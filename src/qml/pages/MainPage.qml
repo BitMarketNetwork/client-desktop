@@ -192,7 +192,7 @@ BasePage {
                 coinName: api.coin.fullName
                 coinIcon: api.coin? Funcs.loadImage( api.coin.icon ):""
                 readOnly: !api.address || api.address.readOnly 
-                receiveOnly: api.address.balance == 0.
+                receiveOnly: api.address.balance === 0.
                 amount: api.address? api.address.balanceHuman : ""
                 fiatAmount: api.address? api.address.fiatBalance : ""
                 isUpdating: api.address? api.address.isUpdating : false

@@ -23,7 +23,7 @@ Base {
         id: _name
         anchors{
             left: parent.left
-            leftMargin: defMargin
+//            leftMargin: defMargin
             verticalCenter: parent.verticalCenter
         }
     }

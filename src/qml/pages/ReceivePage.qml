@@ -45,7 +45,8 @@ NewTxPage {
             id: _result
             address: CoinApi.receive.address
             label: CoinApi.receive.label
-            width: 500
+            message: CoinApi.receive.message
+            width: 700
 
             onReject: {
                 popPage()

@@ -38,7 +38,7 @@ Item {
             addressModel = [] // recursion
             return
         }
-        else if(addressModel.length == 0){
+        else if(addressModel.length === 0){
             return
         }
         reload()
@@ -103,9 +103,14 @@ Item {
 
     Rectangle{
         id: _rect
-        color: palette.base
-        radius: 10
+        color: _base.selected? palette.linkVisited : palette.base
+        radius: 1
         visible: _base.visible
+
+        border{
+            width: _base.selected?1:0
+            color: palette.link
+        }
 
         anchors{
             fill: parent
@@ -128,9 +133,11 @@ Item {
         id: _top_line
         anchors{
             top: parent.top
+            topMargin: -1
             horizontalCenter: parent.horizontalCenter
         }
         width: parent.width - 20
+        visible: !_base.selected
     }
 
         CoinRow{

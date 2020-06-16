@@ -176,5 +176,6 @@
         <file>qml/pages/TxResultPopup.qml</file>
         <file>qml/media/no-money.svg</file>
         <file>qml/controls/MyMenuItem.qml</file>
+        <file>qml/pages/AlphaPopup.qml</file>
     </qresource>
 </RCC>

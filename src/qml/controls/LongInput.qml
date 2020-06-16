@@ -58,13 +58,14 @@ Base {
                         bottom: parent.bottom
                     }
                     width: _value.width
+                    blue: false
                 }
             }
             font{
                 pixelSize: 14
             }
             onTextChanged: {
-                console.log(`lines count ${lineCount}`);
+                // console.log(`lines count ${lineCount}`);
                 if( lineCount > maxLines ){
                     // good choice!
                     // undo()

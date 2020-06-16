@@ -28,6 +28,12 @@ class ReceiveManager(qt_core.QObject):
             return self._address.label
         return ""
 
+    @qt_core.Property(str, notify=addressChanged)
+    def message(self) -> str:
+        if self._address:
+            return self._address.message
+        return ""
+
     @qt_core.Slot(bool, str, str)
     def accept(self, segwit: bool, label: str, message: str):
         _coin = self.parent().coinManager.coin

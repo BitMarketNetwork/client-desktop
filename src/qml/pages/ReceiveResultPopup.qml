@@ -13,6 +13,7 @@ BasePopup{
 
     property alias address: _address.value
     property alias label: _label.value
+    property alias message: _message.value
 
     onAccept: {
        CoinApi.receive.toClipboard()
@@ -30,14 +31,22 @@ BasePopup{
         DetailLabel{
             id: _address
             name: qsTr("Target address:","Receive money result page")
-            MyToolTip{
-                id: _tip
-                visible: false
-            }
+            valueTextSize: 14
+
         }
         DetailLabel{
             id: _label
             name: qsTr("Label:")
+            valueTextSize: 14
+        }
+        LongInput{
+            id:_message
+            name: qsTr("Message:")
+
+            readOnly: true
+            height: 150
+            width: parent.width
+//            labelWidth: 200
         }
 
     }

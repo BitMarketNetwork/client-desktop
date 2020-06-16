@@ -27,6 +27,8 @@ class CoinManager(qt_core.QObject):
         # 0 - all 1- sent 2 - recv
         self._tx_sorting_order = 0
         self._show_empty_balances = True
+        self.coinIndex = 0
+        self.addressIndex = 0
 
     def update_coin_model(self):
         self.coinModelChanged.emit()

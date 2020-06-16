@@ -93,7 +93,6 @@ Rectangle {
                         if(item){
                             // console.log(`================!!!!!!!! ${_list.model[i].confirmCount}`)
                             item.updateConfirm(_list.model[i].confirmCount);
-                            print(item.confirmCount)
                         }
                     }
                 }

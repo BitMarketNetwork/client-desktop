@@ -461,14 +461,8 @@ ApplicationWindow {
             _welcome.show()
         }
     }
-    MsgPopup{
-        id: _perms
-        ok: false
-        text: qsTr("<b>IMPORTANT NOTE:</b> The current application version is an alpha-version and does not warrant stable operation or safety of your finances. Please use this version with precautions for information only, as it is designed for demonstration purposes only.")
-        canBeAccepted: false
-        closable: false
-        acceptText: qsTr("Accept")
-        rejectText: qsTr("Decline")
+    AlphaPopup{
+        id: _alpha
         onAccept: {
             close()
             _password_input.open()
@@ -476,30 +470,11 @@ ApplicationWindow {
         onReject: {
             Qt.quit()
         }
-        onVisibleChanged:{
-            if(visible){
-                _activity_timer.running = true;
-            }
-        }
-    }
-
-    Timer{
-        id: _activity_timer
-        property int counter: 10
-        interval: 1000
-        onTriggered: {
-            if(--counter  === 0 ){
-                _perms.canBeAccepted = true
-                _perms.acceptText = qsTr("Accept")
-            }else{
-                running = true
-                _perms.acceptText = qsTr("Accept (%1)").arg(_activity_timer.counter)
-
-            }
-        }
     }
 
     Component.onCompleted: {
-        _perms.open()
+        if(!CoinApi.debug){
+            _alpha.open()
+        }
     }
 }

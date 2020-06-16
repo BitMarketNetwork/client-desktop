@@ -3,5 +3,5 @@ import "../api"
 
 //Item {
 Rectangle {
-    color: CoinApi.debug? "#44ff0000": "transparent"
+    color: CoinApi.debug && false? "#44ff0000": "transparent"
 }
