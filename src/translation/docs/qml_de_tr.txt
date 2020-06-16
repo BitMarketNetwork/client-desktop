@@ -1,0 +1,291 @@
+## AboutPage
+Anwendungsname
+Serverversion
+Client-Version
+Alle Rechte vorbehalten @ 2020
+Schließen
+####
+
+## AdddressWidget
+Senden an:
+####
+
+## AddressInfoPanel
+Senden
+Erhalten
+Austausch
+Transaktionsverlauf
+Alle
+Geschickt
+Empfangen
+####
+
+## AddressListPanel
+Zeige Details
+Adresse entfernen
+####
+
+## AdvancedSettingsTab
+Bewerbungssprache:
+Fiat-Währung:
+Preisquelle:
+Senden Sie die Änderung immer an eine neue Adresse
+Dies erhöht Ihre Sicherheit.
+Es wird alle Ihre Schlüssel zerstören und Sie können Ihr Geld verlieren! Stellen Sie sicher, dass Sie eine Sicherungskopie erstellt haben. Fortsetzen?
+Klare Brieftasche
+Brieftasche wiederherstellen
+####
+
+## AmountWidget
+Menge:
+Max
+Senden Sie den gesamten verfügbaren Betrag
+####
+
+## BasePopup
+Okay
+Stornieren
+####
+
+## CoinInfoTab
+Münzname:
+Münzstatus:
+Online
+Offline
+Daemon menschliche Version:
+Daemon numerische Version:
+Münzhöhe:
+####
+
+## CoinInfoTabView
+Münzinformationen
+####
+
+## CoinListPanel
+Neue Adresse erstellen
+####
+
+## CoinSettingsTab
+Deaktivieren Sie unnötige Münzen
+####
+
+## ExchangeAprovePopup
+Austausch
+Exchange-Zusammenfassung
+Zu sendender Geldbetrag:
+Geldbetrag zu bekommen:
+####
+
+## ExchangePage
+Machen Sie einen Austausch
+Deal
+####
+
+## ExchangeSourcePanel
+Ich zahle:
+####
+
+## ExchangeTargetPanel
+Ich werde erhalten:
+####
+
+## ExportAddressPage
+Adressen Details
+Schließen
+Adresse:
+Erstellt:
+Öffentlicher Schlüssel (hex):
+Privater Schlüssel (WIF):
+Etikette:
+Botschaft:
+####
+
+## FeeWidget
+Gebühr:
+Die Transaktion wird niemals bestätigt
+sofort
+in% 1 Minuten
+in% 1 Stunden
+Transaktion wird% 1 bestätigt
+Provision abziehen
+Wenn diese Option aktiviert ist, wird der Gebührenbetrag vom Transaktionsbetrag abgezogen
+####
+
+## InputPasswordPopup
+Geben Sie hier Ihr Passwort ein
+Passwort anzeigen
+####
+
+## LeftPanel
+Brieftasche
+Austausch
+Märkte
+####
+
+## LeftoverWidget
+Veränderung:
+Änderung an neue Adresse senden
+####
+
+##Hauptmenüleiste
+Aktionen
+Neue Adresse erstellen
+Brieftasche exportieren
+Ausgang
+Werkzeuge
+die Einstellungen
+Über
+Debuggen
+Über das Debuggen
+Schlüsselverwaltung
+Sicherungskopie importieren
+Neuer Hauptschlüssel
+Verwenden Sie die vorhandene Startphrase
+Brieftaschenverwaltung
+Neue Legacy-Adresse
+Neue Segwit-Adresse
+UTXO-Liste
+Adressen Details
+Brieftaschen füllen
+Entfernen Sie die aktuelle Brieftasche
+Löschen Sie alle Brieftaschen
+Umfragen
+Aktualisieren
+Umfrage
+Sendeliste verarbeiten
+Hör auf abzufragen
+Gebühren aktualisieren
+UI-Tests
+Nachrichtenbox
+Testen des Erscheinungsbilds des Meldungsfelds
+Senden eines Verbesserungstests
+Spinner-Test
+Gebühren-Widget
+Mnemo-Validierung
+Passworteingabe
+Debug-Szenarien
+Simulieren Sie MTX-Sendungen
+####
+
+## MainToolBar
+Export
+Neue Adresse
+die Einstellungen
+Über
+Ausgang
+####
+
+## MakeAddressPopup
+Erstellen
+Währung:
+Adressetikett (optional):
+Segwit-Adresse:
+Botschaft
+####
+
+## MnemonicPage
+Fügen Sie hier Ihren Satz ein
+Neue Samenphrase:
+Fügen Sie Ihre Samenphrase ein
+Sie können Ihre Sicherheit erzwingen, indem Sie neue Wörter anhängen
+Neuen Schlüssel anwenden
+Aktualisierung
+Zurück
+####
+
+## MnemonicValidationPopup
+Prüfung
+Zurück
+Testen Sie sich selbst, ob Sie Ihren Satz im Auge behalten.
+Geben Sie Ihre Phrase erneut ein
+Geben Sie hier erneut Ihren Satz ein
+Überspringen Sie die Mnemo-Validierung unter Debug
+Diese Phrase stimmt nicht mit der zuvor festgelegten Phrase überein. Versuchen Sie es erneut
+####
+
+## NewTxPage
+Zurück
+Währung:
+####
+
+## ReceivePage
+Erhalten
+####
+
+## ReceiveResultPopup
+Schließen
+Adresse kopieren
+Zahlungsübersicht erhalten
+Adresse in Zwischenablage kopiert
+Zieladresse:
+Etikette:
+####
+
+## SelectCoin
+Wählen Sie die Adresse aus der Liste aus
+####
+
+## SendApprovePopup
+Senden
+Transaktions zusammenfassung
+Zu sendender Geldbetrag:
+Empfängeradresse:
+Kommission ist:
+Änderung ist:
+Senden Sie die Änderung an:
+####
+
+## SendPage
+Senden
+Transaktion wurde gesendet
+####
+
+## SettingsPage
+Münzen
+Austausch
+Erweiterte Einstellung
+Schließen
+####
+
+##Statusleiste
+Netzwerkstatus:
+In Verbindung gebracht
+Getrennt
+####
+
+## TabWidget
+Anwendungseinstellungen
+####
+
+## TxDetailsPanel
+ICH WÜRDE:
+Bestätigungen:
+Block:
+Gebühr:
+####
+
+## TxInputListPanel
+Eingänge
+Ausgänge
+####
+
+## TxListFooter
+Aktualisierung ...
+####
+
+## TxRow
+Warten
+In Bearbeitung% 1 bilden% 2
+Geschickt
+Empfangen
+Zeit:
+Von:
+Zu:
+####
+
+## WelcomePopup
+Generieren Sie einen neuen Hauptschlüssel
+Ich möchte eine alte Phrase eingeben
+Ich möchte aus dem Backup wiederherstellen
+Ich stimme den <a href='terms_of_service'> Nutzungsbedingungen </a> und den <a href='privacy_policy'> Datenschutzrichtlinien </a> zu
+####

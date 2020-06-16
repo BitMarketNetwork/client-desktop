@@ -1,0 +1,21 @@
+TRANSLATIONS += \
+        $$TR_DIR/py_fr.ts \
+        $$TR_DIR/py_ru.ts \
+        $$TR_DIR/py_zh.ts \
+        $$TR_DIR/py_es.ts \
+        $$TR_DIR/py_de.ts \
+        $$TR_DIR/py_it.ts \
+        $$TR_DIR/py_uk.ts \
+        $$TR_DIR/py_ja.ts \
+        $$TR_DIR/py_hi.ts \
+        $$TR_DIR/py_ko.ts \
+        $$TR_DIR/py_ar.ts \
+        $$TR_DIR/py_pt.ts \
+        $$TR_DIR/py_vi.ts \
+        $$TR_DIR/py_cs.ts \
+        $$TR_DIR/py_pl.ts \
+        $$TR_DIR/py_el.ts \
+        $$TR_DIR/py_yi.ts \
+        $$TR_DIR/py_hu.ts \
+        $$TR_DIR/py_bg.ts \
+        $$TR_DIR/py_en.ts

@@ -1,0 +1,37 @@
+## AddressInfoCommand
+Münztyp
+Adresse
+Transaktionsanzahl
+Balance
+####
+
+## BaseNetworkCommand
+Serverfehler
+####
+
+##Schlüsselmanager
+Wählen Sie die Datei aus, um die Sicherungskopie zu speichern
+Datei mit Sicherung auswählen
+####
+
+## ServerSysInfoCommand
+Aktiv
+Funktioniert nicht
+Servername
+Serverversion
+Münzen:
+Münzname
+Daemon-Version
+Höhe
+Status
+####
+
+## SettingsManager
+US-Dollar
+Euro
+Russischer Rubel
+####
+
+## qt_core.QObject
+{} erfordert die Python-Version {}. {}. {} oder höher. Die aktuelle Python-Version ist {}. {}. {}.
+####

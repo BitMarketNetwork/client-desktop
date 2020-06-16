@@ -1,0 +1,37 @@
+## AddressInfoCommand
+Tipo de moneda
+Habla a
+Recuento de transacciones
+Equilibrar
+####
+
+## BaseNetworkCommand
+Error del Servidor
+####
+
+##Gestor de claves
+Seleccione el archivo para guardar la copia de seguridad
+Seleccionar archivo con copia de seguridad
+####
+
+## ServerSysInfoCommand
+Activo
+No funciona
+Nombre del servidor
+Versión del servidor
+Monedas:
+Nombre de la moneda
+Versión Daemon
+Altura
+Estado
+####
+
+## SettingsManager
+dólar americano
+Euro
+Rublo ruso
+####
+
+## qt_core.QObject
+{} requiere la versión de Python {}. {}. {} o superior. La versión actual de Python es {}. {}. {}.
+####

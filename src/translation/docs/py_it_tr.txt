@@ -1,0 +1,37 @@
+## AddressInfoCommand
+Tipo di moneta
+Indirizzo
+Conteggio delle transazioni
+Equilibrio
+####
+
+## BaseNetworkCommand
+Errore del server
+####
+
+## KeyManager
+Seleziona il file per salvare la copia di backup
+Seleziona il file con il backup
+####
+
+## ServerSysInfoCommand
+Attivo
+Non funziona
+Nome del server
+Versione del server
+Monete:
+Nome della moneta
+Versione demone
+Altezza
+Stato
+####
+
+## SettingsManager
+dollaro Americano
+Euro
+Rublo russo
+####
+
+## qt_core.QObject
+{} richiede la versione di Python {}. {}. {} o superiore. L'attuale versione di Python è {}. {}. {}.
+####

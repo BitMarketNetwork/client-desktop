@@ -1,0 +1,291 @@
+## AboutPage
+Tên ứng dụng
+Phiên bản máy chủ
+Phiên bản máy khách
+Bảo lưu mọi quyền @ 2020
+Đóng
+####
+
+## AdddressWidget
+Gửi tới:
+####
+
+## Địa chỉInfoPanel
+Gửi
+Nhận
+Trao đổi
+Lịch sử giao dịch
+Tất cả
+Đã gửi
+Đã nhận
+####
+
+## Địa chỉListPanel
+Hiển thị chi tiết
+Xóa địa chỉ
+####
+
+## AdvancedSinstallTab
+Ngôn ngữ ứng dụng:
+Tiền tệ:
+Nguồn giá:
+Luôn gửi thay đổi đến địa chỉ mới
+Điều này làm tăng tính bảo mật của bạn.
+Nó sẽ phá hủy tất cả chìa khóa của bạn và bạn có thể mất tiền của mình! Hãy chắc chắn rằng bạn đã tạo bản sao lưu. Tiếp tục?
+Xóa ví
+Khôi phục ví
+####
+
+## LượngWidget
+Số tiền:
+Tối đa
+Gửi bất kỳ số tiền có sẵn
+####
+
+## BasePopup
+Được rồi
+Hủy bỏ
+####
+
+## CoinInfoTab
+Tên tiền:
+Trạng thái tiền:
+Trực tuyến
+Ngoại tuyến
+Phiên bản con người của Daemon:
+Phiên bản số Daemon:
+Chiều cao đồng xu:
+####
+
+## CoinInfoTabView
+Thông tin về tiền xu
+####
+
+## CoinListPanel
+Tạo địa chỉ mới
+####
+
+## CoinSinstallTab
+Bỏ chọn những đồng tiền không cần thiết
+####
+
+## ExchangeAprovePopup
+Trao đổi
+Tóm tắt trao đổi
+Số tiền cần gửi:
+Số tiền nhận được:
+####
+
+## ExchangePage
+Thực hiện và trao đổi
+Thỏa thuận
+####
+
+## ExchangeSourcePanel
+Tôi đang trả tiền:
+####
+
+## ExchangeTargetPanel
+Tôi sẽ nhận được:
+####
+
+## ExportAddressPage
+Chi tiết địa chỉ
+Đóng
+Địa chỉ:
+Tạo:
+Khóa công khai (hex):
+Khóa riêng (WIF):
+Nhãn:
+Tin nhắn:
+####
+
+## ChargeWidget
+Lệ phí:
+Giao dịch sẽ không bao giờ được xác nhận
+ngay lập tức
+trong% 1 phút
+trong% 1 giờ
+Giao dịch sẽ được xác nhận% 1
+Hoa hồng trừ
+Nếu được chọn thì số tiền phí sẽ được trừ vào số tiền giao dịch
+####
+
+## InputPasswordPopup
+Nhập mật khẩu của bạn ở đây
+Hiển thị mật khẩu
+####
+
+## LeftPanel
+Ví
+Trao đổi
+Thị trường
+####
+
+## Còn lại
+Thay đổi:
+Gửi thay đổi đến địa chỉ mới
+####
+
+## MainMothyBar
+Hành động
+Tạo địa chỉ mới
+Xuất ví
+Thoát
+Công cụ
+Cài đặt
+Giới thiệu
+Gỡ lỗi
+Về gỡ lỗi
+Quản lý khóa
+Nhập bản sao lưu
+Khóa chính mới
+Sử dụng cụm từ hạt giống hiện có
+Quản lý ví
+Địa chỉ di sản mới
+Địa chỉ segwit mới
+Danh sách UTXO
+Chi tiết địa chỉ
+Ví phổ biến
+Xóa ví hiện tại
+Xóa tất cả ví
+Bỏ phiếu
+Cập nhật
+Thăm dò ý kiến
+Quy trình danh sách tx
+Dừng bỏ phiếu
+Cập nhật phí
+Kiểm tra giao diện người dùng
+Hộp tin nhắn
+Kiểm tra xuất hiện hộp thông báo
+Gửi bài kiểm tra phê duyệt
+Kiểm tra spinner
+Tiện ích cổ tích
+Xác nhận Mnemo
+Nhập mật khẩu
+Kịch bản gỡ lỗi
+Mô phỏng phát sóng MTX
+####
+
+## MainToolBar
+Xuất khẩu
+Địa chỉ mới
+Cài đặt
+Giới thiệu
+Thoát
+####
+
+## MakeAddressPopup
+Tạo
+Tiền tệ:
+Nhãn địa chỉ (tùy chọn):
+Địa chỉ Segwit:
+Tin nhắn
+####
+
+## MnemonicPage
+Dán cụm từ của bạn ở đây
+Cụm từ hạt giống mới:
+Dán cụm từ hạt giống của bạn
+Bạn có thể thực thi sự an toàn của mình bằng cách nối thêm từ mới
+Áp dụng khóa mới
+Làm mới
+Quay lại
+####
+
+## MnemonicValidationPopup
+Kiểm tra
+Quay lại
+Kiểm tra chính mình khi bạn giữ cụm từ của bạn trong tâm trí.
+Nhập lại cụm từ của bạn
+Nhập lại cụm từ của bạn ở đây
+Bỏ qua xác nhận mnemo trong quá trình gỡ lỗi
+Cụm từ này không khớp với cụm từ bạn đặt trước đó. Hãy thử lại
+####
+
+## NewTxPage
+Quay lại
+Tiền tệ:
+####
+
+## receivePage
+Nhận
+####
+
+## NhậnResultPopup
+Đóng
+Sao chép địa chỉ
+Nhận tóm tắt thanh toán
+Địa chỉ được sao chép vào clipboard
+Địa chỉ mục tiêu:
+Nhãn:
+####
+
+## ChọnCoin
+Chọn địa chỉ từ danh sách
+####
+
+## SendAppriverPopup
+Gửi
+Tóm tắt giao dịch
+Số tiền được gửi:
+Địa chỉ người nhận:
+Hoa hồng là:
+Thay đổi là:
+Gửi thay đổi tới:
+####
+
+## SendPage
+Gửi
+Giao dịch đã được gửi
+####
+
+## Cài đặt trang
+Tiền xu
+Trao đổi
+Cài đặt nâng cao
+Đóng
+####
+
+## StatusBar
+Trạng thái mạng:
+Đã kết nối
+Ngắt kết nối
+####
+
+## TabWidget
+Cài đặt ứng dụng
+####
+
+## TxDetailsPanel
+ID:
+Xác nhận:
+Khối:
+Lệ phí:
+####
+
+## TxInputListPanel
+Đầu vào
+Đầu ra
+####
+
+## TxListFooter
+Đang cập nhật ...
+####
+
+## TxRow
+Chờ đợi
+Trong tiến trình% 1 mẫu% 2
+Đã gửi
+Đã nhận
+Thời gian:
+Từ:
+Tới:
+####
+
+## WelcomePopup
+Tạo khóa chủ mới
+Tôi muốn nhập cụm từ cũ
+Tôi muốn khôi phục từ bản sao lưu
+Tôi đồng ý với các điều khoản dịch vụ của <a href='terms_of_service'> </a> và <a href='privacy_policy'> </a>
+####

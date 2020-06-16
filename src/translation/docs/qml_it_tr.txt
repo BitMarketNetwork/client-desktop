@@ -1,0 +1,291 @@
+## AboutPage
+Nome dell'applicazione
+Versione del server
+Versione client
+Tutti i diritti riservati @ 2020
+Vicino
+####
+
+## AdddressWidget
+Inviare a:
+####
+
+## AddressInfoPanel
+Spedire
+Ricevere
+Scambio
+Cronologia delle transazioni
+Tutti
+Inviato
+ricevuto
+####
+
+## AddressListPanel
+Mostra dettagli
+Rimuovi indirizzo
+####
+
+## AdvancedSettingsTab
+Lingua di applicazione:
+Valuta Fiat:
+Fonte delle tariffe:
+Invia sempre il cambiamento sul nuovo indirizzo
+Questo aumenta la tua sicurezza.
+Distruggerà tutte le tue chiavi e potresti perdere i tuoi soldi! Assicurati di aver effettuato una copia di backup. Continua?
+Portafoglio trasparente
+Ripristina portafoglio
+####
+
+## AmountWidget
+Quantità:
+Max
+Invia tutto l'importo disponibile
+####
+
+## BasePopup
+Ok
+Annulla
+####
+
+## CoinInfoTab
+Nome della moneta:
+Stato della moneta:
+in linea
+disconnesso
+Demone versione umana:
+Versione numerica del demone:
+Altezza della moneta:
+####
+
+## CoinInfoTabView
+Informazioni sulla moneta
+####
+
+## CoinListPanel
+Crea un nuovo indirizzo
+####
+
+## CoinSettingsTab
+Deseleziona le monete non necessarie
+####
+
+## ExchangeAprovePopup
+Scambio
+Riepilogo di scambio
+Importo del denaro da inviare:
+Quantità di denaro da ottenere:
+####
+
+## ExchangePage
+Fai uno scambio
+Affare
+####
+
+## ExchangeSourcePanel
+Sto pagando:
+####
+
+## ExchangeTargetPanel
+Riceverò:
+####
+
+## ExportAddressPage
+Dettagli dell'indirizzo
+Vicino
+Indirizzo:
+Creato:
+Chiave pubblica (esadecimale):
+Chiave privata (WIF):
+Etichetta:
+Messaggio:
+####
+
+## FeeWidget
+Costo:
+La transazione non sarà mai confermata
+subito
+tra% 1 minuti
+in% 1 ore
+La transazione sarà confermata% 1
+Commissione di sottrazione
+Se selezionato, l'importo della commissione verrà sottratto dall'importo della transazione
+####
+
+## InputPasswordPopup
+Inserisci qui la tua password
+Mostra password
+####
+
+## LeftPanel
+Portafoglio
+Scambio
+mercati
+####
+
+## LeftoverWidget
+Modificare:
+Invia la modifica al nuovo indirizzo
+####
+
+## mainmenubar
+Azioni
+Crea un nuovo indirizzo
+Esporta portafoglio
+Uscita
+Utensili
+impostazioni
+Di
+mettere a punto
+Informazioni sul debug
+Gestione delle chiavi
+Importa copia di backup
+Nuova chiave principale
+Usa la frase seme esistente
+Gestione del portafoglio
+Nuovo indirizzo legacy
+Nuovo indirizzo segwit
+Elenco UTXO
+Dettagli dell'indirizzo
+Popolare i portafogli
+Rimuovi il portafoglio corrente
+Cancella tutti i portafogli
+votazione
+Aggiornare
+Sondaggio
+Elaborare l'elenco tx
+Ferma il polling
+Commissioni di aggiornamento
+Test dell'interfaccia utente
+Casella dei messaggi
+Test dell'aspetto della finestra di messaggio
+Invio test di approvazione
+Test di spinner
+Widget tariffa
+Convalida Mnemo
+Inserimento password
+Scenari di debug
+Simula la trasmissione MTX
+####
+
+## MainToolBar
+Esportare
+Nuovo indirizzo
+impostazioni
+Di
+Uscita
+####
+
+## MakeAddressPopup
+Creare
+Moneta:
+Etichetta indirizzo (opzionale):
+Indirizzo Segwit:
+Messaggio
+####
+
+## MnemonicPage
+Incolla qui la tua frase
+Nuova frase seme:
+Incolla la tua frase seme
+Puoi rafforzare la tua sicurezza aggiungendo nuove parole
+Applica nuova chiave
+ricaricare
+Indietro
+####
+
+## MnemonicValidationPopup
+Test
+Indietro
+Mettiti alla prova mentre tieni a mente la tua frase.
+Inserisci di nuovo la tua frase
+Inserisci di nuovo la tua frase qui
+Salta la convalida di mnemo sotto debug
+Questa frase non corrisponde alla frase impostata in precedenza. Riprova
+####
+
+## NewTxPage
+Indietro
+Moneta:
+####
+
+## ReceivePage
+Ricevere
+####
+
+## ReceiveResultPopup
+Vicino
+Copia indirizzo
+Ricevi il riepilogo del pagamento
+Indirizzo copiato negli appunti
+Indirizzo target:
+Etichetta:
+####
+
+## SelectCoin
+Seleziona l'indirizzo dall'elenco
+####
+
+## SendApprovePopup
+Spedire
+Riepilogo delle transazioni
+Importo del denaro da inviare:
+Indirizzo del destinatario:
+La commissione è:
+Il cambiamento è:
+Invia modifica a:
+####
+
+## sendpage
+Spedire
+La transazione è stata inviata
+####
+
+## SettingsPage
+Monete
+Scambio
+Impostazioni avanzate
+Vicino
+####
+
+##Barra di stato
+Stato della rete:
+Collegato
+Disconnected
+####
+
+## TabWidget
+Impostazioni dell'applicazione
+####
+
+## TxDetailsPanel
+ID:
+conferme:
+Bloccare:
+Costo:
+####
+
+## TxInputListPanel
+ingressi
+Uscite
+####
+
+## TxListFooter
+In aggiornamento ...
+####
+
+## TxRow
+In attesa
+In corso% 1 da% 2
+Inviato
+ricevuto
+Tempo:
+A partire dal:
+Per:
+####
+
+## WelcomePopup
+Genera nuova chiave principale
+Voglio inserire una vecchia frase
+Voglio ripristinare dal backup
+Accetto i <a href='terms_of_service'> termini di servizio </a> e la <a href='privacy_policy'> politica sulla privacy </a>
+####

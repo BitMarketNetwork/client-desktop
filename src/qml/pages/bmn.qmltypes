@@ -1,0 +1,10 @@
+import QtQuick.tooling 1.1
+  Module {
+      Component {
+
+          name: "Bmn"
+
+          prototype: "QObject"
+
+      }
+  }

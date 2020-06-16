@@ -1,0 +1,37 @@
+## Địa chỉInfoCommand
+Loại tiền xu
+Địa chỉ
+Số lượng giao dịch
+Thăng bằng
+####
+
+## BaseNetworkCommand
+Lỗi máy chủ
+####
+
+## Trình quản lý khóa
+Chọn tệp để lưu bản sao lưu
+Chọn tập tin có bản sao lưu
+####
+
+## Máy chủSysInfoCommand
+Hoạt động
+Không làm việc
+Tên máy chủ
+Phiên bản máy chủ
+Đồng xu:
+Tên tiền
+Phiên bản daemon
+Chiều cao
+Trạng thái
+####
+
+## Trình quản lý cài đặt
+Tiền đô la mỹ
+Euro
+Rúp Nga
+####
+
+## qt_core.QObject
+{} yêu cầu phiên bản Python {}. {}. {} trở lên. Phiên bản Python hiện tại là {}. {}. {}.
+####

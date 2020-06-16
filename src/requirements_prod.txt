@@ -1,0 +1,6 @@
+pyside2==5.14.2
+cryptography==2.9.2
+ecdsa
+
+# temporary dependencies
+requests

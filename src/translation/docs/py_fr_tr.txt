@@ -1,0 +1,37 @@
+## AddressInfoCommand
+Type de pièce
+Adresse
+Nombre de transactions
+Équilibre
+####
+
+## BaseNetworkCommand
+Erreur du serveur
+####
+
+## KeyManager
+Sélectionnez le fichier pour enregistrer la copie de sauvegarde
+Sélectionner un fichier avec sauvegarde
+####
+
+## ServerSysInfoCommand
+actif
+Ca ne fonctionne pas
+Nom du serveur
+Version du serveur
+Pièces de monnaie:
+Nom de la pièce
+Version démon
+la taille
+Statut
+####
+
+## SettingsManager
+dollar américain
+euro
+Rouble russe
+####
+
+## qt_core.QObject
+{} nécessite la version Python {}. {}. {} ou supérieure. La version actuelle de Python est {}. {}. {}.
+####

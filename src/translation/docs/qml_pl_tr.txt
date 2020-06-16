@@ -1,0 +1,291 @@
+## AboutPage
+Nazwa aplikacji
+Wersja serwera
+Wersja klienta
+Wszelkie prawa zastrzeżone @ 2020
+Blisko
+####
+
+## AdddressWidget
+Wysłać do:
+####
+
+## AddressInfoPanel
+Wysłać
+Otrzymać
+Wymieniać się
+Historia transakcji
+Wszystko
+Wysłano
+Odebrane
+####
+
+## AddressListPanel
+Pokaż szczegóły
+Usuń adres
+####
+
+## AdvancedSettingsTab
+Język aplikacji:
+Waluta Fiata:
+Źródło stawek:
+Zawsze wysyłaj zmiany na nowy adres
+Zwiększa to Twoje bezpieczeństwo.
+Zniszczy wszystkie klucze i możesz stracić pieniądze! Upewnij się, że wykonałeś kopię zapasową. Kontyntynuj?
+Wyczyść portfel
+Przywróć portfel
+####
+
+## AmountWidget
+Ilość:
+Max
+Wyślij całą dostępną kwotę
+####
+
+## BasePopup
+Dobrze
+Anuluj
+####
+
+## CoinInfoTab
+Nazwa monety:
+Status monety:
+online
+Offline
+Wersja ludzka demona:
+Wersja numeryczna demona:
+Wysokość monety:
+####
+
+## CoinInfoTabView
+Informacje o monetach
+####
+
+## CoinListPanel
+Utwórz nowy adres
+####
+
+## CoinSettingsTab
+Odznacz niepotrzebne monety
+####
+
+## ExchangeAprovePopup
+Wymieniać się
+Podsumowanie wymiany
+Kwota pieniędzy do wysłania:
+Kwota pieniędzy do zdobycia:
+####
+
+## ExchangePage
+Dokonaj wymiany
+Rozdać
+####
+
+## ExchangeSourcePanel
+Płacę:
+####
+
+## ExchangeTargetPanel
+Otrzymam:
+####
+
+## ExportAddressPage
+Dane adresowe
+Blisko
+Adres:
+Utworzony:
+Klucz publiczny (hex):
+Klucz prywatny (WIF):
+Etykieta:
+Wiadomość:
+####
+
+## FeeWidget
+Opłata:
+Transakcja nigdy nie zostanie potwierdzona
+natychmiast
+w% 1 minut
+w% 1 godzin
+Transakcja zostanie potwierdzona% 1
+Odejmowanie prowizji
+Jeśli zaznaczone, wówczas kwota opłaty zostanie odjęta od kwoty transakcji
+####
+
+## InputPasswordPopup
+Wpisz tutaj swoje hasło
+Pokaż hasło
+####
+
+## LeftPanel
+Portfel
+Wymieniać się
+Rynki
+####
+
+## LeftoverWidget
+Zmiana:
+Wyślij zmianę na nowy adres
+####
+
+## MainMenuBar
+działania
+Utwórz nowy adres
+Eksportuj portfel
+Wyjście
+Przybory
+Ustawienia
+O
+Odpluskwić
+O debugowaniu
+Zarządzanie kluczami
+Zaimportuj kopię zapasową
+Nowy klucz główny
+Użyj istniejącej frazy początkowej
+Zarządzanie portfelem
+Nowy starszy adres
+Nowy adres segwit
+Lista UTXO
+Dane adresowe
+Wypełniaj portfele
+Usuń bieżący portfel
+Wyczyść wszystkie portfele
+Ankieta
+Aktualizacja
+Głosowanie
+Przetwórz listę TX
+Przestań sondować
+Aktualizuj opłaty
+Testy interfejsu użytkownika
+Skrzynka pocztowa
+Testowanie wyglądu okna komunikatu
+Przesłanie testu zatwierdzenia
+Test przędzarki
+Widżet opłat
+Walidacja Mnemo
+Wprowadzanie hasła
+Scenariusze debugowania
+Symuluj transmisję MTX
+####
+
+## MainToolBar
+Eksport
+Nowy adres
+Ustawienia
+O
+Wyjście
+####
+
+## MakeAddressPopup
+Stwórz
+Waluta:
+Etykieta adresu (opcjonalnie):
+Adres segmentu:
+Wiadomość
+####
+
+## MnemonicPage
+Wklej tutaj swoją frazę
+Nowa fraza nasienna:
+Wklej frazę nasienia
+Możesz wzmocnić swoje bezpieczeństwo, dodając nowe słowa
+Zastosuj nowy klucz
+Odświeżać
+Z powrotem
+####
+
+## MnemonicValidationPopup
+Test
+Z powrotem
+Sprawdź się, czy pamiętasz swoją frazę.
+Wprowadź ponownie swoją frazę
+Wprowadź ponownie swoją frazę tutaj
+Pomiń sprawdzanie poprawności mnemo podczas debugowania
+To wyrażenie nie pasuje do wcześniej ustawionego. Spróbuj ponownie
+####
+
+## NewTxPage
+Z powrotem
+Waluta:
+####
+
+## ReceivePage
+Otrzymać
+####
+
+## ReceiveResultPopup
+Blisko
+Skopiuj adres
+Otrzymuj podsumowanie płatności
+Adres skopiowany do schowka
+Adres docelowy:
+Etykieta:
+####
+
+## SelectCoin
+Wybierz adres z listy
+####
+
+## SendApprovePopup
+Wysłać
+Podsumowanie transakcji
+Kwota pieniędzy do wysłania:
+Odbiorca adres:
+Prowizja to:
+Zmiana to:
+Wyślij zmianę do:
+####
+
+## SendPage
+Wysłać
+Transakcja została wysłana
+####
+
+## Ustawienia Strona
+Monety
+Wymieniać się
+Ustawienia zaawansowane
+Blisko
+####
+
+##Pasek stanu
+Status sieci:
+Połączony
+Bezładny
+####
+
+## TabWidget
+Ustawienia aplikacji
+####
+
+## TxDetailsPanel
+ID:
+Potwierdzenia:
+Blok:
+Opłata:
+####
+
+## TxInputListPanel
+Wejścia
+Wyjścia
+####
+
+## TxListFooter
+Aktualizuję ...
+####
+
+## TxRow
+Czekanie
+W toku% 1 z% 2
+Wysłano
+Odebrane
+Czas:
+Z:
+Do:
+####
+
+## WelcomePopup
+Wygeneruj nowy klucz główny
+Chcę wprowadzić starą frazę
+Chcę przywrócić z kopii zapasowej
+Wyrażam zgodę na <a href='terms_of_service'> warunki korzystania z usługi </a> i <a href='privacy_policy'> politykę prywatności </a>
+####

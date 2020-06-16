@@ -1,0 +1,291 @@
+## AboutPage
+Název aplikace
+Verze serveru
+Verze klienta
+Všechna práva vyhrazena @ 2020
+Zavřít
+####
+
+## AdddressWidget
+Poslat komu:
+####
+
+## AddressInfoPanel
+Poslat
+Dostávat
+Výměna
+Historie transakcí
+Všechno
+Odesláno
+Přijato
+####
+
+## AddressListPanel
+Ukázat detaily
+Odebrat adresu
+####
+
+## AdvancedSettingsTab
+Jazyk aplikace:
+Fiat měna:
+Zdroj sazeb:
+Změny vždy zasílejte na novou adresu
+To zvyšuje vaši bezpečnost.
+Zničí všechny klíče a můžete ztratit peníze! Ujistěte se, že jste vytvořili záložní kopii. Pokračovat?
+Čistá peněženka
+Obnovit peněženku
+####
+
+## AmountWidget
+Množství:
+Max
+Pošlete veškerou dostupnou částku
+####
+
+## BasePopup
+OK
+zrušení
+####
+
+## CoinInfoTab
+Název mince:
+Stav mincí:
+Online
+Offline
+Lidská verze Daemon:
+Číselná verze démona:
+Výška mince:
+####
+
+## CoinInfoTabView
+Informace o mincích
+####
+
+## CoinListPanel
+Vytvořit novou adresu
+####
+
+## CoinSettingsTab
+Zrušte zaškrtnutí nepotřebných mincí
+####
+
+## ExchangeAprovePopup
+Výměna
+Souhrn výměny
+Částka k odeslání:
+Výše peněz:
+####
+
+## ExchangePage
+Proveďte výměnu
+Obchod
+####
+
+## ExchangeSourcePanel
+Platím:
+####
+
+## ExchangeTargetPanel
+Obdržím:
+####
+
+## ExportAddressPage
+Podrobnosti o adrese
+Zavřít
+Adresa:
+Vytvořeno:
+Veřejný klíč (hex):
+Soukromý klíč (WIF):
+Označení:
+Zpráva:
+####
+
+## FeeWidget
+Poplatek:
+Transakce nebude nikdy potvrzena
+ihned
+v% 1 minutách
+za% 1 hodiny
+Transakce bude potvrzena% 1
+Sub abstraktní provize
+Pokud je zaškrtnuto, částka poplatku bude odečtena od částky transakce
+####
+
+## InputPasswordPopup
+Sem zadejte své heslo
+Zobrazit heslo
+####
+
+## LeftPanel
+Peněženka
+Výměna
+Trhy
+####
+
+## LeftoverWidget
+Změna:
+Odeslat změnu na novou adresu
+####
+
+## MainMenuBar
+Akce
+Vytvořit novou adresu
+Exportovat peněženku
+Výstup
+Nástroje
+Nastavení
+O
+Ladit
+O ladění
+Správa klíčů
+Importujte záložní kopii
+Nový hlavní klíč
+Použijte existující semínko
+Správa peněženky
+Nová starší adresa
+Nová segwit adresa
+Seznam UTXO
+Podrobnosti o adrese
+Vyplňte peněženky
+Odstraňte aktuální peněženku
+Vymazat všechny peněženky
+Hlasování
+Aktualizace
+Hlasování
+Zpracovat seznam tx
+Přestat hlasovat
+Aktualizujte poplatky
+UI testy
+Okno se zprávou
+Testování vzhledu schránky zpráv
+Odeslání zkušebního testu
+Spinnerův test
+Poplatek widget
+Mnemo ověření
+Zadání hesla
+Ladit scénáře
+Simulujte vysílání MTX
+####
+
+## MainToolBar
+Vývozní
+Nová adresa
+Nastavení
+O
+Výstup
+####
+
+## MakeAddressPopup
+Vytvořit
+Měna:
+Štítek s adresou (volitelné):
+Adresa segmentu:
+Zpráva
+####
+
+## MnemonicPage
+Sem vložte svou frázi
+Nová semena:
+Vložte semennou frázi
+Svou bezpečnost můžete vynutit přidáním nových slov
+Použít nový klíč
+Obnovit
+Zadní
+####
+
+## MnemonicValidationPopup
+Test
+Zadní
+Vyzkoušejte si, co si pamatujete.
+Zadejte znovu svou frázi
+Sem zadejte svou frázi
+Přeskočit ověření mnemo v rámci ladění
+Tato fráze neodpovídá fráze, kterou jste nastavili dříve. Zkuste to znovu
+####
+
+## NewTxPage
+Zadní
+Měna:
+####
+
+## ReceivePage
+Dostávat
+####
+
+## ReceiveResultPopup
+Zavřít
+Kopírovat adresu
+Dostávat přehled plateb
+Adresa byla zkopírována do schránky
+Cílová adresa:
+Označení:
+####
+
+## SelectCoin
+Vyberte adresu ze seznamu
+####
+
+## SendApprovePopup
+Poslat
+Souhrn transakcí
+Částka k odeslání:
+Adresa příjemce:
+Komise je:
+Změna je:
+Odeslat změnu na:
+####
+
+## SendPage
+Poslat
+Transakce byla odeslána
+####
+
+## SettingsPage
+Mince
+Výměna
+Pokročilé nastavení
+Zavřít
+####
+
+##Stavový řádek
+Stav sítě:
+Připojeno
+Odpojeno
+####
+
+## TabWidget
+Nastavení aplikace
+####
+
+## TxDetailsPanel
+ID:
+Potvrzení:
+Blok:
+Poplatek:
+####
+
+## TxInputListPanel
+Vstupy
+Výstupy
+####
+
+## TxListFooter
+Aktualizace ...
+####
+
+## TxRow
+Čekání
+Probíhá% 1 forma% 2
+Odesláno
+Přijato
+Čas:
+Z:
+Na:
+####
+
+## WelcomePopup
+Vygenerujte nový hlavní klíč
+Chci vložit starou frázi
+Chci obnovit ze zálohy
+Souhlasím s <a href='terms_of_service'> smluvními podmínkami </a> a <a href='privacy_policy'> zásadami ochrany osobních údajů </a>
+####

@@ -1,0 +1,37 @@
+## AddressInfoCommand
+Érme típusa
+Cím
+Tranzakciók száma
+Egyensúly
+####
+
+## BaseNetworkCommand
+Szerver hiba
+####
+
+## KeyManager
+Válassza ki a fájlt a biztonsági másolat mentéséhez
+Válassza ki a fájlt biztonsági mentéssel
+####
+
+## ServerSysInfoCommand
+Aktív
+Nem működik
+Szerver név
+Szerver verzió
+érmék:
+Érme neve
+Daemon verzió
+Magasság
+Állapot
+####
+
+## Beállításkezelő
+Amerikai dollár
+Euro
+Orosz rubel
+####
+
+## qt_core.QObject
+A (z) {} Python verziót igényli {}. {}. {} vagy újabb. A Python jelenlegi verziója {}. {}. {}.
+####

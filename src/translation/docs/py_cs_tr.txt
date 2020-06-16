@@ -1,0 +1,37 @@
+## AddressInfoCommand
+Typ mince
+Adresa
+Počet transakcí
+Zůstatek
+####
+
+## BaseNetworkCommand
+Chyba serveru
+####
+
+## KeyManager
+Vyberte soubor pro uložení záložní kopie
+Vyberte soubor se zálohou
+####
+
+## ServerSysInfoCommand
+Aktivní
+Nejde to
+Název serveru
+Verze serveru
+Mince:
+Název mince
+Verze démona
+Výška
+Postavení
+####
+
+## SettingsManager
+Americký dolar
+Euro
+Ruský rubl
+####
+
+## qt_core.QObject
+{} vyžaduje verzi Python {}. {}. {} nebo vyšší. Aktuální verze Pythonu je {}. {}. {}.
+####

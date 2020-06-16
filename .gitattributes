@@ -1,0 +1,14 @@
+* text=auto
+
+# Always LF
+*.py text eol=lf
+*.svg text eol=lf
+
+# Always CRLF
+*.bat text eol=crlf
+
+# Always binary
+*.ico binary
+*.gif binary
+*.png binary
+*.pdf binary

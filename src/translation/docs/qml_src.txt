@@ -1,0 +1,292 @@
+##AboutPage
+Application name
+Server version
+Client version
+All right reserved @2020
+Close
+####
+
+##AdddressWidget
+Send to:
+####
+
+##AddressInfoPanel
+Send
+Receive
+Exchange
+Transactions history
+All
+Sent
+Received
+####
+
+##AddressListPanel
+Show details 
+Remove address
+####
+
+##AdvancedSettingsTab
+Application language:
+Fiat currency:
+Rates source:
+Always send change on new address
+This increases your safity.
+It will destroy all you keys and you can lose your money! Make sure you have made backup copy. Continue?
+Clear wallet
+Restore wallet
+####
+
+##AmountWidget
+Amount:
+Max
+Send all amount avialable
+####
+
+##BasePopup
+Ok
+Cancel
+####
+
+##CoinInfoTab
+Coin name:
+Coin status:
+Online
+Offline
+Daemon human version:
+Daemon numeric version:
+Coin height:
+####
+
+##CoinInfoTabView
+Coin information
+####
+
+##CoinListPanel
+Create new address
+####
+
+##CoinSettingsTab
+Uncheck unnecessery coins
+####
+
+##ExchangeAprovePopup
+Exchange
+Exchange summary
+Amount of money to send:
+Amount of money to get:
+####
+
+##ExchangePage
+Make an exchange
+Deal
+####
+
+##ExchangeSourcePanel
+I am paying:
+####
+
+##ExchangeTargetPanel
+I will receive:
+####
+
+##ExportAddressPage
+Address details
+Close
+Address:
+Created:
+Public key (hex):
+Private key (WIF):
+Label:
+Message:
+####
+
+##FeeWidget
+Fee:
+Transaction will be never confirmed
+immediately
+in %1 minutes
+in %1 hours
+Transaction will be confirmed %1
+Substract comission
+If checked then fee amount will be substracted from transaction amount
+####
+
+##InputPasswordPopup
+Input your password here
+Show password
+####
+
+##LeftPanel
+Wallet
+Exchange
+Markets
+####
+
+##LeftoverWidget
+Change:
+Send change to new address
+####
+
+##MainMenuBar
+Actions
+Create new address
+Export wallet
+Exit
+Tools
+Settings
+About
+Debug
+About debug
+Key management
+Import backup copy
+New master key
+Use existing seed phrase
+Wallet management
+New legacy address
+New segwit address
+UTXO list
+Address details
+Populate wallets
+Remove current wallet
+Clear all wallets
+Polling
+Update
+Poll
+Process tx list
+Stop polling
+Update fees
+UI tests
+Message box
+Testing message box appearance
+Sending aprovement test
+Spinner test
+Fee widget
+Mnemo validation
+Password input
+Debug scenarios
+Simulate MTX broadcasting
+####
+
+##MainToolBar
+Export
+New address
+Settings
+About
+Exit
+####
+
+##MakeAddressPopup
+Create
+Currency:
+Address label (optional):
+Segwit address:
+Message
+####
+
+##MnemonicPage
+Paste your phrase here
+New seed phrase:
+Paste your seed phrase
+You can enforce your safity by appending new words
+Apply new key
+Refresh
+Back
+####
+
+##MnemonicValidationPopup
+Test
+Back
+Test yourself wheather you keep your phrase in mind.
+Input your phrase again
+Input again your phrase here
+Skip mnemo validation under debug
+This phrase doesn't match  phrase that you set before.Try again
+####
+
+##NewTxPage
+Back
+Currency:
+####
+
+##ReceivePage
+Receive
+####
+
+##ReceiveResultPopup
+Close
+Copy address
+Receive payment summary
+Address copied to clipboard
+Target address:
+Label:
+####
+
+##SelectCoin
+Select address from the list
+####
+
+##SendApprovePopup
+Send
+Transaction summary
+Amount of money to be sent:
+Receiver address:
+Comission is:
+Change is:
+Send change to:
+####
+
+##SendPage
+Send
+Transaction has sent
+####
+
+##SettingsPage
+Coins
+Exchange
+Advanced setting
+Close
+####
+
+##StatusBar
+Network status:
+Connected
+Disconnected
+####
+
+##TabWidget
+Application settings
+####
+
+##TxDetailsPanel
+ID:
+Confirmations:
+Block:
+Fee:
+####
+
+##TxInputListPanel
+Inputs
+Outputs
+####
+
+##TxListFooter
+Updating ...
+####
+
+##TxRow
+Waiting
+In progress %1 form %2
+Sent
+Received
+Time:
+From:
+To:
+####
+
+##WelcomePopup
+Generate new master key
+I want to input old phrase
+I want to restore from backup
+I agree to <a href='terms_of_service'>terms of service</a> and <a href='privacy_policy'>privacy policy</a>
+####
+
