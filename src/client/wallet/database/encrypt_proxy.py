@@ -27,7 +27,7 @@ class EncryptProxy:
 
     def __init__(self, psw, nonce):
         self._last_hash = None
-        log.critical(f"loading AES with psw:{psw} nonce:{nonce}")
+        log.debug(f"loading AES with psw:{psw} nonce:{nonce}")
         self._aes = aes.AesProvider( psw, nonce)
         self._password = util.get_bytes(psw)
 
@@ -62,7 +62,7 @@ class EncryptProxy:
             if Type.TypeBool == pref:
                 return struct.unpack("?", val[1:])[0]
             if Type.TypeInt == pref:
-                return struct.unpack("L", val[1:])[0]
+                return struct.unpack("Q", val[1:])[0]
             if Type.TypeReal == pref:
                 return struct.unpack("d", val[1:])[0]
             raise RuntimeError(f"Not implemented type {val}")
@@ -90,16 +90,19 @@ class EncryptProxy:
             return value
         if value is None:
             return ""
-        if isinstance(value, str):
-            return self._encrypt(value.encode(), Type.TypeText, strong)
-        if isinstance(value, bytes):
-            return self._encrypt(value, Type.TypeBytes, strong)
-        if isinstance(value, bool):
-            return self._encrypt(struct.pack("?", value), Type.TypeBool, strong)
-        if isinstance(value, int):
-            return self._encrypt(struct.pack("L", value), Type.TypeInt, strong)
-        if isinstance(value, float):
-            return self._encrypt(struct.pack("d", value), Type.TypeReal, strong)
+        try:
+            if isinstance(value, str):
+                return self._encrypt(value.encode(), Type.TypeText, strong)
+            if isinstance(value, bytes):
+                return self._encrypt(value, Type.TypeBytes, strong)
+            if isinstance(value, bool):
+                return self._encrypt(struct.pack("?", value), Type.TypeBool, strong)
+            if isinstance(value, int):
+                return self._encrypt(struct.pack("Q", value), Type.TypeInt, strong)
+            if isinstance(value, float):
+                return self._encrypt(struct.pack("d", value), Type.TypeReal, strong)
+        except struct.error as se:
+            log.critical(f"packing error:{se} for {value}")
         raise TypeError(f"{value} => {type(value)}")
 
     def make_hash(self, value: str) -> str:
