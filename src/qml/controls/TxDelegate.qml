@@ -1,26 +1,28 @@
 import QtQuick 2.12
-//import QtGraphicalEffects 1.12
+import "../api"
 import "../js/constants.js" as Const
+import "../js/functions.js" as Funcs
 
+/*
+
+            from: 	modelData.fromAddress
+            to: 	modelData.toAddress
+            amount: CoinApi.settings.coinBalance(modelData.balance)
+            unit: CoinApi.settings.coinUnit(null)
+            fiatAmount: modelData.fiatBalance
+            fiatUnit: api.currency
+            time: modelData.timeHuman
+            txId: modelData.name
+            block: modelData.block
+            fee: modelData.feeHuman
+            confirmCount: modelData.confirmCount
+            status: modelData.status
+  */
 
 Base {
     id: _base
-
-    property string txId: ""
-    property string block: ""
-    property string fee: ""
-
-    property alias time: _header.time
-    property alias from: _header.from
-    property alias to: _header.to
-    property alias sent: _header.sent
-    property alias confirmCount: _header.confirmCount
-    property alias amount: _header.amount
-    property alias unit: _header.unit
-    property alias fiatAmount: _header.fiatAmount
-    property alias fiatUnit: _header.fiatUnit
-
-    readonly property int infoHeight: 150
+    property variant tx: null
+    readonly property int infoHeight: 140
     antialiasing: true
 
     height: _header.height
@@ -30,20 +32,26 @@ Base {
 
     property bool expanded: false
     onExpandedChanged: {
-        console.log(expanded)
         _base.state = expanded?"expanded":"collapsed"
         _animation_to.running = expanded
         _header.expanded = expanded
         _animation_back.running = !expanded
         if(expanded){
-            _loader.setSource("TxDetailsPanel.qml",{
-                                  "topOffset": _header.height - 10 ,
-                                  "height"  : infoHeight,
-                                  "txId"    : _base.txId,
-                                  "block"    : _base.block,
-                                  "fee"    : _base.fee,
-                                  "confirmText" : _base.confirmCount,
-                              })
+            var opts =  {
+                                  "block" : tx.block,
+                                  "fee" : tx.feeHuman,
+                                  "hash" : tx.name,
+                              };
+            if(CoinApi.dummy){
+                opts["inputsModel"] = CoinApi.coins.inputsModel;
+                opts["outputsModel"] = CoinApi.coins.outputsModel;
+            }else{
+                opts["inputsModel"] = tx.inputsModel;
+                opts["outputsModel"] = tx.outputsModel;
+            }
+            // console.log(`opts: ${opts}`)
+            // Funcs.explore( opts , "tx opts" )
+            _loader.setSource("TxDetailsPanel.qml", opts);
         }else{
             _loader.setSource("EmptyTxInfo.qml")
         }
@@ -74,7 +82,7 @@ Base {
             width: 1
         }
         */
-        radius: 10
+//        radius: 10
 
         color: palette.base
 
@@ -97,6 +105,7 @@ Base {
 
             XemLine{
                 id: _top_line
+                visible: false
                 anchors{
                     top: parent.top
                     horizontalCenter: parent.horizontalCenter
@@ -106,6 +115,17 @@ Base {
         }
             TxRow{
                 id: _header
+
+//                hash: tx.index + '. ' + tx.name
+                time: tx.timeHuman
+                amount: CoinApi.settings.coinBalance( model.balance )
+                // unit: CoinApi.settings.coinUnit( null )
+                unit: CoinApi.coins.unit
+                fiatAmount: tx.fiatBalance
+                fiatUnit: api.currency
+                confirm: tx.confirmCount
+                status: tx.status
+
                 anchors{
                     top: parent.top
                     left: parent.left

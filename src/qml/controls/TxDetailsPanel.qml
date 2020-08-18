@@ -3,115 +3,107 @@ import QtQuick.Controls 2.12
 import "../js/constants.js" as Const
 import "../api"
 
-
- Base{
+Base{
     id: _base
     property bool expanded: false
-    property int topOffset: 0
-    property alias txId: _tx_id.value
     property alias fee: _tx_fee.value
     property alias block: _tx_block.value
-    property alias confirmText: _tx_confirm.value
-   // property string bColor: ""
+    property alias hash: _tx_hash.value
+    property variant inputsModel: []
+    property variant outputsModel: []
 
-   MouseArea{
-       anchors.fill: _rect
-       onDoubleClicked:{
-            CoinApi.ui.copyToClipboard(_tx_id.value)
-       }
-   }
+    readonly property int topOffset: 40
+    height: 140
+    width: parent.width
 
-    Rectangle{
-        id: _rect
-        /*
-        gradient: LinearBg{
-            colorTwo: palette.mid
-            colorOne: palette.button
+    MouseArea{
+        anchors.fill: parent
+        onDoubleClicked: {
+            CoinApi.ui.copyToClipboard(_tx_hash.value)
         }
-        */
-        color: palette.base
+    }
 
-        /*
-        border{
-            id: _border
-            width: 2
-            color: bColor
-        }
-        */
-
-        radius: 10
-        antialiasing: true
-
-        anchors{
-            fill: parent
-            leftMargin: 5
-            rightMargin: 5
-            bottomMargin: 5
-            topMargin: 5
-        }
-
-        Column{
-            id: _column
-            anchors{
-                top: _line.bottom
-                left: parent.left
-                leftMargin: 15
-                topMargin: 5
-            }
-            spacing: 4
-
-            TxDetailRow{
-                id: _tx_id
-                name: qsTr("ID:")
-            }
-            TxDetailRow{
-                id: _tx_confirm
-                name: qsTr("Confirmations:")
-            }
-            TxDetailRow{
-                id: _tx_block
-                name: qsTr("Block:")
-            }
-            TxDetailRow{
-                id: _tx_fee
-                name: qsTr("Fee:")
-                unit: api.unit
-            }
-        /*
-        TxDetailRow{
-            id: _tx_status
-            name: qsTr("Status:")
-        }
-        */
-
-        /*
-        RowLayout{
-            TxInputListPanel{
-            input: true
-            width: _base.width * 0.5
-            }
-            TxInputListPanel{
-            input: false
-            width: _base.width * 0.5
-            }
-        }
-        */
-        }
+    Base{
         XemLine{
-            id: _line
-            blue: false
-            width: parent.width * 0.5
-
             anchors{
                 top: parent.top
-//                right: parent.right
-//                right: parent.horizontalCenter
-//                left: parent.left
-                horizontalCenter: parent.horizontalCenter
-                leftMargin: 10
-//                rightMargin: 0
-                topMargin: _base.topOffset
+            }
+            width: parent.width
+            blue: false
+        }
+        anchors{
+            top: parent.top
+            left: parent.left
+            right: parent.right
+            topMargin: topOffset
+            leftMargin: 20
+        }
+        id: _tx_id
+        height: 15
+    TxDetailRow {
+        id: _tx_hash
+            name: qsTr("ID:", "Cell in transaction list")
+        anchors{
+            fill: parent
+        }
+    }
+    }
+
+    Column{
+        id: _column
+        anchors{
+//            top: parent.top
+            top: _tx_id.bottom
+            bottom: parent.bottom
+            left: parent.left
+            leftMargin: 20
+            topMargin: 5
+        }
+        spacing: 4
+        width: 100
+
+        TxDetailRow{
+            id: _tx_block
+            name: qsTr("Block:", "Cell in transaction list")
+        }
+        TxDetailRow{
+            id: _tx_fee
+            name: qsTr("Fee:", "Cell in transaction list")
+            unit: api.unit
+        }
+        TxDetailButton{
+            id: _input_btn
+            text: qsTr("Inputs:", "Cell in transaction list")
+            width: _tx_block.width
+            checked: false
+            onCheckedChanged: {
+                _output_btn.checked = !checked
+            }
+        }
+        TxDetailButton{
+            id: _output_btn
+            text: qsTr("Outputs:", "Cell in transaction list")
+            width: _tx_block.width
+            checked: true
+            onCheckedChanged: {
+                _input_btn.checked = !checked
             }
         }
     }
- }
+    TxInputsView{
+        id: _inputs
+        width: parent.width * 0.67
+        // height: parent.height - _tx_hash.height
+        z: -1
+        model: _input_btn.checked ? inputsModel: outputsModel
+        anchors{
+            right: parent.right
+//            top: parent.top
+            top: _tx_id.bottom
+            bottom: parent.bottom
+
+//            topMargin: topOffset
+//            margins: 5
+        }
+    }
+}

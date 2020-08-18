@@ -2,20 +2,20 @@
 Qt signals, properties and slots in camel !
 """
 import logging
+from typing import Iterable, List, Optional, Union
+from functools import partial
+
 import PySide2.QtCore as qt_core
-from typing import List, Iterable, Optional, Union
-from . import abs_coin
-from . import address
-from . import coin_network
-from . import key
-from . import serialization
+
 from .. import meta
+from ..config import logger as e_logger
 # linter
-from . import hd
+from . import abs_coin, address, coin_network, hd, key, serialization, address_model
 
 log = logging.getLogger(__name__)
 
 ADDRESS_NAMES = "__address_names"
+
 
 # locale.setlocale(locale.LC_ALL, 'en_US.utf8')
 
@@ -41,9 +41,9 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
     heightChanged = qt_core.Signal()
     balanceChanged = qt_core.Signal()
     expandedChanged = qt_core.Signal()
-    walletListChanged = qt_core.Signal()
     visibleChanged = qt_core.Signal()
     invalidServer = qt_core.Signal()
+    addAddress = qt_core.Signal(address.CAddress)
 
     @meta.classproperty
     def all(cls) -> Iterable:  # pylint: disable=E0213
@@ -52,50 +52,72 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
     def __init__(self, parent):
         super().__init__(parent=parent)
         self._set_object_name(self.name)
-        self._height = None
-        self._offset = None
+        self.__height = None
+        self.__offset = None
         #
-        self._verified_height = None
-        self._unverified_offset = None
-        self._unverified_signature = None
+        self.__verified_height = None
+        self.__unverified_offset = None
+        self.__unverified_hash = None
         #
-        self._status = None
-        self._wallet_list = []
-        self._balance = 0.
-        self._current_wallet = 0
-        self._hd_node = None
-        self._expanded = False
-        self._visible = True
-        # TODO: bad approach
-        self.show_empty = True
+        self.__status = None
+        self.__wallet_list = []
+        address_model_ = address_model.AddressModel(self)
+        self.__address_model = address_model.AddressProxyModel(self)
+        self.__address_model.setSourceModel(address_model_)
+        self.__current_wallet = 0
+        self.__hd_node = None
+        self.__expanded = False
+        self.__visible = True
+        self.addAddress.connect(self.addAddressImpl,
+                                qt_core.Qt.QueuedConnection)
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if not e_logger.SILENCE_VERBOSITY and cls._enabled:
+            print(f"coin => {cls.__name__}")
 
     def __str__(self) -> str:
-        return f"<{self.full_name},{self.rowid} vis:{self._visible}>"
+        return f"<{self.full_name},{self.rowid} vis:{self.__visible}>"
 
     def hd_address(self, hd_index: int) -> str:
-        if self._hd_node is None:
+        if self.__hd_node is None:
             raise address.AddressError(f"There's no private key in {self}")
-        return self._hd_node.make_child_prv(
+        return self.__hd_node.make_child_prv(
             hd_index,
             False,
             self.NETWORK)
+
+    @qt_core.Slot(address.CAddress)
+    def addAddressImpl(self, wallet: address.CAddress) -> None:
+        assert qt_core.QThread.currentThread() == self.thread()
+        self.__address_model.append()
+        self.__wallet_list.append(wallet)
+        self.update_balance()
+        self.__address_model.append_complete()
+        self._reset_address_names()
+        if self.parent():
+            self.parent().update_wallet(wallet)
+        wallet.updatingChanged.connect(
+            partial(self.__address_model.address_updated, wallet), qt_core.Qt.QueuedConnection)
+        wallet.balanceChanged.connect(
+            partial(self.__address_model.balance_changed, wallet), qt_core.Qt.QueuedConnection)
 
     def make_address(self, type_: key.AddressType = key.AddressType.P2WPKH, label: str = "", message: str = "") -> address.CAddress:
         """
         create NEW active address ( with keys)
         """
-        if self._hd_node is None:
+        if self.__hd_node is None:
             raise address.AddressError(f"There's no private key in {self}")
         # big question ?
         # TODO: it is very important difference.
-        # hd_index = len(self._wallet_list)
-        # hd_index = self._hd_node.children_count
+        # hd_index = len(self.__wallet_list)
+        # hd_index = self.__hd_node.children_count
         hd_index = 1
         # but check existing
-        while any(w.hd_index == hd_index for w in self._wallet_list):
+        while any(w.hd_index == hd_index for w in self.__wallet_list):
             hd_index += 1
-        new_hd = self._hd_node.make_child_prv(
-            # self._hd_node.children_count, ??
+        new_hd = self.__hd_node.make_child_prv(
+            # self.__hd_node.children_count, ??
             hd_index,
             False,
             self.NETWORK)
@@ -105,26 +127,24 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
         wallet._message = message
         log.debug(
             f"New wallet {wallet}  created from HD: {new_hd.chain_path} net:{self.NETWORK}")
-        self._wallet_list.append(wallet)
-        self._reset_address_names()
-        # for tests
         if self.parent():
-            # it may be existing address ... then we should update it
-            self.parent().update_wallet(wallet)
             self.parent().save_wallet(wallet)
-        self.walletListChanged.emit()
+            self.addAddress.emit(wallet)
+        else:
+            self.addAddressImpl(wallet)
         return wallet
 
-    def add_watch_address(self, name: str, label: str) -> address.CAddress:
-        adr = address.CAddress(name, self)
+    def add_watch_address(self, name: str, label: str = "") -> address.CAddress:
+        # self(name)
+        adr = address.CAddress(name, self, created=True)
         adr.create()
         adr.label = label
-        self(adr.name)
-        self._wallet_list.append(adr)
-        self._reset_address_names()
-        self.parent().update_wallet(adr)
-        self.parent().save_wallet(adr)
-        self.walletListChanged.emit()
+        if self.parent():
+            self.addAddress.emit(adr)
+            self.parent().save_wallet(adr)
+        else:
+            # for tests
+            self.addAddressImpl(adr)
         return adr
 
     def append_address(self, name: str, *args) -> address.CAddress:
@@ -132,13 +152,11 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
         """
         make address structure from data.
         """
-        has = [n for n in self._wallet_list if name.strip().casefold() ==
+        has = [n for n in self.__wallet_list if name.strip().casefold() ==
                n.name.casefold()]
         if has:
             log.warn(f"Address {name} already exists")
             return has[0]
-        # invalidate
-        self(name)
         #
         if qt_core.QThread.currentThread() != self.thread():
             w = address.CAddress(name)
@@ -155,28 +173,25 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
             except TypeError as terr:
                 log.warning(
                     f"bad arguments: {args} for loading address:{terr}")
-        self._reset_address_names()
-        self._wallet_list.append(w)
-        self.parent().update_wallet(w)
-        self.walletListChanged.emit()
+        self.addAddress.emit(w)
+
         return w
 
     def to_table(self) -> dict:
         return {
             "name": self.name,
-            "visible": self._visible,
-            "addresses": [w.to_table() for w in self._wallet_list],
+            "visible": self.__visible,
+            "addresses": [w.to_table() for w in self.__wallet_list],
         }
 
     def from_table(self, table: dict):
         assert self.name == table["name"]
         self.visible = table["visible"]
-        self._wallet_list.clear()
+        self.__wallet_list.clear()
         for addr_t in table["addresses"]:
             wallet = address.CAddress.from_table(addr_t, self)
-            self._wallet_list.append(wallet)
+            self.__wallet_list.append(wallet)
         self._reset_address_names()
-        self.walletListChanged.emit()
 
     @classmethod
     def match(cls, name: str) -> bool:
@@ -191,45 +206,62 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
         key.AddressString.validate(addr)
 
     def update_balance(self):
-        self._balance = sum(int(w.balance) for w in self._wallet_list)
+        self._balance = sum(int(w.balance)
+                            for w in self.__wallet_list if not w.readOnly)
+        # log.warning(f"BALANCE UPDATED: {self} {self._balance}")
         self.balanceChanged.emit()
 
     def make_hd_node(self, _parent_node):
-        self._hd_node = _parent_node.make_child_prv(
+        self.__hd_node = _parent_node.make_child_prv(
             self.TEST_HD_INDEX if self._test else self._hd_index, True, self.NETWORK)
 
     @property
     def hd_node(self) -> hd.HDNode:
-        return self._hd_node
+        return self.__hd_node
 
     @property
     def private_key(self) -> key.PrivateKey:
-        if self._hd_node:
-            return self._hd_node.key
-
-    def __call__(self, addr: str):
-        """
-        throws AddressError
-        """
-        self._validate_address(addr)
+        if self.__hd_node:
+            return self.__hd_node.key
 
     def __iter__(self) -> "CoinType":
-        self._wallet_iter = iter(self._wallet_list)
+        self.__wallet_iter = iter(self.__wallet_list)
         return self
 
     def __next__(self) -> address.CAddress:
-        return next(self._wallet_iter)
+        return next(self.__wallet_iter)
+
+    # abc implemented it but we can do it better
+    def __contains__(self, value: Union[str, address.CAddress]) -> bool:
+        if not isinstance(value, str):
+            value = value.name
+        return any(value == add.name for add in self.__wallet_list)
 
     def __len__(self) -> int:
-        return len(self._wallet_list)
+        return len(self.__wallet_list)
 
+    # don't bind not_empty with addressModel !!! . beware recursion
     def __getitem__(self, key: Union[int, str]) -> address.CAddress:
         if isinstance(key, int):
-            return self._wallet_list[key]
+            return self.__wallet_list[key]
         if isinstance(key, str):
-            return next((w for w in self._wallet_list if w.name == key), None)
+            return next((w for w in self.__wallet_list if w.name == key), None)
 
-    def parse(self, data: dict, poll: bool, **kwargs) -> bool:
+    def __call__(self, idx: int) -> address.CAddress:
+        "Filtered version of getitem"
+        return self.__address_model(idx)
+
+    def _contains__(self, address: str) -> bool:
+        return any(w.name == address for w in self.__wallet_list)
+
+    def __update_wallets(self, from_=Optional[int], remove_txs_from: Optional[int] = None, verbose: bool = False):
+        "from old to new one !!!"
+        for w in self.__wallet_list:
+            w.update_tx_list(from_, remove_txs_from, verbose)
+        # it must be called when height changed
+        # self.gcd.coin_height_changed(self)
+
+    def parse_coin(self, data: dict, poll: bool, **kwargs) -> bool:
         """
         poll - regular polling (not at start)
 
@@ -240,71 +272,93 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
         - mark server as invalid
         """
 
+        verbose = kwargs.get("verbose", False)
         changed = False
         verified_height = int(data["verified_height"])
-        # don't rely on qt meta
-        old_height = self._height
-        # wrong signature => there's no point to see more, total update
-        if self._unverified_signature is None:
-            self._verified_heigh = None
-            self._height = None
-        else:
-            # don't clear wht to do exactly
-            if self._verified_height and self._verified_height > verified_height:
-                log.error(
-                    f"server verified height is more than local one. Server is invalid")
-                self.invalidServer.emit()
-                return False
+        unverified_hash = data["unverified_hash"]
+        unverified_offset = data["unverified_offset"]
+        height = int(data["height"])
         offset = data["offset"]
         status = int(data["status"])
-        height = int(data["height"])
-        unverified_offset = data["unverified_offset"]
-        #
-        if kwargs.get("verbose"):
-            log.warning(f"data {data} uoff:{unverified_offset}")
-        if unverified_offset != self._unverified_offset:
-            self._offset = unverified_offset
-            self._unverified_offset = unverified_offset
-            changed = True
-        if offset != self._offset:
-            self._offset = offset
-            changed = True
-        if height != self._height:
-            self._height = height
-            changed = True
-        if status != self._status:
-            self._status = status
+
+        def update_local_data():
+            self.__verified_height = verified_height
+            self.__unverified_hash = unverified_hash
+            self.__unverified_offset = unverified_offset
+            self.__offset = offset
+            if verbose and self.__height != height:
+                log.warning(f"height changed for {self} to {height}")
+            self.height = height
+
+        if status != self.__status:
+            self.__status = status
             self.statusChanged.emit()
-            changed = changed or status
-        if old_height != self._height:
-            # to see
-            log.debug(
-                f"{self} height changed from {old_height} to {self._height}")
-            self.heightChanged.emit()
-        if changed:
-            self._unverified_signature = data["unverified_hash"]
-            self._verified_heigh = verified_height
-            self._unverified_offset = unverified_offset
-        return changed
+            if status == 0:
+                return True
+
+        # wrong signature => there's no point to see more, total update
+        if self.__unverified_hash is None:
+            if verbose:
+                log.warning(f"NO LOCAL COIN HASH => {self}")
+
+            self.__update_wallets(verbose=verbose)
+            update_local_data()
+
+            return True
+
+        # don't clear what to do exactly
+        if self.__verified_height and self.__verified_height > verified_height:
+            log.error(
+                f"server verified height is more than local one. Server is invalid")
+            self.invalidServer.emit()
+            return False
+
+        #
+        if verbose:
+            log.warning(f"data {data} uoff:{unverified_offset}")
+
+        if unverified_hash != self.__unverified_hash:
+            if verbose:
+                log.warning(
+                    f"Need to delete local tx data from {self.__verified_height} for {self}. update from {self.__unverified_offset}")
+            self.__update_wallets(self.__unverified_offset,
+                                  self.__verified_height, verbose=verbose)
+            update_local_data()
+            return True
+
+        if offset != self.__offset:
+            if verbose:
+                log.info(
+                    f"Coin offset changed to {offset} for {self}. update from {self.__offset}")
+            self.__update_wallets(self.__offset, verbose=verbose)
+            update_local_data()
+            return True
+
+        return False
 
     def remove_wallet(self, wallet: address.CAddress):
-        self._wallet_list.remove(wallet)
+        index = self.__wallet_list.index(wallet)
+        # self.__wallet_list.remove(wallet)
+        wallet.clear()
+        self.__address_model.remove(index)
+        del self.__wallet_list[index]
+        self.__address_model.remove_complete()
         self.update_balance()
-        self.walletListChanged.emit()
         self._reset_address_names()
 
     def clear(self):
-        for addr in self._wallet_list:
+        for addr in self.__wallet_list:
             addr.clear()
-        self._wallet_list.clear()
+        self.__wallet_list.clear()
+        self.update_balance()
 
     def _set_height(self, hei: int):
-        if hei != self._height:
-            self._height = hei
+        if hei != self.__height:
+            self.__height = hei
             self.heightChanged.emit()  # why no ???
 
     def _get_height(self) -> int:
-        return self._height
+        return self.__height
 
     @property
     def gcd(self) -> "GCD":
@@ -312,35 +366,35 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
 
     @property
     def offset(self) -> Optional[str]:
-        return self._offset
+        return self.__offset
 
     @offset.setter
     def offset(self, val):
-        self._offset = val
+        self.__offset = val
 
     @property
     def unverified_offset(self) -> Optional[str]:
-        return self._unverified_offset
+        return self.__unverified_offset
 
     @unverified_offset.setter
     def unverified_offset(self, val):
-        self._unverified_offset = val
+        self.__unverified_offset = val
 
     @property
     def unverified_signature(self) -> Optional[str]:
-        return self._unverified_signature
+        return self.__unverified_hash
 
     @unverified_signature.setter
     def unverified_signature(self, val):
-        self._unverified_signature = val
+        self.__unverified_hash = val
 
     @property
     def verified_height(self) -> Optional[int]:
-        return self._verified_height
+        return self.__verified_height
 
     @verified_height.setter
     def verified_height(self, val):
-        self._verified_height = val
+        self.__verified_height = val
 
     @property
     def convertion_ratio(self) -> float:
@@ -348,22 +402,22 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
 
     @property
     def active(self) -> bool:
-        return self.enabled and self._status == 1
+        return self.enabled and self.__status == 1
 
     def _set_current_wallet(self, cw: int):
-        if cw != self._current_wallet:
-            self._current_wallet = cw
+        if cw != self.__current_wallet:
+            self.__current_wallet = cw
 
     def _get_current_wallet(self) -> int:
-        return self._current_wallet if self._current_wallet < len(self._wallet_list) else 0
+        return self.__current_wallet if self.__current_wallet < len(self.__wallet_list) else 0
 
     def _set_status(self, status: int):
-        if status != self._status:
+        if status != self.__status:
             self.statusChanged.emit()
-            self._status = status
+            self.__status = status
 
     def _get_status(self) -> int:
-        return self._status
+        return self.__status
 
     @property
     def basename(self) -> str:
@@ -375,7 +429,7 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
     # qml bindings
     @qt_core.Property(bool, notify=visibleChanged)
     def visible(self) -> bool:
-        return self._visible
+        return self.__visible
 
     @qt_core.Property(int, notify=balanceChanged)
     def balance(self) -> int:
@@ -387,6 +441,7 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
 
     @qt_core.Property(str, notify=balanceChanged)
     def fiatBalance(self) -> str:
+        # log.warning(f"{self._balance} ==> {self.fiat_amount(self._balance)}")
         return self.fiat_amount(self._balance)
 
     @qt_core.Property(bool, constant=True)
@@ -397,34 +452,40 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
     def defaultFee(self) -> str:
         return self.balance_human(self._default_fee)
 
-    @qt_core.Property("QVariantList", notify=walletListChanged)
+    @qt_core.Property("QVariantList", constant=True)
     def wallets(self) -> List[address.CAddress]:
-        return self._filtered_wallet_list
+        if self.show_empty:
+            return self.__wallet_list
+        return [w for w in self.__wallet_list if w.balance > 0]
+
+    @qt_core.Property(qt_core.QObject, constant=True)
+    def addressModel(self) -> qt_core.QObject:
+        return self.__address_model
 
     @property
     def show_empty(self) -> bool:
-        return self.show_empty
+        return not self.__address_model.emptyFilter
 
     @show_empty.setter
     def show_empty(self, value=bool) -> None:
-        self._filtered_wallet_list = self._wallet_list if value else [
-            w for w in self._wallet_list if w.balance > 0]
-        self._show_empty = value
+        self.__address_model.emptyFilter = not value
+        for w in self.__wallet_list:
+            w.set_old()
 
     @qt_core.Property(bool, notify=expandedChanged)
     def expanded(self) -> bool:
-        return self._expanded
+        return self.__expanded
 
     @expanded.setter
     def _set_expanded(self, ex: bool):
-        if ex != self._expanded:
-            self._expanded = ex
+        if ex != self.__expanded:
+            self.__expanded = ex
             self.expandedChanged.emit()
 
     @visible.setter
     def _set_visible(self, ex: bool):
-        if ex != self._visible:
-            self._visible = ex
+        if ex != self.__visible:
+            self.__visible = ex
             self.visibleChanged.emit()
 
     @property
@@ -434,7 +495,7 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
         it expected to be called very frequently
         """
         return meta.setdefaultattr(self, ADDRESS_NAMES,
-                                   [w.name for w in self._wallet_list])
+                                   [w.name for w in self.__wallet_list])
 
     def _reset_address_names(self):
         if hasattr(self, ADDRESS_NAMES):
@@ -465,6 +526,7 @@ class BitCoin(CoinType):
 class BitCoinTest(BitCoin):
     name = "btctest"
     full_name = "Bitcoin Test"
+    net_name = "btc-testnet"
     NETWORK = coin_network.BitcoinTestNetwork
     _test = True
     _usd_rate = 9400.51

@@ -10,7 +10,7 @@ from client.wallet.database import db_wrapper, encrypt_proxy
 log = logging.getLogger(__name__)
 
 
-class Test_dataEncoding(unittest.TestCase):
+class TestDataEncoding(unittest.TestCase):
     DB_NAME = "./test.db"
     PSW = b"some password"
 
@@ -76,7 +76,7 @@ class Test_dataEncoding(unittest.TestCase):
         self.assertFalse(coin.visible)
 
 
-class Test_workflow(unittest.TestCase):
+class TestWorkflow(unittest.TestCase):
 
     def setUp(self):
         self.db = db_wrapper.DbWrapper(True)

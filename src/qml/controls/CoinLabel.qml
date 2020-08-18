@@ -8,7 +8,6 @@ Base {
 
     property alias name: _coin_name.text
     property alias icon: _coin_icon.source
-    property string color : "yellow"
     property alias fontSize: _coin_name.font.pixelSize
     readonly property int icon_size: 45
 
@@ -32,7 +31,7 @@ Base {
         LabelText{
             id: _coin_name
             enabled: _base.enabled
-            color: _base.enabled? _base.color : palette.mid
+            color: _base.enabled? palette.text : palette.mid
             anchors{
                     verticalCenter: parent.verticalCenter
                     left: parent.left

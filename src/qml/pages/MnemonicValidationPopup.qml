@@ -11,8 +11,8 @@ BasePopup{
 
 
     ok: false
-    acceptText: qsTr("Test")
-    rejectText: qsTr("Back")
+    acceptText: qsTr("Test","Master key window")
+    rejectText: qsTr("Back","Master key window")
     closable: false
 
     signal match()
@@ -24,26 +24,10 @@ BasePopup{
                 top: parent.top
                 topMargin: 20
             }
-            text: qsTr("Test yourself wheather you kept your phrase in mind.")
+            text: qsTr("Test yourself whether you memorized the phrase","Master key window")
             wrapMode: Text.WordWrap
             sub: true
         }
-        /*
-        Text{
-            id: _sub_title
-            anchors{
-                horizontalCenter: parent.horizontalCenter
-                top: _title.bottom
-                topMargin: 10
-            }
-            text: qsTr("Input your phrase again")
-            font{
-                pixelSize: 12
-            }
-            wrapMode: Text.WordWrap
-            color: palette.mid
-        }
-        */
 
         TextArea{
             id: _mnemo_text
@@ -58,15 +42,13 @@ BasePopup{
                 pixelSize: 14
             }
             wrapMode: Text.WordWrap
-            placeholderText: qsTr("Input again your phrase here")
+            placeholderText: qsTr("Re-enter your phrase","Master key window")
             placeholderTextColor: palette.mid
             color: palette.text
             leftPadding: 20
             rightPadding: 20
             cursorVisible: true
-            background: Rectangle{
-//                radius: 10
-                color: "transparent"
+            background: Base{
                 XemLine{
                     anchors{
                         top: parent.top
@@ -83,7 +65,7 @@ BasePopup{
         }
 
         onAccept: {
-                    if( CoinApi.keyMan.generateMasterKey(_mnemo_text.text, CoinApi.debug)){
+                    if( CoinApi.keyMan.generateMasterKey(_mnemo_text.text, CoinApi.debugSeed)){
                         match()
                     }else{
                         _mnemo_text.clear()

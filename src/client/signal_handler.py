@@ -6,7 +6,6 @@ import signal
 import struct
 import socket
 import PySide2.QtCore as qt_core
-import PySide2.QtGui as qt_gui
 import PySide2.QtNetwork as qt_network
 from . import meta
 log = logging.getLogger(__name__)

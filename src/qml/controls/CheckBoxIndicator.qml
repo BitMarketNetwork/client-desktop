@@ -13,6 +13,7 @@ Rectangle {
       radius: 3
       border{
           id:_border
+          width: 1
       }
 
       Rectangle {

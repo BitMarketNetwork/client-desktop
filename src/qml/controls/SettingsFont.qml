@@ -8,7 +8,7 @@ SettingsDisplayAction {
 
     FontDialog{
         id: _dialog
-        title: qsTr("Select prefferable font")
+        title: qsTr("Select a preferable font","Setting dialog")
 
         currentFont: appWindow.font
 //        currentFont: Qt.font(CoinApi.settings.appFont)

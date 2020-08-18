@@ -27,22 +27,21 @@ Tab {
                 id: _font_dg
                 width: parent.width
 
-                name: qsTr("Application font:")
+                name: qsTr("Application font:","Settings item")
                 visible: false
             }
 
             SettingsComboBox{
                 id: _rate_source
                 role: "name"
-                name: qsTr("Rates source:")
+                name: qsTr("Rates source:","Settings item")
                 width: parent.width
                 onSelect: selectRateSource(index)
-                visible: false
             }
             SettingsComboBox{
                 id: _zeros
                 role: "name"
-                name: qsTr("Zeros after point:")
+                name: qsTr("0s after decimal point:","Settings item")
                 width: parent.width
                 visible: false
             }
@@ -50,14 +49,14 @@ Tab {
 
             SettingsCheckBox{
                 id: _use_new
-                name: qsTr("Always send change on new address")
+                name: qsTr("Always send change to a new address","Settings item")
                 width: parent.width
                 visible: false
 
                 ToolTip.delay: 1000
                 ToolTip.timeout: 5000
                 ToolTip.visible: false
-                ToolTip.text: qsTr("This increases your safity.")
+                ToolTip.text: qsTr("This makes you safer.","Settings item")
             }
         }
 
@@ -72,7 +71,7 @@ Tab {
             }
             TxBigButton{
                 id: _btn_clear
-                text: qsTr("Clear wallet")
+                text: qsTr("Clear wallet","Settings item")
                 width: 300
 
                 anchors{
@@ -91,12 +90,12 @@ Tab {
                     id: _reset_warning
                     visible: false
                     ok: false
-                    text: qsTr("You are about destroy all you keys and there is a risk to lose money! Make sure you have backup copy. Continue?")
+                    text: qsTr("This will destroy all your keys and lead to a risk of losing money! Please make sure that you made a backup. Continue?","Settings item")
                 }
             }
             TxBigButton{
                 id: _btn_restore
-                text: qsTr("Restore wallet")
+                text: qsTr("Restore wallet","Settings item")
                 width: 300
                 // visible: false
 

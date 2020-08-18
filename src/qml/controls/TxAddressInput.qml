@@ -33,7 +33,6 @@ Base {
             id: _address_input
             color: _base.valid? palette.windowText: Constants.invalidTextColor
             font.pixelSize: 14
-            focus: true
             cursorVisible: true
             width: 500
             maximumLength: 80

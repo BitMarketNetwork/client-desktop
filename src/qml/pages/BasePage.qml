@@ -12,7 +12,6 @@ Page {
 
     readonly property int pageId: Constants.pageId.base
     readonly property QtObject api: CoinApi.coins
-    readonly property int defaultMargin: 30
 
     signal wait(int timeout)
 

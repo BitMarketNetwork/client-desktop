@@ -52,7 +52,6 @@ BasePage {
             bottomMargin: 100
         }
 
-        focus: true
 
         color: palette.base
 

@@ -33,6 +33,9 @@ ToolButton{
                     width: icon_size
                     height: icon_size
                 }
+                anchors{
+                    bottom: parent.bottom
+                }
             }
         ColorOverlay  {
             anchors.fill: _icon
@@ -42,6 +45,9 @@ ToolButton{
         }
 
             Text {
+                anchors{
+                    bottom: parent.bottom
+                }
                text: _base.text
                font{
                    pixelSize: 12
@@ -58,7 +64,7 @@ ToolButton{
 
     background: Rectangle {
         implicitHeight: 40
-        implicitWidth: 90
+        implicitWidth: 60
         opacity: _base.enabled ? 1 : 0.3
 //        color: hovered? palette.midlight: "transparent"
 //        color: checked? palette.midlight: "transparent"

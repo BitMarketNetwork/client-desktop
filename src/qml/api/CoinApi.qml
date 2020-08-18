@@ -17,8 +17,10 @@ Item {
     property QtObject exchange: _exchange
     property QtObject receive: _receive
     readonly property bool debug: true
+    readonly property bool debugStart: true
     readonly property bool debugMenu: true
-    readonly property bool debugSeed: true // hard to work without it
+    readonly property bool renderBg: true
+    readonly property bool debugSeed: true
     /*
     Component.onCompleted: {
         console.log("available fonts:")
@@ -26,12 +28,12 @@ Item {
             console.log(`${v} ==>> ${Qt.fontFamilies()[v]}`)
         }
     }
-    */
+    * /
 
 
     /* =>*/
 
-    readonly property bool dummy: false
+    readonly property bool dummy: false // don't touch: hardcoded stuff
     property QtObject coins: coinManager
     property QtObject ui: uiManager
     property QtObject keyMan: keyManager
@@ -39,9 +41,11 @@ Item {
     property QtObject exchange: exchangeManager
     property QtObject receive: receiveManager
     property QtObject debuging: debugManager
-    readonly property bool debug: false
+    readonly property bool debug: debugMode
+    readonly property bool debugStart: false
+    readonly property bool renderBg: false
     readonly property bool debugMenu: false
-    readonly property bool debugSeed: false // hard to work without it
+    readonly property bool debugSeed: false
 
     /* */
 
@@ -73,7 +77,6 @@ Item {
 
         property int coinDaemonIndex: 0
         property variant coinDaemon: coinsModel[0]
-
         readonly property variant coinsModel: [
             {
                 "name" : "Bitcoin",
@@ -185,6 +188,16 @@ Item {
             console.log(`remove psw`)
         }
 
+        function validateAlienSeed(seed){
+            return seed.split(" ").length > 3
+        }
+
+        function revealSeedPhrase(psw){
+            if (psw.length > 4){
+                return "super duper mega loooooong mnemonic phrase that contains at least 12 words"
+            }
+            return "wrong password"
+        }
     }
 
     Item {
@@ -192,10 +205,13 @@ Item {
         visible: false
 
         property int coinIndex: -1
-        property  variant coinModel: []
-        property  variant staticCoinModel: coinModel
-        property  variant txModel: []
-        property  variant addressModel: []
+        property  variant coinModel: _coin_model
+        property  variant staticCoinModel: []
+        property  variant txModel: _tx_model
+        property  variant addressModel: _address_model
+        property  variant addressDataModel: []
+        property  variant inputsModel: []
+        property  variant outputsModel: []
         property QtObject coin: null
         property int addressIndex: -1
         property QtObject address: null
@@ -206,6 +222,9 @@ Item {
 
         // simulation
         readonly property int emptyCoin: 3;
+
+        signal	addressValid(int coin,string address, bool valid)
+
 
 
         function exportWallet(file, pass){
@@ -221,14 +240,7 @@ Item {
 
 
         Component.onCompleted:{
-            // modelData to work
             var i;
-            for(i=0;i< _address_model.count;++i){
-                addressModel.push(_address_model.get(i));
-            }
-            for(i=0;i< _tx_model.count;++i){
-                txModel.push(_tx_model.get(i));
-            }
             for( i=0;i< _coin_model.count;++i){
                 var coin_ = _coin_model.get(i);
                 if( i !== emptyCoin ){
@@ -238,9 +250,26 @@ Item {
                     coin_.wallets = [];
                 }
 
-                coinModel.push(coin_);
+                staticCoinModel.push(coin_);
             }
 
+            for(i=0; i< _address_model.count; ++i){
+                addressDataModel.push(_address_model.get(i))
+            }
+
+            /*
+              inputs
+            */
+            for(var i=0;i < 10;++i){
+                inputsModel.push({
+                                     address: "tb1q4uhsna3qxzcg5fr7gupg8lmr5j9jg762a3e79s",
+                                     amountHuman: "0.0023"
+                                 });
+                outputsModel.push({
+                                     address: "bc1qnlhehg9arzm7jd682k3a2p73yel6y6nu5ctdvf",
+                                     amountHuman: "0.000001"
+                                 });
+            }
         }
 
         function  getAddressModel(coin_idx) {
@@ -278,7 +307,7 @@ Item {
 
         onAddressIndexChanged: {
             if(addressIndex >=0){
-                _mock.address = addressModel[addressIndex]
+                _mock.address = addressModel.get(addressIndex)
             }else{
                 _mock.address = null
             }
@@ -313,6 +342,34 @@ Item {
             newModel.push(add)
             addressModel = newModel
         }
+
+        Timer{
+            id: _validate_timer
+            interval: 1000
+
+            property string address: ""
+            property int    index: 0
+
+            onTriggered: {
+                if( address.startsWith('_') ){
+                    _mock.addressValid(index,address,false);
+                }else{
+                    _mock.addressValid(index,address,true);
+                }
+            }
+        }
+
+        // no return - async code
+        function validateAddress( index , address ){
+            console.log(`validate address simulation for ${address} and coin at idx:${index}`);
+
+            _validate_timer.running = true;
+            _validate_timer.address = address;
+            _validate_timer.index = index;
+
+        }
+
+        // address already validated - no checks
         function addWatchAddress( index, address, label){
             var add = {
                                   "name": address,
@@ -325,9 +382,6 @@ Item {
                               };
             console.log("new address appended :" + add);
             // for signal emission
-            var newModel = addressModel
-            newModel.push(add)
-            addressModel = newModel
         }
 
         function clearTransactions(addressIndex){

@@ -9,7 +9,7 @@ import "../pages"
 
 SendWidget {
     id: _base
-    title: qsTr("Fee:")
+    title: qsTr("Fee:","New transaction window")
     height: 120
 
 
@@ -25,20 +25,20 @@ SendWidget {
     function esteem(){
                 var result = null
                 const LIMIT = 5;
-                console.log(`minutes: ${confirmTime}`)
+                console.log(`confirm minutes: ${confirmTime}`)
                 if (confirmTime < 0){
-                    return qsTr("Transaction will be never confirmed")
+                    return qsTr("Transaction will be never confirmed","New transaction window: transction confirm time")
                 }
                 if (confirmTime < LIMIT){
-                    result = qsTr("immediately")
+                    result = qsTr("immediately","New transaction window: transction confirm time")
                 }
                 else if(confirmTime < 120){
-                    result = qsTr("in %1 minutes").arg(LIMIT * (confirmTime/LIMIT).toFixed())
+                    result = qsTr("in %1 minutes","New transaction window: transction confirm time").arg(LIMIT * (confirmTime/LIMIT).toFixed())
                 }
                 else{
-                    result = qsTr("in %1 hours").arg((confirmTime/60).toFixed())
+                    result = qsTr("in %1 hours","New transaction window: transction confirm time").arg((confirmTime/60).toFixed())
                 }
-                return qsTr("Transaction will be confirmed %1").arg(result)
+                return qsTr("Transaction will be confirmed %1","New transaction window").arg(result)
     }
 
         Slider{
@@ -51,10 +51,10 @@ SendWidget {
 //                rightMargin: defMargin
                 top: _amount.bottom
                 topMargin: 10
+                right: _substract.left
+                rightMargin: 20
             }
-
             height: 20
-            width: 350
 
             handle: Rectangle{
               width: 6
@@ -91,13 +91,11 @@ SendWidget {
         }
         SwitchBox{
             id: _substract
+            width: 190
             anchors{
-                left: _slider.right
-                leftMargin: 20
-
-                // both variants are good
-//                verticalCenter: _slider.bottom
                 verticalCenter: _slider.verticalCenter
+                right: parent.right
+                rightMargin: 20
             }
 
             text: qsTr("Substract fee:")
@@ -108,7 +106,7 @@ SendWidget {
             anchors{
                 margins: defMargin
                 top: parent.top
-                topMargin: 20
+                topMargin: 10
                 right: parent.right
                 left: parent.left
                 leftMargin: defLeftMargin

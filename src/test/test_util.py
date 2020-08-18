@@ -4,7 +4,7 @@ import os
 from client.wallet import util
 
 
-class Test_util(unittest.TestCase):
+class TestUtil(unittest.TestCase):
 
     def test_hex(self):
         bytes = os.urandom(64)

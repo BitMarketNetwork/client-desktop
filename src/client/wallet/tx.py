@@ -2,7 +2,7 @@
 import datetime
 import enum
 import logging
-from typing import Iterable, List
+from typing import Iterable, List, Optional, Tuple
 
 import PySide2.QtCore as qt_core
 
@@ -15,34 +15,30 @@ class TxError(Exception):
     pass
 
 
-class TxStatus(enum.IntFlag):
-    INCOMING = enum.auto()
-    NOT_CONFIRMED = enum.auto()
-    COINBASE = enum.auto()
-
-
 class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
+    READY_CONFIRM_COUNT = 6
     statusChanged = qt_core.Signal()
     # constant fields can be changed while reprocessing
     infoChanged = qt_core.Signal()
     heightChanged = qt_core.Signal()
 
     def __init__(self, wallet: "CAddress"):
-        super().__init__(parent=wallet)
-        # setter !!!!
-        self.wallet = wallet
-        # use it for outputs too
+
+        # wallet can be none for handmade tx
+        # assert wallet is not None
+
+        super().__init__(parent=None)
+        self.__wallet = wallet
         self._inputs = []
-        # status
-        self._status = TxStatus.INCOMING
-        #
-        self._from_address = None
-        self._to_address = None
-        self._height = 0
+        self.__outputs = []
+        self.__coin_base = False
+        self.__height = 0
+        self.__local = False
 
     @classmethod
-    def make_dummy(cls, wallet: "CAddress") -> "Transaction":
+    def make_dummy(cls, wallet: Optional["CAddress"]) -> "Transaction":
         res = cls(wallet)
+        res.__local = True
         return res
 
     def from_args(self, arg_iter: iter):
@@ -53,120 +49,100 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
                 {self.time_column},
                 {self.amount_column},
                 {self.fee_column},
-                {self.status_column}
-                {self.receiver_column},
-                {self.target_column}
         """
         try:
             self._rowid = next(arg_iter)
-            self._name = next(arg_iter)
-            self._set_object_name(self._name)
-            assert isinstance(self._name, str)
-            self._height = next(arg_iter)
-            self._time = next(arg_iter)
-            self._balance = next(arg_iter)
-            self._fee = next(arg_iter)
-            self._status = next(arg_iter)
-            self._from_address = next(arg_iter)
-            self._to_address = next(arg_iter)
+            self.__name = next(arg_iter)
+            self._set_object_name(self.__name)
+            assert isinstance(self.__name, str)
+            self.__height = next(arg_iter)
+            self.__time = next(arg_iter)
+            self.__balance = next(arg_iter)
+            self.__fee = next(arg_iter)
             self._inputs = []
-            self._outputs = []
+            self.__outputs = []
         except StopIteration:
             log.error("Too few arguments for TX {self}")
 
     def parse(self, name: str, body: dict):
-        self._name = name
+        self.__name = name
         self._set_object_name(name)
         # no heigth in mempool !
-        self._height = body.get("height", None)
-        self._time = body["time"]
-        self._balance = body["amount"]
-        self._fee = body["fee"]
-        if body["coinbase"] != 0:
-            self._status |= TxStatus.COINBASE
-        # leave iterators
+        self.__height = body.get("height", None)
+        self.__time = body["time"]
+        self.__balance = body["amount"]
+        self.__fee = body["fee"]
+        self.__coin_base = body["coinbase"] != 0
+        # leave iterators !!!
         self._inputs = map(lambda t: Input.from_dict(t, self), body["input"])
-        self._outputs = map(
+        self.__outputs = map(
             lambda t: Output.from_dict(t, self), body["output"])
+        return self
+
+    def dump(self) -> dict:
+        assert self.__wallet
+        res = {
+            "time": self.__time,
+            "amount": self.__balance,
+            "fee": self.__fee,
+            "coinbase": 1 if self.__coin_base else 0,
+            # TODO
+            "input": [
+                i.dump() for i in self._inputs
+            ],
+            "output": [
+                i.dump() for i in self.__outputs
+            ],
+        }
+        if self.__height is not None:
+            res.update({
+                "height": self.__height
+            })
+        return res
 
     def to_table(self) -> dict:
         return {
-            "hash": self._name,
-            "amount": self._balance,
-            "fee": self._fee,
-            "height": self._height,
-            "time": self._time,
+            "hash": self.__name,
+            "amount": self.__balance,
+            "fee": self.__fee,
+            "height": self.__height,
+            "time": self.__time,
         }
 
-    def process(self):
-        """
-        we have to use input's iterators so unpack it to the lists
-        """
-        if self._inputs is None:
-            return
-        # detect direction
-        all_adds = self._wallet.coin.address_names
-        self._outputs = list(self._outputs)
-        self._inputs = list(self._inputs)
-        # TODO:
-        for out in self._outputs:
-            if self._to_address is None:
-                self._to_address = out.address
-            if out.address not in all_adds:
-                self._status &= ~TxStatus.INCOMING
-                self.statusChanged.emit()
-                break
-        for inp in self._inputs:
-            if self._from_address is None:
-                self._from_address = inp.address
-                break
-        self.infoChanged.emit()
-
     def make_input(self, args: iter):
-        type_ = next(args)
-        if type_ == InputType.INPUT:
-            inp = Input(None)
-        elif type_ == InputType.OUTPUT:
-            inp = Output(None)
+        if next(args):
+            inp = Output(self)
+            if not isinstance(self.__outputs, list):
+                self.__outputs = list(self.__outputs)
+            self.__outputs.append(inp)
         else:
-            raise ValueError(f"Bad input type {type_}")
-        inp.from_args(args, self)
-        (self._inputs if type_ == InputType.INPUT else self._outputs).append(inp)
-
-    def add_input(self, input: "InputType"):
-        """
-        and outputs too of course
-        """
-        if input.type == InputType.OUTPUT:
-            self._outputs.append(input)
-        else:
-            self._inputs.append(input)
-
-    @property
-    def input_iter(self) -> Iterable["InputType"]:
-        if isinstance(self._inputs, list):
-            return iter(self._inputs)
-        return self._inputs
-
-    @property
-    def output_iter(self) -> Iterable["InputType"]:
-        if isinstance(self._outputs, list):
-            return iter(self._outputs)
-        return self._outputs
+            inp = Input(self)
+            if not isinstance(self._inputs, list):
+                self._inputs = list(self._inputs)
+            self._inputs.append(inp)
+        inp.from_args(args)
+        # inp.moveToThread(self.thread())
+        # inp.tx = self
 
     @property
     def wallet(self) -> "CAddress":
-        return self._wallet
+        return self.__wallet
+
+    @property
+    def local(self) -> bool:
+        return self.__local
+
+    @local.setter
+    def local(self, on: bool) -> None:
+        self.__local = on
 
     @wallet.setter
     def wallet(self, wall: "CAddress"):
-        self._wallet = wall
+        self.__wallet = wall
         if wall:
-            # self._wallet.heightChanged.connect(
-            # self.heightChanged, qt_core.Qt.QueuedConnection)
-            # self._wallet.heightChanged.connect( self.testHeight
-            # , qt_core.Qt.QueuedConnection)
-            self.setParent(wall)
+            self.__wallet.heightChanged.connect(
+                self.heightChanged, qt_core.Qt.QueuedConnection)
+        # self.setParent(wall)
 
     """
     DISABLED FOR A WHILE
@@ -175,150 +151,165 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
     @qt_core.Slot()
     def testHeight(self):
         self.heightChanged.emit()
-        log.error(f"height:{self.confirmCount} => {self._wallet.coin.height}")
+        log.error(f"height:{self.confirmCount} => {self.__wallet.coin.height}")
         """
+
+    @property
+    def coin_base(self) -> int:
+        return 1 if self.__coin_base else 0
 
     @qt_core.Property(int, notify=heightChanged)
     def confirmCount(self) -> int:
-        if self._height is not None \
-                and self._wallet.coin.height:
-            return self._wallet.coin.height - self._height + 1
-        log.debug(f"no confirm: height:{self._height} => {self._wallet.coin.height}")
+        if self.__height is not None \
+                and self.__wallet.coin.height:
+            return max(0, self.__wallet.coin.height - self.__height + 1)
+        log.debug(
+            f"no confirm: height:{self.__height} => {self.__wallet.coin.height}")
         return 0
 
     @property
     def height(self) -> int:
-        return self._height
+        return self.__height
 
     @height.setter
-    def height(self, value: int):
-        if self._height == value:
+    def height(self, value: Optional[int]):
+        if self.__height == value:
             return
-        self._height = value
+        self.__height = value
         self.heightChanged.emit()
+        self.statusChanged.emit()
 
     @property
-    def base(self):
-        return self._base
+    def base(self) -> bool:
+        return self.__coin_base
 
     @property
-    def fee(self):
-        return self._fee
+    def fee(self) -> int:
+        return self.__fee
 
     @fee.setter
     def fee(self, value: int):
-        self._fee = value
+        self.__fee = value
 
     @property
     def time(self) -> int:
-        return self._time
+        return self.__time
 
     @time.setter
     def time(self, value: int):
-        self._time = value
+        self.__time = value
 
-    @property
-    def status(self):
-        return self._status
+    def __eq__(self, other):
+        if isinstance(other, Transaction):
+            return self.__name == other.__name
+        raise TypeError
 
-    @status.setter
-    def status(self, st):
-        if st == self._status:
-            return
-        self._status = st
-        self.statusChanged.emit()
+    def __hash__(self):
+        return hash(self.__name)
 
     def __str__(self):
-        return self._name
+        return self.__name
 
     def __repr__(self):
-        return f"{self._name} height:{self._height} amount:{self._balance} fee:{self._fee} time:{self._time}"
+        return f"{self.__name} height:{self.__height} amount:{self.__balance} fee:{self.__fee} time:{self.__time} \
+            in.count:{len(self.inputs)} out.count: {len(self.outputs)}"
 
     def add_inputs(self, values: iter, in_type: bool = True):
+        # import pdb; pdb.set_trace()
         for amount, address in values:
             if in_type:
                 inp = Input(self)
+                self.inputs.append(inp)
             else:
                 inp = Output(self)
-            inp._amount = amount
-            inp._address = address
-        self._inputs.append(inp)
+                self.outputs.append(inp)
+            inp.amount = amount
+            inp.address = address
 
         # qt bindings
 
     @qt_core.Property(str, constant=True)
     def name(self) -> str:
-        return self._name
+        return self.__name
+
+    @property
+    def inputs(self) -> list:
+        if not isinstance(self._inputs, list):
+            self._inputs = list(self._inputs)
+        return self._inputs
+
+    @qt_core.Property("QVariantList", constant=True)
+    def inputsModel(self) -> list:
+        return self.inputs
+
+    @property
+    def outputs(self) -> list:
+        if not isinstance(self.__outputs, list):
+            self.__outputs = list(self.__outputs)
+        return self.__outputs
+
+    @qt_core.Property("QVariantList", constant=True)
+    def outputsModel(self) -> list:
+        return self.outputs
 
     @name.setter
     def _set_name(self, value: str):
-        self._name = value
+        self.__name = value
 
     @qt_core.Property("quint64", constant=True)
     def balance(self) -> int:
-        return self._balance
+        return self.__balance
 
     @balance.setter
     def _set_balance(self, value: int):
-        self._balance = value
+        self.__balance = value
 
     @qt_core.Property(str, constant=True)
     def balanceHuman(self) -> str:
-        return str(self._wallet._coin.balance_human(self._balance))
+        return str(self.__wallet._coin.balance_human(self.__balance))
 
     @qt_core.Property(str, constant=True)
     def unit(self) -> str:
-        return self._wallet._coin.unit
+        return self.__wallet._coin.unit
 
     @qt_core.Property(str, constant=True)
     def feeHuman(self) -> str:
-        return str(self._wallet._coin.balance_human(self._fee))
+        return str(self.__wallet._coin.balance_human(self.__fee))
 
     @qt_core.Property(str, constant=True)
     def fiatBalance(self) -> str:
-        return str(self._wallet._coin.fiat_amount(self._balance))
-
-    @qt_core.Property(bool, notify=statusChanged)
-    def sent(self) -> bool:
-        return (self._status & TxStatus.INCOMING) == 0
+        return str(self.__wallet._coin.fiat_amount(self.__balance))
 
     @qt_core.Property(str, constant=True)
     def timeHuman(self) -> str:
-        # return datetime.datetime.utcfromtimestamp(self._time).strftime("%x %X")
-        return datetime.datetime.fromtimestamp(self._time).strftime("%x %X")
-
-    @qt_core.Property(str, notify=infoChanged)
-    def fromAddress(self) -> str:
-        if self._from_address is None:
-            return self.tr("Not detected")
-        return self._from_address
-
-    @fromAddress.setter
-    def _set_from_address(self, adr: str):
-        if adr == self._from_address:
-            return
-        self._from_address = adr
-        self.infoChanged.emit()
-
-    @qt_core.Property(str, notify=infoChanged)
-    def toAddress(self) -> str:
-        if self._to_address is None:
-            return self.tr("Not detected")
-        return self._to_address
-
-    @toAddress.setter
-    def _set_to_address(self, adr: str):
-        if adr == self._to_address:
-            return
-        self._to_address = adr
-        self.infoChanged.emit()
+        return datetime.datetime.fromtimestamp(self.__time).strftime("%x %X")
 
     @qt_core.Property(str, notify=heightChanged)
     def block(self) -> str:
         "can be none"
-        if self._height is None:
+        if self.__height is None:
             return "-"
-        return str(self._height) 
+        return str(self.__height)
+
+    @qt_core.Property(int, notify=statusChanged)
+    def status(self) -> int:
+        # Pending, Unconfirmed, Confirmed, Complete
+        """
+        0 - Pending
+        1 - Unconfirmed
+        2 - Confirmed
+        3 - Complete
+        """
+        if self.__local:
+            return 0
+        if self.__coin_base:
+            return 3
+        cc = self.confirmCount
+        if cc >= self.READY_CONFIRM_COUNT:
+            return 3
+        if cc == 0:
+            return 1
+        return 2
 
 
 class InputType(enum.IntFlag):
@@ -329,51 +320,55 @@ class InputType(enum.IntFlag):
     OUTPUT = 1
 
 
-class Input:
-    type = InputType.INPUT
+class Input(qt_core.QObject):
+    out = False
+    # we can save memory if get rid of QObject and declare slots
+    # thus we should declare real model (not a variant list)
+    # __slots__ = ["amount", "address", "tx"]
 
     def __init__(self, tx: Transaction):
-        self._tx = tx
-        self._amount = None
-        self._address = None
+        # NO parent!!!
+        assert tx is not None
+        super().__init__(parent=None)
+        self.tx = tx
+        self.amount = None
+        self.address = None
 
     @classmethod
-    def from_dict(cls, table: dict, tx: Transaction = None):
-        inp = cls(None)
-        inp._amount = table["amount"]
-        inp._address = table["address"]
-        # inp.moveToThread(tx.thread())
-        # inp.setParent(tx)
-        inp._tx = tx
+    def from_dict(cls, table: dict, tx: Transaction):
+        inp = cls(tx)
+        inp.address = table["address"]
+        inp.amount = table["amount"]
         return inp
 
-    def from_args(self, arg_iter: Iterable, tx: Transaction):
+    def from_args(self, arg_iter: Iterable):
         """
                 !! type has been eaten by tx !!
                 {self.address_column},
                 {self.amount_column},
         """
         try:
-            self._tx = tx
-            self._address = next(arg_iter)
-            self._amount = next(arg_iter)
+            self.address = next(arg_iter)
+            self.amount = next(arg_iter)
         except StopIteration:
             log.error(f"Too few arguments for Input {self}")
 
-    @property
-    def address(self) -> str:
-        return self._address
+    @qt_core.Property(str, constant=True)
+    def addressName(self) -> str:
+        return self.address
 
-    @property
-    def amount(self) -> float:
-        return self._amount
+    @qt_core.Property(str, constant=True)
+    def amountHuman(self) -> int:
+        return self.tx.wallet.coin.balance_human(self.amount)
 
-    @property
-    def tx(self) -> "Transaction":
-        return self._tx
+    def dump(self) -> dict:
+        return {
+            'address': self.address,
+            'amount': self.amount,
+        }
 
     def __str__(self) -> str:
-        return self._address
+        return f"IN: {self.address}:{self.amount}"
 
 
 class OutputType(enum.IntEnum):
@@ -389,8 +384,12 @@ class OutputType(enum.IntEnum):
 
 
 class Output(Input):
-    type = InputType.OUTPUT
+    # __slots__ = ["amount", "address", "tx", "type"]
+    out = True
 
     def __init__(self, tx: Transaction):
         super().__init__(tx=tx)
-        self._type = OutputType.NONSTANDART
+        self.type = OutputType.NONSTANDART
+
+    def __str__(self) -> str:
+        return f"OUT: {self.address}:{self.amount}"

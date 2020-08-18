@@ -4,6 +4,7 @@ import "../controls"
 import "../widgets"
 import "../api"
 import "../js/constants.js" as Const
+import "../js/functions.js" as Funcs
 
 Base {
     id: _base
@@ -15,6 +16,8 @@ Base {
     property alias  fiatAmount: _fiat.amount
     property alias  fiatUnit: _fiat.unit
     property bool selected: false
+    property alias watchOnly: _id_sign.visible
+    property alias updating: _refresh.visible
 
     height: 40
     anchors.left: parent.left
@@ -35,30 +38,37 @@ Base {
         antialiasing: true
 
 
-            LabelText{
-                id: _main
+        Image {
+            id: _id_sign
+            source: Funcs.loadImage("eye.svg")
+            fillMode: Image.PreserveAspectFit
+            smooth: false
+            cache: true
+            width:  visible? 25 : 0
+            height: width
+            sourceSize.width: width
+            sourceSize.height: height
                 anchors{
                         left: parent.left
                         leftMargin: 10
                         verticalCenter: parent.verticalCenter
 
                 }
-                color: _base.selected?palette.highlightedText:palette.mid
-                font.pixelSize: 14
-                text: _base.name
-            }
+
+        }
             LabelText{
-                id: _sub
-                visible: false
+                id: _main
                 anchors{
-                        leftMargin: 10
-                        bottom: _main.bottom
+                        left: _id_sign.right
+                        leftMargin: 5
+                        verticalCenter: parent.verticalCenter
                         right: _crypto.left
-                        rightMargin: 10
+
                 }
                 color: _base.selected?palette.highlightedText:palette.mid
-                font.pixelSize: 10
+                font.pixelSize: 12
                 text: _base.name
+                clip: true
             }
             MoneyCount{
                 id: _crypto
@@ -87,6 +97,26 @@ Base {
                 fontSize: 10
                 color: _base.selected?palette.highlightedText:palette.mid
             }
+        Image {
+            id: _refresh
+            source: Funcs.loadImage("refresh.svg")
+            fillMode: Image.PreserveAspectFit
+            smooth: false
+            cache: true
+            width: 12
+            height: width
+            sourceSize.width: width
+            sourceSize.height: height
+                anchors{
+//                        left: _fiat.right
+                        leftMargin: 5
+                        verticalCenter: parent.verticalCenter
+                        left: parent.right
+//                        rightMargin: 3
+
+                }
+
+        }
 
         MouseArea{
             anchors.fill: parent

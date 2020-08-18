@@ -1,17 +1,19 @@
 
+import abc
 import enum
 import io
 import json
 import logging
 import sys
-from typing import Tuple, List
+from typing import Callable, List, Tuple
 
 import PySide2.QtCore as qt_core
 
-from client.ui.gui import api
-from client.wallet import address, coins, mtx_impl, mutable_tx, tx, key, hd
-
+from .. import loading_level
+from ..ui.gui import api
+from ..wallet import address, coins, hd, key, mtx_impl, mutable_tx, tx
 from . import server_error
+from ..config import logger as e_logger
 
 log = logging.getLogger(__name__)
 
@@ -21,10 +23,15 @@ log = logging.getLogger(__name__)
 SILENCE_CHECKS = True
 
 
+
 class AbstractNetworkCommand(qt_core.QObject):
 
     def __init__(self, parent):
         super().__init__(parent=parent)
+
+
+class FinalMeta(type(qt_core.QObject), type(abc.ABCMeta)):
+    pass
 
 
 class HTTPProtocol(enum.IntEnum):
@@ -32,35 +39,69 @@ class HTTPProtocol(enum.IntEnum):
     POST = enum.auto()
 
 
-class BaseNetworkCommand(AbstractNetworkCommand):
+class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
     action = None
     _server_action = None
+    # high verbosity
     verbose = False
+    # low verbosity
+    silenced = False
     host = None
     protocol = HTTPProtocol.GET
+    level = loading_level.LoadingLevel.NONE
+    _high_priority = False
+    _low_priority = False
+    unique = False
 
-    def __init__(self, parent):
+    def __init__(self, parent, **kwargs):
         super().__init__(parent=parent)
+        self.__high_priority = kwargs.pop("high_priority", False)
+        assert not kwargs
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        assert not cls._low_priority or not cls._high_priority
+        # no logging
+        if e_logger.SILENCE_VERBOSITY:
+            cls.verbose = False
+            cls.silent = True
+        elif cls.verbose:
+            cls.silent = False
+            print(f"#### verbose network command: {cls.__name__}")
 
     @property
-    def ext(self):
+    def ext(self) -> bool:
         return self.host is not None
 
     @property
-    def server_action(self):
-        return self._server_action or self.action
+    def high_priority(self) -> bool:
+        return self._high_priority or self.__high_priority
 
     @property
-    def args(self):
+    def low_priority(self) -> bool:
+        return self._low_priority
+
+    @property
+    def server_action(self) -> str:
+        return self._server_action or self.action
+
+    def get_host(self) -> str:
+        return self.host
+
+    def get_action(self) -> str:
+        return self.action
+
+    @property
+    def args(self) -> List[str]:
         return []
 
     @property
-    def args_get(self):
+    def args_get(self) -> dict:
         return {}
 
     @property
     def post_data(self) -> bytes:
-        type_, body = self._args_post()
+        type_, body = self.args_post
         return json.dumps({
             "data": {
                 "type": type_,
@@ -68,17 +109,16 @@ class BaseNetworkCommand(AbstractNetworkCommand):
             }
         }).encode()
 
-    def _args_post(self) -> Tuple[str, dict]:
-        """
-        must be implemented for having 'post_data' working
-        """
-        raise NotImplementedError
+    @property
+    def args_post(self) -> Tuple[str, dict]:
+        return "", {}
 
     def on_data(self, data):
         if self.verbose:
-            log.debug('got data: %f kB', len(data) / 1024.)
+            log.debug(f'{self}: got data: %f kB', len(data) / 1024.)
         #raise NotImplementedError()
 
+    @abc.abstractmethod
     def on_data_end(self, http_code=200):
         raise NotImplementedError()
 
@@ -88,8 +128,8 @@ class BaseNetworkCommand(AbstractNetworkCommand):
         if not isinstance(data, dict):
             try:
                 body = json.loads(data)
-            except:
-                raise server_error.JsonError()
+            except Exception as ex:
+                raise server_error.JsonError(ex)
         else:
             body = data
         try:
@@ -141,11 +181,19 @@ class BaseNetworkCommand(AbstractNetworkCommand):
         """
         self._gcd = gcd
 
+    @property
+    def gcd(self):
+        return self._gcd
+
     def __str__(self):
         return self.__class__.__name__
 
     def drop(self):
         pass
+
+    @property
+    def skip(self) -> bool:
+        return False
 
 
 class JsonStreamMixin:
@@ -154,8 +202,8 @@ class JsonStreamMixin:
     - it wastes memory and we can implement more sufficient algorithm later
     """
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent, **kwargs)
         self._json = io.BytesIO()
 
     def on_data(self, data):
@@ -164,7 +212,10 @@ class JsonStreamMixin:
 
     def on_data_end(self, http_code):
         try:
-            return self.process_answer(self._json.getvalue())
+            next_ = self.process_answer(self._json.getvalue())
+            # important !!! ( for debugging for a while)
+            self._json = io.BytesIO()
+            return next_
         except server_error.BaseNetError as se:
             log.error("Processing answer error: %s", se)
             HEAD_LEN = 1024
@@ -185,6 +236,7 @@ class ServerSysInfoCommand(JsonStreamMixin, BaseNetworkCommand):
     To retrieve full server description
     """
     action = 'sysinfo'
+    level = loading_level.LoadingLevel.NONE
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -213,6 +265,7 @@ class CheckServerVersionCommand(ServerSysInfoCommand):
     """
     serverVersion = qt_core.Signal(int, str, arguments=["version", "human"])
     verbose = False
+    level = loading_level.LoadingLevel.NONE
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -232,6 +285,7 @@ class CheckServerVersionCommand(ServerSysInfoCommand):
 
 class CoinInfoCommand(JsonStreamMixin, BaseNetworkCommand):
     action = "coins"
+    level = loading_level.LoadingLevel.NONE
 
     def __init__(self, parent):
         super().__init__(parent=parent)
@@ -245,7 +299,11 @@ class CoinInfoCommand(JsonStreamMixin, BaseNetworkCommand):
 
 
 class UpdateCoinsInfoCommand(CoinInfoCommand):
-    verbose = False
+    verbose = True
+    silenced = False
+    unique = True
+    level = loading_level.LoadingLevel.NONE
+    verbose_filter = "ltc"
 
     def __init__(self, poll: bool, parent):
         """
@@ -260,16 +318,19 @@ class UpdateCoinsInfoCommand(CoinInfoCommand):
         """
         # log.warning(f"UPDATE COINS RESULT: {table}")
         for coin_name, data in table.items():
-            coin = self._gcd.get_coin(coin_name)
+            verbose = self.verbose and coin_name == self.verbose_filter
+            if verbose:
+                log.warning(f"{coin_name} => {data}")
+            coin = self._gcd[coin_name]
             # don't swear here. we've sworn already
-            if coin is not None and coin.parse(data, self._poll, verbose=self.verbose):
+            if coin is not None and coin.parse_coin(data, self._poll, verbose=verbose):
                 """
                 important scope here
                 """
-                if self.verbose:
-                    log.debug(f"remote {coin} changed . poll{self._poll}")
+                if verbose:
+                    log.debug(f"remote {coin} changed . poll: {self._poll}")
                 self._gcd.saveCoin.emit(coin)
-            elif self.verbose:
+            elif verbose:
                 log.debug(f"{coin} hasn't changed")
 
     def __str__(self):
@@ -279,9 +340,10 @@ class UpdateCoinsInfoCommand(CoinInfoCommand):
 class AddressInfoCommand(JsonStreamMixin, BaseNetworkCommand):
     action = "coins"
     _server_action = "address"
+    level = loading_level.LoadingLevel.ADDRESSES
 
-    def __init__(self, wallet: address.CAddress, parent):
-        super().__init__(parent=parent)
+    def __init__(self, wallet: address.CAddress, parent, **kwargs):
+        super().__init__(parent=parent, **kwargs)
         self._wallet = wallet
 
     @property
@@ -299,27 +361,67 @@ class AddressInfoCommand(JsonStreamMixin, BaseNetworkCommand):
         return f"{self.__class__.__name__}: {self._wallet.name}"
 
 
+class ValidateAddressCommand(JsonStreamMixin, BaseNetworkCommand):
+    action = "coins"
+    _server_action = "address"
+    level = loading_level.LoadingLevel.NONE
+
+    def __init__(self, coin: coins.CoinType, address: str, callback: Callable[[bool], None], parent):
+        super().__init__(parent=parent)
+        self._coin = coin
+        self._address = address
+        self._callback = callback
+
+    @property
+    def args(self):
+        return [self._coin.name, self._address]
+
+    def process_attr(self, table):
+        self._callback(table["address"] == self._address)
+
+    def handle_errors(self, errors):
+        self._callback(False)
+
+    def __str__(self):
+        return f"{self.__class__.__name__}: {self._address}"
+
+
 class LookForHDAddresses(AddressInfoCommand):
     """
     search all HD addresses with non zero balances
-    we stop serach when ew meet unexistent address
+    we stop search when ew meet unexistent address
     """
-    MAX_EMPTY_NUMBER = 5
+    MAX_EMPTY_NUMBER = 3
+    level = loading_level.LoadingLevel.ADDRESSES
+    verbose = False
+    _low_priority = True
+    silenced = True
 
     def __init__(self, coin: coins.CoinType, parent, hd_index=0, empty_count: int = 0, segwit: bool = True, hd_: hd.HDNode = None):
+        super().__init__(None, parent=parent)
         try:
             self._coin = coin
-            self._hd: hd.HDNode = hd_ or coin.hd_address(hd_index)
-            self._address: str = self._hd.to_address(
-                key.AddressType.P2WPKH if segwit else key.AddressType.P2PKH)
             self._hd_index = hd_index
             self._empty_count = empty_count
             self._segwit = segwit
+            self._hd: hd.HDNode = hd_ or coin.hd_address(hd_index)
+            self._address: str = self._hd.to_address(
+                key.AddressType.P2WPKH if segwit else key.AddressType.P2PKH)
+            while self._address in self._coin:
+                if self.verbose:
+                    log.warning(f"address exists :{self._address}")
+                if self._segwit:
+                    self._segwit = False
+                    self._address = self._hd.to_address(key.AddressType.P2PKH)
+                else:
+                    self._hd_index += 1
+                    self._hd = coin.hd_address(self._hd_index)
+                    self._address = self._hd.to_address(key.AddressType.P2WPKH)
+
         except address.AddressError as ae:
             # TODO:
             log.error(f"error {ae}")
             self._address = None
-        super().__init__(None, parent=parent)
 
     @property
     def args(self):
@@ -327,7 +429,6 @@ class LookForHDAddresses(AddressInfoCommand):
 
     def process_attr(self, table):
         assert self._address == table["address"]
-        log.debug(table)
         if table["balance"] == 0 and table["number_of_transactions"] == 0:
             self._empty_count += 1
             if self._empty_count > self.MAX_EMPTY_NUMBER * 2:  # remember SW + no SW
@@ -339,6 +440,12 @@ class LookForHDAddresses(AddressInfoCommand):
             wallet.set_prv_key(self._hd)
             log.debug(
                 f"New no empty address found: {wallet}")
+        return next(self)
+
+    def exists(self) -> bool:
+        return self._address in self._coin
+
+    def __next__(self):
         if self._segwit:
             return LookForHDAddresses(self._coin, self, hd_index=self._hd_index, empty_count=self._empty_count, segwit=False, hd_=self._hd)
         return LookForHDAddresses(self._coin, self, hd_index=self._hd_index + 1, empty_count=self._empty_count)
@@ -355,9 +462,11 @@ class UpdateAddressInfoCommand(AddressInfoCommand):
     action = "coins"
     _server_action = "address"
     verbose = True
+    silenced = True
+    level = loading_level.LoadingLevel.TRANSACTIONS
 
-    def __init__(self, wallet: address.CAddress, parent):
-        super().__init__(wallet, parent=parent)
+    def __init__(self, wallet: address.CAddress, parent, **kwargs):
+        super().__init__(wallet, parent=parent, high_priority=True, **kwargs)
 
     @property
     def args(self):
@@ -365,15 +474,24 @@ class UpdateAddressInfoCommand(AddressInfoCommand):
 
     def process_attr(self, table):
         assert self._wallet.name == table["address"]
-        #
-        self._wallet.type = table["type"]
-        self._wallet.tx_count = table["number_of_transactions"]
-        self._wallet.balance = table["balance"]
-        self._gcd.save_wallet(self._wallet)
-        diff = self._wallet.tx_count - len(self._wallet.txs)
-        if diff > 0 and not self._wallet.isUpdating:
-            log.debug("Need to download more %s tx for %s", diff, self._wallet)
-            return AddressHistoryCommand(self._wallet, parent=self)
+        if self.verbose:
+            log.warning(table)
+        # type important!! do not remove
+        type_ = table["type"]
+        txCount = table["number_of_transactions"]
+        balance = table["balance"]
+        if balance != self._wallet.balance or \
+                txCount != self._wallet.txCount or \
+                type_ != self._wallet.type:
+            self._wallet.type = type_
+            self._wallet.balance = balance
+            self._wallet.txCount = txCount
+            self._gcd.save_wallet(self._wallet)
+            diff = txCount - self._wallet.realTxCount
+            if diff > 0 and not self._wallet.is_going_update:
+                log.debug("Need to download more %s tx for %s",
+                          diff, self._wallet)
+                return AddressHistoryCommand(self._wallet, parent=self,  high_priority=True)
 
 
 class AddressHistoryCommand(AddressInfoCommand):
@@ -381,63 +499,87 @@ class AddressHistoryCommand(AddressInfoCommand):
     """
     action = "coins"
     _server_action = "history"
+    level = loading_level.LoadingLevel.TRANSACTIONS
 
     _coin_manager = None
     verbose = False
-
-    DEFAULT_HEIGHT = "max"
+    _prev_wallet = None
     DEFAULT_LIMIT = 50
 
     def __init__(self, wallet: address.CAddress,
-                 limit=None,
-                 tx_count=0,
-                 parent=None,
+                 limit: int = None,
+                 tx_count: int = 0,
+                 parent: qt_core.QObject = None,
+                 first_offset: int = None,
+                 forth: bool = True,
+                 **kwargs
                  ):
-        super().__init__(wallet, parent)
-        wallet.isUpdating = True
-        if wallet.last_offset is None:
-            self._first_offset = 'best'
+        super().__init__(wallet, parent, **kwargs)
+        # don't touch it!!!!!!!!!!!!!!!!!!! crucial meaning
+        self._wallet.is_going_update = True
+        self._forth = forth
+        if self._prev_wallet and self._prev_wallet.name != wallet.name:
+            self._prev_wallet.is_going_update = False
+            self._prev_wallet.isUpdating = False
+        self._prev_wallet = wallet
+        if forth:
+            self._first_offset = first_offset or 'best'
             self._last_offset = wallet.first_offset
         else:
             self._first_offset = wallet.last_offset
-            self._last_offset = None
+            self._last_offset = 'base'
+        if not self._last_offset or self._last_offset in ['best', 'None']:
+            self._last_offset = 'base'
         self._limit = limit
         self._tx_count = tx_count
         if self.verbose:
-            log.info(
-                f"WALLET  on start:{wallet} fof:{self._first_offset} lof:{self._last_offset} me:{id(self)}")
+            log.warning(
+                f"request: FORTH:{self._forth} first off:{self._first_offset} last off:{self._last_offset}")
+            log.warning(
+                f"WALLET  on start:{wallet!r} me:{id(self)}")
         if not self._coin_manager:
             api_inst = api.Api.get_instance()
             self._coin_manager = api_inst.coinManager if api_inst else None
 
     def process_attr(self, table):
         assert table.get("address") == self._wallet.name
-        # log.warning(f"ADDRESS HISTORY RESULT: {table}")
-        if self._first_offset == 'best':
-            self._wallet.first_offset = table["first_offset"]
+        if self.verbose:
+            log.warning(
+                f"answer: first off:{table['first_offset']} last off:{table['last_offset']}")
         last_offset = table["last_offset"]
-        # use setter !!!
+        # beware getter!
         self._wallet.last_offset = last_offset
+        if self._forth and self._first_offset == 'best':
+            self._wallet.first_offset = table["first_offset"]
+        self._wallet.last_offset = last_offset
+        # use setter !!!
         self._process_transactions(table["tx_list"])
         #  - we have to save new wallet offsets ?? .. cause app can be closed before next net calls
-        self._gcd.save_wallet(self._wallet, 1000)
-        if self._coin_manager:
-            self._coin_manager.txModelChanged.emit()
+        self._gcd.save_wallet(self._wallet, 500)
+        # if self._coin_manager:
+        # self._coin_manager.txModelChanged.emit()
         ###
-        if last_offset is not None and \
-                not self._gcd.silent_mode and \
+        qt_core.QCoreApplication.processEvents()
+        # self._wallet.isUpdating = False
+        if not self._gcd.silent_mode and \
                 (self._limit is None or self.tx_count < self._limit):
-            log.debug(f"Next history request for {self._wallet}")
-            return self.clone()
-        else:
-            # self._gcd.saveAddress.emit(self._wallet)
-            self._wallet.isUpdating = False
+            if self._forth and last_offset is not None:
+                log.debug(f"Next FORTH history request for {self._wallet!r}")
+                return self.clone(last_offset)
+            elif self._forth or last_offset is not None:
+                log.debug(f"Next BACK history request for {self._wallet!r}")
+                return self.clone(forth=False)
+        self._wallet.is_going_update = False
+        self._wallet.isUpdating = False
 
-    def clone(self):
+    def clone(self, first_offset=None, forth=True):
         return self.__class__(
             wallet=self._wallet,
             limit=self._limit,
-            tx_count=self._tx_count
+            tx_count=self._tx_count,
+            first_offset=first_offset,
+            forth=forth,
+            parent=self,
         )
 
     def on_data(self, data):
@@ -447,6 +589,7 @@ class AddressHistoryCommand(AddressInfoCommand):
 
     @property
     def args(self):
+        self._wallet.isUpdating = True
         return [self._wallet.coin.name, self._wallet.name, self._server_action]
 
     @property
@@ -456,7 +599,6 @@ class AddressHistoryCommand(AddressInfoCommand):
     @property
     def args_get(self):
         get = {}
-        # TODO: WTF?
         if self._first_offset is not None and self._first_offset != 'None':
             get.update({
                 "first_offset": self._first_offset,
@@ -475,20 +617,22 @@ class AddressHistoryCommand(AddressInfoCommand):
         return get
 
     def _process_transactions(self, txs: dict):
-        for name, body in txs.items():
-            # tx = coins.Transaction(self._wallet) WRONG THREAD!
-            tx_ = tx.Transaction(None)
-            self._tx_count += 1
-            tx_.parse(name, body)
-            try:
-                self._wallet.add_tx(tx_)
-                self._gcd.saveTx.emit(tx_)
-            except tx.TxError as txe:
-                if self.verbose:
-                    log.warn(f"{txe}")
+        tx_list = [tx.Transaction(self._wallet).parse(*a) for a in txs.items()]
+        # strict order !!
+
+        # raw count
+        self._tx_count += len(tx_list)
+        self._wallet.add_tx_list(tx_list)
+        # lsit updated !!
+        if tx_list:
+            self._gcd.save_tx_list(self._wallet, tx_list)
+
+    @property
+    def skip(self) -> bool:
+        return self._wallet.deleted
 
     def __str__(self):
-        return super().__str__() + f"[wallet={self._wallet}]"
+        return f"<{super().__str__()}> [wallet={self._wallet} foff:{self._first_offset}]"
 
 
 class AddressMempoolCommand(AddressInfoCommand):
@@ -497,6 +641,8 @@ class AddressMempoolCommand(AddressInfoCommand):
     MAX_TIMES = 6
     WAIT_CHUNK = 100
     WAIT_TIMEOUT = 3000
+    level = loading_level.LoadingLevel.ADDRESSES
+    _high_priority = True
 
     def __init__(self, wallet: address.CAddress, parent, counter=0):
         super().__init__(wallet, parent=parent)
@@ -527,7 +673,7 @@ class AddressMempoolCommand(AddressInfoCommand):
     def _process_transactions(self, txs: dict):
         for name, body in txs.items():
             # tx = coins.Transaction(self._wallet) WRONG THREAD!
-            tx_ = tx.Transaction(None)
+            tx_ = tx.Transaction(self._wallet)
             tx_.parse(name, body)
             try:
                 self._wallet.add_tx(tx_)
@@ -542,14 +688,16 @@ class AddressMultyMempoolCommand(JsonStreamMixin, BaseNetworkCommand):
     action = "coins"
     _server_action = "unconfirmed"
     protocol = HTTPProtocol.POST
-    MAX_TIMES = 6
+    MAX_TIMES = 10
     WAIT_CHUNK = 100
     WAIT_TIMEOUT = 3000
+    level = loading_level.LoadingLevel.ADDRESSES
+    _high_priority = True
 
     def __init__(self, wallet_list: List[address.CAddress], parent, counter=0, hash_=None):
         super().__init__(parent=parent)
         assert wallet_list
-        self._wallet_list = wallet_list
+        self.__wallet_list = wallet_list
         self._coin = wallet_list[0].coin
         self._counter = counter
         self._hash = hash_
@@ -558,39 +706,51 @@ class AddressMultyMempoolCommand(JsonStreamMixin, BaseNetworkCommand):
     def args(self):
         return [self._coin.name, self._server_action]
 
-    def _args_post(self) -> Tuple[str, bytes]:
+    @property
+    def args_post(self) -> Tuple[str, dict]:
         table = {
-            "address_list": [addr.name for addr in self._wallet_list],
+            "address_list": [addr.name for addr in self.__wallet_list],
         }
         if self._hash:
             table["last_hash"] = self._hash
         return self._server_action, table
 
     def process_attr(self, table):
-        # TODO: process hash
+        if self.verbose:
+            log.warning(table)
 
         txs = table["tx_list"]
         self._hash = table["hash"]
         # if no TX here - then wait and check again
-        if txs:
-            self._process_transactions(txs)
-        # sleep for a bit
-        return self._send_again()
+        if not txs or not self._process_transactions(txs):
+            return self._send_again()
 
     def _process_transactions(self, txs: dict):
+        res = False
         for name, body in txs.items():
-            log.info(body)
-            inps = body["input"] + body["output"]
-            tx_ = tx.Transaction(None)
-            tx_.parse(name, body)
-            for inp in inps:
-                w = self._coin[inp["address"]]
+            if self.verbose:
+                log.debug(body)
+            if self._process_transaction(name, body):
+                res = True
+        return res
+
+    def _process_transaction(self, name: str, body: dict) -> None:
+        # remember!! address not in tx -> in inputs && outputs!!
+        for inp in body["input"] + body["output"]:
+            w = self._coin[inp["address"]]
+            if w is not None:
+                tx_ = tx.Transaction(w)
+                tx_.parse(name, body)
+                tx_.height = w.coin.height + 1
                 try:
                     w.add_tx(tx_)
-                    self._gcd.saveTx.emit(tx_)
                 except tx.TxError as txe:
+                    # everythig's good !!!
+                    self._gcd.saveTx.emit(tx_)
+                    self._gcd.updateTxStatus.emit(tx_)
                     if self.verbose:
                         log.warn(f"{txe}")
+                return True
 
     def _send_again(self):
         if self.verbose:
@@ -601,17 +761,24 @@ class AddressMultyMempoolCommand(JsonStreamMixin, BaseNetworkCommand):
                 to -= self.WAIT_CHUNK
                 qt_core.QThread.currentThread().msleep(self.WAIT_CHUNK)
                 qt_core.QCoreApplication.processEvents()
-            return AddressMultyMempoolCommand(self._wallet_list, self, counter=self._counter + 1, hash_=self._hash)
+            return AddressMultyMempoolCommand(self.__wallet_list, self, counter=self._counter + 1, hash_=self._hash)
 
     def on_data_end(self, http_code):
         if http_code == 304:
             return self._send_again()
         return super().on_data_end(http_code)
 
+    @property
+    def counter(self) -> int:
+        return self._counter
+
 
 class AddressUnspentCommand(AddressInfoCommand):
     action = "coins"
     _server_action = "unspent"
+    level = loading_level.LoadingLevel.NONE
+    _high_priority = True
+    verbose = True
 
     def __init__(self, wallet: address.CAddress, first_offset=None,
                  last_offset=None, unspent=None, calls: int = 0, parent=None):
@@ -671,6 +838,8 @@ class BroadcastTxCommand(JsonStreamMixin, BaseNetworkCommand):
     action = "coins"
     protocol = HTTPProtocol.POST
     verbose = False
+    level = loading_level.LoadingLevel.NONE
+    _high_priority = True
 
     def __init__(self, mtx: mutable_tx.MutableTransaction, parent):
         super().__init__(parent)
@@ -678,7 +847,7 @@ class BroadcastTxCommand(JsonStreamMixin, BaseNetworkCommand):
 
     @property
     def args(self):
-        return [self._mtx.coin.name, "tx", "broadcast"]
+        return [self._mtx.coin.name, "tx"]
 
     def process_attr(self, table):
         tx_id = table["tx"]
@@ -689,7 +858,8 @@ class BroadcastTxCommand(JsonStreamMixin, BaseNetworkCommand):
             log.debug("Broadcasted TX hash is fine!")
         self._mtx.send_callback(True)
 
-    def _args_post(self):
+    @property
+    def args_post(self):
         return ("tx_broadcast", {
             "data": str(self._mtx),
         })
@@ -697,7 +867,7 @@ class BroadcastTxCommand(JsonStreamMixin, BaseNetworkCommand):
     def handle_error(self, error):
         log.error(error)
         err_code = error["code"]
-        if server_error.ServerErrorCode.broadcastError == err_code:
+        if server_error.ServerErrorCode.broadcastError == int(err_code):
             self._mtx.send_callback(False, str(error["detail"]))
         else:
             raise server_error.UnknownErrorCode(err_code)
@@ -711,7 +881,7 @@ class ExtHostCommand(JsonStreamMixin, BaseNetworkCommand):
             try:
                 body = json.loads(data)
             except Exception:
-                raise server_error.JsonError()
+                raise server_error.JsonError(ex)
         else:
             body = data
         self.process_attr(body)
@@ -722,33 +892,53 @@ class GetCoinRatesCommand(ExtHostCommand):
     To retrieve coin rates
     https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd
     """
-    action = "price"
-    host = "https://api.coingecko.com/api/v3/simple/"
-    currency = "usd"
+    DEF_ACTION = "price"
+    DEF_HOST = "https://api.coingecko.com/api/v3/simple/"
+    CURRENCY = "usd"
+    verbose = False
+    unique = True
 
     def __init__(self, parent=None, ):
         super().__init__(parent)
+        self._source = None
+        api_ = api.Api.get_instance()
+        if api_:
+            self._source = api_.settingsManager.rateSource
 
     @property
     def args_get(self):
         self._coins = self._gcd.all_enabled_coins
+        if self._source:
+            return self._source.get_arguments(self._coins, self.CURRENCY)
         coins_ = ",".join([c.basename for c in self._coins])
         return {
             "ids": coins_,
-            "vs_currencies": self.currency,
+            "vs_currencies": self.CURRENCY,
         }
 
+    def get_host(self):
+        if self._source:
+            return self._source.api_url
+        return self.DEF_HOST
+
+    def get_action(self):
+        if self._source:
+            return self._source.action
+        return self.DEF_ACTION
+
     def process_attr(self, table):
-        for coin in self._coins:
-            coin.rate = table[coin.basename][self.currency]
-        # full first save here
-        # self._gcd.save_coins()
+        if self._source:
+            self._source.process_result(self._coins, self.CURRENCY, table)
+        else:
+            for coin in self._coins:
+                coin.rate = table[coin.basename][self.CURRENCY]
 
 
 class GetRecommendFeeCommand(ExtHostCommand):
     "https://bitcoinfees.earn.com/api"
     host = "https://bitcoinfees.earn.com/api/v1/fees/"
     action = "recommended"
+    unique = True
 
     def process_attr(self, table):
         stats = [

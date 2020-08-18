@@ -15,23 +15,28 @@ ApplicationWindow {
     id: _base
 
     title: 		Qt.application.name
+    minimumWidth:	minWidth
+    minimumHeight: 600
+    // width: 		minimumWidth
+    // height: 	minimumHeight
     width: 		1090
-    minimumWidth:	800
-    maximumWidth: 	1800
+    height: 	820
+
+    readonly property real rightSpaceFactor: 0.33
+    readonly property int minWidth: 800
+    property int activeWidth: _base.width
+    property int activeHeight: _base.height
+
 
     // font: Qt.font(CoinApi.settings.fontData)
 
-    height: 	820
-    minimumHeight: 700
-    maximumHeight: 1280
-
-        // Do not delete please !!!
+    // Do not delete please !!!
 
     function reportSize(){
         console.log(`${width} x ${height}`)
     }
-    onWidthChanged: reportSize()
-    onHeightChanged: reportSize()
+//    onWidthChanged: reportSize()
+//    onHeightChanged: reportSize()
 
 
     visible: 	true
@@ -42,34 +47,36 @@ ApplicationWindow {
     Material.primary: 	Material.BlueGrey
 
     /*
-      rely on dynamic scoping for access
+    rely on dynamic scoping for access
     */
     property ApplicationWindow appWindow: _base
 
     readonly property font simpleFont: Qt.font({
-                                          family: "Arial",
-                                          pixelSize: 14
-                                      })
+        family: "Arial",
+        pixelSize: 14
+    })
 
 
     // sugar
     readonly property QtObject api: CoinApi.coins
 
-    function pushPage( fname , props = {}, replace = false ){
-        const fpath = Qt.resolvedUrl("pages/" + fname);
+    function pushPage(fname, props={}, replace=false){
+        const fpath = Qt.resolvedUrl("pages/" + fname)
         var mode = StackView.Transition
         if(replace && _stackview.currentItem.pageId > Constants.pageId.exchange){
-            console.debug("Replacing page: " , fpath.slice(fpath.lastIndexOf("/") + 1));
-            return _stackview.replace( _stackview.currentItem, fpath , props, mode);
+            console.debug("Replacing page: ", fpath.slice(
+                fpath.lastIndexOf("/") + 1))
+            return _stackview.replace(_stackview.currentItem, fpath, props, mode)
         }
-        if( CoinApi.debug ){
-            console.debug("Pushing page: " , fpath.slice(fpath.lastIndexOf("/") + 1));
+        if(CoinApi.debug){
+            console.debug("Pushing page: ", fpath.slice(
+                fpath.lastIndexOf("/") + 1))
         }
-        return _stackview.push(fpath , props, mode);
+        return _stackview.push(fpath, props, mode)
     }
 
-    function copyAddress( addressIndex ){
-        var address = null;
+    function copyAddress(addressIndex){
+        var address = null
         if (CoinApi.dummy){
             address = api.addressModel[addressIndex]
         }
@@ -79,65 +86,65 @@ ApplicationWindow {
         CoinApi.ui.copyToClipboard(address.name)
     }
 
-    function showAddressDetails( addressIndex ){
-        var address = null;
+    function showAddressDetails(addressIndex){
+        var address = null
         if (CoinApi.dummy){
             address = api.addressModel[addressIndex]
         }
         else{
             address = api.coin.wallets[addressIndex]
         }
-        let mPage = pushPage("ExportAddressPage.qml",{
-                  "wif" : address.to_wif,
-                  "pub" : address.public_key,
-                  "address" : address.name,
-                  "label" : address.label,
-                  "message" : address.message,
-                  "created" : address.created,
-         } );
-         mPage.onClosed.connect(function(){
-             address.label = mPage.label;
-             address.save() // local slot!!?
-         });
+        let mPage = pushPage("ExportAddressPage.qml", {
+            "wif": address.to_wif,
+            "pub": address.public_key,
+            "address": address.name,
+            "label": address.label,
+            "message": address.message,
+            "created": address.created_str,
+        })
+        mPage.onClosed.connect(function(){
+            address.label=mPage.label
+            address.save() // local slot!!?
+        })
     }
 
     function removeAddress(addressIndex){
         api.removeAddress(addressIndex)
     }
 
-    function actionClearTransactions( addresIndex ){
+    function actionClearTransactions(addresIndex){
         api.clearTransactions(addresIndex)
     }
 
-    function actionExportTransactions( addressIndex ){
-        if( addressIndex >= 0 ){
-            api.exportTransactions(addressIndex);
+    function actionExportTransactions(addressIndex){
+        if(addressIndex >= 0){
+            api.exportTransactions(addressIndex)
         }
         else{
-            notify(qsTr("Select address to operate"))
+            notify(qsTr("Select address to operate", "Messagebox warning"))
         }
     }
 
     function actionUpdateAddress(addressIndex){
-        if( addressIndex >= 0 ){
-            api.updateAddress(addressIndex);
+        if(addressIndex >= 0){
+            api.updateAddress(addressIndex)
         }
         else{
-            notify(qsTr("Select address to operate"))
+            notify(qsTr("Select address to operate", "messagebox warning"))
         }
     }
 
 
-    function msgbox(txt,choice){
-        return _stackview.currentItem.msgbox(txt,choice);
+    function msgbox(txt, choice){
+        return _stackview.currentItem.msgbox(txt, choice)
     }
 
     function notify(txt){
-        return _stackview.currentItem.notify(txt);
+        return _stackview.currentItem.notify(txt)
     }
 
     function wait(timeout){
-        return _wait.wait(timeout);
+        return _wait.wait(timeout)
     }
 
     function stopWaiting(){
@@ -149,36 +156,36 @@ ApplicationWindow {
     }
 
     /*
-        actions
+    actions
     */
     function actionQuit(){
         Qt.quit()
     }
     function actionAbout(){
-        pushPage("AboutPage.qml", {} ,true)
+        pushPage("AboutPage.qml", {}, true)
     }
     function actionSettings(){
-        var page = pushPage("SettingsPage.qml", {} , true)
+        var page = pushPage("SettingsPage.qml", {}, true)
         // page.applyStyle.connect(actionReload)
         page.applyStyle.connect(actionRestart)
     }
     function actionExport(){
-         CoinApi.keyMan.exportWallet();
+        CoinApi.keyMan.exportWallet()
     }
     function actionNewAddress(){
-        if( !CoinApi.keyMan.hasMaster && !CoinApi.debug ){
-            notify(qsTr("No master key detected"))
+        if(!CoinApi.keyMan.hasMaster && !CoinApi.debug){
+            notify(qsTr("No master key detected", "Messagebox warning"))
         }
         else if (api.coinIndex < 0){
-            notify(qsTr("Select coin at first"))
+            notify(qsTr("Firstly select a coin", "Messagebox warning"))
         }
         else{
             _stackview.initialItem.newAddress(api.coinIndex)
         }
     }
     function actionAddWatchAddress(){
-        if (api.coinIndex < 0 ){
-            notify(qsTr("Select coin at first"))
+        if (api.coinIndex < 0){
+            notify(qsTr("Firstly select a coin", "Messagebox warning"))
         }
         else{
             _stackview.initialItem.addWatchOnlyAddress(api.coinIndex)
@@ -197,14 +204,14 @@ ApplicationWindow {
     }
     function actionNewMasterkey(){
         if(onMainPage()){
-            pushPage("MnemonicPage.qml",{ } );
+            pushPage("MnemonicPage.qml", {})
         }
     }
     function actionInputSeed(){
         if(onMainPage()){
-            pushPage("MnemonicPage.qml",{
+            pushPage("MnemonicPage.qml", {
                 "pasteExisting": true,
-            } );
+            })
         }
     }
     function actionWelcome(){
@@ -214,7 +221,10 @@ ApplicationWindow {
         CoinApi.coins.makeDummyTx()
     }
     function actionShowEmpty(show){
-        api.showEmptyBalances = show;
+        api.showEmptyBalances = show
+    }
+    function actionsShowSeed(){
+        _seed.open()
     }
 
 
@@ -246,9 +256,10 @@ ApplicationWindow {
         onWelcomePage: actionWelcome()
         onAddDummytx: actionAddDummyTx()
         onShowEmpty: actionShowEmpty(show)
+        onShowSeed: actionsShowSeed()
 
-        Component.onCompleted:{
-            if(!CoinApi.debugMenu){
+        Component.onCompleted: {
+            if(!CoinApi.debugMenu && !debugMode){
                 _menu_bar.takeMenu(2)
             }
         }
@@ -256,7 +267,7 @@ ApplicationWindow {
 
     header: MainToolBar{
         id: _tool_bar
-//        width: 200
+        // width: 200
         showEmptyValue: CoinApi.coins.showEmptyBalances
 
         onAbout: 	actionAbout()
@@ -283,21 +294,21 @@ ApplicationWindow {
 
         onWalletClick: {
             console.log("page id: " + _stackview.pageId())
-            if( _stackview.pageId() !== Constants.pageId.main ){
+            if(_stackview.pageId() !== Constants.pageId.main){
                 console.log("Wallet mode")
                 _stackview.pop(null)
             }
         }
         onExchangeClick: {
             console.log("page id: " + _stackview.pageId())
-            if( _stackview.pageId() !== Constants.pageId.exchange ){
+            if(_stackview.pageId() !== Constants.pageId.exchange){
                 console.log("Exchange mode")
                 _stackview.pop(null)
                 _stackview.push(_exchange_window)
             }
         }
     }
-    /*/
+    */
 
 
     PageStack {
@@ -309,12 +320,12 @@ ApplicationWindow {
             bottom:  parent.bottom
             // left:  _left_handle.right
             left:  parent.left
-            /*/
+            /*
             fill: parent
             */
         }
     }
- /*
+    /*
     LeftDrawer{
         id: _left_panel
         visible: false
@@ -323,14 +334,14 @@ ApplicationWindow {
 
         onWalletClick: {
             console.log("page id: " + _stackview.pageId())
-            if( _stackview.pageId() !== Constants.pageId.main ){
+            if(_stackview.pageId() !== Constants.pageId.main){
                 console.log("Wallet mode")
                 _stackview.pop(null)
             }
         }
         onExchangeClick: {
             console.log("page id: " + _stackview.pageId())
-            if( _stackview.pageId() !== Constants.pageId.exchange ){
+            if(_stackview.pageId() !== Constants.pageId.exchange){
                 console.log("Exchange mode")
                 _stackview.pop(null)
                 _stackview.push(_exchange_window)
@@ -364,7 +375,7 @@ ApplicationWindow {
             hoverEnabled: true
 
             onEntered: {
-//                _left_panel.open()
+                // _left_panel.open()
             }
         }
 
@@ -381,11 +392,11 @@ ApplicationWindow {
 
     Connections{
         target: CoinApi.ui
-        onShowSpinner:{
+        function onShowSpinner(on){
             if(on){
-                _base.wait();
+                _base.wait()
             }else{
-                _base.stopWaiting();
+                _base.stopWaiting()
             }
         }
     }
@@ -395,7 +406,7 @@ ApplicationWindow {
     }
 
     /**
-      TODO: make it dynamic
+    TODO: make it dynamic
     ExchangePage{
         id: _exchange_window
         visible: false
@@ -403,32 +414,32 @@ ApplicationWindow {
     */
 
     /**
-      TODO: make it dynamic
+    TODO: make it dynamic
     */
     WelcomePopup{
         id: _welcome
         onNewMaster: {
-            var mp = pushPage("MnemonicPage.qml",{ } );
+            var mp = pushPage("MnemonicPage.qml", {})
             mp.back.connect(function(){
                 _welcome.show()
             })
-            _welcome.close();
+            _welcome.close()
         }
         onOldMaster: {
-            var mp = pushPage("MnemonicPage.qml",{
-                    "pasteExisting": true,
-            } );
+            var mp = pushPage("MnemonicPage.qml", {
+                "pasteExisting": true,
+            })
             mp.back.connect(function(){
                 _welcome.show()
             })
-            _welcome.close();
+            _welcome.close()
         }
-        onFromBackup:{
+        onFromBackup: {
             if(!CoinApi.keyMan.importWallet()){
                 console.log("Import error")
                 // open again strickly!!
             }else{
-                _welcome.close();
+                _welcome.close()
             }
         }
         onReject: {
@@ -437,7 +448,7 @@ ApplicationWindow {
     }
 
     /**
-      TODO: make it dynamic
+    TODO: make it dynamic
     */
     InputPasswordPopup{
         id: _password_input
@@ -446,18 +457,22 @@ ApplicationWindow {
 
     BaseNotificationPopup{
         id: _restart
-        text: qsTr("New settings will be applyed after next launch.")
+        text: qsTr("New settings will be applied after next launch",
+                   "Before restart warning")
+    }
+    DisplaySeedPopup{
+        id: _seed
     }
 
     Connections{
         target: CoinApi.ui
-        onTermsAppliedChanged: {
+        function onTermsAppliedChanged(){
             _welcome.checkTerms()
         }
     }
     Connections{
         target: CoinApi.keyMan
-        onMnemoRequested: {
+        function onMnemoRequested(){
             _welcome.show()
         }
     }
@@ -473,7 +488,10 @@ ApplicationWindow {
     }
 
     Component.onCompleted: {
-        if(!CoinApi.debug){
+         if(CoinApi.debugStart){
+            _password_input.open()
+        }
+        else if(!CoinApi.debug){
             _alpha.open()
         }
     }

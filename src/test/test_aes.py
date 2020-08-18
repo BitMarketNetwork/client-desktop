@@ -7,11 +7,12 @@ import base64
 
 from client.wallet import aes, sym_encrypt_abc, util
 from client.wallet.database import encrypt_proxy
+from client import gcd
 
 log = logging.getLogger(__name__)
 
 
-class Test_base(unittest.TestCase):
+class TestBase(unittest.TestCase):
     BACKEND_CLS = aes.AesProvider
     PASSWORD_GEN = (
         "short",
@@ -40,7 +41,7 @@ class Test_base(unittest.TestCase):
                 for psw in self.PASSWORD_GEN}
 
 
-class Test_proxy(unittest.TestCase):
+class TestProxy(unittest.TestCase):
 
     def test_strong_nonce(self):
         nonce = os.urandom(16)
@@ -48,8 +49,20 @@ class Test_proxy(unittest.TestCase):
         ep = encrypt_proxy.EncryptProxy(psw, nonce)
         seed = os.urandom(64)
         weak = ep.encrypt(seed, False)
-        self.assertEqual(seed , ep.text_from(weak.encode()))
+        self.assertEqual(seed, ep.text_from(weak.encode()))
         strong = ep.encrypt(seed, True)
-        self.assertEqual(seed , ep.text_from(strong.encode()))
-        self.assertNotEqual( strong, weak)
-        self.assertEqual( len(strong) , len(weak) + 24 )
+        self.assertEqual(seed, ep.text_from(strong.encode()))
+        self.assertNotEqual(strong, weak)
+        self.assertEqual(len(strong), len(weak) + 24)
+
+
+class TestSeedEncryption(unittest.TestCase):
+
+    def test_extracting(self):
+        PASSWORD = "F##ckit2019"
+        MNEMO = "super mega safe mnemonic phrase"
+        gcd_ = gcd.GCD(True)
+        self.assertTrue(gcd_.set_password(PASSWORD))
+        self.assertTrue(gcd_.test_password(PASSWORD))
+        gcd_.save_mnemo(MNEMO)
+        self.assertEqual(gcd_.get_mnemo(PASSWORD), MNEMO)

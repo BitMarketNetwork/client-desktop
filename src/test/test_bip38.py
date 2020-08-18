@@ -4,7 +4,7 @@ import unittest
 from client.wallet import util
 
 
-class Test_bip38(unittest.TestCase):
+class TestBip38(unittest.TestCase):
 
     def setUp(self):
         self.BIP_CASES_1 = [

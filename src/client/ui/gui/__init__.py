@@ -23,8 +23,6 @@ class RootBase(AppBase):
     def __init__(self, gcd):
         super().__init__()
         self.api = api.Api(gcd)
-        self.api.updateTr.connect(
-            self.retranslate)  # pylint: disable=no-member
 
     def _register(self, cxt: qt_qml.QQmlContext):
         '''
@@ -42,12 +40,12 @@ class RootApp(RootBase, qt_qml.QQmlApplicationEngine, ):
 
     def __init__(self, gcd, parent=None):
 
-        self.app = app.GuiApplication()
+        self.app = app.GuiApplication("XEM")
         self.app.aboutToQuit.connect(self._app_about_quit)
         super().__init__(gcd)
-        if not self.read_config():
-            log.warning("No config file detected")
         gcd.reloadQml.connect(self.reload, qt_core.Qt.QueuedConnection)
+        self.api.updateTr.connect(
+            self._retranslate)  # pylint: disable=no-member
         # styles = qt_widgets.QStyleFactory.keys()
         # log.debug(f"supported UI styles: {styles}")
         self._engine = qt_qml.QQmlApplicationEngine(self)
@@ -78,7 +76,7 @@ class RootApp(RootBase, qt_qml.QQmlApplicationEngine, ):
         pass
 
     def _object_created(self, object, url):
-        log.debug(f"Loaded {url}")
+        log.debug(f"Loaded qml object:{url}")
         if not object:
             raise SystemExit(1)
 
@@ -93,8 +91,10 @@ class RootApp(RootBase, qt_qml.QQmlApplicationEngine, ):
     def output_info(self, key, value):
         print(key, value)
 
+    def _retranslate(self):
+        log.debug(f"retranslating UI")
+        self._engine.retranslate()
 
 def run(gcd):
     root = RootApp(gcd)
-    # root.run()
     return root

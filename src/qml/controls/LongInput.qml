@@ -42,8 +42,8 @@ Base {
                 top: _name.bottom
                 bottom: parent.bottom
                 right: parent.right
-                rightMargin: 0
-                margins: margin
+//                rightMargin: 0
+//                margins: margin
             }
             color: _name.color
             wrapMode: TextEdit.Wrap

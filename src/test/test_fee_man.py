@@ -4,7 +4,7 @@ import random
 from client.wallet import fee_manager
 
 
-class Test_FeeManager(unittest.TestCase):
+class TestFeeManager(unittest.TestCase):
 
     def test_calculation(self):
         fm = fee_manager.FeeManager(None, {})

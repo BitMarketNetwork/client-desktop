@@ -34,20 +34,26 @@ def parse_command_line():
         default=False,
         dest='silent_mode', 
         action='store_true')
+    parser.add_argument(
+        '-d', 
+        '--debug_mode', 
+        default=False,
+        dest='debug_mode', 
+        action='store_true')
 
     COMMAND_LINE = parser.parse_args()
 
 def is_gui():
-    global COMMAND_LINE
     return 'cui' not in COMMAND_LINE.ui 
 
 def log_file():
-    global COMMAND_LINE
     return COMMAND_LINE.logfile
 
 def silent_mode():
-    global COMMAND_LINE
     return COMMAND_LINE.silent_mode
+
+def debug_mode():
+    return COMMAND_LINE.debug_mode
 
 
 def parse_user_config():

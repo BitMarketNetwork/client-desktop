@@ -7,10 +7,12 @@ import logging
 import random
 import re
 from collections import namedtuple
-from typing import Union
+from typing import Union, List, Tuple
 from datetime import datetime
 
+from .. import meta
 from . import coin_network, constants, rates, segwit_addr, util, tx
+
 
 log = logging.getLogger(__name__)
 
@@ -45,19 +47,24 @@ UNSPENT_TYPES = {
 
 class UTXO:
     __slots__ = ('amount', 'confirmations', 'script', 'txid', 'txindex',
-                 'type', 'vsize', 'segwit')
+                 'type', 'vsize', 'segwit', 'address')
 
     def __init__(self, amount, confirmations, script, txid, txindex,
-                 type='p2pkh', vsize=None, segwit=None):
+                 type='p2pkh', vsize=None, segwit=None, address=None):
         self.amount = amount
         self.confirmations = confirmations
         self.script = script
         self.txid = txid
         self.txindex = txindex
         self.type = type if type in UNSPENT_TYPES else 'unknown'
+        self.address = address
         assert 'unknown' != self.type
         self.vsize = vsize if vsize else UNSPENT_TYPES[self.type]['vsize']
         self.segwit = UNSPENT_TYPES[self.type]['segwit']
+
+    @classmethod
+    def make_dummy(cls, amount: int, address):
+        return cls(amount, 0, "", "", 0, address=address)
 
     def to_dict(self):
         return {attr: getattr(self, attr) for attr in UTXO.__slots__}
@@ -75,15 +82,19 @@ class UTXO:
         # log.warning(f"MAP UTX: {kwargs}")
         return cls(**kwargs)
 
-    def __eq__(self, other):
+    def __hash__(self) -> int:
+        return hash((self.amount, self.address, self.script, self.txid, self.txindex))
+
+    def __eq__(self, other) -> bool:
         return (self.amount == other.amount and
+                self.address == other.address and
                 self.script == other.script and
                 self.txid == other.txid and
                 self.txindex == other.txindex and
                 self.segwit == other.segwit)
 
     def __repr__(self):
-        return f"UTXO(amount={self.amount}, confirmations={self.confirmations}, script={self.script}, txid={self.txid}, txindex={self.txindex}, segwit={self.segwit})"
+        return f"UTXO(address={self.address.name if self.address else '-'} amount={self.amount}, confirmations={self.confirmations}, script={self.script}, txid={self.txid}, txindex={self.txindex}, segwit={self.segwit})"
 
     def set_type(self, type, vsize=0):
         self.type = type if type in UNSPENT_TYPES else 'unknown'
@@ -94,11 +105,22 @@ class UTXO:
 
 class TxEntity:
 
+    def __init__(self, address: str):
+        self._address = address
+        self.amount = None
+
     @property
     def amount_int(self):
         if isinstance(self.amount, bytes):
             return int.from_bytes(self.amount, "little")
         return self.amount
+
+    @property
+    def address(self) -> str:
+        return self._address
+
+    def __eq__(self, other: 'TxEntity'):
+        return isinstance(other, self.__class__) and self._address == other._address
 
 
 class TxInput(TxEntity):
@@ -106,7 +128,8 @@ class TxInput(TxEntity):
                  'amount', 'sequence', 'segwit_input')
 
     def __init__(self, script_sig, txid, txindex, witness=b'', amount=None,
-                 sequence=constants.SEQUENCE, segwit_input=False):
+                 sequence=constants.SEQUENCE, segwit_input=False, address: str = None):
+        super().__init__(address)
 
         self.script_sig = script_sig
         self.script_sig_len = util.int_to_varint(len(script_sig))
@@ -118,6 +141,8 @@ class TxInput(TxEntity):
         self.segwit_input = segwit_input
 
     def __eq__(self, other):
+        if not super().__eq__(other):
+            return False
         return (self.script_sig == other.script_sig and
                 self.script_sig_len == other.script_sig_len and
                 self.txid == other.txid and
@@ -129,8 +154,8 @@ class TxInput(TxEntity):
 
     def __repr__(self):
         if self.is_segwit():
-            return f"TxInput[{self.script_sig}, {self.script_sig_len}, {self.txid}, {self.txindex}, {self.witness}, {self.amount}, {self.sequence}]"
-        return f"TxInput[{self.script_sig}, {self.script_sig_len}, {self.txid}, {self.txindex}, {self.sequence}]"
+            return f"TxInput<{self._address}>[{self.script_sig}, {self.script_sig_len}, {self.txid}, {self.txindex}, {self.witness}, {self.amount}, {self.sequence}]"
+        return f"TxInput<{self._address}>[{self.script_sig}, {self.script_sig_len}, {self.txid}, {self.txindex}, {self.sequence}]"
 
     def __bytes__(self):
         return b''.join([
@@ -151,18 +176,21 @@ Output = namedtuple('Output', ('address', 'amount', 'currency'))
 class TxOutput(TxEntity):
     __slots__ = ('amount', 'script_pubkey_len', 'script_pubkey')
 
-    def __init__(self, amount, script_pubkey):
+    def __init__(self, amount, script_pubkey, address: str = None):
+        super().__init__(address)
         self.amount = amount
         self.script_pubkey = script_pubkey
         self.script_pubkey_len = util.int_to_varint(len(script_pubkey))
 
     def __eq__(self, other):
+        if not super().__eq__(other):
+            return False
         return (self.amount == other.amount and
                 self.script_pubkey == other.script_pubkey and
                 self.script_pubkey_len == other.script_pubkey_len)
 
     def __repr__(self):
-        return f"TxOut({self.amount}, {self.script_pubkey}, {self.script_pubkey_len})"
+        return f"TxOut<{self._address}>({self.amount}, {self.script_pubkey}, {self.script_pubkey_len})"
 
     def __bytes__(self):
         return b''.join([
@@ -170,6 +198,14 @@ class TxOutput(TxEntity):
             self.script_pubkey_len,
             self.script_pubkey
         ])
+
+
+class MtxError(Exception):
+    pass
+
+
+class NoInputsToSignError(MtxError):
+    pass
 
 
 class Mtx:
@@ -213,17 +249,19 @@ class Mtx:
             self.locktime
         ])
 
+    def __hash__(self):
+        return hash(self.to_hex())
+
     def to_tx(self) -> tx.Transaction:
         tx_: tx.Transaction = tx.Transaction.make_dummy(None)
         tx_.name = self.id
         tx_.fee = self.fee
         tx_.time = datetime.now().timestamp()
         tx_.balance = sum(out.amount_int for out in self.TxOut)
-        tx_.height = 0
-        tx_.status = tx.TxStatus.NOT_CONFIRMED
-        # TODO:
-        tx_.add_inputs(((i.amount_int, "") for i in self.TxIn), True)
-        tx_.add_inputs(((i.amount_int, "") for i in self.TxOut), False)
+        tx_.height = None
+        tx_.add_inputs(((i.amount_int, i.address
+        .name) for i in self.TxIn), True)
+        tx_.add_inputs(((i.amount_int, i.address) for i in self.TxOut), False)
         return tx_
 
     def legacy_repr(self):
@@ -242,7 +280,7 @@ class Mtx:
         return util.bytes_to_hex(bytes(self))
 
     @classmethod
-    def make(cls, unspents, outputs):
+    def make(cls, unspents: List[UTXO], outputs: List[Tuple[str, int]]):
         version = constants.VERSION_1
         lock_time = constants.LOCK_TIME
         outputs = construct_outputs(outputs)
@@ -254,22 +292,24 @@ class Mtx:
             txid = util.hex_to_bytes(unspent.txid)[::-1]
             txindex = unspent.txindex.to_bytes(4, byteorder='little')
             amount = int(unspent.amount).to_bytes(8, byteorder='little')
+            assert unspent.address
             inputs.append(TxInput(script_sig, txid, txindex, amount=amount,
-                                  segwit_input=unspent.segwit))
-        log.debug(f"INPUTS: {inputs}")
+                                  segwit_input=unspent.segwit, address=unspent.address))
         out = cls(version, inputs, outputs, lock_time)
         out.unspents = unspents
         return out
 
-    @property
+    @meta.lazy_property
+    def in_amount(self):
+        return sum(inc.amount_int for inc in self.TxIn)
+
+    @meta.lazy_property
+    def out_amount(self):
+        return sum(out.amount_int for out in self.TxOut)
+
+    @meta.lazy_property
     def fee(self):
-        if not hasattr(self, "__fee__"):
-            in_amount = sum(inc.amount_int for inc in self.TxIn)
-            out_amount = sum(out.amount_int for out in self.TxOut)
-            log.debug(
-                f"ESTEEMATE FEE in:{in_amount} out:{out_amount} = {in_amount - out_amount}")
-            self.__fee__ = in_amount - out_amount
-        return self.__fee__
+        return self.in_amount - self.out_amount
 
     @classmethod
     def is_segwit(cls, tx):
@@ -356,28 +396,29 @@ class Mtx:
         input_script_field = [
             self.TxIn[i].script_sig for i in range(len(self.TxIn))]
         if not sign_inputs:
-            log.warning(f"sign_inputs IS EMPTY !!!!")
+            raise NoInputsToSignError()
         for i in sign_inputs:
+            tx_in = self.TxIn[i]
             # Create transaction object for preimage calculation
-            tx_input = self.TxIn[i].txid + self.TxIn[i].txindex
+            tx_input = tx_in.txid + tx_in.txindex
             segwit_input = input_dict[tx_input]['segwit']
-            self.TxIn[i].segwit_input = segwit_input
+            tx_in.segwit_input = segwit_input
 
             script_code = private_key.scriptcode
             script_code_len = util.int_to_varint(len(script_code))
 
             # Use scriptCode for preimage calculation of transaction object:
-            self.TxIn[i].script_sig = script_code
-            self.TxIn[i].script_sig_len = script_code_len
+            tx_in.script_sig = script_code
+            tx_in.script_sig_len = script_code_len
 
             if segwit_input:
                 try:
-                    self.TxIn[i].script_sig += input_dict[tx_input]['amount']\
+                    tx_in.script_sig += input_dict[tx_input]['amount']\
                         .to_bytes(8, byteorder='little')
 
                     # For partially signed Segwit transactions the signatures must
                     # be extracted from the witnessScript field:
-                    input_script_field[i] = self.TxIn[i].witness
+                    input_script_field[i] = tx_in.witness
                 except AttributeError:
                     raise ValueError(
                         'Cannot sign a segwit input when the input\'s amount is '
@@ -389,8 +430,9 @@ class Mtx:
 
         preimages = self.calc_preimages(inputs_parameters)
 
-        for hash, (i, _, segwit_input) in zip(preimages, inputs_parameters):
-            signature = private_key.sign(hash) + b'\x01'
+        for hash_, (i, _, segwit_input) in zip(preimages, inputs_parameters):
+            tx_in = self.TxIn[i]
+            signature = private_key.sign(hash_) + b'\x01'
             if private_key.is_multi_sig:
                 raise NotImplementedError("Multisig will be implemented later")
             else:
@@ -410,9 +452,9 @@ class Mtx:
                     b'\x00' if segwit_tx else b'')
 
             # Providing the signature(s) to the input
-            self.TxIn[i].script_sig = script_sig
-            self.TxIn[i].script_sig_len = util.int_to_varint(len(script_sig))
-            self.TxIn[i].witness = witness
+            tx_in.script_sig = script_sig
+            tx_in.script_sig_len = util.int_to_varint(len(script_sig))
+            tx_in.witness = witness
         return self.to_hex()
 
     def calc_preimages(self, inputs_parameters):
@@ -672,8 +714,7 @@ def sanitize_tx_data(unspents, outputs, fee, leftover, combine=True,
 def construct_outputs(outputs):
     outputs_obj = []
 
-    for data in outputs:
-        dest, amount = data
+    for dest, amount in outputs:
         log.debug(f"dest:{dest} amount:{amount}")
 
         # P2PKH/P2SH/Bech32
@@ -689,8 +730,8 @@ def construct_outputs(outputs):
                              dest)
 
             amount = b'\x00\x00\x00\x00\x00\x00\x00\x00'
-
-        outputs_obj.append(TxOutput(amount, script_pubkey))
+        assert dest
+        outputs_obj.append(TxOutput(amount, script_pubkey, address=dest))
 
     return outputs_obj
 

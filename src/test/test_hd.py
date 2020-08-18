@@ -6,7 +6,7 @@ log = logging.getLogger(__name__)
 MNEMO_PASSWORD = "hardcoded mnemo password"
 
 
-class Test_Base(unittest.TestCase):
+class TestBase(unittest.TestCase):
 
     def test_btc(self):
         seed = mnemonic.Mnemonic.to_seed(

@@ -30,7 +30,7 @@ BasePopup{
 
         DetailLabel{
             id: _address
-            name: qsTr("Target address:","Receive money result page")
+            name: qsTr("Recipient address:","Receive money result page")
             valueTextSize: 14
 
         }

@@ -14,6 +14,7 @@ class GuiApplication(qt_widgets.QApplication):
         self.setAttribute(qt_core.Qt.AA_EnableHighDpiScaling)
         self.setAttribute(qt_core.Qt.AA_UseHighDpiPixmaps)
         super().__init__(sys.argv)
+        self.setWindowIcon(qt_qui.QIcon( ":/qml/media/logo.ico"))
         self.setApplicationName(e_config_version.CLIENT_NAME)
         self.setApplicationVersion(
             ".".join(map(str, e_config_version.CLIENT_VERSION)))

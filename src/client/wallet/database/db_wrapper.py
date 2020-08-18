@@ -3,6 +3,8 @@ from typing import Optional, List
 import sqlite3 as sql
 import sys
 from pathlib import Path
+# to debug
+from ...server import net_cmd
 
 import PySide2.QtCore as qt_core
 
@@ -12,7 +14,7 @@ from . import sqlite_impl
 log = logging.getLogger(__name__)
 
 
-def nmark(number: list) -> str:
+def nmark(number: int) -> str:
     return f"({','.join('?'*number)})"
 
 
@@ -34,8 +36,8 @@ class DbWrapper(sqlite_impl.SqLite):
 
     def open_db(self, password: bytes, nonce: bytes, db_name: str = None) -> None:
         # assert password, "Not empty password expected"
-        assert isinstance(password,bytes)
-        assert isinstance(nonce,bytes)
+        assert isinstance(password, bytes)
+        assert isinstance(nonce, bytes)
         self._db_name = db_name or self.DEFAULT_DB_NAME
         self.connect_impl(self._db_name, password=password, nonce=nonce)
         self.create_tables()
@@ -231,7 +233,8 @@ class DbWrapper(sqlite_impl.SqLite):
         fetch = c.fetchall()
         c.close()
         for values in fetch:
-            _ = tx.make_input(iter(values))
+            tx.make_input(iter(values))
+        qt_core.QCoreApplication.processEvents()
 
     def _read_tx_count(self, wallet: address.CAddress) -> None:
         query = f"""
@@ -250,6 +253,36 @@ class DbWrapper(sqlite_impl.SqLite):
         """
         c = self._exec_(query, (address.rowid,))
         c.close()
+
+    def _remove_tx(self, tx_: tx.Transaction) -> None:
+        if tx_.rowid is None:
+            query = f"""
+            DELETE FROM {self.transactions_table}
+            WHERE {self.name_column} == ?;
+            """
+            c = self._exec_(query, (self(tx_.name),))
+        else:
+            query = f"""
+            DELETE FROM {self.transactions_table}
+            WHERE id == ?;
+            """
+            c = self._exec_(query, (tx_.rowid,))
+        c.close()
+
+    def _remove_tx_list(self, tx_list: List[tx.Transaction]) -> None:
+        # TODO: optimize
+        # may be row ids?
+        # tx_hashes = f"({','.join(map(lambda t: self(t.name),tx_list))})"
+        # log.warning(f"tx hashes:{tx_hashes}")
+        # query = f"""
+        # DELETE FROM {self.transactions_table}
+        # WHERE {self.name_column} IN ?;
+        # """
+        # c = self._exec_(query, (tx_list,))
+        # c.close()
+
+        for tx_ in tx_list:
+            self._remove_tx(tx_)
 
     def _add_or_save_wallet(self, wallet: address.CAddress, timeout: int = None) -> None:
         if not timeout:
@@ -285,13 +318,13 @@ class DbWrapper(sqlite_impl.SqLite):
                 c = self._exec_(query, (
                     self(wallet.name),
                     wallet.coin.rowid,  # don't encrypt!
-                    self(wallet.label,True,"wallet label"),
-                    self(wallet.message, True,"wallet message"),
+                    self(wallet.label, True, "wallet label"),
+                    self(wallet.message, True, "wallet message"),
                     self(wallet.created_db_repr),
                     # they're  empty at first place but later not !
                     self(wallet.type),
                     self(wallet.balance),
-                    self(wallet.tx_count),
+                    self(wallet.txCount),
                     self(wallet.first_offset),
                     self(wallet.last_offset),
                     self(wallet.export_key(), True, "wallet key"),
@@ -308,6 +341,8 @@ class DbWrapper(sqlite_impl.SqLite):
             we don't put some fields in update scope cause we don't expect them being changed
             """
         else:
+            if net_cmd.AddressHistoryCommand.verbose:
+                log.debug("saving wallet info %r" % wallet)
             query = f"""
             UPDATE  {self.wallets_table} SET
                 {self.label_column} = ?,
@@ -319,12 +354,13 @@ class DbWrapper(sqlite_impl.SqLite):
             WHERE id = ?
                 ;
             """
+
             try:
                 c = self._exec_(query, (
                     self(wallet.label, True, "wallet label"),
                     self(wallet.type),
                     self(wallet.balance),
-                    self(wallet.tx_count),
+                    self(wallet.txCount),
                     self(wallet.first_offset),
                     self(wallet.last_offset),
                     wallet.rowid
@@ -346,12 +382,13 @@ class DbWrapper(sqlite_impl.SqLite):
         self._clear_tx(wallet)
         log.debug(f"Wallet {wallet} erased from DB")
 
-    def _apply_password(self, password: bytes , nonce: bytes) -> None:
-        self.drop_db()
-        self.open_db(password,nonce)
+    def _apply_password(self, password: bytes, nonce: bytes) -> None:
+        # why ??
+        # self.drop_db()
+        self.open_db(password, nonce)
         self._init_actions()
 
-    def _set_meta_entry(self, name: str, value: str, strong: bool = False ) -> None:
+    def _set_meta_entry(self, name: str, value: str, strong: bool = False) -> None:
         """
         if not strong then we shouldn't use password
         """
@@ -407,12 +444,10 @@ class DbWrapper(sqlite_impl.SqLite):
                 {self.time_column},
                 {self.amount_column},
                 {self.fee_column},
-                {self.status_column},
-                {self.receiver_column},
-                {self.target_column}
-                ) VALUES  (?,?,?,?,?,?,?,?,?)
+                {self.coin_base_column}
+                ) VALUES  {nmark(7)}
             """
-            assert tx.wallet.rowid is not None and tx.wallet.rowid > 0 and tx.wallet.rowid < 100
+            assert tx.wallet.rowid is not None
             c = self._exec_(query,
                             (
                                 self(tx.name),
@@ -421,18 +456,16 @@ class DbWrapper(sqlite_impl.SqLite):
                                 self(tx.time),
                                 self(tx.balance),
                                 self(tx.fee),
-                                self(tx.status),
-                                self(tx.fromAddress),
-                                self(tx.toAddress),
+                                self(tx.coin_base),
                             )
                             )
             tx.rowid = c.lastrowid
             c.close()
             # make it in try block ( we don't need inputs withot tx )
             # inputs
-            for inp in tx.input_iter:
+            for inp in tx.inputs:
                 self._write_input(inp)
-            for out in tx.output_iter:
+            for out in tx.outputs:
                 self._write_input(out)
 
         except sql.IntegrityError as ie:
@@ -441,9 +474,57 @@ class DbWrapper(sqlite_impl.SqLite):
                 log.fatal("TX exists: %s (%s)", tx, ie)
                 sys.exit(1)
             else:
-                log.warn(f"Can't save TX:{ie}")
+                # log.warn(f"Can't save TX:{ie}")
+                pass
         except AssertionError:
             sys.exit(1)
+
+    def _write_transactions(self, address, tx_list: list) -> None:
+        # log.warning(f"{address} {tx_list}")
+        assert address.rowid is not None
+        self._gcd.post_count -= 1
+        for tx in tx_list:
+            try:
+                query = f"""
+                INSERT  INTO {self.transactions_table}
+                    ({self.name_column},
+                    {self.wallet_id_column},
+                    {self.height_column},
+                    {self.time_column},
+                    {self.amount_column},
+                    {self.fee_column},
+                    {self.coin_base_column}
+                    ) VALUES  {nmark(7)}
+                """
+                c = self._exec_(query,
+                                (
+                                    self(tx.name),
+                                    address.rowid,
+                                    self(tx.height),
+                                    self(tx.time),
+                                    self(tx.balance),
+                                    self(tx.fee),
+                                    self(tx.coin_base),
+                                )
+                                )
+                tx.rowid = c.lastrowid
+                c.close()
+                # make it in try block ( we don't need inputs withot tx )
+                # inputs
+                for inp in tx.inputs:
+                    self._write_input(inp)
+                for out in tx.outputs:
+                    self._write_input(out)
+
+            except sql.IntegrityError as ie:
+                if str(ie).find('UNIQUE') < 0:
+                    log.fatal("TX exists: %s (%s)", tx, ie)
+                    sys.exit(1)
+                else:
+                    log.warn(f"Can't save TX:{ie}")
+                    pass
+            except AssertionError:
+                sys.exit(1)
 
     def _write_input(self, inp: tx.Input) -> None:
         """
@@ -453,14 +534,14 @@ class DbWrapper(sqlite_impl.SqLite):
             query = f"""
             INSERT INTO {self.inputs_table}
                 ({self.address_column},{self.tx_id_column},{self.amount_column},{self.type_column})
-                VALUES  (?,?,?,?)
+                VALUES  {nmark(4)}
             """
             c = self._exec_(query,
                             (
                                 self(inp.address),
                                 inp.tx.rowid,
                                 self(inp.amount),
-                                self(inp.type),
+                                self(inp.out),
                             )
                             )
             c.close()
@@ -562,7 +643,7 @@ class DbWrapper(sqlite_impl.SqLite):
         we call this version on start
         """
         if not adds:
-            return
+            return []
         query = f"""
             SELECT
                 {self.wallet_id_column},
@@ -572,9 +653,7 @@ class DbWrapper(sqlite_impl.SqLite):
                 {self.time_column},
                 {self.amount_column},
                 {self.fee_column},
-                {self.status_column},
-                {self.receiver_column},
-                {self.target_column}
+                {self.coin_base_column}
             FROM {self.transactions_table};
         """
         c = self._exec_(query, )
@@ -582,7 +661,7 @@ class DbWrapper(sqlite_impl.SqLite):
         c.close()
         if not fetch:
             return []
-        # prepare coins
+        # prepare
         add_map = {add.rowid: add for add in adds}
         for add in adds:
             add.__txs = []
@@ -594,7 +673,8 @@ class DbWrapper(sqlite_impl.SqLite):
                 add_cur = add_map.get(int(values[0]))
                 if add_cur is None:
                     log.critical(f"No address with row id:{values[0]}")
-            tx_ = tx.Transaction(None)
+                    break
+            tx_ = tx.Transaction(add_cur)
             tx_.from_args(iter(values[1:]))
             txs.append(tx_)
             add_cur.__txs.append(tx_)
@@ -605,6 +685,38 @@ class DbWrapper(sqlite_impl.SqLite):
     def _read_all_inputs(self, txs):
         """
         we call this version on start
-
-        why do we need to load inputs?
         """
+        if not txs:
+            return []
+        # we don't need rowID here !!!
+        query = f"""
+            SELECT
+                {self.tx_id_column},
+                {self.type_column},
+                {self.address_column},
+                {self.amount_column}
+            FROM {self.inputs_table};
+        """
+        c = self._exec_(query, )
+        fetch = c.fetchall()
+        c.close()
+        if not fetch:
+            return []
+        # prepare
+        tx_map = {tx.rowid: tx for tx in txs}
+        for tx in txs:
+            tx.__ins = []
+        tx_cur = None
+        ins = []
+        for values in fetch:
+            # some sort of caching
+            if not tx_cur or tx_cur.rowid != values[0]:
+                tx_cur = tx_map.get(int(values[0]))
+                if tx_cur is None:
+                    log.critical(f"No tx with row id:{values[0]}")
+                    break
+            ins.append(
+                tx_cur.make_input(iter(values[1:]))
+            )
+        qt_core.QCoreApplication.processEvents()
+        return ins

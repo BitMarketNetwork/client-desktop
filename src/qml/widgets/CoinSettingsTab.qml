@@ -7,6 +7,13 @@ Tab {
     id: _base
     property alias model: _coin_list.model
 
+        Component.onCompleted: {
+            // console.log(`${parent.height} ${parent.height - 300}`)
+        }
+        onHeightChanged: {
+            // console.log(`${parent.height} ${parent.height - 300}`)
+        }
+
     TitleText{
         id: _title
         anchors{
@@ -16,7 +23,7 @@ Tab {
             leftMargin: 40
             topMargin: 10
         }
-        text: qsTr("Uncheck unnecessery coins")
+        text: qsTr("Uncheck unnecessary coins","Settings item")
         sub: true
     }
 
@@ -27,15 +34,15 @@ Tab {
             topMargin: 10
             left: parent.left
             right: parent.right
-            bottom: parent.bottom
+//            bottom: parent.bottom
         }
-//        contentWidth: 400
         contentHeight: 400
+        height: parent.height
+        clip: true
         ScrollBar.vertical: ScrollBar{
             width: 30
             policy: ScrollBar.AlwaysOn
         }
-        clip: true
 
 
 

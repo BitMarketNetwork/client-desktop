@@ -7,7 +7,6 @@ from . import tr_codes
 from . import ts_files
 from . import docs_path
 from . import tr_items
-from . import db
 
 log = logging.getLogger(__name__)
 
@@ -22,8 +21,8 @@ def run():
     make_source("qml")
     make_source("py")
 
-    update_ts("qml")
-    update_ts("py")
+    # update_ts("qml")
+    # update_ts("py")
 
 
 def src_path(prefix):

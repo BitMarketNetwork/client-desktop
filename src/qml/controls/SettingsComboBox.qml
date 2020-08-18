@@ -30,6 +30,29 @@ SettingsControl {
             width: controlWidth
             onActivated: select(currentIndex)
 
+            delegate: ItemDelegate {
+                      width: _combo.width
+                      contentItem: Text {
+                          text: modelData[role]
+                          color: palette.text
+                          font: _combo.font
+                          elide: Text.ElideRight
+                          verticalAlignment: Text.AlignVCenter
+//                          Component.onCompleted: { Funcs.explore(modelData,"combo") }
+                      }
+                      highlighted: _combo.highlightedIndex === index
+                  }
+
+            contentItem: Text{
+                leftPadding: 0
+                rightPadding: _combo.indicator.width + _combo.spacing
+                text: _combo.displayText
+                font: _combo.font
+                color: palette.text
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+            }
+
             background: Rectangle{
                          XemLine{
                              width: parent.width
@@ -62,7 +85,7 @@ SettingsControl {
                      background: Rectangle {
                          border.color: palette.toolTipText
                          radius: 2
-                         color: palette.button
+                         color: palette.midlight
                      }
                  }
             /*

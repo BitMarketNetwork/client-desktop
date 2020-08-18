@@ -6,7 +6,7 @@ from client.wallet import key
 from client.wallet import coin_network
 
 
-class Test_address(unittest.TestCase):
+class TestAddress(unittest.TestCase):
 
     def setUp(self):
         pass

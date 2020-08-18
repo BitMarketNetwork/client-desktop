@@ -15,7 +15,7 @@ Base {
       Component.onCompleted: setOpacities()
 
       function setOpacities() {
-          console.log(`new tab ${current} for ${_stack.children.length}`)
+        //   console.log(`new tab ${current} for ${_stack.children.length}`)
           for (var i = 0; i < _stack.children.length; ++i) {
               _stack.children[i].opacity = (i === current ? 1 : 0);
               _stack.children[i].enabled = i === current;
@@ -26,10 +26,10 @@ Base {
           id: _title
           anchors{
             top: parent.top
-            topMargin: defaultMargin
+            topMargin: 10
             left: parent.left
           }
-          text: qsTr("Application settings")
+          text: qsTr("Application settings","Menu item")
       }
 
       XemLine{
@@ -42,7 +42,7 @@ Base {
           width: parent.width
           anchors{
             top: _title.bottom
-            topMargin: defaultMargin
+            topMargin: 10
             left: parent.left
           }
 
@@ -56,7 +56,7 @@ Base {
                           id: _btn
 
                             text: 	_stack.children[index].title
-                            width: Math.min(150, parent.width / _stack.children.length)
+                            width: Math.min(180, parent.width / _stack.children.length)
                             height: 40
                             checked: current === index
                             MouseArea {

@@ -4,8 +4,7 @@ import logging
 
 import PySide2.QtCore as qt_core
 
-from client import gcd
-
+from ... import gcd
 from ...wallet import key, mutable_tx, tx
 from . import api, coin_manager
 
@@ -16,7 +15,6 @@ class TxController(qt_core.QObject):
     amountChanged = qt_core.Signal()
     feeChanged = qt_core.Signal()
     changeChanged = qt_core.Signal()
-    balanceChanged = qt_core.Signal()
     canSendChanged = qt_core.Signal()
     substractChanged = qt_core.Signal()
     newAddressForLeftoverChanged = qt_core.Signal()
@@ -35,60 +33,70 @@ class TxController(qt_core.QObject):
     def __init__(self, parent=None, address=None):
         super().__init__(parent)
         if address is None:
-            self._cm = api.Api.get_instance().coinManager
-            self._cm.getCoinUnspentList()
-            address = self._cm.address
+            self.__cm = api.Api.get_instance().coinManager
+            self.__cm.getCoinUnspentList()
+            address = self.__cm.address
         assert address
-        self._coin = address.coin
-        self._tx = mutable_tx.MutableTransaction(
+        self.__coin = address.coin
+        self.__tx = mutable_tx.MutableTransaction(
             address,
             gcd.GCD.get_instance().fee_man,
             self
         )
         # we should keep it avoiding rounding issues when user input amount manually
-        self._human_amount = self._round(self._tx.amount)
+        self.__human_amount = self.__round(self.__tx.amount)
         # while we can send only from one address then we show max amount from this address only
-        self._spb_factor: float = None  # recommended value
+        self.__spb_factor: float = None  # recommended value
         self.spbFactor = 0.5
         # update UTXO right now
-        self._coin.balanceChanged.connect(self.balance_changed)
+        self.__coin.balanceChanged.connect(self.balance_changed)
         # do we need make it too often ?
         # qt_core.QTimer.singleShot(1000, self.recalcSources)
-        self._negative_change = True
+        self.__negative_change = False
+        self.use_hint = True
 
     @qt_core.Slot()
     def balance_changed(self):
-        self.balanceChanged.emit()
-        self._update_amount(self._tx.source_amount)
-        api.Api.get_instance().show_spinner(False)
+        self.maxAmountChanged.emit()
+        if self.__negative_change and self.use_hint:
+            self.__update_amount(self.__tx.source_amount)
+        # api.Api.get_instance().show_spinner(False)
 
-    def _round(self, value: float, fiat: bool = False) -> str:
+    def __round(self, value: float, fiat: bool = False) -> str:
         if fiat:
-            return str(self._coin.fiat_amount(value))
-        return str(self._coin.balance_human(value))
+            return str(self.__coin.fiat_amount(value))
+        return str(self.__coin.balance_human(value))
 
-    def _parse(self, value: str) -> float:
-        return self._coin.from_human(value)
+    def __parse(self, value: str) -> float:
+        return self.__coin.from_human(value)
 
     @qt_core.Property(str, notify=maxAmountChanged)
     def maxAmount(self):
-        return self._round(self._tx.source_amount)
+        return self.__round(self.__tx.source_amount)
+
+    @qt_core.Property(str, notify=amountChanged)
+    def filteredAmount(self):
+        "minimum amount to cover amount"
+        return self.__round(self.__tx.filtered_amount)
 
     @qt_core.Property(str, notify=amountChanged)
     def amount(self):
-        return self._human_amount
+        return self.__human_amount
 
     @amount.setter
     def _set_amount(self, value: str) -> None:
-        self._human_amount = value
-        self._tx.amount = int(self._parse(value))
-        self._update_amount()
+        self.__human_amount = value
+        self.__tx.amount = int(self.__parse(value))
+        self.__update_amount()
 
-    def _update_amount(self, amount = None):
+    def __update_amount(self, amount=None):
         if amount is not None:
-            # self._tx.guess_amount()
-            self._tx.amount = amount
-        self._human_amount = self._round(self._tx.amount)
+            self.__tx.amount = amount
+        human_amount = self.__round(self.__tx.amount)
+        if self.__tx.amount != int(self.__parse(self.__human_amount)):
+            self.__human_amount = human_amount
+        self.__validate_change()
+        # log.debug( f"AMOUNT human:{self.__human_amount} real:{self.__tx.amount}")
         self.amountChanged.emit()
         self.canSendChanged.emit()
         self.confirmChanged.emit()
@@ -96,48 +104,49 @@ class TxController(qt_core.QObject):
 
     @qt_core.Property(bool, notify=newAddressForLeftoverChanged)
     def newAddressForChange(self):
-        return self._tx.new_address_for_change
+        return self.__tx.new_address_for_change
 
     @newAddressForChange.setter
     def set_new_address_for_leftover(self, on):
-        if on == self._tx.new_address_for_change:
+        if on == self.__tx.new_address_for_change:
             return
         log.debug(f"use new address for change: {on}")
-        self._tx.new_address_for_change = on
+        self.__tx.new_address_for_change = on
         self.newAddressForLeftoverChanged.emit()
 
     @qt_core.Property(bool, notify=substractChanged)
     def substractFee(self):
-        return self._tx.substract_fee
+        return self.__tx.substract_fee
 
     @substractFee.setter
     def set_substract_fee(self, on):
-        if on == self._tx.substract_fee:
+        if on == self.__tx.substract_fee:
             return
         log.debug(f" substract fee: {on}")
-        self._tx.substract_fee = on
+        self.__tx.substract_fee = on
+        self.__validate_change()
         self.substractChanged.emit()
         self.changeChanged.emit()
         self.canSendChanged.emit()
 
     @qt_core.Property(str, notify=amountChanged)
     def fiatAmount(self):
-        return self._round(self._tx.amount, True)
+        return self.__round(self.__tx.amount, True)
 
-    @qt_core.Property(str, notify=balanceChanged)
+    @qt_core.Property(str, notify=maxAmountChanged)
     def fiatBalance(self):
-        return self._round(self._tx.source_amount, True)
+        return self.__round(self.__tx.source_amount, True)
 
     @qt_core.Property(str, notify=feeChanged)
     def spbAmount(self):
-        return str(self._tx.spb)
+        return str(self.__tx.spb)
 
     @spbAmount.setter
     def _set_spb_amount(self, value: str):
         log.debug(value)
-        if value == str(self._tx.spb):
+        if value == str(self.__tx.spb):
             return
-        self._tx.spb = int(value)
+        self.__tx.spb = int(value)
         self.feeChanged.emit()
         self.changeChanged.emit()
         self.confirmChanged.emit()
@@ -145,25 +154,26 @@ class TxController(qt_core.QObject):
 
     @qt_core.Property(str, notify=feeChanged)
     def feeAmount(self):
-        return self._round(self._tx.fee)
+        return self.__round(self.__tx.fee)
 
     @qt_core.Property(str, notify=feeChanged)
     def feeFiatAmount(self):
-        return self._round(self._tx.fee, True)
+        return self.__round(self.__tx.fee, True)
 
     @qt_core.Property(float, notify=feeChanged)
     def spbFactor(self) -> float:
-        return self._spb_factor
+        return self.__spb_factor
 
     @spbFactor.setter
     def _set_spb_factor(self, value: float) -> None:
         assert isinstance(value, (float, int))
         assert value >= 0. and value <= 1.
-        if self._spb_factor == value:
+        if self.__spb_factor == value:
             return
-        self._spb_factor = value
-        self._tx.spb = (value * (self._tx.MAX_SPB_FEE -
-                                 self._tx.MIN_SPB_FEE)) + self._tx.MIN_SPB_FEE
+        self.__spb_factor = value
+        self.__tx.spb = (value * (self.__tx.MAX_SPB_FEE -
+                                  self.__tx.MIN_SPB_FEE)) + self.__tx.MIN_SPB_FEE
+        self.__validate_change()
         self.feeChanged.emit()
         self.changeChanged.emit()
         self.confirmChanged.emit()
@@ -171,76 +181,89 @@ class TxController(qt_core.QObject):
 
     @qt_core.Property(str, notify=changeChanged)
     def changeAmount(self):
-        change = self._tx.change
-        self._negative_change = change < 0 or self._tx.amount == 0.
-        return self._round(max(0, change))
+        return self.__round(max(0, self.__tx.change))
+
+    def __validate_change(self):
+        self.__negative_change = self.__tx.change < 0 or self.__tx.amount <= 0. or \
+            (self.__tx.substract_fee and self.__tx.fee >= self.__tx.amount)
+
+    @qt_core.Property(bool, notify=changeChanged)
+    def hasChange(self) -> str:
+        return not self.__negative_change and self.__tx.change > 0
 
     @qt_core.Property(bool, notify=changeChanged)
     def wrongAmount(self):
-        return self._negative_change
+        return self.__negative_change
 
     @qt_core.Property(str, notify=changeAddressChanged)
     def changeAddress(self):
-        return self._tx.leftover_address
+        return self.__tx.leftover_address
 
     @qt_core.Property('QVariantList', constant=True)
     def sourceModel(self):
-        return self._tx.sources
+        return self.__tx.sources
 
     @qt_core.Property(str, notify=receiverChanged)
     def receiverAddress(self):
-        return self._tx.receiver
+        return self.__tx.receiver
 
     @qt_core.Property(bool, notify=receiverChanged)
     def receiverValid(self):
-        return self._tx.receiver_valid
+        return self.__tx.receiver_valid
 
     @receiverAddress.setter
     def _set_receiver(self, address: str):
-        self._tx.receiver = address
+        self.__tx.receiver = address
         self.receiverChanged.emit()
         self.canSendChanged.emit()
 
     @qt_core.Property(int, notify=confirmChanged)
     def confirmTime(self):
         "minutes"
-        return self._tx.estimate_confirm_time()
+        return self.__tx.estimate_confirm_time()
 
     @qt_core.Property(bool, notify=canSendChanged)
-    def canSend(self):
+    def canSend(self) -> bool:
         log.debug(
-            f"amount: {self._tx.amount} source amount:{self._tx.source_amount } change:{self._tx.change}")
-        if self._tx.amount <= 0 or self._tx.fee < 0:
-            log.debug("negative amounts")
+            f"amount: {self.__tx.amount} source amount:{self.__tx.source_amount } change:{self.__tx.change} fee:{self.__tx.fee}")
+        if self.__tx.amount <= 0 or self.__tx.fee < 0:
+            log.debug("negative amount or change")
             return False
-        if self._tx.change < 0:
+        if self.__tx.change < 0:
             log.debug("negative change")
             return False
-        if self._tx.spb < self._tx.MIN_SPB_FEE:
+        if self.__tx.spb < self.__tx.MIN_SPB_FEE:
             log.debug("too low SPB")
             return False
-        if not self._tx.receiver_valid:
+        if self.__tx.substract_fee and self.__tx.fee >= self.__tx.amount:
+            log.debug("fee is more than amount")
+            return False
+        if not self.__tx.receiver_valid:
             log.debug("wrong receiver")
             return False
-        if self._tx.amount > self._tx.source_amount:
+        if self.__tx.amount > self.__tx.source_amount:
             log.debug("amount more than balance")
             return False
         return True
 
     @qt_core.Property('QVariantList', constant=True)
     def targetList(self):
-        # if addr is not self._cm.address] # why not?
-        return [addr.name for addr in self._cm.coin.wallets]
+        # if addr is not self.__cm.address] # why not?
+        return [addr.name for addr in self.__cm.coin.wallets]
 
     @qt_core.Property(bool, notify=useCoinBalanceChanged)
     def useCoinBalance(self) -> bool:
-        return self._tx.use_coin_balance
+        return self.__tx.use_coin_balance
 
     @useCoinBalance.setter
     def _set_use_coin_balance(self, value: bool) -> None:
-        if value == self._tx.use_coin_balance:
+        if value == self.__tx.use_coin_balance:
             return
-        self._tx.use_coin_balance = value
+        self.__tx.use_coin_balance = value
+        self.__tx.recalc_sources(True)
+        self.__validate_change()
+        if self.__negative_change:
+            self.setMax()
         self.useCoinBalanceChanged.emit()
         self.maxAmountChanged.emit()
         self.changeChanged.emit()
@@ -249,36 +272,35 @@ class TxController(qt_core.QObject):
 
     @qt_core.Slot()
     def less(self):
+        #TODO: later
         log.debug("amount less")
 
     @qt_core.Slot()
     def more(self):
+        #TODO: later
         log.debug("amount more")
 
     @qt_core.Slot()
     def recalcSources(self):
-        self._tx.recalc_sources()
-        self._tx.guess_amount()
+        self.__tx.recalc_sources()
         self.maxAmountChanged.emit()
         self.canSendChanged.emit()
         self.changeChanged.emit()
 
     @qt_core.Slot()
     def setMax(self):
-        self._update_amount(self._tx.source_amount -
-                            (0 if self._tx.substract_fee else self._tx.fee))
-
-    # actions
+        self.__tx.set_max()
+        self.__update_amount()
 
     @qt_core.Slot(result=bool)
     def prepareSend(self):
         # stupid check but ..
         if not self.canSend:
             return False
-        if self._tx.amount > self._tx.source_amount:
+        if self.__tx.amount > self.__tx.source_amount:
             return False
         try:
-            self._tx.prepare()
+            self.__tx.prepare()
             self.confirmChanged.emit()
             self.changeAddressChanged.emit()
         except mutable_tx.NewTxerror as error:
@@ -289,22 +311,22 @@ class TxController(qt_core.QObject):
 
     @qt_core.Slot(result=bool)
     def send(self) -> bool:
-        # self._recalc_timer.stop()
         # stupid check but ..
         if not self.canSend:
             return False
-        self._tx.send()
-
-        # NO !!!!!!!!!
-        # self.sent.emit()
-
+        self.__tx.send()
         return True
 
     @qt_core.Slot()
     def cancel(self) -> None:
         log.debug("Cancelling TX")
-        self._tx.cancel()
+        self.__tx.cancel()
 
     @qt_core.Property(str, constant=True)
     def txHash(self) -> str:
-        return self._tx.tx_id or ""
+        return self.__tx.tx_id or ""
+
+    # for tests
+    @property
+    def impl(self):
+        return self.__tx

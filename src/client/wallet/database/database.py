@@ -1,24 +1,22 @@
 import base64
 import hashlib
-import sys
 import logging
-
 import sqlite3 as sql
+import sys
+
 import PySide2.QtCore as qt_core
 
-from .db_wrapper import DbWrapper
-from .. import coins
-from .. import address
-from .. import tx
+from . import db_wrapper
+from .. import address, coins, tx
+from ... import loading_level
+
 from client.ui.gui import api  # pylint; disable=import-error
 from client.config import version  # pylint; disable=import-error
 
 log = logging.getLogger(__name__)
-SERVER_VERSION_KEY = "server_version"
-CLIENT_VERSION_KEY = "client_version"
 
 
-class Database(DbWrapper, qt_core.QObject):
+class Database(db_wrapper.DbWrapper, qt_core.QObject):
     dbOpened = qt_core.Signal(bool)
     metaRead = qt_core.Signal(str, str, arguments=["key", "value"])
     testPassword = qt_core.Signal(str)
@@ -27,7 +25,7 @@ class Database(DbWrapper, qt_core.QObject):
         super().__init__(parent=parent)
         log.info(f"SQLITE version {sql.sqlite_version}")
         self._gcd = gcd
-        self._gcd.changePassword.connect(
+        self._gcd.applyPassword.connect(
             self._apply_password, qt_core.Qt.QueuedConnection)
 
     def _init_actions(self):
@@ -41,7 +39,6 @@ class Database(DbWrapper, qt_core.QObject):
                 qt_core.Qt.QueuedConnection
                 )
             """
-            self._process_client_version()
             self._gcd.saveCoin.connect(
                 self._update_coin, qt_core.Qt.QueuedConnection)
             self._gcd.saveAddress.connect(
@@ -52,46 +49,28 @@ class Database(DbWrapper, qt_core.QObject):
                 self._set_meta_entry, qt_core.Qt.QueuedConnection)
             self._gcd.saveTx.connect(
                 self._write_transaction, qt_core.Qt.QueuedConnection)
+            self._gcd.saveTxList.connect(
+                self._write_transactions, qt_core.Qt.QueuedConnection)
+            self._gcd.removeTxList.connect(
+                self._remove_tx_list, qt_core.Qt.QueuedConnection)
             self._gcd.clearAddressTx.connect(
                 self._clear_tx, qt_core.Qt.QueuedConnection)
             self._gcd.dropDb.connect(
                 self.drop_db, qt_core.Qt.QueuedConnection)
             self._gcd.resetDb.connect(
                 self.reset_db, qt_core.Qt.QueuedConnection)
-            self._gcd._server_version = self._get_meta_entry(
-                SERVER_VERSION_KEY)
             # read mnemonic
             self.metaRead.connect(
                 self._gcd.onMeta, qt_core.Qt.QueuedConnection)
-            # order makes sense !!!
-            self._read_meta("font")
-            self._read_meta("style")
-            self._read_meta("language")
-            self._read_meta("base_unit")
             self._read_meta("seed")
-            self._read_meta("terms")
             self.load_everything()
 
     def _read_meta(self, key: str) -> None:
         self.metaRead.emit(key, self._get_meta_entry(key))
 
-    def _process_client_version(self) -> None:
-        client_version = self._get_meta_entry(CLIENT_VERSION_KEY)
-        local_client_version = ".".join(map(str, version.CLIENT_VERSION))
-        if client_version == local_client_version:
-            return
-        if not client_version:
-            log.warning(f"No client version in DB")
-            self._set_meta_entry(CLIENT_VERSION_KEY, local_client_version)
-        else:
-            # swear here
-            log.warning(
-                f"DB client version:{client_version} doesn't match code client version: {local_client_version}")
-            # self._gcd.quit(1)
-
     @qt_core.Slot()
     def abort(self):
-        log.debug("aborting db")
+        log.warning("aborting db")
         self._save_address_timer.stop()
 
     @qt_core.Slot()
@@ -106,7 +85,7 @@ class Database(DbWrapper, qt_core.QObject):
         # TODO: one query
         for coin in self._gcd.all_coins:
             self._add_coin(coin, True)
-        self._update_wallets()
+        self.__update_wallets()
 
     @qt_core.Slot()
     def save_coins_with_addresses(self):
@@ -131,41 +110,31 @@ class Database(DbWrapper, qt_core.QObject):
     def erase_wallet(self, wallet):
         self._erase_wallet(wallet)
 
-    @qt_core.Slot()
-    def write_server_version(self):
-        self._set_meta_entry(SERVER_VERSION_KEY, self._gcd.server_version)
-
-
-    @qt_core.Slot()
+    # @qt_core.Slot()
     def load_everything(self, coins=None):
         if coins is None:
             coins = self._gcd.all_coins
         self._read_all_coins(coins)
         adds = self._read_all_addresses(coins)
+        self._gcd.db_level_loaded(loading_level.LoadingLevel.ADDRESSES)
         txs = self._read_all_tx(adds)
-        self._read_all_inputs(txs)
-        """
-        qt_core.QMetaObject.invokeMethod(
-            self._gcd,
-            "run_ui",
-            qt_core.Qt.QueuedConnection,
-        )
-        """
+        self._gcd.db_level_loaded(loading_level.LoadingLevel.TRANSACTIONS)
+        inputs = self._read_all_inputs(txs)
+        self._gcd.db_level_loaded(loading_level.LoadingLevel.INPUTS)
 
-    def _update_wallets(self):
+    def __update_wallets(self):
         qt_core.QMetaObject.invokeMethod(
             self._gcd,
             "update_wallets",
             qt_core.Qt.QueuedConnection
         )
-        api_ = api.Api.get_instance()
-        # update coins visibility
-        if api_ is not None:
-            qt_core.QMetaObject.invokeMethod(
-                api_.coinManager,
-                "coinModelChanged",
-                qt_core.Qt.QueuedConnection
-            )
+        # api_ = api.Api.get_instance()
+        # if api_ is not None:
+        #     qt_core.QMetaObject.invokeMethod(
+        #         api_.coinManager,
+        #         "coinModelChanged",
+        #         qt_core.Qt.QueuedConnection
+        #     )
 
     def timerEvent(self, event: qt_core.QTimerEvent):
         if event.timerId() == self._save_address_timer.timerId():

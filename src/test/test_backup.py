@@ -5,7 +5,7 @@ import pathlib
 from client.wallet import serialization
 
 
-class Test_base(unittest.TestCase):
+class TestBase(unittest.TestCase):
     PSW = "()90()OP()!@op"
     FPATH = "test._dat"
 

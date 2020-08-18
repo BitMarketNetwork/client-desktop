@@ -13,13 +13,14 @@ Rectangle {
 
     property alias title: _title.text
     property alias titleColor: _title.color
+    property alias bottomLine: _bottom_line.visible
 
     default property alias content__: _content.children
 
     state: "attached"
 
-    readonly property int defMargin: 20
-    readonly property int 	defLeftMargin: 150
+    readonly property int defMargin: 10
+    readonly property int 	defLeftMargin: 140
 
     /*
     InnerShadow {
@@ -57,6 +58,7 @@ Rectangle {
     }
 
     XemLine{
+        id: _bottom_line
         anchors{
             bottom: parent.bottom
         }

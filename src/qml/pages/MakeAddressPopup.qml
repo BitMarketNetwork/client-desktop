@@ -7,16 +7,16 @@ import "../controls"
 BasePopup {
     id: _base
     ok: false
-    acceptText: qsTr("Create")
+    acceptText: qsTr("Create","New address dialog")
 
     property alias coinName: _coin.value
     property alias label: _label.value
     readonly property int defFontSize: 14
+    readonly property int staticLabelWidth: 200
 
     signal make(string label, bool segwit)
 
     onAccept: make(_label.value, _segwit.checked)
-    focus: true
     width: 700
     height: 500
 
@@ -35,13 +35,14 @@ BasePopup {
 
            DetailLabel{
                id: _coin
-               name: qsTr("Currency:")
+               name: qsTr("Currency:","New address dialog")
                nameTextSize: defFontSize
                valueTextSize: defFontSize
+               labelWidth: staticLabelWidth
            }
            DetailInput{
                id: _label
-               name: qsTr("Address label (optional):")
+               name: qsTr("Address label (optional):","New address dialog")
                nameFontSize: defFontSize
                defMargin: 10
                width: parent.width
@@ -49,11 +50,12 @@ BasePopup {
                height: 30
                //placeholder: qsTr("any string to distinguish this address")
                bgColor: palette.midlight
+               labelWidth: staticLabelWidth
            }
            SwitchBox{
                id: _segwit
                checked: true
-               text: qsTr("Segwit address:")
+               text: qsTr("Segwit address:","New address dialog")
                anchors{
                    left: _label.left
                    leftMargin: _label.inputX + defMargin
@@ -63,7 +65,7 @@ BasePopup {
 
            LongInput{
                id: _message
-               name: qsTr("Message")
+               name: qsTr("Message","New address dialog")
                height: 200
                width: parent.width
                anchors{
@@ -72,6 +74,7 @@ BasePopup {
                }
                bgColor: palette.midlight
                nameFontSize: defFontSize
+               labelWidth: staticLabelWidth
            }
         }
 }

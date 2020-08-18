@@ -15,7 +15,6 @@ TextField{
     bottomPadding: 3
 //    height: 30
 
-    focus: true
     maximumLength: 40
     horizontalAlignment: TextInput.AlignLeft
     verticalAlignment: TextInput.AlignVCenter
@@ -33,6 +32,7 @@ TextField{
     MouseArea{
         anchors.fill: parent
         propagateComposedEvents: true
+        scrollGestureEnabled: true
         onClicked: {
             parent.forceActiveFocus();
         }

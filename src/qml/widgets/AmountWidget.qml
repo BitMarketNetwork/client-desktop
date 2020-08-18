@@ -9,8 +9,8 @@ import "../js/constants.js" as Constants
 SendWidget {
 
     id: _base
-    title: qsTr("Amount:")
-    height: 110
+    title: qsTr("Amount:","New transction window")
+    height: 90
 
     titleColor: valid? palette.text: palette.brightText
 
@@ -28,13 +28,12 @@ SendWidget {
 
     TxButton{
         id: _max_btn
-        text: qsTr("Max")
+        text: qsTr("Max","New transction window")
         anchors{
             margins: defMargin
-//            bottomMargin: 10
-            bottom: parent.bottom
-//            left: parent.left
             right: parent.right
+            verticalCenter: _fiat.verticalCenter
+            verticalCenterOffset: 5
         }
         onClicked: max()
         height: 30
@@ -52,7 +51,7 @@ SendWidget {
     MoneyCountInput{
         anchors{
             top: parent.top
-            topMargin: 20
+            topMargin: 10
             right: parent.right
             margins: defMargin
             left: parent.left

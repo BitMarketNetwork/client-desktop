@@ -22,14 +22,14 @@ Rectangle {
         spacing: 10
 
         Text{
-            text: qsTr("Network status:")
+            text: qsTr("Network status:","Status bar")
             color: palette.mid
             font{
                 pixelSize: 14
             }
         }
         Text{
-            text: _base.online? qsTr("Connected"):qsTr("Disconnected")
+            text: _base.online? qsTr("Connected","Status bar"):qsTr("Disconnected","Status bar")
             color: palette.base
             font{
                 pixelSize: 14

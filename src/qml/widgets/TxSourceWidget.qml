@@ -9,45 +9,32 @@ import "../js/constants.js" as Constants
 
 SendWidget {
     id: _base
-    title: qsTr("Assets source:")
-    height: 110
+    title: qsTr("Asset source:","New transction window")
+    height: 130
 
     property alias allAmount: _amount.amount
     property alias allFiat: _fiat.amount
-    property alias sourceModel: _source.model
+    property alias sourceModel: _source_combo.model
+    property alias sourceChoiseEnabled: _source_combo.enabled
     property alias useAllAmount: _use_all.checked
+    property string currentAddress: ""
 
     signal recalcSources()
 
     signal useAll(bool on)
 
-    SourceComboBox{
-        id: _source
-       anchors{
-            top: parent.top
-            topMargin: 10
-            right: parent.right
-            margins: defMargin
-            left: parent.left
-            leftMargin: defLeftMargin
-       }
-       onActivated:{
-           recalcSources()
-       }
-       enabled: false
-       visible: false
-    }
 
         SwitchBox{
             id: _use_all
-            text: qsTr("Use the whole coin balance")
+            text: qsTr("Use the whole coin balance","New transction window")
+            offText: qsTr("Use current address balance only","New transction window")
+//            width: 270
 
             anchors{
-//                left: parent.left
-//                leftMargin: defLeftMargin
-                horizontalCenter: parent.horizontalCenter
-
-
+                right: parent.right
+                rightMargin: 20
+                left: parent.left
+                leftMargin: defLeftMargin
                 top: parent.top
                 topMargin: defMargin
             }
@@ -55,47 +42,70 @@ SendWidget {
             onCheckedChanged: {
                 useAll(checked)
             }
+
         }
 
-        LabelText{
+        SubText{
+            id: _source_title
+            anchors{
+                left: parent.left
+                leftMargin: defLeftMargin
+                top: _source_combo.top
+//                topMargin: 10
+//                bottom: _amount_title.top
+//                margins: 10
+            }
+            text: qsTr("Select inputs:","New transaction window")
+        }
+        SourceComboBox{
+            id: _source_combo
+               anchors{
+                    left: parent.left
+                    leftMargin: defLeftMargin + 130
+                    top: _use_all.bottom
+                    topMargin: 20
+                    right: parent.right
+                    rightMargin: 20
+               }
+//               width: 200
+               onClick: {
+                   recalcSources()
+               }
+        }
+        SubText{
             id: _amount_title
             anchors{
                 left: parent.left
-                leftMargin: defMargin
-//                top:  _source.bottom
-//                topMargin: 10
-                bottomMargin: defMargin
-                bottom: parent.bottom
+                leftMargin: defLeftMargin
+                top:  _amount.top
             }
-            text: qsTr("Amount available:")
+            text: qsTr("Available:","New transction window")
+
         }
         MoneyCount{
             id: _amount
             anchors{
-                left: _amount_title.right
-                leftMargin: 10
-//                top: _source.bottom
-//                topMargin: 10
-                verticalCenter: _amount_title.verticalCenter
+//                left: _amount_title.right
+//                leftMargin: 10
+                top: _source_combo.bottom
+                margins: defMargin
+                left: _source_combo.left
+                leftMargin: 0
+//                right: _fiat.left
             }
             unit: CoinApi.coins.unit
-            width: 300
+            width: 100
         }
         MoneyCount{
             id: _fiat
             anchors{
-//                left: _amount.right
-//                top: _amount.bottom
-//                topMargin: 10
                 margins: defMargin
-//                bottom: _amount_title.bottom
-                verticalCenter: _amount_title.verticalCenter
-                right: parent.right
-//                rightMargin: defMargin
+                verticalCenter: _amount.verticalCenter
+                left: _amount.right
+//                right: parent.right
             }
             unit: CoinApi.coins.currency
-            width: 200
-//            state: "right"
+            width: 100
         }
 
 }

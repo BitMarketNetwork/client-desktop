@@ -4,9 +4,12 @@ import logging
 import os
 import signal
 import time
+
 import PySide2.QtCore as qt_core
-from .wallet import coins
-from .wallet import mutable_tx
+
+from . import constant
+from .wallet import coins, mutable_tx
+
 log = logging.getLogger(__name__)
 
 
@@ -92,9 +95,18 @@ class DebugManager(qt_core.QObject):
     def kill(self, sig: int):
         os.kill(os.getpid(), sig)
 
-    @qt_core.Slot()
-    def lookForHD(self):
-        self.gcd.lookForHDChains()
+    @qt_core.Slot(int, int)
+    def undoTransaction(self, coin: int, count: int) -> None:
+        self.gcd.undoTx.emit(self.gcd[coin], count)
+
+    @qt_core.Slot(int)
+    def simulateHTTPError(self, code: int) -> None:
+        self.gcd.httpFailureSimulation.emit(code)
+
+    @qt_core.Slot(str)
+    def simulateClientVersion(self, client_version: str):
+        self.gcd.set_settings(constant.CLIENT_VERSION, client_version)
+        qt_core.QCoreApplication.quit()
 
     @property
     def gcd(self):

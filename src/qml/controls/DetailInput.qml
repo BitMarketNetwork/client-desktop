@@ -17,6 +17,11 @@ Base {
     property alias labelWidth: _name.width
     property alias failure: _underline.red
     property alias valueFontSize: _value.font.pixelSize
+    property bool  enter: false
+
+    onActiveFocusChanged: {
+        _value.forceActiveFocus()
+    }
 
 
     LabelText{
@@ -25,7 +30,7 @@ Base {
             left: parent.left
                 leftMargin: 0
             //bottom: parent.bottom
-            margins: defMargin
+//            margins: defMargin
             verticalCenter: parent.verticalCenter
         }
         color: failure? palette.brightText: palette.text
@@ -38,7 +43,7 @@ Base {
             left:	_name.right
             //bottom: parent.bottom
             verticalCenter: parent.verticalCenter
-            leftMargin: defMargin
+//            leftMargin: defMargin
         }
         background: Rectangle{
             id: _bg
@@ -54,9 +59,9 @@ Base {
         color: _name.color
         cursorVisible: activeFocus
         selectByMouse: !passwordInput
-        focus: true
         overwriteMode: true
         maximumLength: 20
+        focus: true
         leftPadding: 10
 //        rightInset: 10
         font{
@@ -67,6 +72,16 @@ Base {
         passwordCharacter: "*"
         passwordMaskDelay: 3000
 
+                Keys.onEnterPressed: {
+                    if(enter){
+                        accept()
+                    }
+                }
+                Keys.onReturnPressed: {
+                    if(enter){
+                        accept()
+                    }
+                }
     }
 
     /*

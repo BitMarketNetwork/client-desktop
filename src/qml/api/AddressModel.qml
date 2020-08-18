@@ -2,7 +2,7 @@ import QtQuick 2.12
 
 ListModel {
     ListElement{
-        name: "3P3QsMVK89JBNqZQv5zMAKG8FK3kJM4rjt"
+        name: "tb1qw59d0e5sylzjxmhfvs3p4d36x2dj4lrwkas22u"
         label: "Main"
         message: "Some loooong message heeeeerrrrrrrrrrrrrrre"
         created: "08.02.2018 18:00"
@@ -12,6 +12,8 @@ ListModel {
         readOnly: false
         to_wif: "some_wif"
         useAsSource: false
+        realTxCount: 10
+        txCount: 100
     }
     ListElement{
         name: "1F1tAaz5x1HUXrCNLbtMDqcw6o5GNn4xqX"
@@ -25,6 +27,8 @@ ListModel {
         readOnly: true
         to_wif: "some_wif"
         useAsSource: false
+        realTxCount: 98
+        txCount: 98
     }
     ListElement{
         name: "3Jb9jJVRWYVdrf3p4w1hrxdCqHkeb9FDL2"
@@ -37,6 +41,8 @@ ListModel {
         readOnly: false
         to_wif: "some_wif"
         useAsSource: false
+        realTxCount: 4560
+        txCount: 4560
     }
     ListElement{
         name: "1QGrphsPEbxDFBAz66v1hJJfZXkwu4jcbF"
@@ -49,5 +55,7 @@ ListModel {
         readOnly: false
         to_wif: "fff888f88f8f"
         useAsSource: false
+        realTxCount: 0
+        txCount: 0
     }
 }

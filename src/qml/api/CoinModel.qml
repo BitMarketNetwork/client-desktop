@@ -4,6 +4,7 @@ import "../js/functions.js" as Funcs
 ListModel{
     ListElement{
         fullName: "Bitcoin"
+        netName: "Bitcoin"
         icon: "btc_icon.png"
         balance: 10222.12333
         fiatBalance: 933300444000
@@ -17,6 +18,7 @@ ListModel{
     }
     ListElement{
         fullName: "Bitcoin Test"
+        netName: "Bitcoin Test"
         icon: "btc_icon.png"
         balance: 1022233312333
         fiatBalance: 933344
@@ -30,6 +32,7 @@ ListModel{
     }
     ListElement{
         fullName: "Litecoin"
+        netName: "Litecoin"
         icon: "ltc_icon.png"
         balance: 234.1
         fiatBalance: 90044333333
@@ -43,6 +46,7 @@ ListModel{
     }
     ListElement{
         fullName: "Etherium"
+        netName: "Etherium"
         icon: "eth_icon.png"
         balance: 1.34
         fiatBalance: 90044400000

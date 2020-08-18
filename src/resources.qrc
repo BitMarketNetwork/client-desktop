@@ -26,14 +26,12 @@
         <file>qml/controls/TxDelegate.qml</file>
         <file>qml/controls/TxDetailsPanel.qml</file>
         <file>qml/controls/TxFilterBtn.qml</file>
-        <file>qml/controls/TxInputListPanel.qml</file>
         <file>qml/controls/TxRow.qml</file>
         <file>qml/pages/AboutPage.qml</file>
         <file>qml/pages/BasePage.qml</file>
         <file>qml/pages/BasePopup.qml</file>
         <file>qml/pages/MainPage.qml</file>
         <file>qml/pages/MsgPopup.qml</file>
-        <file>qml/pages/NewTxPage.qml</file>
         <file>qml/pages/ReceivePage.qml</file>
         <file>qml/pages/SendPage.qml</file>
         <file>qml/media/loader.gif</file>
@@ -177,5 +175,15 @@
         <file>qml/media/no-money.svg</file>
         <file>qml/controls/MyMenuItem.qml</file>
         <file>qml/pages/AlphaPopup.qml</file>
+        <file>qml/controls/TxInputsView.qml</file>
+        <file>qml/controls/TxDetailButton.qml</file>
+        <file>qml/media/right-arrow.svg</file>
+        <file>qml/media/eye.svg</file>
+        <file>qml/media/refresh.svg</file>
+        <file>qml/widgets/TopAddressPanel.qml</file>
+        <file>qml/pages/TxPage.qml</file>
+        <file>qml/pages/DisplaySeedPopup.qml</file>
+        <file>qml/pages/ImportBmn.qml</file>
+        <file>qml/controls/SubText.qml</file>
     </qresource>
 </RCC>

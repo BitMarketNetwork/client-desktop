@@ -1,0 +1,441 @@
+##AboutPage
+Application name
+Server version
+Client version
+About program
+Application name:
+Server version:
+Client version:
+All right reserved @2020
+Close
+####
+
+##AddWatchAddressPopup
+Add
+Currency:
+Address:
+Label (optional):
+It is impossible to make transactions with this address. You can only view balance and explore old transactions
+####
+
+##AdddressWidget
+Send to:
+####
+
+##AddressInfoPanel
+Send
+Receive
+Exchange
+Transactions history
+All
+Sent
+Received
+####
+
+##AddressListPanel
+Copy address
+Show details 
+Export transactions
+Update
+Remove address
+Clear transactions
+####
+
+##AdvancedSettingsTab
+Application language:
+Fiat currency:
+Application font:
+Rates source:
+Zeros after point:
+Always send change on new address
+This increases your safity.
+It will destroy all you keys and you can lose your money! Make sure you have made backup copy. Continue?
+Clear wallet
+You are about destroy all you keys and there is a risk to lose money! Make sure you have backup copy. Continue?
+Restore wallet
+####
+
+##AlphaPopup
+Accept (10)
+Decline
+<b><font color="red">IMPORTANT NOTE:</font></b> The current application version is an alpha-version and does not warrant stable operation or safety of your finances. Please use this version with precautions for information only, as it is designed for demonstration purposes only.
+Accept
+Accept (%1)
+####
+
+##AmountWidget
+Amount:
+Max
+Send all amount avialable
+####
+
+##BasePopup
+Ok
+Cancel
+####
+
+##ChangeWidget
+Change:
+Send change on new address
+####
+
+##CoinInfoTab
+Coin name:
+Coin status:
+Online
+Offline
+Daemon human version:
+Daemon numeric version:
+Coin height:
+####
+
+##CoinInfoTabView
+Coin information
+####
+
+##CoinListPanel
+Create new address
+Add watch only address
+####
+
+##CoinSettingsTab
+Uncheck unnecessery coins
+####
+
+##EntropyWindow
+Move cursor randomly to generate seed phrase
+####
+
+##ExchangeAprovePopup
+Exchange
+Exchange summary
+Amount of money to send:
+Amount of money to get:
+####
+
+##ExchangePage
+Make an exchange
+Deal
+####
+
+##ExchangeSourcePanel
+I am paying:
+####
+
+##ExchangeTargetPanel
+I will receive:
+####
+
+##ExportAddressPage
+Address details
+Close
+Address:
+Created:
+Public key (hex):
+Private key (WIF):
+Label:
+Message:
+####
+
+##FeeWidget
+Fee:
+Transaction will be never confirmed
+immediately
+in %1 minutes
+in %1 hours
+Transaction will be confirmed %1
+Substract fee:
+satoshi/byte
+Substract comission
+If checked then fee amount will be substracted from transaction amount
+####
+
+##GeneralSettingsTab
+Application language:
+Appearance theme:
+Base unit:
+Fiat currency:
+####
+
+##InputPasswordPopup
+Horrible
+Week
+Middle
+Good
+Strong
+Paranoic
+Wrong password
+Setup new password
+Input password
+Password:
+Input your password here
+Reset
+It destroys all saved keys and transactions! Reset password?  
+Password confirmation:
+Repeat your password here
+Show password
+####
+
+##LeftPanel
+Wallet
+Exchange
+Markets
+####
+
+##LeftoverWidget
+Change:
+Send change to new address
+####
+
+##MainMenuBar
+Actions
+Create new address
+Add watch-only address
+Address
+Export wallet
+Exit
+Tools
+Show empty addresses
+Settings
+About
+Debug
+About debug
+Palette window
+Notification test
+Message box with choice
+Watch address appending popup
+Tx result popup test
+Welcome window
+Password set
+Key management
+Import backup copy
+New master key
+Use existing seed phrase
+Wallet management
+New legacy address
+New segwit address
+UTXO list
+Address details
+Populate wallets
+Remove current wallet
+Clear all wallets
+Polling
+Update
+Poll
+Process tx list
+Stop polling
+Update fees
+Reload QML
+Restart app
+SIGHUP simulation
+SIGINT simulation
+SIGQUIT simulation
+Add dummy TX
+Simulate incoming transfer
+Look for HD chain
+Explore address mempool
+Explore coin mempool
+Online mode
+UI tests
+Message box
+Testing message box appearance
+Sending aprovement test
+Spinner test
+Fee widget
+Mnemo validation
+Password input
+Debug scenarios
+Simulate MTX broadcasting
+####
+
+##MainToolBar
+Export
+New address
+Show empty
+Settings
+About
+Exit
+####
+
+##MakeAddressPopup
+Create
+Currency:
+Address label (optional):
+Segwit address:
+Message
+####
+
+##MnemonicPage
+Paste your phrase here
+New seed phrase:
+Paste your seed phrase
+You can enforce your safity by appending new words
+Apply new key
+New seed phrase
+Apply phrase
+Refresh
+Back
+####
+
+##MnemonicValidationPopup
+Test
+Back
+Test yourself wheather you keep your phrase in mind.
+Test yourself wheather you kept your phrase in mind.
+Input your phrase again
+Input again your phrase here
+Skip mnemo validation under debug
+This phrase doesn't match  phrase that you set before.Try again
+####
+
+##NewTxPage
+Back
+Currency:
+####
+
+##PalettePage
+Close
+####
+
+##ReceivePage
+Receive
+####
+
+##ReceiveResultPopup
+Close
+Copy address
+Receive payment summary
+Address copied to clipboard
+Target address:
+Label:
+Message:
+####
+
+##ReceiveWidget
+Message
+Label:
+Segwit address:
+Message:
+Some text here ...
+####
+
+##RestartPopup
+Applying new settings
+New style will be applied after next launch
+####
+
+##RootApp
+Select address to operate
+No master key detected
+Select coin at first
+New settings will be applyed after next launch.
+####
+
+##SelectCoin
+Select address from the list
+####
+
+##SendApprovePopup
+Send
+Transaction summary
+Amount of money to be sent:
+Receiver address:
+Comission is:
+Change is:
+Send change to:
+####
+
+##SendPage
+Send
+Transaction has sent
+Send a transaction
+####
+
+##SettingsFont
+Select prefferable font
+####
+
+##SettingsPage
+Coins
+Advanced settings
+Exchange
+Advanced setting
+Close
+####
+
+##StatusBar
+Network status:
+Connected
+Disconnected
+####
+
+##TabWidget
+Application settings
+####
+
+##TxController
+Source data for transaction is not valid
+####
+
+##TxDetailsPanel
+ID:
+Confirmations:
+Block:
+Fee:
+Inputs:
+Outputs:
+####
+
+##TxInputListPanel
+Inputs
+Outputs
+####
+
+##TxInputsView
+%1.
+####
+
+##TxListFooter
+Updating ...
+####
+
+##TxResultPopup
+Your transaction has sent succefully. Here is the transaction ID
+Copy
+You can track confirmation progress <a href='#'>here<a>.
+https://ltc.btc.com/%1
+https://www.blockchain.com/en/%1/tx/%2
+####
+
+##TxRow
+Waiting
+In progress %1 form %2
+Sent
+Received
+Time:
+From:
+To:
+Pending
+Unconfirmed
+Confirmed
+Complete
+####
+
+##TxRowWidgetLeft
+Time:
+Confirmations:
+####
+
+##TxSourceWidget
+Assets source:
+Use the whole coin balance
+Amount available:
+####
+
+##WelcomePopup
+Generate new master key
+I want to input old phrase
+I want to restore from backup
+I agree to <a href='terms_of_service'>terms of service</a> and <a href='privacy_policy'>privacy policy</a>
+####
+

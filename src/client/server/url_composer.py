@@ -10,10 +10,10 @@ class UrlComposer:
     API_HOST = 'https://d1.bitmarket.network:30110'
 
     def __init__(self, apiver):
-        self._apiver = apiver
+        self.__apiver = apiver
 
     def get_url(self, action, args=[], gets={}):
-        res = f"{self.API_HOST}/v{self._apiver}/{action}"
+        res = f"{self.API_HOST}/v{self.__apiver}/{action}"
         if args:
             res += "/" + "/".join(args)
         if gets:
@@ -24,7 +24,7 @@ class UrlComposer:
         if ex_host:
             uri = ex_host + action
             if gets:
-                uri += "/?" + urlencode(gets)
+                uri += "?" + urlencode(gets)
         else:
             uri = self.get_url(action, args, gets)
         if verbose:

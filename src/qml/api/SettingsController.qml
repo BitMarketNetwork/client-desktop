@@ -84,14 +84,14 @@ Item {
 
     }
 
-    function coinUnit(coin){
-        if (coin)
+    function coinUnit(unit ){
+        if (unit)
         {
             switch(baseUnit.factor){
             case 8:
-                return coin.unit;
+                return unit;
             case 5:
-                return "m" + coin.unit[0] + coin.unit.substr(1).toLowerCase();
+                return "m" + unit[0] + unit.substr(1).toLowerCase();
             }
         }
         return baseUnit.name

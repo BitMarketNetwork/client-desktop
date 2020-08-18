@@ -10,16 +10,27 @@ BasePopup {
     acceptText: qsTr("Add")
     canBeAccepted: _address.value.length > 10
 
+
     property alias coinName: _coin.value
+    property alias address: _address.value
+    property alias label: _label.value
+    property  alias errorState: _error.visible
+    readonly property int staticLabelWidth: 200
 
-    signal add(string address, string label)
+    signal validate()
 
-    onAccept: add(_address.value , _label.value)
-    focus: true
+    onAccept: validate()
     width: 800
     onVisibleChanged: {
         _label.value = ""
         _address.value = ""
+    }
+
+
+    function raiseError(message = null){
+        errorState = message
+        _error.text = message || "";
+
     }
 
 
@@ -33,6 +44,8 @@ BasePopup {
                id: _coin
                name: qsTr("Currency:")
                nameTextSize: 18
+               labelWidth: staticLabelWidth
+               width: parent.width - 40
            }
            DetailInput{
                id: _address
@@ -42,6 +55,10 @@ BasePopup {
                height: 50
                bgColor: palette.midlight
                maxLength: 48
+               labelWidth: staticLabelWidth
+               onValueChanged: {
+                   raiseError()
+               }
            }
            DetailInput{
                id: _label
@@ -51,12 +68,28 @@ BasePopup {
                width: parent.width - 40
                height: 50
                bgColor: palette.midlight
+               labelWidth: staticLabelWidth
                maxLength: 30
            }
-           InfoLabel{
-               text: qsTr("It is impossible to make transactions with this address. You can only view balance and explore old transactions")
+           XemLine{
+               red: errorState
+               width: parent.width
+               anchors{
+               }
+           }
+
+           Label{
+               id: _error
                horizontalAlignment: Text.AlignHCenter
                width: parent.width
+               color: palette.brightText
+               visible: false
+           }
+           Label{
+               text: qsTr("Impossible to make transactions with this address. You can check the balance and view old transactions only")
+               horizontalAlignment: Text.AlignHCenter
+               width: parent.width
+               color: palette.mid
            }
         }
 }

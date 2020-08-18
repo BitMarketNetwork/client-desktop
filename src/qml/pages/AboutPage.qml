@@ -1,4 +1,5 @@
 import QtQuick 2.12
+import QtQuick.Controls 2.12
 import "../controls"
 import "../widgets"
 import "../api"
@@ -13,25 +14,31 @@ BasePage {
       id: _title
       anchors{
         top: parent.top
-        margins: defaultMargin * 2
+        margins: 10
 //        horizontalCenter: parent.horizontalCenter
         left: parent.left
-
+        leftMargin: 20
       }
-      text: qsTr("About program")
+      text: qsTr("About","About program window")
     }
-    Rectangle{
+    Flickable{
         id: _body
         anchors{
 //            bottom: _btn.top
             top: _title.bottom
-            right: parent.horizontalCenter
+            right: parent.right
             left: parent.left
-            margins: defaultMargin
+            margins: 10
+            rightMargin: parent.width * rightSpaceFactor
         }
-        height: 400
-        color: palette.base
-//        color: "blue"
+        height: 380
+        contentHeight: 380
+        clip: true
+        ScrollBar.vertical: ScrollBar{
+            width: 30
+//            policy: ScrollBar.AlwaysOn
+        }
+
         Column{
             id: _basic_info
             anchors{
@@ -45,15 +52,15 @@ BasePage {
 //            spacing: 10
 
             AboutLabel{
-                name: qsTr("Application name:")
+                name: qsTr("Application name:","About program window")
                 value: Qt.application.name
             }
             AboutLabel{
-                name: qsTr("Server version:")
+                name: qsTr("Server version:","About program window")
                 value: CoinApi.ui.serverVersion
             }
             AboutLabel{
-                name: qsTr("Client version:")
+                name: qsTr("Client version:","About program window")
                 value: Qt.application.version 
             }
         }
@@ -63,9 +70,9 @@ BasePage {
                 anchors{
                     top: _basic_info.bottom
                     left: parent.left
-//                    right: parent.horizontalCenter
+//                    horizontalCenter: parent.horizontalCenter
                     right: parent.right
-                    topMargin: defaultMargin
+                    topMargin: 5
 
                 }
 
@@ -84,42 +91,44 @@ BasePage {
             }
 
     }
-        BigBlueButton{
-            id: _btn
-            anchors{
-                left: _body.left
-                right: _body.right
-                top: _body.bottom
-                topMargin: 20
-            }
-            text: qsTr("Close")
-            onClicked: {
-                popPage();
-            }
-        }
         TitleText{
             id: _company_name
             anchors{
                 left: parent.left
                 bottom: parent.bottom
-                margins: defaultMargin
+                margins: 10
             }
             text: Qt.application.organization
             color: palette.mid
             sub: true
+            visible: false
         }
         TitleText{
             anchors{
                 right: parent.right
                 bottom: parent.bottom
-                margins: defaultMargin
+                margins: 10
             }
-            text: qsTr("All right reserved @2020")
+            text: qsTr("All right reserved @ 2020","About program window")
             color: palette.mid
             sub: true
         }
-
-        Component.onCompleted: {
-                console.log( `coin names: ${CoinApi.ui.coinInfoModel}`);
+        BigBlueButton{
+            id: _btn
+            anchors{
+                left: _body.left
+                right: _body.right
+//                top: _body.bottom
+//                topMargin: 20
+//                horizontalCenter: _body.horizontalCenter
+                bottom: parent.bottom
+                bottomMargin: 10
+                margins: 20
+            }
+            text: qsTr("Close")
+//            width: 200
+            onClicked: {
+                popPage();
+            }
         }
 }

@@ -4,7 +4,7 @@ from client.server import network_impl
 import PySide2.QtCore as qt_core
 
 
-class Test_server(unittest.TestCase):
+class TestServer(unittest.TestCase):
 
     def test_url_composer(self):
         url = url_composer.UrlComposer(5)

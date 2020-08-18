@@ -1,12 +1,13 @@
 import unittest
 import logging
 from client.wallet import key as key_mod
+from client.wallet.key import AddressString
 from client.wallet import util  # pylint: disable=E0401,E0611
 from client.wallet import coin_network  # pylint: disable=E0401,E0611
 log = logging.getLogger(__name__)
 
 
-class Test_PublicKey(unittest.TestCase):
+class TestPublicKey(unittest.TestCase):
 
     def _test_key(self, hex_, is_valid, is_fullyvalid, is_compressed):
         key = key_mod.PublicKey(util.hex_to_bytes(
@@ -53,3 +54,26 @@ class Test_primitives(unittest.TestCase):
         pub = prv.public_key
         # self.assertEqual(pub.to_hex.upper(), PUBC_HEX)
         self.assertEqual(pub.to_address(key_mod.AddressType.P2PKH), ADDRC)
+
+class Test_validate_address(unittest.TestCase):
+
+    def test_ltc(self):
+        self.assertEqual(AddressString.validate_bool("LZ43jcFdxNVpJWJ6o3neYEsnqEGxQTsP9M"),1)
+        self.assertEqual(AddressString.validate_bool("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"),1)
+        self.assertEqual(AddressString.validate_bool("tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"),1)
+        self.assertEqual(AddressString.validate_bool("tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjee"), 0)
+        self.assertEqual(AddressString.validate_bool("bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3"), 1)
+        self.assertEqual(AddressString.validate_bool("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7", 1), 1)
+        self.assertEqual(AddressString.validate_bool("1Fs2Xqrk4P2XADaJeZWykaGXJ4HEb6RyT1"), 1)
+        self.assertEqual(AddressString.validate_bool("mvNyptwisQTmwL3vN8VMaVUrA3swVCX83c", 1), 1)
+        self.assertEqual(AddressString.validate_bool("33am12q3Bncnn3BfvLYHczyv23Sq2Wbwjw"), 1)
+        self.assertEqual(AddressString.validate_bool("2Mu8y4mm4oF88yppDbUAAEwyBEPezrx7CLh"), 1)
+        self.assertEqual(AddressString.validate_bool("2Mu8y4mm4oF89yppDbUAAEwyBEPezrx7CLh"), 0)
+        self.assertEqual(AddressString.validate_bool("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4", 1), 0)
+        self.assertEqual(AddressString.validate_bool("tb1qw508d6qejxtdg4W5r3zarvary0c5xw7kxpjzsx",1), 0)
+        self.assertEqual(AddressString.validate_bool("bc1qrp33g0q5c5txsp8arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3"), 0)
+        self.assertEqual(AddressString.validate_bool("tb1qrp23g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7",1), 0)
+        self.assertEqual(AddressString.validate_bool("1Fs2Xqrk4P2XADaJeZWykaGXJ2HEb6RyT1"), 0)
+        self.assertEqual(AddressString.validate_bool("mvNyptwisQTkwL3vN8VMaVUrA3swVCX83c", 1), 0)
+        self.assertEqual(AddressString.validate_bool("33am12q3Bncmn3BfvLYHczyv23Sq2Wbwjw"), 0)
+        self.assertEqual(AddressString.validate_bool("2Mu8y4mm4oF78yppDbUAAEwyBEPezrx7CLh", 1), 0)

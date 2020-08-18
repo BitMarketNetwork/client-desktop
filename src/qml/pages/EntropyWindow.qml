@@ -6,7 +6,11 @@ import "../api"
 Popup {
     id: _base
 
-    property int entropy: Date.now()
+    function rnd(){
+        return Date.now() * Math.random()
+    }
+
+    property real entropy: rnd()
 
     property int positionSalt: 1
 
@@ -18,9 +22,13 @@ Popup {
     closePolicy: Popup.NoAutoClose
 
     function step( tweak ){
-//        console.log(`SEED TWEAK ${tweak}`)
-        if(tweak){
+        // console.log(`SEED TWEAK ${tweak} ENTR:${entropy}`)
+        if(tweak !== 0){
             entropy *= tweak;
+            if( entropy === 0 || !isFinite(entropy)){
+                entropy = rnd() 
+                _progress.value = maxEntropySteps * 0.7
+            }
             if(_progress.value ++ >= maxEntropySteps){
                 close()
             }
@@ -49,7 +57,7 @@ Popup {
                   TODO:
                   need to revise this algo thoroughly
                 */
-                 step((mouseX + 1)/( mouseY + 1));
+                 step(mouseX * mouseY / ( _progress.value + 1 ) )
                 positionSalt = (mouseX + 1)*( mouseY + 1)
             }
 
@@ -59,7 +67,6 @@ Popup {
             Keys.onPressed: {
                 step(event.key * positionSalt)
             }
-            focus: true
 
 
 

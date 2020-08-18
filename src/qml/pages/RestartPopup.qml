@@ -20,6 +20,6 @@ BasePopup {
             pixelSize: 20
         }
 
-        text: qsTr("New style will be applied after next launch")
+        text: qsTr("New style will be applied after next launch","Settings item");
     }
 }

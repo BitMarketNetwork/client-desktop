@@ -15,6 +15,7 @@ Base {
     property alias color: _name.color
     property alias valueColor: _value.color
     property alias echoMode: _value.echoMode
+    property alias labelWidth: _name.width
 
     height: 30
     width: parent.width
@@ -30,10 +31,10 @@ Base {
     TextField{
         id: _value
         anchors{
-             verticalCenter: parent.verticalCenter
-            left: parent.left
+            verticalCenter: parent.verticalCenter
+            left: _name.right
             right: parent.right
-            leftMargin: 250
+//            leftMargin: 250
         }
 //        x: 400
 //        width: parent.width * 0.5
@@ -48,7 +49,6 @@ Base {
         rightPadding: 10
         horizontalAlignment: TextInput.AlignLeft
         verticalAlignment: TextInput.AlignVCenter
-        focus: false
         maximumLength: 70
 
         background: Rectangle{

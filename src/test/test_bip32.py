@@ -7,7 +7,7 @@ from client.wallet import coin_network
 from client.wallet import hd
 
 
-class Test_bip32(unittest.TestCase):
+class TestBip32(unittest.TestCase):
 
     def setUp(self):
         self.BIP_CASE_1 = {

@@ -11,16 +11,18 @@ Base {
     id: _base
 
     readonly property QtObject api: CoinApi.coins
-    property alias coinName: _coin_row.text
-    property alias coinIcon: _coin_icon.source
-    property alias amount: _crypto.amount
-    property alias unit: _crypto.unit
-    property alias fiatAmount: _fiat.amount
-    property alias fiatUnit: _fiat.unit
+    property alias coinName: _top_panel.coinName
+    property alias coinIcon: _top_panel.coinIcon
+    property alias amount: _top_panel.amount
+    property alias fiatAmount: _top_panel.fiatAmount
+    property alias label: _label.text
+    property alias message: _message.text
     property alias isUpdating: _tx_list.isUpdating
     property bool readOnly: false
     property bool receiveOnly: false
-    readonly property int icon_size: 45
+
+    property int totalTxNumber: 0
+    property int existingTxNumber: 0
 
 
 
@@ -38,81 +40,44 @@ Base {
             rightMargin: 20
 
         }
-        spacing: 20
+        spacing: 10
+       TopAddressPanel{
+           id: _top_panel
+           height: 60
+       }
 
-        Base{
 
-            height: 60
+        TitleText{
+            id: _label
             anchors{
-                left: parent.left
-                right: parent.right
+                        horizontalCenter: parent.horizontalCenter
             }
-
-            Image {
-                id: _coin_icon
-                anchors{
-                    left: parent.left
-                    top: parent.top
-                    margins: 10
-                    leftMargin: 30
-                }
-                sourceSize.height: icon_size
-                sourceSize.width: icon_size
-                source: Funcs.loadImage("btc_icon.png")
-                height: icon_size
-                width: icon_size
-                fillMode: Image.PreserveAspectFit
-                smooth: true
-            }
-            LabelText{
-                id: _coin_row
-                anchors{
-//                    top: parent.top
-//                    horizontalCenter: parent.horizontalCenter
-//                    horizontalCenterOffset: -20
-                    verticalCenter: _coin_icon.verticalCenter
-                    left: _coin_icon.right
-                    leftMargin: 20
-                    margins: 10
-                }
-            }
-            XemLine{
-                anchors{
-                    bottom: parent.bottom
-                    left: parent.left
-                    right: parent.right
-                    topMargin: 10
-                    margins: 20
-                    bottomMargin: 0
-                }
-                id: _coin_line
-                blue: false
+            font{
+                pixelSize: 16
             }
         }
-
-
-        MoneyCount{
+        XemLine{
             anchors{
-                horizontalCenter: parent.horizontalCenter
+                        horizontalCenter: parent.horizontalCenter
             }
-            id: _crypto
-            color: palette.text
-            unit: api.unit
-            fontSize: 20
-            amounFontSize: 30
-            width: 200
+            width: parent.width * .5
+            blue: false
+            visible: _label.text.length > 0
         }
-
-        MoneyCount{
-            anchors{
-                horizontalCenter: parent.horizontalCenter
+        LabelText{
+            id: _message
+            font{
+                pixelSize: 12
+                bold: false
             }
-            id: _fiat
-            color: palette.text
-            unit: api.currency
-            fontSize: 14
-            amounFontSize: 20
-            width: 200
+        }
+        XemLine{
+            anchors{
+                        horizontalCenter: parent.horizontalCenter
+            }
+            width: parent.width * .5
+            blue: false
+            visible: _message.text.length > 0
         }
 
 
@@ -120,9 +85,11 @@ Base {
         Row{
             anchors{
                 horizontalCenter: parent.horizontalCenter
+//                left: parent.left
+//                right: parent.right
             }
 
-                spacing: 30
+                spacing: (parent.width - minWidth *.5) * .1 + 10
 
 
                 TxBigButton{
@@ -150,51 +117,36 @@ Base {
                 }
             }
 
-        TitleText{
-            anchors{
-                horizontalCenter: parent.horizontalCenter
-            }
-            id: _tx_label
-            text: qsTr("Transactions history")
-            sub: true
-        }
-
-        XemLine{
+        Base{
+            id: _tx_header
+            height: 30
             anchors{
                 left: parent.left
                 right: parent.right
-                rightMargin: 20
-                leftMargin: 20
+                margins: 20
             }
-            id: _tx_line
-            blue: false
-        }
-        Row{
+
+        TitleText{
             anchors{
-                horizontalCenter: parent.horizontalCenter
+                centerIn: parent
             }
-            spacing: 50
-            TxFilterBtn{
-                text: qsTr("All")
-                checked: true
-                onSelect: {
-                    api.txSortingOrder = 0
-                }
-            }
-            TxFilterBtn{
-                text: qsTr("Sent")
-                onSelect: {
-                    api.txSortingOrder = 1
-                }
-            }
-            TxFilterBtn{
-                text: qsTr("Received")
-                notLast: false
-                onSelect: {
-                    api.txSortingOrder = 2
-                }
-            }
+            id: _tx_label
+            text: qsTr("Transactions history")
+//            font{ pixelSize: 14 }
+            sub: true
         }
+        LabelText{
+            anchors{
+//            right: parent.right
+                    verticalCenter: _tx_label.verticalCenter
+                    left: _tx_label.right
+                    leftMargin: 20
+            }
+            text: qsTr("%1 / %2").arg(existingTxNumber).arg(totalTxNumber)
+        }
+
+        }
+
     }
 
     TxListPanel{

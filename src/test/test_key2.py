@@ -109,7 +109,7 @@ class Test_KeyManipultation(unittest.TestCase):
             key_format.KeyFormat.recognize("233")
 
 
-class Test_Key(unittest.TestCase):
+class TestKey(unittest.TestCase):
 
     def test_wif(self):
         prv = key.PrivateKey.from_wif(WALLET_FORMAT_MAIN)

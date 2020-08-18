@@ -32,19 +32,21 @@ function urlToPath(url){
 function explore(obj, pref = ''){
     if( obj instanceof Array ){
         var i;
+        console.log(`${pref}=> array[${obj.length}]`)
         for(i=0;i<obj.length;++i){
-            explore(obj[i]);
+            explore(obj[i] , pref + ":" + i);
         }
     }
     else if( obj instanceof Object ){
+        console.log(`${pref}=> object`)
         for (var k in obj){
             if(obj[k] instanceof Function){
-                continue
+                
+            }else{
+                explore(obj[k], pref + ":" + k);
             }
-
-            console.log(`${pref}:${k} => ${obj[k]}`)
         }
     }else{
-        console.log(`${pref}:${obj}`)
+        console.log(`${pref}:${obj} [${typeof obj}]`)
     }
 }

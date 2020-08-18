@@ -14,8 +14,8 @@ class BaseNetError(Exception):
 
 class JsonError(BaseNetError):
 
-    def __init__(self):
-        super().__init__("Json format error")
+    def __init__(self, msg):
+        super().__init__(f"Json format error: {msg}")
 
 
 class WrongActionError(BaseNetError):

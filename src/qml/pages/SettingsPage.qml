@@ -14,20 +14,19 @@ BasePage {
     TabWidget{
         anchors{
             top: parent.top
-//            bottom: parent.top
+            bottom: parent.bottom
             left: parent.left
             topMargin: 30
-            bottomMargin: 100
-            right: parent.horizontalCenter
-            margins: defaultMargin
+            bottomMargin: 60
+            right: parent.right
+            rightMargin: parent.width * rightSpaceFactor
+            margins: 10
         }
 
         id: _tabs
-        height: 550
 //        height: childrenRect.height
 
 
-    /*
         GeneralSettingsTab{
             id: _general_tab
             title: qsTr("General", "Settings tab")
@@ -37,6 +36,7 @@ BasePage {
             onSelectLanguage: {
                 CoinApi.settings.languageIndex = index
             }
+            /*
 
             currencyModel: CoinApi.settings.currencyModel
             currentCurrencyIndex: CoinApi.settings.currencyIndex
@@ -58,9 +58,9 @@ BasePage {
             onSelectUnit: {
                 CoinApi.settings.unitIndex = index
             }
+        */
 
         }
-        */
         CoinSettingsTab{
             id: _coins_tab
             title: qsTr("Coins", "Settings tab")
@@ -92,8 +92,8 @@ BasePage {
                 CoinApi.keyMan.resetWallet()
             }
             onRestoreWallet: {
-                CoinApi.keyMan.importWallet();
                 popPage();
+                CoinApi.keyMan.importWallet();
             }
         }
     }
@@ -101,9 +101,14 @@ BasePage {
 
     BigBlueButton{
         anchors{
-            horizontalCenter: _tabs.horizontalCenter
-            top: _tabs.bottom
-            topMargin: defaultMargin
+//            horizontalCenter: _tabs.horizontalCenter
+//            top: _tabs.bottom
+//            topMargin: defaultMargin
+            left: parent.left
+            right: _tabs.right
+            bottom: parent.bottom
+            margins: 10
+
         }
         width: _tabs.width
 

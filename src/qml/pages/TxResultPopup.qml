@@ -25,7 +25,7 @@ BasePopup {
         spacing: 30
 
         Text{
-            text: qsTr("Your transaction has sent succefully. Here is the transaction ID")
+            text: qsTr("Your transaction was  sent succefully. Transaction ID","New transaction window")
             font: simpleFont
             color: palette.mid
         }
@@ -62,7 +62,7 @@ BasePopup {
                     left: parent.right
                     margins: 10
                 }
-                text: qsTr("Copy")
+                text: qsTr("Copy","New transaction window")
                 font{
                     pixelSize: 10
                 }
@@ -85,7 +85,7 @@ BasePopup {
         }
 
         Text {
-            text: qsTr("You can track confirmation progress <a href='#'>here<a\>.")
+            text: qsTr("You can track the confirmation progress <a href='#'>here<a\>.","New transaction window")
 
             onLinkActivated: {
                 // don't need args

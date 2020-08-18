@@ -19,8 +19,10 @@ Item {
     property real feeAmount: default_fee
     property real spbFactor:  0.5
     property real feeFiatAmount: (feeAmount * coin.rate).toFixed(2)
-    property int  targetBlocks: (feeAmount * coin.rate).toFixed()
     property int  confirmTime: (feeAmount * 100 ).toFixed()
+
+    property bool useCoinBalance: false
+    property bool hasChange: true
 
     property real changeAmount: 0.33
     property bool newAddressForChange: true
@@ -93,7 +95,7 @@ Item {
     function prepareSend(){
         // unreal case .. but let it be
         if(!canSend){
-            fail(qsTr("Source data for transaction is not valid"));
+            fail(qsTr("Source data for transaction are not valid"),"Preparing to transaction");
             return null;
         }
 

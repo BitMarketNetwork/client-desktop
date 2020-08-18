@@ -13,10 +13,8 @@ BasePage{
     readonly property int pageId: Const.pageId.mnemonic
 
     property bool pasteExisting: false
+    property real extraSeed : _entropy_tool.entropy
 
-    function extraSeed(){
-        return _entropy_tool.entropy
-    }
 
     function generateSeed(){
         _entropy_tool.open()
@@ -30,10 +28,9 @@ BasePage{
         anchors.centerIn: Overlay.overlay
 
         onClosed: {
-            console.log(`extra seed tweak: ${extraSeed()}`)
-            _mnemo_text.textStatic = CoinApi.keyMan.getInitialPassphrase(
-                extraSeed())
-        }
+            // console.log(`extra seed tweak: ${extraSeed}`)
+            _mnemo_text.textStatic = CoinApi.keyMan.getInitialPassphrase( extraSeed )
+            }
     }
 
     MnemonicValidationPopup{
@@ -66,21 +63,22 @@ BasePage{
         anchors{
             top: parent.top
             left: parent.left
-            right: parent.horizontalCenter
+            right: parent.right
+            rightMargin: parent.width * rightSpaceFactor
             margins: 20
         }
         spacing: 20
 
         TitleText{
-            text: pasteExisting?qsTr("Paste your phrase here"): qsTr("New seed phrase")
+            text: pasteExisting?qsTr("Paste your phrase here","Send money result"): qsTr("New seed phrase","Master key window")
             Layout.fillHeight: true
             Layout.alignment: Layout.Left
         }
 
         MnemoInputField{
             id: _mnemo_text
-            textStatic: (pasteExisting || _entropy_tool.visible) ?"": CoinApi.keyMan.getInitialPassphrase(extraSeed())
-            placeholder: pasteExisting?qsTr("Paste your seed phrase"): ""
+            textStatic: (pasteExisting) ?"": CoinApi.keyMan.getInitialPassphrase(extraSeed)
+            placeholder: pasteExisting?qsTr("Paste your seed phrase","Master key window"): ""
             readOnly: !pasteExisting && !CoinApi.debugSeed
             Layout.minimumHeight: 200
             Layout.fillWidth: true
@@ -99,14 +97,20 @@ BasePage{
         spacing: 20
         height: 40
         BigBlueButton{
-            text: qsTr("Apply phrase")
-            enabled: !_entropy_tool.visible && _mnemo_text.textStatic.length > 0
+            text: qsTr("Apply phrase","Master key window")
+            enabled: {
+                if(pasteExisting){
+                    return CoinApi.keyMan.validateAlienSeed( _mnemo_text.textStatic )
+                }
+
+                return !_entropy_tool.visible && _mnemo_text.textStatic.length > 0
+            }
             onClicked: {
                 if(pasteExisting){
                     CoinApi.keyMan.generateMasterKey(
-                        _mnemo_text.textStatic, CoinApi.debug)
+                        _mnemo_text.textStatic, CoinApi.debugSeed)
                     popPage()
-                    CoinApi.debuging.lookForHD()
+                    // api.lookForHD()
                 }
                 else if(CoinApi.keyMan.preparePhrase(_mnemo_text.textStatic)){
                     _validator.open()
@@ -115,14 +119,14 @@ BasePage{
             }
         }
         BigBlueButton{
-            text: qsTr("Refresh")
+            text: qsTr("Refresh","Master key window")
             visible: !pasteExisting
             onClicked: {
                 generateSeed()
             }
         }
         BigBlueButton{
-            text: qsTr("Back")
+            text: qsTr("Back","Master key window")
             onClicked: {
                 popPage()
                 back()

@@ -13,14 +13,10 @@ BasePopup {
     property alias unit:     _amount.unit
 
     id: _base
-    acceptText: qsTr("Send")
+    acceptText: qsTr("Send","New transaction summary")
     ok: false
-    title: qsTr("Transaction summary","Send money result")
+    title: qsTr("Transaction summary","New transaction summary");
     width: 1000
-
-    onFeeChanged: {
-        console.log(`fee ${fee}`)
-    }
 
     signal send()
 
@@ -32,23 +28,23 @@ BasePopup {
         spacing: 10
         DetailLabel{
             id: _amount
-            name: qsTr("Amount of money to be sent:","Send money result")
+            name: qsTr("Amount to be sent:","Send money result")
             valueTextSize: 14
         }
         DetailLabel{
             id: _target
-            name: qsTr("Receiver address:","Send money result")
+            name: qsTr("Recipient address:","Send money result")
             valueTextSize: 14
         }
         DetailLabel{
             id: _fee
-            name: qsTr("Comission is:","Send money result")
+            name: qsTr("Fee:","Send money result")
             valueTextSize: 14
             unit: _amount.unit
         }
         DetailLabel{
             id: _change
-            name: qsTr("Change is:","Send money result")
+            name: qsTr("Change:","Send money result")
             valueTextSize: 14
             unit: _amount.unit
         }

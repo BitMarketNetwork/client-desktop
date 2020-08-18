@@ -4,7 +4,9 @@ from typing import Union, Tuple, Generator
 import hmac
 import enum
 import binascii
+import random
 import sys
+import os
 import base64
 import functools
 import hashlib
@@ -104,6 +106,11 @@ def int_to_varint(val: int) -> bytes:
         return b'\xfe'+val.to_bytes(4, 'little')
     else:
         return b'\xff'+val.to_bytes(8, 'little')
+
+
+def random_hex(len: int) -> str:
+    # return binascii.b2a_hex(os.urandom(len))
+    return os.urandom(len).hex()
 
 
 def read_var_int(stream: bytes) -> int:

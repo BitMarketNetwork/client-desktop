@@ -17,7 +17,9 @@ BasePage {
     }
 
     function newAddress(coinIndex){
-        var coin = api.coinModel[coinIndex]
+
+        var coin = api.coinModel.get(coinIndex)
+        // console.log(`${api.coinModel} ++ ${coin}`)
         if(coin){
             _make_address.coinName = coin.fullName
             _make_address.coinIndex = coinIndex
@@ -27,7 +29,7 @@ BasePage {
     }
 
     function addWatchOnlyAddress(coinIndex){
-        var coin = api.coinModel[coinIndex]
+        var coin = api.coinModel.get(coinIndex)
         if(coin){
             _watch_address.coinName = coin.fullName
             _watch_address.coinIndex = coinIndex
@@ -47,9 +49,31 @@ BasePage {
     AddWatchAddressPopup{
         id: _watch_address
         property int coinIndex: -1
-        onAdd: {
-            api.addWatchAddress( coinIndex , address, label )
-            close()
+        onValidate: {
+            api.validateAddress(coinIndex,address);
+        }
+    }
+    Connections{
+        target: api
+        function onAddressValid(coin,address,valid){
+
+            console.log(`address validation result:${valid} coin:${coin} address:${address} `)
+
+            if(!_watch_address.visible){
+                return;
+            }
+
+            if( coin === _watch_address.coinIndex && address === _watch_address.address){
+                if(valid){
+                    _watch_address.close();
+                    api.addWatchAddress(coin,address,_watch_address.label);
+                }else{
+                    _watch_address.raiseError(qsTr("Invalid address for the %1 network!","Add watch address. %1 is crypto name( Bitcoin, Litecoin ... )").arg(_watch_address.coinName));
+                }
+            }
+            else{
+                console.error(`wrong address validation results. coin:${coin} address:${address}`)
+            }
         }
     }
 
@@ -86,16 +110,24 @@ BasePage {
                         if( api.coin && api.coin.wallets.length > 0 ){
                             _base.state = "address_list"
                             // doesn't change
-                            _address_info.unit = api.coin.unit
                             _address_info.coinName = api.coin.fullName;
-                            _address_info.fiatUnit = api.currency
                         }else{
                             _base.state = "coin_list"
                             _coin_list.closeList()
                         }
             }
-            target: api
-            onAddressIndexChanged:{
+            target: CoinApi.coins
+
+            /* for dummy (5.13) to work * /
+            onAddressIndexChanged: {
+                onAddressIndexChanged()
+            }
+            onCoinIndexChanged: {
+                onCoinIndexChanged()
+            }
+            /**/
+
+            function onAddressIndexChanged(){
                     if( api.address ){
                         _address_info.coinName = api.coin.fullName
                         _address_info.coinIcon = Funcs.loadImage( api.coin.icon)
@@ -105,15 +137,11 @@ BasePage {
                         _base.state = "coin_list"
                         _coin_list.closeList()
                     }
-                    console.log(`new address ${api.address} state:${state}`)
+                    // console.log(`current address ${api.address} state:${state}`)
             }
-            onCoinIndexChanged:{
+            function onCoinIndexChanged(){
                     coin_handler();
-                    console.log(`new coin ${api.coin} state:${state}`)
-                }
-            onAddressModelChanged:{
-                coin_handler();
-                    console.log(`new add model`)
+                    // console.log(`current coin ${api.coin} state:${state}`)
                 }
         }
 
@@ -143,6 +171,8 @@ BasePage {
                 id: _address_info
                 anchors.fill: parent
                 readOnly: api.address === null || api.address.readOnly
+                label: api.address === null || api.address.label
+                message: api.address === null || api.address.message
 
                 function do_tx(page ){
                     let settings= {
@@ -185,17 +215,20 @@ BasePage {
         },
         State {
             name: "address_list"
+            when: api.address
             PropertyChanges {
 
                 target: _address_info
                 visible: true
                 coinName: api.coin.fullName
                 coinIcon: api.coin? Funcs.loadImage( api.coin.icon ):""
-                readOnly: !api.address || api.address.readOnly 
+                readOnly: api.address.readOnly
                 receiveOnly: api.address.balance === 0.
-                amount: api.address? api.address.balanceHuman : ""
-                fiatAmount: api.address? api.address.fiatBalance : ""
-                isUpdating: api.address? api.address.isUpdating : false
+                amount: CoinApi.settings.coinBalance( api.address.balanceHuman )
+                fiatAmount: api.address.fiatBalance
+                isUpdating: api.address.isUpdating
+                existingTxNumber: api.address.realTxCount
+                totalTxNumber: api.address.safeTxCount
             }
             PropertyChanges {
                 target: _no_selection_info

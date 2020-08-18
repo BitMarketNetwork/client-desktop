@@ -8,7 +8,7 @@ import base64
 
 import PySide2.QtCore as qt_core
 
-from client.wallet import aes, util
+from ...wallet import aes, util
 
 log = logging.getLogger(__name__)
 VALUE_HASHER = util.hash160
@@ -27,7 +27,6 @@ class EncryptProxy:
 
     def __init__(self, psw, nonce):
         self._last_hash = None
-        log.debug(f"loading AES with psw:{psw} nonce:{nonce}")
         self._aes = aes.AesProvider( psw, nonce)
         self._password = util.get_bytes(psw)
 

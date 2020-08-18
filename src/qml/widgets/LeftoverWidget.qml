@@ -20,7 +20,7 @@ Item {
             left: parent.left
         }
 
-        text: qsTr("Change:")
+        text: qsTr("Change:","New transaction window")
     }
 
     Rectangle{
@@ -42,7 +42,7 @@ Item {
             }
             MyCheckBox{
                 id: _chb
-                text: qsTr("Send change to new address")
+                text: qsTr("Send change to a new address","New transaction window")
             }
         }
     }

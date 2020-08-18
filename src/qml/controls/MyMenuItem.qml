@@ -12,7 +12,7 @@ MenuItem {
             font.bold: checked
 //            font.underline: checked
       opacity: enabled ? 1.0 : 0.3
-      color:_base.highlighted ? palette.highlight : palette.text
+      color:_base.highlighted ? palette.highlight : _base.enabled? palette.text : palette.mid
 
       horizontalAlignment: Text.AlignLeft
       verticalAlignment: Text.AlignVCenter

@@ -33,13 +33,14 @@ Base {
     TabBar{
         id: _tabbar
 
-//        spacing: 10
+        spacing: (parent.width - minWidth *.5) * .1 + 10
         height: Const.xemBtnHeight
         width: parent.width
-        background: Base{ }
+        background: Base{
+        }
 
         anchors{
-//            top: _header.bottom
+            horizontalCenter: parent.horizontalCenter
         }
 
         Repeater{

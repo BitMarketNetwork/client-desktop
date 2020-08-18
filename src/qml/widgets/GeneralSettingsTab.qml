@@ -31,7 +31,7 @@ Tab {
             SettingsComboBox{
                 id: _locale
                 role: "name"
-                name: qsTr("Application language:")
+                name: qsTr("Application language:","Settings item")
                 width: parent.width
                 onSelect: selectLanguage(index)
             }
@@ -39,25 +39,28 @@ Tab {
             SettingsComboBox{
                 id: _style
                 role: "name"
-                name: qsTr("Appearance theme:")
+                name: qsTr("Skin:","Settings item")
                 width: parent.width
                 onSelect: selectStyle(index)
+                visible: false
             }
 
             SettingsComboBox{
                 id: _unit
                 role: "name"
-                name: qsTr("Base unit:")
+                name: qsTr("Base unit:","Settings item")
                 width: parent.width
                 onSelect: selectUnit(index)
+                visible: false
             }
 
             SettingsComboBox{
                 id: _currency
                 role: "name"
-                name: qsTr("Fiat currency:")
+                name: qsTr("Fiat currency:","Settings item")
                 width: parent.width
                 onSelect: selectCurrency(index)
+                visible: false
             }
         }
 

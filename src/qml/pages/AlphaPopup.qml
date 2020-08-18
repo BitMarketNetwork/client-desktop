@@ -5,8 +5,10 @@ BasePopup{
     ok: false
     canBeAccepted: false
     closable: false
-    acceptText: qsTr("Accept (10)")
-    rejectText: qsTr("Decline")
+    modal: true
+    dim: true
+    acceptText: qsTr("Accept (10)","Alpha version warning")
+    rejectText: qsTr("Decline","Alpha version warning")
     onVisibleChanged:{
         if(visible){
             _activity_timer.running = true;
@@ -30,7 +32,7 @@ BasePopup{
             antialiasing: true
             horizontalAlignment: Text.AlignLeft
             elide: Text.ElideRight
-            text: qsTr("<b><font color=\"red\">IMPORTANT NOTE:</font></b> The current application version is an alpha-version and does not warrant stable operation or safety of your finances. Please use this version with precautions for information only, as it is designed for demonstration purposes only.")
+            text: qsTr("<b><font color='red'>IMPORTANT NOTE:</font></b> This is an alpha version of the current application and it does not guarantee stable operation or safety of your finances. Please use this version carefully for reference only, as it is intended for demonstration purposes only","Alpha version warning")
             font{
                 family: "Arial"
                 pixelSize: 14

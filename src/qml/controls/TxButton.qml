@@ -11,6 +11,7 @@ Button {
 
 
 
+
     background: Rectangle{
         id: _rect
         color: enabled?hovered?palette.midlight:palette.base: palette.midlight

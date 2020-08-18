@@ -7,7 +7,7 @@ import "../js/constants.js" as Constants
 import "../js/functions.js" as Funcs
 
 
-NewTxPage {
+TxPage {
     id: _base
     readonly property int pageId: Constants.pageId.receive
     action: qsTr("Receive")
@@ -27,7 +27,7 @@ NewTxPage {
         id: _main_column
         anchors{
             fill: parent
-            topMargin: 150
+//            topMargin: 150
         }
         spacing: 20
         ReceiveWidget{

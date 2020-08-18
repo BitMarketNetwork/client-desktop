@@ -22,7 +22,7 @@ Item{
                 verticalCenter: parent.verticalCenter
             }
 
-            text: qsTr("Updating ...")
+            text: qsTr("Updating ...","Transaction list")
             color: palette.mid
         }
     }

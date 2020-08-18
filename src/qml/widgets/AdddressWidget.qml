@@ -8,7 +8,7 @@ import "../pages"
 
 SendWidget {
     id: _base
-    title: qsTr("Send to:")
+    title: qsTr("Send to:","New transaction window")
     height: 70
     titleColor: valid?palette.text: palette.brightText
 
@@ -29,7 +29,6 @@ SendWidget {
                 verticalCenter: parent.verticalCenter
             }
 
-            focus: true
             inputMethodHints: Qt.ImhPreferUppercase
             padding: 5
             editable: true
@@ -47,10 +46,11 @@ SendWidget {
                 margins: defMargin
                 left: parent.left
                 leftMargin: defLeftMargin
-                verticalCenter: parent.verticalCenter
+//                verticalCenter: parent.verticalCenter
+                top: parent.top
+                topMargin: 10
             }
 
-            focus: true
             inputMethodHints: Qt.ImhPreferUppercase
 
             padding: 5

@@ -3,5 +3,11 @@ import "../api"
 
 //Item {
 Rectangle {
-    color: CoinApi.debug && false? "#44ff0000": "transparent"
+    color: CoinApi.debug && CoinApi.renderBg  ? tweakAlpha( renderColor , 0.5): "transparent"
+
+    property color renderColor: "red"
+
+    function tweakAlpha(color, alpha) {
+        return Qt.hsla(color.hslHue, color.hslSaturation, color.hslLightness, alpha)
+    }
 }

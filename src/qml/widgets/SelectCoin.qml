@@ -32,7 +32,7 @@ Base {
     */
     TitleText {
         id: _select_coin
-        text: qsTr("Select address from the list")
+        text: qsTr("Select address from the list","When no coin selected")
         anchors.centerIn: parent
         sub: true
 

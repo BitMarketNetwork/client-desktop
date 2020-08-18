@@ -2,19 +2,17 @@
 import logging
 import os
 import re
+
 import PySide2.QtCore as qt_core
-from .wallet import hd
-from .wallet import coin_network
-from .wallet import mnemonic
-from .wallet import util
-from client.ui.gui import import_export
+
+from . import meta
+from .ui.gui import import_export
+from .wallet import coin_network, hd, mnemonic, util
 
 log = logging.getLogger(__name__)
 
-MNEMONIC_SEED_LENGTH = 16
+MNEMONIC_SEED_LENGTH = 24
 PASSWORD_HASHER = util.sha256
-MNEMO_PASSWORD = "hardcoded mnemo password"
-
 
 class KeyManager(qt_core.QObject):
     """
@@ -25,55 +23,67 @@ class KeyManager(qt_core.QObject):
 
     def __init__(self, parent):
         super().__init__(parent=parent)
-        self._master_hd = None
-        self._network = coin_network.BitcoinMainNetwork()
-        self._mnemonic = mnemonic.Mnemonic()
+        self.__master_hd = None
+        self.__network = coin_network.BitcoinMainNetwork()
+        self.__mnemonic = mnemonic.Mnemonic()
         # don't keep mnemo, save seed instead !!!
-        self._seed = None
+        self.__seed = None
         # mb we can use one seed variable?
-        self._pre_hash = None
-        self._backup_password = ""
+        self.__pre_hash = None
+
 
     @qt_core.Slot(str, result=bool)
     def preparePhrase(self, mnemonic_phrase: str) -> bool:
+        mnemonic_phrase = " ".join(mnemonic_phrase.split())
         log.debug(f"pre phrase: {mnemonic_phrase}")
-        self._pre_hash = util.sha256(mnemonic_phrase)
-        # mnemonic.Mnemonic.to_seed( mnemonic_phrase, MNEMO_PASSWORD,)
+        self.__pre_hash = util.sha256(mnemonic_phrase)
         return True
 
     @qt_core.Slot(str, bool, result=bool)
     def generateMasterKey(self, mnemonic_phrase: str, debug: bool = False) -> bool:
-        mnemonic_phrase = " ".join(mnemonic_phrase.split(" "))
-        if debug:
-            return True
+        mnemonic_phrase = " ".join(mnemonic_phrase.split())
         hash_ = util.sha256(mnemonic_phrase)
-        if self._pre_hash is None or hash_ == self._pre_hash:
+        if self.__pre_hash is None or hash_ == self.__pre_hash:
             seed = mnemonic.Mnemonic.to_seed(
                 mnemonic_phrase,
-                MNEMO_PASSWORD,
-                )
+            )
             self.apply_master_seed(
                 seed,
                 save=True,
             )
+            self.gcd.save_mnemo(mnemonic_phrase)
             return True
-        log.warning(f"seed '{mnemonic_phrase}' mismatch: {hash_} != {self._pre_hash}")
+        log.warning(
+            f"seed '{mnemonic_phrase}' mismatch: {hash_} != {self.__pre_hash}")
         return False
 
-    @qt_core.Slot(int, result=str)
-    def getInitialPassphrase(self, extra_seed: int = None) -> str:
+    @qt_core.Slot(float, result=str)
+    def getInitialPassphrase(self, extra__seed: float = None) -> str:
         data = os.urandom(MNEMONIC_SEED_LENGTH)
-        if extra_seed:
-            extra_bytes = util.number_to_bytes(
-                abs(extra_seed), MNEMONIC_SEED_LENGTH)
-            # TODO: week point here ... not xor it ... there is a lot another options
-            data = util.xor_bytes(data, extra_bytes)
-        return self._mnemonic.get_phrase(data)
+        if extra__seed:
+            # a little bit silly but let it be
+            data = util.sha256(data + str(extra__seed).encode())[:MNEMONIC_SEED_LENGTH]
+        else:
+            log.warning("No extra!!!")
+        return self.__mnemonic.get_phrase(data)
+
+    def regenerate_master_key(self):
+        seed = mnemonic.Mnemonic.to_seed(
+            self.gcd.get_mnemo(),
+        )
+        self.apply_master_seed(
+            seed,
+            save=True,
+        )
+
+    @qt_core.Slot(str, result=str)
+    def revealSeedPhrase(self, password: str):
+        return self.gcd.get_mnemo(password) or self.tr("Wrong password")
 
     @qt_core.Property(bool, notify=activeChanged)
     def hasMaster(self):
-        log.debug(f"master key:{self._master_hd}")
-        return self._master_hd is not None
+        log.debug(f"master key:{self.__master_hd}")
+        return self.__master_hd is not None
 
     @qt_core.Slot()
     def resetWallet(self):
@@ -103,11 +113,10 @@ class KeyManager(qt_core.QObject):
         """
         applies master seed
         """
-        self._seed = seed
-        log.debug(f"master seed applied: {seed}")
-        self._master_hd = hd.HDNode.make_master(
-            self._seed, self._network)
-        _44_node = self._master_hd.make_child_prv(44, True)
+        self.__seed = seed
+        self.__master_hd = hd.HDNode.make_master(
+            self.__seed, self.__network)
+        _44_node = self.__master_hd.make_child_prv(44, True)
         # iterate all 'cause we need test coins
         for coin in self.gcd.all_coins:
             if coin.enabled:
@@ -117,21 +126,30 @@ class KeyManager(qt_core.QObject):
             self.gcd.save_master_seed(self.master_seed_hex)
         self.activeChanged.emit()
 
+    @qt_core.Slot(str, result=bool)
+    def validateAlienSeed(self, seed: str) -> bool:
+        try:
+            self.__mnemonic.check_words(seed)
+            return True
+        except ValueError as ve:
+            log.warning(ve)
+            return False
+
     @property
     def gcd(self):
         return self.parent()
 
     @property
     def master_key(self):
-        return self._master_hd
+        return self.__master_hd
 
     @property
     def master_seed_hex(self) -> str:
-        return util.bytes_to_hex(self._seed)
+        return util.bytes_to_hex(self.__seed)
 
-    @qt_core.Slot(str)
-    def setNewPassword(self, password: str) -> None:
-        self.gcd.set_password(password)
+    @qt_core.Slot(str, result=bool)
+    def setNewPassword(self, password: str) -> bool:
+        return self.gcd.set_password(password)
 
     @qt_core.Slot(str, result=int)
     def validatePasswordStrength(self, password: str) -> int:
@@ -163,6 +181,7 @@ class KeyManager(qt_core.QObject):
 
     @qt_core.Slot(str, result=bool)
     def applyPassword(self, password: str) -> None:
+        qt_core.QCoreApplication.processEvents()
         return self.gcd.apply_password(None)
 
     @qt_core.Slot()

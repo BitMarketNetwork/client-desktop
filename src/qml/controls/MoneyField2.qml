@@ -27,7 +27,6 @@ Base{
         rightPadding: 5
         leftPadding: 5
 
-        focus: true
         maximumLength: 12
         horizontalAlignment: TextInput.AlignHCenter
         verticalAlignment: TextInput.AlignBottom

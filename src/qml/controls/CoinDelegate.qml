@@ -1,7 +1,8 @@
+import "../js/constants.js" as Const
+import "../api"
+import "../controls"
 import QtQuick 2.12
 //import QtGraphicalEffects 1.12
-import "../controls"
-import "../js/constants.js" as Const
 
 Item {
     id: _base
@@ -21,28 +22,34 @@ Item {
     antialiasing: true
 
     /*
-      we can many expanded and not expanded items and only one selected !!!
+    we can many expanded and not expanded items and only one selected !!!
     */
     property bool selected: false
     property bool expanded: false
 
     onSelectedChanged: {
-        if(expanded && _base.enabled ){
+        if(expanded && _base.enabled){
             _loader.item.selected = _base.selected
         }
     }
 
-    onAddressModelChanged: {
-        // console.log(`new address model`)
-        if( undefined == addressModel ){
-            addressModel = [] // recursion
-            return
-        }
-        else if(addressModel.length === 0){
-            return
-        }
-        reload()
+    // onAddressModelChanged: {
+        // // console.log(`new address model`)
+        // if(addressModel.length == = 0){
+            // return
+            //}
+        // reload()
+        // }
+
+
+    /**
+    Crucial stuff
+     */
+    Binding on height{
+        when: expanded && _loader.height > 0
+        value: _loader.height
     }
+
 
     function reload() {
         // onChange()
@@ -90,8 +97,6 @@ Item {
     }
 
     onExpandedChanged: {
-
-
         onChange()
     }
 
@@ -103,12 +108,12 @@ Item {
 
     Rectangle{
         id: _rect
-        color: _base.selected? palette.linkVisited : palette.base
+        color: _base.selected? palette.linkVisited: palette.base
         radius: 1
         visible: _base.visible
 
         border{
-            width: _base.selected?1:0
+            width: _base.selected?1: 0
             color: palette.link
         }
 
@@ -129,16 +134,16 @@ Item {
             }
         }
 
-    XemLine{
-        id: _top_line
-        anchors{
-            top: parent.top
-            topMargin: -1
-            horizontalCenter: parent.horizontalCenter
+        XemLine{
+            id: _top_line
+            anchors{
+                top: parent.top
+                topMargin: -1
+                horizontalCenter: parent.horizontalCenter
+            }
+            width: parent.width - 20
+            visible: false// !_base.selected
         }
-        width: parent.width - 20
-        visible: !_base.selected
-    }
 
         CoinRow{
             id: _header
@@ -153,7 +158,8 @@ Item {
                 anchors.fill: parent
                 onClicked: {
                     if (mouse.button === Qt.RightButton) {
-                        _base.rightClick( mouse.x + _header.x , mouse.y + _header.y );
+                        _base.rightClick(mouse.x + _header.x,
+                                         mouse.y + _header.y)
                     }
                     else{
                         _base.coinClick()
@@ -183,19 +189,4 @@ Item {
         to: _header.height
         easing.type: Easing.InOutQuad
     }
-
-    /*
-    Connections{
-        id: _address_connection
-        target: _loader.item
-        enabled: _base.expanded
-        onAddressClick: {
-            if(_base.enabled){
-                _base.addressClick(index)
-            }
-        }
-    }
-        */
-
-
 }

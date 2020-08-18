@@ -8,6 +8,8 @@ BasePopup {
     id: _base
 
     closable: false
+    modal: true
+    dim: true
 
     property bool setMode: true
     property int passwordStrength:  {
@@ -17,12 +19,12 @@ BasePopup {
 
     readonly property variant strengthLevel:[
         "",
-        qsTr("Horrible"),
-        qsTr("Week"),
-        qsTr("Middle"),
-        qsTr("Good"),
-        qsTr("Strong"),
-        qsTr("Paranoic"),
+        qsTr("Horrible","Password strength level"),
+        qsTr("Weak","Password strength level"),
+        qsTr("Medium","Password strength level"),
+        qsTr("Good","Password strength level"),
+        qsTr("Strong","Password strength level"),
+        qsTr("Paranoic","Password strength level"),
     ]
 
     readonly property int minimumStrength: 3
@@ -47,9 +49,18 @@ BasePopup {
     }
 
 
+
+
     onAccept: {
+        if(!isPasswordOk()){
+            return
+        }
+
         if( setMode ){
-            CoinApi.keyMan.setNewPassword(_main.value);
+            if(!CoinApi.keyMan.setNewPassword(_main.value)){
+                _strength.text = qsTr("Critical error")
+                return
+            }
             setMode = false
             _main.value = ""
             _switch.checked = false
@@ -61,17 +72,25 @@ BasePopup {
             _switch.checked = false
             return
         }
+        if( !CoinApi.ui.dbValid){
+            _db_warning.open()
+            return
+        }
+        // strict order !!!
         _main.visible = false
-        CoinApi.keyMan.applyPassword(_main.value);
-        _main.value = "";
+        // first close it
         close()
+        _main.value = "";
+        CoinApi.keyMan.applyPassword(_main.value);
     }
 
     onReject: {
         Qt.quit()
     }
 
-
+    onAboutToShow: {
+        _main.forceActiveFocus()
+    }
 
     Column{
         anchors{
@@ -82,7 +101,7 @@ BasePopup {
 
         TitleText{
             id: _title
-            text: setMode? qsTr("Setup new password") : qsTr("Input password")
+            text: setMode? qsTr("Set new password","Passwrod dialog") : qsTr("Input password","Passwrod dialog")
             width: parent.width
             bottomPadding: 20
         }
@@ -91,25 +110,25 @@ BasePopup {
             id: _main_row
             height: _main.height
             width: parent.width
+
             DetailInput{
                 id: _main
                 passwordInput: !_switch.checked
-                name: qsTr("Password:")
-                placeHolder: qsTr("Input your password here")
+                name: qsTr("Password:","Password dialog")
+                placeHolder: qsTr("Enter your password","Password dialog")
                 width: parent.width - 140
                 labelWidth: 200
                 height: 40
                 maxLength: 36
                 focus: true
                 failure: !isPasswordOk()
+                enter: !setMode
+
                 onValueChanged: {
                     if(!setMode){
                         _strength.text = ""
                     }
                 }
-            Keys.onEnterPressed: {
-                accept()
-            }
             }
             Text {
                 id: _strength
@@ -134,20 +153,35 @@ BasePopup {
                 id: _reset
                 text: qsTr("Reset")
                 height: Const.xemBtnHeight
-                visible: !setMode
+                visible: !setMode && _strength.text.length === 0
                 onClicked: {
                     _confirm_msg.open()
                 }
                 MsgPopup{
                     id: _confirm_msg
                     ok: false
-                    text: qsTr("It destroys all saved keys and transactions! Reset password?  ")
+                    text: qsTr("This will destroy all saved information and you can lose your money! Please make sure you remember the seed phrase. Reset?")
                     onAccept: {
                         close()
-                        CoinApi.keyMan.removePassword();
-                        _main.value = ""
-                        _confirm.value = ""
-                        setMode = true;
+                            CoinApi.keyMan.removePassword();
+                            _main.value = ""
+                            _confirm.value = ""
+                            setMode = true;
+                    }
+                }
+                MsgPopup{
+                    id: _db_warning
+                    text: qsTr("Your current database version isn't supported in this application version (%1). You can reset your database either use old application version. \
+                     Your master key won't be deleted. In case you reset databse you should wait some time to sinchornize data").arg(Qt.application.version)
+                    ok: false
+                    acceptText: qsTr("Reset")
+                    onAccept: {
+                        close()
+                        CoinApi.ui.resetDB()
+                        _base.close()
+                    }
+                    onReject: {
+                        close()
                     }
                 }
             }
@@ -155,8 +189,8 @@ BasePopup {
         DetailInput{
             id: _confirm
             passwordInput: true
-            name: qsTr("Password confirmation:")
-            placeHolder: qsTr("Repeat your password here")
+            name: qsTr("Password confirmation:","Passwrod dialog")
+            placeHolder: qsTr("Repeat your password here","Passwrod dialog")
             width: _main.width
             labelWidth: 200
 //            visible: !_switch.checked
@@ -165,13 +199,14 @@ BasePopup {
             height: 40
             failure: !isConfirmOk()
             visible: setMode
+            enter: setMode
         }
         SwitchBox{
             id: _switch
             x: _main.inputX
             width: parent.width
             height: 40
-            text: qsTr("Show password")
+            text: qsTr("Show password","Password dialog")
             onCheckedChanged: {
                 _confirm.value = ""
             }

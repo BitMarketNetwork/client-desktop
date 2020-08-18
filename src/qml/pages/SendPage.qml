@@ -6,18 +6,20 @@ import "../widgets"
 import "../api"
 import "../js/constants.js" as Constants
 import "../js/functions.js" as Funcs
-
 import Bmn 1.0
 
 
 
-NewTxPage {
+TxPage {
     id: _base
-    action: qsTr("Send a transaction")
+    action: qsTr("Send")
     actionIcon: Funcs.loadImage("send.svg")
     valid: false
     readonly property int pageId: Constants.pageId.send
 
+    // Loader{
+    //   source: CoinApi.dummy ? Qt.createQmlObject('',parent,"dynamicSnippet1") : "ImportBmn.qml"
+    // }
 
     onAccept: {
         var result = _tx_controller.prepareSend();
@@ -30,34 +32,32 @@ NewTxPage {
         _tx_controller.cancel()
     }
 
-    Component.onCompleted:{
-//            _base.wait(2000)
-    }
-
-//    Flickable{
-        Rectangle{
+    Flickable{
         width: parent.width
-//        ScrollBar.vertical: ScrollBar{
-//            width: 30
+        ScrollBar.vertical: ScrollBar{
+            width: 30
 //            policy: ScrollBar.AlwaysOn
-//        }
-//        clip: true
-//        contentHeight: 600
-        height: 600
+        }
+        clip: true
+        contentHeight: 600
+        height: bottomY + titleHeight
+
         y: 150
         anchors{
             top: parent.top
-//            bottom: parent.bottom
-//            topMargin: 150
         }
 
     Column{
+//    Flow{
         id: _main_column
+
+//        flow: Flow.TopToBottom
+
         anchors{
             fill: parent
 //            topMargin: 150
         }
-        spacing: 20
+        spacing: 5
         /*
             logic area
         */
@@ -72,19 +72,12 @@ NewTxPage {
 
             onSent: {
 
-                /*
-                var msg = msgbox(qsTr("Transaction has sent"))
-                msg.reject.connect(function(){
-                    popPage();
-                });
-                */
                 _result_popup.txHash = txHash
                 _result_popup.open()
 
             }
 
             onCanSendChanged:{
-                console.log(`Can send:`, canSend)
                 _base.valid = _tx_controller.canSend
             }
             function less(){}
@@ -109,8 +102,7 @@ NewTxPage {
             }
             TxResultPopup{
                 id: _result_popup
-                // coinName: _base.coinName
-                coinName: api.coin.shortName
+                coinName: api.coin.netName
                 onReject: {
                     popPage()
                 }
@@ -170,7 +162,9 @@ NewTxPage {
             allAmount: _tx_controller.maxAmount
             allFiat: _tx_controller.fiatBalance
             sourceModel: _tx_controller.sourceModel
+            sourceChoiseEnabled: _tx_controller.useCoinBalance
             useAllAmount: _tx_controller.useCoinBalance
+            currentAddress: CoinApi.coins.address.name
             onRecalcSources: {
                 _tx_controller.recalcSources()
             }
@@ -210,6 +204,7 @@ NewTxPage {
             id: _change
             leftOverAmount: _tx_controller.changeAmount
             newAddressLeft: _tx_controller.newAddressForChange
+            hasLeftOver: _tx_controller.hasChange
             onNewAddressLeftChanged: {
                 _tx_controller.newAddressForChange = newAddressLeft
             }

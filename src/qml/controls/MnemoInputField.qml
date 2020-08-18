@@ -21,7 +21,6 @@ Rectangle {
 
         TextArea{
             id: _text_static
-            focus: true
             anchors{
                 top: parent.top
                 left: parent.left

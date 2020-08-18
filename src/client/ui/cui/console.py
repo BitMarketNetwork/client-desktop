@@ -86,7 +86,7 @@ class Console(cmd_base.Cmd, qt_core.QObject, AppBase):
         """
         Retrieve server coins information
         """
-        self.gcd.coins_info()
+        # self.gcd.coins_info()
 
     def help_wallet(self):
         print("Available commands: %s" % ", ".join(self.WALLET_SUB_COMMANDS))

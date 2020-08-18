@@ -11,7 +11,6 @@ Base {
     property alias color : _amount.color
     property int fontSize: 16
     property alias amounFontSize: _amount.font.pixelSize
-    property alias effect: _amount.effect
     property int horAlignment: 0
     height: _amount.font.pixelSize
 
@@ -21,7 +20,7 @@ Base {
         SmallLabel{
             anchors{
                 left: parent.left
-                leftMargin: 10
+                // leftMargin: 10
                 /*
                 right: parent.horizontalCenter
                 rightMargin: 5
@@ -48,8 +47,6 @@ Base {
                 pixelSize: fontSize
             }
             width: _unit_fmetric.averageCharacterWidth * _unit.text.length
-            effect: _amount.effect
-            //verticalAlignment: Qt.AlignBottom
         }
         FontMetrics{
             id: _unit_fmetric

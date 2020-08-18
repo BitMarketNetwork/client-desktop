@@ -73,5 +73,5 @@ class KeyDerivation:
         except exceptions.InvalidKey:
             log.debug(f"Wrong key")
         except AssertionError:
-            log.critical(f"ex:{len(ex)} len:{self._len}")
+            log.critical(f"ex:{ex}:{len(ex)} len:{self._len}")
         return False

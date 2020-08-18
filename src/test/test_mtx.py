@@ -63,7 +63,7 @@ UNSPENTS = [
 ]
 
 
-class Test_Input(unittest.TestCase):
+class TestInput(unittest.TestCase):
 
     def test_init(self):
         txin = mtx.TxInput(b'script', b'txid', b'\x04',
@@ -103,7 +103,7 @@ class Test_Input(unittest.TestCase):
             [b'txid', b'\x04', b'\x06', b'script', b'\xff\xff\xff\xff']))
 
 
-class Test_Output(unittest.TestCase):
+class TestOutput(unittest.TestCase):
 
     def test_init(self):
         txout = mtx.TxOutput(
@@ -126,7 +126,7 @@ class Test_Output(unittest.TestCase):
         self.assertNotEqual(txout3, txout4)
 
 
-class Test_Transaction(unittest.TestCase):
+class TestTransaction(unittest.TestCase):
     def test_init(self):
         txin = [mtx.TxInput(b'script', b'txid', b'\x04',
                             sequence=b'\xff\xff\xff\xff')]
@@ -212,7 +212,7 @@ class Test_Transaction(unittest.TestCase):
         self.assertTrue(mtx.Mtx.is_segwit(bytes(tx).hex()))
 
 
-class Test_TxId(unittest.TestCase):
+class TestTxId(unittest.TestCase):
 
     def test_calc_txid_legacy(self):
         self.assertEqual(mtx.calc_txid(

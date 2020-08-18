@@ -6,7 +6,7 @@ from client.ui.gui import settings_manager
 log = logging.getLogger(__name__)
 
 
-class Test_language(unittest.TestCase):
+class TestLanguage(unittest.TestCase):
 
     def test_loading(self):
         app = qt_core.QCoreApplication()

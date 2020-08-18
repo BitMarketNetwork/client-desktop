@@ -9,7 +9,8 @@ import "../pages"
 SendWidget {
     id: _base
     title: qsTr("Label:")
-    height: 400
+    height: 350
+    bottomLine: false
 
     property alias label: _label.text
     property alias segwit: _segwit.checked
@@ -51,7 +52,7 @@ SendWidget {
                 top:  _label.bottom
                 topMargin: defMargin
             }
-            text: qsTr("Segwit address:","Receive payment")
+            text: qsTr("Segwit address:","Receive payment window")
             checked: true
         }
 
@@ -63,7 +64,7 @@ SendWidget {
                 top:  _segwit.bottom
                 topMargin: defMargin
             }
-            text: qsTr("Message:")
+            text: qsTr("Message:","Receive payment window")
         }
        TextArea{
             id: _message

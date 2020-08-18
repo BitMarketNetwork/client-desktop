@@ -1,11 +1,22 @@
 
 import logging
-from typing import Optional, Union, List, Tuple
+import itertools
+import functools
+import collections
+import traceback
+from typing import Optional, Union, List, Tuple, Callable, Set, DefaultDict
+
 
 from .. import gcd
 from . import coin_network, key, mtx_impl
 
 log = logging.getLogger(__name__)
+
+
+def perms(src: list, getter: callable):
+    for i in range(len(src)):
+        for pack in itertools.combinations(src, r=i + 1):
+            yield pack, sum(map(getter, pack))
 
 
 class NewTxerror(Exception):
@@ -24,175 +35,211 @@ class MutableTransaction:
     MIN_SPB_FEE = 1
     MAX_TX_SIZE = 1024
 
-    def __init__(self, address: str, fee_man: "feeManager", parent=None):
+    def __init__(self, address: 'address.CAddress', fee_man: "feeManager", parent=None):
         log.debug(f"New MTX:{address}")
         assert address is not None
         # we need to emit bx result
-        self._parent = parent
+        self.__parent = parent
         # it s serialized MTX!!!s
-        self._raw_mtx = None
-        self._mtx = None
-        self._address = address
-        self._receiver: str = ""
-        self._receiver_valid: bool = False
-        # user fee
-        self._outputs = []
-        self._amount = None
+        self.__raw__mtx = None
+        self.__mtx = None
+        self.__address = address
+        self.__receiver: str = ""
+        self.__receiver_valid: bool = False
+        self.__amount = None
         self.new_address_for_change = True
-        self._leftover_address = None
-        self._substract_fee = False
+        self.__leftover_address = None
+        self.__substract_fee = False
+        # dummy pending result handmade tx .. keep it for debug
+        self.__tx = None
 
         # ALL source address ( may be filtered by user )
-        self._selected_sources = []
-        # filtered BY APP source addresses
-        self._filtered_addresses = []
-        self._filtered_amount = 0
-        #
-        # self._source_amount =  0
+        self.__selected_sources: List['address.CAdress'] = []
+        # wrong way !!! need to select UNSPENTS not addresses
+        self.__filtered_inputs: List[mtx_impl.TxInput] = []
+        self.__filtered_amount = 0
 
         # strict order !!
-        self._fee_man = fee_man
-        self._spb = self._fee_man.max_spb
+        self.__fee_man = fee_man
+        self._spb = self.__fee_man.max_spb
         # setter !
-        self._amount = 0
+        self.__amount = 0
         self.use_coin_balance = True
         self.recalc_sources()
-        self.guess_amount()
+        self.set_max()
 
     @classmethod
     def make_dummy(cls, address: str, parent) -> 'MutableTransaction':
         out = cls(address, gcd.GCD.get_instance().fee_man)
         # third
-        out._receiver = 'tb1qs5cz8f0f0l6tf87ez90ageyfm4a7w7rhryzdl2'
-        out._amount = 0.01
+        out.__receiver = 'tb1qs5cz8f0f0l6tf87ez90ageyfm4a7w7rhryzdl2'
+        out.__amount = 0.01
         out.prepare()
         return out
 
-    def guess_amount(self):
-        self.amount = max(self._address.balance -
-                          (0 if self._substract_fee else self.fee), 0)
-
-    def recalc_sources(self):
-        # TODO: use only one source for a while!!!
-        if self._use_coin_balance:
-            self._sources = [
-                add for add in self._address.coin if add.balance > 0]
+    def recalc_sources(self, auto: bool = False):
+        if auto:
+            for add in self.__sources:
+                add.useAsSource = True
+        if self.__use_coin_balance:
+            self.__sources = [
+                add for add in self.__address.coin if add.balance > 0]
         else:
-            self._sources = [self._address]
-        # addr for addr in self._address.coin.wallets if not addr.readOnly]
-        self._selected_sources = [
-            add for add in self._sources if add.useAsSource]
-        # TODO: get amount from unspents !!!
-        self._source_amount = sum(
-            add.balance for add in self._selected_sources)
+            self.__sources = [self.__address]
+        # addr for addr in self.__address.coin.wallets if not addr.readOnly]
+        self.__selected_sources: List['address.CAddress'] = self.__sources if auto else [
+            add for add in self.__sources if add.useAsSource]
+        self.__source_amount = sum(
+            add.balance for add in self.__selected_sources)
         self.filter_sources()
-        if self._amount:
-            log.debug(
-                f"selected sources {len(self._filtered_addresses)} with total amount in {self._source_amount}. Change is {self.change}")
+        log.debug(
+            f"source addresses:{len(self.__selected_sources)} ({self.__source_amount}) selected inputs {len(self.__filtered_inputs)} ({self.__filtered_amount}). Change is {self.change}")
 
     @classmethod
-    def _filter_addresses(cls, sources: list, target_amount) -> Tuple[list, int]:
-        """
-        make it static to be clear
-        it is simple for a while.. but it's supposed to be more smart
-        """
-        sorted_list = sorted(sources, key=lambda a: a.balance)
+    def select_sources(cls, sources: list, target_amount: int, getter: callable) -> Tuple[list, int]:
+
+        if not sources or target_amount <= 0:
+            return [], 0
+
+        def src_len_select(src):
+            return max(src, key=lambda s: len(s[0]))
+
+        # try simple cases
+        summ = sum(map(getter, sources))
+        # log.warning(f"sum:{summ} t:{target_amount}")
+        if summ < target_amount:
+            return [], summ
+        if summ == target_amount:
+            return sources, target_amount
+
+        # try exact products
+        res = ((s, c)
+               for s, c in perms(sources, getter) if c == target_amount)
+        # there's no way to test generator
+        try:
+            return src_len_select(res)
+        except ValueError:
+            pass
+
+        res = [(s, c) for s, c in perms(sources, getter) if c > target_amount]
+        # two loops :-\
+        if res:
+            _, min_ = min(res, key=lambda r: r[1])
+            return src_len_select(r for r in res if r[1] == min_)
+
+        # # fallback to the silliest algo
+        sorted_list = sorted(sources, key=getter, reverse=True)
         result_list = []
         amount = 0
+        prev = None
         for src in sorted_list:
-            amount += src.balance
+            if getter(src) > target_amount:
+                prev = src
+                continue
+            if prev and getter(src) < target_amount:
+                src = prev
+            amount += getter(src)
             result_list.append(src)
             if amount >= target_amount:
                 return result_list, amount
-        return sources , target_amount
+        return [], 0
 
     def filter_sources(self) -> None:
-        self._filtered_addresses, self._filtered_amount = self._filter_addresses(
-            self._selected_sources, self._amount -
-            (0 if self._substract_fee else self.fee)
+        all_inputs = sum((a.unspents for a in self.__selected_sources), [])
+        target = self.__amount + (0 if self.__substract_fee else self.fee)
+        self.__filtered_inputs, self.__filtered_amount = self.select_sources(
+            all_inputs, target,
+            getter=lambda a: a.amount
         )
+        # log.warning(
+        #     f"amount:{self.__amount} .  filter=>{[[u.amount for u in a.unspents] for a in self.__selected_sources]} target:{target} result:{self.__filtered_amount}")
+
+        # ensure uniqueness
+        # assert len(set(self.__filtered_inputs)) == len(
+        #     self.__filtered_inputs)
 
     def prepare(self):
         """
         raise stricly before any changes !!!
         """
-        self._test_receiver()
+        self.__test_receiver()
         #
         if 0 == self.fee:
             raise NewTxerror(f"No fee")
-        if self._substract_fee and self.fee > self._amount:
+        if self.__substract_fee and self.fee > self.__amount:
             raise NewTxerror(
-                f"Fee {self.fee} more than amount {self._amount}")
-        if not self._filtered_addresses:
-            raise NewTxerror(f"There are no source addresses selected")
-        if self._amount > self._filtered_amount:
+                f"Fee {self.fee} more than amount {self.__amount}")
+        if not self.__filtered_inputs:
+            raise NewTxerror(f"There are no source inputs selected")
+        if self.__amount > self.__filtered_amount:
             raise NewTxerror(
-                f"Amount {self._amount} more than balance {self._filtered_amount}")
+                f"Amount {self.__amount} more than balance {self.__filtered_amount}")
         # filter sources. some smart algo expected here
         # prepare
-        sources: List[Tuple[List[mtx_impl.UTXO, key.PrivateKey]]] = [
-            (ad.unspents, ad.private_key) for ad in self._filtered_addresses]
-        _unspents = sum((un for un, _ in sources), [])
-        _unspent_sum = sum( (u.amount for u in _unspents ))
-        log.debug(f"unspents: {_unspents} sum: {_unspent_sum} vs {self._filtered_amount}")
+        unspents = self.__filtered_inputs
+        unspent_sum = sum(u.amount for u in unspents)
+
+        def cl(t, i):
+            t[i.address] += [i]
+            return t
+        sources: DefaultDict['address.CAddress',
+                             List[mtx_impl.UTXO]] = functools.reduce(
+                                 cl,
+                                 unspents,
+            collections.defaultdict(list),
+        )
+        log.debug(
+            f"unspents: {unspents} scr:{sources} sum: {unspent_sum} vs {self.__filtered_amount}")
         if not sources:
             raise NewTxerror(f"No unspent outputs found")
         # process fee
-        if self._substract_fee:
-            _outputs = [
-                (self._receiver, int(self._amount - self.fee))
+        if self.__substract_fee:
+            outputs = [
+                (self.__receiver, int(self.__amount - self.fee))
             ]
         else:
-            _outputs = [
-                (self._receiver, int(self._amount)),
+            outputs = [
+                (self.__receiver, int(self.__amount)),
             ]
 
         log.debug(
-            f"amount:{self._amount} fee:{self.fee} fact_change:{self.change}")
+            f"amount:{self.__amount} fee:{self.fee} fact_change:{self.change}")
         # process leftover
         if self.change > 0:
             if self.new_address_for_change:
-                self._leftover_address = self._address.coin.make_address()
+                self.__leftover_address = self.__address.coin.make_address()
             else:
-                self._leftover_address = self._address
+                self.__leftover_address = self.__address
 
-            _outputs.append(
-                (self._leftover_address.name, self.change)
+            outputs.append(
+                (self.__leftover_address.name, self.change)
             )
         else:
-            self._leftover_address = None
+            self.__leftover_address = None
 
         log.debug(
-            f"outputs: {_outputs} change_wallet:{self._leftover_address}")
+            f"outputs: {outputs} change_wallet:{self.__leftover_address}")
 
-        self._mtx = mtx_impl.Mtx.make(
-            _unspents,
-            _outputs,
+        self.__mtx = mtx_impl.Mtx.make(
+            unspents,
+            outputs,
         )
-        log.debug(f"TX fee: {self._mtx.fee}")
-        if self._mtx.fee != self.fee:
+        log.debug(f"TX fee: {self.__mtx.fee}")
+        if self.__mtx.fee != self.fee:
             self.cancel()
             log.error(
-                f"Fee error. Should be {self.fee} but has {self._mtx.fee}")
+                f"Fee failure. Should be {self.fee} but has {self.__mtx.fee}")
             raise NewTxerror("Critical error. Fee mismatch")
-        for utxo, key_ in sources:
-            self._mtx.sign(key_, unspents=utxo)
-        self._raw_mtx = self._mtx.to_hex()
-        log.info(f"final TX to send: {self._mtx}")
-
-    @property
-    def change(self):
-        # TODO:
-        ch = int(self._filtered_amount - self._amount -
-                 (0 if self._substract_fee else self.fee))
-        log.debug( f"source:{self._filtered_amount} am:{self._amount} \
-        # fee:{self.fee} substract: {self.substract_fee}: change: {ch}")
-        return ch
+        for addr, utxo in sources.items():
+            log.debug(f"INPUT: address:{addr.name} utxo:{len(utxo)}")
+            self.__mtx.sign(addr.private_key, unspents=utxo)
+        self.__raw__mtx = self.__mtx.to_hex()
+        log.info(f"final TX to send: {self.__mtx}")
 
     def cancel(self):
-        if self._leftover_address:
-            self._leftover_address.coin.remove_wallet(self._leftover_address)
-            self._leftover_address = None
+        if self.__leftover_address:
+            self.__leftover_address.coin.remove_wallet(self.__leftover_address)
+            self.__leftover_address = None
 
     def send(self):
         gcd.GCD.get_instance().broadcastMtx.emit(self)
@@ -200,149 +247,183 @@ class MutableTransaction:
     def send_callback(self, ok: bool, error: Optional[str] = None):
         # not GUI thread !!!
         log.debug(f"send result:{ok} error:{error}")
-        if self._parent:
-            if ok:
-                self._parent.sent.emit()
-                # add locally and check mempool
-                tx_ = self._mtx.to_tx()
-                tx_.fromAddress = self._address.name
-                tx_.toAddress = self._receiver
-                self._address.insert_new(tx_)
+        if ok:
+            if self.__parent:
+                self.__parent.sent.emit()
+            """
+            # add locally and check mempool
+            - tx to each sender
+            - tx to receiver
+            - tx to the change address
+            # remember about duplicates
+            """
+            address_set = set(inp.address for inp in self.__filtered_inputs)
+            address_set.add(self.__address)
+            receiver = self.__address.coin[self.__receiver]
+            if receiver is not None:
+                address_set.add(receiver)
 
-                gcd.GCD.get_instance().mempoolCoin.emit(self._address.coin)
+            if self.__leftover_address is not None:
+                address_set.add(self.__leftover_address)
 
-                # check for sender
-                # TODO: not addres !!! all filtered_src
-                # gcd.GCD.get_instance().mempoolAddress.emit(self._address)
-                # # check for change
-                # if self._leftover_address:
-                #     gcd.GCD.get_instance().mempoolAddress.emit(self._leftover_address)
-                # # check for receiver
-                # receiver = self._address.coin[self._receiver]
-                # if receiver:
-                #     gcd.GCD.get_instance().mempoolAddress.emit(receiver)
-            else:
-                self._parent.fail.emit(str(error))
+            #
+            tx_ = self.__mtx.to_tx()
+            tx_.height = None
+            for w in address_set:
+                w.add_tx(tx_)
+            gcd.GCD.get_instance().mempoolCoin.emit(self.__address.coin)
+            # to debug
+            self.__tx = tx_
+        else:
+            if self.__parent:
+                self.__parent.fail.emit(str(error))
 
     @property
+    def ui_tx(self):
+        return self.__tx
+
+    @ property
     def tx_size(self):
-        if not self._selected_sources:
+        if not self.__selected_sources:
             return self.MAX_TX_SIZE
         return mtx_impl.estimate_tx_size(
             150,
-            max(1, len(self._filtered_addresses)),
+            max(1, len(self.__filtered_inputs)),
             70,
-            2 if self._filtered_amount > self._amount else 1,
+            2 if self.__filtered_amount > self.__amount else 1,
         )
 
     def estimate_confirm_time(self) -> int:
         spb = self._spb
         # https://bitcoinfees.net
-        if key.AddressString.is_segwit(self._receiver):
+        if key.AddressString.is_segwit(self.__receiver):
             spb *= 0.6  # ??
         if spb < self.MIN_SPB_FEE:
             return -1
-        minutes = self._fee_man.get_minutes(spb)
+        minutes = self.__fee_man.get_minutes(spb)
         return minutes
 
-    def _test_receiver(self) -> None:
-        self._receiver_valid = False
-        if not self._receiver:
+    def __test_receiver(self) -> None:
+        self.__receiver_valid = False
+        if not self.__receiver:
             raise WrongReceiver("No receiver")
-        if not key.AddressString.validate_bool(self._receiver):
+        # import pdb; pdb.set_trace()
+        if not key.AddressString.validate_bool(self.__receiver):
             raise WrongReceiver("Invalid receiver address")
-        target_net = coin_network.CoinNetworkBase.from_address(self._receiver)
-        if target_net:
-            if target_net != self._address.coin.NETWORK:
+        target_net = coin_network.CoinNetworkBase.from_address(self.__receiver)
+        if target_net or self.__address.type == key.AddressType.P2WPKH:
+            if target_net != self.__address.coin.NETWORK:
                 raise WrongReceiver("Wrong network")
-        self._receiver_valid = True
+        self.__receiver_valid = True
 
-    @property
-    def receiver(self):
-        return self._receiver
+    @ property
+    def receiver(self) -> str:
+        return self.__receiver
 
-    @property
-    def receiver_valid(self):
-        return self._receiver_valid
+    @ property
+    def receiver_valid(self) -> bool:
+        return self.__receiver_valid
 
-    @receiver.setter
-    def receiver(self, addr: str):
-        self._receiver = addr
+    @ receiver.setter
+    def receiver(self, addr: str) -> None:
+        self.__receiver = addr
         try:
-            self._test_receiver()
+            self.__test_receiver()
         except WrongReceiver as err:
             log.warning(f"{addr} => {err}")
-            self._receiver = ""
+            self.__receiver = ""
 
-    @property
+    @ property
     def source_amount(self) -> int:
-        return self._source_amount
+        return self.__source_amount
 
-    @property
+    @ property
+    def filtered_amount(self) -> int:
+        return self.__filtered_amount
+
+    @ property
     def use_coin_balance(self) -> bool:
-        return self._use_coin_balance
+        return self.__use_coin_balance
 
-    @use_coin_balance.setter
+    @ use_coin_balance.setter
     def use_coin_balance(self, value: bool) -> None:
-        self._use_coin_balance = value
+        self.__use_coin_balance = value
         self.recalc_sources()
 
-    @property
+    @ property
     def address(self) -> "CAddress":
-        return self._address
+        return self.__address
 
-    @property
+    @ property
     def leftover_address(self):
-        log.warning(self._leftover_address)
-        if self._leftover_address:
-            return self._leftover_address.name
+        if self.__leftover_address:
+            return self.__leftover_address.name
         return ""
 
-    @property
+    def set_max(self):
+        self.amount = max(self.__source_amount -
+                          (0 if self.__substract_fee else self.fee), 0)
+
+    @ property
     def amount(self):
-        return int(self._amount)
+        return int(self.__amount)
 
-    @amount.setter
-    def amount(self, val):
-        self._amount = val
+    @ amount.setter
+    def amount(self, value: int) -> None:
+        self.__amount = value
+        # print(traceback.format_stack(limit=4))
         self.filter_sources()
-        log.info(f"amount: {self._amount} change:{self.change}")
+        log.info(
+            f"amount: {value} available:{self.__source_amount} change:{self.change}")
 
-    @property
+    @ property
+    def change(self):
+        # res = int(self.__filtered_amount - self.__amount - (0 if self.__substract_fee else self.fee))
+        # log.info(f"source:{self.__filtered_amount} am:{self.__amount} \
+        #     fee:{self.fee} substract: {self.substract_fee}: change:{res}")
+        return int(self.__filtered_amount - self.__amount -
+                   (0 if self.__substract_fee else self.fee))
+
+    @ property
     def tx_id(self):
-        if self._mtx:
-            return self._mtx.id
+        if self.__mtx:
+            return self.__mtx.id
 
-    @property
+    # for tests
+    @ property
+    def mtx(self):
+        return self.__mtx
+
+    @ property
     def fee(self) -> int:
         return int(self._spb * self.tx_size)
 
-    @property
+    @ property
     def sources(self):
-        return self._sources
+        return self.__sources
 
-    @property
+    @ property
     def coin(self):
-        return self._address.coin
+        return self.__address.coin
 
-    @property
+    @ property
     def substract_fee(self) -> bool:
-        return self._substract_fee
+        return self.__substract_fee
 
-    @substract_fee.setter
+    @ substract_fee.setter
     def substract_fee(self, value: bool) -> None:
-        self._substract_fee = value
+        self.__substract_fee = value
         self.filter_sources()
 
-    @property
+    @ property
     def spb(self) -> int:
         return int(self._spb)
 
-    @spb.setter
+    @ spb.setter
     def spb(self, value):
         log.debug(f"SPB: {value}")
         self._spb = value
         self.filter_sources()
 
     def __str__(self) -> str:
-        return self._raw_mtx
+        return self.__raw__mtx

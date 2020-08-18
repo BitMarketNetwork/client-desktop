@@ -159,7 +159,6 @@ Popup{
             onClicked: {
                 accept()
             }
-            focus: true
             Keys.onEnterPressed: {
                 accept()
             }

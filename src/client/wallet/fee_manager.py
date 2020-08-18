@@ -2,7 +2,9 @@
 import logging
 
 import PySide2.QtCore as qt_core
-from client import meta
+
+from .. import meta
+
 log = logging.getLogger(__name__)
 # NET timer TO
 UPDATE_FEE_TIMEOUT = 30*60*1000
@@ -41,6 +43,7 @@ class FeeManager(qt_core.QObject):
     def _update(self):
         if self.parent():
             if self._timer.isNull() or self._timer.elapsed() > UPDATE_FORCE_FEE_TIMEOUT:
+                self._timer.restart()
                 self.parent().retrieve_fee()
 
     # @meta.trace
@@ -61,7 +64,7 @@ class FeeManager(qt_core.QObject):
                 return prev_val
                 # no aproximation
                 # return max(val + (val - prev_val) / (key - prev_key) * (spb - prev_key), 0)
-            prev_key, prev_val=key, val
+            prev_key, prev_val = key, val
         return 0
 
     @property

@@ -13,7 +13,6 @@ class ReceiveManager(qt_core.QObject):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self._clipb = qt_gui.QGuiApplication.clipboard()
         self._address = None
 
     @qt_core.Property(str, notify=addressChanged)
@@ -38,7 +37,7 @@ class ReceiveManager(qt_core.QObject):
     def accept(self, segwit: bool, label: str, message: str):
         _coin = self.parent().coinManager.coin
         assert _coin
-        self._address = _coin.make_address( 
+        self._address = _coin.make_address(
             key.AddressType.P2WPKH if segwit else key.AddressType.P2PKH,
             label,
             message,
@@ -47,4 +46,4 @@ class ReceiveManager(qt_core.QObject):
 
     @qt_core.Slot()
     def toClipboard(self):
-        self._clipb.setText(self.address)
+        qt_gui.QGuiApplication.clipboard().setText(self.address)

@@ -22,7 +22,6 @@ Base{
 
         font.pixelSize: 14
         color: palette.text
-        effect: true
     }
     SmallLabel{
         id: _tx_value
@@ -32,7 +31,6 @@ Base{
             leftMargin: 10
         }
         font.pixelSize: 12
-        effect: false
         color: palette.text
     }
     SmallLabel{
@@ -43,7 +41,6 @@ Base{
             leftMargin: 10
         }
         font.pixelSize: 12
-        effect: false
         color: palette.text
     }
 }

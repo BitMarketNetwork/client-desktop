@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import Union, Callable
+from typing import Union, Callable, Optional
 from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.primitives.ciphers import algorithms
 from cryptography.hazmat.primitives.ciphers import modes
@@ -27,27 +27,28 @@ class AesProvider(sym_encrypt_abc.SymEncryptAbc):
     WEAK_LEN = 16
     NONCE_LEN = 16
 
-    def __init__(self, psw: Union[str, bytes], nonce: bytes):
+    def __init__(self, psw: Union[str, bytes], weak_nonce: Optional[bytes] = None):
         # split for future use
-        self._weak_cipher = None
-        self._psw = psw
-        self._make_weak(psw, nonce)
+        self.__weak_cipher = None
+        self.__psw = psw
+        if weak_nonce is not None:
+            self.__make_weak(psw, weak_nonce)
 
-    def _make_weak(self, psw, salt):
-        self._weak_cipher = Cipher(
-            algorithms.AES(self._prepare(psw, self.WEAK_LEN)),
-            self.AES_MODE(self._prepare(salt, self.NONCE_LEN)),
+    def __make_weak(self, psw, salt):
+        self.__weak_cipher = Cipher(
+            algorithms.AES(self.__prepare(psw, self.WEAK_LEN)),
+            self.AES_MODE(self.__prepare(salt, self.NONCE_LEN)),
             default_backend(),
         )
 
-    def _make_strong(self, salt):
+    def __make_strong(self, salt):
         return Cipher(
-            algorithms.AES(self._prepare(self._psw, self.STRONG_LEN)),
-            self.AES_MODE(self._prepare(salt, self.NONCE_LEN)),
+            algorithms.AES(self.__prepare(self.__psw, self.STRONG_LEN)),
+            self.AES_MODE(self.__prepare(salt, self.NONCE_LEN)),
             default_backend(),
         )
 
-    def _prepare(self, psw: Union[str, bytes], size: int) -> bytes:
+    def __prepare(self, psw: Union[str, bytes], size: int) -> bytes:
         digest = hashes.Hash(self.HASHER(), default_backend())
         digest.update(util.get_bytes(psw))
         return digest.finalize()[:size]
@@ -55,9 +56,9 @@ class AesProvider(sym_encrypt_abc.SymEncryptAbc):
     def encode(self, data: bytes, strong: bool) -> bytes:
         if strong:
             nonce = os.urandom(16)
-            cipher = self._make_strong(nonce)
+            cipher = self.__make_strong(nonce)
         else:
-            cipher = self._weak_cipher
+            cipher = self.__weak_cipher
         if not cipher:
             raise AesError("No cipher created. Set password at first.")
         enc = cipher.encryptor()
@@ -68,9 +69,9 @@ class AesProvider(sym_encrypt_abc.SymEncryptAbc):
     def decode(self, data: bytes, strong: bool) -> bytes:
         if strong:
             nonce, data = data[:self.NONCE_LEN], data[self.NONCE_LEN:]
-            cipher = self._make_strong(nonce,)
+            cipher = self.__make_strong(nonce,)
         else:
-            cipher = self._weak_cipher
+            cipher = self.__weak_cipher
         if not cipher:
             raise AesError("No cipher created. Set password at first.")
         try:

@@ -32,4 +32,8 @@ src/client/translation/db
 !src/test/data/*.json
 *.dat
 *._dat
-/bm_wallet.pyz
+*.pyz
+src/..build
+tmp
+get-pip.py
+/src/demo/qml_demo

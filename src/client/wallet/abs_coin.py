@@ -20,6 +20,8 @@ class CoinBase(db_entry.DbEntry):
     name: str = None
     _decimal_level: int = 0
     full_name: str = None
+    # for web explrores
+    net_name: str = None
     # it differs from self._status! the former is hardcoded but the latter depends on the server daemon
     _enabled: bool = False
     # test network or not
@@ -32,6 +34,7 @@ class CoinBase(db_entry.DbEntry):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self._balance = 0.
 
     @qt_core.Property(str, constant=True)
     def unit(self) -> str:
@@ -59,6 +62,10 @@ class CoinBase(db_entry.DbEntry):
     @qt_core.Property(str, constant=True)
     def shortName(self) -> str:
         return self.name
+
+    @qt_core.Property(str, constant=True)
+    def netName(self) -> str:
+        return self.net_name or self.name
 
     @qt_core.Property(int, constant=True)
     def decimalLevel(self) -> int:

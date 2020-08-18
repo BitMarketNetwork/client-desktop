@@ -31,18 +31,18 @@ ToolBar {
         }
 
         ToolItem{
-            text: qsTr("Export")
+            text: qsTr("Export", "Toolbar text")
             pix: Funcs.loadImage("export.svg")
             onClicked: exportAddress()
         }
         ToolItem{
-            text: qsTr("New address")
+            text: qsTr("New address", "Toolbar text")
             pix: Funcs.loadImage("new_wallet.png")
             onClicked: newAddress()
         }
         ToolItem{
             id: _show_empty
-            text: qsTr("Show empty")
+            text: qsTr("Show empty", "Toolbar text")
             pix: Funcs.loadImage("no-money.svg")
             checkable: true
             onCheckedChanged: {
@@ -58,17 +58,17 @@ ToolBar {
         }
         */
         ToolItem{
-            text: qsTr("Settings")
+            text: qsTr("Settings", "Toolbar text")
             pix: Funcs.loadImage("settings.svg")
             onClicked: settings()
         }
         ToolItem{
-            text: qsTr("About")
+            text: qsTr("About", "Toolbar text")
             pix: Funcs.loadImage("about.svg")
             onClicked: about()
         }
         ToolItem{
-            text: qsTr("Exit")
+            text: qsTr("Exit", "Toolbar text")
             pix: Funcs.loadImage("exit.svg")
             onClicked: quit()
         }

@@ -1,11 +1,9 @@
 import logging
+
 import PySide2.QtCore as qt_core
-from . import network_impl
-from . import net_cmd
-from client.wallet import coins
-from client.wallet import address
-from client.wallet import tx
-from client.wallet import mutable_tx
+from client.wallet import address, coins, mutable_tx, tx
+
+from . import net_cmd, network_impl
 
 log = logging.getLogger(__name__)
 
@@ -31,16 +29,22 @@ class Network(network_impl.NetworkImpl):
             self.debug_address_history, qt_core.Qt.QueuedConnection)
         gcd.lookForHDChain.connect(
             self.look_for_hd_addresses, qt_core.Qt.QueuedConnection)
+        gcd.validateAddress.connect(
+            self.validate_address, qt_core.Qt.QueuedConnection)
+        gcd.undoTx.connect(
+            self.undo_tx, qt_core.Qt.QueuedConnection)
+        gcd.httpFailureSimulation.connect(
+            self.http_failure_simulation, qt_core.Qt.QueuedConnection)
+        gcd.dbLoaded.connect(
+            self.level_loaded, qt_core.Qt.QueuedConnection)
+        gcd.fakeMempoolSearch.connect(
+            self.fake_mempool_seach, qt_core.Qt.QueuedConnection)
         # #
         self._run_cmd(net_cmd.CheckServerVersionCommand(self))
         self._run_cmd(net_cmd.GetCoinRatesCommand(self))
-        # self._run_cmd(net_cmd.UpdateCoinsInfoCommand(False, self))
 
     def server_sysinfo(self):
         self._run_cmd(net_cmd.ServerSysInfoCommand(self))
-
-    def coins_info(self):
-        self._run_cmd(net_cmd.CoinInfoCommand(self))
 
     def wallet_utxo_list(self, wallet):
         self._run_cmd(net_cmd.AddressUnspentCommand(wallet, parent=self))
@@ -48,18 +52,13 @@ class Network(network_impl.NetworkImpl):
     def broadcast_tx(self, mtx: mutable_tx.MutableTransaction):
         self._run_cmd(net_cmd.BroadcastTxCommand(mtx, parent=self))
 
-    def wallet_info(self, wallet):
-        self.coin_address_info(wallet)
-
-    def wallet_history(self, wallet):
-        self.retrieve_address_history(wallet)
-
     def update_address(self, wallet: address.CAddress):
         self._run_cmd(net_cmd.UpdateAddressInfoCommand(wallet, self))
 
     @qt_core.Slot()
     def poll_coins(self):
-        self._run_cmd(net_cmd.UpdateCoinsInfoCommand(True, self))
+        self._run_cmd(net_cmd.UpdateCoinsInfoCommand(
+            True, self), run_first=True)
 
     @qt_core.Slot()
     def retrieve_fee(self):
@@ -71,7 +70,7 @@ class Network(network_impl.NetworkImpl):
         self._about_to_quit = True
         self._cmd_timer.stop()
         self._fee_timer.stop()
-        reply = getattr(self,'_reply',None)
+        reply = getattr(self, '_reply', None)
         if reply:
             reply.abort()
 
@@ -81,12 +80,7 @@ class Network(network_impl.NetworkImpl):
 
     def retrieve_coin_history(self, coin: coins.CoinType):
         for wad in coin.wallets:
-            # update tx
-            self.retrieve_address_history(wad)
+            # # update tx
+            # self.retrieve_address_history(wad)
             # update balance
             self._run_cmd(net_cmd.UpdateAddressInfoCommand(wad, self))
-
-    @property
-    def busy(self):
-        # queue is redundant but let's try
-        return self._in_progress or self._cmd_queue

@@ -23,28 +23,28 @@ Item {
         AboutLabel{
             id: _name
             valueColor: _base.valueColor
-            name: qsTr("Coin name:")
+            name: qsTr("Coin name:","About application window")
         }
         AboutLabel{
             id: _online
             valueColor: _base.valueColor
-            name: qsTr("Coin status:")
-            value: online? qsTr("Online") : qsTr("Offline")
+            name: qsTr("Coin status:","Context menu item")
+            value: online? qsTr("Online","Context menu item") : qsTr("Offline","Context menu item")
         }
         AboutLabel{
             id: _version_str
             valueColor: _base.valueColor
-            name: qsTr("Daemon human version:")
+            name: qsTr("Daemon human version:","Context menu item")
         }
         AboutLabel{
             id: _version_num
             valueColor: _base.valueColor
-            name: qsTr("Daemon numeric version:")
+            name: qsTr("Daemon numeric version:","Context menu item")
         }
         AboutLabel{
             id: _height
             valueColor: _base.valueColor
-            name: qsTr("Coin height:")
+            name: qsTr("Coin height:","Context menu item")
         }
     }
 }

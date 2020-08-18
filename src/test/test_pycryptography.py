@@ -33,7 +33,7 @@ def pub_to_bytes(pub: ec.EllipticCurvePublicKey, compressed: bool = True) -> byt
 
 
 @unittest.skip
-class Test_base(unittest.TestCase):
+class TestBase(unittest.TestCase):
 
     def test_set(self):
         # from btc-core data
@@ -133,7 +133,7 @@ class Test_base(unittest.TestCase):
 
 
 @unittest.skip
-class Test_signature(unittest.TestCase):
+class TestSignature(unittest.TestCase):
 
     # u should use raw pyca implementation before using teest
     @unittest.skip
@@ -161,7 +161,7 @@ class Test_signature(unittest.TestCase):
         self.assertEqual(pyc_signed, ec_signed)
 
 
-class Test_derivation(unittest.TestCase):
+class TestDerivation(unittest.TestCase):
 
     def test_base(self):
         MY_PSW = "my mega super secret passphrase"

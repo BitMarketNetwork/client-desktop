@@ -6,7 +6,7 @@ Text {
 
     color: palette.mid
     font{
-        pixelSize: sub?20:60
+        pixelSize: sub?20: ( activeHeight * .05 )
         family: "Helvetica"
     }
 

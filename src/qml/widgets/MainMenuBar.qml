@@ -2,6 +2,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import "../pages"
 import "../controls"
+import "../api"
 
 MyMenuBar {
 
@@ -24,41 +25,42 @@ MyMenuBar {
     signal inputSeedPhrase();
     signal welcomePage();
     signal showEmpty(bool show)
+    signal showSeed()
 
     property alias showEmptyValue: _show_empty.checked
 
     MyMenu {
-        title: qsTr("Actions")
+        title: qsTr("Actions","Menu item")
 
 
         MyMenuItem {
             id: _new_address
-            text: qsTr("Create new address")
+            text: qsTr("Create new address","Menu item")
             onTriggered: newAddress()
         }
 
         MyMenuItem {
             id: _watch_only_address
-            text: qsTr("Add watch-only address")
+            text: qsTr("Add watch-only address","Menu item")
             onTriggered: addWatchAddress()
         }
 
         MyMenu{
-            title: qsTr("Address")
+            title: qsTr("Address","Menu item")
             MyMenuItem{
-                text: "Update"
+                text: qsTr("Update","Menu item");
                 onTriggered: {
                     updateAddress()
                 }
             }
             MyMenuItem{
-                text: "Clear transactions"
+                text: qsTr("Clear transactions","Menu item")
                 onTriggered: {
                     clearTransactions()
                 }
             }
             MyMenuItem{
-                text: "Export transactions"
+                text: qsTr("Export transactions","Menu item");
                 onTriggered: {
                     exportTransactions()
                 }
@@ -68,7 +70,12 @@ MyMenuBar {
         MenuSeparator{}
 
         MyMenuItem {
-            text: qsTr("Export wallet")
+            text: qsTr("Show seed phrase","Menu item")
+            onTriggered: showSeed()
+        }
+
+        MyMenuItem {
+            text: qsTr("Export wallet","Menu item")
             onTriggered: exportAddress()
         }
 
@@ -76,28 +83,28 @@ MyMenuBar {
         MenuSeparator{ }
 
         MyMenuItem {
-            text: qsTr("Exit")
+            text: qsTr("Exit","Menu item")
             onTriggered: quit()
         }
     }
 
     MyMenu {
-        title: qsTr("Tools")
+        title: qsTr("Options","Menu item")
 
 
         MyMenuItem {
             id: _show_empty
-            text: qsTr("Show empty addresses")
+            text: qsTr("Show empty addresses","Menu item")
             checkable: true
             onCheckedChanged: showEmpty(checked)
         }
         MyMenuItem {
-            text: qsTr("Settings")
+            text: qsTr("Settings","Menu item")
 
             onTriggered: settings()
         }
         MyMenuItem {
-            text: qsTr("About")
+            text: qsTr("About","Menu item")
 
             onTriggered: about()
         }
@@ -124,6 +131,15 @@ MyMenu {
         }
 
         MyMenuItem{
+            text: qsTr("Insert TX")
+            enabled: CoinApi.coins.addressIndex >= 0
+
+            onTriggered: {
+                CoinApi.coins.addTxRow()
+            }
+        }
+
+        MyMenuItem{
             text: qsTr("Notification test")
 
             onTriggered: {
@@ -145,6 +161,15 @@ MyMenu {
             }
         }
 
+        MyMenuItem{
+            text: qsTr("New address appending popup")
+            onTriggered: {
+                _add.open()
+            }
+            MakeAddressPopup{
+                id: _add
+            }
+        }
         MyMenuItem{
             text: qsTr("Watch address appending popup")
             onTriggered: {
@@ -244,6 +269,36 @@ MyMenu {
                 _psw_input.visible = true
             }
         }
+        MyMenuItem{
+            text: qsTr("Show seed popup")
+
+            DisplaySeedPopup{
+                id: _seed_show
+            }
+
+            onTriggered: {
+                _seed_show.open()
+            }
+        }
+        MyMenuItem{
+            text: qsTr("Source select combo")
+
+            BasePopup{
+                id: _source_select
+                title: qsTr("Source combo preview","Debug stuff")
+                SourceComboBox{
+                    width: 300
+                    anchors{
+                        centerIn: parent
+                    }
+                    model: CoinApi.coins.addressDataModel
+                }
+            }
+
+            onTriggered: {
+                _source_select.open()
+            }
+        }
     }
     MyMenu{
     title: qsTr("Key management")
@@ -271,22 +326,27 @@ MyMenu {
         title: qsTr("Wallet management")
 
         MyMenuItem {
-            text: qsTr("New legacy address")
-            onTriggered: {
-                api.newAddress("",false)
-            }
-        }
-        MyMenuItem {
-            text: qsTr("New segwit address")
-            onTriggered: {
-                api.newAddress("",true)
-            }
-        }
-        MyMenuItem {
             text: qsTr("UTXO list")
             onTriggered: {
                 api.getAddressUnspentList()
                 }
+        }
+        MyMenuItem {
+            text: qsTr("Increment coin block height")
+            enabled: api.coinIndex >=0
+
+            onTriggered: {
+                CoinApi.coins.coin.height += 1
+            }
+        }
+        MyMenuItem {
+            text: qsTr("Toggle current address updatind state")
+            enabled: api.addressIndex >=0
+            checkable: true
+
+            onCheckedChanged: {
+                CoinApi.coins.address.isUpdating = checked
+            }
         }
         MyMenuItem {
             text: qsTr("Address details")
@@ -321,7 +381,7 @@ MyMenu {
         }
     }
     MyMenu{
-    title: qsTr("Polling")
+    title: qsTr("Network")
 
     MyMenuItem {
         text: qsTr("Update")
@@ -338,13 +398,6 @@ MyMenu {
         }
     }
     MyMenuItem {
-        text: qsTr("Process tx list")
-
-        onTriggered: {
-            debugManager.reprocessTxList()
-        }
-    }
-    MyMenuItem {
         text: qsTr("Stop polling")
 
         onTriggered: {
@@ -356,6 +409,40 @@ MyMenu {
 
         onTriggered: {
             debugManager.retrieveFee()
+        }
+    }
+    MyMenu{
+        title: qsTr("Undo transactions")
+        enabled: api.coinIndex >= 0
+        MyMenuItem{
+            text: "1"
+            onTriggered:{
+                CoinApi.debuging.undoTransaction(api.coinIndex, 1)
+            }
+        }
+        MyMenuItem{
+            text: "2"
+            onTriggered:{
+                CoinApi.debuging.undoTransaction(api.coinIndex, 2)
+            }
+        }
+    }
+    MyMenu{
+        title: qsTr("HTTP error simulation")
+
+        MyMenuItem{
+            text: qsTr("404")
+
+            onTriggered:{
+                CoinApi.debuging.simulateHTTPError(404)
+            }
+        }
+        MyMenuItem{
+            text: qsTr("405")
+
+            onTriggered:{
+                CoinApi.debuging.simulateHTTPError(405)
+            }
         }
     }
     }
@@ -422,9 +509,27 @@ MyMenu {
             text: qsTr("Look for HD chain")
 
             onTriggered:{
-                CoinApi.debuging.lookForHD()
+                CoinApi.coins.lookForHD()
             }
         }
+        MyMenuItem{
+            text: qsTr("Online mode")
+
+            onTriggered:{
+                CoinApi.ui.online = !CoinApi.ui.online
+            }
+        }
+        MyMenuItem{
+            text: qsTr("Try old client version")
+
+            onTriggered:{
+                CoinApi.debuging.simulateClientVersion("0.9.1")
+            }
+        }
+    }
+
+    MyMenu{
+        title: qsTr("Mempool scenarios")
         MyMenuItem{
             text: qsTr("Explore address mempool")
 
@@ -440,10 +545,11 @@ MyMenu {
             }
         }
         MyMenuItem{
-            text: qsTr("Online mode")
+            text: qsTr("Fake coin tx status progress")
+            enabled: CoinApi.coins.coinIndex >= 0
 
             onTriggered:{
-                CoinApi.ui.online = !CoinApi.ui.online
+                CoinApi.coins.fakeTxStatusProgress()
             }
         }
     }

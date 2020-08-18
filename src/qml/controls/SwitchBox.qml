@@ -2,16 +2,19 @@ import QtQuick 2.0
 import QtQuick.Controls 2.12
 
 Base {
+    id: _base
 
-    property alias text: _text.text
     property alias checked: _switch.checked
     property alias nameColor: _text.color
+    property string text: ""
+    property string offText: ""
 
     height: 30
+//    width: 180
 
     signal goLink(string link)
 
-        Text{
+        SubText{
             anchors{
                 left: parent.left
 //                margins: 20
@@ -20,12 +23,10 @@ Base {
 
             id: _text
             font{
-                family: "Arial"
-                pixelSize: 14
                 bold: checked
             }
 
-            color: palette.mid
+            text: _switch.checked || !_base.offText? _base.text: _base.offText
 //            color: checked? palette.text:palette.mid
 
             onLinkActivated: { goLink(link) }

@@ -128,7 +128,6 @@ SendWidget {
             }
             unit: CoinApi.coins.currency
             fontSize: 24
-            effect: true
         }
         /*
         ColorOverlay{

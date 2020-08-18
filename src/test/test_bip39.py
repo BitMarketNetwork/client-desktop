@@ -9,7 +9,7 @@ from client import gcd, key_manager
 from test import TEST_DATA_PATH
 
 
-class Test_bip39(unittest.TestCase):
+class TestBip39(unittest.TestCase):
 
     def _test(self, entropy, mnemonic, seed, bip32_xprv, passphrase="TREZOR"):
         calc_seed = mnemo.Mnemonic.to_seed(mnemonic, passphrase)
@@ -35,7 +35,8 @@ class Test_bip39(unittest.TestCase):
             self._test(**group)
 
 
-class Test_highLevel(unittest.TestCase):
+class TestHighLevel(unittest.TestCase):
+    SEED = "advice marble audit eye average vacuum tennis mushroom crowd boil wise roof"
 
     def _make_adds(self, seed):
         gcd_ = gcd.GCD(True, None)
@@ -43,17 +44,22 @@ class Test_highLevel(unittest.TestCase):
         self.assertTrue(km.generateMasterKey(seed, True))
         for coin in gcd_.all_coins:
             if coin.enabled:
-                for _ in range(5):
+                for _ in range(3):
                     yield coin.make_address().name
 
     def test_persistency(self):
-        seed = "advice marble audit eye average vacuum tennis mushroom crowd boil wise roof"
-        one = self._make_adds(seed)
+        one = self._make_adds(self.SEED)
         adds1 = [a for a in one]
-        two = self._make_adds(seed)
+        two = self._make_adds(self.SEED)
         adds2 = [a for a in two]
-        self.assertEqual(adds1,adds2)
-        three = self._make_adds(seed)
+        self.assertEqual(adds1, adds2)
+        three = self._make_adds(self.SEED)
         adds3 = [a for a in three]
-        self.assertEqual(adds1,adds3)
+        self.assertEqual(adds1, adds3)
 
+    def test_variations(self):
+        two = self._make_adds(self.SEED + " ")
+        adds1 = [a for a in two]
+        three = self._make_adds("   " + self.SEED)
+        adds2 = [a for a in three]
+        self.assertEqual(adds1, adds2)

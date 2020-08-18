@@ -3,7 +3,7 @@ import unittest
 from client.wallet import coins  # pylint: disable=E0401,E0611
 
 
-class Test_Coins(unittest.TestCase):
+class TestCoins(unittest.TestCase):
 
     def test_inheritance(self):
         tbtc = coins.BitCoinTest(None)

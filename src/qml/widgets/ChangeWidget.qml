@@ -9,17 +9,18 @@ import "../js/constants.js" as Constants
 
 SendWidget {
     id: _base
-    title: qsTr("Change:")
-    height: 100
+    title: qsTr("Change:","New transction window")
+    height: 80
 
     property alias newAddressLeft: _leftover.checked
     property alias leftOverAmount: _change_amount.amount
+    property alias hasLeftOver: _leftover.vis
 
 
     MoneyCount{
         anchors{
             top: parent.top
-            topMargin: 20
+            topMargin: 10
             margins: defMargin
             left: parent.left
             leftMargin: defLeftMargin
@@ -42,9 +43,25 @@ SendWidget {
             id: _leftover
             anchors{
                 top: _change_amount.bottom
-                topMargin: 10
+                topMargin: 5
                 left: _change_amount.left
             }
-            text: qsTr("Send change on new address")
+            text: qsTr("Send change to new address","New transction window")
+            offText: qsTr("Return change to this address","New transction window")
+            property bool vis: true
+            onVisChanged: {
+                _anim.from = vis?0:1
+                _anim.to = vis?1:0
+                _anim.running = true
+            }
+
+        PropertyAnimation{
+            id: _anim
+            property: "opacity"
+            target: _leftover
+            duration: 500
+            onFinished: { }
+        }
+
         }
 }

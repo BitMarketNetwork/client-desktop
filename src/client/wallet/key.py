@@ -56,7 +56,7 @@ class AddressString:
         return hrp is not None
 
     @classmethod
-    def validate_bool(cls, address: str) -> bool:
+    def validate_bool(cls, address: str, test = None) -> bool:
         try:
             cls.validate(address)
         except AddressMalformedError as err:
@@ -70,49 +70,52 @@ class AddressString:
             raise AddressMalformedError("Empty address")
         if not isinstance(address, str):
             raise TypeError()
-        if address[0] in coin_network.ADDRESS_PREFIX_LIST:
-            if not util.b58_check_validate(address):
-                raise AddressMalformedError("Bad b58 encoding")
-        else:
-            try:
-                prefix, payload = address.split('1')
-            except Exception:
-                raise AddressMalformedError("Cant split by 1")
-            if prefix.lower() in coin_network.CoinNetworkBase.bech32_hrps:  # pylint: disable=unsupported-membership-test
-                if len(payload) not in (39, 59, 71, 11, 33):
-                    raise AddressMalformedError("Bad bech32 payload")
-            """ TODO:
-            upp = prefix[0].isupper()
-            for i in payload[1:]:
-                if upp:
-                    if not i.isupper() or i not in base32charset_upcase:
-                        return False
-                else:
-                    if i.isupper() or i not in base32charset:
-                        return False
-            payload = payload.lower()
-            prefix = prefix.lower()
-            if testnet:
-                if prefix != TESTNET_SEGWIT_ADDRESS_PREFIX:
-                    return False
-                stripped_prefix = TESTNET_SEGWIT_ADDRESS_BYTE_PREFIX
-            else:
-                if prefix != MAINNET_SEGWIT_ADDRESS_PREFIX:
-                    return False
-                stripped_prefix = MAINNET_SEGWIT_ADDRESS_BYTE_PREFIX
-            d = rebase_32_to_5(payload)
-            address_hash = d[:-6]
-            checksum = d[-6:]
-            checksum2 = bech32_polymod(stripped_prefix + address_hash + b"\x00" * 6)
-            checksum2 = rebase_8_to_5(checksum2.to_bytes(5, "big"))[2:]
-            return checksum == checksum2
-            """
+        # address = address.lower()
+        # if address[0] in coin_network.ADDRESS_PREFIX_LIST:
+        #     if not util.b58_check_validate(address):
+        #         raise AddressMalformedError("Bad b58 encoding")
+        return True
+
+        # elif address[:2] in coin_network.MAIN_BECH_HRP_SET or address[:2] in coin_network.TEST_BECH_HRP_SET:
+        #     try:
+        #         prefix, payload = address.split('1')
+        #     except Exception:
+        #         raise AddressMalformedError("Cant split by 1")
+        #     if prefix.lower() in coin_network.CoinNetworkBase.bech32_hrps:  # pylint: disable=unsupported-membership-test
+        #         if len(payload) not in (39, 59, 71, 11, 33):
+        #             raise AddressMalformedError("Bad bech32 payload")
+        # else:
+        #     return 34 == len(address)
+            # upp = prefix[0].isupper()
+            # for i in payload[1:]:
+            #     if upp:
+            #         if not i.isupper() or i not in base32charset_upcase:
+            #             return False
+            #     else:
+            #         if i.isupper() or i not in base32charset:
+            #             return False
+            # payload = payload.lower()
+            # prefix = prefix.lower()
+            # if testnet:
+            #     if prefix != TESTNET_SEGWIT_ADDRESS_PREFIX:
+            #         return False
+            #     stripped_prefix = TESTNET_SEGWIT_ADDRESS_BYTE_PREFIX
+            # else:
+            #     if prefix != MAINNET_SEGWIT_ADDRESS_PREFIX:
+            #         return False
+            #     stripped_prefix = MAINNET_SEGWIT_ADDRESS_BYTE_PREFIX
+            # d = rebase_32_to_5(payload)
+            # address_hash = d[:-6]
+            # checksum = d[-6:]
+            # checksum2 = bech32_polymod(stripped_prefix + address_hash + b"\x00" * 6)
+            # checksum2 = rebase_8_to_5(checksum2.to_bytes(5, "big"))[2:]
+            # return checksum == checksum2
 
 
 class AddressBase(abc.ABC):
 
     @abc.abstractproperty
-    def to_address(self):
+    def to_address(self, type_):
         pass
 
     @property
@@ -294,20 +297,21 @@ class PrivateKey(Keybase, AddressBase):
         """
         Server doesn't give us scripts
         """
-        if utxo.script is None:
-            # log.debug("Skip key sign check for utxo")
-            return True
-        script = util.bytes_to_hex(util.address_to_scriptpubkey(self.P2PKH))
-        if utxo.script == script:
-            return True
-        if self.P2WPKH is not None:
-            segwit_script = util.bytes_to_hex(
-                util.address_to_scriptpubkey(self.P2WPKH))
-            if utxo.script == segwit_script:
-                return True
-            else:
-                log.warning(f"@@@@ {utxo.script} != {segwit_script} @@@@@")
-        return False
+        return True
+        # if utxo.script is None:
+        #     # log.debug("Skip key sign check for utxo")
+        #     return True
+        # script = util.bytes_to_hex(util.address_to_scriptpubkey(self.P2PKH))
+        # if utxo.script == script:
+        #     return True
+        # if self.P2WPKH is not None:
+        #     segwit_script = util.bytes_to_hex(
+        #         util.address_to_scriptpubkey(self.P2WPKH))
+        #     if utxo.script == segwit_script:
+        #         return True
+        #     else:
+        #         log.warning(f"@@@@ {utxo.script} != {segwit_script} @@@@@")
+        # return False
 
     @property
     def compressed(self) -> bool:

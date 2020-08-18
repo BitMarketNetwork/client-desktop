@@ -26,16 +26,16 @@ BasePopup {
 
         MyRadioButton{
             id: _new_seed
-            text: qsTr("Generate new master key")
+            text: qsTr("Generate new master key","Master key window")
             checked: true
         }
         MyRadioButton{
             id: _old_seed
-            text: qsTr("I want to input old phrase")
+            text: qsTr("Enter old phrase","Master key window")
         }
         MyRadioButton{
             id: _backup
-            text: qsTr("I want to restore from backup")
+            text: qsTr("Restore from backup","Master key window")
         }
     }
 

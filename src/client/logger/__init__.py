@@ -1,6 +1,12 @@
 import  sys
 import  traceback
 import  logging
+try:
+    import coloredlogs
+    USE_COLORED_LOGS = True
+except ImportError:
+    USE_COLORED_LOGS = False
+
 import  pathlib
 from    PySide2 import QtCore as qt_core
 from    ..config import logger as   e_config_logger
@@ -56,34 +62,37 @@ class DispatchingFormatter:
 
 def turn_logger( on ):
     if on:
-        handler = create_handler(e_config.log_file())
-        handler.setFormatter(DispatchingFormatter({
-            'qt': logging.Formatter('qml:(%(levelname)s) %(message)s'), },
-            logging.Formatter( '### (%(levelname)s) <[%(threadName)s>  %(filename)s - %(lineno)s [%(funcName)s]: %(message)s'),
-        ))
-        logging.basicConfig(
-            style='%',
-            level=e_config_logger.DEFAULT_LEVEL,
-            handlers=(handler,)
+        if USE_COLORED_LOGS:
+            coloredlogs.install(
+                level = e_config_logger.DEFAULT_LEVEL,
+                fmt = '### %(asctime)s <[%(threadName)s> [%(filename)s:%(lineno)s %(funcName)s]: %(message)s',
+                datefmt = '%M:%S',
+                reconfigure = True,
             )
-        # coloredlogs.install(
-        #     level = e_config_logger.DEFAULT_LEVEL,
-        #     fmt = '### %(asctime)s <[%(threadName)s> [%(filename)s:%(lineno)s %(funcName)s]: %(message)s',
-        #     datefmt = '%M:%S',
-        #     reconfigure = True,
-        # )
-        # coloredlogs.install(
-        #     level = e_config_logger.DEFAULT_LEVEL,
-        #     fmt = 'QML %(message)s',
-        #     datefmt = '%M:%S',
-        #     reconfigure = True,
-        #     logger = __qt_logger,
-        #     level_styles = {
-        #         'debug': {'color': 'cyan'},
-        #         'warning': {'color': 'magenta'},
-        #         'error': {'color': 'red'},
-        #     },
-        # )
+            coloredlogs.install(
+                level = e_config_logger.DEFAULT_LEVEL,
+                fmt = 'QML %(message)s',
+                # fmt = '###QML %(asctime)s <[%(threadName)s> [%(filename)s:%(lineno)s %(funcName)s]: %(message)s',
+                datefmt = '%M:%S',
+                reconfigure = True,
+                logger = __qt_logger,
+                level_styles = {
+                    'debug': {'color': 'cyan'},
+                    'warning': {'color': 'magenta'},
+                    'error': {'color': 'red'},
+                },
+            )
+        else:
+            handler = create_handler(e_config.log_file())
+            handler.setFormatter(DispatchingFormatter({
+                'qt': logging.Formatter('qml:(%(levelname)s) %(message)s'), },
+                logging.Formatter( '### (%(levelname)s) <[%(threadName)s>  %(filename)s - %(lineno)s [%(funcName)s]: %(message)s'),
+            ))
+            logging.basicConfig(
+                style='%',
+                level=e_config_logger.DEFAULT_LEVEL,
+                handlers=(handler,)
+                )
         qt_core.qInstallMessageHandler(qt_message_handler)
     else:
         qt_core.qInstallMessageHandler(None)

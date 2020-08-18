@@ -2,19 +2,19 @@ import QtQuick 2.12
 import "../controls"
 
 
-Base	 {
+Item	 {
     property string title: ""
     default property alias content: _content.children
     anchors.fill: parent
 
-    Rectangle {
+    Base {
         id: _content
         width: parent.width
         anchors{
             fill: parent
-            topMargin: defaultMargin
+            topMargin: 10
         }
-        color: palette.base
+//        color: palette.base
 
 
     }

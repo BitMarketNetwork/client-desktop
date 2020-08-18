@@ -46,7 +46,7 @@ class SqLite:
                 key
         * transactions
             # status - detectable field
-            - id , name , wallet_id , height , time , amount , fee ,  status , receiver , target
+            - id , name , wallet_id , height , time , amount , fee , coin_base
         * inputs (outputs also here )
             - id , address , tx_id , amount , type ( 0 - input , 1 - output )
     """
@@ -81,8 +81,7 @@ class SqLite:
         "tx_id",
         "type",
         "rate_usd",
-        "receiver",
-        "target",
+        "coin_base",
     ]
     TABLE_NAMES = [
         "meta",
@@ -198,9 +197,7 @@ class SqLite:
             {self.time_column}   {integer} NOT NULL,
             {self.amount_column} {integer} NOT NULL,
             {self.fee_column}    {integer} NOT NULL,
-            {self.status_column}    {integer} NOT NULL,
-            {self.receiver_column}    TEXT,
-            {self.target_column}    TEXT,
+            {self.coin_base_column}    {integer} NOT NULL,
             FOREIGN KEY ({self.wallet_id_column}) REFERENCES {self.wallets_table} (id) ON DELETE CASCADE,
             UNIQUE({self.name_column}, {self.wallet_id_column})
             );
@@ -216,7 +213,7 @@ class SqLite:
         c.close()
 
     def test_table(self, table_name: str) -> bool:
-        enc_table_name = self._make_title(table_name)
+        enc_table_name = self.__make_title(table_name)
         query = f'''
         SELECT name FROM sqlite_master WHERE name='{enc_table_name}';
         '''
@@ -225,7 +222,7 @@ class SqLite:
         c.close()
         return recs is not None
 
-    def _make_title(self, name: str) -> str:
+    def __make_title(self, name: str) -> str:
         if encrypt_proxy.EncryptProxy.ENCRYPT:
             if not self._proxy:
                 return "-"
@@ -244,10 +241,10 @@ class SqLite:
     def __getattr__(self, attr: str) -> str:
         if attr.endswith("_column"):
             if attr[:-7] in self.COLUMN_NAMES:
-                return self._make_title(attr[:-7])
+                return self.__make_title(attr[:-7])
         elif attr.endswith("_table"):
             if attr[:-6] in self.TABLE_NAMES:
-                return self._make_title(attr[:-6])
+                return self.__make_title(attr[:-6])
         else:
             raise AttributeError(attr)
         raise AttributeError(f"Bad table or column:{attr}.")

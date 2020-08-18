@@ -1,6 +1,7 @@
 
 import logging
 import sys
+import threading
 import PySide2.QtCore as qt_core
 
 from .database import database
@@ -12,8 +13,11 @@ class WalletThread(qt_core.QThread):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._db = None
 
     def run(self) -> int:
+        threading.current_thread().name = "DbThread"
+        self.setPriority(qt_core.QThread.LowPriority)
         gcd = self.parent()
         self._db = database.Database(gcd=gcd, password=gcd.passphrase)
         self.finished.connect(self._db.close,    qt_core.Qt.QueuedConnection)
@@ -24,7 +28,7 @@ class WalletThread(qt_core.QThread):
         return hasattr(self, "_db")
 
     @property
-    def database(self) -> database.DbWrapper:
+    def database(self) -> database.Database:
         if not self.ready:
             log.fatal("db isn't ready")
             raise SystemExit(1)
