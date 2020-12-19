@@ -3,12 +3,8 @@
 # Always LF
 *.py text eol=lf
 *.svg text eol=lf
+*.sh text eol=lf
+*.ts text eol=lf
 
 # Always CRLF
 *.bat text eol=crlf
-
-# Always binary
-*.ico binary
-*.gif binary
-*.png binary
-*.pdf binary

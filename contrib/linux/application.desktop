@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Comment=Cryptocurrency Wallet
+GenericName=Cryptocurrency Wallet
+Categories=Finance;Network;
+Name=${BMN_NAME} ${BMN_VERSION_STRING}
+Icon=${BMN_SHORT_NAME}
+Exec=${BMN_SHORT_NAME}
+Terminal=false
+StartupNotify=false
+#StartupWMClass=TODO

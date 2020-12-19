@@ -1,0 +1,13 @@
+DIST_SOURCE_DIR = $(DIST_DIR)/$(BMN_NAME).app
+DIST_SOURCE_NATIVE_DIR = $(DIST_DIR)/$(BMN_SHORT_NAME)
+DIST_TARGET = $(DIST_DIR)/$(BMN_SHORT_NAME)-$(BMN_VERSION_STRING).dmg
+
+dist::
+	$(DMGBUILD) \
+		--settings "$(CONTRIB_PLATFORM_DIR)/dmgbuild_settings.py" \
+		-D "DIST_SOURCE_DIR=$(call NPATH,$(DIST_SOURCE_DIR))" \
+		"$(BMN_NAME) $(BMN_VERSION_STRING)" \
+		"$(call NPATH,$(DIST_TARGET))"
+
+dist-clean::
+	$(call RMDIR,$(DIST_SOURCE_NATIVE_DIR))
