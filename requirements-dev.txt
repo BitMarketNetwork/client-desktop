@@ -1,5 +1,5 @@
 pyside2==5.15.1
-cryptography==2.9.2
+cryptography==3.2
 ecdsa==0.15
 requests
 autopep8
