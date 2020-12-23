@@ -88,7 +88,11 @@ endif
 ################################################################################
 
 TRANSLATIONS := $(sort \
+	de_DE \
+	fr_FR \
+	ja_JP \
 	ru_RU \
+	zh_CN \
 )
 
 define BMN_VERSION
