@@ -1,5 +1,5 @@
 # JOK+
-import enum
+from enum import IntEnum
 
 from PySide2 import QtCore
 from PySide2.QtWidgets import QSystemTrayIcon, QMenu
@@ -8,7 +8,7 @@ from bmnclient.logger import getClassLogger
 from bmnclient.ui import CoreApplication
 
 
-class MessageIcon(enum.IntEnum):
+class MessageIcon(IntEnum):
     NONE = 0
     INFORMATION = 1
     WARNING = 2

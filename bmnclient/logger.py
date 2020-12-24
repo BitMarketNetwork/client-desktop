@@ -1,18 +1,18 @@
-# JOK
+# JOK+
 import logging
 import os
 import sys
-import threading
 import time
 import traceback
+from threading import Lock
 
-from PySide2 import QtCore as QtCore
+from PySide2 import QtCore
 
 from bmnclient import version
 from bmnclient.platform import CURRENT_PLATFORM, Platform
 
 _qt_logger: logging.Logger = None
-_configure_lock = threading.Lock()
+_configure_lock = Lock()
 _is_configured = False
 
 

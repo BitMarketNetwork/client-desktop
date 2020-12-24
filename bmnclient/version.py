@@ -1,4 +1,4 @@
-# JOK
+# JOK+
 # Only standard imports, used by Makefile.
 from pathlib import Path
 

@@ -1,10 +1,10 @@
-# JOK
-import pathlib
-import sys
+# JOK+
 import os
+import sys
 from enum import Enum, auto
+from pathlib import Path, PurePath
 
-import bmnclient.version
+from bmnclient import version
 
 
 class Platform(Enum):
@@ -15,8 +15,6 @@ class Platform(Enum):
 
 
 # Detect platform
-
-
 if sys.platform.startswith("win32"):
     CURRENT_PLATFORM = Platform.WINDOWS
 elif sys.platform.startswith("darwin"):
@@ -28,27 +26,25 @@ else:
     raise RuntimeError("Unsupported platform \"{}\".".format(sys.platform))
 
 # Detect system paths
-
-
-USER_HOME_PATH = pathlib.Path.home()
+USER_HOME_PATH = Path.home()
 if CURRENT_PLATFORM == Platform.WINDOWS:
     USER_CONFIG_PATH = os.environ.get("APPDATA")
     if USER_CONFIG_PATH is None:
         raise RuntimeError("Can't determine APPDATA directory.")
 
-    USER_CONFIG_PATH = pathlib.PurePath(USER_CONFIG_PATH)
+    USER_CONFIG_PATH = PurePath(USER_CONFIG_PATH)
     USER_APPLICATION_CONFIG_PATH = \
         USER_CONFIG_PATH / \
-        bmnclient.version.NAME
+        version.NAME
 elif CURRENT_PLATFORM == Platform.DARWIN:
     USER_CONFIG_PATH = USER_HOME_PATH / "Library" / "Application Support"
     USER_APPLICATION_CONFIG_PATH = \
         USER_CONFIG_PATH / \
-        bmnclient.version.NAME
+        version.NAME
 elif CURRENT_PLATFORM == Platform.LINUX:
     USER_CONFIG_PATH = USER_HOME_PATH / ".config"
     USER_APPLICATION_CONFIG_PATH = \
         USER_CONFIG_PATH / \
-        bmnclient.version.SHORT_NAME.lower()
+        version.SHORT_NAME.lower()
 else:
     raise RuntimeError("Can't determine user directories.")

@@ -4,7 +4,7 @@ import sys
 import bmnclient.command_line
 import bmnclient.logger
 import bmnclient.resources
-import bmnclient.version as version
+from bmnclient import version
 from bmnclient.gcd import GCD
 
 if sys.version_info[:3] < version.PYTHON_MINIMAL_VERSION:

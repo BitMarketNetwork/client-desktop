@@ -1,10 +1,11 @@
-# JOK
+# JOK+
 import signal
 import socket
 import sys
 
-import PySide2.QtCore as QtCore
+from PySide2 import QtCore
 from PySide2.QtNetwork import QAbstractSocket
+
 from bmnclient.logger import getClassLogger
 from bmnclient.platform import CURRENT_PLATFORM, Platform
 

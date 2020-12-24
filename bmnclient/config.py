@@ -1,20 +1,19 @@
-# JOK
+# JOK+
 import json
-import logging
 import os
-import threading
+from threading import RLock
 from pathlib import PurePath
 from typing import Any
 
-import bmnclient.platform
-import bmnclient.logger
+from bmnclient import platform, version
+from bmnclient.logger import getClassLogger, osErrorToString
 
 USER_CONFIG_FILE_PATH = \
-    bmnclient.platform.USER_APPLICATION_CONFIG_PATH / \
+    platform.USER_APPLICATION_CONFIG_PATH / \
     "config.json"
 
 USER_DATABASE_FILE_PATH = \
-    bmnclient.platform.USER_APPLICATION_CONFIG_PATH / \
+    platform.USER_APPLICATION_CONFIG_PATH / \
     "database.db"
 
 KEY_VERSION = "version"
@@ -32,10 +31,10 @@ KEY_WALLET_SEED = "wallet.seed"
 class UserConfig:
     def __init__(self, file_path=USER_CONFIG_FILE_PATH) -> None:
         assert isinstance(file_path, PurePath)
-        self._logger = logging.getLogger(__name__)
+        self._logger = getClassLogger(__name__, self.__class__)
         self._file_path = file_path
         self._config = dict()
-        self._lock = threading.RLock()  # TODO ReadWriteLock
+        self._lock = RLock()  # TODO ReadWriteLock
 
     def load(self) -> bool:
         with self._lock:
@@ -43,7 +42,7 @@ class UserConfig:
                 with open(
                         self._file_path,
                         mode='rt',
-                        encoding=bmnclient.version.PYTHON_ENCODING,
+                        encoding=version.PYTHON_ENCODING,
                         errors='replace') as file:
                     self._config = json.load(file)
                 return True
@@ -51,7 +50,7 @@ class UserConfig:
                 self._logger.warning(
                     "Failed to open configuration file \"%s\". %s",
                     self._file_path,
-                    bmnclient.logger.osErrorToString(e))
+                    osErrorToString(e))
             except json.decoder.JSONDecodeError as e:
                 self._logger.warning(
                     "Failed to parse configuration file \"%s\". "
@@ -70,7 +69,7 @@ class UserConfig:
                 with open(
                         self._file_path,
                         mode='w+t',
-                        encoding=bmnclient.version.PYTHON_ENCODING,
+                        encoding=version.PYTHON_ENCODING,
                         errors='replace') as file:
                     json.dump(
                         self._config,
@@ -84,7 +83,7 @@ class UserConfig:
                 self._logger.warning(
                     "Failed to write configuration file \"%s\". %s",
                     self._file_path,
-                    bmnclient.logger.osErrorToString(e))
+                    osErrorToString(e))
         return False
 
     def get(self, key, value_type=str, default_value=None) -> Any:
