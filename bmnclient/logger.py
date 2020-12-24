@@ -8,7 +8,8 @@ import traceback
 
 from PySide2 import QtCore as QtCore
 
-from bmnclient import platform, version
+from bmnclient import version
+from bmnclient.platform import CURRENT_PLATFORM, Platform
 
 _qt_logger: logging.Logger = None
 _configure_lock = threading.Lock()
@@ -86,7 +87,7 @@ def configure(file_path=None, level=logging.DEBUG) -> None:
         #  -> Shiboken::GilState::GilState()
         #  -> PyGILState_Ensure()
         #  == deadlock
-        if platform.CURRENT_PLATFORM != platform.Platform.DARWIN:
+        if CURRENT_PLATFORM != Platform.DARWIN:
             QtCore.qInstallMessageHandler(_qtMessageHandler)
 
         _is_configured = True
@@ -109,3 +110,8 @@ def fatal(message) -> None:
 
 def osErrorToString(e: OSError) -> str:
     return "Error {:d}: {:s}".format(e.errno, e.strerror)
+
+
+def getClassLogger(module_name, cls) -> logging.Logger:
+    return logging.getLogger(
+        ".".join((module_name, cls.__name__)))

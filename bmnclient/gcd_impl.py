@@ -83,6 +83,18 @@ class GCDImpl(meta.QSeq):
         self.server_thread = n_thread.ServerThread(self)
         self.server_thread.start()
         self._signal_handler = signal_handler.SignalHandler(self)
+
+        # TODO
+        self._signal_handler.SIGINT.connect(
+            lambda: self.quit(0),
+            qt_core.Qt.QueuedConnection)
+        self._signal_handler.SIGQUIT.connect(
+            lambda: self.quit(0),
+            qt_core.Qt.QueuedConnection)
+        self._signal_handler.SIGTERM.connect(
+            lambda: self.quit(0),
+            qt_core.Qt.QueuedConnection)
+
         # this way is preferrable even from the same thread
         if run_ui:
             qt_core.QMetaObject.invokeMethod(
@@ -92,6 +104,7 @@ class GCDImpl(meta.QSeq):
             )
 
     def stop_threads(self):
+        self._signal_handler.close()
         self.server_thread.quit()
         self.server_thread.wait()
         self.wallet_thread.quit()

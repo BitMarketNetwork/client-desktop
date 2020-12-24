@@ -1,59 +1,103 @@
-
-
-import logging
-import os
+# JOK
 import signal
-import struct
 import socket
-import PySide2.QtCore as qt_core
-import PySide2.QtNetwork as qt_network
-from . import meta
-log = logging.getLogger(__name__)
+import sys
+
+import PySide2.QtCore as QtCore
+from PySide2.QtNetwork import QAbstractSocket
+from bmnclient.logger import getClassLogger
+from bmnclient.platform import CURRENT_PLATFORM, Platform
 
 
-class SignalHandler(qt_core.QObject):
+class SignalHandler(QtCore.QObject):
+    SIGHUP = QtCore.Signal()
+    SIGINT = QtCore.Signal()
+    SIGQUIT = QtCore.Signal()
+    SIGTERM = QtCore.Signal()
 
-    def __init__(self, parent: qt_core.QObject):
-        super().__init__(parent)
-        self._handle_unix_signals()
+    if CURRENT_PLATFORM == Platform.WINDOWS:
+        SIGNAL_LIST = (
+            (signal.SIGINT, "SIGINT"),
+            (signal.SIGTERM, "SIGTERM"),
+        )
+    elif \
+            CURRENT_PLATFORM == Platform.DARWIN or \
+            CURRENT_PLATFORM == Platform.LINUX:
+        SIGNAL_LIST = (
+            (signal.SIGHUP, "SIGHUP"),
+            (signal.SIGINT, "SIGINT"),
+            (signal.SIGQUIT, "SIGQUIT"),
+            (signal.SIGTERM, "SIGTERM"),
+        )
+    else:
+        raise RuntimeError(
+            "Unsupported platform \"{}\".".format(CURRENT_PLATFORM))
 
-    def _handle_unix_signals(self):
-        if not meta.IS_WINDOWS:
-            signal.signal(signal.SIGHUP, self.handle_sighup)
-        #
-        if meta.IS_WINDOWS or meta.IS_OSX:
-            # TODO: test this on windows
-            self.signal_read_socket, self.signal_write_socket = socket.socketpair()
-            self.signal_read_socket.setblocking(False)
-            self.signal_write_socket.setblocking(False)
-            read_fd, write_fd = self.signal_read_socket.fileno(), self.signal_write_socket.fileno()
-        else:
-            read_fd, write_fd = os.pipe2(os.O_NONBLOCK | os.O_CLOEXEC)
-        for sig in (signal.SIGINT, signal.SIGTERM):
-            signal.signal(sig, lambda *x: None)
-            if not meta.IS_WINDOWS:
-                # TODO: don't work on win
-                signal.siginterrupt(sig, False)
-        signal.set_wakeup_fd(write_fd)
-        self.signal_notifier = qt_core.QSocketNotifier(
-            read_fd, qt_core.QSocketNotifier.Read, self)
-        self.signal_notifier.setEnabled(True)
-        self.signal_notifier.activated.connect(
-            self.signal_received, type=qt_core.Qt.QueuedConnection)
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent=parent)
+        self._logger = getClassLogger(__name__, self.__class__)
 
-    def handle_sighup(self, *args):
-        log.debug(f"ignoring SIGHUP")
+        read_socket, self._write_socket = socket.socketpair(
+            type=socket.SOCK_STREAM)
+        read_socket.setblocking(False)
+        self._write_socket.setblocking(False)
 
-    def signal_received(self, read_fd):
-        try:
-            data = self.signal_read_socket.recv(
-                1024) if meta.IS_WINDOWS else os.read(read_fd, 1024)
-        except BlockingIOError:
-            return
-        if data:
-            signals = struct.unpack('%uB' % len(data), data)
-            log.debug(f"signals handled: {signals}")
-            if not meta.IS_WINDOWS and signal.SIGHUP in signals:
-                log.warning(f"sighup detected: skip it")
-            elif signal.SIGINT in signals or signal.SIGTERM in signals:
-                self.parent().quit(1)
+        self._qt_socket = QAbstractSocket(QAbstractSocket.TcpSocket, self)
+        self._qt_socket.setSocketDescriptor(
+            read_socket.detach(),
+            openMode=QAbstractSocket.ReadOnly)
+        self._qt_socket.readyRead.connect(self._onReadSignal)
+
+        self._old_wakeup_fd = signal.set_wakeup_fd(self._write_socket.fileno())
+
+        self._old_signal_list = [-1] * len(self.SIGNAL_LIST)
+        for i in range(len(self.SIGNAL_LIST)):
+            self._old_signal_list[i] = signal.signal(
+                self.SIGNAL_LIST[i][0],
+                self._defaultHandler)
+            assert self._old_signal_list[i] != -1
+
+    def __del__(self) -> None:
+        self.close()
+
+    def close(self) -> None:
+        if self._old_signal_list is not None:
+            for i in range(len(self.SIGNAL_LIST)):
+                if self._old_signal_list[i] != -1:
+                    signal.signal(
+                        self.SIGNAL_LIST[i][0],
+                        self._old_signal_list[i])
+            self._old_signal_list = None
+
+        if self._old_wakeup_fd is not None:
+            signal.set_wakeup_fd(self._old_wakeup_fd)
+            self._old_wakeup_fd = None
+
+        if self._qt_socket is not None:
+            self._qt_socket.close()
+            self._qt_socket = None
+
+        if self._write_socket is not None:
+            self._write_socket.close()
+            self._write_socket = None
+
+    @QtCore.Slot()
+    def _onReadSignal(self) -> None:
+        while True:
+            sig = self._qt_socket.readData(1)
+            if not isinstance(sig, str) or len(sig) == 0:
+                break
+            sig = int.from_bytes(sig.encode("ascii"), sys.byteorder)
+            found = False
+            for known_signal in self.SIGNAL_LIST:
+                if sig == known_signal[0]:
+                    self._logger.debug(known_signal[1])
+                    getattr(self, known_signal[1]).emit()
+                    found = True
+                    break
+            if not found:
+                self._logger.debug(
+                    "Unsupported signal {} received.".format(sig))
+
+    def _defaultHandler(self, sig, frame) -> None:
+        pass
