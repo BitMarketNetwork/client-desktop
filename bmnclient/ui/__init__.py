@@ -1,21 +1,23 @@
-# JOK
+# JOK+
 from __future__ import annotations
 
-import logging
+from PySide2 import QtCore
+from PySide2 import QtGui
 
-import PySide2.QtCore as QtCore
-import PySide2.QtGui as QtGui
-
-import bmnclient.version
-
-logger = logging.getLogger(__name__)
+from bmnclient import version, resources
+from bmnclient.logger import getClassLogger
 
 
-class ApplicationBase(QtCore.QObject):
+class CoreApplication(QtCore.QObject):
     _instance = None
 
     def __init__(self, qt_class, argv) -> None:
         assert self.__class__._instance is None
+
+        self._logger = getClassLogger(__name__, self.__class__)
+        self._title = "{} {}".format(version.NAME, version.VERSION_STRING)
+        self._icon = None
+        self._language = None
 
         QtCore.QLocale.setDefault(QtCore.QLocale.c())
 
@@ -24,27 +26,19 @@ class ApplicationBase(QtCore.QObject):
         qt_class.setAttribute(QtCore.Qt.AA_DisableShaderDiskCache)
         qt_class.setAttribute(QtCore.Qt.AA_DisableWindowContextHelpButton)
 
-        qt_class.setApplicationName(
-            bmnclient.version.NAME)
-        qt_class.setApplicationVersion(
-            ".".join(map(str, bmnclient.version.VERSION)))
-        qt_class.setOrganizationName(
-            bmnclient.version.MAINTAINER)
-        qt_class.setOrganizationDomain(
-            bmnclient.version.MAINTAINER_DOMAIN)
+        qt_class.setApplicationName(version.NAME)
+        qt_class.setApplicationVersion(version.VERSION_STRING)
+        qt_class.setOrganizationName(version.MAINTAINER)
+        qt_class.setOrganizationDomain(version.MAINTAINER_DOMAIN)
 
         self._qt_application = qt_class(argv)
         super().__init__()
 
-        self._application_icon = None
-        self._application_language = None
-
         if issubclass(qt_class, QtGui.QGuiApplication):
-            self._application_icon = QtGui.QIcon(
-                str(bmnclient.resources.ICON_FILE_PATH))
-            qt_class.setWindowIcon(self._application_icon)
+            self._icon = QtGui.QIcon(str(resources.ICON_FILE_PATH))
+            qt_class.setWindowIcon(self._icon)
 
-        self.__class__._instance = self
+        CoreApplication._instance = self
 
     def runEventLoop(self) -> int:
         # We recommend that you connect clean-up code to the aboutToQuit()
@@ -53,19 +47,23 @@ class ApplicationBase(QtCore.QObject):
         exit_code = self._qt_application.exec_()
 
         if exit_code == 0:
-            logger.info(
+            self._logger.info(
                 "%s terminated successfully.",
-                bmnclient.version.NAME)
+                version.NAME)
         else:
-            logger.warning(
+            self._logger.warning(
                 "%s terminated with error.",
-                bmnclient.version.NAME)
+                version.NAME)
         return exit_code
 
     @property
-    def windowIcon(self) -> QtGui.QIcon:
-        return self._application_icon
+    def title(self) -> str:
+        return self._title
+
+    @property
+    def icon(self) -> QtGui.QIcon:
+        return self._icon
 
     @classmethod
-    def instance(cls) -> ApplicationBase:
+    def instance(cls) -> CoreApplication:
         return cls._instance

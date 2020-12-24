@@ -42,12 +42,12 @@ class Language:
         for translator in self._translator_list:
             if translator.isEmpty():
                 self._logger.warning(
-                    "Translator file \"{}\" is empty."
-                    .format(translator.filePath()))
+                    "Translator file \"%s\" is empty.",
+                    translator.filePath())
             elif not QtCore.QCoreApplication.installTranslator(translator):
                 self._logger.error(
-                    "Can't install translator file \"{}\"."
-                    .format(translator.filePath()))
+                    "Can't install translator file \"%s\".",
+                    translator.filePath())
             else:
                 translated = True
         return translated

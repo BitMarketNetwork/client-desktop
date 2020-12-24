@@ -1,19 +1,9 @@
-
-import sys
 import logging
 import functools
 from collections import abc
 import PySide2.QtCore as qt_core
 
 log = logging.getLogger()
-
-_plat = sys.platform.lower()
-IS_WINDOWS = 'win32' in _plat or 'win64' in _plat
-IS_OSX = 'darwin' in _plat
-IS_FREEBSD = 'freebsd' in _plat
-IS_NETBSD = 'netbsd' in _plat
-IS_BSD = IS_FREEBSD or IS_NETBSD
-IS_LINUX = not(IS_WINDOWS or IS_OSX or IS_BSD)
 
 
 def lazy_property(f):

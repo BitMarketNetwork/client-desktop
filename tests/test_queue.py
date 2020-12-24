@@ -7,7 +7,7 @@ from unittest import skip
 import PySide2.QtCore as qt_core
 from bmnclient import gcd
 from bmnclient.server import net_cmd, network_impl
-from bmnclient.ui import gui
+from bmnclient.ui import gui, CoreApplication
 
 log = logging.getLogger(__name__)
 """
@@ -74,7 +74,7 @@ class TestQueue(unittest.TestCase):
 
 
 class TestRequest(unittest.TestCase):
-    app_ = ApplicationBase(qt_core.QCoreApplication)
+    app_ = CoreApplication(qt_core.QCoreApplication)
 
     def setUp(self):
         gcd_ = gcd.GCD(silent_mode=True)

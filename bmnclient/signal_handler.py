@@ -91,13 +91,13 @@ class SignalHandler(QtCore.QObject):
             found = False
             for known_signal in self.SIGNAL_LIST:
                 if sig == known_signal[0]:
-                    self._logger.debug(known_signal[1])
+                    self._logger.debug("%s", known_signal[1])
                     getattr(self, known_signal[1]).emit()
                     found = True
                     break
             if not found:
                 self._logger.debug(
-                    "Unsupported signal {} received.".format(sig))
+                    "Unsupported signal %i received.", sig)
 
     def _defaultHandler(self, sig, frame) -> None:
         pass

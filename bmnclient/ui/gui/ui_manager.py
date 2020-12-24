@@ -3,7 +3,7 @@ import functools
 from typing import Union, List
 from ...models import list_model, coin_daemon_model
 import PySide2.QtCore as qt_core
-from . import system_tray
+from bmnclient.ui.gui.system_tray import SystemTrayIcon, MessageIcon
 
 log = logging.getLogger(__name__)
 
@@ -30,10 +30,13 @@ class UIManager(qt_core.QObject):
         self.__server_coin_index = 0
         self.__notified_tx_list = set()
         #
-        self.__tray = system_tray.SystemTray(self)
+        self.__tray = SystemTrayIcon(self)
         self.__tray.quit.connect(
             functools.partial(self.gcd.quit, 0)
         )
+        self.__tray.showMainWindow.connect(self.show)
+        self.__tray.hideMainWindow.connect(self.hide)
+        self.__tray.show()
         self.__notify_hidden = True
 
     @property
@@ -55,9 +58,9 @@ class UIManager(qt_core.QObject):
                     True:
                 self.__notified_tx_list.add(tx)
                 log.info(f"NOTIFY ABOUT: {tx}")
-                self.__tray.notify(
+                self.__tray.showMessage(
                     f"New transaction: {tx.user_view(self.parent().settingsManager)}",
-                    system_tray.Messagelevel.info,
+                    MessageIcon.INFORMATION,
                 )
 
     def fill_coin_info_model(self, coin_map):
@@ -112,7 +115,7 @@ class UIManager(qt_core.QObject):
         if on == self.__visible:
             return
         self.__visible = on
-        self.__tray.set_visible(on)
+        self.__tray.setMainWindowVisibleState(on)
         self.visibleChanged.emit()
 
     @statusMessage.setter
@@ -150,9 +153,8 @@ class UIManager(qt_core.QObject):
         qt_gui.QGuiApplication.clipboard().setText(text)
 
     @qt_core.Slot(str, int)
-    def notify(self, message: str, level: int = system_tray.Messagelevel.info):
-        # self.showNotification.emit(title, message)
-        self.__tray.notify( message, level)
+    def notify(self, message: str, level: int = MessageIcon.INFORMATION):
+        self.__tray.showMessage(message, level)
 
     @qt_core.Slot()
     def resetDB(self) -> None:

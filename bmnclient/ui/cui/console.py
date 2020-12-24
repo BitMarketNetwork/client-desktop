@@ -1,6 +1,6 @@
 import logging
 import getpass
-from .. import ApplicationBase
+from bmnclient.ui import CoreApplication
 
 import PySide2.QtCore as qt_core
 
@@ -13,7 +13,7 @@ from . import cmd_base
 log = logging.getLogger(__name__)
 
 
-class Console(cmd_base.Cmd, qt_core.QObject, ApplicationBase):
+class Console(cmd_base.Cmd, qt_core.QObject, CoreApplication):
 
     WALLET_SUB_COMMANDS = [
         "add",

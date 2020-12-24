@@ -16,7 +16,7 @@ from .receive_manager import ReceiveManager
 from .coin_manager import CoinManager
 from ...server.network_factory import NetworkFactory
 from ...wallet.language import Language
-from .. import ApplicationBase
+from bmnclient.ui import CoreApplication
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ QML_FILE = "main.qml"
 QML_CONTEXT_NAME = "BBackend"
 
 
-class Application(ApplicationBase):
+class Application(CoreApplication):
     def __init__(self, gcd, argv) -> None:
         super().__init__(QtWidgets.QApplication, argv)
         self._qt_application.aboutToQuit.connect(self._onAboutToQuit)
@@ -121,10 +121,10 @@ class Application(ApplicationBase):
     def _updateLanguage(self) -> None:
         language = Language(self._settings_manager.currentLanguageName)
 
-        if self._application_language is not None:
-            self._application_language.uninstall()
-        self._application_language = language
-        self._application_language.install()
+        if self._language is not None:
+            self._language.uninstall()
+        self._language = language
+        self._language.install()
 
         self._qml_engine.setUiLanguage(language.name)
         self._qml_engine.retranslate()

@@ -17,7 +17,6 @@ BMenu {
             text: "OS notification test"
             onTriggered: {
                 BBackend.uiManager.notify(
-                            "Notification test",
                             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore...",
                             3)
             }
