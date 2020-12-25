@@ -40,7 +40,7 @@ def main(argv) -> int:
 
         # TODO run in event loop
         gcd.start_threads(app)
-        exit_code = gcd.app.runEventLoop()
+        exit_code = gcd.app.run()
         gcd.release()
 
     except SystemExit as e:

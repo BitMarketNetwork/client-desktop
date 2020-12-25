@@ -30,7 +30,6 @@ class GCD(meta.QSeq):
     POLLING_SERVER_LONG_TIMEOUT = 10000
     POLLING_SERVER_SHORT_TIMEOUT = 3000
     MEMPOOL_MONITOR_TIMEOUT = 60000
-    # TMP_HASH_FILE = "hash.dat"
 
     saveCoin = qt_core.Signal(coins.CoinType, arguments=["coin"])
     lookForHDChain = qt_core.Signal(coins.CoinType, arguments=["coin"])
@@ -75,6 +74,7 @@ class GCD(meta.QSeq):
         self.__class__.__instance = self
 
         super().__init__(parent=parent)
+
         self.launch_time = datetime.datetime.utcnow()
         self.silent_mode = silent_mode
         self._mempool_timer = qt_core.QBasicTimer()
@@ -115,41 +115,12 @@ class GCD(meta.QSeq):
         self.__create_settings()
         self.__connect_coins()
 
-        self._ui_started = False
-
     def start_threads(self, app: qt_core.QCoreApplication, run_ui=True):
         self.app = app
         self.wallet_thread = w_thread.WalletThread(self)
         self.wallet_thread.start()
         self.server_thread = n_thread.ServerThread(self)
         self.server_thread.start()
-        self._signal_handler = signal_handler.SignalHandler(self)
-
-        # TODO
-        self._signal_handler.SIGINT.connect(
-            lambda: self.quit(0),
-            qt_core.Qt.QueuedConnection)
-        self._signal_handler.SIGQUIT.connect(
-            lambda: self.quit(0),
-            qt_core.Qt.QueuedConnection)
-        self._signal_handler.SIGTERM.connect(
-            lambda: self.quit(0),
-            qt_core.Qt.QueuedConnection)
-
-        # this way is preferrable even from the same thread
-        if run_ui:
-            qt_core.QMetaObject.invokeMethod(
-                self,
-                "run_ui",
-                qt_core.Qt.QueuedConnection,
-            )
-
-    def stop_threads(self):
-        self._signal_handler.close()
-        self.server_thread.quit()
-        self.server_thread.wait()
-        self.wallet_thread.quit()
-        self.wallet_thread.wait()
 
     @property
     def network(self) -> network.Network:
@@ -492,12 +463,7 @@ class GCD(meta.QSeq):
         return next(w for w in self if w.match(pref))
 
     def quit(self, exit_code):
-        log.debug(f"GCD QUIT with code:{exit_code}")
-        if qt_core.QThread.currentThread() == self.thread():
-            qt_core.QCoreApplication.instance().quit()
-            self.release()
-        else:
-            log.warning("not implemented")
+        self.release()
 
     def release(self):
         self.stop_poll()
@@ -513,7 +479,11 @@ class GCD(meta.QSeq):
         )
         for win in qt_gui.QGuiApplication.topLevelWindows():
             win.close()
-        self.stop_threads()
+
+        self.server_thread.quit()
+        self.server_thread.wait()
+        self.wallet_thread.quit()
+        self.wallet_thread.wait()
 
     def stop_poll(self):
         self._poll_timer.stop()
@@ -607,14 +577,11 @@ class GCD(meta.QSeq):
         self._salt = os.urandom(16)
         self._settings.set(bmnclient.config.KEY_WALLET_SALT, self._salt.hex())
         return True
-        # with open(self.TMP_HASH_FILE, "wb") as fh:
-        # fh.write(impl.encode())
 
     def test_password(self, password: str) -> bool:
         "This supposed to be a hash - not a real password"
         impl = key_derivation.KeyDerivation(password)
         try:
-            # with open(self.TMP_HASH_FILE, "rb") as fh:
             if impl.check(bytes.fromhex(
                     self._settings.get(bmnclient.config.KEY_WALLET_HASH, str, "ff"))):
                 self._passphrase = impl.value()
@@ -663,12 +630,6 @@ class GCD(meta.QSeq):
             self._poll_timer.start(self.POLLING_SERVER_SHORT_TIMEOUT, self)
             #
             self._mempool_timer.start(self.MEMPOOL_MONITOR_TIMEOUT, self)
-
-    @ qt_core.Slot()
-    def run_ui(self):
-        if not self._ui_started:
-            self._ui_started = True
-            self.app.load()
 
     def look_for_HD(self):
         for coin in self.all_enabled_coins:

@@ -17,6 +17,7 @@ from .coin_manager import CoinManager
 from ...server.network_factory import NetworkFactory
 from ...wallet.language import Language
 from bmnclient.ui import CoreApplication
+from bmnclient.meta import override
 
 log = logging.getLogger(__name__)
 
@@ -28,7 +29,6 @@ QML_CONTEXT_NAME = "BBackend"
 class Application(CoreApplication):
     def __init__(self, gcd, argv) -> None:
         super().__init__(QtWidgets.QApplication, argv)
-        self._qt_application.aboutToQuit.connect(self._onAboutToQuit)
 
         # TODO kill
         self.gcd = gcd
@@ -83,23 +83,21 @@ class Application(CoreApplication):
         # TODO self._qml_engine.warnings.connect(self._onQmlWarnings)
         self._qml_engine.exit.connect(self._onQmlExit)
 
-    def load(self) -> None:
+    @override
+    def _onRun(self) -> None:
+        super()._onRun()
         url = self._qml_engine.rootContext().resolvedUrl(QtCore.QUrl(QML_FILE))
         self._updateLanguage()
         self._qml_engine.load(url)
-
-    def unload(self) -> None:
-        # TODO https://stackoverflow.com/questions/30196113/properly-reloading-a-qqmlapplicationengine
-        self._qml_engine.clearComponentCache()
-        self._qml_engine.deleteLater()
 
     @QtCore.Slot(QtCore.QObject, QtCore.QUrl)
     def _onQmlObjectCreated(self, qml_object, url) -> None:
         if qml_object is None:
             # TODO If an error occurs, the objectCreated signal is emitted with
             #  a null pointer as parameter an
-            pass
-        log.debug(f"QML object was created: {url.toString()}")
+            self.setQuitEvent()
+        else:
+            log.debug(f"QML object was created: {url.toString()}")
 
     @QtCore.Slot(list)
     def _onQmlWarnings(self, warning_list) -> None:
@@ -113,9 +111,12 @@ class Application(CoreApplication):
         # TODO test
         log.debug(f"QML exit: {code}")
 
-    @QtCore.Slot()
-    def _onAboutToQuit(self) -> None:
-        self.unload()
+    @override
+    def _onQuit(self) -> None:
+        # TODO https://stackoverflow.com/questions/30196113/properly-reloading-a-qqmlapplicationengine
+        self._qml_engine.clearComponentCache()
+        self._qml_engine.deleteLater()
+        super()._onQuit()
 
     @QtCore.Slot()
     def _updateLanguage(self) -> None:

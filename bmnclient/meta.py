@@ -1,5 +1,6 @@
 import logging
 import functools
+import typing
 from collections import abc
 import PySide2.QtCore as qt_core
 
@@ -53,3 +54,7 @@ class QSeqMeta(type(qt_core.QObject), type(abc.Sequence)):
 
 class QSeq(qt_core.QObject, abc.Sequence, metaclass=QSeqMeta):
     pass
+
+
+def override(f) -> typing.Callable:
+    return f
