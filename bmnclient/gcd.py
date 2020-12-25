@@ -6,7 +6,6 @@ import threading
 from typing import Any, List, Optional, Union
 
 import PySide2.QtCore as qt_core
-import PySide2.QtGui as qt_gui
 
 import bmnclient.config
 import bmnclient.config
@@ -403,9 +402,6 @@ class GCD(meta.QSeq):
         return getattr(cls, "_GCD__instance", None)
         # return cls.__instance
 
-    def exec_(self):
-        return self.app.runEventLoop()
-
     def serverInfo(self):
         # TODO:
         self._network.server_sysinfo()
@@ -477,8 +473,6 @@ class GCD(meta.QSeq):
             "abort",
             qt_core.Qt.QueuedConnection,
         )
-        for win in qt_gui.QGuiApplication.topLevelWindows():
-            win.close()
 
         self.server_thread.quit()
         self.server_thread.wait()

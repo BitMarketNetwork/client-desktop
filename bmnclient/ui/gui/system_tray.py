@@ -24,7 +24,7 @@ class SystemTrayIcon(QtCore.QObject):
         super().__init__(parent=parent)
         self._logger = getClassLogger(__name__, self.__class__)
 
-        if not QSystemTrayIcon.isSystemTrayAvailable() or True:
+        if not QSystemTrayIcon.isSystemTrayAvailable():
             self._logger.warning("System tray is not available.")
         if not QSystemTrayIcon.supportsMessages():
             self._logger.warning("System tray don't support balloon messages.")

@@ -116,6 +116,8 @@ class CoreApplication(QObject):
 
     def __onAboutToQuit(self) -> None:
         self._logger.debug("Shutting down...");
+        # for w in QGuiApplication.topLevelWindows():
+        #     w.close()
         self._onQuit()
 
     def _onQuit(self) -> None:
