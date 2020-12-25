@@ -7,6 +7,7 @@ from PySide2.QtGui import QIcon, QGuiApplication
 from bmnclient.signal_handler import SignalHandler
 from bmnclient import version, resources
 from bmnclient.logger import getClassLogger
+from bmnclient.config import UserConfig
 
 
 class CoreApplication(QObject):
@@ -22,6 +23,9 @@ class CoreApplication(QObject):
         self._language = None
         self._quit_code = 0
         self._on_quit_called = False
+
+        self._user_config = UserConfig()
+        self._user_config.load()
 
         # Prepare QApplication
         QLocale.setDefault(QLocale.c())
@@ -90,6 +94,10 @@ class CoreApplication(QObject):
     @property
     def quitCode(self) -> int:
         return self._quit_code
+
+    @property
+    def userConfig(self) -> UserConfig:
+        return self._user_config
 
     @property
     def title(self) -> str:
