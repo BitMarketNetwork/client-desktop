@@ -1,7 +1,7 @@
-import PySide2.QtCore as QtCore
+from PySide2 import QtCore
 
 from bmnclient.debug_manager import DebugManager
-from bmnclient.key_manager import KeyManager
+from bmnclient.wallet.master_key import KeyManager
 from .coin_manager import CoinManager
 from .receive_manager import ReceiveManager
 from .settings_manager import SettingsManager

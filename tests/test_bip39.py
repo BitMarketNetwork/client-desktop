@@ -5,7 +5,8 @@ from bmnclient.wallet import util
 from bmnclient.wallet import hd
 from bmnclient.wallet import coin_network
 from bmnclient.wallet import mnemonic as mnemo
-from bmnclient import gcd, key_manager
+from bmnclient import gcd
+from wallet import master_key
 from tests import TEST_DATA_PATH
 
 
@@ -40,7 +41,7 @@ class TestHighLevel(unittest.TestCase):
 
     def _make_adds(self, seed):
         gcd_ = gcd.GCD(True, None)
-        km = key_manager.KeyManager(gcd_)
+        km = master_key.KeyManager(gcd_)
         self.assertTrue(km.generateMasterKey(seed, True))
         for coin in gcd_.all_coins:
             if coin.enabled:

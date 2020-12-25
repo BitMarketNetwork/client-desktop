@@ -4,8 +4,7 @@ import logging
 import unittest
 import os
 import random
-from unittest import skip
-from bmnclient import key_manager
+from wallet import master_key
 from bmnclient.wallet import mnemonic
 
 
@@ -17,7 +16,7 @@ class TestMnemo(unittest.TestCase):
     def test_valid(self):
         mnemo = mnemonic.Mnemonic()
         for i in range(100):
-            phr = mnemo.get_phrase(os.urandom(key_manager.MNEMONIC_SEED_LENGTH))
+            phr = mnemo.get_phrase(os.urandom(master_key.MNEMONIC_SEED_LENGTH))
             log.warning(f"{i}: {phr}")
             mnemo.check_words(phr)
         #
@@ -36,4 +35,3 @@ class TestMnemo(unittest.TestCase):
         wrong_phr = " ".join(split + [new_word])
         with self.assertRaises(ValueError):
             mnemo.check_words(wrong_phr)
-

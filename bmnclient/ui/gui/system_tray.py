@@ -74,7 +74,6 @@ class SystemTrayIcon(QtCore.QObject):
             message: str,
             icon: int = MessageIcon.INFORMATION,
             timeout: int = 10 * 1000) -> None:
-
         icon_map = (
             QSystemTrayIcon.MessageIcon.NoIcon,
             QSystemTrayIcon.MessageIcon.Information,

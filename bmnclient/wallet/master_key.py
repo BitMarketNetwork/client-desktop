@@ -5,9 +5,9 @@ import re
 
 import PySide2.QtCore as qt_core
 
-from . import meta
-from .ui.gui import import_export
-from .wallet import coin_network, hd, mnemonic, util
+from bmnclient import meta
+from bmnclient.ui.gui import import_export
+from . import coin_network, hd, mnemonic, util
 
 log = logging.getLogger(__name__)
 

@@ -60,10 +60,10 @@ QtObject {
     function openMasterPasswordDialog() {
         let dialog
         if (BBackend.keyManager.hasPassword) {
-            dialog = createDialog("BMasterPasswordDialog", {})
+            dialog = createDialog("BMasterKeyPasswordDialog", {})
             dialog.onResetWalletAccepted.connect(openMasterPasswordDialog)
         } else {
-            dialog = createDialog("BMasterNewPasswordDialog", {})
+            dialog = createDialog("BMasterKeyNewPasswordDialog", {})
             dialog.onPasswordReady.connect(openMasterPasswordDialog)
         }
         dialog.onRejected.connect(quit)

@@ -3,8 +3,7 @@ import functools
 import logging
 import threading
 import datetime
-from collections import abc
-from typing import Any, List, Optional, Type, Union
+from typing import Any, List, Optional, Union
 
 import PySide2.QtCore as qt_core
 import bmnclient.version
@@ -42,8 +41,8 @@ class GCDImpl(meta.QSeq):
         self._poll_timer = qt_core.QBasicTimer()
         self.app = None
         self.__debug_man = debug_manager.DebugManager(self)
-        from . import key_manager
-        self._key_manager = key_manager.KeyManager(self)
+        from bmnclient.wallet import master_key
+        self._key_manager = master_key.KeyManager(self)
         self.__fee_manager = fee_manager.FeeManager(self)
         #
         self.__btc_coin = coins.BitCoin(self)
