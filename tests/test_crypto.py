@@ -36,7 +36,7 @@ class TestKdf(TestCase):
 
     def test_basic(self) -> None:
         kdf = KeyDerivationFunction()
-        kdf.setPassphrase("password1")
+        kdf.setPassphrase(os.urandom(16).hex())
         for key_length in self.KEY_LENGTH_LIST:
             key = kdf.derive(b"salt1", key_length // 8)
             self.assertIsInstance(key, bytes)
@@ -44,13 +44,14 @@ class TestKdf(TestCase):
 
     def test_secret(self) -> None:
         kdf1 = KeyDerivationFunction()
-        kdf1.setPassphrase("password2")
+        kdf1.setPassphrase(os.urandom(16).hex())
         kdf2 = KeyDerivationFunction()
-        kdf2.setPassphrase("password3")
+        kdf2.setPassphrase(os.urandom(16).hex())
 
         secret1 = kdf1.createSecret()
         self.assertIsInstance(secret1, str)
         self.assertGreater(len(secret1), 10)
+        self.assertTrue(secret1.startswith("v1:"))
 
         self.assertTrue(kdf1.verifySecret(secret1))
         self.assertFalse(kdf2.verifySecret(secret1))

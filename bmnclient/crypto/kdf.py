@@ -13,6 +13,8 @@ class KeyDerivationFunction:
 
     KEY_COST = 18
 
+    SECRET_SEPARATOR = ":"
+    SECRET_VERSION = "v1"
     SECRET_VALUE = version.SHORT_NAME.encode(encoding=ENCODING)
     SECRET_KEY_LENGTH = 128 // 8
     SECRET_SALT = b"secret1"
@@ -47,9 +49,17 @@ class KeyDerivationFunction:
 
     def verifySecret(self, secret: str) -> bool:
         key = self.derive(self.SECRET_SALT, self.SECRET_KEY_LENGTH)
-        result = MessageCipher(key).decrypt(secret)
+
+        (secret_version, secret) = secret.split(self.SECRET_SEPARATOR, 1)
+        if secret_version != self.SECRET_VERSION:
+            return False
+        result = MessageCipher(key).decrypt(secret, self.SECRET_SEPARATOR)
         return result == self.SECRET_VALUE
 
     def createSecret(self) -> str:
         key = self.derive(self.SECRET_SALT, self.SECRET_KEY_LENGTH)
-        return MessageCipher(key).encrypt(self.SECRET_VALUE)
+        secret = self.SECRET_VERSION + self.SECRET_SEPARATOR
+        secret += MessageCipher(key).encrypt(
+            self.SECRET_VALUE,
+            self.SECRET_SEPARATOR)
+        return secret
