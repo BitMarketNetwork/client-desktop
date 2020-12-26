@@ -16,19 +16,19 @@ USER_DATABASE_FILE_PATH = \
     platform.USER_APPLICATION_CONFIG_PATH / \
     "database.db"
 
-KEY_VERSION = "version"
-KEY_SERVER_VERSION = "server_version"  # TODO kill
-
-KEY_UI_LANGUAGE = "ui.language"
-KEY_UI_THEME = "ui.theme"
-KEY_UI_HIDE_TO_TRAY = "ui.hide_to_tray"
-
-KEY_WALLET_HASH = "wallet.hash"
-KEY_WALLET_SALT = "wallet.salt"
-KEY_WALLET_SEED = "wallet.seed"
-
 
 class UserConfig:
+    KEY_VERSION = "version"
+    KEY_SERVER_VERSION = "server_version"  # TODO kill
+
+    KEY_UI_LANGUAGE = "ui.language"
+    KEY_UI_THEME = "ui.theme"
+    KEY_UI_HIDE_TO_TRAY = "ui.hide_to_tray"
+
+    KEY_WALLET_HASH = "wallet.hash"
+    KEY_WALLET_SALT = "wallet.salt"
+    KEY_WALLET_SEED = "wallet.seed"
+
     def __init__(self, file_path=USER_CONFIG_FILE_PATH) -> None:
         assert isinstance(file_path, PurePath)
         self._logger = getClassLogger(__name__, self.__class__)

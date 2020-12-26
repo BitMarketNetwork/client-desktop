@@ -1,7 +1,7 @@
 # JOK+
 from __future__ import annotations
 
-from PySide2.QtCore import Qt, QLocale, QMetaObject, QObject, Slot
+from PySide2.QtCore import Qt, QLocale, QMetaObject, QObject, Slot as QSlot
 from PySide2.QtGui import QIcon, QGuiApplication
 
 from bmnclient.signal_handler import SignalHandler
@@ -107,7 +107,7 @@ class CoreApplication(QObject):
     def icon(self) -> QIcon:
         return self._icon
 
-    @Slot()
+    @QSlot()
     def _onRunPrivate(self) -> None:
         self._onRun()
 

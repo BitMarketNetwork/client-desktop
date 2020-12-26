@@ -56,7 +56,7 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
     def currentLanguageName(self) -> str:
         if self._current_language_name is None:
             name = self._gcd.get_settings(
-                bmnclient.config.KEY_UI_LANGUAGE,
+                bmnclient.config.UserConfig.KEY_UI_LANGUAGE,
                 language.Language.PRIMARY_NAME,
                 str)
             if self._isValidLanguageName(name):
@@ -72,7 +72,7 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
         if not self._isValidLanguageName(name):
             log.error(f"Unknown language \"{name}\".")
             return
-        self._gcd.set_settings(bmnclient.config.KEY_UI_LANGUAGE, name)
+        self._gcd.set_settings(bmnclient.config.UserConfig.KEY_UI_LANGUAGE, name)
         if self._current_language_name != name:
             self._current_language_name = name
             self.currentLanguageNameChanged.emit()
@@ -97,7 +97,7 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
     def currentThemeName(self) -> str:
         if self._current_theme_name is None:
             self._current_theme_name = self._gcd.get_settings(
-                bmnclient.config.KEY_UI_THEME,
+                bmnclient.config.UserConfig.KEY_UI_THEME,
                 "",  # QML controlled
                 str)
         assert type(self._current_theme_name) is str
@@ -106,7 +106,7 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
     @currentThemeName.setter
     def _setCurrentThemeName(self, name) -> None:
         assert type(name) is str
-        self._gcd.set_settings(bmnclient.config.KEY_UI_THEME, name)
+        self._gcd.set_settings(bmnclient.config.UserConfig.KEY_UI_THEME, name)
         if self._current_theme_name != name:
             self._current_theme_name = name
             self.currentThemeNameChanged.emit()
@@ -121,7 +121,7 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
     def hideToTray(self) -> bool:
         if self._hide_to_tray is None:
             self._hide_to_tray = self._gcd.get_settings(
-                bmnclient.config.KEY_UI_HIDE_TO_TRAY,
+                bmnclient.config.UserConfig.KEY_UI_HIDE_TO_TRAY,
                 False,
                 bool)
         assert type(self._hide_to_tray) is bool
@@ -130,7 +130,7 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
     @hideToTray.setter
     def _setHideToTray(self, value) -> None:
         assert type(value) is bool
-        self._gcd.set_settings(bmnclient.config.KEY_UI_HIDE_TO_TRAY, value)
+        self._gcd.set_settings(bmnclient.config.UserConfig.KEY_UI_HIDE_TO_TRAY, value)
         if value != self._hide_to_tray:
             self._hide_to_tray = value
             self.hideToTrayChanged.emit()

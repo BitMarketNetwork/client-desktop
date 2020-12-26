@@ -111,8 +111,22 @@ class GCD(meta.QSeq):
         self.__post_mutex = threading.Lock()
         self._mnemo: bytes = None
         self._db_valid = True
-        self.__create_settings()
-        self.__connect_coins()
+
+        self._settings = bmnclient.config.UserConfig()
+        self._settings.load()
+        self.__server_version = self._settings.get(
+            bmnclient.config.UserConfig.KEY_SERVER_VERSION,
+            str,
+            "")
+        self.process_client_version()
+
+        for coin in self.__all_coins:
+            coin.statusChanged.connect(
+                functools.partial(self._coin_status_changed, coin), qt_core.Qt.UniqueConnection)
+            coin.heightChanged.connect(
+                functools.partial(self.coin_height_changed, coin), qt_core.Qt.UniqueConnection)
+            coin.heightChanged.connect(
+                functools.partial(lambda coin: self.heightChanged.emit(coin), coin), qt_core.Qt.UniqueConnection)
 
     def start_threads(self, app: qt_core.QCoreApplication, run_ui=True):
         self.app = app
@@ -128,22 +142,6 @@ class GCD(meta.QSeq):
     @property
     def database(self) -> database.Database:
         return self.wallet_thread.database
-
-    def __create_settings(self):
-        # !! set
-        self._settings = bmnclient.config.UserConfig()
-        self._settings.load()
-        self.__server_version = self.get_settings(bmnclient.config.KEY_SERVER_VERSION, "")
-        self.process_client_version()
-
-    def __connect_coins(self):
-        for coin in self.__all_coins:
-            coin.statusChanged.connect(
-                functools.partial(self._coin_status_changed, coin), qt_core.Qt.UniqueConnection)
-            coin.heightChanged.connect(
-                functools.partial(self.coin_height_changed, coin), qt_core.Qt.UniqueConnection)
-            coin.heightChanged.connect(
-                functools.partial(lambda coin: self.heightChanged.emit(coin), coin), qt_core.Qt.UniqueConnection)
 
     def save_coins(self):
         qt_core.QMetaObject.invokeMethod(
@@ -278,7 +276,7 @@ class GCD(meta.QSeq):
     def process_client_version(self):
         def to_num(ver: str) -> int:
             return int("".join(ver.split('.')))
-        saved_version = self.get_settings(bmnclient.config.KEY_VERSION, "")
+        saved_version = self.get_settings(bmnclient.config.UserConfig.KEY_VERSION, "")
         code_version = ".".join(map(str, e_config_version.VERSION))
         if code_version == saved_version:
             log.debug(
@@ -295,12 +293,12 @@ class GCD(meta.QSeq):
                 # don't save version !!!!
                 return
 
-        self.set_settings(bmnclient.config.KEY_VERSION, code_version)
+        self.set_settings(bmnclient.config.UserConfig.KEY_VERSION, code_version)
 
     def dump_server_version(self):
         if self.__remote_server_version:
             self.__server_version = self.__remote_server_version
-            self.set_settings(bmnclient.config.KEY_SERVER_VERSION, self.__server_version)
+            self.set_settings(bmnclient.config.UserConfig.KEY_SERVER_VERSION, self.__server_version)
         else:
             log.warn("Local server version match with remote one")
 
@@ -524,11 +522,13 @@ class GCD(meta.QSeq):
         self._mnemo = aes.AesProvider(self._passphrase).encode(
             util.get_bytes(mnemo), True)
         # log.debug(f"mnemo {self._mnemo} saved")
-        self.set_settings(bmnclient.config.KEY_WALLET_SEED, self._mnemo.hex())
+        self.set_settings(
+            bmnclient.config.UserConfig.KEY_WALLET_SEED,
+            self._mnemo.hex())
 
     def get_mnemo(self, password: Optional[str] = None) -> str:
         if self._mnemo is None:
-            self._mnemo = self.get_settings(bmnclient.config.KEY_WALLET_SEED, str, "").fromhex()
+            self._mnemo = self.get_settings(bmnclient.config.UserConfig.KEY_WALLET_SEED, str, "").fromhex()
         if self._mnemo:
             if password is None:
                 try:
@@ -538,7 +538,7 @@ class GCD(meta.QSeq):
             else:
                 der = key_derivation.KeyDerivation(password)
                 if der.check(bytes.fromhex(
-                        self._settings.get(bmnclient.config.KEY_WALLET_HASH, str, "ff"))):
+                        self._settings.get(bmnclient.config.UserConfig.KEY_WALLET_HASH, str, "ff"))):
                     try:
                         return aes.AesProvider(der.value()).decode(self._mnemo, True).decode()
                     except aes.AesError as ae:
@@ -567,9 +567,9 @@ class GCD(meta.QSeq):
 
     def set_password(self, password: str) -> bool:
         impl = key_derivation.KeyDerivation(password)
-        self._settings.set(bmnclient.config.KEY_WALLET_HASH, impl.encode().hex())
+        self._settings.set(bmnclient.config.UserConfig.KEY_WALLET_HASH, impl.encode().hex())
         self._salt = os.urandom(16)
-        self._settings.set(bmnclient.config.KEY_WALLET_SALT, self._salt.hex())
+        self._settings.set(bmnclient.config.UserConfig.KEY_WALLET_SALT, self._salt.hex())
         return True
 
     def test_password(self, password: str) -> bool:
@@ -577,7 +577,7 @@ class GCD(meta.QSeq):
         impl = key_derivation.KeyDerivation(password)
         try:
             if impl.check(bytes.fromhex(
-                    self._settings.get(bmnclient.config.KEY_WALLET_HASH, str, "ff"))):
+                    self._settings.get(bmnclient.config.UserConfig.KEY_WALLET_HASH, str, "ff"))):
                 self._passphrase = impl.value()
                 return True
         except Exception as ex:
@@ -590,7 +590,7 @@ class GCD(meta.QSeq):
         """
         """
         self._salt = bytes.fromhex(
-            self._settings.get(bmnclient.config.KEY_WALLET_SALT, str, "ff"))
+            self._settings.get(bmnclient.config.UserConfig.KEY_WALLET_SALT, str, "ff"))
         self.applyPassword.emit(self._passphrase, self._salt)
         qt_core.QMetaObject.invokeMethod(
             self,
@@ -599,19 +599,19 @@ class GCD(meta.QSeq):
         )
 
     def has_password(self) -> bool:
-        return self._settings.exists(bmnclient.config.KEY_WALLET_HASH, str)
+        return self._settings.exists(bmnclient.config.UserConfig.KEY_WALLET_HASH, str)
 
     def remove_password(self) -> None:
         # don't use self api !!
         self.reset_db()
         self._passphrase = None
         self._salt = None
-        self._settings.set(bmnclient.config.KEY_WALLET_HASH, None)
-        self._settings.set(bmnclient.config.KEY_WALLET_SALT, None)
+        self._settings.set(bmnclient.config.UserConfig.KEY_WALLET_HASH, None)
+        self._settings.set(bmnclient.config.UserConfig.KEY_WALLET_SALT, None)
 
     def reset_db(self) -> None:
         self.dropDb.emit()
-        self.set_settings(bmnclient.config.KEY_VERSION,
+        self.set_settings(bmnclient.config.UserConfig.KEY_VERSION,
                           e_config_version.VERSION)
         self._db_valid = True
 

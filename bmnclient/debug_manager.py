@@ -99,7 +99,7 @@ class DebugManager(qt_core.QObject):
 
     @qt_core.Slot(str)
     def simulateClientVersion(self, client_version: str):
-        self.gcd.set_settings(bmnclient.config.KEY_VERSION, client_version)
+        self.gcd.set_settings(bmnclient.config.UserConfig.KEY_VERSION, client_version)
         qt_core.QCoreApplication.quit()
 
     @property
