@@ -20,7 +20,7 @@ class MessageCipher:
     def generateKey(cls) -> bytes:
         return cls.CIPHER.generate_key(128)
 
-    def encrypt(self, data: bytes, separator: str = ":") -> Optional[str]:
+    def encrypt(self, data: bytes, separator: str = ":") -> str:
         nonce = os.urandom(self.NONCE_LENGTH)
         cipher_text = self._cipher.encrypt(
             nonce,
