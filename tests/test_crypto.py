@@ -1,4 +1,5 @@
 import os
+import time
 from unittest import TestCase
 
 from bmnclient.crypto.cipher import MessageCipher
@@ -55,3 +56,17 @@ class TestKdf(TestCase):
 
         self.assertTrue(kdf1.verifySecret(secret1))
         self.assertFalse(kdf2.verifySecret(secret1))
+
+    def test_bruteforce(self) -> None:
+        passphrase = os.urandom(4).hex()
+        kdf = KeyDerivationFunction()
+        kdf.setPassphrase(passphrase)
+
+        timeframe = time.monotonic_ns()
+        kdf.derive(b"SALT", 128)
+        timeframe = time.monotonic_ns() - timeframe
+
+        result = (24 * 60 * 60 * 1e+9) / timeframe
+        print(
+            "KDF bruteforce status: ~{:.2f} combinations per day."
+            .format(result))

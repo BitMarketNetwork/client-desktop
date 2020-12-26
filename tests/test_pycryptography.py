@@ -159,37 +159,3 @@ class TestSignature(unittest.TestCase):
         self.assertTrue(ec_pub.verify(ec_signed, message_hash))
         # but
         self.assertEqual(pyc_signed, ec_signed)
-
-
-class TestDerivation(unittest.TestCase):
-
-    def test_base(self):
-        MY_PSW = "my mega super secret passphrase"
-        log.info(f"PASSWORD TO SAVE and TEST: {MY_PSW}")
-        worker_in = key_derivation.KeyDerivation(MY_PSW)
-        mat = worker_in.encode()
-        log.info(f"DATA SAVED LOCALLY TO VERIFY PASSWORD: {mat.hex()}")
-        worker_out = key_derivation.KeyDerivation(MY_PSW)
-        start_time = time.time()
-        self.assertTrue(worker_out.check(mat))
-        value = worker_out.value()
-        log.info(f"VALUE TO USE FOR DB ENCRYPTION: {value.hex()}")
-        secs = (time.time() - start_time)
-        log.info(f"VERIFYING SECONDS:{secs}")
-        # pay attention to your macbook!
-        self.assertGreaterEqual(secs, 1)
-        self.assertLess(secs, 5)
-        worker_false = key_derivation.KeyDerivation(MY_PSW + 'ff')
-        self.assertFalse(worker_false.check(mat))
-
-    def test_brutforce(self):
-        MY_PSW = "my mega super secret passphrase"
-        worker = key_derivation.KeyDerivation(MY_PSW)
-        COUNT = 10
-        worker.check(b'f' * 80)
-        start_time = time.time()
-        for i in range(0,COUNT):
-            worker.value()
-        secs = (time.time() - start_time)
-        log.info(f"BRUTFORCE DB PASSWORD MILION TIMES  WILL TAKE :{secs * 1000000 / 3600 // 24 / COUNT } DAYS")
-
