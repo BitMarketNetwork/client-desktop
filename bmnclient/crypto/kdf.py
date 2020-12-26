@@ -9,7 +9,7 @@ from .cipher import MessageCipher
 class KeyDerivationFunction:
     ENCODING = version.PYTHON_ENCODING
     HASH_ALGORITHM = hashes.BLAKE2b(64)
-    HASH_SALT = b"passphrase1"
+    HASH_SALT = b"password1"
 
     KEY_COST = 18
 
@@ -20,18 +20,18 @@ class KeyDerivationFunction:
     SECRET_SALT = b"secret1"
 
     def __init__(self) -> None:
-        self._passphrase_hash = None
+        self._password_hash = None
 
-    def setPassphrase(self, passphrase: str) -> None:
-        passphrase_hash = hashes.Hash(self.HASH_ALGORITHM)
-        passphrase_hash.update(
+    def setPassword(self, password: str) -> None:
+        password_hash = hashes.Hash(self.HASH_ALGORITHM)
+        password_hash.update(
             version.SHORT_NAME.encode(encoding=self.ENCODING))
-        passphrase_hash.update(
-            passphrase.encode(encoding=self.ENCODING))
-        passphrase_hash.update(
+        password_hash.update(
+            password.encode(encoding=self.ENCODING))
+        password_hash.update(
             self.HASH_SALT)
-        passphrase_hash = passphrase_hash.finalize()
-        self._passphrase_hash = passphrase_hash
+        password_hash = password_hash.finalize()
+        self._password_hash = password_hash
 
     def derive(
             self,
@@ -45,7 +45,7 @@ class KeyDerivationFunction:
             r=8,  # RFC7914
             p=1   # RFC7914
         )
-        return kdf.derive(self._passphrase_hash)
+        return kdf.derive(self._password_hash)
 
     def verifySecret(self, secret: str) -> bool:
         key = self.derive(self.SECRET_SALT, self.SECRET_KEY_LENGTH)
