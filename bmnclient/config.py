@@ -1,9 +1,9 @@
 # JOK+
 import json
 import os
-from threading import RLock
 from pathlib import PurePath
-from typing import Any
+from threading import RLock
+from typing import Any, Union, Type
 
 from bmnclient import platform, version
 from bmnclient.logger import getClassLogger, osErrorToString
@@ -29,7 +29,9 @@ class UserConfig:
     KEY_WALLET_SALT = "wallet.salt"
     KEY_WALLET_SEED = "wallet.seed"
 
-    def __init__(self, file_path=USER_CONFIG_FILE_PATH) -> None:
+    def __init__(
+            self,
+            file_path: Union[str, PurePath] = USER_CONFIG_FILE_PATH) -> None:
         assert isinstance(file_path, PurePath)
         self._logger = getClassLogger(__name__, self.__class__)
         self._file_path = file_path
@@ -86,7 +88,11 @@ class UserConfig:
                     osErrorToString(e))
         return False
 
-    def get(self, key, value_type=str, default_value=None) -> Any:
+    def get(
+            self,
+            key: str,
+            value_type: Type = str,
+            default_value: Any = None) -> Any:
         key_list = key.split('.')
         with self._lock:
             current_config = self._config
@@ -102,10 +108,10 @@ class UserConfig:
                 current_config = current_value
         return default_value
 
-    def exists(self, key, value_type=str) -> bool:
+    def exists(self, key: str, value_type: Type = str) -> bool:
         return self.get(key, value_type, None) is not None
 
-    def set(self, key, value, save=True) -> bool:
+    def set(self, key: str, value: Any, save: bool = True) -> bool:
         key_list = key.split('.')
         with self._lock:
             current_config = self._config

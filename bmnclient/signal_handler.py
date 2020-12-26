@@ -2,19 +2,20 @@
 import signal
 import socket
 import sys
+from typing import Optional, Type
 
-from PySide2 import QtCore
+from PySide2.QtCore import Signal as QSignal, Slot as QSlot, QObject
 from PySide2.QtNetwork import QAbstractSocket
 
 from bmnclient.logger import getClassLogger
 from bmnclient.platform import CURRENT_PLATFORM, Platform
 
 
-class SignalHandler(QtCore.QObject):
-    SIGHUP = QtCore.Signal()
-    SIGINT = QtCore.Signal()
-    SIGQUIT = QtCore.Signal()
-    SIGTERM = QtCore.Signal()
+class SignalHandler(QObject):
+    SIGHUP = QSignal()
+    SIGINT = QSignal()
+    SIGQUIT = QSignal()
+    SIGTERM = QSignal()
 
     if CURRENT_PLATFORM == Platform.WINDOWS:
         SIGNAL_LIST = (
@@ -34,7 +35,7 @@ class SignalHandler(QtCore.QObject):
         raise RuntimeError(
             "Unsupported platform \"{}\".".format(CURRENT_PLATFORM))
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: Optional[QObject] = None) -> None:
         super().__init__(parent=parent)
         self._logger = getClassLogger(__name__, self.__class__)
 
@@ -82,7 +83,7 @@ class SignalHandler(QtCore.QObject):
             self._write_socket.close()
             self._write_socket = None
 
-    @QtCore.Slot()
+    @QSlot()
     def _onReadSignal(self) -> None:
         while True:
             sig = self._qt_socket.readData(1)
@@ -100,5 +101,5 @@ class SignalHandler(QtCore.QObject):
                 self._logger.debug(
                     "Unsupported signal %i received.", sig)
 
-    def _defaultHandler(self, sig, frame) -> None:
+    def _defaultHandler(self, sig: int, frame: Type) -> None:
         pass

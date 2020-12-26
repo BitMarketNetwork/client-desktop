@@ -5,6 +5,7 @@ import sys
 import time
 import traceback
 from threading import Lock
+from typing import Type
 
 from PySide2 import QtCore
 
@@ -48,7 +49,7 @@ def _qtMessageHandler(message_type, context, message) -> None:
         _qt_logger.error(message)
 
 
-def configure(file_path=None, level=logging.DEBUG) -> None:
+def configure(file_path: str = None, level: int = logging.DEBUG) -> None:
     global _is_configured
     global _configure_lock
     global _qt_logger
@@ -102,7 +103,7 @@ def fatalException() -> None:
     os.abort()
 
 
-def fatal(message) -> None:
+def fatal(message: str) -> None:
     configure()
     logging.getLogger().critical("FATAL ERROR: " + message)
     os.abort()
@@ -112,6 +113,6 @@ def osErrorToString(e: OSError) -> str:
     return "Error {:d}: {:s}".format(e.errno, e.strerror)
 
 
-def getClassLogger(module_name, cls) -> logging.Logger:
+def getClassLogger(module_name: str, cls: Type) -> logging.Logger:
     return logging.getLogger(
         ".".join((module_name, cls.__name__)))

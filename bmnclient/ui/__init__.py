@@ -1,19 +1,25 @@
 # JOK+
 from __future__ import annotations
 
-from PySide2.QtCore import Qt, QLocale, QMetaObject, QObject, Slot as QSlot
+from typing import Union
+
+from PySide2.QtCore import Qt, QLocale, QMetaObject, QObject, Slot as QSlot, \
+    QCoreApplication
 from PySide2.QtGui import QIcon, QGuiApplication
 
-from bmnclient.signal_handler import SignalHandler
 from bmnclient import version, resources
-from bmnclient.logger import getClassLogger
 from bmnclient.config import UserConfig
+from bmnclient.logger import getClassLogger
+from bmnclient.signal_handler import SignalHandler
 
 
 class CoreApplication(QObject):
-    _instance = None
+    _instance: CoreApplication = None
 
-    def __init__(self, qt_class, argv) -> None:
+    def __init__(
+            self,
+            qt_class: Union[QCoreApplication, QGuiApplication],
+            argv: list[str]) -> None:
         assert self.__class__._instance is None
 
         CoreApplication._instance = self
@@ -27,7 +33,7 @@ class CoreApplication(QObject):
         self._user_config = UserConfig()
         self._user_config.load()
 
-        # Prepare QApplication
+        # Prepare QCoreApplication
         QLocale.setDefault(QLocale.c())
 
         qt_class.setAttribute(Qt.AA_EnableHighDpiScaling)
@@ -40,7 +46,7 @@ class CoreApplication(QObject):
         qt_class.setOrganizationName(version.MAINTAINER)
         qt_class.setOrganizationDomain(version.MAINTAINER_DOMAIN)
 
-        # QApplication
+        # QCoreApplication
         self._qt_application = qt_class(argv)
         super().__init__()
 
