@@ -20,7 +20,7 @@ class KeyDerivationFunction:
     SECRET_SALT = b"secret1"
 
     def __init__(self) -> None:
-        self._password_hash = None
+        self._password_hash: bytes = None
 
     def setPassword(self, password: str) -> None:
         password_hash = hashes.Hash(self.HASH_ALGORITHM)

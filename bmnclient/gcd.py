@@ -62,8 +62,7 @@ class GCD(meta.QSeq):
     # updateTxs = qt_core.Signal(address.CAddress, arguments=["wallet"])
     addressHistory = qt_core.Signal( address.CAddress )
     saveMeta = qt_core.Signal(str, str, arguments=["name", "value"])
-    applyPassword = qt_core.Signal(
-        bytes, bytes, arguments=["password", "nonce"])
+    applyPassword = qt_core.Signal()
 
     def __init__(self, silent_mode: bool = False, parent=None):
         assert isinstance(silent_mode, bool)
@@ -502,8 +501,8 @@ class GCD(meta.QSeq):
         # to save offsetts
         self.saveAddress.emit(address, None)
 
-    def apply_password(self, password) -> None:
-        self.applyPassword.emit(password, b"123")
+    def apply_password(self) -> None:
+        self.applyPassword.emit()
         if not self.silent_mode:
             self._poll_timer.short = True
             self._poll_timer.start(self.POLLING_SERVER_SHORT_TIMEOUT, self)

@@ -1,7 +1,7 @@
 import os
 import re
 from typing import Optional
-
+from threading import Lock
 from PySide2.QtCore import Slot as QSlot, Signal as QSignal, \
     Property as QProperty, QObject
 
@@ -27,7 +27,8 @@ class KeyManager(QObject):
         super().__init__(parent=parent)
         self._logger = getClassLogger(__name__, self.__class__)
 
-        self._password_kdf = None
+        self._password_kdf: KeyDerivationFunction = None
+        self._password_kdf_lock = Lock()
         self.__master_hd = None
         self.__mnemonic = mnemonic.Mnemonic()
         # don't keep mnemo, save seed instead !!!
@@ -150,6 +151,11 @@ class KeyManager(QObject):
     def master_seed_hex(self) -> str:
         return util.bytes_to_hex(self.__seed)
 
+    def deriveKey(self, salt: bytes, key_length: int) -> bytes:
+        with self._password_kdf_lock:
+            key = self._password_kdf.derive(salt, key_length)
+        return key
+
     @QSlot(str, result=int)
     def validatePasswordStrength(self, password: str) -> int:
         unique = "".join(set(password))
@@ -184,7 +190,7 @@ class KeyManager(QObject):
             kdf.createSecret())
 
     @QSlot(str, result=bool)
-    def applyPassword(self, password: str) -> bool:
+    def setPassword(self, password: str) -> bool:
         user_config = CoreApplication.instance().userConfig
         secret = user_config.get(UserConfig.KEY_WALLET_SECRET, str)
         if not secret:
@@ -194,18 +200,19 @@ class KeyManager(QObject):
         kdf.setPassword(password)
         if not kdf.verifySecret(secret):
             return False
-        self._password_kdf = kdf
+        with self._password_kdf_lock:
+            self._password_kdf = kdf
 
-        self.gcd.apply_password(self._password_kdf)  # TODO
+        self.gcd.apply_password()  # TODO
         return True
 
     @QSlot()
     def resetPassword(self) -> bool:
         user_config = CoreApplication.instance().userConfig
-        if user_config.set(UserConfig.KEY_WALLET_SECRET, None):
-            self.gcd.reset_db()  # TODO
-            return True
-        return False
+        if not user_config.set(UserConfig.KEY_WALLET_SECRET, None):
+            return False
+        self.gcd.reset_db()  # TODO
+        return True
 
     @QProperty(bool, constant=True)
     def hasPassword(self) -> bool:

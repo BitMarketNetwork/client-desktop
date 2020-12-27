@@ -5,14 +5,14 @@ import sys
 import time
 import traceback
 from threading import Lock
-from typing import Type
+from typing import Optional, Type
 
 from PySide2 import QtCore
 
 from . import version
 from .platform import CURRENT_PLATFORM, Platform
 
-_qt_logger: logging.Logger = None
+_qt_logger: Optional[logging.Logger] = None
 _configure_lock = Lock()
 _is_configured = False
 

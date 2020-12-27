@@ -6,13 +6,9 @@ from cryptography.hazmat.primitives.ciphers import algorithms
 from cryptography.hazmat.primitives.ciphers import modes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives import padding
 from . import sym_encrypt_abc
 from . import util
 log = logging.getLogger(__name__)
-
-"""
-"""
 
 
 class AesError(Exception):
@@ -21,7 +17,6 @@ class AesError(Exception):
 
 class AesProvider(sym_encrypt_abc.SymEncryptAbc):
     HASHER = hashes.SHA256
-    # PADDER = padding.ANSIX923
     AES_MODE = modes.CTR
     STRONG_LEN = 32
     WEAK_LEN = 16
@@ -32,21 +27,14 @@ class AesProvider(sym_encrypt_abc.SymEncryptAbc):
         self.__weak_cipher = None
         self.__psw = psw
         if weak_nonce is not None:
-            self.__make_weak(psw, weak_nonce)
-
-    def __make_weak(self, psw, salt):
-        self.__weak_cipher = Cipher(
-            algorithms.AES(self.__prepare(psw, self.WEAK_LEN)),
-            self.AES_MODE(self.__prepare(salt, self.NONCE_LEN)),
-            default_backend(),
-        )
+            self.__weak_cipher = Cipher(
+                algorithms.AES(self.__prepare(psw, self.WEAK_LEN)),
+                self.AES_MODE(self.__prepare(weak_nonce, self.NONCE_LEN)))
 
     def __make_strong(self, salt):
         return Cipher(
             algorithms.AES(self.__prepare(self.__psw, self.STRONG_LEN)),
-            self.AES_MODE(self.__prepare(salt, self.NONCE_LEN)),
-            default_backend(),
-        )
+            self.AES_MODE(self.__prepare(salt, self.NONCE_LEN)))
 
     def __prepare(self, psw: Union[str, bytes], size: int) -> bytes:
         digest = hashes.Hash(self.HASHER(), default_backend())

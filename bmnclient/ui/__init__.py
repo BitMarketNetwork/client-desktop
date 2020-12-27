@@ -11,6 +11,7 @@ from bmnclient import version, resources
 from bmnclient.config import UserConfig
 from bmnclient.logger import getClassLogger
 from bmnclient.signal_handler import SignalHandler
+from bmnclient.wallet.language import Language
 
 
 class CoreApplication(QObject):
@@ -26,7 +27,7 @@ class CoreApplication(QObject):
         self._logger = getClassLogger(__name__, self.__class__)
         self._title = "{} {}".format(version.NAME, version.VERSION_STRING)
         self._icon = QIcon(str(resources.ICON_FILE_PATH))
-        self._language = None
+        self._language: Language = None
         self._quit_code = 0
         self._on_quit_called = False
 

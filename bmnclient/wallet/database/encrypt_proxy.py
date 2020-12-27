@@ -27,12 +27,8 @@ class EncryptProxy:
 
     def __init__(self, psw, nonce):
         self._last_hash = None
-        self._aes = aes.AesProvider( psw, nonce)
+        self._cipher = aes.AesProvider( psw, nonce)
         self._password = util.get_bytes(psw)
-
-    @property
-    def password(self) -> str:
-        return self._password
 
     def text_from(self, value: bytes) -> str:
         if self.ENCRYPT:
@@ -46,11 +42,9 @@ class EncryptProxy:
                 return None
             # leave it for a while
             if value[0] == 76:
-                val = self._aes.decode( base64.b64decode(
-                    value)[1:], False)
+                val = self._cipher.decode(base64.b64decode(value)[1:], False)
             elif value[0] == 75:
-                val = self._aes.decode( base64.b64decode(
-                    value)[1:], True)
+                val = self._cipher.decode(base64.b64decode(value)[1:], True)
             else:
                 return int(value)
             pref = val[0]
@@ -74,10 +68,10 @@ class EncryptProxy:
         try:
             if strong:
                 return base64.b64encode(b'+' +
-                    self._aes.encode( bytes([type_]) + value , True)).decode()
+                    self._cipher.encode( bytes([type_]) + value , True)).decode()
             else:
                 return base64.b64encode(b'-' +
-                    self._aes.encode( bytes([type_]) + value , False)).decode()
+                    self._cipher.encode( bytes([type_]) + value , False)).decode()
         except RuntimeError as re:
             log.fatal(f"{re} +> {value}")
         except Exception as te:

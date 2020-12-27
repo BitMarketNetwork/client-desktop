@@ -9,7 +9,7 @@ BPasswordDialog {
     destroyOnClose: false
 
     onPasswordAccepted: {
-        if (!BBackend.keyManager.applyPassword(password)) {
+        if (!BBackend.keyManager.setPassword(password)) {
             let dialog = _applicationManager.messageDialog(qsTr("Wrong password."))
             dialog.onClosed.connect(_base.open)
             dialog.open()
