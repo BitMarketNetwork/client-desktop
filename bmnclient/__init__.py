@@ -1,11 +1,9 @@
-# JOK
+# JOK+
 import sys
+from typing import List
 
-import bmnclient.command_line
-import bmnclient.logger
-import bmnclient.resources
-from bmnclient import version
-from bmnclient.gcd import GCD
+from . import version, command_line, logger
+from .ui.gui import Application
 
 if sys.version_info[:3] < version.PYTHON_MINIMAL_VERSION:
     raise RuntimeError(
@@ -21,33 +19,14 @@ if sys.version_info[:3] < version.PYTHON_MINIMAL_VERSION:
             sys.version_info[2]))
 
 
-def main(argv) -> int:
-    bmnclient.command_line.parse(argv)
-    exit_code = 1
-
+def main(argv: List[str]) -> int:
     try:
-        # TODO to application, level from command_line
-        bmnclient.logger.configure(bmnclient.command_line.log_file())
-
-        gcd = GCD(silent_mode=bmnclient.command_line.silent_mode())
-
-        if bmnclient.command_line.is_gui():
-            from .ui import gui
-            app = gui.Application(gcd, argv)
-        else:
-            from .ui import cui
-            app = cui.run(gcd)
-
-        # TODO run in event loop
-        gcd.start_threads(app)
-        exit_code = gcd.app.run()
-        gcd.release()
-
+        command_line.parse(argv)
+        logger.configure(command_line.log_file())
+        exit_code = Application(argv).run()
     except SystemExit as e:
         exit_code = e.args[0]
-
     except BaseException:
         exit_code = 1
-        bmnclient.logger.fatalException()
-
+        logger.fatalException()
     return exit_code

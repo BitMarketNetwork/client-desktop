@@ -98,12 +98,6 @@ class DebugManager(qt_core.QObject):
     def simulateHTTPError(self, code: int) -> None:
         self.gcd.httpFailureSimulation.emit(code)
 
-    @qt_core.Slot(str)
-    def simulateClientVersion(self, client_version: str):
-        user_config = CoreApplication.instance().userConfig
-        user_config.set(bmnclient.config.UserConfig.KEY_VERSION, client_version)
-        qt_core.QCoreApplication.quit()
-
     @property
     def gcd(self):
         return self.parent()

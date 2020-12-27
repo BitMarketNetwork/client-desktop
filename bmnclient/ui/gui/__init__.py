@@ -1,24 +1,20 @@
 import logging
 
-from PySide2 import QtCore
-from PySide2 import QtQml
-from PySide2 import QtWidgets
-from PySide2 import QtQuickControls2
+from PySide2 import QtCore, QtQml, QtWidgets, QtQuickControls2
 
 import bmnclient.version
+from bmnclient.gcd import GCD
+from bmnclient.meta import override
+from bmnclient.ui import CoreApplication
 from . import qml_context, tx_controller, ui_manager, exchange_manager, \
     receive_manager, coin_manager, settings_manager
-
+from .coin_manager import CoinManager
 from .qml_context import BackendContext
+from .receive_manager import ReceiveManager
 from .settings_manager import SettingsManager
 from .ui_manager import UIManager
-from .receive_manager import ReceiveManager
-from .coin_manager import CoinManager
 from ...server.network_factory import NetworkFactory
 from ...wallet.language import Language
-from bmnclient.ui import CoreApplication
-from bmnclient.meta import override
-from bmnclient.gcd import GCD
 
 log = logging.getLogger(__name__)
 
@@ -87,6 +83,7 @@ class Application(CoreApplication):
     @override
     def _onRun(self) -> None:
         super()._onRun()
+        self.gcd.start_threads()
         url = self._qml_engine.rootContext().resolvedUrl(QtCore.QUrl(QML_FILE))
         self._updateLanguage()
         self._qml_engine.load(url)
@@ -117,6 +114,7 @@ class Application(CoreApplication):
         # TODO https://stackoverflow.com/questions/30196113/properly-reloading-a-qqmlapplicationengine
         self._qml_engine.clearComponentCache()
         self._qml_engine.deleteLater()
+        self.gcd.release()
         super()._onQuit()
 
     @QtCore.Slot()

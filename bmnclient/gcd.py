@@ -398,9 +398,6 @@ class GCD(meta.QSeq):
     def select_wallet(self, pref: str):
         return next(w for w in self if w.match(pref))
 
-    def quit(self, exit_code):
-        self.release()
-
     def release(self):
         self.stop_poll()
         qt_core.QMetaObject.invokeMethod(self.network, "abort",qt_core.Qt.QueuedConnection,)

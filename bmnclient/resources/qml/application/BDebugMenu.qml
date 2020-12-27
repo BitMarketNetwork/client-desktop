@@ -186,12 +186,6 @@ BMenu {
                 BBackend.uiManager.online = !BBackend.uiManager.online
             }
         }
-        BMenuItem {
-            text: "Try old client version"
-            onTriggered: {
-                BBackend.debugManager.simulateClientVersion("0.9.1")
-            }
-        }
     }
     BMenu {
         title: "Mempool scenarios"
