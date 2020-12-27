@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 import time
 
-from bmnclient.wallet import coin_network, key, util, key_derivation
+from bmnclient.wallet import coin_network, key, util
 
 log = logging.getLogger(__name__)
 

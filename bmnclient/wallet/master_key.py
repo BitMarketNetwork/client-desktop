@@ -2,12 +2,16 @@
 import logging
 import os
 import re
+from typing import Optional
 
-import PySide2.QtCore as qt_core
+from PySide2.QtCore import Slot as QSlot, Signal as QSignal, \
+    Property as QProperty, QObject
 
-from bmnclient import meta
+from bmnclient.config import UserConfig
+from bmnclient.crypto.kdf import KeyDerivationFunction
+from bmnclient.ui import CoreApplication
 from bmnclient.ui.gui import import_export
-from . import coin_network, hd, mnemonic, util
+from . import hd, mnemonic, util
 
 log = logging.getLogger(__name__)
 
@@ -15,15 +19,17 @@ MNEMONIC_SEED_LENGTH = 24
 PASSWORD_HASHER = util.sha256
 
 
-class KeyManager(qt_core.QObject):
+class KeyManager(QObject):
     """
     Holding hierarchy  according to bip0044
     """
-    activeChanged = qt_core.Signal()
-    mnemoRequested = qt_core.Signal()
+    activeChanged = QSignal()
+    mnemoRequested = QSignal()
 
-    def __init__(self, parent):
+    def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent=parent)
+
+        self._password_kdf = None
         self.__master_hd = None
         self.__mnemonic = mnemonic.Mnemonic()
         # don't keep mnemo, save seed instead !!!
@@ -31,14 +37,14 @@ class KeyManager(qt_core.QObject):
         # mb we can use one seed variable?
         self.__pre_hash = None
 
-    @qt_core.Slot(str, result=bool)
+    @QSlot(str, result=bool)
     def preparePhrase(self, mnemonic_phrase: str) -> bool:
         mnemonic_phrase = " ".join(mnemonic_phrase.split())
         log.debug(f"pre phrase: {mnemonic_phrase}")
         self.__pre_hash = util.sha256(mnemonic_phrase)
         return True
 
-    @qt_core.Slot(str, bool, result=bool)
+    @QSlot(str, bool, result=bool)
     def generateMasterKey(self, mnemonic_phrase: str, debug: bool = False) -> bool:
         mnemonic_phrase = " ".join(mnemonic_phrase.split())
         hash_ = util.sha256(mnemonic_phrase)
@@ -56,7 +62,7 @@ class KeyManager(qt_core.QObject):
             f"seed '{mnemonic_phrase}' mismatch: {hash_} != {self.__pre_hash}")
         return False
 
-    @qt_core.Slot(float, result=str)
+    @QSlot(float, result=str)
     def getInitialPassphrase(self, extra__seed: float = None) -> str:
         data = os.urandom(MNEMONIC_SEED_LENGTH)
         if extra__seed:
@@ -76,21 +82,21 @@ class KeyManager(qt_core.QObject):
             save=True,
         )
 
-    @qt_core.Slot(str, result=str)
+    @QSlot(str, result=str)
     def revealSeedPhrase(self, password: str):
         return self.gcd.get_mnemo(password) or self.tr("Wrong password")
 
-    @qt_core.Property(bool, notify=activeChanged)
+    @QProperty(bool, notify=activeChanged)
     def hasMaster(self):
         log.debug(f"master key:{self.__master_hd}")
         return self.__master_hd is not None
 
-    @qt_core.Slot()
+    @QSlot()
     def resetWallet(self):
         self.gcd.reset_wallet()
         self.mnemoRequested.emit()
 
-    @qt_core.Slot()
+    @QSlot()
     def exportWallet(self):
         iexport = import_export.ImportExportDialog()
         filename = iexport.doExport(
@@ -98,7 +104,7 @@ class KeyManager(qt_core.QObject):
         if filename:
             self.gcd.export_wallet(filename)
 
-    @qt_core.Slot(result=bool)
+    @QSlot(result=bool)
     def importWallet(self) -> bool:
         iexport = import_export.ImportExportDialog()
         filename = iexport.doImport(
@@ -125,7 +131,7 @@ class KeyManager(qt_core.QObject):
             self.gcd.save_master_seed(self.master_seed_hex)
         self.activeChanged.emit()
 
-    @qt_core.Slot(str, result=bool)
+    @QSlot(str, result=bool)
     def validateSeed(self, seed: str) -> bool:
         try:
             self.__mnemonic.check_words(seed)
@@ -146,11 +152,7 @@ class KeyManager(qt_core.QObject):
     def master_seed_hex(self) -> str:
         return util.bytes_to_hex(self.__seed)
 
-    @qt_core.Slot(str, result=bool)
-    def setNewPassword(self, password: str) -> bool:
-        return self.gcd.set_password(password)
-
-    @qt_core.Slot(str, result=int)
+    @QSlot(str, result=int)
     def validatePasswordStrength(self, password: str) -> int:
         unique = "".join(set(password))
         if not password or len(password) < 8:
@@ -174,19 +176,41 @@ class KeyManager(qt_core.QObject):
             res += 1
         return res
 
-    @qt_core.Slot(str, result=bool)
-    def testPassword(self, password: str) -> bool:
-        return self.gcd.test_password(password)
+    @QSlot(str, result=bool)
+    def createPassword(self, password: str) -> bool:
+        user_config = CoreApplication.instance().userConfig
+        kdf = KeyDerivationFunction()
+        kdf.setPassword(password)
+        return user_config.set(
+            UserConfig.KEY_WALLET_SECRET,
+            kdf.createSecret())
 
-    @qt_core.Slot(str, result=bool)
-    def applyPassword(self, password: str) -> None:
-        qt_core.QCoreApplication.processEvents()
-        return self.gcd.apply_password(None)
+    @QSlot(str, result=bool)
+    def applyPassword(self, password: str) -> bool:
+        user_config = CoreApplication.instance().userConfig
+        secret = user_config.get(UserConfig.KEY_WALLET_SECRET, str)
+        if not secret:
+            return False
 
-    @qt_core.Slot()
-    def removePassword(self) -> None:
-        return self.gcd.remove_password()
+        kdf = KeyDerivationFunction()
+        kdf.setPassword(password)
+        if not kdf.verifySecret(secret):
+            return False
+        self._password_kdf = kdf
 
-    @qt_core.Property(bool, constant=True)
+        self.gcd.apply_password(self._password_kdf)  # TODO
+        return True
+
+    @QSlot()
+    def resetPassword(self) -> bool:
+        user_config = CoreApplication.instance().userConfig
+        if user_config.set(UserConfig.KEY_WALLET_SECRET, None):
+            self.gcd.reset_db()  # TODO
+            return True
+        return False
+
+    @QProperty(bool, constant=True)
     def hasPassword(self) -> bool:
-        return self.gcd.has_password()
+        user_config = CoreApplication.instance().userConfig
+        secret = user_config.get(UserConfig.KEY_WALLET_SECRET, str)
+        return secret and len(secret) > 0

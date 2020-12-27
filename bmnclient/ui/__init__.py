@@ -94,7 +94,7 @@ class CoreApplication(QObject):
         self._qt_application.exit(code)
 
     @classmethod
-    def instance(cls) -> CoreApplication:
+    def instance(cls) -> CoreApplication:  # TODO kill?
         return cls._instance
 
     @property

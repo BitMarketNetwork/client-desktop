@@ -96,7 +96,6 @@ class SqLite:
     DEBUG = True
 
     def __init__(self):
-        self._query_count = 0
         self.__mutex = threading.Lock()
         self.__conn = None
         self.__proxy = None
@@ -261,14 +260,7 @@ class SqLite:
         return self.__proxy.encrypt(data, strong)
 
     def __pos__(self):
-        # TODO: i feel like this stuff is redundant. I supposed there is similiar stuff in python/sqlite module
-        with self.__mutex:
-            self._query_count += 1
-
-    @property
-    def query_count(self) -> int:
-        with self.__mutex:
-            return self._query_count
+        pass
 
     def close(self) -> None:
         if self.__conn:

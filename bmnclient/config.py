@@ -25,8 +25,7 @@ class UserConfig:
     KEY_UI_THEME = "ui.theme"
     KEY_UI_HIDE_TO_TRAY = "ui.hide_to_tray"
 
-    KEY_WALLET_HASH = "wallet.hash"
-    KEY_WALLET_SALT = "wallet.salt"
+    KEY_WALLET_SECRET = "wallet.secret"
     KEY_WALLET_SEED = "wallet.seed"
 
     def __init__(
@@ -119,11 +118,10 @@ class UserConfig:
                 current_key = key_list[i]
                 current_value = current_config.get(current_key)
                 if (i + 1) == len(key_list):
-                    if current_value == value:
-                        return False
-                    current_config[current_key] = value
-                    if save:
-                        return self.save()
+                    if current_value != value:
+                        current_config[current_key] = value
+                        if save:
+                            return self.save()
                     return True
                 if type(current_value) is not dict:
                     current_value = dict()

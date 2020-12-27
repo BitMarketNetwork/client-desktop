@@ -19,7 +19,7 @@ class WalletThread(qt_core.QThread):
         threading.current_thread().name = "DbThread"
         self.setPriority(qt_core.QThread.LowPriority)
         gcd = self.parent()
-        self._db = database.Database(gcd=gcd, password=gcd.passphrase)
+        self._db = database.Database(gcd=gcd)
         self.finished.connect(self._db.close,    qt_core.Qt.QueuedConnection)
         return self.exec_()
 

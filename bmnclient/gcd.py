@@ -14,7 +14,7 @@ from bmnclient import version as e_config_version
 from . import loading_level, debug_manager, signal_handler, meta
 from .server import network, thread as n_thread
 from .ui.gui import qml_context
-from .wallet import aes, key_derivation, mutable_tx, tx, address, coins, \
+from .wallet import aes, mutable_tx, tx, address, coins, \
     fee_manager, serialization, thread as w_thread, util
 from .wallet.database import database
 
@@ -64,7 +64,6 @@ class GCD(meta.QSeq):
     # updateTxs = qt_core.Signal(address.CAddress, arguments=["wallet"])
     addressHistory = qt_core.Signal( address.CAddress )
     saveMeta = qt_core.Signal(str, str, arguments=["name", "value"])
-    testPassword = qt_core.Signal(str, arguments=["password", ])
     applyPassword = qt_core.Signal(
         bytes, bytes, arguments=["password", "nonce"])
 
@@ -105,7 +104,6 @@ class GCD(meta.QSeq):
             self.__eos_coin,
         ]
         self.__remote_server_version = None
-        self._passphrase = None
         self._settings = None
         self.__post_count = 0
         self.__post_mutex = threading.Lock()
@@ -236,10 +234,6 @@ class GCD(meta.QSeq):
         return self.__server_version
 
     @property
-    def db_query_count(self) -> int:
-        return self.wallet_thread.database.query_count
-
-    @property
     def db_valid(self) -> bool:
         return self._db_valid
 
@@ -254,13 +248,6 @@ class GCD(meta.QSeq):
     @property
     def fee_man(self) -> fee_manager.FeeManager:
         return self.__fee_manager
-
-    @property
-    def passphrase(self) -> bytes:
-        return self._passphrase
-
-    def salt(self) -> str:
-        return util.hash160(self._passphrase).hex()
 
     @property
     def empty(self):
@@ -336,7 +323,7 @@ class GCD(meta.QSeq):
             return next(self.__wallet_iter)
 
     def export_wallet(self, fpath: str):
-        password = self.passphrase
+        password = self._passphrase
         log.debug(f"Exporting wallet to {fpath} using psw:{password}")
         srl = serialization.Serializator(
             serialization.SerializationType.DEBUG
@@ -347,7 +334,7 @@ class GCD(meta.QSeq):
         srl.to_file(fpath)
 
     def import_wallet(self, fpath: str):
-        password = self.passphrase
+        password = self._passphrase
         log.debug(f"Importing wallet from {fpath} using psw:{password}")
         dsrl = serialization.DeSerializator(fpath, password=password)
         # need to cleanup old stuff
@@ -366,7 +353,7 @@ class GCD(meta.QSeq):
 
     def reset_wallet(self):
         self.dropDb.emit()
-        self.remove_password()
+        self.reset_db()
         self.__server_version = None
         for c in self.__all_coins:
             c.clear()
@@ -538,7 +525,7 @@ class GCD(meta.QSeq):
             else:
                 der = key_derivation.KeyDerivation(password)
                 if der.check(bytes.fromhex(
-                        self._settings.get(bmnclient.config.UserConfig.KEY_WALLET_HASH, str, "ff"))):
+                        self._settings.get(bmnclient.config.UserConfig.KEY_WALLET_SECRET, str, "ff"))):
                     try:
                         return aes.AesProvider(der.value()).decode(self._mnemo, True).decode()
                     except aes.AesError as ae:
@@ -558,61 +545,19 @@ class GCD(meta.QSeq):
         else:
             log.error(f"Unknown meta key read: {key}")
 
-
     def clear_transactions(self, address):
         self.clearAddressTx.emit(address)
         address.clear()
         # to save offsetts
         self.saveAddress.emit(address, None)
 
-    def set_password(self, password: str) -> bool:
-        impl = key_derivation.KeyDerivation(password)
-        self._settings.set(bmnclient.config.UserConfig.KEY_WALLET_HASH, impl.encode().hex())
-        self._salt = os.urandom(16)
-        self._settings.set(bmnclient.config.UserConfig.KEY_WALLET_SALT, self._salt.hex())
-        return True
-
-    def test_password(self, password: str) -> bool:
-        "This supposed to be a hash - not a real password"
-        impl = key_derivation.KeyDerivation(password)
-        try:
-            if impl.check(bytes.fromhex(
-                    self._settings.get(bmnclient.config.UserConfig.KEY_WALLET_HASH, str, "ff"))):
-                self._passphrase = impl.value()
-                return True
-        except Exception as ex:
-            log.error(ex)
-            pass
-        self._passphrase = None
-        return False
-
-    def apply_password(self, password: str) -> None:
-        """
-        """
-        self._salt = bytes.fromhex(
-            self._settings.get(bmnclient.config.UserConfig.KEY_WALLET_SALT, str, "ff"))
-        self.applyPassword.emit(self._passphrase, self._salt)
-        qt_core.QMetaObject.invokeMethod(
-            self,
-            "run_user",
-            qt_core.Qt.QueuedConnection,
-        )
-
-    def has_password(self) -> bool:
-        return self._settings.exists(bmnclient.config.UserConfig.KEY_WALLET_HASH, str)
-
-    def remove_password(self) -> None:
-        # don't use self api !!
-        self.reset_db()
-        self._passphrase = None
-        self._salt = None
-        self._settings.set(bmnclient.config.UserConfig.KEY_WALLET_HASH, None)
-        self._settings.set(bmnclient.config.UserConfig.KEY_WALLET_SALT, None)
+    def apply_password(self, password) -> None:
+        self.applyPassword.emit(password, b"123")
+        qt_core.QMetaObject.invokeMethod(self,"run_user", qt_core.Qt.QueuedConnection)
 
     def reset_db(self) -> None:
         self.dropDb.emit()
-        self.set_settings(bmnclient.config.UserConfig.KEY_VERSION,
-                          e_config_version.VERSION)
+        self.set_settings(bmnclient.config.UserConfig.KEY_VERSION, e_config_version.VERSION)
         self._db_valid = True
 
     @ qt_core.Slot()

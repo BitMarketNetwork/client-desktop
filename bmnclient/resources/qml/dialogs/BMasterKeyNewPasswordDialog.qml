@@ -4,13 +4,11 @@ BNewPasswordDialog {
     destroyOnClose: false
 
     onPasswordAccepted: {
-        console.assert(!BBackend.keyManager.hasPassword)
-        if (!BBackend.keyManager.setNewPassword(password)) {
+        if (!BBackend.keyManager.createPassword(password)) {
             // TODO internal error, show it
             open()
             return
         }
-        console.assert(BBackend.keyManager.hasPassword)
 
         autoDestroy()
         passwordReady()

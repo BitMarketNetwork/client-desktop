@@ -136,12 +136,12 @@ class Test_password(unittest.TestCase):
     def test_higher_level(self):
         gcd_ = gcd.GCD(True, None)
         km = master_key.KeyManager(gcd_)
-        gcd_.remove_password()
+        gcd_.reset_db()
         self.assertFalse(gcd_.has_password())
         password = "test password stuff"
         km.setNewPassword(password)
         self.assertTrue(km.testPassword(password))
         self.assertFalse(km.testPassword(password*2))
         self.assertTrue(km.hasPassword)
-        gcd_.remove_password()
+        gcd_.reset_db()
         self.assertFalse(km.hasPassword)
