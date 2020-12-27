@@ -1,5 +1,3 @@
-
-import logging
 import os
 import re
 from typing import Optional
@@ -11,9 +9,8 @@ from bmnclient.config import UserConfig
 from bmnclient.crypto.kdf import KeyDerivationFunction
 from bmnclient.ui import CoreApplication
 from bmnclient.ui.gui import import_export
+from bmnclient.logger import getClassLogger
 from . import hd, mnemonic, util
-
-log = logging.getLogger(__name__)
 
 MNEMONIC_SEED_LENGTH = 24
 PASSWORD_HASHER = util.sha256
@@ -28,6 +25,7 @@ class KeyManager(QObject):
 
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent=parent)
+        self._logger = getClassLogger(__name__, self.__class__)
 
         self._password_kdf = None
         self.__master_hd = None
@@ -40,7 +38,7 @@ class KeyManager(QObject):
     @QSlot(str, result=bool)
     def preparePhrase(self, mnemonic_phrase: str) -> bool:
         mnemonic_phrase = " ".join(mnemonic_phrase.split())
-        log.debug(f"pre phrase: {mnemonic_phrase}")
+        self._logger.debug(f"pre phrase: {mnemonic_phrase}")
         self.__pre_hash = util.sha256(mnemonic_phrase)
         return True
 
@@ -58,7 +56,7 @@ class KeyManager(QObject):
             )
             self.gcd.save_mnemo(mnemonic_phrase)
             return True
-        log.warning(
+        self._logger.warning(
             f"seed '{mnemonic_phrase}' mismatch: {hash_} != {self.__pre_hash}")
         return False
 
@@ -70,7 +68,7 @@ class KeyManager(QObject):
             data = util.sha256(data + str(extra__seed).encode()
                                )[:MNEMONIC_SEED_LENGTH]
         else:
-            log.warning("No extra!!!")
+            self._logger.warning("No extra!!!")
         return self.__mnemonic.get_phrase(data)
 
     def regenerate_master_key(self):
@@ -88,7 +86,7 @@ class KeyManager(QObject):
 
     @QProperty(bool, notify=activeChanged)
     def hasMaster(self):
-        log.debug(f"master key:{self.__master_hd}")
+        self._logger.debug(f"master key:{self.__master_hd}")
         return self.__master_hd is not None
 
     @QSlot()
@@ -109,7 +107,7 @@ class KeyManager(QObject):
         iexport = import_export.ImportExportDialog()
         filename = iexport.doImport(
             self.tr("Select file with backup"))
-        log.debug(f"Import result: {filename}")
+        self._logger.debug(f"Import result: {filename}")
         if filename:
             self.gcd.import_wallet(filename)
             return True
@@ -126,7 +124,7 @@ class KeyManager(QObject):
         for coin in self.gcd.all_coins:
             if coin.enabled:
                 coin.make_hd_node(_44_node)
-                log.debug(f"Make HD prv for {coin}")
+                self._logger.debug(f"Make HD prv for {coin}")
         if save:
             self.gcd.save_master_seed(self.master_seed_hex)
         self.activeChanged.emit()
@@ -137,7 +135,7 @@ class KeyManager(QObject):
             self.__mnemonic.check_words(seed)
             return True
         except ValueError as ve:
-            log.warning(f"seed validation error: {ve} => {seed}")
+            self._logger.warning(f"seed validation error: {ve} => {seed}")
             return False
 
     @property

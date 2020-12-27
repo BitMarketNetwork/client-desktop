@@ -7,6 +7,7 @@ import "pages"
 BApplicationWindow {
     id: _applicationWindow
 
+    title: BBackend.uiManager.title
     visible: true // TODO wrong usage, should controlled by Python
 
     BApplicationStyle {

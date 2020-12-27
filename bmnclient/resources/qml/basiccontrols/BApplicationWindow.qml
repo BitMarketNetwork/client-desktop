@@ -3,8 +3,6 @@ import QtQuick.Window 2.15
 import QtQuick.Controls.Material 2.15
 
 ApplicationWindow {
-    title: Qt.application.name + " " + Qt.application.version
-
     // https://en.wikipedia.org/wiki/16:9_aspect_ratio
     // HD
     minimumWidth: Math.min(Screen.desktopAvailableWidth, 1280) // TODO DPI

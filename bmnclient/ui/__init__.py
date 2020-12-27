@@ -25,7 +25,7 @@ class CoreApplication(QObject):
         CoreApplication._instance = self
         self._logger = getClassLogger(__name__, self.__class__)
         self._title = "{} {}".format(version.NAME, version.VERSION_STRING)
-        self._icon = None
+        self._icon = QIcon(str(resources.ICON_FILE_PATH))
         self._language = None
         self._quit_code = 0
         self._on_quit_called = False
@@ -51,7 +51,6 @@ class CoreApplication(QObject):
         super().__init__()
 
         if issubclass(qt_class, QGuiApplication):
-            self._icon = QIcon(str(resources.ICON_FILE_PATH))
             qt_class.setWindowIcon(self._icon)
 
         # We recommend that you connect clean-up code to the aboutToQuit()
@@ -94,7 +93,7 @@ class CoreApplication(QObject):
         self._qt_application.exit(code)
 
     @classmethod
-    def instance(cls) -> CoreApplication:  # TODO kill?
+    def instance(cls) -> CoreApplication:  # TODO kill
         return cls._instance
 
     @property

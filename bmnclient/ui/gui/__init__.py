@@ -45,7 +45,7 @@ class Application(CoreApplication):
 
     def _initializeManagers(self) -> None:
         self._settings_manager = SettingsManager(self, self)
-        self._ui_manager = UIManager(self)
+        self._ui_manager = UIManager(self, self)
         self._receive_manager = ReceiveManager(self)
         self._coin_manager = CoinManager(self.gcd, self)
 
