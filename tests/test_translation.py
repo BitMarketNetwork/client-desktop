@@ -2,7 +2,6 @@ import unittest
 import logging
 import PySide2.QtCore as qt_core
 from bmnclient.ui.gui import settings_manager
-# from bmnclient.wallet import language
 log = logging.getLogger(__name__)
 
 

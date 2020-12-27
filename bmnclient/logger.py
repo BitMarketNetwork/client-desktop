@@ -113,6 +113,11 @@ def osErrorToString(e: OSError) -> str:
     return "Error {:d}: {:s}".format(e.errno, e.strerror)
 
 
-def getClassLogger(module_name: str, cls: Type) -> logging.Logger:
-    return logging.getLogger(
-        ".".join((module_name, cls.__name__)))
+def getClassLogger(
+        module_name: str,
+        cls: Type,
+        suffix: Optional[str] = None) -> logging.Logger:
+    name = ".".join((module_name, cls.__name__))
+    if suffix is not None:
+        name += "[" + suffix + "]"
+    return logging.getLogger(name)

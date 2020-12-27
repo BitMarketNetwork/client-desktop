@@ -1,36 +1,36 @@
-# JOK
-import logging
+# JOK+
 from pathlib import PurePath
 from typing import Optional, List
 
-from PySide2 import QtCore
+from PySide2.QtCore import QLocale, QTranslator, QCoreApplication, \
+    QDirIterator, QDir
 
-import bmnclient.version
+from . import version
+from .logger import getClassLogger
 
 
 class Language:
-    _logger = logging.getLogger(__name__)
     SUFFIX_LIST = (".qml.qm", ".py.qm",)
     FILE_MATH = "*.qml.qm"
     PRIMARY_NAME = "en_US"
 
-    def __init__(self, name=PRIMARY_NAME) -> None:
-        self._logger = logging.getLogger(__name__ + "-" + name)
+    def __init__(self, name: str = PRIMARY_NAME) -> None:
+        self._logger = getClassLogger(__name__, self.__class__, name)
 
         if name is None:
-            self._locale = QtCore.QLocale()
+            self._locale = QLocale()
         else:
-            self._locale = QtCore.QLocale(name)
+            self._locale = QLocale(name)
 
         self._translator_list = []
-        if name != Language.PRIMARY_NAME:
-            for suffix in Language.SUFFIX_LIST:
-                translator = Language._createTranslator(self._locale, suffix)
+        if name != self.PRIMARY_NAME:
+            for suffix in self.SUFFIX_LIST:
+                translator = self._createTranslator(self._locale, suffix)
                 if translator is not None:
                     self._translator_list.append(translator)
 
     @property
-    def translatorList(self) -> List[QtCore.QTranslator]:
+    def translatorList(self) -> List[QTranslator]:
         return self._translator_list
 
     @property
@@ -44,7 +44,7 @@ class Language:
                 self._logger.warning(
                     "Translator file \"%s\" is empty.",
                     translator.filePath())
-            elif not QtCore.QCoreApplication.installTranslator(translator):
+            elif not QCoreApplication.installTranslator(translator):
                 self._logger.error(
                     "Can't install translator file \"%s\".",
                     translator.filePath())
@@ -55,48 +55,50 @@ class Language:
     def uninstall(self) -> None:
         for translator in self._translator_list:
             if not translator.isEmpty():
-                QtCore.QCoreApplication.removeTranslator(translator)
+                QCoreApplication.removeTranslator(translator)
 
-    @staticmethod
-    def createTranslationList() -> List[dict]:
+    @classmethod
+    def createTranslationList(cls) -> List[dict]:
         result = [
-            Language._createAvailableTranslationItem(Language.PRIMARY_NAME)
+            cls._createAvailableTranslationItem(cls.PRIMARY_NAME)
         ]
-        it = QtCore.QDirIterator(
-            str(bmnclient.version.TRANSLATIONS_PATH),
-            (Language.FILE_MATH, ),
-            QtCore.QDir.Files)
+        it = QDirIterator(
+            str(version.TRANSLATIONS_PATH),
+            (cls.FILE_MATH,),
+            QDir.Files)
         while it.next():
             name = PurePath(it.fileName()).with_suffix('').with_suffix('').stem
-            result.append(Language._createAvailableTranslationItem(name))
+            result.append(cls._createAvailableTranslationItem(name))
         result.sort(key=lambda x: x["name"])
         return result
 
-    @staticmethod
-    def _createAvailableTranslationItem(name) -> dict:
-        locale = QtCore.QLocale(name)
+    @classmethod
+    def _createAvailableTranslationItem(cls, name: str) -> dict:
+        locale = QLocale(name)
         assert locale.name() == name
         return {
             "name": name,
             "friendlyName": "{} - {}".format(
                 locale.nativeLanguageName().title(),
-                QtCore.QLocale.languageToString(locale.language()).title())
+                QLocale.languageToString(locale.language()).title())
         }
 
-    @staticmethod
-    def _createTranslator(locale, suffix) -> Optional[QtCore.QTranslator]:
-        translator = QtCore.QTranslator()
+    @classmethod
+    def _createTranslator(
+            cls,
+            locale: QLocale,
+            suffix: str) -> Optional[QTranslator]:
+        translator = QTranslator()
         result = translator.load(
             locale,
             "",
             "",
-            str(bmnclient.version.TRANSLATIONS_PATH),
+            str(version.TRANSLATIONS_PATH),
             suffix)
 
         if not result:
-            Language._logger.error(
-                "Failed to load translator: "
-                + "locale \"{}\", suffix \"{}\"."
+            getClassLogger(__name__, cls).error(
+                "Failed to load translator: locale \"{}\", suffix \"{}\"."
                 .format(locale.name(), suffix))
             return None
         return translator

@@ -7,11 +7,11 @@ from PySide2.QtCore import Qt, QLocale, QMetaObject, QObject, Slot as QSlot, \
     QCoreApplication
 from PySide2.QtGui import QIcon, QGuiApplication
 
-from bmnclient import version, resources
-from bmnclient.config import UserConfig
-from bmnclient.logger import getClassLogger
-from bmnclient.signal_handler import SignalHandler
-from bmnclient.wallet.language import Language
+from .. import version, resources
+from ..config import UserConfig
+from ..language import Language
+from ..logger import getClassLogger
+from ..signal_handler import SignalHandler
 
 
 class CoreApplication(QObject):

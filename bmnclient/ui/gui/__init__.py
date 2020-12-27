@@ -14,7 +14,7 @@ from .receive_manager import ReceiveManager
 from .settings_manager import SettingsManager
 from .ui_manager import UIManager
 from ...server.network_factory import NetworkFactory
-from ...wallet.language import Language
+from ...language import Language
 
 log = logging.getLogger(__name__)
 

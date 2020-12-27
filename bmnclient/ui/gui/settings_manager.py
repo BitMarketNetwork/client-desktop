@@ -9,7 +9,8 @@ from PySide2.QtCore import QObject, Signal as QSignal, Slot as QSlot, \
 from . import settings_manager_impl
 from ...config import UserConfig
 from ...ui import CoreApplication
-from ...wallet import base_unit, currency, language, rate_source
+from ...wallet import base_unit, currency, rate_source
+from ...language import Language
 
 log = logging.getLogger(__name__)
 
@@ -47,7 +48,7 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
     @QProperty('QVariantList', constant=True)
     def languageList(self) -> list:
         if self._language_list is None:
-            self._language_list = language.Language.createTranslationList()
+            self._language_list = Language.createTranslationList()
         assert type(self._language_list) is list
         return self._language_list
 
@@ -65,11 +66,11 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
             name = self._application.userConfig.get(
                 UserConfig.KEY_UI_LANGUAGE,
                 str,
-                language.Language.PRIMARY_NAME)
+                Language.PRIMARY_NAME)
             if self._isValidLanguageName(name):
                 self._current_language_name = name
             else:
-                self._current_language_name = language.Language.PRIMARY_NAME
+                self._current_language_name = Language.PRIMARY_NAME
         assert type(self._current_language_name) is str
         return self._current_language_name
 
