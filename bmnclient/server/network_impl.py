@@ -5,11 +5,10 @@ import PySide2.QtNetwork as qt_network
 
 from .. import loading_level
 import bmnclient.command_line as e_config
-from .. import config
 from ..ui.gui import qml_context
 from ..wallet import address, fee_manager, tx
 from . import debug_cmd, net_cmd, progress_view, url_composer
-
+from bmnclient.ui import CoreApplication
 log = logging.getLogger(__name__)
 
 
@@ -23,7 +22,7 @@ class NetworkImpl(qt_core.QObject):
         super().__init__(parent=parent)
 
         # self.__net_manager = qt_network.QNetworkAccessManager(self)
-        self.__net_manager = gcd.app._qml_network_factory.create(self) if gcd.app else None
+        self.__net_manager = CoreApplication.instance()._qml_network_factory.create(self)
         ##
         self.__url_manager = url_composer.UrlComposer(self.API_VERSION)
         self.__progress = progress_view.ProgressView()

@@ -3,29 +3,36 @@ import math
 import pickle
 from typing import Optional, Union
 
-import PySide2.QtCore as QtCore
-import bmnclient.config
+from PySide2.QtCore import QObject, Signal as QSignal, Slot as QSlot, \
+    Property as QProperty
+
 from . import settings_manager_impl
+from ...config import UserConfig
+from ...ui import CoreApplication
 from ...wallet import base_unit, currency, language, rate_source
 
 log = logging.getLogger(__name__)
 
 
 class SettingsManager(settings_manager_impl.SettingsManagerImpl):
-    newAddressChanged = QtCore.Signal()
-    rateSourceChanged = QtCore.Signal()
-    currencyChanged = QtCore.Signal()
-    unitChanged = QtCore.Signal()
+    newAddressChanged = QSignal()
+    rateSourceChanged = QSignal()
+    currencyChanged = QSignal()
+    unitChanged = QSignal()
 
-    def __init__(self, parent) -> None:
+    def __init__(
+            self,
+            application: CoreApplication,
+            parent: Optional[QObject]) -> None:
         super().__init__(parent)
+        self._application = application
         self._language_list = None
         self._current_language_name = None
         self._current_theme_name = None
         self._hide_to_tray = None
 
-    @QtCore.Slot(result=bool)
-    def accept(self):
+    @QSlot(result=bool)
+    def accept(self) -> bool:
         log.debug("Accepting settings")
         self.parent().coinManager.update_coin_model()
         self._gcd.save_coins_settings()
@@ -35,9 +42,9 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
     # Language
     ############################################################################
 
-    currentLanguageNameChanged = QtCore.Signal()
+    currentLanguageNameChanged = QSignal()
 
-    @QtCore.Property('QVariantList', constant=True)
+    @QProperty('QVariantList', constant=True)
     def languageList(self) -> list:
         if self._language_list is None:
             self._language_list = language.Language.createTranslationList()
@@ -52,13 +59,13 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
                     return True
         return False
 
-    @QtCore.Property(str, notify=currentLanguageNameChanged)
+    @QProperty(str, notify=currentLanguageNameChanged)
     def currentLanguageName(self) -> str:
         if self._current_language_name is None:
-            name = self._gcd.get_settings(
-                bmnclient.config.UserConfig.KEY_UI_LANGUAGE,
-                language.Language.PRIMARY_NAME,
-                str)
+            name = self._application.userConfig.get(
+                UserConfig.KEY_UI_LANGUAGE,
+                str,
+                language.Language.PRIMARY_NAME)
             if self._isValidLanguageName(name):
                 self._current_language_name = name
             else:
@@ -72,12 +79,12 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
         if not self._isValidLanguageName(name):
             log.error(f"Unknown language \"{name}\".")
             return
-        self._gcd.set_settings(bmnclient.config.UserConfig.KEY_UI_LANGUAGE, name)
+        self._application.userConfig.set(UserConfig.KEY_UI_LANGUAGE, name)
         if self._current_language_name != name:
             self._current_language_name = name
             self.currentLanguageNameChanged.emit()
 
-    @QtCore.Slot(result=int)
+    @QSlot(result=int)
     def currentLanguageIndex(self) -> int:
         name = self.currentLanguageName
         language_list = self.languageList
@@ -91,22 +98,23 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
     # Theme
     ############################################################################
 
-    currentThemeNameChanged = QtCore.Signal()
+    currentThemeNameChanged = QSignal()
 
-    @QtCore.Property(str, notify=currentThemeNameChanged)
+    @QProperty(str, notify=currentThemeNameChanged)
     def currentThemeName(self) -> str:
         if self._current_theme_name is None:
-            self._current_theme_name = self._gcd.get_settings(
-                bmnclient.config.UserConfig.KEY_UI_THEME,
-                "",  # QML controlled
-                str)
+            self._current_theme_name = self._application.userConfig.get(
+                UserConfig.KEY_UI_THEME,
+                str,
+                ""  # QML controlled
+            )
         assert type(self._current_theme_name) is str
         return self._current_theme_name
 
     @currentThemeName.setter
     def _setCurrentThemeName(self, name) -> None:
         assert type(name) is str
-        self._gcd.set_settings(bmnclient.config.UserConfig.KEY_UI_THEME, name)
+        self._application.userConfig.set(UserConfig.KEY_UI_THEME, name)
         if self._current_theme_name != name:
             self._current_theme_name = name
             self.currentThemeNameChanged.emit()
@@ -115,22 +123,22 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
     # HideToTray
     ############################################################################
 
-    hideToTrayChanged = QtCore.Signal()
+    hideToTrayChanged = QSignal()
 
-    @QtCore.Property(bool, notify=hideToTrayChanged)
+    @QProperty(bool, notify=hideToTrayChanged)
     def hideToTray(self) -> bool:
         if self._hide_to_tray is None:
-            self._hide_to_tray = self._gcd.get_settings(
-                bmnclient.config.UserConfig.KEY_UI_HIDE_TO_TRAY,
-                False,
-                bool)
+            self._hide_to_tray = self._application.userConfig.get(
+                UserConfig.KEY_UI_HIDE_TO_TRAY,
+                bool,
+                False)
         assert type(self._hide_to_tray) is bool
         return self._hide_to_tray
 
     @hideToTray.setter
     def _setHideToTray(self, value) -> None:
         assert type(value) is bool
-        self._gcd.set_settings(bmnclient.config.UserConfig.KEY_UI_HIDE_TO_TRAY, value)
+        self._application.userConfig.set(UserConfig.KEY_UI_HIDE_TO_TRAY, value)
         if value != self._hide_to_tray:
             self._hide_to_tray = value
             self.hideToTrayChanged.emit()
@@ -139,11 +147,11 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
     # TODO
     ############################################################################
 
-    @QtCore.Property("QVariantList", constant=True)
+    @QProperty("QVariantList", constant=True)
     def currencyModel(self):
         return self._currency_model
 
-    @QtCore.Property(int, notify=currencyChanged)
+    @QProperty(int, notify=currencyChanged)
     def currencyIndex(self) -> int:
         return self._currency_index
 
@@ -154,16 +162,16 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
         self._currency_index = index
         self.currencyChanged.emit()
 
-    @QtCore.Property(currency.Currency, notify=currencyChanged)
+    @QProperty(currency.Currency, notify=currencyChanged)
     def currency(self) -> currency.Currency:
         if self._currency_index < len(self._currency_model):
             return self._currency_model[self._currency_index]
 
-    @QtCore.Property("QVariantList", constant=True)
+    @QProperty("QVariantList", constant=True)
     def unitModel(self):
         return self._unit_model
 
-    @QtCore.Property(int, notify=unitChanged)
+    @QProperty(int, notify=unitChanged)
     def unitIndex(self) -> int:
         return self._unit_index
 
@@ -177,12 +185,12 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
         self._gcd.save_meta("base_unit", str(index))
         self.unitChanged.emit()
 
-    @QtCore.Property(base_unit.BaseUnit, notify=unitChanged)
+    @QProperty(base_unit.BaseUnit, notify=unitChanged)
     def baseUnit(self) -> base_unit.BaseUnit:
         if self._unit_index < len(self._unit_model):
             return self._unit_model[self._unit_index]
 
-    @QtCore.Slot(float, result=str)
+    @QSlot(float, result=str)
     def coinBalance(self, amount: float) -> str:
         # TODO: we disgard coin convertion ratio & decimal level !!! it's
         #  normal for btc & lts but isn't sure for next coins
@@ -206,7 +214,7 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
             log.error(f"Overflow {amount}")
             raise OverflowError(f"{oe} for {res}") from oe
 
-    @QtCore.Slot(str, result=str)
+    @QSlot(str, result=str)
     def coinUnit(self, unit: Optional[str]) -> str:
         assert self.baseUnit
         # use current then
@@ -223,11 +231,11 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
             })
         return self.baseUnit.name  # pylint: disable=no-member
 
-    @QtCore.Property("QVariantList", constant=True)
+    @QProperty("QVariantList", constant=True)
     def rateSourceModel(self) -> "QVariantList":
         return self._rate_source_model
 
-    @QtCore.Property(int, notify=rateSourceChanged)
+    @QProperty(int, notify=rateSourceChanged)
     def rateSourceIndex(self) -> int:
         return self._rate_source_index
 
@@ -240,12 +248,12 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
         self._rate_source_model[index].activate()
         self._gcd.retrieve_coin_rates()
 
-    @QtCore.Property(rate_source.RateSource, notify=rateSourceChanged)
+    @QProperty(rate_source.RateSource, notify=rateSourceChanged)
     def rateSource(self) -> rate_source.RateSource:
         if self._rate_source_index < len(self._rate_source_model):
             return self._rate_source_model[self._rate_source_index]
 
-    @QtCore.Property(bool, notify=newAddressChanged)
+    @QProperty(bool, notify=newAddressChanged)
     def newAddressFroLeftover(self) -> bool:
         return self._use_new_address
 
@@ -256,7 +264,7 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
         self._use_new_address = on
         self.newAddressChanged.emit()
 
-    @QtCore.Property("QVariantMap", constant=True)
+    @QProperty("QVariantMap", constant=True)
     def fontData(self) -> dict:
         return self._font_settings
 

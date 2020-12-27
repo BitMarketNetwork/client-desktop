@@ -3,10 +3,10 @@ import logging
 import itertools
 import functools
 import collections
-from typing import Optional, Union, List, Tuple, Callable, Set, DefaultDict
+from typing import Optional, List, Tuple, DefaultDict
 
 
-from .. import gcd
+from ..ui import CoreApplication
 from . import coin_network, key, mtx_impl
 
 log = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ class MutableTransaction:
 
     @classmethod
     def make_dummy(cls, address: str, parent) -> 'MutableTransaction':
-        out = cls(address, gcd.GCD.get_instance().fee_man)
+        out = cls(address, CoreApplication.instance().gcd.fee_man)
         # third
         out.__receiver = 'tb1qs5cz8f0f0l6tf87ez90ageyfm4a7w7rhryzdl2'
         out.__amount = 0.01
@@ -244,7 +244,7 @@ class MutableTransaction:
             self.__leftover_address = None
 
     def send(self):
-        gcd.GCD.get_instance().broadcastMtx.emit(self)
+        CoreApplication.instance().gcd.broadcastMtx.emit(self)
 
     def send_callback(self, ok: bool, error: Optional[str] = None):
         # not GUI thread !!!
@@ -273,7 +273,7 @@ class MutableTransaction:
             tx_.height = None
             for w in address_set:
                 w.add_tx(tx_)
-            gcd.GCD.get_instance().mempoolCoin.emit(self.__address.coin)
+            CoreApplication.instance().gcd.mempoolCoin.emit(self.__address.coin)
             # to debug
             self.__tx = tx_
         else:

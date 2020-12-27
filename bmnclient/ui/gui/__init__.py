@@ -18,6 +18,7 @@ from ...server.network_factory import NetworkFactory
 from ...wallet.language import Language
 from bmnclient.ui import CoreApplication
 from bmnclient.meta import override
+from bmnclient.gcd import GCD
 
 log = logging.getLogger(__name__)
 
@@ -27,11 +28,11 @@ QML_CONTEXT_NAME = "BBackend"
 
 
 class Application(CoreApplication):
-    def __init__(self, gcd, argv) -> None:
+    def __init__(self, argv) -> None:
         super().__init__(QtWidgets.QApplication, argv)
 
         # TODO kill
-        self.gcd = gcd
+        self.gcd = GCD(silent_mode=bmnclient.command_line.silent_mode())
         self.gcd.netError.connect(self._on_network_error)
 
         self._initializeManagers()
@@ -43,7 +44,7 @@ class Application(CoreApplication):
                 QtCore.Qt.QueuedConnection)
 
     def _initializeManagers(self) -> None:
-        self._settings_manager = SettingsManager(self)
+        self._settings_manager = SettingsManager(self, self)
         self._ui_manager = UIManager(self)
         self._receive_manager = ReceiveManager(self)
         self._coin_manager = CoinManager(self.gcd, self)

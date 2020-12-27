@@ -8,6 +8,7 @@ import PySide2.QtCore as qt_core
 
 import bmnclient.config
 from .wallet import coins, mutable_tx
+from .ui import CoreApplication
 
 log = logging.getLogger(__name__)
 
@@ -99,7 +100,8 @@ class DebugManager(qt_core.QObject):
 
     @qt_core.Slot(str)
     def simulateClientVersion(self, client_version: str):
-        self.gcd.set_settings(bmnclient.config.UserConfig.KEY_VERSION, client_version)
+        user_config = CoreApplication.instance().userConfig
+        user_config.set(bmnclient.config.UserConfig.KEY_VERSION, client_version)
         qt_core.QCoreApplication.quit()
 
     @property

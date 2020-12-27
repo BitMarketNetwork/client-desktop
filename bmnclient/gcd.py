@@ -16,7 +16,7 @@ from .ui.gui import qml_context
 from .wallet import aes, mutable_tx, tx, address, coins, \
     fee_manager, serialization, thread as w_thread, util
 from .wallet.database import database
-
+from bmnclient.ui import CoreApplication
 log = logging.getLogger(__name__)
 
 
@@ -45,7 +45,6 @@ class GCD(meta.QSeq):
     eraseWallet = qt_core.Signal(address.CAddress, arguments=["wallet"])
     clearAddressTx = qt_core.Signal(address.CAddress, arguments=["address"])
     removeTxList = qt_core.Signal(list)
-    # removeTxList = qt_core.Signal("QVariantList")
     undoTx = qt_core.Signal(coins.CoinType, int)
     httpFailureSimulation = qt_core.Signal(int)
     unspentsOfWallet = qt_core.Signal(address.CAddress, arguments=["wallet"])
@@ -76,7 +75,6 @@ class GCD(meta.QSeq):
         self.silent_mode = silent_mode
         self._mempool_timer = qt_core.QBasicTimer()
         self._poll_timer = qt_core.QBasicTimer()
-        self.app = None
         self.__debug_man = debug_manager.DebugManager(self)
         from bmnclient.wallet import master_key
         self._key_manager = master_key.KeyManager(self)
@@ -103,15 +101,13 @@ class GCD(meta.QSeq):
             self.__eos_coin,
         ]
         self.__remote_server_version = None
-        self._settings = None
         self.__post_count = 0
         self.__post_mutex = threading.Lock()
         self._mnemo: bytes = None
         self._db_valid = True
 
-        self._settings = bmnclient.config.UserConfig()
-        self._settings.load()
-        self.__server_version = self._settings.get(
+        user_config = CoreApplication.instance().userConfig
+        self.__server_version = user_config.get(
             bmnclient.config.UserConfig.KEY_SERVER_VERSION,
             str,
             "")
@@ -125,8 +121,7 @@ class GCD(meta.QSeq):
             coin.heightChanged.connect(
                 functools.partial(lambda coin: self.heightChanged.emit(coin), coin), qt_core.Qt.UniqueConnection)
 
-    def start_threads(self, app: qt_core.QCoreApplication, run_ui=True):
-        self.app = app
+    def start_threads(self):
         self.wallet_thread = w_thread.WalletThread(self)
         self.wallet_thread.start()
         self.server_thread = n_thread.ServerThread(self)
@@ -141,32 +136,16 @@ class GCD(meta.QSeq):
         return self.wallet_thread.database
 
     def save_coins(self):
-        qt_core.QMetaObject.invokeMethod(
-            self.wallet_thread.database,
-            "save_coins",
-            qt_core.Qt.QueuedConnection,
-        )
+        qt_core.QMetaObject.invokeMethod(self.wallet_thread.database,"save_coins",qt_core.Qt.QueuedConnection,)
 
     def save_coins_with_addresses(self):
-        qt_core.QMetaObject.invokeMethod(
-            self.wallet_thread.database,
-            "save_coins_with_addresses",
-            qt_core.Qt.QueuedConnection,
-        )
+        qt_core.QMetaObject.invokeMethod(self.wallet_thread.database,"save_coins_with_addresses",qt_core.Qt.QueuedConnection,)
 
     def save_coins_settings(self):
-        qt_core.QMetaObject.invokeMethod(
-            self.wallet_thread.database,
-            "save_coins_settings",
-            qt_core.Qt.QueuedConnection,
-        )
+        qt_core.QMetaObject.invokeMethod(self.wallet_thread.database,"save_coins_settings",qt_core.Qt.QueuedConnection,)
 
     def retrieve_fee(self):
-        qt_core.QMetaObject.invokeMethod(
-            self.network,
-            "retrieve_fee",
-            qt_core.Qt.QueuedConnection,
-        )
+        qt_core.QMetaObject.invokeMethod(self.network, "retrieve_fee",qt_core.Qt.QueuedConnection,)
 
     def _coin_status_changed(self, coin: coins.CoinType):
         log.debug(F"Coin status changed for {coin}")
@@ -252,17 +231,14 @@ class GCD(meta.QSeq):
     def empty(self):
         return all(len(c) == 0 for c in self.__all_coins)
 
-    @property
-    def is_valid(self):
-        "May be more conditions here"
-        if self.__remote_server_version is None:
-            return True
-        return self.__server_version == self.__remote_server_version
-
     def process_client_version(self):
         def to_num(ver: str) -> int:
             return int("".join(ver.split('.')))
-        saved_version = self.get_settings(bmnclient.config.UserConfig.KEY_VERSION, "")
+        user_config = CoreApplication.instance().userConfig
+        saved_version = user_config.get(
+            bmnclient.config.UserConfig.KEY_VERSION,
+            str,
+            "")
         code_version = ".".join(map(str, e_config_version.VERSION))
         if code_version == saved_version:
             log.debug(
@@ -279,12 +255,14 @@ class GCD(meta.QSeq):
                 # don't save version !!!!
                 return
 
-        self.set_settings(bmnclient.config.UserConfig.KEY_VERSION, code_version)
+        user_config = CoreApplication.instance().userConfig
+        user_config.set(bmnclient.config.UserConfig.KEY_VERSION, code_version)
 
     def dump_server_version(self):
         if self.__remote_server_version:
             self.__server_version = self.__remote_server_version
-            self.set_settings(bmnclient.config.UserConfig.KEY_SERVER_VERSION, self.__server_version)
+            user_config = CoreApplication.instance().userConfig
+            user_config.set(bmnclient.config.UserConfig.KEY_SERVER_VERSION, self.__server_version)
         else:
             log.warn("Local server version match with remote one")
 
@@ -365,12 +343,6 @@ class GCD(meta.QSeq):
     def __len__(self) -> int:
         return len(self.all_visible_coins)
 
-    def get_settings(self, name, default, value_type=str) -> Any:
-        return self._settings.get(name, value_type, default)
-
-    def set_settings(self, name: str, value: Any) -> None:
-        self._settings.set(name, value)
-
     @ property
     def post_count(self) -> int:
         return self.__post_count
@@ -385,18 +357,6 @@ class GCD(meta.QSeq):
         # take care of the test ( test_tr )
         return getattr(cls, "_GCD__instance", None)
         # return cls.__instance
-
-    def serverInfo(self):
-        # TODO:
-        self._network.server_sysinfo()
-
-    def check_tx_count(self):
-        if self._btc_address:
-            qt_core.QMetaObject.invokeMethod(
-                self.wallet_thread.database,
-                "check_tx_saved",
-                qt_core.Qt.QueuedConnection
-            )
 
     def add_address(self, address: str, coin_str: str = None, coin: coins.CoinType = None):
         if coin is None:
@@ -415,11 +375,7 @@ class GCD(meta.QSeq):
         self.saveAddress.emit(wallet, delay_ms)
 
     def poll_coins(self):
-        qt_core.QMetaObject.invokeMethod(
-            self.network,
-            "poll_coins",
-            qt_core.Qt.QueuedConnection,
-        )
+        qt_core.QMetaObject.invokeMethod(self.network,"poll_coins",qt_core.Qt.QueuedConnection)
         #  self.network.poll_coins()
 
     def save_meta(self, key: str, value: str):
@@ -447,16 +403,8 @@ class GCD(meta.QSeq):
 
     def release(self):
         self.stop_poll()
-        qt_core.QMetaObject.invokeMethod(
-            self.network,
-            "abort",
-            qt_core.Qt.QueuedConnection,
-        )
-        qt_core.QMetaObject.invokeMethod(
-            self.database,
-            "abort",
-            qt_core.Qt.QueuedConnection,
-        )
+        qt_core.QMetaObject.invokeMethod(self.network, "abort",qt_core.Qt.QueuedConnection,)
+        qt_core.QMetaObject.invokeMethod(self.database,"abort",qt_core.Qt.QueuedConnection,)
 
         self.server_thread.quit()
         self.server_thread.wait()
@@ -508,13 +456,18 @@ class GCD(meta.QSeq):
         self._mnemo = aes.AesProvider(self._passphrase).encode(
             util.get_bytes(mnemo), True)
         # log.debug(f"mnemo {self._mnemo} saved")
-        self.set_settings(
+        user_config = CoreApplication.instance().userConfig
+        user_config.set(
             bmnclient.config.UserConfig.KEY_WALLET_SEED,
             self._mnemo.hex())
 
     def get_mnemo(self, password: Optional[str] = None) -> str:
         if self._mnemo is None:
-            self._mnemo = self.get_settings(bmnclient.config.UserConfig.KEY_WALLET_SEED, str, "").fromhex()
+            user_config = CoreApplication.instance().userConfig
+            self._mnemo = user_config.get(
+                bmnclient.config.UserConfig.KEY_WALLET_SEED,
+                str,
+                "").fromhex()
         if self._mnemo:
             if password is None:
                 try:
@@ -523,8 +476,10 @@ class GCD(meta.QSeq):
                     log.warning(f"AES error: {ae}")
             else:
                 der = key_derivation.KeyDerivation(password)
+                user_config = CoreApplication.instance().userConfig
+
                 if der.check(bytes.fromhex(
-                        self._settings.get(bmnclient.config.UserConfig.KEY_WALLET_SECRET, str, "ff"))):
+                        user_config.get(bmnclient.config.UserConfig.KEY_WALLET_SECRET, str, "ff"))):
                     try:
                         return aes.AesProvider(der.value()).decode(self._mnemo, True).decode()
                     except aes.AesError as ae:
@@ -552,22 +507,16 @@ class GCD(meta.QSeq):
 
     def apply_password(self, password) -> None:
         self.applyPassword.emit(password, b"123")
-        qt_core.QMetaObject.invokeMethod(self,"run_user", qt_core.Qt.QueuedConnection)
+        if not self.silent_mode:
+            self._poll_timer.short = True
+            self._poll_timer.start(self.POLLING_SERVER_SHORT_TIMEOUT, self)
+            self._mempool_timer.start(self.MEMPOOL_MONITOR_TIMEOUT, self)
 
     def reset_db(self) -> None:
         self.dropDb.emit()
-        self.set_settings(bmnclient.config.UserConfig.KEY_VERSION, e_config_version.VERSION)
+        user_config = CoreApplication.instance().userConfig
+        user_config.set(bmnclient.config.UserConfig.KEY_VERSION, e_config_version.VERSION)
         self._db_valid = True
-
-    @ qt_core.Slot()
-    def run_user(self):
-        if not self.silent_mode:
-            # one trick here - we chould make first call as soon as possible
-            # see event for details
-            self._poll_timer.short = True
-            self._poll_timer.start(self.POLLING_SERVER_SHORT_TIMEOUT, self)
-            #
-            self._mempool_timer.start(self.MEMPOOL_MONITOR_TIMEOUT, self)
 
     def look_for_HD(self):
         for coin in self.all_enabled_coins:
