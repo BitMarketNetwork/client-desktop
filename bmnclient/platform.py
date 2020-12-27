@@ -4,7 +4,7 @@ import sys
 from enum import Enum, auto
 from pathlib import Path, PurePath
 
-from bmnclient import version
+from . import version
 
 
 class Platform(Enum):

@@ -1,6 +1,7 @@
 # JOK+
 import sys
-import bmnclient
+
+from . import main
 
 if __name__ == "__main__":
-    sys.exit(bmnclient.main(sys.argv))
+    sys.exit(main(sys.argv))

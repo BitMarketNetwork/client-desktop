@@ -9,8 +9,8 @@ from typing import Type
 
 from PySide2 import QtCore
 
-from bmnclient import version
-from bmnclient.platform import CURRENT_PLATFORM, Platform
+from . import version
+from .platform import CURRENT_PLATFORM, Platform
 
 _qt_logger: logging.Logger = None
 _configure_lock = Lock()

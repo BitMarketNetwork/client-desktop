@@ -5,8 +5,8 @@ from pathlib import PurePath
 from threading import RLock
 from typing import Any, Union, Type
 
-from bmnclient import platform, version
-from bmnclient.logger import getClassLogger, osErrorToString
+from . import platform, version
+from .logger import getClassLogger, osErrorToString
 
 USER_CONFIG_FILE_PATH = \
     platform.USER_APPLICATION_CONFIG_PATH / \

@@ -7,8 +7,8 @@ from typing import Optional, Type
 from PySide2.QtCore import Signal as QSignal, Slot as QSlot, QObject
 from PySide2.QtNetwork import QAbstractSocket
 
-from bmnclient.logger import getClassLogger
-from bmnclient.platform import CURRENT_PLATFORM, Platform
+from .logger import getClassLogger
+from .platform import CURRENT_PLATFORM, Platform
 
 
 class SignalHandler(QObject):
