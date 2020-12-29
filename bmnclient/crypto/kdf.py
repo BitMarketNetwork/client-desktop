@@ -9,7 +9,6 @@ from .cipher import MessageCipher
 
 
 class KeyDerivationFunction:
-    ENCODING = version.PYTHON_ENCODING
     HASH_ALGORITHM = hashes.BLAKE2b(64)
     HASH_SALT = b"password1"
 
@@ -26,9 +25,9 @@ class KeyDerivationFunction:
     def setPassword(self, password: str) -> None:
         password_hash = hashes.Hash(self.HASH_ALGORITHM)
         password_hash.update(
-            version.SHORT_NAME.encode(encoding=self.ENCODING))
+            version.SHORT_NAME.encode(encoding=version.ENCODING))
         password_hash.update(
-            password.encode(encoding=self.ENCODING))
+            password.encode(encoding=version.ENCODING))
         password_hash.update(
             self.HASH_SALT)
         password_hash = password_hash.finalize()

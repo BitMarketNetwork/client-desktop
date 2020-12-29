@@ -63,7 +63,7 @@ def configure(file_path: str = None, level: int = logging.DEBUG) -> None:
             handler = logging.FileHandler(
                 file_path,
                 mode='a',
-                encoding=version.PYTHON_ENCODING)
+                encoding=version.ENCODING)
         else:
             handler = logging.StreamHandler(stream=sys.stderr)
         handler.setFormatter(Formatter())

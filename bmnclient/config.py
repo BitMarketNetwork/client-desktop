@@ -43,13 +43,13 @@ class UserConfig:
                 with open(
                         self._file_path,
                         mode='rt',
-                        encoding=version.PYTHON_ENCODING,
+                        encoding=version.ENCODING,
                         errors='replace') as file:
                     self._config = json.load(file)
                 return True
             except OSError as e:
                 self._logger.warning(
-                    "Failed to open configuration file \"%s\". %s",
+                    "Failed to read configuration file \"%s\". %s",
                     self._file_path,
                     osErrorToString(e))
             except json.decoder.JSONDecodeError as e:
@@ -70,7 +70,7 @@ class UserConfig:
                 with open(
                         self._file_path,
                         mode='w+t',
-                        encoding=version.PYTHON_ENCODING,
+                        encoding=version.ENCODING,
                         errors='replace') as file:
                     json.dump(
                         self._config,
