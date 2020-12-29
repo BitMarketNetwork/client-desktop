@@ -49,13 +49,13 @@ class TestKdf(TestCase):
         kdf2 = KeyDerivationFunction()
         kdf2.setPassword(os.urandom(16).hex())
 
-        secret1 = kdf1.createSecret()
+        secret1 = kdf1.createSecret(b"secret1")
         self.assertIsInstance(secret1, str)
         self.assertGreater(len(secret1), 10)
         self.assertTrue(secret1.startswith("v1:"))
 
-        self.assertTrue(kdf1.verifySecret(secret1))
-        self.assertFalse(kdf2.verifySecret(secret1))
+        self.assertEqual(kdf1.verifySecret(secret1), b"secret1")
+        self.assertEqual(kdf2.verifySecret(secret1), None)
 
     def test_bruteforce(self) -> None:
         password = os.urandom(4).hex()

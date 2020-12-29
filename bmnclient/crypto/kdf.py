@@ -1,8 +1,10 @@
 # JOK+
+from typing import Optional
+
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 
-from bmnclient import version
+from .. import version
 from .cipher import MessageCipher
 
 
@@ -15,12 +17,11 @@ class KeyDerivationFunction:
 
     SECRET_SEPARATOR = ":"
     SECRET_VERSION = "v1"
-    SECRET_VALUE = version.SHORT_NAME.encode(encoding=ENCODING)
     SECRET_KEY_LENGTH = 128 // 8
     SECRET_SALT = b"secret1"
 
     def __init__(self) -> None:
-        self._password_hash: bytes = None
+        self._password_hash: Optional[bytes] = None
 
     def setPassword(self, password: str) -> None:
         password_hash = hashes.Hash(self.HASH_ALGORITHM)
@@ -47,19 +48,17 @@ class KeyDerivationFunction:
         )
         return kdf.derive(self._password_hash)
 
-    def verifySecret(self, secret: str) -> bool:
+    def verifySecret(self, secret: str) -> Optional[bytes]:
         key = self.derive(self.SECRET_SALT, self.SECRET_KEY_LENGTH)
 
         (secret_version, secret) = secret.split(self.SECRET_SEPARATOR, 1)
         if secret_version != self.SECRET_VERSION:
-            return False
-        result = MessageCipher(key).decrypt(secret, self.SECRET_SEPARATOR)
-        return result == self.SECRET_VALUE
+            return None
+        value = MessageCipher(key).decrypt(secret, self.SECRET_SEPARATOR)
+        return value
 
-    def createSecret(self) -> str:
+    def createSecret(self, value: bytes) -> str:
         key = self.derive(self.SECRET_SALT, self.SECRET_KEY_LENGTH)
         secret = self.SECRET_VERSION + self.SECRET_SEPARATOR
-        secret += MessageCipher(key).encrypt(
-            self.SECRET_VALUE,
-            self.SECRET_SEPARATOR)
+        secret += MessageCipher(key).encrypt(value, self.SECRET_SEPARATOR)
         return secret
