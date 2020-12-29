@@ -8,8 +8,8 @@ MAINTAINER_URL = "https://" + MAINTAINER_DOMAIN + "/"
 NAME = "BitMarket Network Client"
 SHORT_NAME = "bmn-client"
 VERSION = (0, 10, 0)
-VERSION_STRING = '.'.join(map(str, VERSION))
-ENCODING = 'utf-8'
+VERSION_STRING = ".".join(map(str, VERSION))
+ENCODING = "utf-8"
 
 PYTHON_MINIMAL_VERSION = (3, 7, 0)
 

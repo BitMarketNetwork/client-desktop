@@ -1,6 +1,7 @@
 # JOK+
 import json
 import os
+from json.decoder import JSONDecodeError
 from pathlib import PurePath
 from threading import RLock
 from typing import Any, Union, Type
@@ -52,7 +53,7 @@ class UserConfig:
                     "Failed to read configuration file \"%s\". %s",
                     self._file_path,
                     osErrorToString(e))
-            except json.decoder.JSONDecodeError as e:
+            except JSONDecodeError as e:
                 self._logger.warning(
                     "Failed to parse configuration file \"%s\". "
                     "Offset %i:%i: %s",

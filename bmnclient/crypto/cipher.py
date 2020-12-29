@@ -11,7 +11,7 @@ from .. import version
 class Cipher:
     CIPHER = aead.AESGCM
     NONCE_LENGTH = 96 // 8  # NIST recommends
-    ASSOCIATED_DATA = version.SHORT_NAME.encode(encoding="utf-8")
+    ASSOCIATED_DATA = version.SHORT_NAME.encode(encoding=version.ENCODING)
 
     def __init__(self, key: bytes) -> None:
         self._cipher = self.CIPHER(key)
