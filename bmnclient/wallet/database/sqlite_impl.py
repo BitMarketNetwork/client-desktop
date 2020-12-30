@@ -100,8 +100,8 @@ class SqLite:
         self.__conn = None
         self.__proxy = None
 
-    def connect_impl(self, db_name: str, password: str, nonce: bytes) -> None:
-        self.__proxy = encrypt_proxy.EncryptProxy(password,nonce)
+    def connect_impl(self, db_name: str) -> None:
+        self.__proxy = encrypt_proxy.EncryptProxy()
         self.__conn = sql.connect(
             db_name,
             timeout=3,

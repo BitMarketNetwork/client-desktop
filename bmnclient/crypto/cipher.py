@@ -13,8 +13,9 @@ class Cipher:
     NONCE_LENGTH = 96 // 8  # NIST recommends
     ASSOCIATED_DATA = version.SHORT_NAME.encode(encoding=version.ENCODING)
 
-    def __init__(self, key: bytes) -> None:
+    def __init__(self, key: bytes, nonce: Optional[bytes] = None) -> None:
         self._cipher = self.CIPHER(key)
+        self._nonce = nonce
 
     @classmethod
     def generateKey(cls) -> bytes:
@@ -24,17 +25,26 @@ class Cipher:
     def generateNonce(cls) -> bytes:
         return os.urandom(cls.NONCE_LENGTH)
 
-    def encrypt(self, nonce: bytes, data: bytes) -> bytes:
-        return self._cipher.encrypt(nonce, data, self.ASSOCIATED_DATA)
+    def encrypt(self, nonce: Optional[bytes], data: bytes) -> bytes:
+        return self._cipher.encrypt(
+            nonce or self._nonce,
+            data,
+            self.ASSOCIATED_DATA)
 
-    def decrypt(self, nonce: bytes, data: bytes) -> Optional[bytes]:
+    def decrypt(self, nonce: Optional[bytes], data: bytes) -> Optional[bytes]:
         try:
-            return self._cipher.decrypt(nonce, data, self.ASSOCIATED_DATA)
+            return self._cipher.decrypt(
+                nonce or self._nonce,
+                data,
+                self.ASSOCIATED_DATA)
         except InvalidTag:
             return None
 
 
 class MessageCipher(Cipher):
+    def __init(self, key: bytes):
+        super().__init__(key, None)
+
     def encrypt(self, data: bytes, separator: str = ":") -> str:
         nonce = self.generateNonce()
         cipher_text = super().encrypt(nonce, data)

@@ -38,13 +38,9 @@ class DbWrapper:
         self.__db_name = None
         self.__impl = sqlite_impl.SqLite()
 
-    def open_db(self, password: bytes, nonce: bytes, db_name: str = None) -> None:
-        # assert password, "Not empty password expected"
-        assert isinstance(password, bytes)
-        assert isinstance(nonce, bytes)
-        self.__db_name = db_name or self.DEFAULT_DB_NAME
-        self.__impl.connect_impl(
-            self.__db_name, password=password, nonce=nonce)
+    def open_db(self) -> None:
+        self.__db_name = self.DEFAULT_DB_NAME
+        self.__impl.connect_impl(self.__db_name)
         self.__impl.create_tables()
 
     def close_db(self) -> None:
@@ -60,7 +56,7 @@ class DbWrapper:
 
     def reset_db(self, password: str) -> None:
         self.drop_db()
-        self.open_db(password, self.__db_name)
+        self.open_db()
 
     @classmethod
     def has_db(cls) -> bool:
@@ -387,10 +383,8 @@ class DbWrapper:
         self._clear_tx(wallet)
         log.debug(f"Wallet {wallet} erased from DB")
 
-    def _apply_password(self, password: bytes, nonce: bytes) -> None:
-        # why ??
-        # self.drop_db()
-        self.open_db(password, nonce)
+    def _apply_password(self) -> None:
+        self.open_db()
         self._init_actions()
 
     def _set_meta_entry(self, name: str, value: str, strong: bool = False) -> None:
