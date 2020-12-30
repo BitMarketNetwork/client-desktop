@@ -3,7 +3,8 @@ import unittest
 import os
 import logging
 import random
-from bmnclient.wallet import key as key_mod, hd, mnemonic, coin_network, master_key
+from bmnclient.wallet import key as key_mod, hd, mnemonic, coin_network
+import root_key
 
 log = logging.getLogger(__name__)
 MNEMO_PASSWORD = "hardcoded mnemo password"
@@ -73,7 +74,7 @@ class TestAdvanced(unittest.TestCase):
                 # words_combs = itertools.combinations(
                 #     random.shuffle(mnemo.wordlist, f), master_key.MNEMONIC_SEED_LENGTH)
                 words = random.choices(
-                    mnemo.wordlist, k=master_key.MNEMONIC_SEED_LENGTH)
+                    mnemo.wordlist, k=root_key.MNEMONIC_SEED_LENGTH)
                 phraze = " ".join(words)
                 cache_entry = {}
                 cache_entry["phraze"] = phraze

@@ -8,14 +8,14 @@ from typing import Optional
 from PySide2.QtCore import Slot as QSlot, Signal as QSignal, \
     Property as QProperty, QObject
 
-from . import hd, mnemonic, util
-from .. import version
-from ..config import UserConfig
-from ..crypto.cipher import Cipher
-from ..crypto.kdf import KeyDerivationFunction
-from ..logger import getClassLogger
-from ..ui import CoreApplication
-from ..ui.gui import import_export
+from .wallet import hd, mnemonic, util
+from . import version
+from .config import UserConfig
+from .crypto.cipher import Cipher
+from .crypto.kdf import KeyDerivationFunction
+from .logger import getClassLogger
+from .application import CoreApplication
+from .ui.gui import import_export
 
 MNEMONIC_SEED_LENGTH = 24
 PASSWORD_HASHER = util.sha256
@@ -23,7 +23,7 @@ PASSWORD_HASHER = util.sha256
 
 class Secret:
     def __init__(self) -> None:
-        self._db_nonce: bytes = None
+        self._db_nonce: Optional[bytes] = None
 
     @property
     def dbNonce(self) -> Optional[bytes]:
@@ -50,16 +50,19 @@ class Secret:
         return True
 
 
-class KeyManager(QObject):
+class RootKey(QObject):
     """
     Holding hierarchy  according to bip0044
     """
     activeChanged = QSignal()
     mnemoRequested = QSignal()
 
-    def __init__(self, parent: Optional[QObject] = None):
+    def __init__(
+            self,
+            application: CoreApplication,
+            parent: Optional[QObject] = None):
         super().__init__(parent=parent)
-        self._application = CoreApplication.instance()
+        self._application = application
         self._logger = getClassLogger(__name__, self.__class__)
         self._lock = Lock()
 

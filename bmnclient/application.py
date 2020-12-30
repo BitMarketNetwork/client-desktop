@@ -7,11 +7,12 @@ from PySide2.QtCore import Qt, QLocale, QMetaObject, QObject, Slot as QSlot, \
     QCoreApplication
 from PySide2.QtGui import QIcon, QGuiApplication
 
-from .. import version, resources
-from ..config import UserConfig
-from ..language import Language
-from ..logger import getClassLogger
-from ..signal_handler import SignalHandler
+from . import version, resources
+from .config import UserConfig
+from .language import Language
+from .logger import getClassLogger
+from .signal_handler import SignalHandler
+from .root_key import RootKey
 
 
 class CoreApplication(QObject):
@@ -33,6 +34,8 @@ class CoreApplication(QObject):
 
         self._user_config = UserConfig()
         self._user_config.load()
+
+        self._root_key = RootKey(self, self)
 
         # Prepare QCoreApplication
         QLocale.setDefault(QLocale.c())
@@ -104,6 +107,10 @@ class CoreApplication(QObject):
     @property
     def userConfig(self) -> UserConfig:
         return self._user_config
+
+    @property
+    def rootKey(self) -> RootKey:
+        return self._root_key
 
     @property
     def title(self) -> str:

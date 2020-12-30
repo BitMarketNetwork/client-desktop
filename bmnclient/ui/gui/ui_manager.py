@@ -164,5 +164,5 @@ class UIManager(QObject):
     @QSlot()
     def resetDB(self) -> None:
         self._application.gcd.reset_db()
-        self._application.gcd.keyManager.regenerate_master_key()
+        self._application.rootKey.regenerate_master_key()
         self._application.gcd.coinManager.lookForHD()

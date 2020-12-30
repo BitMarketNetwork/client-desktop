@@ -6,7 +6,7 @@ import collections
 from typing import Optional, List, Tuple, DefaultDict
 
 
-from ..ui import CoreApplication
+from ..application import CoreApplication
 from . import coin_network, key, mtx_impl
 
 log = logging.getLogger(__name__)
