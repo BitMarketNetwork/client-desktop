@@ -4,6 +4,7 @@ from unittest import TestCase
 
 from bmnclient.crypto.cipher import MessageCipher
 from bmnclient.crypto.kdf import KeyDerivationFunction
+from bmnclient.crypto.password import PasswordStrength
 
 
 class TestMessageCipher(TestCase):
@@ -70,3 +71,98 @@ class TestKdf(TestCase):
         print(
             "KDF bruteforce status: ~{:.2f} combinations per day."
             .format(result))
+
+
+class TestPassword(TestCase):
+    def test_char_groups(self) -> None:
+        password_list = (
+            ("",  {
+                "upper": False,
+                "lower": False,
+                "numbers": False,
+                "special": False}),
+            ("A", {
+                "upper": True,
+                "lower": False,
+                "numbers": False,
+                "special": False}),
+            ("a", {
+                "upper": False,
+                "lower": True,
+                "numbers": False,
+                "special": False}),
+            ("Aa", {
+                "upper": True,
+                "lower": True,
+                "numbers": False,
+                "special": False}),
+            ("1", {
+                "upper": False,
+                "lower": False,
+                "numbers": True,
+                "special": False}),
+            ("Aa1", {
+                "upper": True,
+                "lower": True,
+                "numbers": True,
+                "special": False}),
+            (".", {
+                "upper": False,
+                "lower": False,
+                "numbers": False,
+                "special": True}),
+            (" ", {
+                "upper": False,
+                "lower": False,
+                "numbers": False,
+                "special": True}),
+            ("słowo", {
+                "upper": False,
+                "lower": True,
+                "numbers": False,
+                "special": False}),
+            ("SŁOWO", {
+                "upper": True,
+                "lower": False,
+                "numbers": False,
+                "special": False}),
+            ("реч", {
+                "upper": False,
+                "lower": True,
+                "numbers": False,
+                "special": False}),
+            ("РЕЧ", {
+                "upper": True,
+                "lower": False,
+                "numbers": False,
+                "special": False}),
+            ("Реч@1", {
+                "upper": True,
+                "lower": True,
+                "numbers": True,
+                "special": True}),
+            ("`", {
+                "upper": False,
+                "lower": False,
+                "numbers": False,
+                "special": True}),
+        )
+        for v in password_list:
+            s = PasswordStrength(v[0])._getCharGroups()
+            self.assertEqual(s, v[1])
+
+    def test_strength(self) -> None:
+        password_list = (
+            ("1", 1),
+            ("111122223333", 2),
+            ("12345678", 1),
+            ("1234567a", 2),
+            ("123456aA", 3),
+            ("12345aA@", 4),
+            ("12345aA@@@@@@@@@@", 5),
+            ("1234@aABCDEFGHIJ", 5),
+            ("1234@aABCDEFGHIJK", 6),
+        )
+        for v in password_list:
+            s = PasswordStrength(v[0]).calc()
+            self.assertEqual(s, v[1])

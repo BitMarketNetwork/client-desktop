@@ -11,6 +11,7 @@ from PySide2.QtCore import Slot as QSlot, Signal as QSignal, \
 from . import version
 from .config import UserConfig
 from .crypto.cipher import Cipher
+from .crypto.password import PasswordStrength
 from .crypto.kdf import KeyDerivationFunction
 from .logger import getClassLogger
 from .ui.gui import import_export
@@ -192,28 +193,8 @@ class RootKey(QObject):
             return self._kdf.derive(salt, key_length)
 
     @QSlot(str, result=int)
-    def validatePasswordStrength(self, password: str) -> int:
-        unique = "".join(set(password))
-        if not password or len(password) < 8:
-            return 1
-        if len(unique) < 6:
-            return 2
-        password_strength = dict.fromkeys(
-            ['has_upper', 'has_lower', 'has_num', 'has_sep'], False)
-        if re.search(r'[A-Z]', password):
-            password_strength['has_upper'] = True
-        if re.search(r'[a-z]', password):
-            password_strength['has_lower'] = True
-        if re.search(r'[0-9]', password):
-            password_strength['has_num'] = True
-        if re.search(r'[;+-@=#$%^&":{}\(\)]', password):
-            password_strength['has_sep'] = True
-        res = len([b for b in password_strength.values() if b])
-        if len(password) > 16:
-            res += 1
-        if len(unique) > 10:
-            res += 1
-        return res
+    def calcPasswordStrength(self, password: str) -> int:
+        return PasswordStrength(password).calc()
 
     @QSlot(str, result=bool)
     def createPassword(self, password: str) -> bool:

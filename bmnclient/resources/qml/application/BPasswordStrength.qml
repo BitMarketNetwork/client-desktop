@@ -6,15 +6,15 @@ import "../application"
 import "../basiccontrols"
 
 QtObject {
-    // sync with BBackend.rootKey.validatePasswordStrength()
+    // TODO move to bmnclient.cipher.password.PasswordStrength
     readonly property variant map: [
-        [ false, "",               BDialogValidLabel.Mode.Unset  ],
-        [ false, qsTr("Horrible"), BDialogValidLabel.Mode.Reject ],
-        [ false, qsTr("Weak"),     BDialogValidLabel.Mode.Reject ],
-        [ false, qsTr("Medium"),   BDialogValidLabel.Mode.Reject ],
-        [ true,  qsTr("Good"),     BDialogValidLabel.Mode.Accept ],
-        [ true,  qsTr("Strong"),   BDialogValidLabel.Mode.Accept ],
-        [ true,  qsTr("Paranoic"), BDialogValidLabel.Mode.Accept ]
+        [ false, "",                BDialogValidLabel.Mode.Unset  ],
+        [ false, qsTr("Horrible"),  BDialogValidLabel.Mode.Reject ],
+        [ false, qsTr("Weak"),      BDialogValidLabel.Mode.Reject ],
+        [ false, qsTr("Medium"),    BDialogValidLabel.Mode.Reject ],
+        [ true,  qsTr("Good"),      BDialogValidLabel.Mode.Accept ],
+        [ true,  qsTr("Strong"),    BDialogValidLabel.Mode.Accept ],
+        [ true,  qsTr("Paranoiac"), BDialogValidLabel.Mode.Accept ]
     ]
 
     function getMaxStringLength() {
@@ -28,7 +28,7 @@ QtObject {
     }
 
     function getIndex(password) {
-        return password.length > 0 ? BBackend.rootKey.validatePasswordStrength(password) : 0
+        return password.length > 0 ? BBackend.rootKey.calcPasswordStrength(password) : 0
     }
 
     function isAcceptable(index) {
