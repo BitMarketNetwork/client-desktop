@@ -8,7 +8,7 @@ import PySide2.QtCore as qt_core
 
 import bmnclient.config
 from .wallet import coins, mutable_tx
-from .ui import CoreApplication
+from .application import CoreApplication
 
 log = logging.getLogger(__name__)
 

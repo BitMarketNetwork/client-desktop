@@ -5,7 +5,7 @@ from PySide2.QtCore import QObject, Signal as QSignal, Slot as QSlot, \
     Property as QProperty, QTimer
 
 from ...models import list_model, coin_daemon_model
-from ...ui import CoreApplication
+from ...application import CoreApplication
 from ...ui.gui.system_tray import SystemTrayIcon, MessageIcon
 
 log = logging.getLogger(__name__)

@@ -1,6 +1,6 @@
 import logging
 import getpass
-from bmnclient.ui import CoreApplication
+from ...application import CoreApplication
 
 import PySide2.QtCore as qt_core
 

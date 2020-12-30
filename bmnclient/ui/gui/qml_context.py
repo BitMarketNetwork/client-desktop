@@ -1,13 +1,13 @@
 from PySide2 import QtCore
 
 from bmnclient.debug_manager import DebugManager
-from root_key import RootKey
+from ...root_key import RootKey
 from .coin_manager import CoinManager
 from .receive_manager import ReceiveManager
 from .settings_manager import SettingsManager
 from .ui_manager import UIManager
 import bmnclient.command_line
-from .. import CoreApplication
+from ...application import CoreApplication
 
 
 class BackendContext(QtCore.QObject):

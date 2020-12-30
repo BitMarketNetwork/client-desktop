@@ -5,7 +5,7 @@ from PySide2 import QtCore
 from PySide2.QtWidgets import QSystemTrayIcon, QMenu
 
 from bmnclient.logger import getClassLogger
-from bmnclient.ui import CoreApplication
+from ...application import CoreApplication
 
 
 class MessageIcon(IntEnum):

@@ -8,7 +8,7 @@ import bmnclient.command_line as e_config
 from ..ui.gui import qml_context
 from ..wallet import address, fee_manager, tx
 from . import debug_cmd, net_cmd, progress_view, url_composer
-from bmnclient.ui import CoreApplication
+from ..application import CoreApplication
 log = logging.getLogger(__name__)
 
 

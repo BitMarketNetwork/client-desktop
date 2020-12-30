@@ -11,8 +11,8 @@ from . import version, resources
 from .config import UserConfig
 from .language import Language
 from .logger import getClassLogger
-from .signal_handler import SignalHandler
 from .root_key import RootKey
+from .signal_handler import SignalHandler
 
 
 class CoreApplication(QObject):
@@ -23,6 +23,7 @@ class CoreApplication(QObject):
             qt_class: Union[QCoreApplication, QGuiApplication],
             argv: list[str]) -> None:
         assert self.__class__._instance is None
+        super().__init__()
 
         CoreApplication._instance = self
         self._logger = getClassLogger(__name__, self.__class__)
@@ -35,7 +36,7 @@ class CoreApplication(QObject):
         self._user_config = UserConfig()
         self._user_config.load()
 
-        self._root_key = RootKey(self, self)
+        self._root_key = RootKey(self._user_config)
 
         # Prepare QCoreApplication
         QLocale.setDefault(QLocale.c())
@@ -52,7 +53,6 @@ class CoreApplication(QObject):
 
         # QCoreApplication
         self._qt_application = qt_class(argv)
-        super().__init__()
 
         if issubclass(qt_class, QGuiApplication):
             qt_class.setWindowIcon(self._icon)

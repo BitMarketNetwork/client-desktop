@@ -8,7 +8,7 @@ from PySide2.QtCore import QObject, Signal as QSignal, Slot as QSlot, \
 
 from . import settings_manager_impl
 from ...config import UserConfig
-from ...ui import CoreApplication
+from ...application import CoreApplication
 from ...wallet import base_unit, currency, rate_source
 from ...language import Language
 

@@ -5,7 +5,7 @@ from PySide2 import QtCore, QtQml, QtWidgets, QtQuickControls2
 import bmnclient.version
 from bmnclient.gcd import GCD
 from bmnclient.meta import override
-from bmnclient.ui import CoreApplication
+from ...application import CoreApplication
 from . import qml_context, tx_controller, ui_manager, exchange_manager, \
     receive_manager, coin_manager, settings_manager
 from .coin_manager import CoinManager

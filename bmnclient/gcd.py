@@ -16,7 +16,7 @@ from .ui.gui import qml_context
 from .wallet import aes, mutable_tx, tx, address, coins, \
     fee_manager, serialization, thread as w_thread, util
 from .wallet.database import database
-from bmnclient.ui import CoreApplication
+from .application import CoreApplication
 log = logging.getLogger(__name__)
 
 
