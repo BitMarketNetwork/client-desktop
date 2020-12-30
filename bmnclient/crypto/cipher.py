@@ -48,3 +48,7 @@ class MessageCipher(Cipher):
                 bytes.fromhex(data))
         except (ValueError, TypeError):
             return None
+
+
+class StreamCipher:
+    pass

@@ -112,7 +112,7 @@ BApplicationWindow {
     }
 
     Connections {
-        target: BBackend.keyManager
+        target: BBackend.rootKey
         function onMnemoRequested() { // TODO bad name
             let dialog = _applicationManager.createDialog("BMasterKeyDialog", {})
             dialog.onRejected.connect(_applicationManager.quit)

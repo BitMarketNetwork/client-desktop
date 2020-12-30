@@ -59,7 +59,7 @@ QtObject {
 
     function openMasterPasswordDialog() {
         let dialog
-        if (BBackend.keyManager.hasPassword) {
+        if (BBackend.rootKey.hasPassword) {
             dialog = createDialog("BMasterKeyPasswordDialog", {})
             dialog.onResetWalletAccepted.connect(openMasterPasswordDialog)
         } else {
@@ -76,7 +76,7 @@ QtObject {
             let dialog = createDialog(
                     "BSeedPhraseDialog", {
                         "type": BSeedPhraseDialog.Type.Reveal,
-                        "seedPhraseText": BBackend.keyManager.revealSeedPhrase(password),
+                        "seedPhraseText": BBackend.rootKey.revealSeedPhrase(password),
                         "readOnly": true
                     })
             dialog.open()

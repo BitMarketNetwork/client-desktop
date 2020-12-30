@@ -6,7 +6,7 @@ import "../application"
 import "../basiccontrols"
 
 QtObject {
-    // sync with BBackend.keyManager.validatePasswordStrength()
+    // sync with BBackend.rootKey.validatePasswordStrength()
     readonly property variant map: [
         [ false, "",               BDialogValidLabel.Mode.Unset  ],
         [ false, qsTr("Horrible"), BDialogValidLabel.Mode.Reject ],
@@ -28,7 +28,7 @@ QtObject {
     }
 
     function getIndex(password) {
-        return password.length > 0 ? BBackend.keyManager.validatePasswordStrength(password) : 0
+        return password.length > 0 ? BBackend.rootKey.validatePasswordStrength(password) : 0
     }
 
     function isAcceptable(index) {

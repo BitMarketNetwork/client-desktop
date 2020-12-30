@@ -2,7 +2,7 @@ import datetime
 import functools
 import logging
 import threading
-from typing import Any, List, Optional, Union
+from typing import List, Optional, Union
 
 import PySide2.QtCore as qt_core
 
@@ -10,7 +10,7 @@ import bmnclient.config
 import bmnclient.config
 import bmnclient.version
 from bmnclient import version as e_config_version
-from . import loading_level, debug_manager, signal_handler, meta
+from . import loading_level, debug_manager, meta
 from .server import network, thread as n_thread
 from .ui.gui import qml_context
 from .wallet import aes, mutable_tx, tx, address, coins, \
@@ -75,8 +75,6 @@ class GCD(meta.QSeq):
         self._mempool_timer = qt_core.QBasicTimer()
         self._poll_timer = qt_core.QBasicTimer()
         self.__debug_man = debug_manager.DebugManager(self)
-        from bmnclient.wallet import master_key
-        self._key_manager = master_key.KeyManager(self)
         self.__fee_manager = fee_manager.FeeManager(self)
         #
         self.__btc_coin = coins.BitCoin(self)
@@ -217,10 +215,6 @@ class GCD(meta.QSeq):
     @property
     def debug_man(self) -> debug_manager.DebugManager:
         return self.__debug_man
-
-    @property
-    def key_man(self) -> "KeyManager":
-        return self._key_manager
 
     @property
     def fee_man(self) -> fee_manager.FeeManager:
