@@ -1,19 +1,53 @@
+import json
 import os
 import re
-from typing import Optional
+from json.decoder import JSONDecodeError
 from threading import Lock
+from typing import Optional
+
 from PySide2.QtCore import Slot as QSlot, Signal as QSignal, \
     Property as QProperty, QObject
 
-from bmnclient.config import UserConfig
-from bmnclient.crypto.kdf import KeyDerivationFunction
-from bmnclient.ui import CoreApplication
-from bmnclient.ui.gui import import_export
-from bmnclient.logger import getClassLogger
 from . import hd, mnemonic, util
+from .. import version
+from ..config import UserConfig
+from ..crypto.cipher import Cipher
+from ..crypto.kdf import KeyDerivationFunction
+from ..logger import getClassLogger
+from ..ui import CoreApplication
+from ..ui.gui import import_export
 
 MNEMONIC_SEED_LENGTH = 24
 PASSWORD_HASHER = util.sha256
+
+
+class Secret:
+    def __init__(self) -> None:
+        self._db_nonce: bytes = None
+
+    @property
+    def dbNonce(self) -> Optional[bytes]:
+        return self._db_nonce
+
+    @classmethod
+    def generate(cls) -> bytes:
+        value = {
+            "version": version.VERSION_STRING,
+            "db_nonce": Cipher.generateNonce().hex()
+        }
+        return json.dumps(value).encode(encoding=version.ENCODING)
+
+    def load(self, value: bytes) -> bool:
+        try:
+            value = json.loads(value.decode(encoding=version.ENCODING))
+            db_nonce = value["db_nonce"]
+            if not isinstance(db_nonce, str) or len(db_nonce) == 0:
+                return False
+        except (TypeError, JSONDecodeError):
+            return False
+
+        self._db_nonce = db_nonce
+        return True
 
 
 class KeyManager(QObject):
@@ -25,10 +59,13 @@ class KeyManager(QObject):
 
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent=parent)
+        self._application = CoreApplication.instance()
         self._logger = getClassLogger(__name__, self.__class__)
+        self._lock = Lock()
 
-        self._password_kdf: KeyDerivationFunction = None
-        self._password_kdf_lock = Lock()
+        self._kdf: Optional[KeyDerivationFunction] = None
+        self._secret: Optional[Secret] = None
+
         self.__master_hd = None
         self.__mnemonic = mnemonic.Mnemonic()
         # don't keep mnemo, save seed instead !!!
@@ -152,9 +189,8 @@ class KeyManager(QObject):
         return util.bytes_to_hex(self.__seed)
 
     def deriveKey(self, salt: bytes, key_length: int) -> bytes:
-        with self._password_kdf_lock:
-            key = self._password_kdf.derive(salt, key_length)
-        return key
+        with self._lock:
+            return self._kdf.derive(salt, key_length)
 
     @QSlot(str, result=int)
     def validatePasswordStrength(self, password: str) -> int:
@@ -182,40 +218,52 @@ class KeyManager(QObject):
 
     @QSlot(str, result=bool)
     def createPassword(self, password: str) -> bool:
-        user_config = CoreApplication.instance().userConfig
         kdf = KeyDerivationFunction()
         kdf.setPassword(password)
-        return user_config.set(
-            UserConfig.KEY_WALLET_SECRET,
-            kdf.createSecret())
+        secret_value = Secret.generate()
+        secret_value = kdf.createSecret(secret_value)
+        with self._lock:
+            return self._application.userConfig.set(
+                UserConfig.KEY_WALLET_SECRET,
+                secret_value)
 
     @QSlot(str, result=bool)
     def setPassword(self, password: str) -> bool:
-        user_config = CoreApplication.instance().userConfig
-        secret = user_config.get(UserConfig.KEY_WALLET_SECRET, str)
-        if not secret:
-            return False
+        with self._lock:
+            secret_value = self._application.userConfig.get(
+                UserConfig.KEY_WALLET_SECRET,
+                str)
+            if not secret_value:
+                return False
 
-        kdf = KeyDerivationFunction()
-        kdf.setPassword(password)
-        if not kdf.verifySecret(secret):
-            return False
-        with self._password_kdf_lock:
-            self._password_kdf = kdf
+            secret = Secret()
+            kdf = KeyDerivationFunction()
+            kdf.setPassword(password)
+            secret_value = kdf.verifySecret(secret_value)
+            if not secret_value or not secret.load(secret_value):
+                return False
 
+            self._kdf = kdf
+            self._secret = secret
         self.gcd.apply_password()  # TODO
         return True
 
     @QSlot()
     def resetPassword(self) -> bool:
-        user_config = CoreApplication.instance().userConfig
-        if not user_config.set(UserConfig.KEY_WALLET_SECRET, None):
-            return False
+        with self._lock:
+            if not self._application.userConfig.set(
+                    UserConfig.KEY_WALLET_SECRET,
+                    None):
+                return False
+            self._kdf = None
+            self._secret = None
         self.gcd.reset_db()  # TODO
         return True
 
     @QProperty(bool, constant=True)
     def hasPassword(self) -> bool:
-        user_config = CoreApplication.instance().userConfig
-        secret = user_config.get(UserConfig.KEY_WALLET_SECRET, str)
-        return secret and len(secret) > 0
+        with self._lock:
+            secret_value = self._application.userConfig.get(
+                UserConfig.KEY_WALLET_SECRET,
+                str)
+        return secret_value and len(secret_value) > 0
