@@ -1,6 +1,6 @@
+from enum import Enum
 import json
 import os
-import re
 from json.decoder import JSONDecodeError
 from threading import Lock
 from typing import Optional
@@ -21,32 +21,36 @@ MNEMONIC_SEED_LENGTH = 24
 PASSWORD_HASHER = util.sha256
 
 
+class KeyType(Enum):
+    WALLET_DATABASE = 0
+
+
 class Secret:
     def __init__(self) -> None:
-        self._db_nonce: Optional[bytes] = None
+        self._nonce_list = [None] * len(KeyType)
 
-    @property
-    def dbNonce(self) -> Optional[bytes]:
-        return self._db_nonce
+    def getNonce(self, key_type: KeyType) -> Optional[bytes]:
+        return self._nonce_list[key_type.value]
 
     @classmethod
     def generate(cls) -> bytes:
         value = {
-            "version": version.VERSION_STRING,
-            "db_nonce": Cipher.generateNonce().hex()
+            "version":
+                version.VERSION_STRING,
+            "nonce_{:d}".format(KeyType.WALLET_DATABASE.value):
+                Cipher.generateNonce().hex()
         }
         return json.dumps(value).encode(encoding=version.ENCODING)
 
     def load(self, value: bytes) -> bool:
         try:
             value = json.loads(value.decode(encoding=version.ENCODING))
-            db_nonce = value["db_nonce"]
-            if not isinstance(db_nonce, str) or len(db_nonce) == 0:
-                return False
-        except (TypeError, JSONDecodeError):
+            for k, v in value.items():
+                if k.startswith("nonce_"):
+                    k = int(k[6:])
+                    self._nonce_list[k] = bytes.fromhex(v)
+        except (IndexError, ValueError, TypeError, JSONDecodeError):
             return False
-
-        self._db_nonce = db_nonce
         return True
 
 
@@ -226,7 +230,8 @@ class RootKey(QObject):
             self._kdf = kdf
             self._secret = secret
         from .application import CoreApplication
-        CoreApplication.instance().gcd.apply_password()  # TODO
+        if CoreApplication.instance():
+            CoreApplication.instance().gcd.apply_password()  # TODO
         return True
 
     @QSlot()
@@ -239,7 +244,8 @@ class RootKey(QObject):
             self._kdf = None
             self._secret = None
         from .application import CoreApplication
-        CoreApplication.instance().gcd.reset_db()  # TODO
+        if CoreApplication.instance():
+            CoreApplication.instance().gcd.reset_db()  # TODO
         return True
 
     @QProperty(bool, constant=True)

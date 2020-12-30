@@ -31,8 +31,7 @@ class UserConfig:
 
     def __init__(
             self,
-            file_path: Union[str, PurePath] = USER_CONFIG_FILE_PATH) -> None:
-        assert isinstance(file_path, PurePath)
+            file_path: PurePath = USER_CONFIG_FILE_PATH) -> None:
         self._logger = getClassLogger(__name__, self.__class__)
         self._file_path = file_path
         self._config = dict()
