@@ -193,9 +193,19 @@ class RootKey(QObject):
     def master_seed_hex(self) -> str:
         return util.bytes_to_hex(self.__seed)
 
-    def deriveKey(self, salt: bytes, key_length: int) -> bytes:
+    def deriveCipher(self, key_type: KeyType) -> Optional[Cipher]:
         with self._lock:
-            return self._kdf.derive(salt, key_length)
+            if key_type == KeyType.WALLET_DATABASE:
+                key = self._kdf.derive(b"wallet_database1", 128 // 8)
+            else:
+                raise ValueError("Invalid key type \"%s\".", str(key_type))
+            nonce = self._secret.getNonce(key_type)
+        if not nonce:
+            self._logger.error(
+                "Nonce not defined for key type \"{}\"."
+                .format(str(key_type)))
+            return None
+        return Cipher(key, nonce)
 
     @QSlot(str, result=int)
     def calcPasswordStrength(self, password: str) -> int:
