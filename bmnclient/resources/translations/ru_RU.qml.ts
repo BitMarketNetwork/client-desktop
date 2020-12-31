@@ -334,14 +334,14 @@ Please use this version carefully for reference only, as it is intended for demo
     </message>
 </context>
 <context>
-    <name>BMasterPasswordDialog</name>
+    <name>BMasterKeyPasswordDialog</name>
     <message>
-        <location filename="../qml/dialogs/BMasterPasswordDialog.qml" line="15"/>
+        <location filename="../qml/dialogs/BMasterKeyPasswordDialog.qml" line="13"/>
         <source>Wrong password.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/dialogs/BMasterPasswordDialog.qml" line="23"/>
+        <location filename="../qml/dialogs/BMasterKeyPasswordDialog.qml" line="21"/>
         <source>Your current database version isn&apos;t supported in this application version (%1).
 You can reset your database either use old application version.
 
@@ -352,17 +352,17 @@ Reset database?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/dialogs/BMasterPasswordDialog.qml" line="52"/>
+        <location filename="../qml/dialogs/BMasterKeyPasswordDialog.qml" line="49"/>
         <source>Forgot your password?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/dialogs/BMasterPasswordDialog.qml" line="53"/>
+        <location filename="../qml/dialogs/BMasterKeyPasswordDialog.qml" line="50"/>
         <source>Reset wallet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/dialogs/BMasterPasswordDialog.qml" line="58"/>
+        <location filename="../qml/dialogs/BMasterKeyPasswordDialog.qml" line="55"/>
         <source>This will destroy all saved information and you can lose your money!
 Please make sure you remember the seed phrase.
 
@@ -455,7 +455,7 @@ Reset?</source>
     </message>
     <message>
         <location filename="../qml/application/BPasswordStrength.qml" line="17"/>
-        <source>Paranoic</source>
+        <source>Paranoiac</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

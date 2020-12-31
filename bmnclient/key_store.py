@@ -54,7 +54,7 @@ class Secret:
         return True
 
 
-class RootKey(QObject):
+class KeyStore(QObject):
     """
     Holding hierarchy  according to bip0044
     """

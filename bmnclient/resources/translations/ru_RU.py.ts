@@ -75,22 +75,19 @@
     </message>
 </context>
 <context>
-    <name>KeyManager</name>
-</context>
-<context>
-    <name>RootKey</name>
+    <name>KeyStore</name>
     <message>
-        <location filename="root_key.py" line="129"/>
+        <location filename="key_store.py" line="128"/>
         <source>Wrong password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="root_key.py" line="143"/>
+        <location filename="key_store.py" line="137"/>
         <source>Select file to save backup copy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="root_key.py" line="151"/>
+        <location filename="key_store.py" line="145"/>
         <source>Select file with backup</source>
         <translation type="unfinished"></translation>
     </message>
@@ -160,9 +157,6 @@
         <source>Russian ruble</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>SystemTray</name>
 </context>
 <context>
     <name>SystemTrayIcon</name>

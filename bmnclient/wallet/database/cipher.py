@@ -3,7 +3,7 @@ import logging
 import struct
 from typing import Any
 import base64
-from ...root_key import KeyType
+from ...key_store import KeyType
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class Cipher:
 
     def __init__(self) -> None:
         from ...application import CoreApplication
-        self._cipher = CoreApplication.instance().rootKey.deriveCipher(KeyType.WALLET_DATABASE)
+        self._cipher = CoreApplication.instance().keyStore.deriveCipher(KeyType.WALLET_DATABASE)
 
     def text_from(self, value: bytes) -> str:
         if self.ENCRYPT:

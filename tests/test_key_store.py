@@ -1,3 +1,4 @@
+# JOK+
 import json
 import tempfile
 from pathlib import Path
@@ -6,7 +7,7 @@ from unittest import TestCase
 from bmnclient import version
 from bmnclient.config import UserConfig
 from bmnclient.crypto.kdf import KeyDerivationFunction
-from bmnclient.root_key import KeyType, Secret, RootKey
+from bmnclient.key_store import KeyType, Secret, KeyStore
 
 
 class TestSecret(TestCase):
@@ -29,7 +30,7 @@ class TestSecret(TestCase):
             self.assertIsInstance(secret.getNonce(k), bytes)
 
 
-class TestRootKey(TestCase):
+class TestKeyStore(TestCase):
     def setUp(self) -> None:
         self.password = "123123Qaz"
         self.user_config_path = \
@@ -45,32 +46,32 @@ class TestRootKey(TestCase):
         self.user_config = None
 
     def test_password(self) -> None:
-        root_key = RootKey(self.user_config)
+        key_store = KeyStore(self.user_config)
 
-        self.assertFalse(root_key.hasPassword)
+        self.assertFalse(key_store.hasPassword)
         self.assertIsNone(
             self.user_config.get(UserConfig.KEY_WALLET_SECRET, str))
-        self.assertTrue(root_key.createPassword(self.password))
+        self.assertTrue(key_store.createPassword(self.password))
         self.assertIsInstance(
             self.user_config.get(UserConfig.KEY_WALLET_SECRET, str),
             str)
-        self.assertTrue(root_key.hasPassword)
+        self.assertTrue(key_store.hasPassword)
 
-        self.assertIsNone(root_key._kdf)
-        self.assertIsNone(root_key._secret)
-        self.assertFalse(root_key.setPassword(self.password * 2))
-        self.assertIsNone(root_key._kdf)
-        self.assertIsNone(root_key._secret)
-        self.assertTrue(root_key.setPassword(self.password))
-        self.assertIsInstance(root_key._kdf, KeyDerivationFunction)
-        self.assertIsInstance(root_key._secret, Secret)
+        self.assertIsNone(key_store._kdf)
+        self.assertIsNone(key_store._secret)
+        self.assertFalse(key_store.setPassword(self.password * 2))
+        self.assertIsNone(key_store._kdf)
+        self.assertIsNone(key_store._secret)
+        self.assertTrue(key_store.setPassword(self.password))
+        self.assertIsInstance(key_store._kdf, KeyDerivationFunction)
+        self.assertIsInstance(key_store._secret, Secret)
 
         for k in KeyType:
-            self.assertIsInstance(root_key._secret.getNonce(k), bytes)
+            self.assertIsInstance(key_store._secret.getNonce(k), bytes)
 
-        self.assertTrue(root_key.resetPassword())
-        self.assertFalse(root_key.hasPassword)
-        self.assertIsNone(root_key._kdf)
-        self.assertIsNone(root_key._secret)
+        self.assertTrue(key_store.resetPassword())
+        self.assertFalse(key_store.hasPassword)
+        self.assertIsNone(key_store._kdf)
+        self.assertIsNone(key_store._secret)
         self.assertIsNone(
             self.user_config.get(UserConfig.KEY_WALLET_SECRET, str))

@@ -9,7 +9,7 @@ BPasswordDialog {
     destroyOnClose: false
 
     onPasswordAccepted: {
-        if (!BBackend.rootKey.setPassword(password)) {
+        if (!BBackend.keyStore.setPassword(password)) {
             let dialog = _applicationManager.messageDialog(qsTr("Wrong password."))
             dialog.onClosed.connect(_base.open)
             dialog.open()
@@ -58,7 +58,7 @@ BPasswordDialog {
                         + "Reset?"),
                     BMessageDialog.Yes | BMessageDialog.No)
             dialog.onAccepted.connect(function () {
-                BBackend.rootKey.resetPassword() // TODO if failed?
+                BBackend.keyStore.resetPassword() // TODO if failed?
                 _base.autoDestroy()
                 _base.resetWalletAccepted()
             })

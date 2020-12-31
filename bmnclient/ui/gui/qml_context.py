@@ -1,7 +1,7 @@
 from PySide2 import QtCore
 
 from bmnclient.debug_manager import DebugManager
-from ...root_key import RootKey
+from ...key_store import KeyStore
 from .coin_manager import CoinManager
 from .receive_manager import ReceiveManager
 from .settings_manager import SettingsManager
@@ -28,9 +28,9 @@ class BackendContext(QtCore.QObject):
     def debugManager(self) -> DebugManager:
         return self.parent().debug_man
 
-    @QtCore.Property(RootKey, constant=True)
-    def rootKey(self) -> RootKey:
-        return CoreApplication.instance().rootKey
+    @QtCore.Property(KeyStore, constant=True)
+    def keyStore(self) -> KeyStore:
+        return CoreApplication.instance().keyStore
 
     @QtCore.Property(SettingsManager, constant=True)
     def settingsManager(self) -> SettingsManager:

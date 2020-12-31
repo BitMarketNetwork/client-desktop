@@ -11,7 +11,7 @@ from . import version, resources
 from .config import UserConfig
 from .language import Language
 from .logger import getClassLogger
-from .root_key import RootKey
+from .key_store import KeyStore
 from .signal_handler import SignalHandler
 
 
@@ -36,7 +36,7 @@ class CoreApplication(QObject):
         self._user_config = UserConfig()
         self._user_config.load()
 
-        self._root_key = RootKey(self._user_config)
+        self._key_store = KeyStore(self._user_config)
 
         # Prepare QCoreApplication
         QLocale.setDefault(QLocale.c())
@@ -109,8 +109,8 @@ class CoreApplication(QObject):
         return self._user_config
 
     @property
-    def rootKey(self) -> RootKey:
-        return self._root_key
+    def keyStore(self) -> KeyStore:
+        return self._key_store
 
     @property
     def title(self) -> str:

@@ -45,7 +45,7 @@ BDialog {
             _restoreDialog.open()
         } else if (_restoreBackupButton.checked) {
             // TODO Segmentation fault
-            if (!BBackend.rootKey.importWallet()) {
+            if (!BBackend.keyStore.importWallet()) {
                 // TODO
                 //console.log("Import error")
                 open()
@@ -65,14 +65,14 @@ BDialog {
         id: _generateDialog
         type: BSeedPhraseDialog.Type.Generate
         readOnly: !BBackend.debugMode
-        seedPhraseText: BBackend.rootKey.getInitialPassphrase(salt)
+        seedPhraseText: BBackend.keyStore.getInitialPassphrase(salt)
         enableAccept: true
 
         onSaltChanged: {
-            seedPhraseText = BBackend.rootKey.getInitialPassphrase(salt)
+            seedPhraseText = BBackend.keyStore.getInitialPassphrase(salt)
         }
         onAccepted: {
-            BBackend.rootKey.preparePhrase(seedPhraseText) // TODO if fail?
+            BBackend.keyStore.preparePhrase(seedPhraseText) // TODO if fail?
             _validateDialog.open()
         }
         onRejected: {
@@ -89,7 +89,7 @@ BDialog {
             enableAccept = (seedPhraseText.length > 0)
         }
         onAccepted: {
-            if (!BBackend.rootKey.generateMasterKey(seedPhraseText, BBackend.debugMode)) {
+            if (!BBackend.keyStore.generateMasterKey(seedPhraseText, BBackend.debugMode)) {
                 let dialog = _applicationManager.messageDialog(qsTr("Wrong seed pharse."))
                 dialog.onClosed.connect(_validateDialog.open)
                 dialog.open()
@@ -108,10 +108,10 @@ BDialog {
         readOnly: false
 
         onSeedPhraseTextChanged: {
-            enableAccept = (seedPhraseText.length > 0 && BBackend.rootKey.validateSeed(seedPhraseText))
+            enableAccept = (seedPhraseText.length > 0 && BBackend.keyStore.validateSeed(seedPhraseText))
         }
         onAccepted: {
-            BBackend.rootKey.generateMasterKey(seedPhraseText, BBackend.debugMode) // TODO if failed?
+            BBackend.keyStore.generateMasterKey(seedPhraseText, BBackend.debugMode) // TODO if failed?
             _base.autoDestroy()
         }
         onRejected: {

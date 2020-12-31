@@ -4,7 +4,7 @@ import pathlib
 import unittest
 
 from bmnclient import gcd
-import root_key
+import key_store
 from bmnclient.wallet import address, coin_network, coins, hd, key
 from bmnclient.wallet.database import db_wrapper, cipher
 
@@ -135,7 +135,7 @@ class Test_password(unittest.TestCase):
     @unittest.skip
     def test_higher_level(self):
         gcd_ = gcd.GCD(True, None)
-        km = root_key.RootKey(gcd_)
+        km = key_store.KeyStore(gcd_)
         gcd_.reset_db()
         self.assertFalse(gcd_.has_password())
         password = "test password stuff"
