@@ -76,18 +76,21 @@
 </context>
 <context>
     <name>KeyManager</name>
+</context>
+<context>
+    <name>RootKey</name>
     <message>
-        <location filename="key_manager.py" line="82"/>
+        <location filename="root_key.py" line="129"/>
         <source>Wrong password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="key_manager.py" line="96"/>
+        <location filename="root_key.py" line="143"/>
         <source>Select file to save backup copy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="key_manager.py" line="104"/>
+        <location filename="root_key.py" line="151"/>
         <source>Select file with backup</source>
         <translation type="unfinished"></translation>
     </message>
@@ -160,26 +163,29 @@
 </context>
 <context>
     <name>SystemTray</name>
+</context>
+<context>
+    <name>SystemTrayIcon</name>
     <message>
         <location filename="system_tray.py" line="44"/>
         <source>Show</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="system_tray.py" line="46"/>
+        <location filename="system_tray.py" line="47"/>
         <source>Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="system_tray.py" line="49"/>
-        <source>Close</source>
+        <location filename="system_tray.py" line="53"/>
+        <source>Quit</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>UIManager</name>
     <message>
-        <location filename="ui_manager.py" line="149"/>
+        <location filename="ui_manager.py" line="157"/>
         <source>Text &apos;%s&apos; copied to clipboard</source>
         <translation type="unfinished"></translation>
     </message>
