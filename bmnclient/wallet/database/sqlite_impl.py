@@ -2,14 +2,10 @@
 import logging
 from typing import Any
 import threading
-import hashlib
-import struct
-import base64
-import binascii
 import sys
 import sqlite3 as sql
 from ... import meta
-from . import encrypt_proxy
+from . import cipher
 
 log = logging.getLogger(__name__)
 
@@ -101,7 +97,7 @@ class SqLite:
         self.__proxy = None
 
     def connect_impl(self, db_name: str) -> None:
-        self.__proxy = encrypt_proxy.EncryptProxy()
+        self.__proxy = cipher.Cipher()
         self.__conn = sql.connect(
             db_name,
             timeout=3,
@@ -153,8 +149,8 @@ class SqLite:
             sys.exit(1)
 
     def create_tables(self) -> None:
-        integer = "TEXT" if encrypt_proxy.EncryptProxy.ENCRYPT else "INTEGER"
-        real = "TEXT" if encrypt_proxy.EncryptProxy.ENCRYPT else "REAL"
+        integer = "TEXT" if cipher.Cipher.ENCRYPT else "INTEGER"
+        real = "TEXT" if cipher.Cipher.ENCRYPT else "REAL"
         query = f"""
         CREATE TABLE IF NOT EXISTS {self.meta_table}
             (id INTEGER PRIMARY KEY,
@@ -223,7 +219,7 @@ class SqLite:
         return recs is not None
 
     def __make_title(self, name: str) -> str:
-        if encrypt_proxy.EncryptProxy.ENCRYPT:
+        if cipher.Cipher.ENCRYPT:
             if not self.__proxy:
                 return "-"
             return meta.setdefaultattr(

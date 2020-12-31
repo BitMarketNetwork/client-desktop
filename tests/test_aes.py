@@ -6,7 +6,7 @@ import unittest
 import base64
 
 from bmnclient.wallet import aes, sym_encrypt_abc, util
-from bmnclient.wallet.database import encrypt_proxy
+from bmnclient.wallet.database import cipher
 from bmnclient import gcd
 
 log = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ class TestProxy(unittest.TestCase):
     def test_strong_nonce(self):
         nonce = os.urandom(16)
         psw = os.urandom(32)
-        ep = encrypt_proxy.EncryptProxy(psw, nonce)
+        ep = cipher.Cipher(psw, nonce)
         seed = os.urandom(64)
         weak = ep.encrypt(seed, False)
         self.assertEqual(seed, ep.text_from(weak.encode()))

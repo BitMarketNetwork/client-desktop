@@ -6,7 +6,7 @@ import unittest
 from bmnclient import gcd
 import root_key
 from bmnclient.wallet import address, coin_network, coins, hd, key
-from bmnclient.wallet.database import db_wrapper, encrypt_proxy
+from bmnclient.wallet.database import db_wrapper, cipher
 
 log = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ class TestDataEncoding(unittest.TestCase):
         self.__do_test(False)
 
     def __do_test(self, encrypted: bool):
-        encrypt_proxy.EncryptProxy.ENCRYPT = encrypted
+        cipher.Cipher.ENCRYPT = encrypted
         log.warning(f"start DB test crypted: {encrypted}")
         db = pathlib.Path(self.DB_NAME)
         if db.exists():
@@ -122,7 +122,7 @@ class Test_password(unittest.TestCase):
 
     @unittest.skip
     def test_db(self):
-        encrypt_proxy.EncryptProxy.ENCRYPT = True
+        cipher.Cipher.ENCRYPT = True
         self.db = db_wrapper.DbWrapper(True)
         self.db.open_db("test.db")
         password = "test password stuff"

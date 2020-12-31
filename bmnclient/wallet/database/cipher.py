@@ -16,13 +16,12 @@ class Type(enum.IntEnum):
     TypeReal = 5
 
 
-class EncryptProxy:
+class Cipher:
     ENCRYPT = True
 
-    def __init__(self, psw, nonce):
-        self._last_hash = None
-        self._cipher = aes.AesProvider( psw, nonce)
-        self._password = util.get_bytes(psw)
+    def __init__(self) -> None:
+        from ...application import CoreApplication
+        self._cipher = CoreApplication.instance().rootKey.deriveCipher(KeyType.WALLET_DATABASE)
 
     def text_from(self, value: bytes) -> str:
         if self.ENCRYPT:
@@ -35,9 +34,9 @@ class EncryptProxy:
                 return None
             # leave it for a while
             if value[0] == 76:
-                val = self._cipher.decode(base64.b64decode(value)[1:], False)
+                val = self._cipher.decrypt(None, base64.b64decode(value)[1:])
             elif value[0] == 75:
-                val = self._cipher.decode(base64.b64decode(value)[1:], True)
+                val = self._cipher.decrypt(None, base64.b64decode(value)[1:])
             else:
                 return int(value)
             pref = val[0]
@@ -60,11 +59,13 @@ class EncryptProxy:
     def _encrypt(self, value: Any, type_: Type, strong: bool) -> str:
         try:
             if strong:
-                return base64.b64encode(b'+' +
-                    self._cipher.encode( bytes([type_]) + value , True)).decode()
+                return base64.b64encode(
+                    b'+' +
+                    self._cipher.encrypt(None, bytes([type_]) + value)).decode()
             else:
-                return base64.b64encode(b'-' +
-                    self._cipher.encode( bytes([type_]) + value , False)).decode()
+                return base64.b64encode(
+                    b'-' +
+                    self._cipher.encrypt(None, bytes([type_]) + value)).decode()
         except RuntimeError as re:
             log.fatal(f"{re} +> {value}")
         except Exception as te:
@@ -92,5 +93,4 @@ class EncryptProxy:
         raise TypeError(f"{value} => {type(value)}")
 
     def make_hash(self, value: str) -> str:
-        assert self._password
-        return blake2b(util.get_bytes(value), key=self._password, digest_size=16).hexdigest()
+        return self._cipher.encrypt(None, value.encode(encoding="utf-8")).hex()
