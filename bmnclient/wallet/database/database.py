@@ -14,7 +14,6 @@ log = logging.getLogger(__name__)
 
 
 class Database(db_wrapper.DbWrapper, qt_core.QObject):
-    dbOpened = qt_core.Signal(bool)
     metaRead = qt_core.Signal(str, str, arguments=["key", "value"])
 
     def __init__(self, gcd, parent: qt_core.QObject = None):

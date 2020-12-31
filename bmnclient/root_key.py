@@ -58,7 +58,6 @@ class RootKey(QObject):
     """
     Holding hierarchy  according to bip0044
     """
-    activeChanged = QSignal()
     mnemoRequested = QSignal()
 
     def __init__(self, user_config: UserConfig):
@@ -126,11 +125,6 @@ class RootKey(QObject):
     def revealSeedPhrase(self, password: str):
         return self.gcd.get_mnemo(password) or self.tr("Wrong password")
 
-    @QProperty(bool, notify=activeChanged)
-    def hasMaster(self):
-        self._logger.debug(f"master key:{self.__master_hd}")
-        return self.__master_hd is not None
-
     @QSlot()
     def resetWallet(self):
         self.gcd.reset_wallet()
@@ -169,7 +163,6 @@ class RootKey(QObject):
                 self._logger.debug(f"Make HD prv for {coin}")
         if save:
             self.gcd.save_master_seed(self.master_seed_hex)
-        self.activeChanged.emit()
 
     @QSlot(str, result=bool)
     def validateSeed(self, seed: str) -> bool:
