@@ -1,5 +1,9 @@
 # BitMarket Network Client Change Log
 
+## 0.10.1 (31.12.2020)
+
+* fixes for public release
+
 ## 0.10.0 (19.12.2020)
 
 * full reorganization
