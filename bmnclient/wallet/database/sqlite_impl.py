@@ -229,11 +229,6 @@ class SqLite:
             return meta.setdefaultattr(
                 self,
                 name + "_title_",
-                # may be slow
-                # f"_{base64.b32encode(hashlib.new('ripemd160', (name + self._aes.password).encode()).digest())}",
-                # too long
-                # f"_{hashlib.new('ripemd160', (name + self._aes.password).encode()).hexdigest()}",
-                # f"_{hashlib.md5(name.encode()).hexdigest()}",
                 f"_{self.__proxy.make_hash(name)}",
             )
         return name

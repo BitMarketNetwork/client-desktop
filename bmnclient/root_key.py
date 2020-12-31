@@ -182,7 +182,8 @@ class RootKey(QObject):
 
     @property
     def gcd(self):
-        return self.parent()
+        from .application import CoreApplication
+        return CoreApplication.instance().gcd
 
     @property
     def master_key(self):

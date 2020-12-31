@@ -1,17 +1,11 @@
 import enum
 import logging
 import struct
-import sqlite3 as sql
-from hashlib import blake2b
 from typing import Any
 import base64
-
-import PySide2.QtCore as qt_core
-
-from ...wallet import aes, util
+from ...root_key import KeyType
 
 log = logging.getLogger(__name__)
-VALUE_HASHER = util.hash160
 
 
 class Type(enum.IntEnum):
@@ -37,7 +31,6 @@ class EncryptProxy:
 
     def _decrypt(self, value: bytes) -> Any:
         try:
-            self._last_hash = None
             if not value:
                 return None
             # leave it for a while

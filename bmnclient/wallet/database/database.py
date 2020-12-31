@@ -10,9 +10,6 @@ from . import db_wrapper
 from .. import address, coins, tx
 from ... import loading_level
 
-from bmnclient.ui.gui import qml_context  # pylint; disable=import-error
-from bmnclient import version  # pylint; disable=import-error
-
 log = logging.getLogger(__name__)
 
 

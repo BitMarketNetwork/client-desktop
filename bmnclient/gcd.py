@@ -299,7 +299,7 @@ class GCD(meta.QSeq):
             serialization.SerializationType.DEBUG
             | serialization.SerializationType.CYPHER,
             password=password)
-        srl.add_one("seed", self._key_manager.master_seed_hex)
+        srl.add_one("seed", CoreApplication.instance().rootKey.master_seed_hex)
         srl.add_many("coins", iter(self.__all_coins))
         srl.to_file(fpath)
 
@@ -480,12 +480,12 @@ class GCD(meta.QSeq):
         log.debug(f"meta value read: {key}:")
         if key == "seed":
             if value:
-                self._key_manager.apply_master_seed(
+                CoreApplication.instance().rootKey.apply_master_seed(
                     util.hex_to_bytes(value), save=False)
                 self.look_for_HD()
             else:
                 log.debug(f"No master then request it")
-                self._key_manager.mnemoRequested.emit()
+                CoreApplication.instance().rootKey.mnemoRequested.emit()
         else:
             log.error(f"Unknown meta key read: {key}")
 
