@@ -48,6 +48,7 @@ BNavigationDrawer {
         }
     }
     BNavigationDrawerItem {
+        visible: false
         text: qsTr("Market")
         icon.source: _applicationManager.imageSource("icon-market.svg")
         onClicked: {

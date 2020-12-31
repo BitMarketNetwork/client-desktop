@@ -16,6 +16,7 @@ BPane {
             model: BBackend.settingsManager.languageList
             textRole: "friendlyName"
             valueRole: "name"
+            enabled: false
             onModelChanged: {
                 currentIndex = BBackend.settingsManager.currentLanguageIndex()
             }

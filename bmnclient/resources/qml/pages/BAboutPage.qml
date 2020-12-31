@@ -12,7 +12,7 @@ BApplicationPage {
     BAboutGeneralPane {}
 
     Repeater {
-        property string title: "TODO DelegateModelGroup"
+        property string title: "" // TODO DelegateModelGroup
         model: BBackend.uiManager.coinInfoModel
         delegate: BAboutCoinPane {}
     }
