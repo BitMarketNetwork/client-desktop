@@ -306,6 +306,43 @@ Please use this version carefully for reference only, as it is intended for demo
     </message>
 </context>
 <context>
+    <name>BKeyStorePasswordDialog</name>
+    <message>
+        <location filename="../qml/dialogs/BKeyStorePasswordDialog.qml" line="13"/>
+        <source>Wrong password.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BKeyStorePasswordDialog.qml" line="21"/>
+        <source>Your current database version isn&apos;t supported in this application version (%1).
+You can reset your database either use old application version.
+
+Your master key won&apos;t be deleted.
+In case you reset databse you should wait some time to sinchornize data.
+
+Reset database?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BKeyStorePasswordDialog.qml" line="49"/>
+        <source>Forgot your password?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BKeyStorePasswordDialog.qml" line="50"/>
+        <source>Reset wallet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BKeyStorePasswordDialog.qml" line="55"/>
+        <source>This will destroy all saved information and you can lose your money!
+Please make sure you remember the seed phrase.
+
+Reset?</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BMasterKeyDialog</name>
     <message>
         <location filename="../qml/dialogs/BMasterKeyDialog.qml" line="8"/>
@@ -330,43 +367,6 @@ Please use this version carefully for reference only, as it is intended for demo
     <message>
         <location filename="../qml/dialogs/BMasterKeyDialog.qml" line="93"/>
         <source>Wrong seed pharse.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>BMasterKeyPasswordDialog</name>
-    <message>
-        <location filename="../qml/dialogs/BMasterKeyPasswordDialog.qml" line="13"/>
-        <source>Wrong password.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/dialogs/BMasterKeyPasswordDialog.qml" line="21"/>
-        <source>Your current database version isn&apos;t supported in this application version (%1).
-You can reset your database either use old application version.
-
-Your master key won&apos;t be deleted.
-In case you reset databse you should wait some time to sinchornize data.
-
-Reset database?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/dialogs/BMasterKeyPasswordDialog.qml" line="49"/>
-        <source>Forgot your password?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/dialogs/BMasterKeyPasswordDialog.qml" line="50"/>
-        <source>Reset wallet</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/dialogs/BMasterKeyPasswordDialog.qml" line="55"/>
-        <source>This will destroy all saved information and you can lose your money!
-Please make sure you remember the seed phrase.
-
-Reset?</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -77,17 +77,17 @@
 <context>
     <name>KeyStore</name>
     <message>
-        <location filename="key_store.py" line="128"/>
+        <location filename="key_store.py" line="143"/>
         <source>Wrong password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="key_store.py" line="137"/>
+        <location filename="key_store.py" line="152"/>
         <source>Select file to save backup copy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="key_store.py" line="145"/>
+        <location filename="key_store.py" line="160"/>
         <source>Select file with backup</source>
         <translation type="unfinished"></translation>
     </message>

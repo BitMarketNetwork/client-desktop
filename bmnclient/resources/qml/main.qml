@@ -62,7 +62,7 @@ BApplicationWindow {
     Component.onCompleted: {
         // TODO should controlled by Python
         _applicationManager.openAplhaDialog(
-                    _applicationManager.openMasterPasswordDialog,
+                    _applicationManager.openKeyStorePasswordDialog,
                     _applicationManager.quit)
         BBackend.coinManager.showEmptyBalances = true // TODO
     }
