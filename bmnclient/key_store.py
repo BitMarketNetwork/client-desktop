@@ -12,7 +12,7 @@ from . import version
 from .config import UserConfig
 from .crypto.cipher import Cipher
 from .crypto.password import PasswordStrength
-from .crypto.kdf import KeyDerivationFunction
+from .crypto.kdf import SecretStore
 from .logger import getClassLogger
 from .ui.gui import import_export
 from .wallet import hd, mnemonic, util

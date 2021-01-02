@@ -11,6 +11,7 @@ from .. import version
 class Cipher:
     CIPHER = aead.AESGCM
     NONCE_LENGTH = 96 // 8  # NIST recommends
+    KEY_LENGTH = 128 // 8
     ASSOCIATED_DATA = version.SHORT_NAME.encode(encoding=version.ENCODING)
 
     def __init__(self, key: bytes, nonce: Optional[bytes] = None) -> None:
@@ -18,12 +19,12 @@ class Cipher:
         self._nonce = nonce
 
     @classmethod
-    def generateKey(cls) -> bytes:
-        return cls.CIPHER.generate_key(128)
-
-    @classmethod
     def generateNonce(cls) -> bytes:
         return os.urandom(cls.NONCE_LENGTH)
+
+    @classmethod
+    def generateKey(cls) -> bytes:
+        return cls.CIPHER.generate_key(cls.KEY_LENGTH * 8)
 
     def encrypt(self, nonce: Optional[bytes], data: bytes) -> bytes:
         return self._cipher.encrypt(

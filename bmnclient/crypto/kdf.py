@@ -1,4 +1,5 @@
 # JOK+
+import os
 from typing import Optional
 
 from cryptography.hazmat.primitives import hashes
@@ -10,26 +11,14 @@ from .cipher import MessageCipher
 
 class KeyDerivationFunction:
     HASH_ALGORITHM = hashes.BLAKE2b(64)
-    HASH_SALT = b"password1"
-
     KEY_COST = 18
 
-    SECRET_SEPARATOR = ":"
-    SECRET_VERSION = "v1"
-    SECRET_KEY_LENGTH = 128 // 8
-    SECRET_SALT = b"secret1"
-
-    def __init__(self) -> None:
-        self._password_hash: Optional[bytes] = None
-
-    def setPassword(self, password: str) -> None:
+    def __init__(self, password: str) -> None:
         password_hash = hashes.Hash(self.HASH_ALGORITHM)
         password_hash.update(
             version.SHORT_NAME.encode(encoding=version.ENCODING))
         password_hash.update(
             password.encode(encoding=version.ENCODING))
-        password_hash.update(
-            self.HASH_SALT)
         password_hash = password_hash.finalize()
         self._password_hash = password_hash
 
@@ -47,17 +36,30 @@ class KeyDerivationFunction:
         )
         return kdf.derive(self._password_hash)
 
-    def verifySecret(self, secret: str) -> Optional[bytes]:
-        key = self.derive(self.SECRET_SALT, self.SECRET_KEY_LENGTH)
 
-        (secret_version, secret) = secret.split(self.SECRET_SEPARATOR, 1)
+class SecretStore(KeyDerivationFunction):
+    SECRET_SEPARATOR = ":"
+    SECRET_VERSION = "v1"
+    SECRET_SALT_LENGTH = 128 // 8
+    SECRET_KEY_LENGTH = 128 // 8
+
+    def createValue(self, value: bytes) -> str:
+        salt = os.urandom(self.SECRET_SALT_LENGTH)
+        key = self.derive(salt, self.SECRET_KEY_LENGTH)
+        result = self.SECRET_VERSION + self.SECRET_SEPARATOR
+        result += salt.hex() + self.SECRET_SEPARATOR
+        result += MessageCipher(key).encrypt(value, self.SECRET_SEPARATOR)
+        return result
+
+    def verifyValue(self, value: str) -> Optional[bytes]:
+        try:
+            (secret_version, salt, value) = value.split(
+                self.SECRET_SEPARATOR,
+                2)
+        except ValueError:
+            return None
         if secret_version != self.SECRET_VERSION:
             return None
-        value = MessageCipher(key).decrypt(secret, self.SECRET_SEPARATOR)
+        key = self.derive(bytes.fromhex(salt), self.SECRET_KEY_LENGTH)
+        value = MessageCipher(key).decrypt(value, self.SECRET_SEPARATOR)
         return value
-
-    def createSecret(self, value: bytes) -> str:
-        key = self.derive(self.SECRET_SALT, self.SECRET_KEY_LENGTH)
-        secret = self.SECRET_VERSION + self.SECRET_SEPARATOR
-        secret += MessageCipher(key).encrypt(value, self.SECRET_SEPARATOR)
-        return secret

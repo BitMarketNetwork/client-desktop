@@ -4,7 +4,7 @@ import time
 from unittest import TestCase
 
 from bmnclient.crypto.cipher import MessageCipher
-from bmnclient.crypto.kdf import KeyDerivationFunction
+from bmnclient.crypto.kdf import KeyDerivationFunction, SecretStore
 from bmnclient.crypto.password import PasswordStrength
 
 
@@ -38,40 +38,44 @@ class TestKdf(TestCase):
     KEY_LENGTH_LIST = (128, 256)
 
     def test_basic(self) -> None:
-        kdf = KeyDerivationFunction()
-        kdf.setPassword(os.urandom(16).hex())
         for key_length in self.KEY_LENGTH_LIST:
+            kdf = KeyDerivationFunction(os.urandom(16).hex())
             key = kdf.derive(b"salt1", key_length // 8)
             self.assertIsInstance(key, bytes)
             self.assertEqual(len(key), key_length // 8)
 
-    def test_secret(self) -> None:
-        kdf1 = KeyDerivationFunction()
-        kdf1.setPassword(os.urandom(16).hex())
-        kdf2 = KeyDerivationFunction()
-        kdf2.setPassword(os.urandom(16).hex())
-
-        secret1 = kdf1.createSecret(b"secret1")
-        self.assertIsInstance(secret1, str)
-        self.assertGreater(len(secret1), 10)
-        self.assertTrue(secret1.startswith("v1:"))
-
-        self.assertEqual(kdf1.verifySecret(secret1), b"secret1")
-        self.assertEqual(kdf2.verifySecret(secret1), None)
-
     def test_bruteforce(self) -> None:
         password = os.urandom(4).hex()
-        kdf = KeyDerivationFunction()
-        kdf.setPassword(password)
+        kdf = KeyDerivationFunction(password)
 
         timeframe = time.monotonic_ns()
-        kdf.derive(b"SALT", 128)
+        kdf.derive(b"salt2", 128)
         timeframe = time.monotonic_ns() - timeframe
 
         result = (24 * 60 * 60 * 1e+9) / timeframe
         print(
             "KDF bruteforce status: ~{:.2f} combinations per day."
             .format(result))
+
+
+class TestSecretStore(TestCase):
+    def test_basic(self) -> None:
+        store1 = SecretStore(os.urandom(16).hex())
+        store2 = SecretStore(os.urandom(16).hex())
+
+        value1 = store1.createValue(b"secret1")
+        self.assertIsInstance(value1, str)
+        self.assertGreater(len(value1), 10)
+        self.assertTrue(value1.startswith("v1:"))
+
+        self.assertEqual(store1.verifyValue(value1), b"secret1")
+        self.assertEqual(store2.verifyValue(value1), None)
+
+        self.assertEqual(store1.verifyValue("v2" + value1[:2]), None)
+        self.assertEqual(store1.verifyValue("v1"), None)
+        self.assertEqual(store1.verifyValue(""), None)
+        self.assertEqual(store1.verifyValue(":::::"), None)
+        self.assertEqual(store1.verifyValue("1:2:3:4:5:6"), None)
 
 
 class TestPassword(TestCase):
