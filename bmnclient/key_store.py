@@ -21,42 +21,13 @@ MNEMONIC_SEED_LENGTH = 24
 PASSWORD_HASHER = util.sha256
 
 
-class KeyType(Enum):
+class KeyIndex(Enum):
     WALLET_DATABASE = 0
-
-
-class Secret:
-    def __init__(self) -> None:
-        self._nonce_list = [None] * len(KeyType)
-
-    def getNonce(self, key_type: KeyType) -> Optional[bytes]:
-        return self._nonce_list[key_type.value]
-
-    @classmethod
-    def generate(cls) -> bytes:
-        value = {
-            "version":
-                version.VERSION_STRING,
-            "nonce_{:d}".format(KeyType.WALLET_DATABASE.value):
-                Cipher.generateNonce().hex()
-        }
-        return json.dumps(value).encode(encoding=version.ENCODING)
-
-    def load(self, value: bytes) -> bool:
-        try:
-            value = json.loads(value.decode(encoding=version.ENCODING))
-            for k, v in value.items():
-                if k.startswith("nonce_"):
-                    k = int(k[6:])
-                    self._nonce_list[k] = bytes.fromhex(v)
-        except (IndexError, ValueError, TypeError, JSONDecodeError):
-            return False
-        return True
 
 
 class KeyStore(QObject):
     """
-    Holding hierarchy  according to bip0044
+    Holding hierarchy according to bip0044
     """
     mnemoRequested = QSignal()
 
@@ -66,15 +37,59 @@ class KeyStore(QObject):
         self._logger = getClassLogger(__name__, self.__class__)
         self._lock = Lock()
 
-        self._kdf: Optional[KeyDerivationFunction] = None
-        self._secret: Optional[Secret] = None
+        self._nonce_list = [None] * len(KeyIndex)
+        self._key_list = [None] * len(KeyIndex)
 
+        # TODO
         self.__master_hd = None
         self.__mnemonic = mnemonic.Mnemonic()
         # don't keep mnemo, save seed instead !!!
         self.__seed = None
         # mb we can use one seed variable?
         self.__pre_hash = None
+
+    def _getNonce(self, key_index: KeyIndex) -> Optional[bytes]:
+        return self._nonce_list[key_index.value]
+
+    def _getKey(self, key_index: KeyIndex) -> Optional[bytes]:
+        return self._key_list[key_index.value]
+
+    def deriveCipher(self, key_index: KeyIndex) -> Optional[Cipher]:
+        with self._lock:
+            return Cipher(self._getKey(key_index), self._getNonce(key_index))
+
+    @classmethod
+    def _generateSecretStoreValue(cls) -> bytes:
+        value = {
+            "version":
+                version.VERSION_STRING,
+            "nonce_{:d}".format(KeyIndex.WALLET_DATABASE.value):
+                Cipher.generateNonce().hex(),
+            "key_{:d}".format(KeyIndex.WALLET_DATABASE.value):
+                Cipher.generateKey().hex()
+        }
+        return json.dumps(value).encode(encoding=version.ENCODING)
+
+    def _loadSecretStoreValue(self, value: bytes) -> bool:
+        try:
+            value = json.loads(value.decode(encoding=version.ENCODING))
+            for k, v in value.items():
+                if k.startswith("nonce_"):
+                    k = int(k[6:])
+                    self._nonce_list[k] = bytes.fromhex(v)
+                elif k.startswith("key_"):
+                    k = int(k[4:])
+                    self._key_list[k] = bytes.fromhex(v)
+        except (IndexError, ValueError, TypeError, JSONDecodeError):
+            return False
+        return True
+
+    def _resetSecretStoreValue(self) -> None:
+        self._nonce_list = [None] * len(self._nonce_list)
+        self._key_list = [None] * len(self._key_list)
+
+    ############################################################################
+    # TODO
 
     @QSlot(str, result=bool)
     def preparePhrase(self, mnemonic_phrase: str) -> bool:
@@ -186,19 +201,7 @@ class KeyStore(QObject):
     def master_seed_hex(self) -> str:
         return util.bytes_to_hex(self.__seed)
 
-    def deriveCipher(self, key_type: KeyType) -> Optional[Cipher]:
-        with self._lock:
-            if key_type == KeyType.WALLET_DATABASE:
-                key = self._kdf.derive(b"wallet_database1", 128 // 8)
-            else:
-                raise ValueError("Invalid key type \"%s\".", str(key_type))
-            nonce = self._secret.getNonce(key_type)
-        if not nonce:
-            self._logger.error(
-                "Nonce not defined for key type \"{}\"."
-                .format(str(key_type)))
-            return None
-        return Cipher(key, nonce)
+    ############################################################################
 
     @QSlot(str, result=int)
     def calcPasswordStrength(self, password: str) -> int:
@@ -206,33 +209,25 @@ class KeyStore(QObject):
 
     @QSlot(str, result=bool)
     def createPassword(self, password: str) -> bool:
-        kdf = KeyDerivationFunction()
-        kdf.setPassword(password)
-        secret_value = Secret.generate()
-        secret_value = kdf.createSecret(secret_value)
+        value = SecretStore(password).createValue(
+            self._generateSecretStoreValue())
         with self._lock:
             return self._user_config.set(
-                UserConfig.KEY_WALLET_SECRET,
-                secret_value)
+                UserConfig.KEY_KEY_STORE_VALUE,
+                value)
 
     @QSlot(str, result=bool)
     def setPassword(self, password: str) -> bool:
         with self._lock:
-            secret_value = self._user_config.get(
-                UserConfig.KEY_WALLET_SECRET,
+            value = self._user_config.get(
+                UserConfig.KEY_KEY_STORE_VALUE,
                 str)
-            if not secret_value:
+            if not value:
+                return False
+            value = SecretStore(password).verifyValue(value)
+            if not value or not self._loadSecretStoreValue(value):
                 return False
 
-            secret = Secret()
-            kdf = KeyDerivationFunction()
-            kdf.setPassword(password)
-            secret_value = kdf.verifySecret(secret_value)
-            if not secret_value or not secret.load(secret_value):
-                return False
-
-            self._kdf = kdf
-            self._secret = secret
         from .application import CoreApplication
         if CoreApplication.instance():
             CoreApplication.instance().gcd.apply_password()  # TODO
@@ -242,11 +237,11 @@ class KeyStore(QObject):
     def resetPassword(self) -> bool:
         with self._lock:
             if not self._user_config.set(
-                    UserConfig.KEY_WALLET_SECRET,
+                    UserConfig.KEY_KEY_STORE_VALUE,
                     None):
                 return False
-            self._kdf = None
-            self._secret = None
+            self._resetSecretStoreValue()
+
         from .application import CoreApplication
         if CoreApplication.instance():
             CoreApplication.instance().gcd.reset_db()  # TODO
@@ -255,7 +250,7 @@ class KeyStore(QObject):
     @QProperty(bool, constant=True)
     def hasPassword(self) -> bool:
         with self._lock:
-            secret_value = self._user_config.get(
-                UserConfig.KEY_WALLET_SECRET,
+            value = self._user_config.get(
+                UserConfig.KEY_KEY_STORE_VALUE,
                 str)
-        return secret_value and len(secret_value) > 0
+        return value and len(value) > 0

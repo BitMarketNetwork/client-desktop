@@ -26,8 +26,8 @@ class UserConfig:
     KEY_UI_THEME = "ui.theme"
     KEY_UI_HIDE_TO_TRAY = "ui.hide_to_tray"
 
-    KEY_WALLET_SECRET = "wallet.secret"
-    KEY_WALLET_SEED = "wallet.seed"
+    KEY_KEY_STORE_VALUE = "key_store.value"
+    KEY_KEY_STORE_SEED = "key_store.seed"
 
     def __init__(
             self,
