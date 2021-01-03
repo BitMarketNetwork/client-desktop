@@ -14,7 +14,7 @@ MNEMO_PASSWORD = "hardcoded mnemo password"
 class TestBase(unittest.TestCase):
 
     def test_btc(self):
-        seed = mnemonic.Mnemonic.to_seed(
+        seed = mnemonic.Mnemonic.toSeed(
             "minimum crowd cruel boil truck mirror drop source urge ritual various napkin",
             MNEMO_PASSWORD,
         )
@@ -78,7 +78,7 @@ class TestAdvanced(unittest.TestCase):
                 phraze = " ".join(words)
                 cache_entry = {}
                 cache_entry["phraze"] = phraze
-                master_seed = mnemo.to_seed(phraze)
+                master_seed = mnemo.toSeed(phraze)
                 cache_entry["master"] = master_seed
                 master = hd.HDNode.make_master(master_seed)
                 self.assertIsNotNone(master)

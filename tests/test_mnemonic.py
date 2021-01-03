@@ -1,20 +1,41 @@
-
-
+import json
 import logging
-import unittest
 import os
 import random
-import key_store
-from bmnclient.wallet import mnemonic
+import unittest
 
+from bmnclient import key_store
+from bmnclient.wallet.mnemonic import Mnemonic
+from tests import DATA_PATH
 
 log = logging.getLogger(__name__)
 
 
-class TestMnemo(unittest.TestCase):
+class TestMnemonic(unittest.TestCase):
+    def _test_seed(self, mnemonic: str, password: str, seed: str) -> None:
+        # TODO
+        #key_ = hd.HDNode.make_master(
+        #    calc_seed, coin_network.BitcoinMainNetwork)
+        #self.assertEqual(key_.extended_key, bip32_xprv,
+        #                 f"entropy: {entropy} key: {key_}"
+        #                 )
+        result = Mnemonic.toSeed(mnemonic, password)
+        self.assertEqual(result.hex(), seed)
+
+    def test_seed_en(self) -> None:
+        test_list = json.loads(
+            (DATA_PATH / "bip-0039.json").read_text(encoding="utf-8"))
+        for item in test_list["english"]:
+            self._test_seed(item[1], "TREZOR", item[2])
+
+    def test_seed_jp(self) -> None:
+        test_list = json.loads(
+            (DATA_PATH / "bip-0039_jp.json").read_text(encoding="utf-8"))
+        for item in test_list:
+            self._test_seed(item["mnemonic"], item["passphrase"], item["seed"])
 
     def test_valid(self):
-        mnemo = mnemonic.Mnemonic()
+        mnemo = Mnemonic()
         for i in range(100):
             phr = mnemo.get_phrase(os.urandom(key_store.MNEMONIC_SEED_LENGTH))
             log.warning(f"{i}: {phr}")

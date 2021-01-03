@@ -1,39 +1,6 @@
-
 import unittest
-import json
-from bmnclient.wallet import util
-from bmnclient.wallet import hd
-from bmnclient.wallet import coin_network
-from bmnclient.wallet import mnemonic as mnemo
 from bmnclient import gcd
 import key_store
-from tests import TEST_DATA_PATH
-
-
-class TestBip39(unittest.TestCase):
-
-    def _test(self, entropy, mnemonic, seed, bip32_xprv, passphrase="TREZOR"):
-        calc_seed = mnemo.Mnemonic.to_seed(mnemonic, passphrase)
-        self.assertEqual(util.bytes_to_hex(calc_seed), seed,
-                         f"entropy: {entropy} seed: {calc_seed}"
-                         )
-        key_ = hd.HDNode.make_master(
-            calc_seed, coin_network.BitcoinMainNetwork)
-        self.assertEqual(key_.extended_key, bip32_xprv,
-                         f"entropy: {entropy} key: {key_}"
-                         )
-
-    def test_english(self):
-        body = json.loads(TEST_DATA_PATH.joinpath("bip0039.json").read_text())
-        for group in body["english"]:
-            self._test(*group)
-
-    @unittest.skip
-    def test_jp(self):
-        body = json.loads(TEST_DATA_PATH.joinpath(
-            "bip0039_jp.json").read_text())
-        for group in body:
-            self._test(**group)
 
 
 class TestHighLevel(unittest.TestCase):

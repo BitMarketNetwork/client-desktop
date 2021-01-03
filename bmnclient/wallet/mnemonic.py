@@ -1,10 +1,13 @@
-from typing import List
 import binascii
 import hashlib
 import logging
-from typing import Union, Optional
+import unicodedata
+from typing import List, Union, Optional
+
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
 import bmnclient.version
-from . import util
 
 WORDS_COUNT = 2048
 PBKDF2_ROUNDS = 2048
@@ -74,11 +77,28 @@ class Mnemonic:
         return self.__wordlist
 
     @classmethod
-    def to_seed(cls, mnemonic: Union[str, bytes], passphrase: Optional[str] = None) -> bytes:
-        if passphrase is None:
-            passphrase = "".join(mnemonic[::-3])
-        passphrase = "mnemonic" + util.normalize_string(passphrase)
-        # log.warning(f"seed salt: {passphrase} ({len(passphrase)})")
-        stretched = hashlib.pbkdf2_hmac("sha512", util.normalize_string(
-            mnemonic).encode(), passphrase.encode(), PBKDF2_ROUNDS)
-        return stretched[:64]
+    def toSeed(
+            cls,
+            mnemonic: str,
+            password: Optional[str] = None) -> bytes:
+        mnemonic = cls.normalizeString(mnemonic)
+        if password is None:
+            password = "".join(mnemonic[::-3])
+        else:
+            password = cls.normalizeString(password)
+
+        password = ("mnemonic" + password).encode("utf-8")
+        mnemonic = mnemonic.encode("utf-8")
+
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA512(),
+            length=64,
+            salt=password,
+            iterations=PBKDF2_ROUNDS)
+        seed = kdf.derive(mnemonic)
+        assert len(seed) == 64
+        return seed
+
+    @classmethod
+    def normalizeString(cls, string: str) -> str:
+        return unicodedata.normalize("NFKD", string)

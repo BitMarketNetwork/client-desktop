@@ -103,7 +103,7 @@ class KeyStore(QObject):
         mnemonic_phrase = " ".join(mnemonic_phrase.split())
         hash_ = util.sha256(mnemonic_phrase)
         if self.__pre_hash is None or hash_ == self.__pre_hash:
-            seed = mnemonic.Mnemonic.to_seed(
+            seed = mnemonic.Mnemonic.toSeed(
                 mnemonic_phrase,
             )
             self.apply_master_seed(
@@ -128,7 +128,7 @@ class KeyStore(QObject):
         return self.__mnemonic.get_phrase(data)
 
     def regenerate_master_key(self):
-        seed = mnemonic.Mnemonic.to_seed(
+        seed = mnemonic.Mnemonic.toSeed(
             self.gcd.get_mnemo(),
         )
         self.apply_master_seed(

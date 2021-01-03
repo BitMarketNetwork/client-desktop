@@ -1,6 +1,5 @@
-
 import logging
-import pathlib
+from pathlib import Path
 import sys
 
 logging.basicConfig(
@@ -9,4 +8,5 @@ logging.basicConfig(
     style='%',
     level=logging.DEBUG,
     stream=sys.stdout)
-TEST_DATA_PATH = pathlib.Path(__file__).parent.joinpath("data")
+DATA_PATH = Path(__file__).parent.resolve() / "data"
+TEST_DATA_PATH = DATA_PATH

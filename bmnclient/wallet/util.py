@@ -35,14 +35,6 @@ def ensure_string_or_bytes(data: Union[str, bytes]):
     if not isinstance(data, (str, bytes, bytearray)):
         raise TypeError(f"{type(data)} is not string or bytes")
 
-
-def normalize_string(txt: str) -> str:
-    if isinstance(txt, bytes):
-        txt = txt.decode("utf8")
-    elif not isinstance(txt, str):
-        raise TypeError("String value expected")
-    return unicodedata.normalize("NFKD", txt)
-
 # https://docs.python.org/3/library/decimal.html#recipes
 
 
