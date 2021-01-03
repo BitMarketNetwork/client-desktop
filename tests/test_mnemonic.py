@@ -61,7 +61,7 @@ class TestMnemonic(unittest.TestCase):
     def test_valid(self) -> None:
         for language in Mnemonic.getLanguageList():
             mnemonic = Mnemonic(language)
-            for i in range(1000):
+            for i in range(2000):
                 phrase = mnemonic.getPhrase(
                     os.urandom(random.choice(Mnemonic.DATA_LENGTH_LIST)))
                 if i == 1:

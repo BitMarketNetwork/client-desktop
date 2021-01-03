@@ -1,78 +1,80 @@
-import binascii
-import hashlib
+# JOK+
 import unicodedata
 from typing import Optional, List
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-import bmnclient.version
-
-WORDS_COUNT = 2048
-PBKDF2_ROUNDS = 2048
-VALID_SEED_LEN = [16, 20, 24, 28, 32]
-VALID_MNEMO_LEN = [12, 15, 18, 21, 24]
-
-log = logging.getLogger(__name__)
+from bmnclient import version
 
 
-class WordsSourceError(Exception):
-    pass
-
-
+# Base:
+# https://github.com/trezor/python-mnemonic/blob/master/mnemonic/mnemonic.py
 class Mnemonic:
+    ENCODING = "utf-8"
+    WORD_COUNT = 2048
+    SOURCE_PATH = version.RESOURCES_PATH / "wordlist"
+    PBKDF2_ROUNDS = 2048
 
-    def __init__(self, language='english'):
-        self.__lang = language
-        source_file_path = \
-            bmnclient.version.RESOURCES_PATH \
-            / "wordlist" \
-            / f'{language}.txt'
-        with open(source_file_path, 'rt') as fid:
-            self.__wordlist = [w.strip() for w in fid.readlines()]
-        if len(self.__wordlist) != WORDS_COUNT:
-            raise WordsSourceError("Wordlist should contain %d words, but it contains %d words."
-                                   % (WORDS_COUNT, len(self.__wordlist)))
+    DATA_LENGTH_LIST = (16, 20, 24, 28, 32)
+    PHRASE_WORD_COUNT_LIST = (12, 15, 18, 21, 24)
 
-    def get_phrase(self, data) -> str:
-        if len(data) not in VALID_SEED_LEN:
+    def __init__(self, language: str = "english") -> None:
+        self._language = language
+        with open(
+                self.SOURCE_PATH / (self._language + ".txt"),
+                mode="rt",
+                encoding=self.ENCODING) as file:
+            self._word_list = [word.strip() for word in file.readlines()]
+        if len(self._word_list) != self.WORD_COUNT:
+            raise RuntimeError(
+                "Wordlist should contain {} words, but it contains {} words."
+                .format(self.WORD_COUNT, len(self._word_list)))
+
+    def getPhrase(self, data: bytes) -> str:
+        if len(data) not in self.DATA_LENGTH_LIST:
             raise ValueError(
-                f"Data length should be one of the following: {VALID_SEED_LEN}, but it is not {len(data)}.")
-        h = hashlib.sha256(data).hexdigest()
-        b = (
-            bin(int(binascii.hexlify(data), 16))[2:].zfill(len(data) * 8)
-            + bin(int(h, 16))[2:].zfill(256)[: len(data) * 8 // 32]
-        )
+                "Data length should be one of the following: {}, "
+                "but data length {}."
+                .format(self.DATA_LENGTH_LIST, len(data)))
+        h = hashes.Hash(hashes.SHA256())
+        h.update(data)
+        h = h.finalize().hex()
+
+        b = bin(int.from_bytes(data, byteorder="big"))[2:].zfill(len(data) * 8)
+        b += bin(int(h, 16))[2:].zfill(256)[: len(data) * 8 // 32]
         result = []
 
         for i in range(len(b) // 11):
-            idx = int(b[i * 11: (i + 1) * 11], 2)
-            result.append(self._word_list[idx])
+            i = int(b[i * 11: (i + 1) * 11], 2)
+            result.append(self._word_list[i])
         if self._language == "japanese":
             result_phrase = "\u3000".join(result)
         else:
             result_phrase = " ".join(result)
         return result_phrase
 
-    def check_words(self, words: Union[str, list]) -> None:
-        """
-        Check if these words exist in vocabulary
-        """
-        if isinstance(words, str):
-            words = words.split()
-        if len(words) not in VALID_MNEMO_LEN:
-            raise ValueError(
-                f"Data length should be one of the following: {VALID_MNEMO_LEN}, but it is {len(words)}.")
-        if len(words) != len(set(words)):
-            raise ValueError( f"Two equal words in passphrase. {len(set(words))}")
-        alien = next((w for w in words if w not in self.__wordlist), None)
-        if alien:
-            raise ValueError(f"Unknown word:{alien}")
+    def isValid(self, phrase: str) -> bool:
+        phrase = self.normalizePhrase(phrase).split()
+        if len(phrase) not in self.PHRASE_WORD_COUNT_LIST:
+            return False
+        try:
+            b = map(
+                lambda x: bin(self._word_list.index(x))[2:].zfill(11),
+                phrase)
+            b = "".join(b)
+        except ValueError:
+            return False
+        j = len(b)
+        d = b[: j // 33 * 32]
+        h = b[-j // 33:]
+        nd = int(d, 2).to_bytes(j // 33 * 4, byteorder="big")
 
-    @property
-    def wordlist(self) -> List[str]:
-        "for debugging purposes"
-        return self.__wordlist
+        nh = hashes.Hash(hashes.SHA256())
+        nh.update(nd)
+        nh = nh.finalize().hex()
+        nh = bin(int(nh, 16))[2:].zfill(256)[: j // 33]
+        return h == nh
 
     @classmethod
     def toSeed(

@@ -62,24 +62,24 @@ def configure(file_path: str = None, level: int = logging.DEBUG) -> None:
         if isinstance(file_path, str) and len(file_path) > 0:
             handler = logging.FileHandler(
                 file_path,
-                mode='a',
+                mode="at",
                 encoding=version.ENCODING)
         else:
             handler = logging.StreamHandler(stream=sys.stderr)
         handler.setFormatter(Formatter())
 
-        logging.addLevelName(logging.DEBUG, 'dd')
-        logging.addLevelName(logging.INFO, 'ii')
-        logging.addLevelName(logging.WARNING, 'WW')
-        logging.addLevelName(logging.ERROR, 'EE')
-        logging.addLevelName(logging.CRITICAL, 'CC')
+        logging.addLevelName(logging.DEBUG, "dd")
+        logging.addLevelName(logging.INFO, "ii")
+        logging.addLevelName(logging.WARNING, "WW")
+        logging.addLevelName(logging.ERROR, "EE")
+        logging.addLevelName(logging.CRITICAL, "CC")
 
         kwargs = {
-            'level': level,
-            'handlers': (handler,)
+            "level": level,
+            "handlers": (handler,)
         }
         logging.basicConfig(**kwargs)
-        _qt_logger = logging.getLogger('qt')
+        _qt_logger = logging.getLogger("qt")
 
         # TODO I found this deadlock only on macOS (10.14 - 11.0), I have to
         #  disable the custom handler for this OS...
