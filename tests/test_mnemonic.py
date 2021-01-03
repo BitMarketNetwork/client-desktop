@@ -6,7 +6,7 @@ import unittest
 
 from bmnclient import key_store
 from bmnclient.wallet.mnemonic import Mnemonic
-from tests import DATA_PATH
+from tests import TEST_DATA_PATH
 
 log = logging.getLogger(__name__)
 
@@ -24,13 +24,13 @@ class TestMnemonic(unittest.TestCase):
 
     def test_seed_en(self) -> None:
         test_list = json.loads(
-            (DATA_PATH / "bip-0039.json").read_text(encoding="utf-8"))
+            (TEST_DATA_PATH / "bip-0039.json").read_text(encoding="utf-8"))
         for item in test_list["english"]:
             self._test_seed(item[1], "TREZOR", item[2])
 
     def test_seed_jp(self) -> None:
         test_list = json.loads(
-            (DATA_PATH / "bip-0039_jp.json").read_text(encoding="utf-8"))
+            (TEST_DATA_PATH / "bip-0039_jp.json").read_text(encoding="utf-8"))
         for item in test_list:
             self._test_seed(item["mnemonic"], item["passphrase"], item["seed"])
 

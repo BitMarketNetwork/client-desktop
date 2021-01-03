@@ -7,6 +7,9 @@ from bmnclient.crypto.cipher import MessageCipher
 from bmnclient.crypto.kdf import KeyDerivationFunction, SecretStore
 from bmnclient.crypto.password import PasswordStrength
 
+from tests import getLogger
+_logger = getLogger(__name__)
+
 
 class TestMessageCipher(TestCase):
     def test_basic(self) -> None:
@@ -53,7 +56,7 @@ class TestKdf(TestCase):
         timeframe = time.monotonic_ns() - timeframe
 
         result = (24 * 60 * 60 * 1e+9) / timeframe
-        print(
+        _logger.info(
             "KDF bruteforce status: ~{:.2f} combinations per day."
             .format(result))
 
