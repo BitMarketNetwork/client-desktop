@@ -5,6 +5,7 @@ import random
 import unittest
 
 from bmnclient.wallet.mnemonic import Mnemonic
+from bmnclient.wallet.hd import HDNode
 from tests import TEST_DATA_PATH, getLogger
 
 _logger = getLogger(__name__)
@@ -17,14 +18,8 @@ class TestMnemonic(unittest.TestCase):
             entropy: str,
             phrase: str,
             password: str,
-            seed: str) -> None:
-        # TODO
-        #key_ = hd.HDNode.make_master(
-        #    calc_seed, coin_network.BitcoinMainNetwork)
-        #self.assertEqual(key_.extended_key, bip32_xprv,
-        #                 f"entropy: {entropy} key: {key_}"
-        #                 )
-
+            seed: str,
+            bip32_xprv: str) -> None:
         mnemonic = Mnemonic(language)
         generated_phrase = mnemonic.getPhrase(bytes.fromhex(entropy))
         self.assertEqual(
@@ -34,7 +29,14 @@ class TestMnemonic(unittest.TestCase):
         self.assertTrue(mnemonic.isValid(generated_phrase))
         self.assertTrue(mnemonic.isValid(phrase))
 
-        self.assertEqual(Mnemonic.toSeed(phrase, password).hex(), seed)
+        generated_seed = Mnemonic.toSeed(phrase, password)
+        self.assertEqual(generated_seed.hex(), seed)
+
+        # TODO
+        hd_node = HDNode.make_master(generated_seed)
+        from bmnclient.wallet.coin_network import BitcoinMainNetwork
+        hd_node.key._network = BitcoinMainNetwork
+        self.assertEqual(bip32_xprv, hd_node.extended_key)
 
     def test_seed_en(self) -> None:
         test_list = json.loads(
@@ -45,7 +47,8 @@ class TestMnemonic(unittest.TestCase):
                 item[0],
                 item[1],
                 "TREZOR",
-                item[2])
+                item[2],
+                item[3])
 
     def test_seed_jp(self) -> None:
         test_list = json.loads(
@@ -56,7 +59,8 @@ class TestMnemonic(unittest.TestCase):
                 item["entropy"],
                 item["mnemonic"],
                 item["passphrase"],
-                item["seed"])
+                item["seed"],
+                item["bip32_xprv"])
 
     def test_valid(self) -> None:
         for language in Mnemonic.getLanguageList():

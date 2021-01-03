@@ -306,10 +306,6 @@ def chunk_data(data: Union[bytes, str], size: int) -> Generator:
     return (data[i:i + size] for i in range(0, len(data), size))
 
 
-def hmac_hash(key, data: Union[bytes, str], digest=hashlib.sha512) -> str:
-    return hmac.new(get_bytes(key), get_bytes(data), digest).digest()
-
-
 class KeyBasis(enum.IntEnum):
     BASE_2 = 2
     BASE_10 = 10

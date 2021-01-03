@@ -1,0 +1,2 @@
+wget 'https://github.com/trezor/python-mnemonic/raw/master/vectors.json' -O ./tests/data/bip-0039.json
+wget 'https://github.com/bip32JP/bip32JP.github.io/raw/master/test_JP_BIP39.json' -O ./tests/data/bip-0039_jp.json

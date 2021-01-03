@@ -20,7 +20,7 @@ class Mnemonic:
     PHRASE_WORD_COUNT_LIST = (12, 15, 18, 21, 24)
 
     def __init__(self, language: str = "english") -> None:
-        self._language = language
+        self._language = language.lower()
         with open(
                 self.SOURCE_PATH / (self._language + ".txt"),
                 mode="rt",
