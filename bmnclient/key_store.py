@@ -125,7 +125,7 @@ class KeyStore(QObject):
                                )[:MNEMONIC_SEED_LENGTH]
         else:
             self._logger.warning("No extra!!!")
-        return self.__mnemonic.get_phrase(data)
+        return self.__mnemonic.getPhrase(data)
 
     def regenerate_master_key(self):
         seed = mnemonic.Mnemonic.toSeed(
@@ -181,12 +181,7 @@ class KeyStore(QObject):
 
     @QSlot(str, result=bool)
     def validateSeed(self, seed: str) -> bool:
-        try:
-            self.__mnemonic.check_words(seed)
-            return True
-        except ValueError as ve:
-            self._logger.warning(f"seed validation error: {ve} => {seed}")
-            return False
+        return self.__mnemonic.isValid(seed)
 
     @property
     def gcd(self):

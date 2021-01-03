@@ -72,9 +72,9 @@ class TestAdvanced(unittest.TestCase):
                 coin = coin_class(None)
                 random.seed(a=f)
                 # words_combs = itertools.combinations(
-                #     random.shuffle(mnemo.wordlist, f), master_key.MNEMONIC_SEED_LENGTH)
+                #     random.shuffle(mnemo._wordlist, f), master_key.MNEMONIC_SEED_LENGTH)
                 words = random.choices(
-                    mnemo.wordlist, k=key_store.MNEMONIC_SEED_LENGTH)
+                    mnemo._wordlist, k=key_store.MNEMONIC_SEED_LENGTH)
                 phraze = " ".join(words)
                 cache_entry = {}
                 cache_entry["phraze"] = phraze

@@ -1,8 +1,7 @@
 import binascii
 import hashlib
-import logging
 import unicodedata
-from typing import List, Union, Optional
+from typing import Optional, List
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -48,10 +47,9 @@ class Mnemonic:
 
         for i in range(len(b) // 11):
             idx = int(b[i * 11: (i + 1) * 11], 2)
-            log.error(idx)
-            result.append(self.__wordlist[idx])
-        if self.__lang == "japanese":
-            result_phrase = u"\u3000".join(result)
+            result.append(self._word_list[idx])
+        if self._language == "japanese":
+            result_phrase = "\u3000".join(result)
         else:
             result_phrase = " ".join(result)
         return result_phrase
@@ -79,26 +77,34 @@ class Mnemonic:
     @classmethod
     def toSeed(
             cls,
-            mnemonic: str,
+            phrase: str,
             password: Optional[str] = None) -> bytes:
-        mnemonic = cls.normalizeString(mnemonic)
+        phrase = cls.normalizePhrase(phrase)
         if password is None:
-            password = "".join(mnemonic[::-3])
+            password = "".join(phrase[::-3])
         else:
-            password = cls.normalizeString(password)
+            password = cls.normalizePhrase(password)
 
-        password = ("mnemonic" + password).encode("utf-8")
-        mnemonic = mnemonic.encode("utf-8")
+        password = ("mnemonic" + password).encode(cls.ENCODING)
+        phrase = phrase.encode(cls.ENCODING)
 
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA512(),
             length=64,
             salt=password,
-            iterations=PBKDF2_ROUNDS)
-        seed = kdf.derive(mnemonic)
+            iterations=cls.PBKDF2_ROUNDS)
+        seed = kdf.derive(phrase)
         assert len(seed) == 64
         return seed
 
     @classmethod
-    def normalizeString(cls, string: str) -> str:
+    def normalizePhrase(cls, string: str) -> str:
         return unicodedata.normalize("NFKD", string)
+
+    @classmethod
+    def getLanguageList(cls) -> List[str]:
+        result = []
+        for f in cls.SOURCE_PATH.iterdir():
+            if f.suffix == ".txt" and f.stem:
+                result.append(f.stem)
+        return result
