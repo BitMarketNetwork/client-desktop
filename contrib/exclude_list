@@ -1,5 +1,7 @@
 # glob-style pattern
 
+bmnclient/**/.*
+
 include/*
 PySide2/Qt/libexec/*
 PySide2/plugins/qmltooling/*
