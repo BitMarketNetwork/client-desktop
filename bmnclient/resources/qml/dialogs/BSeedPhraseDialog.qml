@@ -13,7 +13,6 @@ BDialog {
     }
 
     property int type: BSeedPhraseDialog.Type.Generate
-    property alias salt: _saltDialog.salt
     property alias seedPhraseText: _seedPhrase.text
     property bool readOnly: false
     property bool enableAccept: false
@@ -121,11 +120,12 @@ BDialog {
     }
 
     onAboutToShow: {
+        _seedPhrase.forceActiveFocus()
         switch (type) {
         case BSeedPhraseDialog.Type.Generate:
-            if (!_saltDialog.used) {
-                _saltDialog.used = true
-                _saltDialog.open()
+            if (!_saltDialogLoader.active) {
+                _saltDialogLoader.active = true
+                Qt.callLater(_saltDialogLoader.item.open)
             }
             break
         case BSeedPhraseDialog.Type.Validate:
@@ -136,13 +136,12 @@ BDialog {
             _closeTimer.start()
             break
         }
-        _seedPhrase.forceActiveFocus()
     }
 
     onReset: {
         switch (type) {
         case BSeedPhraseDialog.Type.Generate:
-            _saltDialog.open()
+            _saltDialogLoader.item.open()
             break
         case BSeedPhraseDialog.Type.Validate:
         case BSeedPhraseDialog.Type.Restore:
@@ -154,18 +153,27 @@ BDialog {
     }
 
     onRejected: {
-        _saltDialog.used = false
+        _saltDialogLoader.active = false
     }
 
-    BSeedSaltDialog {
-        id: _saltDialog
-        property bool used: false
+    Loader {
+        id: _saltDialogLoader
+        active: false
+        sourceComponent: BSeedSaltDialog {
+            property bool used: false
 
-        onAccepted: {
-            _seedPhrase.forceActiveFocus()
-        }
-        onRejected: {
-            _base.reject()
+            onAboutToShow: {
+                _seedPhrase.text = BBackend.keyStore.prepareGenerateSeedPhrase(null)
+            }
+            onUpdateSalt: {
+                _seedPhrase.text = BBackend.keyStore.updateGenerateSeedPhrase(value)
+            }
+            onAccepted: {
+                _seedPhrase.forceActiveFocus()
+            }
+            onRejected: {
+                _base.reject()
+            }
         }
     }
 

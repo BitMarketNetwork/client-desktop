@@ -2,11 +2,14 @@ from enum import Enum
 import json
 import os
 from json.decoder import JSONDecodeError
-from threading import Lock
+from threading import RLock
 from typing import Optional
 
 from PySide2.QtCore import Slot as QSlot, Signal as QSignal, \
     Property as QProperty, QObject
+
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.hashes import Hash
 
 from . import version
 from .config import UserConfig
@@ -16,9 +19,9 @@ from .crypto.kdf import SecretStore
 from .logger import getClassLogger
 from .ui.gui import import_export
 from .wallet import hd, mnemonic, util
+from .wallet.mnemonic import Mnemonic
 
 MNEMONIC_SEED_LENGTH = 24
-PASSWORD_HASHER = util.sha256
 
 
 class KeyIndex(Enum):
@@ -26,27 +29,23 @@ class KeyIndex(Enum):
 
 
 class KeyStore(QObject):
-    """
-    Holding hierarchy according to bip0044
-    """
     mnemoRequested = QSignal()
 
     def __init__(self, user_config: UserConfig):
         super().__init__()
         self._user_config = user_config
         self._logger = getClassLogger(__name__, self.__class__)
-        self._lock = Lock()
+        self._lock = RLock()
 
         self._nonce_list = [None] * len(KeyIndex)
         self._key_list = [None] * len(KeyIndex)
 
+        self._mnemonic = None
+        self._mnemonic_salt_hash = None
+
         # TODO
         self.__master_hd = None
-        self.__mnemonic = mnemonic.Mnemonic()
-        # don't keep mnemo, save seed instead !!!
         self.__seed = None
-        # mb we can use one seed variable?
-        self.__pre_hash = None
 
     def _getNonce(self, key_index: KeyIndex) -> Optional[bytes]:
         return self._nonce_list[key_index.value]
@@ -90,42 +89,6 @@ class KeyStore(QObject):
 
     ############################################################################
     # TODO
-
-    @QSlot(str, result=bool)
-    def preparePhrase(self, mnemonic_phrase: str) -> bool:
-        mnemonic_phrase = " ".join(mnemonic_phrase.split())
-        self._logger.debug(f"pre phrase: {mnemonic_phrase}")
-        self.__pre_hash = util.sha256(mnemonic_phrase)
-        return True
-
-    @QSlot(str, bool, result=bool)
-    def generateMasterKey(self, mnemonic_phrase: str, debug: bool = False) -> bool:
-        mnemonic_phrase = " ".join(mnemonic_phrase.split())
-        hash_ = util.sha256(mnemonic_phrase)
-        if self.__pre_hash is None or hash_ == self.__pre_hash:
-            seed = mnemonic.Mnemonic.toSeed(
-                mnemonic_phrase,
-            )
-            self.apply_master_seed(
-                seed,
-                save=True,
-            )
-            self.gcd.save_mnemo(mnemonic_phrase)
-            return True
-        self._logger.warning(
-            f"seed '{mnemonic_phrase}' mismatch: {hash_} != {self.__pre_hash}")
-        return False
-
-    @QSlot(float, result=str)
-    def getInitialPassphrase(self, extra__seed: float = None) -> str:
-        data = os.urandom(MNEMONIC_SEED_LENGTH)
-        if extra__seed:
-            # a little bit silly but let it be
-            data = util.sha256(data + str(extra__seed).encode()
-                               )[:MNEMONIC_SEED_LENGTH]
-        else:
-            self._logger.warning("No extra!!!")
-        return self.__mnemonic.getPhrase(data)
 
     def regenerate_master_key(self):
         seed = mnemonic.Mnemonic.toSeed(
@@ -177,11 +140,7 @@ class KeyStore(QObject):
                 coin.make_hd_node(_44_node)
                 self._logger.debug(f"Make HD prv for {coin}")
         if save:
-            self.gcd.save_master_seed(self.master_seed_hex)
-
-    @QSlot(str, result=bool)
-    def validateSeed(self, seed: str) -> bool:
-        return self.__mnemonic.isValid(seed)
+            self.saveMeta.emit("seed", self.master_seed_hex)
 
     @property
     def gcd(self):
@@ -197,6 +156,55 @@ class KeyStore(QObject):
         return util.bytes_to_hex(self.__seed)
 
     ############################################################################
+
+    @QSlot(str, result=str)
+    def prepareGenerateSeedPhrase(self, language: str = None) -> str:
+        with self._lock:
+            self._mnemonic = Mnemonic(language)
+            self._mnemonic_salt_hash = Hash(hashes.SHA256())
+            self._mnemonic_salt_hash.update(os.urandom(64))
+            result = self._mnemonic_salt_hash.copy().finalize()
+            result = result[:MNEMONIC_SEED_LENGTH]
+            return self._mnemonic.getPhrase(result)
+
+    @QSlot(str, result=str)
+    def updateGenerateSeedPhrase(self, salt: Optional[str]) -> str:
+        with self._lock:
+            if self._mnemonic and self._mnemonic_salt_hash:
+                if salt:
+                    self._mnemonic_salt_hash.update(
+                        salt.encode(encoding=version.ENCODING))
+                    self._mnemonic_salt_hash.update(os.urandom(4))
+                result = self._mnemonic_salt_hash.copy().finalize()
+                result = result[:MNEMONIC_SEED_LENGTH]
+                return self._mnemonic.getPhrase(result)
+        return ""
+
+    @QSlot(str, result=bool)
+    def validateGenerateSeedPhrase(self, phrase: str) -> bool:
+        if len(phrase) <= 0:
+            return False
+        phrase = Mnemonic.normalizePhrase(phrase)
+        return phrase == self.updateGenerateSeedPhrase(None)
+
+    @QSlot(str, result=bool)
+    def finalizeGenerateSeedPhrase(self, phrase: str) -> bool:
+        if len(phrase) <= 0:
+            return False
+        phrase = Mnemonic.normalizePhrase(phrase)
+        with self._lock:
+            if phrase != self.updateGenerateSeedPhrase(None):
+                return False
+            self._mnemonic = None
+            self._mnemonic_salt_hash = None
+            seed = Mnemonic.phraseToSeed(phrase)
+            # TODO save
+            self.apply_master_seed(seed, save=True)
+            return True
+
+    @QSlot(str, result=bool)
+    def isValidSeedPhrase(self, phrase: str) -> bool:
+        return self._mnemonic and self._mnemonic.isValidPhrase(phrase)
 
     @QSlot(str, result=int)
     def calcPasswordStrength(self, password: str) -> int:
@@ -228,7 +236,7 @@ class KeyStore(QObject):
             CoreApplication.instance().gcd.apply_password()  # TODO
         return True
 
-    @QSlot()
+    @QSlot(result=bool)
     def resetPassword(self) -> bool:
         with self._lock:
             if not self._user_config.set(

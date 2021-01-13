@@ -65,14 +65,9 @@ BDialog {
         id: _generateDialog
         type: BSeedPhraseDialog.Type.Generate
         readOnly: !BBackend.debugMode
-        seedPhraseText: BBackend.keyStore.getInitialPassphrase(salt)
         enableAccept: true
 
-        onSaltChanged: {
-            seedPhraseText = BBackend.keyStore.getInitialPassphrase(salt)
-        }
         onAccepted: {
-            BBackend.keyStore.preparePhrase(seedPhraseText) // TODO if fail?
             _validateDialog.open()
         }
         onRejected: {
@@ -86,10 +81,10 @@ BDialog {
         readOnly: false
 
         onSeedPhraseTextChanged: {
-            enableAccept = (seedPhraseText.length > 0)
+            enableAccept = BBackend.keyStore.validateGenerateSeedPhrase(seedPhraseText)
         }
         onAccepted: {
-            if (!BBackend.keyStore.generateMasterKey(seedPhraseText, BBackend.debugMode)) {
+            if (!BBackend.keyStore.finalizeGenerateSeedPhrase(seedPhraseText)) {
                 let dialog = _applicationManager.messageDialog(qsTr("Wrong seed pharse."))
                 dialog.onClosed.connect(_validateDialog.open)
                 dialog.open()

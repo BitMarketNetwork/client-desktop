@@ -7,7 +7,9 @@ import "../basiccontrols"
 
 BDialog {
     id: _base
-    property alias salt: _manager.salt
+    readonly property int stepCount: 500 + Math.random() * 501
+
+    signal updateSalt(string value)
 
     closePolicy: BDialog.NoAutoClose
     x: 0
@@ -19,6 +21,13 @@ BDialog {
         id: _mouseArea
         hoverEnabled: true
         focus: true
+
+        onPositionChanged: {
+            _base.saltStep((mouseX * mouseY) + (mouseX + mouseY))
+        }
+        Keys.onPressed: {
+            _base.saltStep(event.key)
+        }
 
         ColumnLayout {
             anchors.left: parent.left
@@ -39,7 +48,8 @@ BDialog {
                 id: _progressBar
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
                 Layout.fillWidth: true
-                to: _manager.stepCount
+                enabled: false
+                to: _base.stepCount
             }
             BButton {
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
@@ -49,9 +59,6 @@ BDialog {
                 }
             }
         }
-
-        onPositionChanged: _manager.updateMouse(mouseX, mouseY)
-        Keys.onPressed: _manager.updateKeyboard(event.key)
 
         ParticleSystem {
             id: _particleSystem
@@ -86,47 +93,18 @@ BDialog {
 
     onAboutToShow: {
         _progressBar.value = 0
+        _progressBar.enabled = true
+        _mouseArea.forceActiveFocus()
     }
 
-    // TODO read best practice
-    QtObject {
-        id: _manager
-
-        property real salt: Date.now() * Math.random() // TODO use openssl
-        property int mouseSalt: 0
-        readonly property int stepCount: 500 + Math.random() * 501
-
-        function updateMouse(x, y) {
-            mouseSalt += (x * y) + (x + y)
-            update(mouseSalt)
-        }
-
-        function updateKeyboard(key) {
-            update((mouseSalt * key) + key)
-        }
-
-        function update(value) {
-            if (value === 0) {
-                return
+    function saltStep(value) {
+        if (_progressBar.enabled) {
+            _base.updateSalt("" + value)
+            if (_progressBar.value++ >= _progressBar.to) {
+                _progressBar.enabled = false
+                _progressBar.value = 0
+                Qt.callLater(_base.accept) // exectute after all updateSalt()
             }
-
-            let nextValue = salt * Math.sqrt(value) + _progressBar.value + 1
-            if (nextValue !== 0) {
-                if (!isFinite(nextValue)) {
-                    salt *= 1e-100
-                } else {
-                    salt = nextValue
-                }
-                if (_progressBar.value++ >= _progressBar.to) {
-                    _progressBar.value = 0
-                    _base.accept()
-                }
-            }
-            /*console.log(
-                        "value = " + value
-                        + ", nextValue = " + nextValue
-                        + ", salt = " + salt)*/
         }
     }
 }
-
