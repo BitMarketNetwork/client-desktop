@@ -182,29 +182,54 @@ class KeyStore(QObject):
 
     @QSlot(str, result=bool)
     def validateGenerateSeedPhrase(self, phrase: str) -> bool:
+        phrase = Mnemonic.normalizePhrase(phrase)
         if len(phrase) <= 0:
             return False
-        phrase = Mnemonic.normalizePhrase(phrase)
         return phrase == self.updateGenerateSeedPhrase(None)
 
     @QSlot(str, result=bool)
     def finalizeGenerateSeedPhrase(self, phrase: str) -> bool:
+        phrase = Mnemonic.normalizePhrase(phrase)
         if len(phrase) <= 0:
             return False
-        phrase = Mnemonic.normalizePhrase(phrase)
         with self._lock:
             if phrase != self.updateGenerateSeedPhrase(None):
                 return False
-            self._mnemonic = None
-            self._mnemonic_salt_hash = None
-            seed = Mnemonic.phraseToSeed(phrase)
-            # TODO save
-            self.apply_master_seed(seed, save=True)
-            return True
+            return self._saveMnemonicSeedPhrase(phrase)
 
     @QSlot(str, result=bool)
-    def isValidSeedPhrase(self, phrase: str) -> bool:
-        return self._mnemonic and self._mnemonic.isValidPhrase(phrase)
+    def prepareRestoreSeedPhrase(self, language: str = None) -> bool:
+        with self._lock:
+            self._mnemonic = Mnemonic(language)
+            self._mnemonic_salt_hash = None
+
+    @QSlot(str, result=bool)
+    def validateRestoreSeedPhrase(self, phrase: str) -> bool:
+        phrase = Mnemonic.normalizePhrase(phrase)
+        if len(phrase) <= 0:
+            return False
+        with self._lock:
+            return self._mnemonic and self._mnemonic.isValidPhrase(phrase)
+
+    @QSlot(str, result=bool)
+    def finalizeRestoreSeedPhrase(self, phrase: str) -> bool:
+        phrase = Mnemonic.normalizePhrase(phrase)
+        if len(phrase) <= 0:
+            return False
+        with self._lock:
+            if not self._mnemonic or not self._mnemonic.isValidPhrase(phrase):
+                return False
+            return self._saveMnemonicSeedPhrase(phrase)
+
+    def _saveMnemonicSeedPhrase(self, phrase: str) -> bool:
+        self._mnemonic = None
+        self._mnemonic_salt_hash = None
+        seed = Mnemonic.phraseToSeed(phrase)
+        # TODO save
+        # self.apply_master_seed(seed, save=True)
+        return False
+
+    ############################################################################
 
     @QSlot(str, result=int)
     def calcPasswordStrength(self, password: str) -> int:

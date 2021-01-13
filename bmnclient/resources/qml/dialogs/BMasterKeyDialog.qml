@@ -102,12 +102,20 @@ BDialog {
         type: BSeedPhraseDialog.Type.Restore
         readOnly: false
 
+        onAboutToShow: {
+            BBackend.keyStore.prepareRestoreSeedPhrase(null)
+        }
         onSeedPhraseTextChanged: {
-            enableAccept = (seedPhraseText.length > 0 && BBackend.keyStore.validateSeed(seedPhraseText))
+            enableAccept = BBackend.keyStore.validateRestoreSeedPhrase(seedPhraseText)
         }
         onAccepted: {
-            BBackend.keyStore.generateMasterKey(seedPhraseText, BBackend.debugMode) // TODO if failed?
-            _base.autoDestroy()
+            if (!BBackend.keyStore.finalizeRestoreSeedPhrase(seedPhraseText)) {
+                let dialog = _applicationManager.messageDialog(qsTr("Invalid seed pharse."))
+                dialog.onClosed.connect(_restoreDialog.open)
+                dialog.open()
+            } else {
+                _base.autoDestroy()
+            }
         }
         onRejected: {
             _base.open()
