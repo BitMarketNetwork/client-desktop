@@ -54,15 +54,3 @@ class TestProxy(unittest.TestCase):
         self.assertEqual(seed, ep.text_from(strong.encode()))
         self.assertNotEqual(strong, weak)
         self.assertEqual(len(strong), len(weak) + 24)
-
-
-class TestSeedEncryption(unittest.TestCase):
-
-    def test_extracting(self):
-        PASSWORD = "F##ckit2019"
-        MNEMO = "super mega safe mnemonic phrase"
-        gcd_ = gcd.GCD(True)
-        self.assertTrue(gcd_.set_password(PASSWORD))
-        self.assertTrue(gcd_.test_password(PASSWORD))
-        gcd_.save_mnemo(MNEMO)
-        self.assertEqual(gcd_.get_mnemo(PASSWORD), MNEMO)

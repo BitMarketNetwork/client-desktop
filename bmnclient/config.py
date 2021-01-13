@@ -42,9 +42,9 @@ class UserConfig:
             try:
                 with open(
                         self._file_path,
-                        mode='rt',
+                        mode="rt",
                         encoding=version.ENCODING,
-                        errors='replace') as file:
+                        errors="replace") as file:
                     self._config = json.load(file)
                 return True
             except OSError as e:
@@ -69,9 +69,9 @@ class UserConfig:
                 os.makedirs(self._file_path.parent, exist_ok=True)
                 with open(
                         self._file_path,
-                        mode='w+t',
+                        mode="w+t",
                         encoding=version.ENCODING,
-                        errors='replace') as file:
+                        errors="replace") as file:
                     json.dump(
                         self._config,
                         file,

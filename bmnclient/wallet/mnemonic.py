@@ -19,8 +19,8 @@ class Mnemonic:
     DATA_LENGTH_LIST = (16, 20, 24, 28, 32)
     PHRASE_WORD_COUNT_LIST = (12, 15, 18, 21, 24)
 
-    def __init__(self, language: str = "english") -> None:
-        self._language = language.lower()
+    def __init__(self, language: str = None) -> None:
+        self._language = language.lower() if language else "english"
         with open(
                 self.SOURCE_PATH / (self._language + ".txt"),
                 mode="rt",
@@ -54,7 +54,7 @@ class Mnemonic:
             result_phrase = " ".join(result)
         return result_phrase
 
-    def isValid(self, phrase: str) -> bool:
+    def isValidPhrase(self, phrase: str) -> bool:
         phrase = self.normalizePhrase(phrase).split()
         if len(phrase) not in self.PHRASE_WORD_COUNT_LIST:
             return False
@@ -77,7 +77,7 @@ class Mnemonic:
         return h == nh
 
     @classmethod
-    def toSeed(
+    def phraseToSeed(
             cls,
             phrase: str,
             password: Optional[str] = None) -> bytes:

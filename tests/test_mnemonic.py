@@ -26,10 +26,10 @@ class TestMnemonic(unittest.TestCase):
             Mnemonic.normalizePhrase(generated_phrase),
             Mnemonic.normalizePhrase(phrase))
 
-        self.assertTrue(mnemonic.isValid(generated_phrase))
-        self.assertTrue(mnemonic.isValid(phrase))
+        self.assertTrue(mnemonic.isValidPhrase(generated_phrase))
+        self.assertTrue(mnemonic.isValidPhrase(phrase))
 
-        generated_seed = Mnemonic.toSeed(phrase, password)
+        generated_seed = Mnemonic.phraseToSeed(phrase, password)
         self.assertEqual(generated_seed.hex(), seed)
 
         # TODO
@@ -70,6 +70,6 @@ class TestMnemonic(unittest.TestCase):
                     os.urandom(random.choice(Mnemonic.DATA_LENGTH_LIST)))
                 if i == 1:
                     _logger.debug("Random phrase {}: {}".format(i, phrase))
-                self.assertTrue(mnemonic.isValid(phrase))
-                self.assertFalse(mnemonic.isValid(
+                self.assertTrue(mnemonic.isValidPhrase(phrase))
+                self.assertFalse(mnemonic.isValidPhrase(
                     phrase + " " + random.choice(mnemonic._word_list)))
