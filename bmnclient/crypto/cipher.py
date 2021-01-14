@@ -46,12 +46,18 @@ class MessageCipher(Cipher):
     def __init(self, key: bytes):
         super().__init__(key, None)
 
-    def encrypt(self, data: bytes, separator: str = ":") -> str:
+    def encrypt(
+            self,
+            data: bytes,
+            separator: str = version.STRING_SEPARATOR) -> str:
         nonce = self.generateNonce()
         cipher_text = super().encrypt(nonce, data)
         return nonce.hex() + separator + cipher_text.hex()
 
-    def decrypt(self, text: str, separator: str = ":") -> Optional[bytes]:
+    def decrypt(
+            self,
+            text: str,
+            separator: str = version.STRING_SEPARATOR) -> Optional[bytes]:
         try:
             (nonce, data) = text.split(separator, 1)
             return super().decrypt(

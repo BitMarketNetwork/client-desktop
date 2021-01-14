@@ -10,6 +10,7 @@ SHORT_NAME = "bmn-client"
 VERSION = (0, 10, 0)
 VERSION_STRING = ".".join(map(str, VERSION))
 ENCODING = "utf-8"
+STRING_SEPARATOR = ":"
 
 PYTHON_MINIMAL_VERSION = (3, 7, 0)
 

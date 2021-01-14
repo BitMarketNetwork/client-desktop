@@ -38,7 +38,6 @@ class KeyDerivationFunction:
 
 
 class SecretStore(KeyDerivationFunction):
-    SECRET_SEPARATOR = ":"
     SECRET_VERSION = "v1"
     SECRET_SALT_LENGTH = 128 // 8
     SECRET_KEY_LENGTH = 128 // 8
@@ -46,20 +45,20 @@ class SecretStore(KeyDerivationFunction):
     def createValue(self, value: bytes) -> str:
         salt = os.urandom(self.SECRET_SALT_LENGTH)
         key = self.derive(salt, self.SECRET_KEY_LENGTH)
-        result = self.SECRET_VERSION + self.SECRET_SEPARATOR
-        result += salt.hex() + self.SECRET_SEPARATOR
-        result += MessageCipher(key).encrypt(value, self.SECRET_SEPARATOR)
+        result = self.SECRET_VERSION + version.STRING_SEPARATOR
+        result += salt.hex() + version.STRING_SEPARATOR
+        result += MessageCipher(key).encrypt(value, version.STRING_SEPARATOR)
         return result
 
     def verifyValue(self, value: str) -> Optional[bytes]:
         try:
             (secret_version, salt, value) = value.split(
-                self.SECRET_SEPARATOR,
+                version.STRING_SEPARATOR,
                 2)
         except ValueError:
             return None
         if secret_version != self.SECRET_VERSION:
             return None
         key = self.derive(bytes.fromhex(salt), self.SECRET_KEY_LENGTH)
-        value = MessageCipher(key).decrypt(value, self.SECRET_SEPARATOR)
+        value = MessageCipher(key).decrypt(value, version.STRING_SEPARATOR)
         return value
