@@ -44,6 +44,21 @@ class KeyStore(QObject):
         # TODO
         self.__master_hd = None
 
+    def _reset(self) -> None:
+        with self._lock:
+            self._nonce_list = [None] * len(self._nonce_list)
+            self._key_list = [None] * len(self._key_list)
+            self._mnemonic = None
+            self._mnemonic_salt_hash = None
+
+            with self._user_config.lock:
+                for key in (
+                        UserConfig.KEY_KEY_STORE_VALUE,
+                        UserConfig.KEY_KEY_STORE_SEED,
+                        UserConfig.KEY_KEY_STORE_SEED_PHRASE):
+                    self._user_config.set(key, None, save=False)
+                self._user_config.save()
+
     def _getNonce(self, key_index: KeyIndex) -> Optional[bytes]:
         return self._nonce_list[key_index.value]
 
@@ -89,10 +104,6 @@ class KeyStore(QObject):
         except (IndexError, ValueError, TypeError, JSONDecodeError):
             return False
         return True
-
-    def _resetSecretStoreValue(self) -> None:
-        self._nonce_list = [None] * len(self._nonce_list)
-        self._key_list = [None] * len(self._key_list)
 
     ############################################################################
     # TODO
@@ -249,19 +260,16 @@ class KeyStore(QObject):
 
     @QSlot(str, result=bool)
     def createPassword(self, password: str) -> bool:
-        value = SecretStore(password).encryptValue(
-            self._generateSecretStoreValue())
+        value = self._generateSecretStoreValue()
+        value = SecretStore(password).encryptValue(value)
         with self._lock:
-            return self._user_config.set(
-                UserConfig.KEY_KEY_STORE_VALUE,
-                value)
+            self._reset()
+            return self._user_config.set(UserConfig.KEY_KEY_STORE_VALUE, value)
 
     @QSlot(str, result=bool)
     def applyPassword(self, password: str) -> bool:
         with self._lock:
-            value = self._user_config.get(
-                UserConfig.KEY_KEY_STORE_VALUE,
-                str)
+            value = self._user_config.get(UserConfig.KEY_KEY_STORE_VALUE, str)
             if not value:
                 return False
             value = SecretStore(password).decryptValue(value)
@@ -275,13 +283,7 @@ class KeyStore(QObject):
 
     @QSlot(result=bool)
     def resetPassword(self) -> bool:
-        with self._lock:
-            if not self._user_config.set(
-                    UserConfig.KEY_KEY_STORE_VALUE,
-                    None):
-                return False
-            self._resetSecretStoreValue()
-
+        self._reset()
         from .application import CoreApplication
         if CoreApplication.instance():
             CoreApplication.instance().gcd.reset_db()  # TODO

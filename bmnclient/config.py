@@ -28,6 +28,7 @@ class UserConfig:
 
     KEY_KEY_STORE_VALUE = "key_store.value"
     KEY_KEY_STORE_SEED = "key_store.seed"
+    KEY_KEY_STORE_SEED_PHRASE = "key_store.seed_phrase"
 
     def __init__(
             self,

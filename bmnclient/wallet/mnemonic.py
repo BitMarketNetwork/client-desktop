@@ -114,7 +114,7 @@ class Mnemonic:
 
     @classmethod
     def normalizePhrase(cls, string: str) -> str:
-        return unicodedata.normalize("NFKD", string.strip())
+        return unicodedata.normalize("NFKD", string).strip()
 
     @classmethod
     def getLanguageList(cls) -> List[str]:
