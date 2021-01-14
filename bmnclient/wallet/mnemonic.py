@@ -17,6 +17,7 @@ class Mnemonic:
     PBKDF2_ROUNDS = 2048
 
     DATA_LENGTH_LIST = (16, 20, 24, 28, 32)
+    DEFAULT_DATA_LENGTH = 24
     PHRASE_WORD_COUNT_LIST = (12, 15, 18, 21, 24)
 
     def __init__(self, language: str = None) -> None:

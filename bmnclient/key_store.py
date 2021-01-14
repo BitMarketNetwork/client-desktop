@@ -1,27 +1,24 @@
-from enum import Enum
 import json
 import os
+from enum import Enum
 from json.decoder import JSONDecodeError
 from threading import RLock
 from typing import Optional, Tuple
 
 from PySide2.QtCore import Slot as QSlot, Signal as QSignal, \
     Property as QProperty, QObject
-
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.hashes import Hash
 
 from . import version
 from .config import UserConfig
 from .crypto.cipher import Cipher, MessageCipher
-from .crypto.password import PasswordStrength
 from .crypto.kdf import SecretStore
+from .crypto.password import PasswordStrength
 from .logger import getClassLogger
 from .ui.gui import import_export
-from .wallet import hd, mnemonic, util
+from .wallet import hd, mnemonic
 from .wallet.mnemonic import Mnemonic
-
-MNEMONIC_SEED_LENGTH = 24
 
 
 class KeyIndex(Enum):
@@ -141,7 +138,7 @@ class KeyStore(QObject):
                 coin.make_hd_node(_44_node)
                 self._logger.debug(f"Make HD prv for {coin}")
         if save:
-            self.saveMeta.emit("seed", seed.hex())
+            self.gcd.saveMeta.emit("seed", seed.hex())
 
     @property
     def gcd(self):
@@ -161,7 +158,7 @@ class KeyStore(QObject):
             self._mnemonic_salt_hash = Hash(hashes.SHA256())
             self._mnemonic_salt_hash.update(os.urandom(64))
             result = self._mnemonic_salt_hash.copy().finalize()
-            result = result[:MNEMONIC_SEED_LENGTH]
+            result = result[:Mnemonic.DEFAULT_DATA_LENGTH]
             return self._mnemonic.getPhrase(result)
 
     @QSlot(str, result=str)
@@ -173,7 +170,7 @@ class KeyStore(QObject):
                         salt.encode(encoding=version.ENCODING))
                     self._mnemonic_salt_hash.update(os.urandom(4))
                 result = self._mnemonic_salt_hash.copy().finalize()
-                result = result[:MNEMONIC_SEED_LENGTH]
+                result = result[:Mnemonic.DEFAULT_DATA_LENGTH]
                 return self._mnemonic.getPhrase(result)
         return ""
 
