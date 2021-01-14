@@ -66,19 +66,19 @@ class TestSecretStore(TestCase):
         store1 = SecretStore(os.urandom(16).hex())
         store2 = SecretStore(os.urandom(16).hex())
 
-        value1 = store1.createValue(b"secret1")
+        value1 = store1.encryptValue(b"secret1")
         self.assertIsInstance(value1, str)
         self.assertGreater(len(value1), 10)
         self.assertTrue(value1.startswith("v1:"))
 
-        self.assertEqual(store1.verifyValue(value1), b"secret1")
-        self.assertEqual(store2.verifyValue(value1), None)
+        self.assertEqual(store1.decryptValue(value1), b"secret1")
+        self.assertEqual(store2.decryptValue(value1), None)
 
-        self.assertEqual(store1.verifyValue("v2" + value1[:2]), None)
-        self.assertEqual(store1.verifyValue("v1"), None)
-        self.assertEqual(store1.verifyValue(""), None)
-        self.assertEqual(store1.verifyValue(":::::"), None)
-        self.assertEqual(store1.verifyValue("1:2:3:4:5:6"), None)
+        self.assertEqual(store1.decryptValue("v2" + value1[:2]), None)
+        self.assertEqual(store1.decryptValue("v1"), None)
+        self.assertEqual(store1.decryptValue(""), None)
+        self.assertEqual(store1.decryptValue(":::::"), None)
+        self.assertEqual(store1.decryptValue("1:2:3:4:5:6"), None)
 
 
 class TestPassword(TestCase):

@@ -249,7 +249,7 @@ class KeyStore(QObject):
 
     @QSlot(str, result=bool)
     def createPassword(self, password: str) -> bool:
-        value = SecretStore(password).createValue(
+        value = SecretStore(password).encryptValue(
             self._generateSecretStoreValue())
         with self._lock:
             return self._user_config.set(
@@ -264,7 +264,7 @@ class KeyStore(QObject):
                 str)
             if not value:
                 return False
-            value = SecretStore(password).verifyValue(value)
+            value = SecretStore(password).decryptValue(value)
             if not value or not self._loadSecretStoreValue(value):
                 return False
 
