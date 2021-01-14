@@ -8,8 +8,8 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from bmnclient import version
 
 
-# Base:
-# https://github.com/trezor/python-mnemonic/blob/master/mnemonic/mnemonic.py
+# Adapted from:
+# https://github.com/trezor/python-mnemonic/blob/faa9c607d9a4b4fb1e2b2bc79a341a60181e3381/mnemonic/mnemonic.py
 class Mnemonic:
     ENCODING = "utf-8"
     WORD_COUNT = 2048
@@ -30,6 +30,10 @@ class Mnemonic:
             raise RuntimeError(
                 "Wordlist should contain {} words, but it contains {} words."
                 .format(self.WORD_COUNT, len(self._word_list)))
+
+    @property
+    def language(self) -> str:
+        return self._language
 
     def getPhrase(self, data: bytes) -> str:
         if len(data) not in self.DATA_LENGTH_LIST:

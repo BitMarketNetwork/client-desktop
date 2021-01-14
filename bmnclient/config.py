@@ -35,7 +35,11 @@ class UserConfig:
         self._logger = getClassLogger(__name__, self.__class__)
         self._file_path = file_path
         self._config = dict()
-        self._lock = RLock()  # TODO ReadWriteLock
+        self._lock = RLock()
+
+    @property
+    def lock(self) -> RLock:
+        return self._lock
 
     def load(self) -> bool:
         with self._lock:
