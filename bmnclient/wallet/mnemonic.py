@@ -104,6 +104,14 @@ class Mnemonic:
         return seed
 
     @classmethod
+    def isEqualPhrases(cls, phrase1: str, phrase2: str) -> bool:
+        if len(phrase1) <= 0 or len(phrase2) <= 0:
+            return False
+        phrase1 = Mnemonic.normalizePhrase(phrase1)
+        phrase2 = Mnemonic.normalizePhrase(phrase2)
+        return phrase1 == phrase2
+
+    @classmethod
     def normalizePhrase(cls, string: str) -> str:
         return unicodedata.normalize("NFKD", string.strip())
 
