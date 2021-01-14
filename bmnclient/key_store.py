@@ -3,7 +3,7 @@ import json
 import os
 from json.decoder import JSONDecodeError
 from threading import RLock
-from typing import Optional
+from typing import Optional, Tuple
 
 from PySide2.QtCore import Slot as QSlot, Signal as QSignal, \
     Property as QProperty, QObject
@@ -13,7 +13,7 @@ from cryptography.hazmat.primitives.hashes import Hash
 
 from . import version
 from .config import UserConfig
-from .crypto.cipher import Cipher
+from .crypto.cipher import Cipher, MessageCipher
 from .crypto.password import PasswordStrength
 from .crypto.kdf import SecretStore
 from .logger import getClassLogger
@@ -26,6 +26,7 @@ MNEMONIC_SEED_LENGTH = 24
 
 class KeyIndex(Enum):
     WALLET_DATABASE = 0
+    SEED = 1
 
 
 class KeyStore(QObject):
@@ -45,7 +46,6 @@ class KeyStore(QObject):
 
         # TODO
         self.__master_hd = None
-        self.__seed = None
 
     def _getNonce(self, key_index: KeyIndex) -> Optional[bytes]:
         return self._nonce_list[key_index.value]
@@ -57,15 +57,25 @@ class KeyStore(QObject):
         with self._lock:
             return Cipher(self._getKey(key_index), self._getNonce(key_index))
 
+    def deriveMessageCipher(self, key_index: KeyIndex) -> Optional[Cipher]:
+        with self._lock:
+            return MessageCipher(self._getKey(key_index))
+
     @classmethod
     def _generateSecretStoreValue(cls) -> bytes:
         value = {
             "version":
                 version.VERSION_STRING,
+
             "nonce_{:d}".format(KeyIndex.WALLET_DATABASE.value):
                 Cipher.generateNonce().hex(),
             "key_{:d}".format(KeyIndex.WALLET_DATABASE.value):
-                Cipher.generateKey().hex()
+                Cipher.generateKey().hex(),
+
+            "nonce_{:d}".format(KeyIndex.SEED.value):
+                MessageCipher.generateNonce().hex(),
+            "key_{:d}".format(KeyIndex.SEED.value):
+                MessageCipher.generateKey().hex()
         }
         return json.dumps(value).encode(encoding=version.ENCODING)
 
@@ -123,11 +133,7 @@ class KeyStore(QObject):
         return False
 
     def apply_master_seed(self, seed: bytes, *, save: bool):
-        """
-        applies master seed
-        """
-        self.__seed = seed
-        self.__master_hd = hd.HDNode.make_master(self.__seed)
+        self.__master_hd = hd.HDNode.make_master(seed)
         _44_node = self.__master_hd.make_child_prv(44, True)
         # iterate all 'cause we need test coins
         for coin in self.gcd.all_coins:
@@ -135,7 +141,7 @@ class KeyStore(QObject):
                 coin.make_hd_node(_44_node)
                 self._logger.debug(f"Make HD prv for {coin}")
         if save:
-            self.saveMeta.emit("seed", self.master_seed_hex)
+            self.saveMeta.emit("seed", seed.hex())
 
     @property
     def gcd(self):
@@ -145,10 +151,6 @@ class KeyStore(QObject):
     @property
     def master_key(self):
         return self.__master_hd
-
-    @property
-    def master_seed_hex(self) -> str:
-        return util.bytes_to_hex(self.__seed)
 
     ############################################################################
 
@@ -205,15 +207,42 @@ class KeyStore(QObject):
         with self._lock:
             if not self._mnemonic or not self._mnemonic.isValidPhrase(phrase):
                 return False
-            return self._saveMnemonicSeedPhrase(phrase)
+            return self._saveSeedFromPhrase(phrase)
 
-    def _saveMnemonicSeedPhrase(self, phrase: str) -> bool:
+    def _saveSeedFromPhrase(self, phrase: str) -> bool:
+        assert self._mnemonic
+        seed = Mnemonic.phraseToSeed(phrase)
+        value = version.STRING_SEPARATOR.join((
+            self._mnemonic.language,
+            seed.hex())).encode(encoding=version.ENCODING)
+        value = self.deriveMessageCipher(KeyIndex.SEED).encrypt(value)
+        if not self._user_config.set(
+                UserConfig.KEY_KEY_STORE_SEED,
+                value):
+            return False
+
         self._mnemonic = None
         self._mnemonic_salt_hash = None
-        seed = Mnemonic.phraseToSeed(phrase)
-        # TODO save
-        # self.apply_master_seed(seed, save=True)
-        return False
+
+        from .application import CoreApplication
+        if CoreApplication.instance():
+            self.apply_master_seed(seed, save=True)
+        return True
+
+    def _loadSeed(self) -> Optional[Tuple[str, bytes]]:
+        value = self._user_config.get(UserConfig.KEY_KEY_STORE_SEED, str)
+        if not value:
+            return None
+        value = self.deriveMessageCipher(KeyIndex.SEED).decrypt(value)
+        if not value:
+            return None
+        try:
+            value = value.decode(encoding=version.ENCODING)
+            (language, seed) = value.split(version.STRING_SEPARATOR, 1)
+            seed = bytes.fromhex(seed)
+        except (UnicodeError, ValueError):
+            return None
+        return language, seed
 
     ############################################################################
 
