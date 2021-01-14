@@ -245,7 +245,7 @@ class KeyStore(QObject):
                 value)
 
     @QSlot(str, result=bool)
-    def setPassword(self, password: str) -> bool:
+    def applyPassword(self, password: str) -> bool:
         with self._lock:
             value = self._user_config.get(
                 UserConfig.KEY_KEY_STORE_VALUE,

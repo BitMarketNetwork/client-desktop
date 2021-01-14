@@ -59,11 +59,11 @@ class TestKeyStore(TestCase):
         for i in range(len(KeyIndex)):
             self.assertIsNone(key_store._nonce_list[i])
             self.assertIsNone(key_store._key_list[i])
-        self.assertFalse(key_store.setPassword(self.password * 2))
+        self.assertFalse(key_store.applyPassword(self.password * 2))
         for i in range(len(KeyIndex)):
             self.assertIsNone(key_store._nonce_list[i])
             self.assertIsNone(key_store._key_list[i])
-        self.assertTrue(key_store.setPassword(self.password))
+        self.assertTrue(key_store.applyPassword(self.password))
         for i in range(len(KeyIndex)):
             self.assertIsInstance(key_store._nonce_list[i], bytes)
             self.assertIsInstance(key_store._key_list[i], bytes)
