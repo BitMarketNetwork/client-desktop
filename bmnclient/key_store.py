@@ -208,7 +208,9 @@ class KeyStore(QObject):
     @QSlot(str, result=bool)
     def validateRestoreSeedPhrase(self, phrase: str) -> bool:
         with self._lock:
-            return self._mnemonic and self._mnemonic.isValidPhrase(phrase)
+            if self._mnemonic and self._mnemonic.isValidPhrase(phrase):
+                return True
+        return False
 
     @QSlot(str, result=bool)
     def finalizeRestoreSeedPhrase(self, phrase: str) -> bool:
@@ -292,7 +294,7 @@ class KeyStore(QObject):
     @QProperty(bool, constant=True)
     def hasPassword(self) -> bool:
         with self._lock:
-            value = self._user_config.get(
-                UserConfig.KEY_KEY_STORE_VALUE,
-                str)
-        return value and len(value) > 0
+            value = self._user_config.get(UserConfig.KEY_KEY_STORE_VALUE, str)
+        if value and len(value) > 0:
+            return True
+        return False

@@ -22,7 +22,7 @@ class Mnemonic:
 
     def __init__(self, language: str = None) -> None:
         self._language = language.lower() if language else "english"
-        with open(
+        with open(  # TODO global cache
                 self.SOURCE_PATH / (self._language + ".txt"),
                 mode="rt",
                 encoding=self.ENCODING) as file:
