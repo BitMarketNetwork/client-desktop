@@ -1,7 +1,6 @@
 import logging
 import math
-import pickle
-from typing import Optional, Union
+from typing import Optional, Union, List, Tuple
 from bmnclient import gcd
 
 from PySide2.QtCore import QObject, Signal as QSignal, Slot as QSlot, \
@@ -15,6 +14,7 @@ log = logging.getLogger(__name__)
 
 
 class SettingsManager(QObject):
+    DEFAULT_FONT_SIZE = 10
     newAddressChanged = QSignal()
     rateSourceChanged = QSignal()
     currencyChanged = QSignal()
@@ -24,7 +24,6 @@ class SettingsManager(QObject):
         super().__init__()
         self._gcd = gcd.GCD.get_instance()
         self._use_new_address = True
-        self._font_settings = {}
         #
         self._currency_model = []
         self._currency_index = 0
@@ -38,11 +37,15 @@ class SettingsManager(QObject):
         self._unit_index = 0
         self._fill_units()
 
+        from . import Application
+
         self._user_config = user_config
-        self._language_list = None
-        self._current_language_name = None
-        self._current_theme_name = None
-        self._hide_to_tray = None
+        self._language_list: Optional[List[str]] = None
+        self._current_language_name: Optional[str] = None
+        self._current_theme_name: Optional[str] = None
+        self._hide_to_tray: Optional[bool] = None
+        self._font: Optional[Tuple] = None
+        self._default_font = Application.instance().defaultFont
 
     def _fill_currencies(self):
         currencies = [
@@ -197,14 +200,56 @@ class SettingsManager(QObject):
     # Font
     ############################################################################
 
-    @QProperty("QVariantMap", constant=True)
-    def fontData(self) -> dict:
-        return self._font_settings
+    fontChanged = QSignal()
 
-    @fontData.setter
-    def _set_font_data(self, font: dict) -> None:
-        self._font_settings = font
-        self._gcd.save_meta("font", pickle.dumps(font).hex())
+    @QProperty("QVariantMap", notify=fontChanged)
+    def font(self) -> dict:
+        if self._font is None:
+            with self._user_config.lock:
+                family = self._user_config.get(
+                    UserConfig.KEY_UI_FONT_FAMILY,
+                    str,
+                    self._default_font.family())
+                size = self._user_config.get(
+                    UserConfig.KEY_UI_FONT_SIZE,
+                    int,
+                    self._default_font.pointSize())
+            self._font = (family, self.DEFAULT_FONT_SIZE if size <= 0 else size)
+
+        # QML Qt.font() comfortable
+        print(self._font)
+        return {
+            "family": self._font[0],
+            "pointSize": self._font[1]
+        }
+
+    @font.setter
+    def _setFont(self, font: dict) -> None:
+        # QML Qt.font() comfortable
+        if "family" in font:
+            family = str(font["family"])
+        else:
+            family = self._default_font.family()
+        if "pointSize" in font:
+            size = int(font["pointSize"])
+            size = self.DEFAULT_FONT_SIZE if size <= 0 else size
+        else:
+            size = self.DEFAULT_FONT_SIZE
+
+        with self._user_config.lock:
+            self._user_config.set(
+                UserConfig.KEY_UI_FONT_FAMILY,
+                family,
+                save=False)
+            self._user_config.set(
+                UserConfig.KEY_UI_FONT_SIZE,
+                size,
+                save=False)
+            self._user_config.save()
+
+        if (family, size) != self._font:
+            self._font = (family, size)
+            self.fontChanged.emit()
 
     ############################################################################
     # TODO

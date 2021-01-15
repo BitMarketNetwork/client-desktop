@@ -463,7 +463,7 @@ class GCD(meta.QSeq):
     def reset_db(self) -> None:
         self.dropDb.emit()
         user_config = CoreApplication.instance().userConfig
-        user_config.set(bmnclient.config.UserConfig.KEY_VERSION, e_config_version.VERSION)
+        user_config.set(bmnclient.config.UserConfig.KEY_VERSION, e_config_version.VERSION_STRING)
         self._db_valid = True
 
     def look_for_HD(self):

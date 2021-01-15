@@ -93,9 +93,6 @@ BApplicationWindow {
 
         BSettingsPage {
             list.display: _drawer.barsDisplay
-            onRestartApplication: { // TODO
-                //_applicationWindow.close()
-            }
         }
     }
 

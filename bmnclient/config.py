@@ -25,6 +25,8 @@ class UserConfig:
     KEY_UI_LANGUAGE = "ui.language"
     KEY_UI_THEME = "ui.theme"
     KEY_UI_HIDE_TO_TRAY = "ui.hide_to_tray"
+    KEY_UI_FONT_FAMILY = "ui.font.family"
+    KEY_UI_FONT_SIZE = "ui.font.size"
 
     KEY_KEY_STORE_VALUE = "key_store.value"
     KEY_KEY_STORE_SEED = "key_store.seed"

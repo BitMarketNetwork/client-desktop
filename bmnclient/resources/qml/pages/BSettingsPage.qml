@@ -3,7 +3,6 @@ import "../basiccontrols"
 
 BApplicationPage {
     id: _base
-    signal restartApplication
 
     title: qsTr("Application settings")
 
@@ -23,15 +22,12 @@ BApplicationPage {
     }
 
     BSettingsAdvancedPane {
-        applicationFont: _applicationWindow.font
+        applicationFont: Qt.font(BBackend.settingsManager.font)
         onApplicationFontChanged: {
-            _applicationWindow.font = applicationFont
-            BBackend.settingsManager.fontData = { // TODO
+            BBackend.settingsManager.font = {
                 "family": applicationFont.family,
                 "pointSize": applicationFont.pointSize,
-                "bold": applicationFont.bold
             }
-            restartApplication()
         }
 
         fiatValueSourceModel: BBackend.settingsManager.rateSourceModel
