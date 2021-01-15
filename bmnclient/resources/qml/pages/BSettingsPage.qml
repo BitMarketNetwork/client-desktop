@@ -30,6 +30,11 @@ BApplicationPage {
             }
         }
 
+        hideToTray: BBackend.settingsManager.hideToTray
+        onHideToTrayChanged: {
+            BBackend.settingsManager.hideToTray = hideToTray
+        }
+
         fiatValueSourceModel: BBackend.settingsManager.rateSourceModel
         currentFiatValueSourceIndex: BBackend.settingsManager.rateSourceIndex
         onCurrentFiatValueSourceIndexChanged: {

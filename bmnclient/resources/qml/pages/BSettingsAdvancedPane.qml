@@ -9,6 +9,7 @@ BPane {
     property string iconSource: _applicationManager.imageSource("icon-tools.svg")
 
     property alias applicationFont: _fontDialog.font
+    property alias hideToTray: _hideToTray.checked
 
     property alias fiatValueSourceModel: _fiatValueSource.model
     property alias currentFiatValueSourceIndex: _fiatValueSource.currentIndex
@@ -28,9 +29,9 @@ BPane {
             id: _fontDialogButton
             text: {
                 return (
-                            _fontDialog.currentFont.family
+                            _fontDialog.font.family
                             + ", "
-                            + Math.round(_fontDialog.currentFont.pointSize * 10) / 10)
+                            + Math.round(_fontDialog.font.pointSize))
             }
             onClicked: {
                 _fontDialog.open()
@@ -41,10 +42,7 @@ BPane {
             text: qsTr("Hide to tray on closing:")
         }
         BDialogInputSwitch {
-            checked: BBackend.settingsManager.hideToTray
-            onCheckedChanged: {
-                BBackend.settingsManager.hideToTray = checked
-            }
+            id: _hideToTray
         }
 
         BDialogSeparator {}

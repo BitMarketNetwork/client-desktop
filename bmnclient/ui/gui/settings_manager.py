@@ -209,15 +209,20 @@ class SettingsManager(QObject):
                 family = self._user_config.get(
                     UserConfig.KEY_UI_FONT_FAMILY,
                     str,
-                    self._default_font.family())
+                    None)
                 size = self._user_config.get(
                     UserConfig.KEY_UI_FONT_SIZE,
                     int,
-                    self._default_font.pointSize())
-            self._font = (family, self.DEFAULT_FONT_SIZE if size <= 0 else size)
+                    0)
+            if not family:
+                family = self._default_font.family()
+            if not size:
+                size = self._default_font.pointSize()
+            if size <= 0:
+                size = self.DEFAULT_FONT_SIZE
+            self._font = (family, size)
 
         # QML Qt.font() comfortable
-        print(self._font)
         return {
             "family": self._font[0],
             "pointSize": self._font[1]
