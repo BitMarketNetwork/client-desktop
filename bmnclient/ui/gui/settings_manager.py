@@ -2,35 +2,84 @@ import logging
 import math
 import pickle
 from typing import Optional, Union
+from bmnclient import gcd
 
 from PySide2.QtCore import QObject, Signal as QSignal, Slot as QSlot, \
     Property as QProperty
 
-from . import settings_manager_impl
 from ...config import UserConfig
-from ...application import CoreApplication
 from ...wallet import base_unit, currency, rate_source
 from ...language import Language
 
 log = logging.getLogger(__name__)
 
 
-class SettingsManager(settings_manager_impl.SettingsManagerImpl):
+class SettingsManager(QObject):
     newAddressChanged = QSignal()
     rateSourceChanged = QSignal()
     currencyChanged = QSignal()
     unitChanged = QSignal()
 
-    def __init__(
-            self,
-            application: CoreApplication,
-            parent: Optional[QObject]) -> None:
-        super().__init__(parent)
-        self._application = application
+    def __init__(self, user_config: UserConfig) -> None:
+        super().__init__()
+        self._gcd = gcd.GCD.get_instance()
+        self._use_new_address = True
+        self._font_settings = {}
+        #
+        self._currency_model = []
+        self._currency_index = 0
+        self._fill_currencies()
+        #
+        self._rate_source_model = []
+        self._rate_source_index = 0
+        self._fill_rate_source()
+        #
+        self._unit_model = []
+        self._unit_index = 0
+        self._fill_units()
+
+        self._user_config = user_config
         self._language_list = None
         self._current_language_name = None
         self._current_theme_name = None
         self._hide_to_tray = None
+
+    def _fill_currencies(self):
+        currencies = [
+            (self.tr("US dollar"), "USD"),
+            (self.tr("Euro"), "EUR"),
+            (self.tr("Russian ruble"), "RUB"),
+        ]
+        self._currency_model = [
+            currency.Currency(
+                self,
+                name=name,
+            )
+            for name, _ in currencies
+        ]
+
+    def _fill_units(self):
+        units = [
+            ("BTC", 8),
+            ("mBtc", 5),
+            ("bits", 2),
+            ("sat", 0),
+        ]
+        self._unit_model = [
+            base_unit.BaseUnit(
+                *val,
+                self,
+            )
+            for val in units
+        ]
+
+    def _fill_rate_source(self):
+        self._rate_source_model = [
+            rate_source.RateSource(
+                self,
+                name=name,
+            ) for name, _ in rate_source.SOURCE_OPTIONS.items()
+        ]
 
     @QSlot(result=bool)
     def accept(self) -> bool:
@@ -63,7 +112,7 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
     @QProperty(str, notify=currentLanguageNameChanged)
     def currentLanguageName(self) -> str:
         if self._current_language_name is None:
-            name = self._application.userConfig.get(
+            name = self._user_config.get(
                 UserConfig.KEY_UI_LANGUAGE,
                 str,
                 Language.PRIMARY_NAME)
@@ -80,7 +129,7 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
         if not self._isValidLanguageName(name):
             log.error(f"Unknown language \"{name}\".")
             return
-        self._application.userConfig.set(UserConfig.KEY_UI_LANGUAGE, name)
+        self._user_config.set(UserConfig.KEY_UI_LANGUAGE, name)
         if self._current_language_name != name:
             self._current_language_name = name
             self.currentLanguageNameChanged.emit()
@@ -104,7 +153,7 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
     @QProperty(str, notify=currentThemeNameChanged)
     def currentThemeName(self) -> str:
         if self._current_theme_name is None:
-            self._current_theme_name = self._application.userConfig.get(
+            self._current_theme_name = self._user_config.get(
                 UserConfig.KEY_UI_THEME,
                 str,
                 ""  # QML controlled
@@ -115,7 +164,7 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
     @currentThemeName.setter
     def _setCurrentThemeName(self, name) -> None:
         assert type(name) is str
-        self._application.userConfig.set(UserConfig.KEY_UI_THEME, name)
+        self._user_config.set(UserConfig.KEY_UI_THEME, name)
         if self._current_theme_name != name:
             self._current_theme_name = name
             self.currentThemeNameChanged.emit()
@@ -129,7 +178,7 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
     @QProperty(bool, notify=hideToTrayChanged)
     def hideToTray(self) -> bool:
         if self._hide_to_tray is None:
-            self._hide_to_tray = self._application.userConfig.get(
+            self._hide_to_tray = self._user_config.get(
                 UserConfig.KEY_UI_HIDE_TO_TRAY,
                 bool,
                 False)
@@ -139,10 +188,23 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
     @hideToTray.setter
     def _setHideToTray(self, value) -> None:
         assert type(value) is bool
-        self._application.userConfig.set(UserConfig.KEY_UI_HIDE_TO_TRAY, value)
+        self._user_config.set(UserConfig.KEY_UI_HIDE_TO_TRAY, value)
         if value != self._hide_to_tray:
             self._hide_to_tray = value
             self.hideToTrayChanged.emit()
+
+    ############################################################################
+    # Font
+    ############################################################################
+
+    @QProperty("QVariantMap", constant=True)
+    def fontData(self) -> dict:
+        return self._font_settings
+
+    @fontData.setter
+    def _set_font_data(self, font: dict) -> None:
+        self._font_settings = font
+        self._gcd.save_meta("font", pickle.dumps(font).hex())
 
     ############################################################################
     # TODO
@@ -264,19 +326,3 @@ class SettingsManager(settings_manager_impl.SettingsManagerImpl):
             return
         self._use_new_address = on
         self.newAddressChanged.emit()
-
-    @QProperty("QVariantMap", constant=True)
-    def fontData(self) -> dict:
-        return self._font_settings
-
-    def set_font_from_hex(self, font: str) -> None:
-        # we don't want notify here 'cause we rely it happens before QML loading
-        if font:
-            self._font_settings = pickle.loads(bytes.fromhex(font))
-            log.warning(f"new font data: {self._font_settings}")
-
-    @fontData.setter
-    def _set_font_data(self, font: dict) -> None:
-        self._font_settings = font
-        self._gcd.save_meta("font", pickle.dumps(font).hex())
-        # log.warning(f"new font data: {font}")

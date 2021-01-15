@@ -29,7 +29,7 @@ class KeyIndex(Enum):
 class KeyStore(QObject):
     mnemoRequested = QSignal()
 
-    def __init__(self, user_config: UserConfig):
+    def __init__(self, user_config: UserConfig) -> None:
         super().__init__()
         self._user_config = user_config
         self._logger = getClassLogger(__name__, self.__class__)

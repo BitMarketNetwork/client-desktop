@@ -40,7 +40,7 @@ class Application(CoreApplication):
                 QtCore.Qt.QueuedConnection)
 
     def _initializeManagers(self) -> None:
-        self._settings_manager = SettingsManager(self, self)
+        self._settings_manager = SettingsManager(self._user_config)
         self._ui_manager = UIManager(self, self)
         self._receive_manager = ReceiveManager(self)
         self._coin_manager = CoinManager(self.gcd, self)
