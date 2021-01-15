@@ -18,7 +18,6 @@ class SettingsManager(QObject):
     newAddressChanged = QSignal()
     rateSourceChanged = QSignal()
     currencyChanged = QSignal()
-    unitChanged = QSignal()
 
     def __init__(self, user_config: UserConfig) -> None:
         super().__init__()
@@ -32,10 +31,6 @@ class SettingsManager(QObject):
         self._rate_source_model = []
         self._rate_source_index = 0
         self._fill_rate_source()
-        #
-        self._unit_model = []
-        self._unit_index = 0
-        self._fill_units()
 
         from . import Application
 
@@ -59,21 +54,6 @@ class SettingsManager(QObject):
                 name=name,
             )
             for name, _ in currencies
-        ]
-
-    def _fill_units(self):
-        units = [
-            ("BTC", 8),
-            ("mBtc", 5),
-            ("bits", 2),
-            ("sat", 0),
-        ]
-        self._unit_model = [
-            base_unit.BaseUnit(
-                *val,
-                self,
-            )
-            for val in units
         ]
 
     def _fill_rate_source(self):
@@ -280,42 +260,14 @@ class SettingsManager(QObject):
         if self._currency_index < len(self._currency_model):
             return self._currency_model[self._currency_index]
 
-    @QProperty("QVariantList", constant=True)
-    def unitModel(self):
-        return self._unit_model
-
-    @QProperty(int, notify=unitChanged)
-    def unitIndex(self) -> int:
-        return self._unit_index
-
-    @unitIndex.setter
-    def _set_unit(self, index: Union[int, str]) -> None:
-        if isinstance(index, str):
-            index = int(index)
-        if index == self._unit_index:
-            return
-        self._unit_index = index
-        self._gcd.save_meta("base_unit", str(index))
-        self.unitChanged.emit()
-
-    @QProperty(base_unit.BaseUnit, notify=unitChanged)
-    def baseUnit(self) -> base_unit.BaseUnit:
-        if self._unit_index < len(self._unit_model):
-            return self._unit_model[self._unit_index]
-
     @QSlot(float, result=str)
     def coinBalance(self, amount: float) -> str:
-        # TODO: we disgard coin convertion ratio & decimal level !!! it's
-        #  normal for btc & lts but isn't sure for next coins
-        assert self.baseUnit
         assert isinstance(amount, (int, float)), amount
         if math.isnan(amount):
             return "0"
         # log.debug(f"balance calcaultaion")
         try:
-            # log.warning(f"am:{amount} fac:{self.baseUnit.factor}")
-            res = amount / \
-                  pow(10, self.baseUnit.factor)  # pylint: disable=no-member
+            res = amount / pow(10, 8)
             if res == 0.0:
                 return "0"
             res = format(round(res, max(0, 3 - int(math.log10(res)))), 'f')
@@ -329,20 +281,9 @@ class SettingsManager(QObject):
 
     @QSlot(str, result=str)
     def coinUnit(self, unit: Optional[str]) -> str:
-        assert self.baseUnit
-        # use current then
         if unit is None:
             unit = self.parent().coinManager.coin.unit
-        # unless baseUnit implemented
         return unit
-
-        if self.baseUnit.factor == 8:  # pylint: disable=no-member
-            return unit
-        if self.baseUnit.factor == 5:  # pylint: disable=no-member
-            return "".join({
-                "m", unit[0], unit[1:].lower()
-            })
-        return self.baseUnit.name  # pylint: disable=no-member
 
     @QProperty("QVariantList", constant=True)
     def rateSourceModel(self) -> "QVariantList":
