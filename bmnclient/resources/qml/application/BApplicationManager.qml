@@ -70,14 +70,14 @@ QtObject {
         dialog.open()
     }
 
-    function openRevealSeedPharseDialog() {
+    function openRevealSeedPharseDialog() { // TODO create dialogs/*.qml file
         let passwordDialog = createDialog("BPasswordDialog", {})
         passwordDialog.onPasswordAccepted.connect(function (password) {
             let dialog = createDialog(
                     "BSeedPhraseDialog", {
                         "type": BSeedPhraseDialog.Type.Reveal,
                         "seedPhraseText": BBackend.keyStore.revealSeedPhrase(password),
-                        "readOnly": true
+                        "readOnly": !BBackend.debugMode
                     })
             dialog.open()
         })

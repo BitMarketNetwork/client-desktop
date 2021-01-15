@@ -112,10 +112,6 @@ class KeyStore(QObject):
         seed = mnemonic.Mnemonic.phraseToSeed(self.gcd.get_mnemo())
         self.apply_master_seed(seed, save=True)
 
-    @QSlot(str, result=str)
-    def revealSeedPhrase(self, password: str):
-        return self.gcd.get_mnemo(password) or self.tr("Wrong password")
-
     @QSlot()
     def resetWallet(self):
         self.gcd.reset_wallet()
@@ -141,6 +137,10 @@ class KeyStore(QObject):
         return False
 
     def apply_master_seed(self, seed: bytes, *, save: bool):
+        from .application import CoreApplication
+        if not CoreApplication.instance():
+            return
+
         self.__master_hd = hd.HDNode.make_master(seed)
         _44_node = self.__master_hd.make_child_prv(44, True)
         # iterate all 'cause we need test coins
@@ -194,9 +194,12 @@ class KeyStore(QObject):
     @QSlot(str, result=bool)
     def finalizeGenerateSeedPhrase(self, phrase: str) -> bool:
         with self._lock:
-            if not self.validateGenerateSeedPhrase(phrase):
-                return False
-            return self._saveSeedFromPhrase(phrase)
+            if self.validateGenerateSeedPhrase(phrase):
+                if self._saveSeedWithPhrase(self._mnemonic.language, phrase):
+                    self._mnemonic = None
+                    self._mnemonic_salt_hash = None
+                    return True
+        return False
 
     @QSlot(str, result=bool)
     def prepareRestoreSeedPhrase(self, language: str = None) -> bool:
@@ -215,44 +218,67 @@ class KeyStore(QObject):
     @QSlot(str, result=bool)
     def finalizeRestoreSeedPhrase(self, phrase: str) -> bool:
         with self._lock:
-            if not self._mnemonic or not self._mnemonic.isValidPhrase(phrase):
-                return False
-            return self._saveSeedFromPhrase(phrase)
+            if self._mnemonic and self._mnemonic.isValidPhrase(phrase):
+                if self._saveSeedWithPhrase(self._mnemonic.language, phrase):
+                    self._mnemonic = None
+                    self._mnemonic_salt_hash = None
+                    return True
+        return False
 
-    def _saveSeedFromPhrase(self, phrase: str) -> bool:
-        assert self._mnemonic
-        seed = Mnemonic.phraseToSeed(phrase)
-        value = version.STRING_SEPARATOR.join((
-            self._mnemonic.language,
-            seed.hex())).encode(encoding=version.ENCODING)
-        value = self.deriveMessageCipher(KeyIndex.SEED).encrypt(value)
-        if not self._user_config.set(
-                UserConfig.KEY_KEY_STORE_SEED,
-                value):
+    @QSlot(str, result=str)
+    def revealSeedPhrase(self, password: str):
+        with self._lock:
+            if not self.verifyPassword(password):
+                return self.tr("Wrong password.")
+            phrase = self._getSeedPhrase()
+            if not phrase:
+                return self.tr("Seed phrase not found.")
+            return phrase[1]
+
+    def _saveSeedWithPhrase(self, language: str, phrase: str) -> bool:
+        if version.STRING_SEPARATOR in language:
             return False
 
-        self._mnemonic = None
-        self._mnemonic_salt_hash = None
+        seed = Mnemonic.phraseToSeed(phrase)
+        phrase = version.STRING_SEPARATOR.join((language, phrase))
 
-        from .application import CoreApplication
-        if CoreApplication.instance():
-            self.apply_master_seed(seed, save=True)
+        with self._user_config.lock:
+            if not self._user_config.set(
+                    UserConfig.KEY_KEY_STORE_SEED,
+                    self.deriveMessageCipher(KeyIndex.SEED).encrypt(seed),
+                    save=False):
+                return False
+            if not self._user_config.set(
+                    UserConfig.KEY_KEY_STORE_SEED_PHRASE,
+                    self.deriveMessageCipher(KeyIndex.SEED).encrypt(
+                        phrase.encode(encoding=version.ENCODING)),
+                    save=False):
+                return False
+            if not self._user_config.save():
+                return False
+        self.apply_master_seed(seed, save=True)
         return True
 
-    def _loadSeed(self) -> Optional[Tuple[str, bytes]]:
+    def _getSeed(self) -> Optional[bytes]:
         value = self._user_config.get(UserConfig.KEY_KEY_STORE_SEED, str)
         if not value:
             return None
-        value = self.deriveMessageCipher(KeyIndex.SEED).decrypt(value)
+        return self.deriveMessageCipher(KeyIndex.SEED).decrypt(value)
+
+    def _getSeedPhrase(self) -> Optional[Tuple[str, str]]:
+        value = self._user_config.get(UserConfig.KEY_KEY_STORE_SEED_PHRASE, str)
         if not value:
             return None
+        value = self.deriveMessageCipher(KeyIndex.SEED).decrypt(value)
         try:
             value = value.decode(encoding=version.ENCODING)
-            (language, seed) = value.split(version.STRING_SEPARATOR, 1)
-            seed = bytes.fromhex(seed)
+            (language, phrase) = value.split(version.STRING_SEPARATOR, 1)
         except (UnicodeError, ValueError):
             return None
-        return language, seed
+
+        language = language.lower()
+        phrase = Mnemonic.friendlyPhrase(language, phrase)
+        return language, phrase
 
     ############################################################################
 
@@ -282,6 +308,14 @@ class KeyStore(QObject):
         if CoreApplication.instance():
             CoreApplication.instance().gcd.apply_password()  # TODO
         return True
+
+    @QSlot(str, result=bool)
+    def verifyPassword(self, password: str) -> bool:
+        with self._lock:
+            value = self._user_config.get(UserConfig.KEY_KEY_STORE_VALUE, str)
+            if value and SecretStore(password).decryptValue(value):
+                return True
+        return False
 
     @QSlot(result=bool)
     def resetPassword(self) -> bool:

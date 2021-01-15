@@ -90,7 +90,7 @@ class TestKeyStore(TestCase):
         self.assertFalse(key_store.hasPassword)
         self.assertTrue(key_store.createPassword(self.password))
         self.assertTrue(key_store.applyPassword(self.password))
-        self.assertIsNone(key_store._loadSeed())
+        self.assertIsNone(key_store._getSeed())
 
         for language in Mnemonic.getLanguageList():
             phrase1 = key_store.prepareGenerateSeedPhrase(language)
@@ -112,10 +112,16 @@ class TestKeyStore(TestCase):
             self.assertIsNone(key_store._mnemonic)
             self.assertIsNone(key_store._mnemonic_salt_hash)
 
-            result = key_store._loadSeed()
+            result = key_store._getSeed()
+            self.assertIsInstance(result, bytes)
+            self.assertEqual(seed2, result)
+
+            result = key_store._getSeedPhrase()
             self.assertIsInstance(result, tuple)
+            self.assertIsInstance(result[0], str)
+            self.assertIsInstance(result[1], str)
             self.assertEqual(language, result[0])
-            self.assertEqual(seed2, result[1])
+            self.assertEqual(phrase2, result[1])
 
     def test_restore_seed_phrase(self) -> None:
         key_store = KeyStore(self.user_config)
@@ -134,7 +140,13 @@ class TestKeyStore(TestCase):
             self.assertIsNone(key_store._mnemonic)
             self.assertIsNone(key_store._mnemonic_salt_hash)
 
-            result = key_store._loadSeed()
+            seed = key_store._getSeed()
+            self.assertIsInstance(seed, bytes)
+            self.assertEqual(Mnemonic(language).phraseToSeed(phrase), seed)
+
+            result = key_store._getSeedPhrase()
             self.assertIsInstance(result, tuple)
+            self.assertIsInstance(result[0], str)
+            self.assertIsInstance(result[1], str)
             self.assertEqual(language, result[0])
-            self.assertEqual(Mnemonic(language).phraseToSeed(phrase), result[1])
+            self.assertEqual(phrase, result[1])

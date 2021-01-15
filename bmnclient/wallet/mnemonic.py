@@ -1,6 +1,6 @@
 # JOK+
 import unicodedata
-from typing import Optional, List
+from typing import Optional, List, Union, Iterable
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -53,11 +53,7 @@ class Mnemonic:
         for i in range(len(b) // 11):
             i = int(b[i * 11: (i + 1) * 11], 2)
             result.append(self._word_list[i])
-        if self._language == "japanese":
-            result_phrase = "\u3000".join(result)
-        else:
-            result_phrase = " ".join(result)
-        return result_phrase
+        return self.friendlyPhrase(self._language, result)
 
     def isValidPhrase(self, phrase: str) -> bool:
         phrase = self.normalizePhrase(phrase).split()
@@ -113,8 +109,22 @@ class Mnemonic:
         return phrase1 == phrase2
 
     @classmethod
-    def normalizePhrase(cls, string: str) -> str:
-        return unicodedata.normalize("NFKD", string).strip()
+    def normalizePhrase(cls, phrase: str) -> str:
+        return unicodedata.normalize("NFKD", phrase).strip()
+
+    @classmethod
+    def friendlyPhrase(
+            cls,
+            language: str,
+            phrase: Union[str, Iterable[str]]) -> str:
+        if isinstance(phrase, str):
+            phrase = cls.normalizePhrase(phrase).split()
+            # phrase = filter(None, phrase)
+        if language == "japanese":
+            phrase = "\u3000".join(phrase)
+        else:
+            phrase = " ".join(phrase)
+        return phrase
 
     @classmethod
     def getLanguageList(cls) -> List[str]:
