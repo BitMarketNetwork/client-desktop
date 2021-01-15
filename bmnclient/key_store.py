@@ -156,10 +156,6 @@ class KeyStore(QObject):
         from .application import CoreApplication
         return CoreApplication.instance().gcd
 
-    @property
-    def master_key(self):
-        return self.__master_hd
-
     ############################################################################
 
     @QSlot(str, result=str)

@@ -434,48 +434,6 @@ class GCD(meta.QSeq):
         if address.wants_update_unspents:
             self.unspentsOfWallet.emit(address)
 
-    def save_master_seed(self, seed):
-        self.saveMeta.emit("seed", seed)
-
-    def save_mnemo(self, mnemo: str):
-        # test case
-        if self._passphrase is None:
-            log.critical("NO PASSPHRASE")
-            return
-        # we can't use DB for mnemo ! 'cause user can reset DB but leave master key
-        self._mnemo = aes.AesProvider(self._passphrase).encode(
-            util.get_bytes(mnemo), True)
-        # log.debug(f"mnemo {self._mnemo} saved")
-        user_config = CoreApplication.instance().userConfig
-        user_config.set(
-            bmnclient.config.UserConfig.KEY_WALLET_SEED,
-            self._mnemo.hex())
-
-    def get_mnemo(self, password: Optional[str] = None) -> str:
-        if self._mnemo is None:
-            user_config = CoreApplication.instance().userConfig
-            self._mnemo = user_config.get(
-                bmnclient.config.UserConfig.KEY_WALLET_SEED,
-                str,
-                "").fromhex()
-        if self._mnemo:
-            if password is None:
-                try:
-                    return aes.AesProvider(self._passphrase).decode(self._mnemo, True).decode()
-                except aes.AesError as ae:
-                    log.warning(f"AES error: {ae}")
-            else:
-                der = key_derivation.KeyDerivation(password)
-                user_config = CoreApplication.instance().userConfig
-
-                if der.check(bytes.fromhex(
-                        user_config.get(bmnclient.config.UserConfig.KEY_WALLET_SECRET, str, "ff"))):
-                    try:
-                        return aes.AesProvider(der.value()).decode(self._mnemo, True).decode()
-                    except aes.AesError as ae:
-                        log.warning(f"AES error: {ae}")
-        # log.warning(f"mnemo: {self._mnemo}")
-
     def on_meta(self, key: str, value: str):
         log.debug(f"meta value read: {key}:")
         if key == "seed":
