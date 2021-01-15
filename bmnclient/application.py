@@ -1,11 +1,12 @@
 # JOK+
 from __future__ import annotations
 
-from typing import Union
+from typing import Union, Optional, Type
 
 from PySide2.QtCore import Qt, QLocale, QMetaObject, QObject, Slot as QSlot, \
     QCoreApplication
-from PySide2.QtGui import QIcon, QGuiApplication
+from PySide2.QtGui import QIcon
+from PySide2.QtWidgets import QApplication
 
 from . import version, resources
 from .config import UserConfig
@@ -20,7 +21,7 @@ class CoreApplication(QObject):
 
     def __init__(
             self,
-            qt_class: Union[QCoreApplication, QGuiApplication],
+            qt_class: Union[Type[QCoreApplication], Type[QApplication]],
             argv: list[str]) -> None:
         assert self.__class__._instance is None
         super().__init__()
@@ -29,7 +30,7 @@ class CoreApplication(QObject):
         self._logger = getClassLogger(__name__, self.__class__)
         self._title = "{} {}".format(version.NAME, version.VERSION_STRING)
         self._icon = QIcon(str(resources.ICON_FILE_PATH))
-        self._language: Language = None
+        self._language: Optional[Language] = None
         self._quit_code = 0
         self._on_quit_called = False
 
@@ -54,7 +55,7 @@ class CoreApplication(QObject):
         # QCoreApplication
         self._qt_application = qt_class(argv)
 
-        if issubclass(qt_class, QGuiApplication):
+        if issubclass(qt_class, QApplication):
             qt_class.setWindowIcon(self._icon)
 
         # We recommend that you connect clean-up code to the aboutToQuit()
@@ -97,7 +98,7 @@ class CoreApplication(QObject):
         self._qt_application.exit(code)
 
     @classmethod
-    def instance(cls) -> CoreApplication:  # TODO kill
+    def instance(cls) -> CoreApplication:
         return cls._instance
 
     @property

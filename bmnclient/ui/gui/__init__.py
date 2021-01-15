@@ -1,6 +1,9 @@
+from __future__ import annotations
 import logging
 
 from PySide2 import QtCore, QtQml, QtWidgets, QtQuickControls2
+from PySide2.QtWidgets import QApplication
+from PySide2.QtGui import QFont
 
 import bmnclient.version
 from bmnclient.gcd import GCD
@@ -25,7 +28,7 @@ QML_CONTEXT_NAME = "BBackend"
 
 class Application(CoreApplication):
     def __init__(self, argv) -> None:
-        super().__init__(QtWidgets.QApplication, argv)
+        super().__init__(QApplication, argv)
 
         # TODO kill
         self.gcd = GCD(silent_mode=bmnclient.command_line.silent_mode())
@@ -79,6 +82,14 @@ class Application(CoreApplication):
         self._qml_engine.objectCreated.connect(self._onQmlObjectCreated)
         # TODO self._qml_engine.warnings.connect(self._onQmlWarnings)
         self._qml_engine.exit.connect(self._onQmlExit)
+
+    @classmethod
+    def instance(cls) -> Application:
+        return super().instance()
+
+    @property
+    def defaultFont(self) -> QFont:
+        return self._qt_application.font()
 
     @override
     def _onRun(self) -> None:
