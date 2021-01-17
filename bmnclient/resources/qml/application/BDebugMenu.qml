@@ -48,12 +48,6 @@ BMenu {
             }
         }
         BMenuItem {
-            text: "Populate wallets"
-            onTriggered: {
-                BBackend.debugManager.makeWallets()
-            }
-        }
-        BMenuItem {
             text: "Remove current wallet"
             enabled: BBackend.coinManager.addressIndex >= 0
             onTriggered: {
@@ -137,13 +131,6 @@ BMenu {
     }
     BMenu {
         title: "Debug scenarios"
-        BMenuItem {
-            text: "Simulate MTX broadcasting"
-            onTriggered: {
-                // Error: name 'OP_RETURN' is not defined
-                debugManager.simulateTxBroadcasting()
-            }
-        }
         BMenuItem {
             text: "SIGHUP simulation"
             onTriggered: {

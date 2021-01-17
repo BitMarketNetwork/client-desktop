@@ -68,18 +68,14 @@ class GCD(meta.QSeq):
         self.__debug_man = debug_manager.DebugManager(self)
         self.__fee_manager = fee_manager.FeeManager(self)
 
-        self.__btc_coin = coins.Bitcoin(self)
-        self.__btc_test_coin = coins.BitcoinTest(self)
-        self.__ltc_coin = coins.Litecoin(self)
         self.__all_coins = [
-            self.__btc_coin,
-            self.__btc_test_coin,
-            self.__ltc_coin,
+            coins.Bitcoin(self),
+            coins.BitcoinTest(self),
+            coins.Litecoin(self),
         ]
         self.__remote_server_version = None
 
-        user_config = CoreApplication.instance().userConfig
-        self.__server_version = user_config.get(
+        self.__server_version = CoreApplication.instance().userConfig.get(
             bmnclient.config.UserConfig.KEY_SERVER_VERSION,
             str,
             "")
@@ -128,21 +124,6 @@ class GCD(meta.QSeq):
     @property
     def wallets(self) -> List[address.CAddress]:
         return self._wallet_list
-
-    @ property
-    def first_test_address(self) -> address.CAddress:
-        # why for?
-        if not self.__btc_test_coin.wallets:
-            raise RuntimeError("Create any btc test address")
-        return self.__btc_test_coin.wallets[0]  # pylint: disable=unsubscriptable-object
-
-    @property
-    def ltc_coin(self) -> coins.CoinType:
-        return self.__ltc_coin
-
-    @property
-    def btc_coin(self) -> coins.CoinType:
-        return self.__btc_coin
 
     @property
     def all_coins(self) -> List[coins.CoinType]:
@@ -194,9 +175,9 @@ class GCD(meta.QSeq):
                             self.__server_version, version)
             if self.__remote_server_version:
                 self.__server_version = self.__remote_server_version
-                user_config = CoreApplication.instance().userConfig
-                user_config.set(bmnclient.config.UserConfig.KEY_SERVER_VERSION,
-                                self.__server_version)
+                CoreApplication.instance().userConfig.set(
+                    bmnclient.config.UserConfig.KEY_SERVER_VERSION,
+                    self.__server_version)
             else:
                 log.warn("Local server version match with remote one")
 
