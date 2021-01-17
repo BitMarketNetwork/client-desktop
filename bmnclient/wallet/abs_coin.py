@@ -32,8 +32,6 @@ class CoinBase(db_entry.DbEntry):
     _btc_rate: float = 0.
     _convertion_ratio: float = 100000000.
 
-    _icon_ext = "png"
-
     def __init__(self, parent):
         super().__init__(parent)
         self._balance = 0.
@@ -50,8 +48,8 @@ class CoinBase(db_entry.DbEntry):
     @qt_core.Property(str, constant=True)
     def icon(self) -> str:
         if self._test:
-            return f"coins/{self.name[:-4]}.{self._icon_ext}"
-        return f"coins/{self.name}.{self._icon_ext}"
+            return f"coins/{self.name[:-4]}.svg"
+        return f"coins/{self.name}.svg"
 
     @qt_core.Property(bool, constant=True)
     def enabled(self) -> bool:

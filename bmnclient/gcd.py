@@ -73,22 +73,10 @@ class GCD(meta.QSeq):
         self.__btc_coin = coins.BitCoin(self)
         self.__btc_test_coin = coins.BitCoinTest(self)
         self.__ltc_coin = coins.LiteCoin(self)
-        self.__eth_coin = coins.EthereumCoin(self)
-        self.__bnb_coin = coins.BinanceCoin(self)
-        self.__xrp_coin = coins.RippleCoin(self)
-        self.__xlm_coin = coins.StellarCoin(self)
-        self.__usdt_coin = coins.TetherCoin(self)
-        self.__eos_coin = coins.EOSCoin(self)
         self.__all_coins = [
             self.__btc_coin,
             self.__btc_test_coin,
             self.__ltc_coin,
-            self.__eth_coin,
-            self.__bnb_coin,
-            self.__xrp_coin,
-            self.__xlm_coin,
-            self.__usdt_coin,
-            self.__eos_coin,
         ]
         self.__remote_server_version = None
         self.__post_count = 0
@@ -296,11 +284,11 @@ class GCD(meta.QSeq):
     def __len__(self) -> int:
         return len(self.all_visible_coins)
 
-    @ property
+    @property
     def post_count(self) -> int:
         return self.__post_count
 
-    @ post_count.setter
+    @post_count.setter
     def post_count(self, val: int) -> None:
         with self.__post_mutex:
             self.__post_count = val
@@ -340,8 +328,8 @@ class GCD(meta.QSeq):
 
     def release(self):
         self.stop_poll()
-        qt_core.QMetaObject.invokeMethod(self.network, "abort",qt_core.Qt.QueuedConnection,)
-        qt_core.QMetaObject.invokeMethod(self.database,"abort",qt_core.Qt.QueuedConnection,)
+        qt_core.QMetaObject.invokeMethod(self.network, "abort", qt_core.Qt.QueuedConnection,)
+        qt_core.QMetaObject.invokeMethod(self.database,"abort", qt_core.Qt.QueuedConnection,)
 
         self.server_thread.exit()
         self.server_thread.wait()

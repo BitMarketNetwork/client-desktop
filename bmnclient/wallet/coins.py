@@ -555,10 +555,6 @@ class BitCoin(CoinType):
     _hd_index = 0
     _usd_rate = 9400.51
     _btc_rate = 1.
-    _icon_ext = "svg"
-
-    def __init__(self, parent):
-        super().__init__(parent=parent)
 
 
 class BitCoinTest(BitCoin):
@@ -569,7 +565,6 @@ class BitCoinTest(BitCoin):
     _test = True
     _usd_rate = 9400.51
     _btc_rate = 1.
-    _icon_ext = "svg"
 
 
 class LiteCoin(CoinType):
@@ -581,59 +576,3 @@ class LiteCoin(CoinType):
     _hd_index = 2
     _usd_rate = 39.83
     _btc_rate = 0.0073
-    _icon_ext = "svg"
-
-    def __init__(self, parent):
-        super().__init__(parent=parent)
-
-
-class LiteCoinTest(LiteCoin):
-    name = "ltctest"
-    full_name = "Litecoin Test"
-    network = coin_network.LitecoinTestNetwork
-    _test = True
-    _enabled = False
-    _usd_rate = 39.83
-    _btc_rate = 0.0073
-    _hd_index = 1  # all test have 1 !
-
-
-class EthereumCoin(CoinType):
-    name = "eth"
-    full_name = "Ethereum"
-    _btc_rate = 0.026
-    _enabled = False
-    _hd_index = 60  # 61 classic?
-
-
-class BinanceCoin(CoinType):
-    name = "bnb"
-    full_name = "Binancecoin"
-    _btc_rate = 0.00211
-    _hd_index = 714
-
-
-class RippleCoin(CoinType):
-    name = "xrp"
-    full_name = "Ripple"
-    btc_rate = 0.000001
-    _hd_index = 144
-
-
-class StellarCoin(CoinType):
-    name = "xlm"
-    full_name = "Stellar"
-    _btc_rate = 0.000007
-    _hd_index = 148
-
-
-class TetherCoin(CoinType):
-    name = "usdt"
-    full_name = "Tether"
-    # _hd_index = ?
-
-
-class EOSCoin(CoinType):
-    name = "eos"
-    full_name = "EOS"
-    _hd_index = 194
