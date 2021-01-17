@@ -2,8 +2,12 @@
 from pathlib import PurePath
 from typing import Optional, List
 
-from PySide2.QtCore import QLocale, QTranslator, QCoreApplication, \
-    QDirIterator, QDir
+from PySide2.QtCore import \
+    QCoreApplication, \
+    QDir, \
+    QDirIterator, \
+    QLocale, \
+    QTranslator
 
 from . import version
 from .logger import getClassLogger

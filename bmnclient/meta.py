@@ -54,7 +54,3 @@ class QSeqMeta(type(qt_core.QObject), type(abc.Sequence)):
 
 class QSeq(qt_core.QObject, abc.Sequence, metaclass=QSeqMeta):
     pass
-
-
-def override(f) -> typing.Callable:
-    return f

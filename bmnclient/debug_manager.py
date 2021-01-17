@@ -6,9 +6,7 @@ import time
 
 import PySide2.QtCore as qt_core
 
-import bmnclient.config
 from .wallet import coins, mutable_tx
-from .application import CoreApplication
 
 log = logging.getLogger(__name__)
 

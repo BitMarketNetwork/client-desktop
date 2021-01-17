@@ -2,11 +2,11 @@
 import functools
 import logging
 from datetime import datetime
-from typing import Any, List, Mapping, Optional, Union
+from typing import List, Optional, Union
 
 import PySide2.QtCore as qt_core
 
-from .. import config, orderedset, meta
+from .. import orderedset
 from . import db_entry, hd, key, mtx_impl, serialization, tx, util
 
 log = logging.getLogger(__name__)

@@ -4,7 +4,10 @@ import socket
 import sys
 from typing import Optional, Type
 
-from PySide2.QtCore import Signal as QSignal, Slot as QSlot, QObject
+from PySide2.QtCore import \
+    QObject, \
+    Signal as QSignal, \
+    Slot as QSlot
 from PySide2.QtNetwork import QAbstractSocket
 
 from .logger import getClassLogger

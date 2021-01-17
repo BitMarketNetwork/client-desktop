@@ -3,16 +3,21 @@ from __future__ import annotations
 
 from typing import Union, Optional, Type
 
-from PySide2.QtCore import Qt, QLocale, QMetaObject, QObject, Slot as QSlot, \
-    QCoreApplication
+from PySide2.QtCore import \
+    QCoreApplication, \
+    QLocale, \
+    QMetaObject, \
+    QObject, \
+    Qt, \
+    Slot as QSlot
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 
 from . import version, resources
 from .config import UserConfig
+from .key_store import KeyStore
 from .language import Language
 from .logger import getClassLogger
-from .key_store import KeyStore
 from .signal_handler import SignalHandler
 
 

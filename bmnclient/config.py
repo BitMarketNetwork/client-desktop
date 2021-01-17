@@ -4,7 +4,7 @@ import os
 from json.decoder import JSONDecodeError
 from pathlib import PurePath
 from threading import RLock
-from typing import Any, Union, Type
+from typing import Any, Type
 
 from . import platform, version
 from .logger import getClassLogger, osErrorToString

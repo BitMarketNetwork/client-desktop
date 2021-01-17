@@ -5,8 +5,11 @@ from json.decoder import JSONDecodeError
 from threading import RLock
 from typing import Optional, Tuple
 
-from PySide2.QtCore import Slot as QSlot, Signal as QSignal, \
-    Property as QProperty, QObject
+from PySide2.QtCore import \
+    Property as QProperty, \
+    QObject, \
+    Signal as QSignal, \
+    Slot as QSlot
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.hashes import Hash
 
@@ -17,7 +20,7 @@ from .crypto.kdf import SecretStore
 from .crypto.password import PasswordStrength
 from .logger import getClassLogger
 from .ui.gui import import_export
-from .wallet import hd, mnemonic
+from .wallet import hd
 from .wallet.mnemonic import Mnemonic
 
 
@@ -67,10 +70,13 @@ class KeyStore(QObject):
 
     def deriveCipher(self, key_index: KeyIndex) -> Optional[Cipher]:
         with self._lock:
+            assert self._getKey(key_index)
+            assert self._getNonce(key_index)
             return Cipher(self._getKey(key_index), self._getNonce(key_index))
 
     def deriveMessageCipher(self, key_index: KeyIndex) -> Optional[Cipher]:
         with self._lock:
+            assert self._getKey(key_index)
             return MessageCipher(self._getKey(key_index))
 
     @classmethod
