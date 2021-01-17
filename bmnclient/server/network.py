@@ -26,24 +26,14 @@ class Network(network_impl.NetworkImpl):
             self.retreive_mempool, qt_core.Qt.QueuedConnection)
         gcd.broadcastMtx.connect(
             self.broadcast_tx, qt_core.Qt.QueuedConnection)
-        gcd.debugUpdateHistory.connect(
-            self.debug_address_history, qt_core.Qt.QueuedConnection)
         gcd.lookForHDChain.connect(
             self.look_for_hd_addresses, qt_core.Qt.QueuedConnection)
         gcd.validateAddress.connect(
             self.validate_address, qt_core.Qt.QueuedConnection)
         gcd.undoTx.connect(
             self.undo_tx, qt_core.Qt.QueuedConnection)
-        gcd.httpFailureSimulation.connect(
-            self.http_failure_simulation, qt_core.Qt.QueuedConnection)
         gcd.dbLoaded.connect(
             self.level_loaded, qt_core.Qt.QueuedConnection)
-        gcd.fakeMempoolSearch.connect(
-            self.fake_mempool_seach, qt_core.Qt.QueuedConnection)
-        gcd.addressHistory.connect(
-            self.retrieve_address_history, qt_core.Qt.QueuedConnection)
-        gcd.startNetwork.connect(
-            self.start, qt_core.Qt.QueuedConnection)
 
         self._run_cmd(net_cmd.CheckServerVersionCommand(self))
         self._run_cmd(net_cmd.GetCoinRatesCommand(self))
@@ -85,6 +75,5 @@ class Network(network_impl.NetworkImpl):
     def retrieve_coin_history(self, coin: coins.CoinType):
         for wad in coin.wallets:
             # # update tx
-            # self.retrieve_address_history(wad)
             # update balance
             self._run_cmd(net_cmd.UpdateAddressInfoCommand(wad, self))

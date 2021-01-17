@@ -20,7 +20,6 @@ USER_DATABASE_FILE_PATH = \
 
 class UserConfig:
     KEY_VERSION = "version"
-    KEY_SERVER_VERSION = "server_version"  # TODO kill
 
     KEY_UI_LANGUAGE = "ui.language"
     KEY_UI_THEME = "ui.theme"

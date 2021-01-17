@@ -111,23 +111,6 @@ BMenu {
                 }
             }
         }
-        BMenu {
-            title: "HTTP error simulation"
-            BMenuItem {
-                text: "404"
-                onTriggered: {
-                    // TODO cannot test, not found ui visual updates
-                    BBackend.debugManager.simulateHTTPError(404)
-                }
-            }
-            BMenuItem {
-                text: "405"
-                onTriggered: {
-                    // TODO cannot test, not found ui visual updates
-                    BBackend.debugManager.simulateHTTPError(405)
-                }
-            }
-        }
     }
     BMenu {
         title: "Debug scenarios"
@@ -156,12 +139,6 @@ BMenu {
             }
         }
         BMenuItem {
-            text: "Simulate incoming transfer"
-            onTriggered: {
-                BBackend.coinManager.debugHistoryRequest()
-            }
-        }
-        BMenuItem {
             text: "Look for HD chain"
             onTriggered: {
                 BBackend.coinManager.lookForHD()
@@ -186,13 +163,6 @@ BMenu {
             text: "Monitor mempool"
             onTriggered: {
                 BBackend.coinManager.monitorMempool()
-            }
-        }
-        BMenuItem {
-            text: "Fake coin tx status progress"
-            enabled: BBackend.coinManager.coinIndex >= 0
-            onTriggered: {
-                BBackend.coinManager.fakeTxStatusProgress()
             }
         }
     }

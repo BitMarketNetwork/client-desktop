@@ -4,17 +4,10 @@ import logging
 from datetime import datetime
 from typing import Union
 
-import PySide2.QtCore as qt_core
-
-from .. import meta
 from .. import loading_level
 from . import net_cmd
 
 log = logging.getLogger(__name__)
-
-"""
-debugging copying
-"""
 
 
 class DummyCommandBase:
@@ -106,67 +99,3 @@ class UndoTransactionCommand(net_cmd.BaseNetworkCommand):
 
     def on_data_end(self, http_code=200):
         pass
-
-
-class HTTPFailureCommand(net_cmd.BaseNetworkCommand):
-    action = "wtf"
-    verbose = True
-
-    def __init__(self, code: int, parent):
-        super().__init__(parent=parent)
-        self._code = code
-
-    def on_data_end(self, http_code=200):
-        pass
-
-    @meta.debug
-    def get_action(self) -> str:
-        if self._code == 404:
-            return "wtf"
-        if self._code == 405:
-            return "coins"
-
-    @property
-    def args(self):
-        if self._code == 405:
-            return ["btc", "tx"]
-        return []
-
-
-class FakeMempoolCommand(net_cmd.AddressMultyMempoolCommand, DummyCommandBase):
-    verbose = True
-
-    def __init__(self, tx_: 'tx.Transaction', parent, counter=0, hash_=None):
-        super().__init__(tx_.wallet.coin.wallets, parent=parent, counter=counter, hash_=hash_)
-        self._tx = tx_
-
-    def run(self):
-        next_ = self.feed_data(
-            {
-                "tx_list": [],
-                "hash": '-',
-            }
-        )
-        #
-        if next_.counter == 3:
-            txd = self._tx.dump()
-            txd.update({
-                "height" : self._coin.height + 1,
-            })
-            self.feed_data({
-                "tx_list": {
-                    self._tx.name: txd,
-                },
-                "hash": "-",
-            })
-        elif next_:
-            qt_core.QThread.currentThread().msleep(50)
-            qt_core.QCoreApplication.processEvents()
-            fake = FakeMempoolCommand(
-                tx_=self._tx,
-                parent=self,
-                counter=next_.counter,
-                hash_=next_._hash,
-            )
-            fake.connect_(self.gcd)
-            fake.run()

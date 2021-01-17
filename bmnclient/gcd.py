@@ -1,14 +1,10 @@
 import datetime
 import functools
 import logging
-import threading
 from typing import List, Optional, Union
 
 import PySide2.QtCore as qt_core
 
-import bmnclient.config
-import bmnclient.config
-import bmnclient.version
 from . import loading_level, debug_manager, meta
 from .wallet import mutable_tx, tx, address, coins, \
     fee_manager, serialization, util
@@ -34,17 +30,13 @@ class GCD(meta.QSeq):
         coins.CoinType, str, arguments=["coin,address"])
     mempoolCoin = qt_core.Signal(coins.CoinType, arguments=["coin"])
     mempoolEveryCoin = qt_core.Signal()
-    startNetwork = qt_core.Signal()
     updateTxStatus = qt_core.Signal(tx.Transaction)
-    fakeMempoolSearch = qt_core.Signal(tx.Transaction)
     heightChanged = qt_core.Signal(coins.CoinType, arguments=["coin"])
     eraseWallet = qt_core.Signal(address.CAddress, arguments=["wallet"])
     clearAddressTx = qt_core.Signal(address.CAddress, arguments=["address"])
     removeTxList = qt_core.Signal(list)
     undoTx = qt_core.Signal(coins.CoinType, int)
-    httpFailureSimulation = qt_core.Signal(int)
     unspentsOfWallet = qt_core.Signal(address.CAddress, arguments=["wallet"])
-    debugUpdateHistory = qt_core.Signal(address.CAddress, arguments=["wallet"])
     retrieveCoinHistory = qt_core.Signal(coins.CoinType, arguments=["coin"])
     netError = qt_core.Signal(int, str, arguments=["code,error"])
     dropDb = qt_core.Signal()
@@ -54,9 +46,6 @@ class GCD(meta.QSeq):
     saveTx = qt_core.Signal(tx.Transaction, arguments=["tx"])
     saveTxList = qt_core.Signal(address.CAddress, list)
     dbLoaded = qt_core.Signal(int)
-    # TODO: connect it
-    # updateTxs = qt_core.Signal(address.CAddress, arguments=["wallet"])
-    addressHistory = qt_core.Signal( address.CAddress )
     applyPassword = qt_core.Signal()
 
     def __init__(self, parent=None):
@@ -73,12 +62,6 @@ class GCD(meta.QSeq):
             coins.BitcoinTest(self),
             coins.Litecoin(self),
         ]
-        self.__remote_server_version = None
-
-        self.__server_version = CoreApplication.instance().userConfig.get(
-            bmnclient.config.UserConfig.KEY_SERVER_VERSION,
-            str,
-            "")
 
         for coin in self.__all_coins:
             coin.statusChanged.connect(
@@ -141,10 +124,6 @@ class GCD(meta.QSeq):
         return next((c for c in self.__all_coins if c.name == name), None)
 
     @property
-    def server_version(self) -> str:
-        return self.__server_version
-
-    @property
     def debug_man(self) -> debug_manager.DebugManager:
         return self.__debug_man
 
@@ -158,28 +137,9 @@ class GCD(meta.QSeq):
 
     @qt_core.Slot(int, str)
     def onServerVersion(self, version: int, human_version: str):
-        """
-        we got remote version
-        if we have version in DB then test it and swear
-        else just save it as actual one
-        """
         log.debug(f"server version {version} / {human_version}")
-        if not self.__server_version or int(version) != int(self.__server_version):
-            self.__remote_server_version = version
-            from .ui.gui import Application
-            gui = Application.instance()
-            if gui:
-                gui.uiManager.serverVersion = human_version
-            if self.__server_version:
-                log.warning("Server version mismatch !!! Local server version: %s <> Server version:%s",
-                            self.__server_version, version)
-            if self.__remote_server_version:
-                self.__server_version = self.__remote_server_version
-                CoreApplication.instance().userConfig.set(
-                    bmnclient.config.UserConfig.KEY_SERVER_VERSION,
-                    self.__server_version)
-            else:
-                log.warn("Local server version match with remote one")
+        from .ui.gui import Application
+        Application.instance().uiManager.serverVersion = human_version
 
     def __iter__(self):
         self.__coin_iter = iter(self.all_enabled_coins)
@@ -225,7 +185,6 @@ class GCD(meta.QSeq):
 
     def reset_wallet(self):
         self.dropDb.emit()
-        self.__server_version = None
         for c in self.__all_coins:
             c.clear()
 

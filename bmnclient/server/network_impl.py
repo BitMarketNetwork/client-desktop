@@ -72,18 +72,6 @@ class NetworkImpl(qt_core.QObject):
             if verbose and self.__cui_mode:
                 self.__progress.reset()
 
-    def retrieve_address_history(self, wallet: address.CAddress):
-        """
-        only for tests !!!!!
-        """
-        #assert config.DEBUG_MODE
-        log.warning(wallet)
-        if wallet.is_going_update:
-            log.warning(f"skip history request for {wallet}")
-            return
-        self._run_cmd(net_cmd.AddressHistoryCommand(
-            wallet, limit=None, parent=self, high_priority=True, level=loading_level.LoadingLevel.NONE))
-
     def _push_cmd(self, cmd: net_cmd.AbstractNetworkCommand, first: bool = False) -> None:
         "for tests only"
         #assert config.DEBUG_MODE
@@ -198,13 +186,6 @@ class NetworkImpl(qt_core.QObject):
         log.warn('next SSL errors ignored: %s', errors)
         self.__reply.ignoreSslErrors(errors)
 
-    def debug_address_history(self, address: "CAddress"):
-        if address.is_root:
-            address = address()
-        if address is not None:
-            cmd = debug_cmd.IncomingTransferCommand(self.__gcd, wallet=address)
-            cmd.run()
-
     def look_for_hd_addresses(self, coin: "CoinType"):
         self._run_cmd(net_cmd.LookForHDAddresses(coin, self))
 
@@ -230,14 +211,6 @@ class NetworkImpl(qt_core.QObject):
 
     def undo_tx(self, coin: "CoinType", count: int) -> None:
         self._run_cmd(debug_cmd.UndoTransactionCommand(coin, count, self))
-
-    def http_failure_simulation(self, code: int) -> None:
-        self._run_cmd(debug_cmd.HTTPFailureCommand(code, self))
-
-    def fake_mempool_seach(self, tx_: tx.Transaction):
-        cmd = debug_cmd.FakeMempoolCommand(tx_, self)
-        cmd.connect_(self.__gcd)
-        cmd.run()
 
     def level_loaded(self, level: int):
         self.__level_loaded = level

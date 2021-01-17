@@ -278,14 +278,6 @@ class CoinManager(QObject):
             addr.add_tx(tx, check_new=True)
 
     @qt_core.Slot()
-    def debugHistoryRequest(self):
-        addr = self.address
-        if addr:
-            self._application.gcd.debugUpdateHistory.emit(addr)
-        else:
-            log.warning("No current address")
-
-    @qt_core.Slot()
     def monitorMempool(self):
         self._application.gcd.mempoolEveryCoin.emit()
 
@@ -321,32 +313,6 @@ class CoinManager(QObject):
         self._application.gcd.delete_all_wallets()
         self.coinIndex = -1
         self.lookForHD()
-
-    @qt_core.Slot()
-    def fakeTxStatusProgress(self):
-        coin = self.coin
-        if not coin or len(coin) < 2:
-            raise RuntimeError(
-                f"Active coin and at least two addresses in it required for simulation")
-
-        from ...wallet import mutable_tx, tx
-        from ... import gcd
-        source: address.CAddress = coin(0)
-        reciever = coin(1)
-        assert source != reciever
-
-        def make_tx(w: address.CAddress):
-            tx_: tx.Transaction = w.make_dummy_tx()
-            tx_.height = coin.height + 1
-            tx_.add_inputs(((1000000, source.name),), True)
-            tx_.add_inputs(((1000000, reciever.name),), False)
-            return tx_
-        log.warning(f"source: {source} target: {reciever}")
-        #
-        tx_ = make_tx(source)
-        source.add_tx(tx_)
-        reciever.add_tx(tx_)
-        self._application.gcd.fakeMempoolSearch.emit(tx_)
 
     @qt_core.Slot()
     def addTxRow(self):

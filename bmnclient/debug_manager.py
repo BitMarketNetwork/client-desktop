@@ -36,10 +36,6 @@ class DebugManager(qt_core.QObject):
     def undoTransaction(self, coin: int, count: int) -> None:
         self.gcd.undoTx.emit(self.gcd[coin], count)
 
-    @qt_core.Slot(int)
-    def simulateHTTPError(self, code: int) -> None:
-        self.gcd.httpFailureSimulation.emit(code)
-
     @property
     def gcd(self):
         return self.parent()
