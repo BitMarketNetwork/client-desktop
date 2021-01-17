@@ -278,24 +278,24 @@ class GCD(meta.QSeq):
             return next(self.__wallet_iter)
 
     def export_wallet(self, fpath: str):
-        password = self._passphrase
+        password = self._passphrase  # TODO
         log.debug(f"Exporting wallet to {fpath} using psw:{password}")
         srl = serialization.Serializator(
             serialization.SerializationType.DEBUG
             | serialization.SerializationType.CYPHER,
             password=password)
-        srl.add_one("seed", CoreApplication.instance().keyStore.master_seed_hex)
+        # TODO srl.add_one("seed", CoreApplication.instance().keyStore.master_seed_hex)
         srl.add_many("coins", iter(self.__all_coins))
         srl.to_file(fpath)
 
     def import_wallet(self, fpath: str):
-        password = self._passphrase
+        password = self._passphrase  # TODO
         log.debug(f"Importing wallet from {fpath} using psw:{password}")
         dsrl = serialization.DeSerializator(fpath, password=password)
         # need to cleanup old stuff
-        self.resetDb.emit(self._passphrase)
-        self._key_manager.apply_master_seed(
-            util.hex_to_bytes(dsrl["seed"]), save=True)
+        self.resetDb.emit(self._passphrase)  # TODO
+        CoreApplication.instance().keyStore.apply_master_seed(
+            util.hex_to_bytes(dsrl["seed"]))
         for coin_t in dsrl["coins"]:
             coin = next(
                 (c for c in self.__all_coins if c.name == coin_t["name"]), None)

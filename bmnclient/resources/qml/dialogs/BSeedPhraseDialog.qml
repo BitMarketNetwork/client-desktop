@@ -29,7 +29,7 @@ BDialog {
         case BSeedPhraseDialog.Type.Restore:
             return qsTr("Restore seed phrase")
         case BSeedPhraseDialog.Type.Reveal:
-            return qsTr("Seed phrase")
+            return qsTr("Reveal seed phrase")
         }
     }
     contentItem: BDialogLayout {
@@ -55,7 +55,9 @@ BDialog {
             readOnly: _base.readOnly
             selectByMouse: !_base.readOnly
             wrapMode: TextEdit.WordWrap
+
             font.bold: true
+            font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.huge
         }
     }
     footer: BDialogButtonBox {
