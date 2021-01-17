@@ -3,7 +3,7 @@ import os
 from enum import Enum
 from json.decoder import JSONDecodeError
 from threading import RLock
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -18,7 +18,6 @@ from .crypto.cipher import Cipher, MessageCipher
 from .crypto.kdf import SecretStore
 from .crypto.password import PasswordStrength
 from .logger import getClassLogger
-from .ui.gui import import_export
 from .wallet import hd
 from .wallet.mnemonic import Mnemonic
 
@@ -35,8 +34,8 @@ class KeyStore(QObject):
         self._logger = getClassLogger(__name__, self.__class__)
         self._lock = RLock()
 
-        self._nonce_list = [None] * len(KeyIndex)
-        self._key_list = [None] * len(KeyIndex)
+        self._nonce_list: List[Optional[bytes]] = [None] * len(KeyIndex)
+        self._key_list: List[Optional[bytes]] = [None] * len(KeyIndex)
 
         self._mnemonic: Optional[Mnemonic] = None
         self._mnemonic_salt_hash: Optional[Hash] = None

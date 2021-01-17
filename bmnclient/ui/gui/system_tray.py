@@ -1,7 +1,11 @@
 # JOK+
 from enum import IntEnum
 
-from PySide2 import QtCore
+from PySide2.QtCore import \
+    QCoreApplication, \
+    QObject, \
+    Signal as QSignal, \
+    Slot as QSlot
 from PySide2.QtWidgets import QSystemTrayIcon, QMenu
 
 from bmnclient.logger import getClassLogger
@@ -15,10 +19,10 @@ class MessageIcon(IntEnum):
     CRITICAL = 3
 
 
-class SystemTrayIcon(QtCore.QObject):
-    exit = QtCore.Signal()
-    showMainWindow = QtCore.Signal()
-    hideMainWindow = QtCore.Signal()
+class SystemTrayIcon(QObject):
+    exit = QSignal()
+    showMainWindow = QSignal()
+    hideMainWindow = QSignal()
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent=parent)
@@ -53,12 +57,12 @@ class SystemTrayIcon(QtCore.QObject):
             self.tr("Quit"),
             self.exit.emit)
 
-    @QtCore.Slot()
+    @QSlot()
     def _onActivated(self, reason: QSystemTrayIcon.ActivationReason) -> None:
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
             self.showMainWindow.emit()
 
-    @QtCore.Slot()
+    @QSlot()
     def _onMessageClicked(self) -> None:
         self.showMainWindow.emit()
 
@@ -84,7 +88,7 @@ class SystemTrayIcon(QtCore.QObject):
 
         self._logger.debug("Message %i: %s.", icon, message)
         self._tray_icon.showMessage(
-            QtCore.QCoreApplication.instance().applicationName(),
+            QCoreApplication.instance().applicationName(),  # TODO
             message,
             icon_map[icon],
             timeout)
