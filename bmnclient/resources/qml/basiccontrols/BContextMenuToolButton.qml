@@ -1,4 +1,5 @@
 import QtQuick.Window 2.15
+import "../application"
 
 BToolButton {
     id: _base

@@ -60,7 +60,6 @@ class GCD(meta.QSeq):
     # TODO: connect it
     # updateTxs = qt_core.Signal(address.CAddress, arguments=["wallet"])
     addressHistory = qt_core.Signal( address.CAddress )
-    saveMeta = qt_core.Signal(str, str, arguments=["name", "value"])
     applyPassword = qt_core.Signal()
 
     def __init__(self, silent_mode: bool = False, parent=None):
@@ -365,9 +364,6 @@ class GCD(meta.QSeq):
         qt_core.QMetaObject.invokeMethod(self.network,"poll_coins",qt_core.Qt.QueuedConnection)
         #  self.network.poll_coins()
 
-    def save_meta(self, key: str, value: str):
-        self.saveMeta.emit(key, value)
-
     @qt_core.Slot(address.CAddress)
     def update_wallet(self, wallet):
         """
@@ -427,19 +423,6 @@ class GCD(meta.QSeq):
     def unspent_list(self, address):
         if address.wants_update_unspents:
             self.unspentsOfWallet.emit(address)
-
-    def on_meta(self, key: str, value: str):
-        log.debug(f"meta value read: {key}:")
-        if key == "seed":
-            if value:
-                CoreApplication.instance().keyStore.apply_master_seed(
-                    util.hex_to_bytes(value), save=False)
-                self.look_for_HD()
-            else:
-                log.debug(f"No master then request it")
-                CoreApplication.instance().keyStore.mnemoRequested.emit()
-        else:
-            log.error(f"Unknown meta key read: {key}")
 
     def clear_transactions(self, address):
         self.clearAddressTx.emit(address)

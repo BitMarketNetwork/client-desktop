@@ -14,8 +14,6 @@ log = logging.getLogger(__name__)
 
 
 class Database(db_wrapper.DbWrapper, qt_core.QObject):
-    metaRead = qt_core.Signal(str, str, arguments=["key", "value"])
-
     def __init__(self, gcd, parent: qt_core.QObject = None):
         super().__init__(parent=parent)
         log.info(f"SQLITE version {sql.sqlite_version}")
@@ -40,8 +38,6 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
                 self._add_or_save_wallet, qt_core.Qt.QueuedConnection)
             self._gcd.eraseWallet.connect(
                 self.erase_wallet, qt_core.Qt.QueuedConnection)
-            self._gcd.saveMeta.connect(
-                self._set_meta_entry, qt_core.Qt.QueuedConnection)
             self._gcd.saveTx.connect(
                 self._write_transaction, qt_core.Qt.QueuedConnection)
             self._gcd.saveTxList.connect(
@@ -54,14 +50,7 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
                 self.drop_db, qt_core.Qt.QueuedConnection)
             self._gcd.resetDb.connect(
                 self.reset_db, qt_core.Qt.QueuedConnection)
-            # read mnemonic
-            self.metaRead.connect(
-                self._gcd.on_meta, qt_core.Qt.QueuedConnection)
-            self._read_meta("seed")
             self.load_everything()
-
-    def _read_meta(self, key: str) -> None:
-        self.metaRead.emit(key, self._get_meta_entry(key))
 
     @qt_core.Slot()
     def abort(self):
@@ -120,13 +109,6 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
             "update_wallets",
             qt_core.Qt.QueuedConnection
         )
-        # api_ = api.Api.get_instance()
-        # if api_ is not None:
-        #     qt_core.QMetaObject.invokeMethod(
-        #         api_.coinManager,
-        #         "coinModelChanged",
-        #         qt_core.Qt.QueuedConnection
-        #     )
 
     def timerEvent(self, event: qt_core.QTimerEvent):
         if event.timerId() == self._save_address_timer.timerId():

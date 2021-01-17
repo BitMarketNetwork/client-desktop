@@ -8,7 +8,6 @@ from typing import Optional, Tuple
 from PySide2.QtCore import \
     Property as QProperty, \
     QObject, \
-    Signal as QSignal, \
     Slot as QSlot
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.hashes import Hash
@@ -30,8 +29,6 @@ class KeyIndex(Enum):
 
 
 class KeyStore(QObject):
-    mnemoRequested = QSignal()
-
     def __init__(self, user_config: UserConfig) -> None:
         super().__init__()
         self._user_config = user_config
@@ -44,23 +41,26 @@ class KeyStore(QObject):
         self._mnemonic: Optional[Mnemonic] = None
         self._mnemonic_salt_hash: Optional[Hash] = None
 
+        self._has_seed = False
+
         # TODO
         self.__master_hd = None
 
-    def _reset(self) -> None:
-        with self._lock:
-            self._nonce_list = [None] * len(self._nonce_list)
-            self._key_list = [None] * len(self._key_list)
-            self._mnemonic = None
-            self._mnemonic_salt_hash = None
+    def _reset(self, *, hard: bool = True) -> None:
+        self._nonce_list = [None] * len(self._nonce_list)
+        self._key_list = [None] * len(self._key_list)
+        self._mnemonic = None
+        self._mnemonic_salt_hash = None
+        self._has_seed = False
 
+        if hard:
             with self._user_config.lock:
                 for key in (
                         UserConfig.KEY_KEY_STORE_VALUE,
                         UserConfig.KEY_KEY_STORE_SEED,
                         UserConfig.KEY_KEY_STORE_SEED_PHRASE):
                     self._user_config.set(key, None, save=False)
-                self._user_config.save()
+                    self._user_config.save()
 
     def _getNonce(self, key_index: KeyIndex) -> Optional[bytes]:
         return self._nonce_list[key_index.value]
@@ -115,47 +115,35 @@ class KeyStore(QObject):
     # TODO
 
     def regenerate_master_key(self):
-        seed = mnemonic.Mnemonic.phraseToSeed(self.gcd.get_mnemo())
-        self.apply_master_seed(seed, save=True)
+        # seed = mnemonic.Mnemonic.phraseToSeed(self.gcd.get_mnemo())
+        # self.apply_master_seed(seed)
+        pass
 
     @QSlot()
     def resetWallet(self):
-        self.gcd.reset_wallet()
-        self.mnemoRequested.emit()
+        #self.gcd.reset_wallet()
+        #self.mnemoRequested.emit()
+        pass
 
     @QSlot()
     def exportWallet(self):
-        iexport = import_export.ImportExportDialog()
-        filename = iexport.doExport(
-            self.tr("Select file to save backup copy"))
-        if filename:
-            self.gcd.export_wallet(filename)
+        #iexport = import_export.ImportExportDialog()
+        #filename = iexport.doExport(
+        #    self.tr("Select file to save backup copy"))
+        #if filename:
+        #    self.gcd.export_wallet(filename)
+        pass
 
     @QSlot(result=bool)
     def importWallet(self) -> bool:
-        iexport = import_export.ImportExportDialog()
-        filename = iexport.doImport(
-            self.tr("Select file with backup"))
-        self._logger.debug(f"Import result: {filename}")
-        if filename:
-            self.gcd.import_wallet(filename)
-            return True
+        #iexport = import_export.ImportExportDialog()
+        #filename = iexport.doImport(
+        #    self.tr("Select file with backup"))
+        #self._logger.debug(f"Import result: {filename}")
+        #if filename:
+        #    self.gcd.import_wallet(filename)
+        #    return True
         return False
-
-    def apply_master_seed(self, seed: bytes, *, save: bool):
-        from .application import CoreApplication
-        if not CoreApplication.instance():
-            return
-
-        self.__master_hd = hd.HDNode.make_master(seed)
-        _44_node = self.__master_hd.make_child_prv(44, True)
-        # iterate all 'cause we need test coins
-        for coin in self.gcd.all_coins:
-            if coin.enabled:
-                coin.make_hd_node(_44_node)
-                self._logger.debug(f"Make HD prv for {coin}")
-        if save:
-            self.gcd.saveMeta.emit("seed", seed.hex())
 
     @property
     def gcd(self):
@@ -200,7 +188,7 @@ class KeyStore(QObject):
                 if self._saveSeedWithPhrase(self._mnemonic.language, phrase):
                     self._mnemonic = None
                     self._mnemonic_salt_hash = None
-                    return True
+                    return self._loadSeed()
         return False
 
     @QSlot(str, result=bool)
@@ -224,7 +212,7 @@ class KeyStore(QObject):
                 if self._saveSeedWithPhrase(self._mnemonic.language, phrase):
                     self._mnemonic = None
                     self._mnemonic_salt_hash = None
-                    return True
+                    return self._loadSeed()
         return False
 
     @QSlot(str, result=str)
@@ -236,6 +224,11 @@ class KeyStore(QObject):
             if not phrase:
                 return self.tr("Seed phrase not found.")
             return phrase[1]
+
+    @QProperty(bool, constant=True)
+    def hasSeed(self) -> bool:
+        with self._lock:
+            return self._has_seed
 
     def _saveSeedWithPhrase(self, language: str, phrase: str) -> bool:
         if version.STRING_SEPARATOR in language:
@@ -258,7 +251,6 @@ class KeyStore(QObject):
                 return False
             if not self._user_config.save():
                 return False
-        self.apply_master_seed(seed, save=True)
         return True
 
     def _getSeed(self) -> Optional[bytes]:
@@ -282,6 +274,21 @@ class KeyStore(QObject):
         phrase = Mnemonic.friendlyPhrase(language, phrase)
         return language, phrase
 
+    def _loadSeed(self) -> bool:
+        seed = self._getSeed()
+        if not seed:
+            return False
+
+        # TODO
+        self.__master_hd = hd.HDNode.make_master(seed)
+        _44_node = self.__master_hd.make_child_prv(44, True)
+        for coin in self.gcd.all_coins:
+            if coin.enabled:
+                coin.make_hd_node(_44_node)
+                self._logger.debug(f"Make HD prv for {coin}")
+        self.gcd.look_for_HD()
+        return True
+
     ############################################################################
 
     @QSlot(str, result=int)
@@ -293,18 +300,20 @@ class KeyStore(QObject):
         value = self._generateSecretStoreValue()
         value = SecretStore(password).encryptValue(value)
         with self._lock:
-            self._reset()
+            self._reset(hard=True)
             return self._user_config.set(UserConfig.KEY_KEY_STORE_VALUE, value)
 
     @QSlot(str, result=bool)
     def applyPassword(self, password: str) -> bool:
         with self._lock:
+            self._reset(hard=False)
             value = self._user_config.get(UserConfig.KEY_KEY_STORE_VALUE, str)
             if not value:
                 return False
             value = SecretStore(password).decryptValue(value)
             if not value or not self._loadSecretStoreValue(value):
                 return False
+            self._has_seed = self._loadSeed()
 
         from .application import CoreApplication
         if CoreApplication.instance():
@@ -321,7 +330,9 @@ class KeyStore(QObject):
 
     @QSlot(result=bool)
     def resetPassword(self) -> bool:
-        self._reset()
+        with self._lock:
+            self._reset(hard=True)
+
         from .application import CoreApplication
         if CoreApplication.instance():
             CoreApplication.instance().gcd.reset_db()  # TODO
@@ -330,7 +341,6 @@ class KeyStore(QObject):
     @QProperty(bool, constant=True)
     def hasPassword(self) -> bool:
         with self._lock:
-            value = self._user_config.get(UserConfig.KEY_KEY_STORE_VALUE, str)
-        if value and len(value) > 0:
-            return True
+            if self._user_config.get(UserConfig.KEY_KEY_STORE_VALUE, str):
+                return True
         return False

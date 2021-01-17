@@ -117,13 +117,4 @@ BApplicationWindow {
             dialog.open()
         }
     }
-
-    Connections {
-        target: BBackend.keyStore
-        function onMnemoRequested() { // TODO bad name
-            let dialog = _applicationManager.createDialog("BNewSeedDialog", {})
-            dialog.onRejected.connect(_applicationManager.exit)
-            dialog.open()
-        }
-    }
 }

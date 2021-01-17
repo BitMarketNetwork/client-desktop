@@ -387,52 +387,6 @@ class DbWrapper:
         self.open_db()
         self._init_actions()
 
-    def _set_meta_entry(self, name: str, value: str, strong: bool = False) -> None:
-        """
-        if not strong then we shouldn't use password
-        """
-        name_ = self.__impl(name)
-        strong = strong or name in ("seed",)
-        value_ = self.__impl(value, strong, name)
-        try:
-            # need to have sqlite > 3.22
-            query = f"""
-            INSERT INTO {self.meta_table} ({self.key_column}, {self.value_column})
-            VALUES(?,?)
-            ON CONFLICT({self.key_column}) DO UPDATE SET
-                {self.value_column}=?
-            WHERE {self.key_column} == ?
-            """
-            with closing(self.__exec(query, (name_, value_, value_, name_))):
-                pass
-        except sql.OperationalError:
-            query = f"""
-            UPDATE {self.meta_table} SET {self.value_column}=?
-            WHERE {self.key_column} == ?;
-            """
-            with closing(self.__exec(query, (value_, name_))):
-                pass
-            query = f"""
-            INSERT INTO {self.meta_table}  ({self.key_column},{self.value_column})
-            SELECT ?, ?
-            WHERE (Select Changes() = 0);
-            """
-            with closing(self.__exec(query, (name_, value_))):
-                pass
-        log.debug(
-            f"New {'strong' if  strong else ''} meta entry set '{name}'={value}")
-
-    def _get_meta_entry(self, name: str, strong: bool = True) -> Optional[str]:
-        name_ = self.__impl(name)
-        query = f"""
-        SELECT  {self.value_column} FROM {self.meta_table} WHERE {self.key_column} = (?)
-        """
-        with closing(self.__exec(query, (name_,))) as c:
-            fetch = c.fetchone()
-            if fetch:
-                return fetch[0]
-            log.debug(f"no meta with name {name_}")
-
     def _write_transaction(self, tx: tx.Transaction) -> None:
         try:
             query = f"""
