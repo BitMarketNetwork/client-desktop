@@ -36,8 +36,8 @@ class CoreApplication(QObject):
         self._title = "{} {}".format(version.NAME, version.VERSION_STRING)
         self._icon = QIcon(str(resources.ICON_FILE_PATH))
         self._language: Optional[Language] = None
-        self._quit_code = 0
-        self._on_quit_called = False
+        self._exit_code = 0
+        self._on_exit_called = False
 
         self._user_config = UserConfig()
         self._user_config.load()
@@ -73,23 +73,23 @@ class CoreApplication(QObject):
         # SignalHandler
         self._signal_handler = SignalHandler(self)
         self._signal_handler.SIGINT.connect(
-            self.setQuitEvent,
+            self.setExitEvent,
             Qt.QueuedConnection)
         self._signal_handler.SIGQUIT.connect(
-            self.setQuitEvent,
+            self.setExitEvent,
             Qt.QueuedConnection)
         self._signal_handler.SIGTERM.connect(
-            self.setQuitEvent,
+            self.setExitEvent,
             Qt.QueuedConnection)
 
     def run(self) -> int:
         QMetaObject.invokeMethod(self, "_onRunPrivate", Qt.QueuedConnection)
 
-        assert not self._on_quit_called
-        self._quit_code = self._qt_application.exec_()
-        assert self._on_quit_called
+        assert not self._on_exit_called
+        self._exit_code = self._qt_application.exec_()
+        assert self._on_exit_called
 
-        if self._quit_code == 0:
+        if self._exit_code == 0:
             self._logger.info(
                 "%s terminated successfully.",
                 version.NAME)
@@ -97,9 +97,9 @@ class CoreApplication(QObject):
             self._logger.warning(
                 "%s terminated with error.",
                 version.NAME)
-        return self._quit_code
+        return self._exit_code
 
-    def setQuitEvent(self, code: int = 0) -> None:
+    def setExitEvent(self, code: int = 0) -> None:
         self._qt_application.exit(code)
 
     @classmethod
@@ -107,8 +107,8 @@ class CoreApplication(QObject):
         return cls._instance
 
     @property
-    def quitCode(self) -> int:
-        return self._quit_code
+    def exitCode(self) -> int:
+        return self._exit_code
 
     @property
     def userConfig(self) -> UserConfig:
@@ -137,9 +137,9 @@ class CoreApplication(QObject):
         self._logger.debug("Shutting down...");
         # for w in QGuiApplication.topLevelWindows():
         #     w.close()
-        self._onQuit()
+        self._onExit()
 
-    def _onQuit(self) -> None:
-        assert not self._on_quit_called
-        self._on_quit_called = True
+    def _onExit(self) -> None:
+        assert not self._on_exit_called
+        self._on_exit_called = True
         self._signal_handler.close()

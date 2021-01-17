@@ -42,7 +42,7 @@ class Console(cmd_base.Cmd, qt_core.QObject, CoreApplication):
         stop = self.postcmd(stop, line)
         if stop:
             log.warning("Exit app")
-            self.gcd.quit(0)
+            self.gcd.exit(0)
 
     def exec_(self):
         self._input.start()
@@ -56,7 +56,7 @@ class Console(cmd_base.Cmd, qt_core.QObject, CoreApplication):
 
     def default(self, line):
         self._print(self.tr(f'Command `{line}` isn`t recognized. Type `help` for full list.'))
-        # self.gcd.quit(1)
+        # self.gcd.exit(1)
 
     def preloop(self):
         pass

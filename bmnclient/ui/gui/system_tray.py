@@ -16,7 +16,7 @@ class MessageIcon(IntEnum):
 
 
 class SystemTrayIcon(QtCore.QObject):
-    quit = QtCore.Signal()
+    exit = QtCore.Signal()
     showMainWindow = QtCore.Signal()
     hideMainWindow = QtCore.Signal()
 
@@ -51,7 +51,7 @@ class SystemTrayIcon(QtCore.QObject):
 
         self._menu.addAction(
             self.tr("Quit"),
-            self.quit.emit)
+            self.exit.emit)
 
     @QtCore.Slot()
     def _onActivated(self, reason: QSystemTrayIcon.ActivationReason) -> None:

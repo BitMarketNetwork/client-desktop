@@ -8,8 +8,8 @@ import "../dialogs"
 QtObject {
     property BApplicationWindow applicationWindow: null
 
-    function quit() {
-        Qt.quit() // TODO
+    function exit(code = 0) {
+        BBackend.uiManager.exit(code)
     }
 
     function imageSource(filePath) {

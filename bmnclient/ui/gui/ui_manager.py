@@ -39,7 +39,7 @@ class UIManager(QObject):
         self.__notified_tx_list = set()
         #
         self.__tray = SystemTrayIcon(self)
-        self.__tray.quit.connect(self._application.setQuitEvent)
+        self.__tray.exit.connect(self._application.setExitEvent)
         self.__tray.showMainWindow.connect(self.show)
         self.__tray.hideMainWindow.connect(self.hide)
         self.__tray.show()

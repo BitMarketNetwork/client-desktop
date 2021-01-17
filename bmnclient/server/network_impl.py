@@ -40,7 +40,6 @@ class NetworkImpl(qt_core.QObject):
         self._fee_timer = qt_core.QBasicTimer()
         self._fee_timer.start(fee_manager.UPDATE_FEE_TIMEOUT, self)
         self.__level_loaded = loading_level.LoadingLevel.NONE
-        self.__about_to_quit = False
         self.__cui_mode = not e_config.is_gui
         if not gcd.silent_mode:
             self.start()
@@ -146,7 +145,7 @@ class NetworkImpl(qt_core.QObject):
         if self.__cmd is None:
             log.critical(
                 f"{self.__reply.error()}: {self.__reply.errorString()}")
-            qt_core.QCoreApplication.instance().quit()
+            qt_core.QCoreApplication.instance().exit()
             return
         if self.__cmd.verbose and self.__cui_mode:
             self.__progress.finish()

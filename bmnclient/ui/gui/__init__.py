@@ -90,6 +90,7 @@ class Application(CoreApplication):
         self._qml_engine.objectCreated.connect(self._onQmlObjectCreated)
         # TODO self._qml_engine.warnings.connect(self._onQmlWarnings)
         self._qml_engine.exit.connect(self._onQmlExit)
+        self._qml_engine.quit.connect(self._onQmlExit)
 
     @classmethod
     def instance(cls) -> Application:
@@ -131,7 +132,7 @@ class Application(CoreApplication):
         if qml_object is None:
             # TODO If an error occurs, the objectCreated signal is emitted with
             #  a null pointer as parameter an
-            self.setQuitEvent()
+            self.setExitEvent()
         else:
             log.debug(f"QML object was created: {url.toString()}")
 
@@ -142,17 +143,17 @@ class Application(CoreApplication):
         # https://github.com/enthought/pyside/blob/master/libpyside/signalmanager.cpp
         pass
 
+    @QSlot()
     @QSlot(int)
-    def _onQmlExit(self, code) -> None:
-        # TODO test
-        log.debug(f"QML exit: {code}")
+    def _onQmlExit(self, code: int = 0) -> None:
+        self.setExitEvent(code)
 
-    def _onQuit(self) -> None:
+    def _onExit(self) -> None:
         # TODO https://stackoverflow.com/questions/30196113/properly-reloading-a-qqmlapplicationengine
         self._qml_engine.clearComponentCache()
         self._qml_engine.deleteLater()
         self.gcd.release()
-        super()._onQuit()
+        super()._onExit()
 
     @QSlot()
     def _updateLanguage(self) -> None:

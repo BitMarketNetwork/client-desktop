@@ -41,9 +41,9 @@ BApplicationWindow {
         onShowSettings: {
             _mainLayout.currentIndex = 3
         }
-        onQuit: {
+        onExit: {
             // TODO confirmation
-            _applicationManager.quit()
+            _applicationManager.exit()
         }
     }
 
@@ -112,7 +112,7 @@ BApplicationWindow {
         target: BBackend.keyStore
         function onMnemoRequested() { // TODO bad name
             let dialog = _applicationManager.createDialog("BNewSeedDialog", {})
-            dialog.onRejected.connect(_applicationManager.quit)
+            dialog.onRejected.connect(_applicationManager.exit)
             dialog.open()
         }
     }

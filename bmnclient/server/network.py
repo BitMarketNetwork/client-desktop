@@ -72,7 +72,6 @@ class Network(network_impl.NetworkImpl):
     @qt_core.Slot()
     def abort(self):
         log.debug("aborting server")
-        self._about_to_quit = True
         self._cmd_timer.stop()
         self._fee_timer.stop()
         reply = getattr(self, '_reply', None)

@@ -390,9 +390,9 @@ class GCD(meta.QSeq):
         qt_core.QMetaObject.invokeMethod(self.network, "abort",qt_core.Qt.QueuedConnection,)
         qt_core.QMetaObject.invokeMethod(self.database,"abort",qt_core.Qt.QueuedConnection,)
 
-        self.server_thread.quit()
+        self.server_thread.exit()
         self.server_thread.wait()
-        self.wallet_thread.quit()
+        self.wallet_thread.exit()
         self.wallet_thread.wait()
 
     def stop_poll(self):
