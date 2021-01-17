@@ -53,6 +53,7 @@ class UserConfig:
                         encoding=version.ENCODING,
                         errors="replace") as file:
                     self._config = json.load(file)
+                self._updateVersion()
                 return True
             except OSError as e:
                 self._logger.warning(
@@ -68,6 +69,7 @@ class UserConfig:
                     e.pos,
                     e.msg)
             self._config = dict()
+            self._updateVersion()
         return False
 
     def save(self) -> bool:
@@ -117,7 +119,7 @@ class UserConfig:
     def exists(self, key: str, value_type: Type = str) -> bool:
         return self.get(key, value_type, None) is not None
 
-    def set(self, key: str, value: Any, save: bool = True) -> bool:
+    def set(self, key: str, value: Any, *, save: bool = True) -> bool:
         key_list = key.split('.')
         with self._lock:
             current_config = self._config
@@ -135,3 +137,7 @@ class UserConfig:
                     current_config[current_key] = current_value
                 current_config = current_value
         return False
+
+    def _updateVersion(self) -> None:
+        if not self.get(self.KEY_VERSION, str):
+            self.set(self.KEY_VERSION, version.VERSION_STRING, save=False)

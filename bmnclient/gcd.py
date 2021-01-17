@@ -103,7 +103,6 @@ class GCD(meta.QSeq):
             bmnclient.config.UserConfig.KEY_SERVER_VERSION,
             str,
             "")
-        self.process_client_version()
 
         for coin in self.__all_coins:
             coin.statusChanged.connect(
@@ -214,26 +213,6 @@ class GCD(meta.QSeq):
     @property
     def empty(self):
         return all(len(c) == 0 for c in self.__all_coins)
-
-    def process_client_version(self):
-        def to_num(ver: str) -> int:
-            return int("".join(ver.split('.')))
-        user_config = CoreApplication.instance().userConfig
-        saved_version = user_config.get(
-            bmnclient.config.UserConfig.KEY_VERSION,
-            str,
-            "")
-        code_version = ".".join(map(str, e_config_version.VERSION))
-        if code_version == saved_version:
-            log.debug(
-                f"client version is fresh: {code_version} ({to_num(saved_version)})")
-            return
-        elif saved_version:
-            log.info(
-                f"saved client version: {saved_version}. code client version: {code_version}")
-
-        user_config = CoreApplication.instance().userConfig
-        user_config.set(bmnclient.config.UserConfig.KEY_VERSION, code_version)
 
     def dump_server_version(self):
         if self.__remote_server_version:
@@ -426,8 +405,6 @@ class GCD(meta.QSeq):
 
     def reset_db(self) -> None:
         self.dropDb.emit()
-        user_config = CoreApplication.instance().userConfig
-        user_config.set(bmnclient.config.UserConfig.KEY_VERSION, e_config_version.VERSION_STRING)
 
     def look_for_HD(self):
         for coin in self.all_enabled_coins:
