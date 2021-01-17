@@ -1,13 +1,20 @@
+from __future__ import annotations
 import logging
 import math
-from typing import Optional, List, Tuple
+from typing import TYPE_CHECKING, Optional, List, Tuple
 
-from PySide2.QtCore import QObject, Signal as QSignal, Slot as QSlot, \
+from PySide2.QtCore import \
+    QObject, \
+    Signal as QSignal, \
+    Slot as QSlot, \
     Property as QProperty
 
 from ...config import UserConfig
 from ...wallet import currency, rate_source
 from ...language import Language
+
+if TYPE_CHECKING:
+    from . import Application
 
 log = logging.getLogger(__name__)
 
@@ -18,7 +25,7 @@ class SettingsManager(QObject):
     rateSourceChanged = QSignal()
     currencyChanged = QSignal()
 
-    def __init__(self, user_config: UserConfig) -> None:
+    def __init__(self, application: Application) -> None:
         super().__init__()
         self._use_new_address = True
         #
@@ -30,15 +37,14 @@ class SettingsManager(QObject):
         self._rate_source_index = 0
         self._fill_rate_source()
 
-        from . import Application
+        self._application = application
 
-        self._user_config = user_config
         self._language_list: Optional[List[str]] = None
         self._current_language_name: Optional[str] = None
         self._current_theme_name: Optional[str] = None
         self._hide_to_tray: Optional[bool] = None
         self._font: Optional[Tuple] = None
-        self._default_font = Application.instance().defaultFont
+        self._default_font = self._application.defaultFont
 
     def _fill_currencies(self):
         currencies = [
@@ -86,7 +92,7 @@ class SettingsManager(QObject):
     @QProperty(str, notify=currentLanguageNameChanged)
     def currentLanguageName(self) -> str:
         if self._current_language_name is None:
-            name = self._user_config.get(
+            name = self._application.userConfig.get(
                 UserConfig.KEY_UI_LANGUAGE,
                 str,
                 Language.PRIMARY_NAME)
@@ -103,7 +109,7 @@ class SettingsManager(QObject):
         if not self._isValidLanguageName(name):
             log.error(f"Unknown language \"{name}\".")
             return
-        self._user_config.set(UserConfig.KEY_UI_LANGUAGE, name)
+        self._application.userConfig.set(UserConfig.KEY_UI_LANGUAGE, name)
         if self._current_language_name != name:
             self._current_language_name = name
             self.currentLanguageNameChanged.emit()
@@ -127,7 +133,7 @@ class SettingsManager(QObject):
     @QProperty(str, notify=currentThemeNameChanged)
     def currentThemeName(self) -> str:
         if self._current_theme_name is None:
-            self._current_theme_name = self._user_config.get(
+            self._current_theme_name = self._application.userConfig.get(
                 UserConfig.KEY_UI_THEME,
                 str,
                 ""  # QML controlled
@@ -138,7 +144,7 @@ class SettingsManager(QObject):
     @currentThemeName.setter
     def _setCurrentThemeName(self, name) -> None:
         assert type(name) is str
-        self._user_config.set(UserConfig.KEY_UI_THEME, name)
+        self._application.userConfig.set(UserConfig.KEY_UI_THEME, name)
         if self._current_theme_name != name:
             self._current_theme_name = name
             self.currentThemeNameChanged.emit()
@@ -152,7 +158,7 @@ class SettingsManager(QObject):
     @QProperty(bool, notify=hideToTrayChanged)
     def hideToTray(self) -> bool:
         if self._hide_to_tray is None:
-            self._hide_to_tray = self._user_config.get(
+            self._hide_to_tray = self._application.userConfig.get(
                 UserConfig.KEY_UI_HIDE_TO_TRAY,
                 bool,
                 False)
@@ -162,7 +168,7 @@ class SettingsManager(QObject):
     @hideToTray.setter
     def _setHideToTray(self, value) -> None:
         assert type(value) is bool
-        self._user_config.set(UserConfig.KEY_UI_HIDE_TO_TRAY, value)
+        self._application.userConfig.set(UserConfig.KEY_UI_HIDE_TO_TRAY, value)
         if value != self._hide_to_tray:
             self._hide_to_tray = value
             self.hideToTrayChanged.emit()
@@ -176,12 +182,12 @@ class SettingsManager(QObject):
     @QProperty("QVariantMap", notify=fontChanged)
     def font(self) -> dict:
         if self._font is None:
-            with self._user_config.lock:
-                family = self._user_config.get(
+            with self._application.userConfig.lock:
+                family = self._application.userConfig.get(
                     UserConfig.KEY_UI_FONT_FAMILY,
                     str,
                     None)
-                size = self._user_config.get(
+                size = self._application.userConfig.get(
                     UserConfig.KEY_UI_FONT_SIZE,
                     int,
                     0)
@@ -212,16 +218,16 @@ class SettingsManager(QObject):
         else:
             size = self.DEFAULT_FONT_SIZE
 
-        with self._user_config.lock:
-            self._user_config.set(
+        with self._application.userConfig.lock:
+            self._application.userConfig.set(
                 UserConfig.KEY_UI_FONT_FAMILY,
                 family,
                 save=False)
-            self._user_config.set(
+            self._application.userConfig.set(
                 UserConfig.KEY_UI_FONT_SIZE,
                 size,
                 save=False)
-            self._user_config.save()
+            self._application.userConfig.save()
 
         if (family, size) != self._font:
             self._font = (family, size)
@@ -273,7 +279,7 @@ class SettingsManager(QObject):
     @QSlot(str, result=str)
     def coinUnit(self, unit: Optional[str]) -> str:
         if unit is None:
-            unit = self.parent().coinManager.coin.unit
+            unit = self._application.coinManager.coin.unit
         return unit
 
     @QProperty("QVariantList", constant=True)
@@ -291,9 +297,7 @@ class SettingsManager(QObject):
         self._rate_source_index = index
         self.rateSourceChanged.emit()
         self._rate_source_model[index].activate()
-
-        from . import Application
-        Application.instance().gcd.retrieve_coin_rates()
+        self._application.gcd.retrieve_coin_rates()
 
     @QProperty(rate_source.RateSource, notify=rateSourceChanged)
     def rateSource(self) -> rate_source.RateSource:

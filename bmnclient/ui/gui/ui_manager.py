@@ -22,11 +22,8 @@ class UIManager(QObject):
     hide = QSignal()
     show = QSignal()
 
-    def __init__(
-            self,
-            application: CoreApplication,
-            parent: Optional[QObject]) -> None:
-        super().__init__(parent=parent)
+    def __init__(self, application: Application) -> None:
+        super().__init__()
         self._application = application
         self.__online = True
         self.__server_version = None
@@ -60,7 +57,7 @@ class UIManager(QObject):
                 self.__notified_tx_list.add(tx)
                 log.info(f"NOTIFY ABOUT: {tx}")
                 self.__tray.showMessage(
-                    f"New transaction: {tx.user_view(self.parent().settingsManager)}",
+                    f"New transaction: {tx.user_view(self._application.settingsManager)}",
                     MessageIcon.INFORMATION,
                 )
 

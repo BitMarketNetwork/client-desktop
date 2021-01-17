@@ -1,36 +1,43 @@
-
+from __future__ import annotations
 import logging
+from typing import TYPE_CHECKING
 
 import PySide2.QtCore as qt_core
-import PySide2.QtQml as qt_qml
-
+from PySide2.QtCore import \
+    QObject, \
+    Signal as QSignal
 from ...wallet import address, coin_model, key, tx, tx_model, coins
 from . import import_export
+
+if TYPE_CHECKING:
+    from . import Application
 
 log = logging.getLogger(__name__)
 
 
-class CoinManager(qt_core.QObject):
-    coinIndexChanged = qt_core.Signal()
-    expandedChanged = qt_core.Signal()
-    addressIndexChanged = qt_core.Signal()
-    coinModelChanged = qt_core.Signal()
-    renderCell = qt_core.Signal(int, arguments=["index"])
-    emptyBalancesChanged = qt_core.Signal()
-    addressValid = qt_core.Signal(int, str, bool, arguments=[
+class CoinManager(QObject):
+    coinIndexChanged = QSignal()
+    expandedChanged = QSignal()
+    addressIndexChanged = QSignal()
+    coinModelChanged = QSignal()
+    renderCell = QSignal(int, arguments=["index"])
+    emptyBalancesChanged = QSignal()
+    addressValid = QSignal(int, str, bool, arguments=[
                                   "coin", "address", "valid"])
 
-    def __init__(self, gcd: 'gcd.GCD', parent):
-        super().__init__(parent=parent)
-        self.__gcd: 'gcd.GCD' = gcd
+    def __init__(self, application: Application) -> None:
+        super().__init__()
+        self._application = application
+
+        self.__gcd = self._application.gcd
         self.__current_coin_idx = -1
         self.__coin_expanded = False
         self.__current_address_idx = -1
         tx_source = tx_model.TxModel(self)
         self.__tx_model = tx_model.TxProxyModel(self)
         self.__tx_model.setSourceModel(tx_source)
-        self.__coins_model = coin_model.CoinModel(self, gcd)
-        gcd.heightChanged.connect(self.coin_height_changed)
+        self.__coins_model = coin_model.CoinModel(self, self._application.gcd)
+        self._application.gcd.heightChanged.connect(self.coin_height_changed)
         self.showEmptyBalances = True
         self.coinModelChanged.connect(
             self.update_coin_model, qt_core.Qt.QueuedConnection)
@@ -54,7 +61,7 @@ class CoinManager(qt_core.QObject):
 
     @qt_core.Property('QVariantList', constant=True)
     def staticCoinModel(self) -> 'QVariantList':
-        return self.__gcd.all_coins
+        return self._application.gcd.all_coins
 
     @qt_core.Property(int, notify=coinIndexChanged)
     def coinIndex(self) -> int:
@@ -74,7 +81,7 @@ class CoinManager(qt_core.QObject):
     @qt_core.Property(coins.CoinType, notify=coinIndexChanged)
     def coin(self) -> 'coins.CoinType':
         if self.__current_coin_idx >= 0:
-            return self.__gcd[self.__current_coin_idx]
+            return self._application.gcd[self.__current_coin_idx]
 
     @qt_core.Property(address.CAddress, notify=addressIndexChanged)
     def address(self) -> address.CAddress:
@@ -94,7 +101,7 @@ class CoinManager(qt_core.QObject):
     def __set_coin_index(self, idx: int):
         if idx == self.__current_coin_idx:
             return
-        assert idx < len(self.__gcd)
+        assert idx < len(self._application.gcd)
         if self.coin is not None and self.__current_address_idx >= 0:
             self.coin.current_wallet = self.__current_address_idx
             # log.debug("Current wallet: %s", self.__current_address_idx)
@@ -126,7 +133,7 @@ class CoinManager(qt_core.QObject):
         self.update_tx_model()
         self.addressIndexChanged.emit()
         if idx >= 0:
-            self.__gcd.update_wallet(self.address)
+            self._application.gcd.update_wallet(self.address)
 
     @qt_core.Property(str, constant=True)
     def currency(self) -> str:
@@ -135,7 +142,7 @@ class CoinManager(qt_core.QObject):
     @qt_core.Slot()
     def deleteCurrentWallet(self):
         if self.address:
-            self.__gcd.delete_wallet(self.address)
+            self._application.gcd.delete_wallet(self.address)
             self.addressIndex = 0
 
     @qt_core.Property(qt_core.QObject, constant=True)
@@ -151,7 +158,7 @@ class CoinManager(qt_core.QObject):
         if self.__coins_model.show_empty_addresses == value:
             return
         self.__coins_model.show_empty_addresses = value
-        for c in self.__gcd.all_coins:
+        for c in self._application.gcd.all_coins:
             c.show_empty = value
         self.emptyBalancesChanged.emit()
         # yeah!
@@ -162,7 +169,7 @@ class CoinManager(qt_core.QObject):
 
     @qt_core.Slot(int, result=int)
     def walletsCount(self, coin_index: int) -> int:
-        return len(self.__gcd.all_coins[coin_index])
+        return len(self._application.gcd.all_coins[coin_index])
 
     @qt_core.Slot()
     def getCoinUnspentList(self):
@@ -170,21 +177,21 @@ class CoinManager(qt_core.QObject):
             # TODO: we shouldn't get unspents from read only addresses
             for addr in self.coin:  # pylint: disable=not-an-iterable
                 if not addr.readOnly and addr.balance > 0:
-                    self.__gcd.unspent_list(addr)
+                    self._application.gcd.unspent_list(addr)
         else:
             log.warn("No current coin")
 
     @qt_core.Slot()
     def getAddressUnspentList(self):
         if self.address:
-            self.__gcd.unspent_list(self.address)
+            self._application.gcd.unspent_list(self.address)
 
     @qt_core.Slot(int, str, bool)
     def makeAddress(self, coin_index: int, label: str, segwit: bool):
         if coin_index >= 0:
             log.debug(f"Coin idx:{coin_index}")
             try:
-                coin = self.__gcd[coin_index]
+                coin = self._application.gcd[coin_index]
                 coin.make_address(
                     key.AddressType.P2WPKH if segwit else key.AddressType.P2PKH, label)
             except address.AddressError as ca:
@@ -194,7 +201,7 @@ class CoinManager(qt_core.QObject):
 
     @qt_core.Slot(int, str)
     def validateAddress(self, coin_index: int, name: str) -> None:
-        self.__gcd.validate_address(coin_index, name)
+        self._application.gcd.validate_address(coin_index, name)
 
     @qt_core.Slot(int, str, str)
     def addWatchAddress(self, coin_index: int, name: str, label: str) -> None:
@@ -203,7 +210,7 @@ class CoinManager(qt_core.QObject):
         """
         if coin_index >= 0:
             log.debug(f"Coin idx:{coin_index}")
-            coin = self.__gcd[coin_index]
+            coin = self._application.gcd[coin_index]
             coin.add_watch_address(name, label)
         else:
             log.error(f"No coin selected {coin_index}!")
@@ -217,7 +224,7 @@ class CoinManager(qt_core.QObject):
             return
         addrss = self.coin(address_index)
         self.__tx_model.clear(addrss)
-        self.__gcd.clear_transactions(addrss)
+        self._application.gcd.clear_transactions(addrss)
         self.__tx_model.clear_complete(addrss)
 
     @qt_core.Slot(int)
@@ -227,17 +234,17 @@ class CoinManager(qt_core.QObject):
                 f"invalid coin idecies: coin:{self.__current_coin_idx} address:{address_index}")
             return
         log.debug(f"removing adress: {address_index}")
-        self.__gcd.delete_wallet(
+        self._application.gcd.delete_wallet(
             self.coin[address_index])  # pylint: disable=unsubscriptable-object
         self.__tx_model.clear(self.coin[address_index])
 
     @qt_core.Slot(str, str)
     def exportWallet(self, fpath: str, password: str):
-        return self.__gcd.export_wallet(fpath, password)
+        return self._application.gcd.export_wallet(fpath, password)
 
     @qt_core.Slot(str, str)
     def importWallet(self, fpath: str, password: str):
-        return self.__gcd.import_wallet(fpath, password)
+        return self._application.gcd.import_wallet(fpath, password)
 
     @qt_core.Slot(int)
     def exportTransactions(self, address_index: int):
@@ -257,7 +264,7 @@ class CoinManager(qt_core.QObject):
             log.critical(
                 f"invalid coin idecies: coin:{self.__current_coin_idx} address:{address_index}")
             return
-        self.__gcd.updateAddress.emit(
+        self._application.gcd.updateAddress.emit(
             self.coin[address_index])  # pylint: disable=unsubscriptable-object
 
     @qt_core.Slot()
@@ -274,25 +281,25 @@ class CoinManager(qt_core.QObject):
     def debugHistoryRequest(self):
         addr = self.address
         if addr:
-            self.__gcd.debugUpdateHistory.emit(addr)
+            self._application.gcd.debugUpdateHistory.emit(addr)
         else:
             log.warning("No current address")
 
     @qt_core.Slot()
     def monitorMempool(self):
-        self.__gcd.mempoolEveryCoin.emit()
+        self._application.gcd.mempoolEveryCoin.emit()
 
     @qt_core.Slot()
     def retrieveCoinMempool(self):
         coin = self.coin
         if coin:
-            self.__gcd.mempoolCoin.emit(coin)
+            self._application.gcd.mempoolCoin.emit(coin)
         else:
             log.warning("No current coin")
 
     def address_validated_handler(self, coin: 'coins.CoinType', address: str, result: bool) -> None:
         self.addressValid.emit(
-            self.__gcd.all_visible_coins.index(coin), address, result)
+            self._application.gcd.all_visible_coins.index(coin), address, result)
 
     def update_tx(self, tx_: 'tx.Transaction') -> None:
         if self.address == tx_.wallet:
@@ -300,28 +307,28 @@ class CoinManager(qt_core.QObject):
             self.__tx_model.update_confirm_count(3)
 
     def render_cell(self, coin):
-        self.renderCell.emit(self.__gcd.all_visible_coins.index(coin))
+        self.renderCell.emit(self._application.gcd.all_visible_coins.index(coin))
 
     @qt_core.Slot()
     def lookForHD(self):
-        self.__gcd.look_for_HD()
+        self._application.gcd.look_for_HD()
 
     @qt_core.Slot()
     def clear(self):
         """
         removes all addresses
         """
-        self.__gcd.delete_all_wallets()
+        self._application.gcd.delete_all_wallets()
         self.coinIndex = -1
         self.lookForHD()
 
     @qt_core.Slot(int)
     def updateCoin(self, index: int):
-        self.__gcd.update_coin(index)
+        self._application.gcd.update_coin(index)
 
     @qt_core.Slot(int)
     def clearCoin(self, index: int):
-        self.__gcd.clear_coin(index)
+        self._application.gcd.clear_coin(index)
 
     @qt_core.Slot()
     def fakeTxStatusProgress(self):
@@ -347,7 +354,7 @@ class CoinManager(qt_core.QObject):
         tx_ = make_tx(source)
         source.add_tx(tx_)
         reciever.add_tx(tx_)
-        self.__gcd.fakeMempoolSearch.emit(tx_)
+        self._application.gcd.fakeMempoolSearch.emit(tx_)
 
     @qt_core.Slot()
     def addTxRow(self):

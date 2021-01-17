@@ -5,7 +5,6 @@ import PySide2.QtNetwork as qt_network
 
 from .. import loading_level
 import bmnclient.command_line as e_config
-from ..ui.gui import qml_context
 from ..wallet import address, fee_manager, tx
 from . import debug_cmd, net_cmd, progress_view, url_composer
 from ..application import CoreApplication
@@ -226,7 +225,7 @@ class NetworkImpl(qt_core.QObject):
     def validate_address(self, coin: "CoinType", address: str):
         def callback(result: bool):
             from ..ui.gui import Application
-            api_ = Application.instance().backendContext
+            api_ = Application.instance()
             if api_:
                 api_.coinManager.address_validated_handler(
                     coin, address, result)

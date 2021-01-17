@@ -4,9 +4,7 @@ import logging
 
 import PySide2.QtCore as qt_core
 
-from ... import gcd
 from ...wallet import key, mutable_tx, tx
-from . import qml_context
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +33,7 @@ class TxController(qt_core.QObject):
         super().__init__(parent)
         if address is None:
             from . import Application
-            self.__cm = Application.instance().backendContext.coinManager
+            self.__cm = Application.instance().coinManager
             self.__cm.getCoinUnspentList()
             address = self.__cm.address
         assert address

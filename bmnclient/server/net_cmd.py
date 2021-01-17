@@ -296,7 +296,7 @@ class CheckServerVersionCommand(ServerSysInfoCommand):
         versions = table["version"][::-1]
         self.serverVersion.emit(*versions)
         from ..ui.gui import Application
-        gui_api = Application.instance().backendContext
+        gui_api = Application.instance()
         if gui_api:
             gui_api.uiManager.fill_coin_info_model(table["coins"])
 
@@ -970,7 +970,7 @@ class GetCoinRatesCommand(ExtHostCommand):
         super().__init__(parent)
         self._source = None
         from ..ui.gui import Application
-        api_ = Application.instance().backendContext
+        api_ = Application.instance()
         if api_:
             self._source = api_.settingsManager.rateSource
 

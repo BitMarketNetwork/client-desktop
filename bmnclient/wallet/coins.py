@@ -1,5 +1,4 @@
 import logging
-import traceback
 from functools import partial
 import itertools
 from typing import Iterable, List, Optional, Union
@@ -102,7 +101,7 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
 
         #
         from ..ui.gui import Application
-        Application.instance().backendContext.coinManager.render_cell(self)
+        Application.instance().coinManager.render_cell(self)
         # self.reset_cell()
 
         if self.parent():

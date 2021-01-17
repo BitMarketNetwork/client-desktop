@@ -268,7 +268,7 @@ class GCD(meta.QSeq):
         if not self.__server_version or int(version) != int(self.__server_version):
             self.__remote_server_version = version
             from .ui.gui import Application
-            gui = Application.instance().backendContext
+            gui = Application.instance()
             if gui:
                 gui.uiManager.serverVersion = human_version
             if self.__server_version:
@@ -319,7 +319,7 @@ class GCD(meta.QSeq):
                 log.warning(f"Coin {coin_t['name']} isn't found")
         self.save_coins_with_addresses()
         from .ui.gui import Application
-        Application.instance().backendContext.coinManager.update_coin_model()
+        Application.instance().coinManager.update_coin_model()
 
     def reset_wallet(self):
         self.dropDb.emit()
@@ -478,7 +478,7 @@ class GCD(meta.QSeq):
         self.dbLoaded.emit(level)
         if level == loading_level.LoadingLevel.ADDRESSES:
             from . import Application
-            Application.instance().backendContext.coinManager.update_coin_model()
+            Application.instance().coinManager.update_coin_model()
 
     def update_coin(self, index: int) -> None:
         self.poll_coins()
