@@ -67,7 +67,7 @@ class TestDataEncoding(unittest.TestCase):
         HASH = os.urandom(32)
         self.db._set_meta_entry("seed", HASH)
         self.assertEqual(self.db._get_meta_entry("seed"),HASH)
-        coin = coins.BitCoin(None)
+        coin = coins.Bitcoin(None)
         coin.visible = False
         self.assertIsInstance(coin.visible, bool)
         self.db._add_coin(coin)
@@ -91,7 +91,7 @@ class TestWorkflow(unittest.TestCase):
 
     @unittest.skip
     def test_addresses(self):
-        coin = coins.BitCoinTest(self.gcd)
+        coin = coins.BitcoinTest(self.gcd)
         seed = os.urandom(32)
         master_hd = hd.HDNode.make_master(
             seed, coin_network.BitcoinTestNetwork)

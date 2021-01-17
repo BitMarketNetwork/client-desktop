@@ -79,7 +79,7 @@ class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
     @property
     def is_ltc(self) -> bool:
         if hasattr(self, "_coin"):
-            return isinstance(self._coin, coins.LiteCoin)
+            return isinstance(self._coin, coins.Litecoin)
         return False
 
     @property

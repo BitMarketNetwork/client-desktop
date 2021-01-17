@@ -70,9 +70,9 @@ class GCD(meta.QSeq):
         self.__debug_man = debug_manager.DebugManager(self)
         self.__fee_manager = fee_manager.FeeManager(self)
 
-        self.__btc_coin = coins.BitCoin(self)
-        self.__btc_test_coin = coins.BitCoinTest(self)
-        self.__ltc_coin = coins.LiteCoin(self)
+        self.__btc_coin = coins.Bitcoin(self)
+        self.__btc_test_coin = coins.BitcoinTest(self)
+        self.__ltc_coin = coins.Litecoin(self)
         self.__all_coins = [
             self.__btc_coin,
             self.__btc_test_coin,

@@ -12,7 +12,7 @@ class TestMeta(unittest.TestCase):
         gcd_ = gcd.GCD()
         log.debug(gcd_.count(10))
         #
-        coin = coins.BitCoin(None)
+        coin = coins.Bitcoin(None)
         coin.add_watch_address("-")
         coin.add_watch_address("--")
         addr = coin.add_watch_address("---")
@@ -30,4 +30,3 @@ class TestMeta(unittest.TestCase):
         addtx("++")
         addtx("++++")
         self.assertEqual(addr.count(tx_) , 1)
-

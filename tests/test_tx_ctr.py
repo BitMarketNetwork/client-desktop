@@ -101,8 +101,8 @@ UNSPENTS_2 = [
 
 class ParseMixin:
     def _setup(self):
-        self.btc_coin = coins.BitCoin(None)
-        self.ltc_coin = coins.LiteCoin(None)
+        self.btc_coin = coins.Bitcoin(None)
+        self.ltc_coin = coins.Litecoin(None)
         seed = os.urandom(32)
         master_hd = hd.HDNode.make_master(
             seed, coin_network.BitcoinTestNetwork)

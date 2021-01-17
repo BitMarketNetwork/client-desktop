@@ -31,7 +31,7 @@ class TestBase(unittest.TestCase):
 class TestAdvanced(unittest.TestCase):
 
     def test_free_coin_index(self):
-        coin = coins.BitCoin(None)
+        coin = coins.Bitcoin(None)
         dummy = hd.HDNode.make_master(os.urandom(64))
         coin.make_hd_node(dummy)
         self.assertEqual(coin._next_hd_index(), 1)
@@ -108,5 +108,5 @@ class TestAdvanced(unittest.TestCase):
                         break
 
         ##
-        do_for_coin(coins.BitCoin)
-        do_for_coin(coins.LiteCoin)
+        do_for_coin(coins.Bitcoin)
+        do_for_coin(coins.Litecoin)

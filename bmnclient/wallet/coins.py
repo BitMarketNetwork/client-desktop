@@ -546,7 +546,7 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
     current_wallet = property(_get_current_wallet, _set_current_wallet)
 
 
-class BitCoin(CoinType):
+class Bitcoin(CoinType):
     name = "btc"
     full_name = "Bitcoin"
     network = coin_network.BitcoinMainNetwork
@@ -557,7 +557,7 @@ class BitCoin(CoinType):
     _btc_rate = 1.
 
 
-class BitCoinTest(BitCoin):
+class BitcoinTest(Bitcoin):
     name = "btctest"
     full_name = "Bitcoin Test"
     net_name = "btc-testnet"
@@ -567,7 +567,7 @@ class BitCoinTest(BitCoin):
     _btc_rate = 1.
 
 
-class LiteCoin(CoinType):
+class Litecoin(CoinType):
     name = "ltc"
     full_name = "Litecoin"
     network = coin_network.LitecoinMainNetwork
