@@ -9,7 +9,6 @@ import PySide2.QtCore as qt_core
 import bmnclient.config
 import bmnclient.config
 import bmnclient.version
-from bmnclient import version as e_config_version
 from . import loading_level, debug_manager, meta
 from .server import network, thread as n_thread
 from .wallet import mutable_tx, tx, address, coins, \
@@ -288,7 +287,6 @@ class GCD(meta.QSeq):
 
     def reset_wallet(self):
         self.dropDb.emit()
-        self.reset_db()
         self.__server_version = None
         for c in self.__all_coins:
             c.clear()
@@ -425,11 +423,3 @@ class GCD(meta.QSeq):
         if level == loading_level.LoadingLevel.ADDRESSES:
             from . import Application
             Application.instance().coinManager.update_coin_model()
-
-    def update_coin(self, index: int) -> None:
-        self.poll_coins()
-
-    def clear_coin(self, index: int) -> None:
-        for add in self[index]:
-            self.delete_wallet(add)
-        self[index].clear()

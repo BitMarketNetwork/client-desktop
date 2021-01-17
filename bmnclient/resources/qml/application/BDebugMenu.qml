@@ -50,7 +50,7 @@ BMenu {
         BMenuItem {
             text: "Populate wallets"
             onTriggered: {
-                debugManager.makeWallets()
+                BBackend.debugManager.makeWallets()
             }
         }
         BMenuItem {

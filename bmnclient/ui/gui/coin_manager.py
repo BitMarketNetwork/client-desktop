@@ -322,14 +322,6 @@ class CoinManager(QObject):
         self.coinIndex = -1
         self.lookForHD()
 
-    @qt_core.Slot(int)
-    def updateCoin(self, index: int):
-        self._application.gcd.update_coin(index)
-
-    @qt_core.Slot(int)
-    def clearCoin(self, index: int):
-        self._application.gcd.clear_coin(index)
-
     @qt_core.Slot()
     def fakeTxStatusProgress(self):
         coin = self.coin
