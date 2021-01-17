@@ -12,7 +12,6 @@ import PySide2.QtCore as qt_core
 import PySide2.QtNetwork as qt_network
 
 from .. import loading_level
-from ..ui.gui import qml_context
 from ..wallet import address, coins, hd, key, mtx_impl, mutable_tx, tx
 from . import server_error
 
@@ -296,7 +295,8 @@ class CheckServerVersionCommand(ServerSysInfoCommand):
     def process_attr(self, table):
         versions = table["version"][::-1]
         self.serverVersion.emit(*versions)
-        gui_api = qml_context.BackendContext.get_instance()
+        from ..ui.gui import Application
+        gui_api = Application.instance().backendContext
         if gui_api:
             gui_api.uiManager.fill_coin_info_model(table["coins"])
 
@@ -969,7 +969,8 @@ class GetCoinRatesCommand(ExtHostCommand):
     def __init__(self, parent=None, ):
         super().__init__(parent)
         self._source = None
-        api_ = qml_context.BackendContext.get_instance()
+        from ..ui.gui import Application
+        api_ = Application.instance().backendContext
         if api_:
             self._source = api_.settingsManager.rateSource
 

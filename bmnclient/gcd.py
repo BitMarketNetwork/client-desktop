@@ -12,8 +12,7 @@ import bmnclient.version
 from bmnclient import version as e_config_version
 from . import loading_level, debug_manager, meta
 from .server import network, thread as n_thread
-from .ui.gui import qml_context
-from .wallet import aes, mutable_tx, tx, address, coins, \
+from .wallet import mutable_tx, tx, address, coins, \
     fee_manager, serialization, thread as w_thread, util
 from .wallet.database import database
 from .application import CoreApplication
@@ -66,7 +65,6 @@ class GCD(meta.QSeq):
 
     def __init__(self, silent_mode: bool = False, parent=None):
         assert isinstance(silent_mode, bool)
-        self.__class__.__instance = self
 
         super().__init__(parent=parent)
 
@@ -269,9 +267,10 @@ class GCD(meta.QSeq):
         log.debug(f"server version {version} / {human_version}")
         if not self.__server_version or int(version) != int(self.__server_version):
             self.__remote_server_version = version
-            gui = qml_context.BackendContext.get_instance()
+            from .ui.gui import Application
+            gui = Application.instance().backendContext
             if gui:
-                gui.get_instance().uiManager.serverVersion = human_version
+                gui.uiManager.serverVersion = human_version
             if self.__server_version:
                 log.warning("Server version mismatch !!! Local server version: %s <> Server version:%s",
                             self.__server_version, version)
@@ -319,7 +318,8 @@ class GCD(meta.QSeq):
             else:
                 log.warning(f"Coin {coin_t['name']} isn't found")
         self.save_coins_with_addresses()
-        qml_context.BackendContext.get_instance().coinManager.update_coin_model()
+        from .ui.gui import Application
+        Application.instance().backendContext.coinManager.update_coin_model()
 
     def reset_wallet(self):
         self.dropDb.emit()
@@ -344,12 +344,6 @@ class GCD(meta.QSeq):
     def post_count(self, val: int) -> None:
         with self.__post_mutex:
             self.__post_count = val
-
-    @classmethod
-    def get_instance(cls):
-        # take care of the test ( test_tr )
-        return getattr(cls, "_GCD__instance", None)
-        # return cls.__instance
 
     def add_address(self, address: str, coin_str: str = None, coin: coins.CoinType = None):
         if coin is None:
@@ -483,7 +477,8 @@ class GCD(meta.QSeq):
         "not gui !!!"
         self.dbLoaded.emit(level)
         if level == loading_level.LoadingLevel.ADDRESSES:
-            qml_context.BackendContext.get_instance().coinManager.update_coin_model()
+            from . import Application
+            Application.instance().backendContext.coinManager.update_coin_model()
 
     def update_coin(self, index: int) -> None:
         self.poll_coins()

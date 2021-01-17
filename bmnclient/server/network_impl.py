@@ -225,7 +225,8 @@ class NetworkImpl(qt_core.QObject):
 
     def validate_address(self, coin: "CoinType", address: str):
         def callback(result: bool):
-            api_: qml_context.BackendContext = qml_context.BackendContext.get_instance()
+            from ..ui.gui import Application
+            api_ = Application.instance().backendContext
             if api_:
                 api_.coinManager.address_validated_handler(
                     coin, address, result)

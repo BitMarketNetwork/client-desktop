@@ -101,8 +101,8 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
         self._reset_address_names()
 
         #
-        from ..ui.gui import qml_context
-        qml_context.BackendContext.get_instance().coinManager.render_cell(self)
+        from ..ui.gui import Application
+        Application.instance().backendContext.coinManager.render_cell(self)
         # self.reset_cell()
 
         if self.parent():

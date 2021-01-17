@@ -1,13 +1,12 @@
 import logging
 import math
-from typing import Optional, Union, List, Tuple
-from bmnclient import gcd
+from typing import Optional, List, Tuple
 
 from PySide2.QtCore import QObject, Signal as QSignal, Slot as QSlot, \
     Property as QProperty
 
 from ...config import UserConfig
-from ...wallet import base_unit, currency, rate_source
+from ...wallet import currency, rate_source
 from ...language import Language
 
 log = logging.getLogger(__name__)
@@ -21,7 +20,6 @@ class SettingsManager(QObject):
 
     def __init__(self, user_config: UserConfig) -> None:
         super().__init__()
-        self._gcd = gcd.GCD.get_instance()
         self._use_new_address = True
         #
         self._currency_model = []
@@ -63,13 +61,6 @@ class SettingsManager(QObject):
                 name=name,
             ) for name, _ in rate_source.SOURCE_OPTIONS.items()
         ]
-
-    @QSlot(result=bool)
-    def accept(self) -> bool:
-        log.debug("Accepting settings")
-        self.parent().coinManager.update_coin_model()
-        self._gcd.save_coins_settings()
-        return True
 
     ############################################################################
     # Language
@@ -300,7 +291,9 @@ class SettingsManager(QObject):
         self._rate_source_index = index
         self.rateSourceChanged.emit()
         self._rate_source_model[index].activate()
-        self._gcd.retrieve_coin_rates()
+
+        from . import Application
+        Application.instance().gcd.retrieve_coin_rates()
 
     @QProperty(rate_source.RateSource, notify=rateSourceChanged)
     def rateSource(self) -> rate_source.RateSource:

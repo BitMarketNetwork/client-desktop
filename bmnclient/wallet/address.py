@@ -90,8 +90,8 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         self.__connect_tx_model()
 
     def __connect_tx_model(self):
-        from ..ui.gui import qml_context
-        api_ = qml_context.BackendContext.get_instance()
+        from ..ui.gui import Application
+        api_ = Application.instance().backendContext
         if api_:
             model = api_.coinManager.txModel
             self.addTx.connect(functools.partial(model.append, self))
@@ -284,8 +284,8 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         if tx_.local:
             self.__local__tx_count += 1
         if check_new:
-            from ..ui.gui import qml_context
-            api_ = qml_context.BackendContext.get_instance()
+            from ..ui.gui import Application
+            api_ = Application.instance().backendContext
             if api_:
                 api_.uiManager.process_incoming_tx(tx_)
         self.addTx.emit()
@@ -320,8 +320,8 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         self.coin.add_tx_list(unique)
         #
         if check_new:
-            from ..ui.gui import qml_context
-            api_ = qml_context.BackendContext.get_instance()
+            from ..ui.gui import Application
+            api_ = Application.instance().backendContext
             if api_:
                 api_.uiManager.process_incoming_tx(unique)
         self.addComplete.emit()

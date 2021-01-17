@@ -34,14 +34,16 @@ class TxController(qt_core.QObject):
     def __init__(self, parent=None, address=None):
         super().__init__(parent)
         if address is None:
-            self.__cm = qml_context.BackendContext.get_instance().coinManager
+            from . import Application
+            self.__cm = Application.instance().backendContext.coinManager
             self.__cm.getCoinUnspentList()
             address = self.__cm.address
         assert address
         self.__coin = address.coin
+        from . import Application
         self.__tx = mutable_tx.MutableTransaction(
             address,
-            gcd.GCD.get_instance().fee_man,
+            Application.instance().gcd.fee_man,
             self
         )
         # we should keep it avoiding rounding issues when user input amount manually
@@ -61,7 +63,6 @@ class TxController(qt_core.QObject):
         self.maxAmountChanged.emit()
         if self.__negative_change and self.use_hint:
             self.__update_amount(self.__tx.source_amount)
-        # api.Api.get_instance().show_spinner(False)
 
     def __round(self, value: float, fiat: bool = False) -> str:
         if fiat:

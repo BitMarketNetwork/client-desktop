@@ -9,7 +9,7 @@ import bmnclient.version
 from bmnclient.gcd import GCD
 from bmnclient.meta import override
 from ...application import CoreApplication
-from . import qml_context, tx_controller, ui_manager, exchange_manager, \
+from . import qml_context, tx_controller, ui_manager, \
     receive_manager, coin_manager, settings_manager
 from .coin_manager import CoinManager
 from .qml_context import BackendContext
@@ -55,7 +55,7 @@ class Application(CoreApplication):
         QtQuickControls2.QQuickStyle.setStyle(QML_STYLE)
         log.debug("QML Base URL: %s", bmnclient.resources.QML_URL)
 
-        self._qml_backend_context = BackendContext(self, self.gcd)
+        self._backend_context = BackendContext(self, self.gcd)
         self._qml_network_factory = NetworkFactory(self)
 
         self._qml_engine = QtQml.QQmlApplicationEngine(self)
@@ -70,7 +70,7 @@ class Application(CoreApplication):
         qml_root_context.setBaseUrl(bmnclient.resources.QML_URL)
         qml_root_context.setContextProperty(
             QML_CONTEXT_NAME,
-            self._qml_backend_context)
+            self._backend_context)
 
         # TODO kill
         QtQml.qmlRegisterType(
@@ -90,6 +90,10 @@ class Application(CoreApplication):
     @property
     def defaultFont(self) -> QFont:
         return self._qt_application.font()
+
+    @property
+    def backendContext(self) -> BackendContext:
+        return self._backend_context
 
     @override
     def _onRun(self) -> None:
