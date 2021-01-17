@@ -122,7 +122,6 @@ class Application(CoreApplication):
 
     def _onRun(self) -> None:
         super()._onRun()
-        self.gcd.start_threads()
         url = self._qml_engine.rootContext().resolvedUrl(QUrl(QML_FILE))
         self._updateLanguage()
         self._qml_engine.load(url)
@@ -152,7 +151,7 @@ class Application(CoreApplication):
         # TODO https://stackoverflow.com/questions/30196113/properly-reloading-a-qqmlapplicationengine
         self._qml_engine.clearComponentCache()
         self._qml_engine.deleteLater()
-        self.gcd.release()
+        self.gcd.stop_poll()
         super()._onExit()
 
     @QSlot()

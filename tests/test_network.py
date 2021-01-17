@@ -21,7 +21,7 @@ class TestNetworkCommands(unittest.TestCase):
         gcd_ = gcd.GCD()
         root = gui.Application(gcd_)
         # app = qt_core.QCoreApplication()
-        gcd_.start_threads(root, run_ui=False)
+        # gcd_.start_threads(root, run_ui=False)
         root.app.processEvents()
         ##
 

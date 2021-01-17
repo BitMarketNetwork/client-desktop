@@ -1,17 +1,18 @@
 import logging
 
 import PySide2.QtCore as qt_core
-from bmnclient.wallet import address, coins, mutable_tx, tx
 
+from bmnclient.wallet import address, coins, mutable_tx
 from . import net_cmd, network_impl
 
 log = logging.getLogger(__name__)
 
 
 class Network(network_impl.NetworkImpl):
-
-    def __init__(self, gcd, parent=None):
-        super().__init__(gcd, parent=parent)
+    def __init__(self):
+        from ..ui.gui import Application
+        gcd = Application.instance().gcd
+        super().__init__(gcd)
         # connect
         gcd.updateAddress.connect(
             self.update_address, qt_core.Qt.QueuedConnection)

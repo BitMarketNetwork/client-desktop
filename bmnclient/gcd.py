@@ -96,12 +96,6 @@ class GCD(meta.QSeq):
             coin.heightChanged.connect(
                 functools.partial(lambda coin: self.heightChanged.emit(coin), coin), qt_core.Qt.UniqueConnection)
 
-    def start_threads(self):
-        self.wallet_thread = w_thread.WalletThread(self)
-        self.wallet_thread.start()
-        self.server_thread = n_thread.ServerThread(self)
-        self.server_thread.start()
-
     @property
     def network(self) -> network.Network:
         return self.server_thread.network
@@ -325,16 +319,6 @@ class GCD(meta.QSeq):
 
     def select_wallet(self, pref: str):
         return next(w for w in self if w.match(pref))
-
-    def release(self):
-        self.stop_poll()
-        qt_core.QMetaObject.invokeMethod(self.network, "abort", qt_core.Qt.QueuedConnection,)
-        qt_core.QMetaObject.invokeMethod(self.database,"abort", qt_core.Qt.QueuedConnection,)
-
-        self.server_thread.exit()
-        self.server_thread.wait()
-        self.wallet_thread.exit()
-        self.wallet_thread.wait()
 
     def stop_poll(self):
         self._poll_timer.stop()

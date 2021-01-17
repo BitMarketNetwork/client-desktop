@@ -1,21 +1,20 @@
-import base64
-import hashlib
 import logging
 import sqlite3 as sql
-import sys
 
 import PySide2.QtCore as qt_core
 
 from . import db_wrapper
-from .. import address, coins, tx
+from .. import address
 from ... import loading_level
 
 log = logging.getLogger(__name__)
 
 
 class Database(db_wrapper.DbWrapper, qt_core.QObject):
-    def __init__(self, gcd, parent: qt_core.QObject = None):
-        super().__init__(parent=parent)
+    def __init__(self):
+        from ...ui.gui import Application
+        gcd = Application.instance().gcd
+        super().__init__()
         log.info(f"SQLITE version {sql.sqlite_version}")
         self._gcd = gcd
         self._gcd.applyPassword.connect(

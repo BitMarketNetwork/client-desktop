@@ -31,8 +31,8 @@ class DbWrapper:
     """
     DEFAULT_DB_NAME = str(bmnclient.config.USER_DATABASE_FILE_PATH)
 
-    def __init__(self, parent) -> None:
-        super().__init__(parent=parent)
+    def __init__(self) -> None:
+        super().__init__()
         self._save_address_timer: qt_core.QBasicTimer = qt_core.QBasicTimer()
         self._save_address_timer.wallet = None
         self.__db_name = None

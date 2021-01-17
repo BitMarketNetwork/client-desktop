@@ -19,6 +19,8 @@ from .key_store import KeyStore
 from .language import Language
 from .logger import getClassLogger
 from .signal_handler import SignalHandler
+from .server.thread import ServerThread
+from .wallet.thread import WalletThread
 
 
 class CoreApplication(QObject):
@@ -82,6 +84,9 @@ class CoreApplication(QObject):
             self.setExitEvent,
             Qt.QueuedConnection)
 
+        self._wallet_thread: Optional[WalletThread] = None
+        self._server_thread: Optional[ServerThread] = None
+
     def run(self) -> int:
         QMetaObject.invokeMethod(self, "_onRunPrivate", Qt.QueuedConnection)
 
@@ -131,7 +136,10 @@ class CoreApplication(QObject):
         self._onRun()
 
     def _onRun(self) -> None:
-        pass
+        self._wallet_thread = WalletThread()
+        self._wallet_thread.start()
+        self._server_thread = ServerThread()
+        self._server_thread.start()
 
     def __onAboutToQuit(self) -> None:
         self._logger.debug("Shutting down...");
@@ -141,5 +149,20 @@ class CoreApplication(QObject):
 
     def _onExit(self) -> None:
         assert not self._on_exit_called
+
+        # TODO
+        QMetaObject.invokeMethod(
+            self._server_thread.network,
+            "abort",
+            Qt.QueuedConnection)
+        QMetaObject.invokeMethod(
+            self._wallet_thread.database,
+            "abort",
+            Qt.QueuedConnection)
+        for thread in (self._server_thread, self._wallet_thread):
+            # TODO logger
+            thread.exit()
+            thread.wait()
+
         self._on_exit_called = True
         self._signal_handler.close()
