@@ -40,6 +40,7 @@ class Application(CoreApplication):
         super().__init__(QApplication, argv)
 
         # TODO kill
+        self._coin_manager = None
         self.gcd = GCD(silent_mode=bmnclient.command_line.silent_mode())
         self.gcd.netError.connect(self._on_network_error)
 

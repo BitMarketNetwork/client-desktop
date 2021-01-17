@@ -74,7 +74,7 @@ class GCD(meta.QSeq):
         self._poll_timer = qt_core.QBasicTimer()
         self.__debug_man = debug_manager.DebugManager(self)
         self.__fee_manager = fee_manager.FeeManager(self)
-        #
+
         self.__btc_coin = coins.BitCoin(self)
         self.__btc_test_coin = coins.BitCoinTest(self)
         self.__ltc_coin = coins.LiteCoin(self)

@@ -91,8 +91,8 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
 
     def __connect_tx_model(self):
         from ..ui.gui import Application
-        api_ = Application.instance().backendContext
-        if api_:
+        api_ = Application.instance()
+        if api_.coinManager:
             model = api_.coinManager.txModel
             self.addTx.connect(functools.partial(model.append, self))
             self.addTxList.connect(functools.partial(model.append_list, self))
@@ -118,7 +118,6 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         return res
 
     def create(self):
-        "fill NEW address"
         self.__created = datetime.now()
 
     # no getter for it for security reasons
@@ -285,7 +284,7 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
             self.__local__tx_count += 1
         if check_new:
             from ..ui.gui import Application
-            api_ = Application.instance().backendContext
+            api_ = Application.instance()
             if api_:
                 api_.uiManager.process_incoming_tx(tx_)
         self.addTx.emit()
@@ -321,7 +320,7 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         #
         if check_new:
             from ..ui.gui import Application
-            api_ = Application.instance().backendContext
+            api_ = Application.instance()
             if api_:
                 api_.uiManager.process_incoming_tx(unique)
         self.addComplete.emit()
