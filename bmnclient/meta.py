@@ -11,16 +11,6 @@ def lazy_property(f):
     return property(functools.lru_cache()(f))
 
 
-def trace(func):
-    def wrapper(*args, **kwargs):
-        result = func(*args, **kwargs)
-        import pdb
-        pdb.set_trace()
-        log.warning(f"{func} result: {result}")
-        return result
-    return wrapper
-
-
 class classproperty:
 
     def __init__(self, fget):

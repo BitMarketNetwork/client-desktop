@@ -46,7 +46,6 @@ class FeeManager(qt_core.QObject):
                 self._timer.restart()
                 self.parent().retrieve_fee()
 
-    # @meta.trace
     def get_minutes(self, spb: int):
         self._update()
         #       return next(minutes for (sb, minutes) in sorted(self._time_values.items()) if spb >= sb)

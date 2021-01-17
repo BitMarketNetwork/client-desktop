@@ -7,7 +7,7 @@ class TestHighLevel(unittest.TestCase):
     SEED = "advice marble audit eye average vacuum tennis mushroom crowd boil wise roof"
 
     def _make_adds(self, seed):
-        gcd_ = gcd.GCD(True, None)
+        gcd_ = gcd.GCD()
         km = key_store.KeyStore(gcd_)
         self.assertTrue(km.generateMasterKey(seed, True))
         for coin in gcd_.all_coins:

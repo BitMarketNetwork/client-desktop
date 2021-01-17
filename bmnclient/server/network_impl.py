@@ -245,10 +245,6 @@ class NetworkImpl(qt_core.QObject):
         self.__level_loaded = level
 
     @property
-    def busy(self):
-        return self.__in_progress or self.__cmd_queue
-
-    @property
     def _queue(self) -> list:
         "access only for tests"
         #assert config.DEBUG_MODE
