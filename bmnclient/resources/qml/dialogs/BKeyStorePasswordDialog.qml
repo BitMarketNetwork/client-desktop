@@ -15,26 +15,6 @@ BPasswordDialog {
             dialog.open()
             return
         }
-
-        if (!BBackend.uiManager.dbValid) { // TODO whats it?
-            let dialog = _applicationManager.messageDialog(
-                    qsTr(
-                        "Your current database version isn't supported in this application version (%1).\n"
-                        + "You can reset your database either use old application version.\n\n"
-                        + "Your master key won't be deleted.\n"
-                        + "In case you reset databse you should wait some time to sinchornize data.\n\n" + "Reset database?").arg(
-                        Qt.application.version),
-                    BMessageDialog.Yes | BMessageDialog.No)
-            dialog.onAccepted.connect(function () {
-                BBackend.uiManager.resetDB() // TODO if failed?
-                _base.autoDestroy()
-                // TODO unknown action, not tested
-            })
-            dialog.onRejected.connect(_base.open)
-            dialog.open()
-            return
-        }
-
         autoDestroy()
         passwordReady()
     }

@@ -97,8 +97,6 @@ class GCD(meta.QSeq):
         self.__remote_server_version = None
         self.__post_count = 0
         self.__post_mutex = threading.Lock()
-        self._mnemo: bytes = None
-        self._db_valid = True
 
         user_config = CoreApplication.instance().userConfig
         self.__server_version = user_config.get(
@@ -206,10 +204,6 @@ class GCD(meta.QSeq):
         return self.__server_version
 
     @property
-    def db_valid(self) -> bool:
-        return self._db_valid
-
-    @property
     def debug_man(self) -> debug_manager.DebugManager:
         return self.__debug_man
 
@@ -237,13 +231,6 @@ class GCD(meta.QSeq):
         elif saved_version:
             log.info(
                 f"saved client version: {saved_version}. code client version: {code_version}")
-            saved_num = to_num(saved_version)
-            if saved_num <= 91:
-                log.warning(
-                    f"Old (alpha) DB version: {saved_num}. Need to erase it.")
-                self._db_valid = False
-                # don't save version !!!!
-                return
 
         user_config = CoreApplication.instance().userConfig
         user_config.set(bmnclient.config.UserConfig.KEY_VERSION, code_version)
@@ -441,7 +428,6 @@ class GCD(meta.QSeq):
         self.dropDb.emit()
         user_config = CoreApplication.instance().userConfig
         user_config.set(bmnclient.config.UserConfig.KEY_VERSION, e_config_version.VERSION_STRING)
-        self._db_valid = True
 
     def look_for_HD(self):
         for coin in self.all_enabled_coins:

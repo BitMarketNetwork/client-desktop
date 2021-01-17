@@ -43,9 +43,6 @@ class KeyStore(QObject):
 
         self._has_seed = False
 
-        # TODO
-        self.__master_hd = None
-
     def _reset(self, *, hard: bool = True) -> None:
         self._nonce_list = [None] * len(self._nonce_list)
         self._key_list = [None] * len(self._key_list)
@@ -113,11 +110,6 @@ class KeyStore(QObject):
 
     ############################################################################
     # TODO
-
-    def regenerate_master_key(self):
-        # seed = mnemonic.Mnemonic.phraseToSeed(self.gcd.get_mnemo())
-        # self.apply_master_seed(seed)
-        pass
 
     @QSlot()
     def resetWallet(self):
@@ -280,8 +272,8 @@ class KeyStore(QObject):
             return False
 
         # TODO
-        self.__master_hd = hd.HDNode.make_master(seed)
-        _44_node = self.__master_hd.make_child_prv(44, True)
+        master_hd = hd.HDNode.make_master(seed)
+        _44_node = master_hd.make_child_prv(44, True)
         for coin in self.gcd.all_coins:
             if coin.enabled:
                 coin.make_hd_node(_44_node)

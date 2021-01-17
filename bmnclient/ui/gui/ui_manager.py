@@ -167,10 +167,6 @@ class UIManager(QObject):
     def serverVersion(self):
         return self.__server_version
 
-    @QProperty(bool, constant=True)
-    def dbValid(self) -> bool:
-        return self._application.gcd.db_valid
-
     @serverVersion.setter
     def _set_server_version(self, vers):
         if vers == self.__server_version:
@@ -192,12 +188,6 @@ class UIManager(QObject):
     @QSlot(str, int)
     def notify(self, message: str, level: int = MessageIcon.INFORMATION):
         self.__tray.showMessage(message, level)
-
-    @QSlot()
-    def resetDB(self) -> None:
-        self._application.gcd.reset_db()
-        self._application.keyStore.regenerate_master_key()
-        self._application.gcd.coinManager.lookForHD()
 
     @QSlot(int)
     def exit(self, code: int) -> None:
