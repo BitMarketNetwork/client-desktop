@@ -19,7 +19,7 @@ QtObject {
 
     function getMaxStringLength() {
         let length = 0
-        for (let i = 0; i < map.length; i++) {
+        for (let i = 0; i < map.length; ++i) {
             if(length < map[i][1].length) {
                 length = map[i][1].length
             }

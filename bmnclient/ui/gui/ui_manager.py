@@ -11,6 +11,11 @@ from PySide2.QtCore import \
 
 from ...models import list_model, coin_daemon_model
 from ...ui.gui.system_tray import SystemTrayIcon, MessageIcon
+from . import dialogs
+
+if TYPE_CHECKING:
+    from . import Application
+
 
 log = logging.getLogger(__name__)
 
@@ -44,6 +49,32 @@ class UIManager(QObject):
         self.__tray.hideMainWindow.connect(self.hide)
         self.__tray.show()
         self.__notify_hidden = True
+
+    @QSlot()
+    def onMainComponentCompleted(self) -> None:
+        self.openDialog(dialogs.BAlphaDialog)
+
+    ############################################################################
+    # Dialogs
+    ############################################################################
+
+    openDialogSignal = QSignal(str, "QVariantMap")
+
+    def openDialog(self, dialog: Type[dialogs.Dialog]) -> None:
+        properties = {
+            "signals": []
+        }
+        for n in dir(dialog):
+            if n.startswith("on") and callable(getattr(dialog, n)):
+                properties["signals"].append(n)
+        self.openDialogSignal.emit(dialog.__name__, properties)
+
+    @QSlot(str, str)
+    def onDialogSignal(self, name: str, signal: str) -> None:
+        dialog = getattr(dialogs, name)(self._application.backendContext)
+        getattr(dialog, signal)()
+
+    ############################################################################
 
     def process_incoming_tx(self, tx: Union['tx.Transaction', List['tx.Transaction']]):
         if isinstance(tx, list):
@@ -167,3 +198,7 @@ class UIManager(QObject):
         self._application.gcd.reset_db()
         self._application.keyStore.regenerate_master_key()
         self._application.gcd.coinManager.lookForHD()
+
+    @QSlot(int)
+    def exit(self, code: int) -> None:
+        self._application.setExitEvent(code)

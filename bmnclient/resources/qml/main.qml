@@ -60,11 +60,8 @@ BApplicationWindow {
     }
 
     Component.onCompleted: {
-        // TODO should controlled by Python
-        _applicationManager.openAplhaDialog(
-                    _applicationManager.openKeyStorePasswordDialog,
-                    _applicationManager.quit)
         BBackend.coinManager.showEmptyBalances = true // TODO
+        BBackend.uiManager.onMainComponentCompleted()
     }
 
     BStackLayout {
@@ -98,13 +95,26 @@ BApplicationWindow {
 
     Connections {
         target: BBackend.uiManager
+
         function onShow() {
             _applicationWindow.showNormal()
             _applicationWindow.raise()
             _applicationWindow.requestActivate()
         }
+
         function onHide() {
             _applicationWindow.hide()
+        }
+
+        function onOpenDialogSignal(name, properties) {
+            let dialog = _applicationManager.createDialog(name, {})
+            for(let i = 0; i < properties["signals"].length; ++i) {
+                let s = properties["signals"][i]
+                dialog[s].connect(function () {
+                    BBackend.uiManager.onDialogSignal(name, s)
+                })
+            }
+            dialog.open()
         }
     }
 

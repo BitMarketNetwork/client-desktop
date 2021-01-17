@@ -50,26 +50,6 @@ QtObject {
         return dialog
     }
 
-    function openAplhaDialog(onAccepted, onRejected) {
-        let dialog = createDialog("BAlphaDialog", {})
-        dialog.onAccepted.connect(onAccepted)
-        dialog.onRejected.connect(onRejected)
-        dialog.open()
-    }
-
-    function openKeyStorePasswordDialog() {
-        let dialog
-        if (BBackend.keyStore.hasPassword) {
-            dialog = createDialog("BKeyStorePasswordDialog", {})
-            dialog.onResetWalletAccepted.connect(openKeyStorePasswordDialog)
-        } else {
-            dialog = createDialog("BKeyStoreNewPasswordDialog", {})
-            dialog.onPasswordReady.connect(openKeyStorePasswordDialog)
-        }
-        dialog.onRejected.connect(quit)
-        dialog.open()
-    }
-
     function openRevealSeedPharseDialog() { // TODO create dialogs/*.qml file
         let passwordDialog = createDialog("BPasswordDialog", {})
         passwordDialog.onPasswordAccepted.connect(function (password) {
