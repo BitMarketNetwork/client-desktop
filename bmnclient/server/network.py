@@ -43,10 +43,9 @@ class Network(network_impl.NetworkImpl):
             self.retrieve_address_history, qt_core.Qt.QueuedConnection)
         gcd.startNetwork.connect(
             self.start, qt_core.Qt.QueuedConnection)
-        # #
-        if not gcd.silent_mode:
-            self._run_cmd(net_cmd.CheckServerVersionCommand(self))
-            self._run_cmd(net_cmd.GetCoinRatesCommand(self))
+
+        self._run_cmd(net_cmd.CheckServerVersionCommand(self))
+        self._run_cmd(net_cmd.GetCoinRatesCommand(self))
 
     def server_sysinfo(self):
         self._run_cmd(net_cmd.ServerSysInfoCommand(self))

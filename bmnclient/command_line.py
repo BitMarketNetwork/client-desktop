@@ -26,12 +26,6 @@ def parse(argv) -> None:
         "--logfile",
         help="set file name for logging")
     parser.add_argument(
-        '-s',
-        '--silent_mode',
-        default=False,
-        dest='silent_mode',
-        action='store_true')
-    parser.add_argument(
         '-d',
         '--debug_mode',
         default=False,
@@ -49,11 +43,6 @@ def is_gui():
 # TODO
 def log_file():
     return ARGUMENTS.logfile
-
-
-# TODO
-def silent_mode():
-    return ARGUMENTS.silent_mode
 
 
 # TODO

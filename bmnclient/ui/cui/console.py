@@ -125,7 +125,6 @@ class Console(cmd_base.Cmd, qt_core.QObject, CoreApplication):
                 elif "history" == cmds[0]:
                     self.gcd.get_address_history(cmds[1])
                 elif "update" == cmds[0]:
-                    self.gcd.silent_mode = False
                     self.gcd.update_wallet(cmds[1])
                 else:
                     raise cmd_base.ConsoleInputError(

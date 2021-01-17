@@ -41,8 +41,7 @@ class NetworkImpl(qt_core.QObject):
         self._fee_timer.start(fee_manager.UPDATE_FEE_TIMEOUT, self)
         self.__level_loaded = loading_level.LoadingLevel.NONE
         self.__cui_mode = not e_config.is_gui
-        if not gcd.silent_mode:
-            self.start()
+        self.start()
 
     def start(self):
         self._cmd_timer.start(self.CMD_DELAY, self)

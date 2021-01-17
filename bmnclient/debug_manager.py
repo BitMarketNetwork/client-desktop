@@ -42,17 +42,14 @@ class DebugManager(qt_core.QObject):
 
     @qt_core.Slot()
     def update(self):
-        self.gcd.silent_mode = False
         self.gcd.update_wallets()
 
     @qt_core.Slot()
     def poll(self):
-        self.gcd.silent_mode = False
         self.gcd.poll_coins()
 
     @qt_core.Slot()
     def stopPolling(self):
-        self.gcd.silent_mode = True
         self.gcd.stop_poll()
 
     @qt_core.Slot()

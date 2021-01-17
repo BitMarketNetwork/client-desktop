@@ -18,7 +18,7 @@ Test for network commands' queue
 class TestQueue(unittest.TestCase):
 
     def setUp(self):
-        gcd_ = gcd.GCD(silent_mode=True)
+        gcd_ = gcd.GCD()
         self.net = network_impl.NetworkImpl(gcd_)
         coin = gcd_.btc_coin
         self.wallet = coin.append_address("1A8JiWcwvpY7tAopUkSnGuEYHmzGYfZPiq")
@@ -77,7 +77,7 @@ class TestRequest(unittest.TestCase):
     app_ = CoreApplication(qt_core.QCoreApplication)
 
     def setUp(self):
-        gcd_ = gcd.GCD(silent_mode=True)
+        gcd_ = gcd.GCD()
         gcd_.app = gui.Application(gcd_, self.app_)
         self.net = network_impl.NetworkImpl(gcd_)
         coin = gcd_.btc_coin

@@ -41,7 +41,7 @@ class Application(CoreApplication):
 
         # TODO kill
         self._coin_manager = None
-        self.gcd = GCD(silent_mode=bmnclient.command_line.silent_mode())
+        self.gcd = GCD()
         self.gcd.netError.connect(self._on_network_error)
 
         self._settings_manager = SettingsManager(self)

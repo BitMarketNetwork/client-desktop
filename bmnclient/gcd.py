@@ -61,13 +61,10 @@ class GCD(meta.QSeq):
     addressHistory = qt_core.Signal( address.CAddress )
     applyPassword = qt_core.Signal()
 
-    def __init__(self, silent_mode: bool = False, parent=None):
-        assert isinstance(silent_mode, bool)
-
+    def __init__(self, parent=None):
         super().__init__(parent=parent)
 
         self.launch_time = datetime.datetime.utcnow()
-        self.silent_mode = silent_mode
         self._mempool_timer = qt_core.QBasicTimer()
         self._poll_timer = qt_core.QBasicTimer()
         self.__debug_man = debug_manager.DebugManager(self)
@@ -330,11 +327,7 @@ class GCD(meta.QSeq):
 
     @qt_core.Slot(address.CAddress)
     def update_wallet(self, wallet):
-        """
-        don't be confused with poll_coins !!! they have different meaning !
-        """
-        if not self.silent_mode:
-            self.updateAddress.emit(wallet)
+        self.updateAddress.emit(wallet)
 
     def update_wallets(self, coin: Optional[coins.CoinType] = None):
         if coin is None:
@@ -396,10 +389,9 @@ class GCD(meta.QSeq):
 
     def apply_password(self) -> None:
         self.applyPassword.emit()
-        if not self.silent_mode:
-            self._poll_timer.short = True
-            self._poll_timer.start(self.POLLING_SERVER_SHORT_TIMEOUT, self)
-            self._mempool_timer.start(self.MEMPOOL_MONITOR_TIMEOUT, self)
+        self._poll_timer.short = True
+        self._poll_timer.start(self.POLLING_SERVER_SHORT_TIMEOUT, self)
+        self._mempool_timer.start(self.MEMPOOL_MONITOR_TIMEOUT, self)
 
     def reset_db(self) -> None:
         self.dropDb.emit()

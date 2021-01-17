@@ -18,7 +18,7 @@ It is supposed to be more behavior testing
 class TestNetworkCommands(unittest.TestCase):
 
     def test_tx_history(self):
-        gcd_ = gcd.GCD(silent_mode=True)
+        gcd_ = gcd.GCD()
         root = gui.Application(gcd_)
         # app = qt_core.QCoreApplication()
         gcd_.start_threads(root, run_ui=False)
