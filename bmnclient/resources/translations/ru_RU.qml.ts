@@ -239,22 +239,22 @@ Please use this version carefully for reference only, as it is intended for demo
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/application/BApplicationDrawer.qml" line="51"/>
+        <location filename="../qml/application/BApplicationDrawer.qml" line="52"/>
         <source>Market</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/application/BApplicationDrawer.qml" line="61"/>
+        <location filename="../qml/application/BApplicationDrawer.qml" line="62"/>
         <source>About</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/application/BApplicationDrawer.qml" line="68"/>
+        <location filename="../qml/application/BApplicationDrawer.qml" line="69"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/application/BApplicationDrawer.qml" line="75"/>
+        <location filename="../qml/application/BApplicationDrawer.qml" line="76"/>
         <source>Quit</source>
         <translation type="unfinished"></translation>
     </message>
@@ -591,12 +591,12 @@ Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BSettingsGeneralPane.qml" line="29"/>
+        <location filename="../qml/pages/BSettingsGeneralPane.qml" line="30"/>
         <source>Theme:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BSettingsGeneralPane.qml" line="47"/>
+        <location filename="../qml/pages/BSettingsGeneralPane.qml" line="48"/>
         <source>Fiat currency:</source>
         <translation type="unfinished"></translation>
     </message>

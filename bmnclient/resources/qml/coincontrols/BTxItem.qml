@@ -45,12 +45,12 @@ BItemDelegate {
                     amount: tx.amount
                 }
             }
-            BContextMenuToolButton {
+            /* TODO BContextMenuToolButton {
                 onClicked: {
                     _base.contextMenu.tx = _base.tx
                     toggleMenu(_base.contextMenu)
                 }
-            }
+            }*/
         }
         Loader {
             id: _detailsLoader

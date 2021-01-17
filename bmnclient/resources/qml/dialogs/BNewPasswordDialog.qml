@@ -68,10 +68,6 @@ BDialog {
             BDialogButtonBox.buttonRole: BDialogButtonBox.RejectRole
             text: BStandardText.buttonText.cancelRole
         }
-        BButton {
-            BDialogButtonBox.buttonRole: BDialogButtonBox.ResetRole
-            text: BStandardText.buttonText.resetRole
-        }
     }
 
     onAboutToShow: {
