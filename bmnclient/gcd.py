@@ -10,10 +10,8 @@ import bmnclient.config
 import bmnclient.config
 import bmnclient.version
 from . import loading_level, debug_manager, meta
-from .server import network, thread as n_thread
 from .wallet import mutable_tx, tx, address, coins, \
-    fee_manager, serialization, thread as w_thread, util
-from .wallet.database import database
+    fee_manager, serialization, util
 from .application import CoreApplication
 log = logging.getLogger(__name__)
 
@@ -96,25 +94,17 @@ class GCD(meta.QSeq):
             coin.heightChanged.connect(
                 functools.partial(lambda coin: self.heightChanged.emit(coin), coin), qt_core.Qt.UniqueConnection)
 
-    @property
-    def network(self) -> network.Network:
-        return self.server_thread.network
-
-    @property
-    def database(self) -> database.Database:
-        return self.wallet_thread.database
-
     def save_coins(self):
-        qt_core.QMetaObject.invokeMethod(self.wallet_thread.database,"save_coins",qt_core.Qt.QueuedConnection,)
+        qt_core.QMetaObject.invokeMethod(CoreApplication.instance().databaseThread,"save_coins",qt_core.Qt.QueuedConnection,)
 
     def save_coins_with_addresses(self):
-        qt_core.QMetaObject.invokeMethod(self.wallet_thread.database,"save_coins_with_addresses",qt_core.Qt.QueuedConnection,)
+        qt_core.QMetaObject.invokeMethod(CoreApplication.instance().databaseThread,"save_coins_with_addresses",qt_core.Qt.QueuedConnection,)
 
     def save_coins_settings(self):
-        qt_core.QMetaObject.invokeMethod(self.wallet_thread.database,"save_coins_settings",qt_core.Qt.QueuedConnection,)
+        qt_core.QMetaObject.invokeMethod(CoreApplication.instance().databaseThread,"save_coins_settings",qt_core.Qt.QueuedConnection,)
 
     def retrieve_fee(self):
-        qt_core.QMetaObject.invokeMethod(self.network, "retrieve_fee",qt_core.Qt.QueuedConnection,)
+        qt_core.QMetaObject.invokeMethod(CoreApplication.instance().networkThread, "retrieve_fee",qt_core.Qt.QueuedConnection,)
 
     def _coin_status_changed(self, coin: coins.CoinType):
         log.debug(F"Coin status changed for {coin}")
@@ -304,8 +294,8 @@ class GCD(meta.QSeq):
         self.saveAddress.emit(wallet, delay_ms)
 
     def poll_coins(self):
-        qt_core.QMetaObject.invokeMethod(self.network,"poll_coins",qt_core.Qt.QueuedConnection)
-        #  self.network.poll_coins()
+        qt_core.QMetaObject.invokeMethod(CoreApplication.instance().networkThread,"poll_coins",qt_core.Qt.QueuedConnection)
+        #  CoreApplication.instance().networkThread.poll_coins()
 
     @qt_core.Slot(address.CAddress)
     def update_wallet(self, wallet):
@@ -325,7 +315,7 @@ class GCD(meta.QSeq):
 
     def retrieve_coin_rates(self):
         qt_core.QMetaObject.invokeMethod(
-            self.network,
+            CoreApplication.instance().networkThread,
             "retrieve_rates",
             qt_core.Qt.QueuedConnection,
         )

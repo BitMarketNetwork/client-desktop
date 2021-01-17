@@ -123,6 +123,16 @@ class CoreApplication(QObject):
     def keyStore(self) -> KeyStore:
         return self._key_store
 
+    # TODO
+    @property
+    def databaseThread(self) -> WalletThread:
+        return self._wallet_thread.database
+
+    # TODO
+    @property
+    def networkThread(self) -> ServerThread:
+        return self._server_thread.network
+
     @property
     def title(self) -> str:
         return self._title
