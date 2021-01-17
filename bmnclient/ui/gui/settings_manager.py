@@ -4,10 +4,12 @@ import math
 from typing import TYPE_CHECKING, Optional, List, Tuple
 
 from PySide2.QtCore import \
+    Property as QProperty, \
+    QMetaObject, \
     QObject, \
+    Qt, \
     Signal as QSignal, \
-    Slot as QSlot, \
-    Property as QProperty
+    Slot as QSlot
 
 from ...config import UserConfig
 from ...wallet import currency, rate_source
@@ -297,7 +299,11 @@ class SettingsManager(QObject):
         self._rate_source_index = index
         self.rateSourceChanged.emit()
         self._rate_source_model[index].activate()
-        self._application.gcd.retrieve_coin_rates()
+        QMetaObject.invokeMethod(
+            self._application.networkThread,
+            "retrieve_rates",
+            Qt.QueuedConnection,
+        )
 
     @QProperty(rate_source.RateSource, notify=rateSourceChanged)
     def rateSource(self) -> rate_source.RateSource:

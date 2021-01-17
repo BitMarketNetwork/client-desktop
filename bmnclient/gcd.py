@@ -77,8 +77,6 @@ class GCD(meta.QSeq):
             self.__ltc_coin,
         ]
         self.__remote_server_version = None
-        self.__post_count = 0
-        self.__post_mutex = threading.Lock()
 
         user_config = CoreApplication.instance().userConfig
         self.__server_version = user_config.get(
@@ -117,18 +115,13 @@ class GCD(meta.QSeq):
     def _check_address_exists(self, address: str) -> bool:
         return any(address.strip().casefold() == n.sacefold() for n in self)
 
-    # Qt override
     def timerEvent(self, event: qt_core.QTimerEvent):
-        """
-        poll coins' state for new tx if any only we're not busy
-        """
         if event.timerId() == self._poll_timer.timerId():
             self.poll_coins()
             if self._poll_timer.short:
                 log.debug("increase polling timeout")
                 self._poll_timer.short = False
-                self._poll_timer.start(
-                    self.POLLING_SERVER_LONG_TIMEOUT, self)
+                self._poll_timer.start(self.POLLING_SERVER_LONG_TIMEOUT, self)
         elif event.timerId() == self._mempool_timer.timerId():
             self.mempoolEveryCoin.emit()
 
@@ -182,15 +175,7 @@ class GCD(meta.QSeq):
     def empty(self):
         return all(len(c) == 0 for c in self.__all_coins)
 
-    def dump_server_version(self):
-        if self.__remote_server_version:
-            self.__server_version = self.__remote_server_version
-            user_config = CoreApplication.instance().userConfig
-            user_config.set(bmnclient.config.UserConfig.KEY_SERVER_VERSION, self.__server_version)
-        else:
-            log.warn("Local server version match with remote one")
-
-    @ qt_core.Slot(int, str)
+    @qt_core.Slot(int, str)
     def onServerVersion(self, version: int, human_version: str):
         """
         we got remote version
@@ -207,12 +192,15 @@ class GCD(meta.QSeq):
             if self.__server_version:
                 log.warning("Server version mismatch !!! Local server version: %s <> Server version:%s",
                             self.__server_version, version)
-            self.dump_server_version()
+            if self.__remote_server_version:
+                self.__server_version = self.__remote_server_version
+                user_config = CoreApplication.instance().userConfig
+                user_config.set(bmnclient.config.UserConfig.KEY_SERVER_VERSION,
+                                self.__server_version)
+            else:
+                log.warn("Local server version match with remote one")
 
     def __iter__(self):
-        """
-        by wallets of all enabled coins
-        """
         self.__coin_iter = iter(self.all_enabled_coins)
         self.__wallet_iter = iter(next(self.__coin_iter))
         return self
@@ -268,15 +256,6 @@ class GCD(meta.QSeq):
     def __len__(self) -> int:
         return len(self.all_visible_coins)
 
-    @property
-    def post_count(self) -> int:
-        return self.__post_count
-
-    @post_count.setter
-    def post_count(self, val: int) -> None:
-        with self.__post_mutex:
-            self.__post_count = val
-
     def add_address(self, address: str, coin_str: str = None, coin: coins.CoinType = None):
         if coin is None:
             coin = next((c for c in self.all_coins if c.match(coin_str)), None)
@@ -313,22 +292,12 @@ class GCD(meta.QSeq):
     def stop_poll(self):
         self._poll_timer.stop()
 
-    def retrieve_coin_rates(self):
-        qt_core.QMetaObject.invokeMethod(
-            CoreApplication.instance().networkThread,
-            "retrieve_rates",
-            qt_core.Qt.QueuedConnection,
-        )
-
     def delete_wallet(self, wallet):
         wallet.coin.expanded = False
         self.eraseWallet.emit(wallet)
         wallet.coin.remove_wallet(wallet)
 
     def delete_all_wallets(self):
-        """
-        put it to list at first!!
-        """
         wlist = [w for w in self]
         for w in wlist:
             self.delete_wallet(w)
@@ -369,7 +338,6 @@ class GCD(meta.QSeq):
 
     def save_tx_list(self, address, tx_list):
         self.saveTxList.emit(address, tx_list)
-        self.post_count += 1
 
     def db_level_loaded(self, level: int) -> None:
         "not gui !!!"

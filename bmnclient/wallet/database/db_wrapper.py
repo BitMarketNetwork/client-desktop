@@ -433,7 +433,6 @@ class DbWrapper:
     def _write_transactions(self, address, tx_list: list) -> None:
         # log.warning(f"{address} {tx_list}")
         assert address.rowid is not None
-        self._gcd.post_count -= 1
         for tx in tx_list:
             try:
                 query = f"""

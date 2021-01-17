@@ -15,7 +15,6 @@ class NetworkImpl(qt_core.QObject):
     API_VERSION = 1
     CMD_DELAY = 1000
     REPLY_TIMEOUT = 5000
-    EVENTS_QUEUE_LIMIT = 5
 
     def __init__(self, gcd, parent=None):
         super().__init__(parent=parent)
@@ -180,8 +179,7 @@ class NetworkImpl(qt_core.QObject):
         if event.timerId() == self._cmd_timer.timerId():
             if not self.__in_progress:
                 qt_core.QCoreApplication.processEvents()
-                if self.__gcd.post_count < self.EVENTS_QUEUE_LIMIT:
-                    self.__run_next_cmd()
+                self.__run_next_cmd()
         if event.timerId() == self._fee_timer.timerId():
             self.retrieve_fee()
 
