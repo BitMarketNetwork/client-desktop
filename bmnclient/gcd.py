@@ -22,8 +22,6 @@ class GCD(meta.QSeq):
     saveAddress = qt_core.Signal(
         address.CAddress, int, arguments=["wallet", "timeout"])
     updateAddress = qt_core.Signal(address.CAddress, arguments=["wallet"])
-    validateAddress = qt_core.Signal(
-        coins.CoinType, str, arguments=["coin,address"])
     updateTxStatus = qt_core.Signal(tx.Transaction)
     heightChanged = qt_core.Signal(coins.CoinType, arguments=["coin"])
     eraseWallet = qt_core.Signal(address.CAddress, arguments=["wallet"])
@@ -205,7 +203,3 @@ class GCD(meta.QSeq):
         for coin in self.all_enabled_coins:
             log.debug(f"Looking for HD chain: {coin}")
             self.lookForHDChain.emit(coin)
-
-    def validate_address(self, coin_index: int, address: str) -> None:
-        coin = self[coin_index]
-        self.validateAddress.emit(coin, address)

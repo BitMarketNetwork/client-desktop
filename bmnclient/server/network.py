@@ -28,7 +28,7 @@ class Network(network_impl.NetworkImpl):
             self.broadcast_tx, qt_core.Qt.QueuedConnection)
         gcd.lookForHDChain.connect(
             self.look_for_hd_addresses, qt_core.Qt.QueuedConnection)
-        gcd.validateAddress.connect(
+        parent.validateAddress.connect(
             self.validate_address, qt_core.Qt.QueuedConnection)
         gcd.undoTx.connect(
             self.undo_tx, qt_core.Qt.QueuedConnection)

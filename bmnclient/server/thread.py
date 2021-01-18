@@ -5,6 +5,7 @@ from ..wallet.coins import CoinType
 class ServerThread(qt_core.QThread):
     mempoolEveryCoin = qt_core.Signal()
     mempoolCoin = qt_core.Signal(CoinType, arguments=["coin"])
+    validateAddress = qt_core.Signal(CoinType, str, arguments=["coin,address"])
 
     def __init__(self):
         super().__init__()
@@ -58,3 +59,8 @@ class ServerThread(qt_core.QThread):
             self._network,
             "retrieve_fee",
             qt_core.Qt.QueuedConnection,)
+
+    def validate_address(self, coin_index: int, address: str) -> None:
+        from ..ui.gui import Application
+        coin = Application.instance().gcd[coin_index]
+        self.validateAddress.emit(coin, address)

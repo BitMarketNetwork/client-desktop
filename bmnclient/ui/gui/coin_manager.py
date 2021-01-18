@@ -201,7 +201,7 @@ class CoinManager(QObject):
 
     @qt_core.Slot(int, str)
     def validateAddress(self, coin_index: int, name: str) -> None:
-        self._application.gcd.validate_address(coin_index, name)
+        self._application.networkThread.validate_address(coin_index, name)
 
     @qt_core.Slot(int, str, str)
     def addWatchAddress(self, coin_index: int, name: str, label: str) -> None:
