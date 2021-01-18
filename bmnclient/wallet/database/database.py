@@ -61,13 +61,6 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
         self.close_db()
 
     @qt_core.Slot()
-    def save_coins(self):
-        # TODO: one query
-        for coin in self._gcd.all_coins:
-            self._add_coin(coin, True)
-        self.__update_wallets()
-
-    @qt_core.Slot()
     def save_coins_with_addresses(self):
         # TODO: one query
         for coin in self._gcd.all_coins:

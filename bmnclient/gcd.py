@@ -17,10 +17,6 @@ class GcdError(Exception):
 
 
 class GCD(meta.QSeq):
-    POLLING_SERVER_LONG_TIMEOUT = 10000
-    POLLING_SERVER_SHORT_TIMEOUT = 3000
-    MEMPOOL_MONITOR_TIMEOUT = 60000
-
     saveCoin = qt_core.Signal(coins.CoinType, arguments=["coin"])
     lookForHDChain = qt_core.Signal(coins.CoinType, arguments=["coin"])
     saveAddress = qt_core.Signal(
@@ -71,9 +67,6 @@ class GCD(meta.QSeq):
             coin.heightChanged.connect(
                 functools.partial(lambda coin: self.heightChanged.emit(coin), coin), qt_core.Qt.UniqueConnection)
 
-    def save_coins(self):
-        qt_core.QMetaObject.invokeMethod(CoreApplication.instance().databaseThread,"save_coins",qt_core.Qt.QueuedConnection,)
-
     def save_coins_with_addresses(self):
         qt_core.QMetaObject.invokeMethod(CoreApplication.instance().databaseThread,"save_coins_with_addresses",qt_core.Qt.QueuedConnection,)
 
@@ -91,16 +84,13 @@ class GCD(meta.QSeq):
         # log.info(f"Coin height changed for {coin} to {coin.height}")
         self.retrieveCoinHistory.emit(coin)
 
-    def _check_address_exists(self, address: str) -> bool:
-        return any(address.strip().casefold() == n.sacefold() for n in self)
-
     def timerEvent(self, event: qt_core.QTimerEvent):
         if event.timerId() == self._poll_timer.timerId():
             self.poll_coins()
             if self._poll_timer.short:
                 log.debug("increase polling timeout")
                 self._poll_timer.short = False
-                self._poll_timer.start(self.POLLING_SERVER_LONG_TIMEOUT, self)
+                self._poll_timer.start(10 * 10000, self)
         elif event.timerId() == self._mempool_timer.timerId():
             self.mempoolEveryCoin.emit()
 
@@ -196,25 +186,11 @@ class GCD(meta.QSeq):
     def __len__(self) -> int:
         return len(self.all_visible_coins)
 
-    def add_address(self, address: str, coin_str: str = None, coin: coins.CoinType = None):
-        if coin is None:
-            coin = next((c for c in self.all_coins if c.match(coin_str)), None)
-            if coin is None:
-                raise GcdError(
-                    self.tr(f"There's no coin found matching '{coin}'"))
-        # create it
-        wallet = coin.append_address(address)
-        # why do we save it? we'll save it after update
-        # self.save_wallet.emit(wallet)
-        # update from server
-        self.updateAddress.emit(wallet)
-
     def save_wallet(self, wallet: address.CAddress, delay_ms: int = None):
         self.saveAddress.emit(wallet, delay_ms)
 
     def poll_coins(self):
         qt_core.QMetaObject.invokeMethod(CoreApplication.instance().networkThread,"poll_coins",qt_core.Qt.QueuedConnection)
-        #  CoreApplication.instance().networkThread.poll_coins()
 
     @qt_core.Slot(address.CAddress)
     def update_wallet(self, wallet):
@@ -225,9 +201,6 @@ class GCD(meta.QSeq):
             coin = self
         for addr in coin:
             self.update_wallet(addr)
-
-    def select_wallet(self, pref: str):
-        return next(w for w in self if w.match(pref))
 
     def stop_poll(self):
         self._poll_timer.stop()
@@ -241,7 +214,6 @@ class GCD(meta.QSeq):
         wlist = [w for w in self]
         for w in wlist:
             self.delete_wallet(w)
-        assert self.empty
 
     def process_all_txs(self):
         for w in self:
@@ -261,8 +233,8 @@ class GCD(meta.QSeq):
     def apply_password(self) -> None:
         self.applyPassword.emit()
         self._poll_timer.short = True
-        self._poll_timer.start(self.POLLING_SERVER_SHORT_TIMEOUT, self)
-        self._mempool_timer.start(self.MEMPOOL_MONITOR_TIMEOUT, self)
+        self._poll_timer.start(3 * 1000, self)
+        self._mempool_timer.start(10 * 1000, self)
 
     def reset_db(self) -> None:
         self.dropDb.emit()
