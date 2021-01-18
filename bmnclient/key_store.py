@@ -308,7 +308,8 @@ class KeyStore(QObject):
 
         from .application import CoreApplication
         if CoreApplication.instance():
-            CoreApplication.instance().gcd.apply_password()  # TODO
+            CoreApplication.instance().databaseThread.applyPassword.emit()
+            CoreApplication.instance().networkThread.startTimers()
         return True
 
     @QSlot(str, result=bool)

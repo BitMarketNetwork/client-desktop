@@ -11,13 +11,12 @@ log = logging.getLogger(__name__)
 
 
 class Database(db_wrapper.DbWrapper, qt_core.QObject):
-    def __init__(self):
+    def __init__(self, parent):
         from ..ui.gui import Application
-        gcd = Application.instance().gcd
         super().__init__()
         log.info(f"SQLITE version {sql.sqlite_version}")
-        self._gcd = gcd
-        self._gcd.applyPassword.connect(
+        self._gcd = Application.instance().gcd
+        parent.applyPassword.connect(
             self._apply_password, qt_core.Qt.QueuedConnection)
 
     def _init_actions(self):

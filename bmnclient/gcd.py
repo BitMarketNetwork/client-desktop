@@ -40,7 +40,6 @@ class GCD(meta.QSeq):
     saveTx = qt_core.Signal(tx.Transaction, arguments=["tx"])
     saveTxList = qt_core.Signal(address.CAddress, list)
     dbLoaded = qt_core.Signal(int)
-    applyPassword = qt_core.Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -200,10 +199,6 @@ class GCD(meta.QSeq):
         address.clear()
         # to save offsetts
         self.saveAddress.emit(address, None)
-
-    def apply_password(self) -> None:
-        self.applyPassword.emit()
-        CoreApplication.instance().networkThread.startTimers()
 
     def reset_db(self) -> None:
         self.dropDb.emit()

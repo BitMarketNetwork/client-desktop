@@ -6,6 +6,8 @@ log = logging.getLogger(__name__)
 
 
 class WalletThread(qt_core.QThread):
+    applyPassword = qt_core.Signal()
+
     def __init__(self):
         super().__init__()
         self._db = None
@@ -13,7 +15,7 @@ class WalletThread(qt_core.QThread):
     def run(self) -> int:
         threading.current_thread().name = "DbThread"
         from ..database import database
-        self._db = database.Database()
+        self._db = database.Database(self)
         self.finished.connect(self._db.close, qt_core.Qt.QueuedConnection)
         return self.exec_()
 
