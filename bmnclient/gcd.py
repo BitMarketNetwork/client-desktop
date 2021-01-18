@@ -8,10 +8,6 @@ from .application import CoreApplication
 log = logging.getLogger(__name__)
 
 
-class GcdError(Exception):
-    pass
-
-
 class GCD(meta.QSeq):
     def __init__(self, application):
         super().__init__()

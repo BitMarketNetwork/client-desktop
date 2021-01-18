@@ -218,15 +218,11 @@ clean: tr-mostlyclean qrc-clean dist-clean
 
 ################################################################################
 
-.PHONY: gui gui-debug cui cui-debug
+.PHONY: gui gui-debug
 gui: all
-	$(PYTHON) "$(call NPATH,$(BASE_DIR)/$(BMN_SHORT_NAME))" -u gui
+	$(PYTHON) "$(call NPATH,$(BASE_DIR)/$(BMN_SHORT_NAME))"
 gui-debug: all
-	$(PYTHON) "$(call NPATH,$(BASE_DIR)/$(BMN_SHORT_NAME))" -u gui -d
-cui: all
-	$(PYTHON) "$(call NPATH,$(BASE_DIR)/$(BMN_SHORT_NAME))" -u cui
-cui-debug: all
-	$(PYTHON) "$(call NPATH,$(BASE_DIR)/$(BMN_SHORT_NAME))" -u cui -d
+	$(PYTHON) "$(call NPATH,$(BASE_DIR)/$(BMN_SHORT_NAME))" -d
 
 # https://docs.python.org/3/library/unittest.html#test-discovery
 # https://docs.python.org/3/library/unittest.html#command-line-interface

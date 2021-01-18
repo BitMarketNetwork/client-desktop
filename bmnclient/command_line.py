@@ -14,14 +14,6 @@ def parse(argv) -> None:
         prog=argv[0],
         description=bmnclient.version.NAME)
     parser.add_argument(
-        "-u",
-        "--ui",
-        action="store",
-        nargs=1,
-        default="auto",
-        choices=["auto", "cui", "gui"],
-        help="select user interface type, the default value is \'auto\'")
-    parser.add_argument(
         "-l",
         "--logfile",
         help="set file name for logging")
@@ -33,11 +25,6 @@ def parse(argv) -> None:
         action='store_true')
 
     ARGUMENTS = parser.parse_args(argv[1:])
-
-
-# TODO
-def is_gui():
-    return 'cui' not in ARGUMENTS.ui
 
 
 # TODO

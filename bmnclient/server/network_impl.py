@@ -39,7 +39,6 @@ class NetworkImpl(qt_core.QObject):
         self._fee_timer = qt_core.QBasicTimer()
         self._fee_timer.start(fee_manager.UPDATE_FEE_TIMEOUT, self)
         self.__level_loaded = loading_level.LoadingLevel.NONE
-        self.__cui_mode = not e_config.is_gui
         self.start()
 
     def start(self):
@@ -68,9 +67,6 @@ class NetworkImpl(qt_core.QObject):
         self.__reply.readyRead.connect(self.__reply_read)
         self.__reply.finished.connect(self.__reply_finished)
         self.__reply.sslErrors.connect(self.__on_ssl_errors)
-        if not kwargs.get("test"):
-            if verbose and self.__cui_mode:
-                self.__progress.reset()
 
     def _push_cmd(self, cmd: net_cmd.AbstractNetworkCommand, first: bool = False) -> None:
         "for tests only"
@@ -133,8 +129,6 @@ class NetworkImpl(qt_core.QObject):
                 f"{self.__reply.error()}: {self.__reply.errorString()}")
             qt_core.QCoreApplication.instance().exit()
             return
-        if self.__cmd.verbose and self.__cui_mode:
-            self.__progress.finish()
         http_error = int(self.__reply.attribute(
             qt_network.QNetworkRequest.HttpStatusCodeAttribute) or 501)
         ok = http_error < 400 or http_error == 500 or http_error == 404
@@ -174,8 +168,7 @@ class NetworkImpl(qt_core.QObject):
 
     def __reply_down_progress(self, rcv, total):
         # log.debug('%s from %s bytes received',rcv,total)
-        if self.__cui_mode and self.__cmd.verbose:
-            self.__progress(rcv, total)
+        pass
 
     def __reply_read(self):
         if self.__cmd:
