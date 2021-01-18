@@ -139,12 +139,6 @@ BMenu {
             }
         }
         BMenuItem {
-            text: "Look for HD chain"
-            onTriggered: {
-                BBackend.coinManager.lookForHD()
-            }
-        }
-        BMenuItem {
             text: "Online mode"
             onTriggered: {
                 BBackend.uiManager.online = !BBackend.uiManager.online

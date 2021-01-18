@@ -6,6 +6,7 @@ class ServerThread(qt_core.QThread):
     mempoolEveryCoin = qt_core.Signal()
     mempoolCoin = qt_core.Signal(CoinType, arguments=["coin"])
     validateAddress = qt_core.Signal(CoinType, str, arguments=["coin,address"])
+    lookForHDChain = qt_core.Signal(CoinType, arguments=["coin"])
 
     def __init__(self):
         super().__init__()
@@ -64,3 +65,9 @@ class ServerThread(qt_core.QThread):
         from ..ui.gui import Application
         coin = Application.instance().gcd[coin_index]
         self.validateAddress.emit(coin, address)
+
+    def look_for_HD(self):
+        from ..ui.gui import Application
+        for coin in Application.instance().gcd.all_enabled_coins:
+            #log.debug(f"Looking for HD chain: {coin}")
+            self.lookForHDChain.emit(coin)

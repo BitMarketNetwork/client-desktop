@@ -290,17 +290,13 @@ class CoinManager(QObject):
         self.renderCell.emit(self._application.gcd.all_visible_coins.index(coin))
 
     @qt_core.Slot()
-    def lookForHD(self):
-        self._application.gcd.look_for_HD()
-
-    @qt_core.Slot()
     def clear(self):
         """
         removes all addresses
         """
         self._application.gcd.delete_all_wallets()
         self.coinIndex = -1
-        self.lookForHD()
+        self._application.networkThread.look_for_HD()
 
     @qt_core.Slot()
     def addTxRow(self):

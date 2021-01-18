@@ -277,7 +277,8 @@ class KeyStore(QObject):
             if coin.enabled:
                 coin.make_hd_node(_44_node)
                 self._logger.debug(f"Make HD prv for {coin}")
-        self.gcd.look_for_HD()
+        from .ui.gui import Application
+        Application.instance().networkThread.look_for_HD()
         return True
 
     ############################################################################

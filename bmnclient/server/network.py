@@ -26,7 +26,7 @@ class Network(network_impl.NetworkImpl):
             self.retreive_mempool, qt_core.Qt.QueuedConnection)
         gcd.broadcastMtx.connect(
             self.broadcast_tx, qt_core.Qt.QueuedConnection)
-        gcd.lookForHDChain.connect(
+        parent.lookForHDChain.connect(
             self.look_for_hd_addresses, qt_core.Qt.QueuedConnection)
         parent.validateAddress.connect(
             self.validate_address, qt_core.Qt.QueuedConnection)

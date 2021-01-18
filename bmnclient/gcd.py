@@ -18,7 +18,6 @@ class GcdError(Exception):
 
 class GCD(meta.QSeq):
     saveCoin = qt_core.Signal(coins.CoinType, arguments=["coin"])
-    lookForHDChain = qt_core.Signal(coins.CoinType, arguments=["coin"])
     saveAddress = qt_core.Signal(
         address.CAddress, int, arguments=["wallet", "timeout"])
     updateAddress = qt_core.Signal(address.CAddress, arguments=["wallet"])
@@ -198,8 +197,3 @@ class GCD(meta.QSeq):
 
     def reset_db(self) -> None:
         self.dropDb.emit()
-
-    def look_for_HD(self):
-        for coin in self.all_enabled_coins:
-            log.debug(f"Looking for HD chain: {coin}")
-            self.lookForHDChain.emit(coin)
