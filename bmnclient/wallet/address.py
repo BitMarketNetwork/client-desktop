@@ -615,7 +615,8 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
 
     @qt_core.Slot()
     def save(self):
-        self.gcd.save_wallet(self)
+        from ..application import CoreApplication
+        CoreApplication.instance().databaseThread.save_wallet(self)
 
     @property
     def gcd(self) -> "GCD":

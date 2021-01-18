@@ -12,6 +12,8 @@ class WalletThread(qt_core.QThread):
     dbLoaded = qt_core.Signal(int)
     saveTxList = qt_core.Signal(CAddress, list)
     dropDb = qt_core.Signal()
+    clearAddressTx = qt_core.Signal(CAddress, arguments=["address"])
+    saveAddress = qt_core.Signal(CAddress, int, arguments=["wallet", "timeout"])
 
     def __init__(self):
         super().__init__()
@@ -54,3 +56,12 @@ class WalletThread(qt_core.QThread):
 
     def reset_db(self) -> None:
         self.dropDb.emit()
+
+    def clear_transactions(self, address):
+        self.clearAddressTx.emit(address)
+        address.clear()
+        # to save offsetts
+        self.saveAddress.emit(address, None)
+
+    def save_wallet(self, wallet: CAddress, delay_ms: int = None):
+        self.saveAddress.emit(wallet, delay_ms)

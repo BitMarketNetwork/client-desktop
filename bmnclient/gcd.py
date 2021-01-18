@@ -5,7 +5,7 @@ from typing import List, Optional, Union
 
 import PySide2.QtCore as qt_core
 
-from . import loading_level, debug_manager, meta
+from . import debug_manager, meta
 from .wallet import mutable_tx, tx, address, coins, \
     fee_manager, serialization, util
 from .application import CoreApplication
@@ -18,13 +18,10 @@ class GcdError(Exception):
 
 class GCD(meta.QSeq):
     saveCoin = qt_core.Signal(coins.CoinType, arguments=["coin"])
-    saveAddress = qt_core.Signal(
-        address.CAddress, int, arguments=["wallet", "timeout"])
     updateAddress = qt_core.Signal(address.CAddress, arguments=["wallet"])
     updateTxStatus = qt_core.Signal(tx.Transaction)
     heightChanged = qt_core.Signal(coins.CoinType, arguments=["coin"])
     eraseWallet = qt_core.Signal(address.CAddress, arguments=["wallet"])
-    clearAddressTx = qt_core.Signal(address.CAddress, arguments=["address"])
     removeTxList = qt_core.Signal(list)
     undoTx = qt_core.Signal(coins.CoinType, int)
     unspentsOfWallet = qt_core.Signal(address.CAddress, arguments=["wallet"])
@@ -156,9 +153,6 @@ class GCD(meta.QSeq):
     def __len__(self) -> int:
         return len(self.all_visible_coins)
 
-    def save_wallet(self, wallet: address.CAddress, delay_ms: int = None):
-        self.saveAddress.emit(wallet, delay_ms)
-
     @qt_core.Slot(address.CAddress)
     def update_wallet(self, wallet):
         self.updateAddress.emit(wallet)
@@ -187,9 +181,3 @@ class GCD(meta.QSeq):
     def unspent_list(self, address):
         if address.wants_update_unspents:
             self.unspentsOfWallet.emit(address)
-
-    def clear_transactions(self, address):
-        self.clearAddressTx.emit(address)
-        address.clear()
-        # to save offsetts
-        self.saveAddress.emit(address, None)

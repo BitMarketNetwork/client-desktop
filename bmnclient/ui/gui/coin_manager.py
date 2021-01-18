@@ -224,7 +224,7 @@ class CoinManager(QObject):
             return
         addrss = self.coin(address_index)
         self.__tx_model.clear(addrss)
-        self._application.gcd.clear_transactions(addrss)
+        self._application.databaseThread.clear_transactions(addrss)
         self.__tx_model.clear_complete(addrss)
 
     @qt_core.Slot(int)

@@ -26,7 +26,7 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
 
             self._gcd.saveCoin.connect(
                 self._update_coin, qt_core.Qt.QueuedConnection)
-            self._gcd.saveAddress.connect(
+            self._parent.saveAddress.connect(
                 self._add_or_save_wallet, qt_core.Qt.QueuedConnection)
             self._gcd.eraseWallet.connect(
                 self.erase_wallet, qt_core.Qt.QueuedConnection)
@@ -36,7 +36,7 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
                 self._write_transactions, qt_core.Qt.QueuedConnection)
             self._gcd.removeTxList.connect(
                 self._remove_tx_list, qt_core.Qt.QueuedConnection)
-            self._gcd.clearAddressTx.connect(
+            self._parent.clearAddressTx.connect(
                 self._clear_tx, qt_core.Qt.QueuedConnection)
             self._parent.dropDb.connect(
                 self.drop_db, qt_core.Qt.QueuedConnection)

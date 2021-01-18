@@ -135,7 +135,8 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
         # log.debug(
         #     f"New wallet {wallet}  created from HD: {new_hd.chain_path} net:{self.network}")
         if self.parent():
-            self.parent().save_wallet(wallet)
+            from ..application import CoreApplication
+            CoreApplication.instance().databaseThread.save_wallet(wallet)
             self.addAddress.emit(wallet)
         else:
             self.addAddressImpl(wallet)
@@ -148,7 +149,8 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
         adr.label = label
         if self.parent():
             self.addAddress.emit(adr)
-            self.parent().save_wallet(adr)
+            from ..application import CoreApplication
+            CoreApplication.instance().databaseThread.save_wallet(adr)
         else:
             # for tests
             self.addAddressImpl(adr)

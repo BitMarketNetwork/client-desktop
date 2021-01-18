@@ -512,7 +512,8 @@ class UpdateAddressInfoCommand(AddressInfoCommand):
             self._wallet.type = type_
             self._wallet.balance = balance
             self._wallet.txCount = txCount
-            self._gcd.save_wallet(self._wallet)
+            from ..application import CoreApplication
+            CoreApplication.instance().databaseThread.save_wallet(self._wallet)
             diff = txCount - self._wallet.realTxCount
             if diff > 0 and not self._wallet.is_going_update:
                 log.debug("Need to download more %s tx for %s",
@@ -575,7 +576,8 @@ class AddressHistoryCommand(AddressInfoCommand):
         # use setter !!!
         self.__process_transactions(table["tx_list"])
         #  - we have to save new wallet offsets ?? .. cause app can be closed before next net calls
-        self._gcd.save_wallet(self._wallet, 500)
+        from ..application import CoreApplication
+        CoreApplication.instance().databaseThread.save_wallet(self._wallet, 500)
         ###
         qt_core.QCoreApplication.processEvents()
         # self._wallet.isUpdating = False
