@@ -38,7 +38,6 @@ class GCD(meta.QSeq):
     broadcastMtx = qt_core.Signal(
         mutable_tx.MutableTransaction, arguments=["mtx"])
     saveTx = qt_core.Signal(tx.Transaction, arguments=["tx"])
-    saveTxList = qt_core.Signal(address.CAddress, list)
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -210,6 +209,3 @@ class GCD(meta.QSeq):
     def validate_address(self, coin_index: int, address: str) -> None:
         coin = self[coin_index]
         self.validateAddress.emit(coin, address)
-
-    def save_tx_list(self, address, tx_list):
-        self.saveTxList.emit(address, tx_list)

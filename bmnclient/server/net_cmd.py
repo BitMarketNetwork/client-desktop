@@ -643,7 +643,8 @@ class AddressHistoryCommand(AddressInfoCommand):
             tx_list, check_new=self.__forth and self.__first_offset == 'best')
         # lsit updated !!
         if tx_list:
-            self._gcd.save_tx_list(self._wallet, tx_list)
+            from ..application import CoreApplication
+            CoreApplication.instance().databaseThread.save_tx_list(self._wallet, tx_list)
 
     @ property
     def skip(self) -> bool:

@@ -23,14 +23,7 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
     def _init_actions(self):
         if self._gcd:  # it can happen during testing
             assert self._gcd.thread() != self.thread()
-            """
-            qt_core.QObject.connect(
-                self,
-                qt_core.SIGNAL("update_wallet()"),
-                self._gcd.update_wallet ,
-                qt_core.Qt.QueuedConnection
-                )
-            """
+
             self._gcd.saveCoin.connect(
                 self._update_coin, qt_core.Qt.QueuedConnection)
             self._gcd.saveAddress.connect(
@@ -39,7 +32,7 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
                 self.erase_wallet, qt_core.Qt.QueuedConnection)
             self._gcd.saveTx.connect(
                 self._write_transaction, qt_core.Qt.QueuedConnection)
-            self._gcd.saveTxList.connect(
+            self._parent.saveTxList.connect(
                 self._write_transactions, qt_core.Qt.QueuedConnection)
             self._gcd.removeTxList.connect(
                 self._remove_tx_list, qt_core.Qt.QueuedConnection)

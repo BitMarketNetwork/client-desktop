@@ -3,13 +3,14 @@ import threading
 import PySide2.QtCore as qt_core
 
 from ..loading_level import LoadingLevel
-
+from .address import CAddress
 log = logging.getLogger(__name__)
 
 
 class WalletThread(qt_core.QThread):
     applyPassword = qt_core.Signal()
     dbLoaded = qt_core.Signal(int)
+    saveTxList = qt_core.Signal(CAddress, list)
 
     def __init__(self):
         super().__init__()
@@ -46,3 +47,6 @@ class WalletThread(qt_core.QThread):
         if level == LoadingLevel.ADDRESSES:
             from ..ui.gui import Application
             Application.instance().coinManager.update_coin_model()
+
+    def save_tx_list(self, address, tx_list):
+        self.saveTxList.emit(address, tx_list)
