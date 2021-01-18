@@ -32,7 +32,7 @@ class Network(network_impl.NetworkImpl):
             self.validate_address, qt_core.Qt.QueuedConnection)
         gcd.undoTx.connect(
             self.undo_tx, qt_core.Qt.QueuedConnection)
-        gcd.dbLoaded.connect(
+        Application.instance().databaseThread.dbLoaded.connect(
             self.level_loaded, qt_core.Qt.QueuedConnection)
 
         self._run_cmd(net_cmd.CheckServerVersionCommand(self))

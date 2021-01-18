@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 
 class Database(db_wrapper.DbWrapper, qt_core.QObject):
     def __init__(self, parent):
+        self._parent = parent
         from ..ui.gui import Application
         super().__init__()
         log.info(f"SQLITE version {sql.sqlite_version}")
@@ -88,11 +89,11 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
             coins = self._gcd.all_coins
         self._read_all_coins(coins)
         adds = self._read_all_addresses(coins)
-        self._gcd.db_level_loaded(loading_level.LoadingLevel.ADDRESSES)
+        self._parent.db_level_loaded(loading_level.LoadingLevel.ADDRESSES)
         txs = self._read_all_tx(adds)
-        self._gcd.db_level_loaded(loading_level.LoadingLevel.TRANSACTIONS)
+        self._parent.db_level_loaded(loading_level.LoadingLevel.TRANSACTIONS)
         inputs = self._read_all_inputs(txs)
-        self._gcd.db_level_loaded(loading_level.LoadingLevel.INPUTS)
+        self._parent.db_level_loaded(loading_level.LoadingLevel.INPUTS)
 
     def __update_wallets(self):
         qt_core.QMetaObject.invokeMethod(

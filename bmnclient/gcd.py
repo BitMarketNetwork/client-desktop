@@ -39,7 +39,6 @@ class GCD(meta.QSeq):
         mutable_tx.MutableTransaction, arguments=["mtx"])
     saveTx = qt_core.Signal(tx.Transaction, arguments=["tx"])
     saveTxList = qt_core.Signal(address.CAddress, list)
-    dbLoaded = qt_core.Signal(int)
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -214,10 +213,3 @@ class GCD(meta.QSeq):
 
     def save_tx_list(self, address, tx_list):
         self.saveTxList.emit(address, tx_list)
-
-    def db_level_loaded(self, level: int) -> None:
-        "not gui !!!"
-        self.dbLoaded.emit(level)
-        if level == loading_level.LoadingLevel.ADDRESSES:
-            from . import Application
-            Application.instance().coinManager.update_coin_model()
