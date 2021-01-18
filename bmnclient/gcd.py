@@ -30,7 +30,6 @@ class GCD(meta.QSeq):
     unspentsOfWallet = qt_core.Signal(address.CAddress, arguments=["wallet"])
     retrieveCoinHistory = qt_core.Signal(coins.CoinType, arguments=["coin"])
     netError = qt_core.Signal(int, str, arguments=["code,error"])
-    dropDb = qt_core.Signal()
     resetDb = qt_core.Signal(bytes, arguments=["password"])
     broadcastMtx = qt_core.Signal(
         mutable_tx.MutableTransaction, arguments=["mtx"])
@@ -145,7 +144,7 @@ class GCD(meta.QSeq):
         Application.instance().coinManager.update_coin_model()
 
     def reset_wallet(self):
-        self.dropDb.emit()
+        CoreApplication.instance().databaseThread.reset_db()
         for c in self.__all_coins:
             c.clear()
 
@@ -194,6 +193,3 @@ class GCD(meta.QSeq):
         address.clear()
         # to save offsetts
         self.saveAddress.emit(address, None)
-
-    def reset_db(self) -> None:
-        self.dropDb.emit()

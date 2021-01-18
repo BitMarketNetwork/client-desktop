@@ -11,6 +11,7 @@ class WalletThread(qt_core.QThread):
     applyPassword = qt_core.Signal()
     dbLoaded = qt_core.Signal(int)
     saveTxList = qt_core.Signal(CAddress, list)
+    dropDb = qt_core.Signal()
 
     def __init__(self):
         super().__init__()
@@ -50,3 +51,6 @@ class WalletThread(qt_core.QThread):
 
     def save_tx_list(self, address, tx_list):
         self.saveTxList.emit(address, tx_list)
+
+    def reset_db(self) -> None:
+        self.dropDb.emit()

@@ -38,7 +38,7 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
                 self._remove_tx_list, qt_core.Qt.QueuedConnection)
             self._gcd.clearAddressTx.connect(
                 self._clear_tx, qt_core.Qt.QueuedConnection)
-            self._gcd.dropDb.connect(
+            self._parent.dropDb.connect(
                 self.drop_db, qt_core.Qt.QueuedConnection)
             self._gcd.resetDb.connect(
                 self.reset_db, qt_core.Qt.QueuedConnection)

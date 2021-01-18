@@ -328,7 +328,7 @@ class KeyStore(QObject):
 
         from .application import CoreApplication
         if CoreApplication.instance():
-            CoreApplication.instance().gcd.reset_db()  # TODO
+            CoreApplication.instance().databaseThread.reset_db()  # TODO
         return True
 
     @QProperty(bool, constant=True)
