@@ -14,7 +14,7 @@ class GcdError(Exception):
 
 
 class GCD(meta.QSeq):
-    def __init__(self):
+    def __init__(self, application):
         super().__init__()
 
         self.launch_time = datetime.datetime.utcnow()
@@ -28,17 +28,12 @@ class GCD(meta.QSeq):
         ]
 
         for coin in self.__all_coins:
-            from .application import CoreApplication
-            coin.statusChanged.connect(
-                functools.partial(self._coin_status_changed, coin), qt_core.Qt.UniqueConnection)
-            CoreApplication.instance().networkThread.heightChanged.connect(
-                functools.partial(self.coin_height_changed, coin), qt_core.Qt.UniqueConnection)
-            CoreApplication.instance().networkThread.heightChanged.connect(
-                functools.partial(lambda coin: CoreApplication.instance().networkThread.heightChanged.emit(coin), coin), qt_core.Qt.UniqueConnection)
-
-    def _coin_status_changed(self, coin: coins.CoinType):
-        log.debug(F"Coin status changed for {coin}")
-        # TODO:
+            application.networkThread.heightChanged.connect(
+                functools.partial(self.coin_height_changed, coin),
+                qt_core.Qt.UniqueConnection)
+            application.networkThread.heightChanged.connect(
+                functools.partial(lambda coin: application.networkThread.heightChanged.emit(coin), coin),
+                qt_core.Qt.UniqueConnection)
 
     def coin_height_changed(self, coin: coins.CoinType):
         # log.info(f"Coin height changed for {coin} to {coin.height}")

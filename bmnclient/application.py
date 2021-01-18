@@ -84,8 +84,8 @@ class CoreApplication(QObject):
             self.setExitEvent,
             Qt.QueuedConnection)
 
-        self._wallet_thread: Optional[WalletThread] = None
-        self._server_thread: Optional[ServerThread] = None
+        self._wallet_thread = WalletThread()
+        self._server_thread = ServerThread()
 
     def run(self) -> int:
         QMetaObject.invokeMethod(self, "_onRunPrivate", Qt.QueuedConnection)
@@ -146,9 +146,7 @@ class CoreApplication(QObject):
         self._onRun()
 
     def _onRun(self) -> None:
-        self._wallet_thread = WalletThread()
         self._wallet_thread.start()
-        self._server_thread = ServerThread()
         self._server_thread.start()
 
     def __onAboutToQuit(self) -> None:

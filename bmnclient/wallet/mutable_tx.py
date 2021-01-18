@@ -6,7 +6,6 @@ import collections
 from typing import Optional, List, Tuple, DefaultDict
 
 
-from ..application import CoreApplication
 from . import coin_network, key, mtx_impl
 
 log = logging.getLogger(__name__)
@@ -69,6 +68,7 @@ class MutableTransaction:
 
     @classmethod
     def make_dummy(cls, address: str, parent) -> 'MutableTransaction':
+        from ..application import CoreApplication
         out = cls(address, CoreApplication.instance().gcd.fee_man)
         # third
         out.__receiver = 'tb1qs5cz8f0f0l6tf87ez90ageyfm4a7w7rhryzdl2'
@@ -244,6 +244,7 @@ class MutableTransaction:
             self.__leftover_address = None
 
     def send(self):
+        from ..application import CoreApplication
         CoreApplication.instance().networkThread.broadcastMtx.emit(self)
 
     def send_callback(self, ok: bool, error: Optional[str] = None):
@@ -273,6 +274,7 @@ class MutableTransaction:
             tx_.height = None
             for w in address_set:
                 w.add_tx(tx_)
+            from ..application import CoreApplication
             CoreApplication.instance().networkThread.mempoolCoin.emit(self.__address.coin)
             # to debug
             self.__tx = tx_
