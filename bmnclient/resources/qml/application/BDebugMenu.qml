@@ -66,13 +66,6 @@ BMenu {
     BMenu {
         title: "Network"
         BMenuItem {
-            text: "Update"
-            onTriggered: {
-                // TODO ok, check actions
-                debugManager.update()
-            }
-        }
-        BMenuItem {
             text: "Poll"
             onTriggered: {
                 // TODO cannot test, not found ui visual updates

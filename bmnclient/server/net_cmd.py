@@ -351,7 +351,8 @@ class UpdateCoinsInfoCommand(CoinInfoCommand):
                 """
                 if verbose:
                     log.debug(f"remote {coin} changed . poll: {self._poll}")
-                self._gcd.saveCoin.emit(coin)
+                from ..application import CoreApplication
+                CoreApplication.instance().databaseThread.saveCoin.emit(coin)
             elif verbose:
                 log.debug(f"{coin} hasn't changed")
 
@@ -698,7 +699,8 @@ class AddressMempoolCommand(AddressInfoCommand):
             tx_.parse(name, body)
             try:
                 self._wallet.add_tx(tx_, check_new=True)
-                self._gcd.saveTx.emit(tx_)
+                from ..application import CoreApplication
+                CoreApplication.instance().databaseThread.saveTx.emit(tx_)
             except tx.TxError as txe:
                 if self.verbose:
                     log.warn(f"{txe}")
@@ -781,8 +783,9 @@ class AddressMultyMempoolCommand(AbstractMultyMempoolCommand):
                     w.add_tx(tx_, check_new=True)
                 except tx.TxError as txe:
                     # everythig's good !!!
-                    self._gcd.saveTx.emit(tx_)
-                    self._gcd.updateTxStatus.emit(tx_)
+                    from ..application import CoreApplication
+                    CoreApplication.instance().databaseThread.saveTx.emit(tx_)
+                    CoreApplication.instance().networkThread.updateTxStatus.emit(tx_)
                     if self.verbose:
                         log.warn(f"{txe}")
                 return True

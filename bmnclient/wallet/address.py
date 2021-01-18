@@ -370,7 +370,8 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
                 else:
                     break
             if to_remove:
-                self.gcd.removeTxList.emit(to_remove)
+                from ..application import CoreApplication
+                CoreApplication.instance().databaseThread.removeTxList.emit(to_remove)
                 self.removeTxList.emit(len(to_remove))
                 self.__tx_list.remove(0, len(to_remove))
                 self.removeComplete.emit()

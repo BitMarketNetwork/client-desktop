@@ -133,7 +133,7 @@ class CoinManager(QObject):
         self.update_tx_model()
         self.addressIndexChanged.emit()
         if idx >= 0:
-            self._application.gcd.update_wallet(self.address)
+            self._application.networkThread.update_wallet(self.address)
 
     @qt_core.Property(str, constant=True)
     def currency(self) -> str:
@@ -142,7 +142,7 @@ class CoinManager(QObject):
     @qt_core.Slot()
     def deleteCurrentWallet(self):
         if self.address:
-            self._application.gcd.delete_wallet(self.address)
+            self._application.databaseThread.delete_wallet(self.address)
             self.addressIndex = 0
 
     @qt_core.Property(qt_core.QObject, constant=True)
@@ -234,7 +234,7 @@ class CoinManager(QObject):
                 f"invalid coin idecies: coin:{self.__current_coin_idx} address:{address_index}")
             return
         log.debug(f"removing adress: {address_index}")
-        self._application.gcd.delete_wallet(
+        self._application.databaseThread.delete_wallet(
             self.coin[address_index])  # pylint: disable=unsubscriptable-object
         self.__tx_model.clear(self.coin[address_index])
 
@@ -264,7 +264,7 @@ class CoinManager(QObject):
             log.critical(
                 f"invalid coin idecies: coin:{self.__current_coin_idx} address:{address_index}")
             return
-        self._application.gcd.updateAddress.emit(
+        self._application.networkThread.updateAddress.emit(
             self.coin[address_index])  # pylint: disable=unsubscriptable-object
 
     @qt_core.Slot()
@@ -291,10 +291,7 @@ class CoinManager(QObject):
 
     @qt_core.Slot()
     def clear(self):
-        """
-        removes all addresses
-        """
-        self._application.gcd.delete_all_wallets()
+        self._application.databaseThread.delete_all_wallets()
         self.coinIndex = -1
         self._application.networkThread.look_for_HD()
 

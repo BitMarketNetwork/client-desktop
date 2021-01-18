@@ -3,7 +3,9 @@ import threading
 import PySide2.QtCore as qt_core
 
 from ..loading_level import LoadingLevel
+from ..wallet.coins import CoinType
 from .address import CAddress
+from ..wallet import tx
 log = logging.getLogger(__name__)
 
 
@@ -14,6 +16,11 @@ class WalletThread(qt_core.QThread):
     dropDb = qt_core.Signal()
     clearAddressTx = qt_core.Signal(CAddress, arguments=["address"])
     saveAddress = qt_core.Signal(CAddress, int, arguments=["wallet", "timeout"])
+    eraseWallet = qt_core.Signal(CAddress, arguments=["wallet"])
+    saveTx = qt_core.Signal(tx.Transaction, arguments=["tx"])
+    resetDb = qt_core.Signal(bytes, arguments=["password"])
+    removeTxList = qt_core.Signal(list)
+    saveCoin = qt_core.Signal(CoinType, arguments=["coin"])
 
     def __init__(self):
         super().__init__()
@@ -65,3 +72,14 @@ class WalletThread(qt_core.QThread):
 
     def save_wallet(self, wallet: CAddress, delay_ms: int = None):
         self.saveAddress.emit(wallet, delay_ms)
+
+    def delete_wallet(self, wallet):
+        wallet.coin.expanded = False
+        self.eraseWallet.emit(wallet)
+        wallet.coin.remove_wallet(wallet)
+
+    def delete_all_wallets(self):
+        from ..ui.gui import Application
+        wlist = [w for w in Application.instance().gcd]
+        for w in wlist:
+            self.delete_wallet(w)

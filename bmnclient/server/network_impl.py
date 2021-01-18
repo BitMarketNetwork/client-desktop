@@ -143,10 +143,11 @@ class NetworkImpl(qt_core.QObject):
                 f"HTTP reply error: {self.__reply.errorString()} CODE:{http_error}")
         # we shouldn't rely on external servers when detect online status
         if not self.__cmd.ext:
+            from ..application import CoreApplication
             if ok:
-                self.__gcd.netError.emit(0, "")
+                CoreApplication.instance().networkThread.netError.emit(0, "")
             else:
-                self.__gcd.netError.emit(
+                CoreApplication.instance().networkThread.netError.emit(
                     http_error, self.__reply.errorString())
         del self.__reply
         self.__in_progress = False

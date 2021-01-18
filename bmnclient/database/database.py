@@ -24,23 +24,23 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
         if self._gcd:  # it can happen during testing
             assert self._gcd.thread() != self.thread()
 
-            self._gcd.saveCoin.connect(
+            self._parent.saveCoin.connect(
                 self._update_coin, qt_core.Qt.QueuedConnection)
             self._parent.saveAddress.connect(
                 self._add_or_save_wallet, qt_core.Qt.QueuedConnection)
-            self._gcd.eraseWallet.connect(
+            self._parent.eraseWallet.connect(
                 self.erase_wallet, qt_core.Qt.QueuedConnection)
-            self._gcd.saveTx.connect(
+            self._parent.saveTx.connect(
                 self._write_transaction, qt_core.Qt.QueuedConnection)
             self._parent.saveTxList.connect(
                 self._write_transactions, qt_core.Qt.QueuedConnection)
-            self._gcd.removeTxList.connect(
+            self._parent.removeTxList.connect(
                 self._remove_tx_list, qt_core.Qt.QueuedConnection)
             self._parent.clearAddressTx.connect(
                 self._clear_tx, qt_core.Qt.QueuedConnection)
             self._parent.dropDb.connect(
                 self.drop_db, qt_core.Qt.QueuedConnection)
-            self._gcd.resetDb.connect(
+            self._parent.resetDb.connect(
                 self.reset_db, qt_core.Qt.QueuedConnection)
             self.load_everything()
 
@@ -90,7 +90,7 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
 
     def __update_wallets(self):
         qt_core.QMetaObject.invokeMethod(
-            self._gcd,
+            self._parent,
             "update_wallets",
             qt_core.Qt.QueuedConnection
         )

@@ -11,10 +11,6 @@ class DebugManager(qt_core.QObject):
         super().__init__(parent=gcd)
 
     @qt_core.Slot()
-    def update(self):
-        self.gcd.update_wallets()
-
-    @qt_core.Slot()
     def poll(self):
         CoreApplication.instance().networkThread.poll_coins()
 
@@ -32,7 +28,7 @@ class DebugManager(qt_core.QObject):
 
     @qt_core.Slot(int, int)
     def undoTransaction(self, coin: int, count: int) -> None:
-        self.gcd.undoTx.emit(self.gcd[coin], count)
+        CoreApplication.instance().networkThread.undoTx.emit(self.gcd[coin], count)
 
     @property
     def gcd(self):

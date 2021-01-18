@@ -244,7 +244,7 @@ class MutableTransaction:
             self.__leftover_address = None
 
     def send(self):
-        CoreApplication.instance().gcd.broadcastMtx.emit(self)
+        CoreApplication.instance().networkThread.broadcastMtx.emit(self)
 
     def send_callback(self, ok: bool, error: Optional[str] = None):
         # not GUI thread !!!

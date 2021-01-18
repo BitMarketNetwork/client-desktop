@@ -2,12 +2,9 @@ import datetime
 import functools
 import logging
 from typing import List, Optional, Union
-
 import PySide2.QtCore as qt_core
-
 from . import debug_manager, meta
-from .wallet import mutable_tx, tx, address, coins, \
-    fee_manager, serialization, util
+from .wallet import address, coins, fee_manager, serialization, util
 from .application import CoreApplication
 log = logging.getLogger(__name__)
 
@@ -17,22 +14,8 @@ class GcdError(Exception):
 
 
 class GCD(meta.QSeq):
-    saveCoin = qt_core.Signal(coins.CoinType, arguments=["coin"])
-    updateAddress = qt_core.Signal(address.CAddress, arguments=["wallet"])
-    updateTxStatus = qt_core.Signal(tx.Transaction)
-    heightChanged = qt_core.Signal(coins.CoinType, arguments=["coin"])
-    eraseWallet = qt_core.Signal(address.CAddress, arguments=["wallet"])
-    removeTxList = qt_core.Signal(list)
-    undoTx = qt_core.Signal(coins.CoinType, int)
-    retrieveCoinHistory = qt_core.Signal(coins.CoinType, arguments=["coin"])
-    netError = qt_core.Signal(int, str, arguments=["code,error"])
-    resetDb = qt_core.Signal(bytes, arguments=["password"])
-    broadcastMtx = qt_core.Signal(
-        mutable_tx.MutableTransaction, arguments=["mtx"])
-    saveTx = qt_core.Signal(tx.Transaction, arguments=["tx"])
-
-    def __init__(self, parent=None):
-        super().__init__(parent=parent)
+    def __init__(self):
+        super().__init__()
 
         self.launch_time = datetime.datetime.utcnow()
         self.__debug_man = debug_manager.DebugManager(self)
@@ -151,23 +134,3 @@ class GCD(meta.QSeq):
 
     def __len__(self) -> int:
         return len(self.all_visible_coins)
-
-    @qt_core.Slot(address.CAddress)
-    def update_wallet(self, wallet):
-        self.updateAddress.emit(wallet)
-
-    def update_wallets(self, coin: Optional[coins.CoinType] = None):
-        if coin is None:
-            coin = self
-        for addr in coin:
-            self.update_wallet(addr)
-
-    def delete_wallet(self, wallet):
-        wallet.coin.expanded = False
-        self.eraseWallet.emit(wallet)
-        wallet.coin.remove_wallet(wallet)
-
-    def delete_all_wallets(self):
-        wlist = [w for w in self]
-        for w in wlist:
-            self.delete_wallet(w)

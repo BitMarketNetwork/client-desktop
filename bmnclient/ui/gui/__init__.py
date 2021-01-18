@@ -42,7 +42,7 @@ class Application(CoreApplication):
         # TODO kill
         self._coin_manager = None
         self.gcd = GCD()
-        self.gcd.netError.connect(self._on_network_error)
+        self.networkThread.netError.connect(self._on_network_error)
 
         self._settings_manager = SettingsManager(self)
         self._ui_manager = UIManager(self)
@@ -56,7 +56,7 @@ class Application(CoreApplication):
         self._initializeQml()
 
         # TODO kill
-        self.gcd.updateTxStatus.connect(
+        self.networkThread.updateTxStatus.connect(
                 self._coin_manager.update_tx,
                 Qt.QueuedConnection)
 

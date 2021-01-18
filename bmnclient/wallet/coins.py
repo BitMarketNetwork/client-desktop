@@ -105,7 +105,7 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
         # self.reset_cell()
 
         if self.parent():
-            self.parent().update_wallet(wallet)
+            Application.instance().networkThread.update_wallet(wallet)
         wallet.updatingChanged.connect(
             partial(self.__address_model.address_updated, wallet), qt_core.Qt.QueuedConnection)
         wallet.balanceChanged.connect(

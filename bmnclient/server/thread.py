@@ -2,6 +2,7 @@ import threading
 import PySide2.QtCore as qt_core
 from ..wallet.coins import CoinType
 from ..wallet.address import CAddress
+from ..wallet import mutable_tx, tx
 
 
 class ServerThread(qt_core.QThread):
@@ -10,6 +11,11 @@ class ServerThread(qt_core.QThread):
     validateAddress = qt_core.Signal(CoinType, str, arguments=["coin,address"])
     lookForHDChain = qt_core.Signal(CoinType, arguments=["coin"])
     unspentsOfWallet = qt_core.Signal(CAddress, arguments=["wallet"])
+    updateAddress = qt_core.Signal(CAddress, arguments=["wallet"])
+    undoTx = qt_core.Signal(CoinType, int)
+    broadcastMtx = qt_core.Signal(mutable_tx.MutableTransaction, arguments=["mtx"])
+    netError = qt_core.Signal(int, str, arguments=["code,error"])
+    updateTxStatus = qt_core.Signal(tx.Transaction)
 
     def __init__(self):
         super().__init__()
@@ -78,3 +84,14 @@ class ServerThread(qt_core.QThread):
     def unspent_list(self, address):
         if address.wants_update_unspents:
             self.unspentsOfWallet.emit(address)
+
+    def update_wallet(self, wallet):
+        self.updateAddress.emit(wallet)
+
+    @qt_core.Slot(CAddress)
+    def update_wallets(self, coin=None):
+        from ..ui.gui import Application
+        if coin is None:
+            coin = Application.instance().gcd
+        for addr in coin:
+            self.update_wallet(addr)
