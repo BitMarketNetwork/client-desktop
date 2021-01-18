@@ -278,10 +278,6 @@ class CoinManager(QObject):
             addr.add_tx(tx, check_new=True)
 
     @qt_core.Slot()
-    def monitorMempool(self):
-        self._application.gcd.mempoolEveryCoin.emit()
-
-    @qt_core.Slot()
     def retrieveCoinMempool(self):
         coin = self.coin
         if coin:

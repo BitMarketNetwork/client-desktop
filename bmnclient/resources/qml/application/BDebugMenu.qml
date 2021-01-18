@@ -159,11 +159,5 @@ BMenu {
                 BBackend.coinManager.retrieveCoinMempool()
             }
         }
-        BMenuItem {
-            text: "Monitor mempool"
-            onTriggered: {
-                BBackend.coinManager.monitorMempool()
-            }
-        }
     }
 }

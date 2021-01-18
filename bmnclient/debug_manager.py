@@ -20,7 +20,7 @@ class DebugManager(qt_core.QObject):
 
     @qt_core.Slot()
     def stopPolling(self):
-        self.gcd.stop_poll()
+        CoreApplication.instance().networkThread.stop_poll()
 
     @qt_core.Slot()
     def reprocesstxlist(self):

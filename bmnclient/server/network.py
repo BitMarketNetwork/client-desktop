@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 
 class Network(network_impl.NetworkImpl):
-    def __init__(self):
+    def __init__(self, parent):
         from ..ui.gui import Application
         gcd = Application.instance().gcd
         super().__init__(gcd)
@@ -22,7 +22,7 @@ class Network(network_impl.NetworkImpl):
             self.wallet_utxo_list, qt_core.Qt.QueuedConnection)
         gcd.mempoolCoin.connect(
             self.retreive_mempool_coin, qt_core.Qt.QueuedConnection)
-        gcd.mempoolEveryCoin.connect(
+        parent.mempoolEveryCoin.connect(
             self.retreive_mempool, qt_core.Qt.QueuedConnection)
         gcd.broadcastMtx.connect(
             self.broadcast_tx, qt_core.Qt.QueuedConnection)

@@ -25,7 +25,6 @@ class GCD(meta.QSeq):
     validateAddress = qt_core.Signal(
         coins.CoinType, str, arguments=["coin,address"])
     mempoolCoin = qt_core.Signal(coins.CoinType, arguments=["coin"])
-    mempoolEveryCoin = qt_core.Signal()
     updateTxStatus = qt_core.Signal(tx.Transaction)
     heightChanged = qt_core.Signal(coins.CoinType, arguments=["coin"])
     eraseWallet = qt_core.Signal(address.CAddress, arguments=["wallet"])
@@ -48,8 +47,6 @@ class GCD(meta.QSeq):
         super().__init__(parent=parent)
 
         self.launch_time = datetime.datetime.utcnow()
-        self._mempool_timer = qt_core.QBasicTimer()
-        self._poll_timer = qt_core.QBasicTimer()
         self.__debug_man = debug_manager.DebugManager(self)
         self.__fee_manager = fee_manager.FeeManager(self)
 
@@ -74,16 +71,6 @@ class GCD(meta.QSeq):
     def coin_height_changed(self, coin: coins.CoinType):
         # log.info(f"Coin height changed for {coin} to {coin.height}")
         self.retrieveCoinHistory.emit(coin)
-
-    def timerEvent(self, event: qt_core.QTimerEvent):
-        if event.timerId() == self._poll_timer.timerId():
-            CoreApplication.instance().networkThread.poll_coins()
-            if self._poll_timer.short:
-                log.debug("increase polling timeout")
-                self._poll_timer.short = False
-                self._poll_timer.start(10 * 10000, self)
-        elif event.timerId() == self._mempool_timer.timerId():
-            self.mempoolEveryCoin.emit()
 
     @property
     def wallets(self) -> List[address.CAddress]:
@@ -190,9 +177,6 @@ class GCD(meta.QSeq):
         for addr in coin:
             self.update_wallet(addr)
 
-    def stop_poll(self):
-        self._poll_timer.stop()
-
     def delete_wallet(self, wallet):
         wallet.coin.expanded = False
         self.eraseWallet.emit(wallet)
@@ -220,9 +204,7 @@ class GCD(meta.QSeq):
 
     def apply_password(self) -> None:
         self.applyPassword.emit()
-        self._poll_timer.short = True
-        self._poll_timer.start(3 * 1000, self)
-        self._mempool_timer.start(10 * 1000, self)
+        CoreApplication.instance().networkThread.startTimers()
 
     def reset_db(self) -> None:
         self.dropDb.emit()

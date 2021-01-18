@@ -151,7 +151,7 @@ class Application(CoreApplication):
         # TODO https://stackoverflow.com/questions/30196113/properly-reloading-a-qqmlapplicationengine
         self._qml_engine.clearComponentCache()
         self._qml_engine.deleteLater()
-        self.gcd.stop_poll()
+        self.networkThread.stop_poll()
         super()._onExit()
 
     @QSlot()
