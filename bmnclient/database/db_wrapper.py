@@ -6,12 +6,12 @@ import traceback
 from pathlib import Path
 from contextlib import closing
 # to debug
-from ...server import net_cmd
+from ..server import net_cmd
 import bmnclient.config
 
 import PySide2.QtCore as qt_core
 
-from .. import address, coins, tx
+from ..wallet import address, coins, tx
 from . import sqlite_impl
 
 log = logging.getLogger(__name__)

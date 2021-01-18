@@ -3,7 +3,7 @@ import logging
 import struct
 from typing import Any
 import base64
-from ...key_store import KeyIndex
+from ..key_store import KeyIndex
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class Cipher:
     ENCRYPT = True
 
     def __init__(self) -> None:
-        from ...application import CoreApplication
+        from ..application import CoreApplication
         self._cipher = CoreApplication.instance().keyStore.deriveCipher(KeyIndex.WALLET_DATABASE)
 
     def text_from(self, value: bytes) -> str:

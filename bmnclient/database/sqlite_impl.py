@@ -4,7 +4,7 @@ from typing import Any
 import threading
 import sys
 import sqlite3 as sql
-from ... import meta
+from .. import meta
 from . import cipher
 
 log = logging.getLogger(__name__)

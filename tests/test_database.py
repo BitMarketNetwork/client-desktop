@@ -6,7 +6,7 @@ import unittest
 from bmnclient import gcd
 import key_store
 from bmnclient.wallet import address, coin_network, coins, hd, key
-from bmnclient.wallet.database import db_wrapper, cipher
+from bmnclient.database import db_wrapper, cipher
 
 log = logging.getLogger(__name__)
 

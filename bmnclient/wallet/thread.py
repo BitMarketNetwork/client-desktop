@@ -12,7 +12,7 @@ class WalletThread(qt_core.QThread):
 
     def run(self) -> int:
         threading.current_thread().name = "DbThread"
-        from .database import database
+        from ..database import database
         self._db = database.Database()
         self.finished.connect(self._db.close, qt_core.Qt.QueuedConnection)
         return self.exec_()
