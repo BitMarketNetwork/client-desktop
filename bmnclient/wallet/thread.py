@@ -23,3 +23,15 @@ class WalletThread(qt_core.QThread):
             log.fatal("db isn't ready")
             raise SystemExit(1)
         return self._db
+
+    def save_coins_with_addresses(self):
+        qt_core.QMetaObject.invokeMethod(
+            self._db,
+            "save_coins_with_addresses",
+            qt_core.Qt.QueuedConnection)
+
+    def save_coins_settings(self):  # TODO call from SettingsManager
+        qt_core.QMetaObject.invokeMethod(
+            self._db,
+            "save_coins_settings",
+            qt_core.Qt.QueuedConnection)

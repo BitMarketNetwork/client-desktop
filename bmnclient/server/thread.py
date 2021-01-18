@@ -19,3 +19,15 @@ class ServerThread(qt_core.QThread):
     @property
     def network(self):
         return self._network
+
+    def poll_coins(self):
+        qt_core.QMetaObject.invokeMethod(
+            self._network,
+            "poll_coins",
+            qt_core.Qt.QueuedConnection)
+
+    def retrieve_fee(self):
+        qt_core.QMetaObject.invokeMethod(
+            self._network,
+            "retrieve_fee",
+            qt_core.Qt.QueuedConnection,)

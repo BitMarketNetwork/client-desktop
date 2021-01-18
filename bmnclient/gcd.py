@@ -67,15 +67,6 @@ class GCD(meta.QSeq):
             coin.heightChanged.connect(
                 functools.partial(lambda coin: self.heightChanged.emit(coin), coin), qt_core.Qt.UniqueConnection)
 
-    def save_coins_with_addresses(self):
-        qt_core.QMetaObject.invokeMethod(CoreApplication.instance().databaseThread,"save_coins_with_addresses",qt_core.Qt.QueuedConnection,)
-
-    def save_coins_settings(self):
-        qt_core.QMetaObject.invokeMethod(CoreApplication.instance().databaseThread,"save_coins_settings",qt_core.Qt.QueuedConnection,)
-
-    def retrieve_fee(self):
-        qt_core.QMetaObject.invokeMethod(CoreApplication.instance().networkThread, "retrieve_fee",qt_core.Qt.QueuedConnection,)
-
     def _coin_status_changed(self, coin: coins.CoinType):
         log.debug(F"Coin status changed for {coin}")
         # TODO:
@@ -86,7 +77,7 @@ class GCD(meta.QSeq):
 
     def timerEvent(self, event: qt_core.QTimerEvent):
         if event.timerId() == self._poll_timer.timerId():
-            self.poll_coins()
+            CoreApplication.instance().networkThread.poll_coins()
             if self._poll_timer.short:
                 log.debug("increase polling timeout")
                 self._poll_timer.short = False
@@ -169,7 +160,7 @@ class GCD(meta.QSeq):
                 coin.from_table(coin_t)
             else:
                 log.warning(f"Coin {coin_t['name']} isn't found")
-        self.save_coins_with_addresses()
+        CoreApplication.instance().databaseThread.save_coins_with_addresses()
         from .ui.gui import Application
         Application.instance().coinManager.update_coin_model()
 
@@ -188,9 +179,6 @@ class GCD(meta.QSeq):
 
     def save_wallet(self, wallet: address.CAddress, delay_ms: int = None):
         self.saveAddress.emit(wallet, delay_ms)
-
-    def poll_coins(self):
-        qt_core.QMetaObject.invokeMethod(CoreApplication.instance().networkThread,"poll_coins",qt_core.Qt.QueuedConnection)
 
     @qt_core.Slot(address.CAddress)
     def update_wallet(self, wallet):

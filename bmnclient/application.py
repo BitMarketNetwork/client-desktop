@@ -126,12 +126,12 @@ class CoreApplication(QObject):
     # TODO
     @property
     def databaseThread(self) -> WalletThread:
-        return self._wallet_thread.database
+        return self._wallet_thread
 
     # TODO
     @property
     def networkThread(self) -> ServerThread:
-        return self._server_thread.network
+        return self._server_thread
 
     @property
     def title(self) -> str:

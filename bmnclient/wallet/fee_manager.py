@@ -43,8 +43,9 @@ class FeeManager(qt_core.QObject):
     def _update(self):
         if self.parent():
             if self._timer.isNull() or self._timer.elapsed() > UPDATE_FORCE_FEE_TIMEOUT:
+                from ..application import CoreApplication
                 self._timer.restart()
-                self.parent().retrieve_fee()
+                CoreApplication.instance().networkThread.retrieve_fee()
 
     def get_minutes(self, spb: int):
         self._update()

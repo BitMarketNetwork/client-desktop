@@ -2,6 +2,8 @@ import os
 
 import PySide2.QtCore as qt_core
 
+from .application import CoreApplication
+
 
 class DebugManager(qt_core.QObject):
 
@@ -14,7 +16,7 @@ class DebugManager(qt_core.QObject):
 
     @qt_core.Slot()
     def poll(self):
-        self.gcd.poll_coins()
+        CoreApplication.instance().networkThread.poll_coins()
 
     @qt_core.Slot()
     def stopPolling(self):
@@ -26,7 +28,7 @@ class DebugManager(qt_core.QObject):
 
     @qt_core.Slot()
     def retrieveFee(self):
-        self.gcd.retrieve_fee()
+        CoreApplication.instance().networkThread.retrieve_fee()
 
     @qt_core.Slot(int)
     def kill(self, sig: int):
