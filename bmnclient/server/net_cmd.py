@@ -1021,5 +1021,6 @@ class GetRecommendFeeCommand(ExtHostCommand):
             ("halfHourFee", 30),
             ("hourFee", 60),
         ]
-        self._gcd.fee_man.add_fees(
+        from ..ui.gui import Application
+        Application.instance().feeManager.add_fees(
             {table[to_str]: to_int for to_str, to_int in stats})

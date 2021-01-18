@@ -1,32 +1,31 @@
+from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 import PySide2.QtCore as qt_core
 
-from .. import meta
+if TYPE_CHECKING:
+    from . import Application
 
 log = logging.getLogger(__name__)
-# NET timer TO
 UPDATE_FEE_TIMEOUT = 30*60*1000
-# LOCAL timer TO
 UPDATE_FORCE_FEE_TIMEOUT = 10*60*1000
 
 
 class FeeManager(qt_core.QObject):
+    def __init__(self, application: Application):
+        super().__init__()
+        self._application = application
 
-    def __init__(self, parent=None, init: dict = None):
-        super().__init__(parent=parent)
         self._timer = qt_core.QTime()
         # 18.02.2020
         # {"fastestFee":14,"halfHourFee":14,"hourFee":2}
-        if init is None:
-            self._time_values = {
-                15: 10,
-                14: 30,
-                2: 60,
-            }
-        else:
-            self._time_values = init
+        self._time_values = {
+            15: 10,
+            14: 30,
+            2: 60,
+        }
 
     def add_fee(self, spb: int, minutes: int):
         """

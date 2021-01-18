@@ -1,35 +1,39 @@
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING
 
-import PySide2.QtCore as qt_core
+from PySide2.QtCore import \
+    QObject, \
+    Slot as QSlot
 
-from .application import CoreApplication
+if TYPE_CHECKING:
+    from . import Application
 
 
-class DebugManager(qt_core.QObject):
+class DebugManager(QObject):
+    def __init__(self, application: Application):
+        super().__init__()
+        self._application = application
 
-    def __init__(self, gcd=None):
-        super().__init__(parent=gcd)
+    @QSlot()
+    def poll(self) -> None:
+        self._application.networkThread.poll_coins()
 
-    @qt_core.Slot()
-    def poll(self):
-        CoreApplication.instance().networkThread.poll_coins()
+    @QSlot()
+    def stopPolling(self) -> None:
+        self._application.networkThread.stop_poll()
 
-    @qt_core.Slot()
-    def stopPolling(self):
-        CoreApplication.instance().networkThread.stop_poll()
+    @QSlot()
+    def retrieveFee(self) -> None:
+        self._application.networkThread.retrieve_fee()
 
-    @qt_core.Slot()
-    def retrieveFee(self):
-        CoreApplication.instance().networkThread.retrieve_fee()
-
-    @qt_core.Slot(int)
+    @QSlot(int)
     def kill(self, sig: int):
         os.kill(os.getpid(), sig)
 
-    @qt_core.Slot(int, int)
+    @QSlot(int, int)
     def undoTransaction(self, coin: int, count: int) -> None:
-        CoreApplication.instance().networkThread.undoTx.emit(self.gcd[coin], count)
-
-    @property
-    def gcd(self):
-        return self.parent()
+        self._application.networkThread.undoTx.emit(
+            self._application.gcd[coin],
+            count)

@@ -1,10 +1,9 @@
-import datetime
 import functools
 import logging
 from typing import List, Optional, Union
 import PySide2.QtCore as qt_core
-from . import debug_manager, meta
-from .wallet import address, coins, fee_manager, serialization, util
+from . import meta
+from .wallet import address, coins, serialization, util
 from .application import CoreApplication
 log = logging.getLogger(__name__)
 
@@ -16,10 +15,6 @@ class GcdError(Exception):
 class GCD(meta.QSeq):
     def __init__(self, application):
         super().__init__()
-
-        self.launch_time = datetime.datetime.utcnow()
-        self.__debug_man = debug_manager.DebugManager(self)
-        self.__fee_manager = fee_manager.FeeManager(self)
 
         self.__all_coins = [
             coins.Bitcoin(self),
@@ -58,14 +53,6 @@ class GCD(meta.QSeq):
 
     def coin(self, name: str) -> Optional[coins.CoinType]:
         return next((c for c in self.__all_coins if c.name == name), None)
-
-    @property
-    def debug_man(self) -> debug_manager.DebugManager:
-        return self.__debug_man
-
-    @property
-    def fee_man(self) -> fee_manager.FeeManager:
-        return self.__fee_manager
 
     @property
     def empty(self):

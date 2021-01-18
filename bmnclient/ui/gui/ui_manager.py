@@ -1,7 +1,7 @@
 from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Union, List, Type
-
+from datetime import datetime
 from PySide2.QtCore import \
     QObject, \
     Signal as QSignal, \
@@ -49,6 +49,8 @@ class UIManager(QObject):
         self.__tray.hideMainWindow.connect(self.hide)
         self.__tray.show()
         self.__notify_hidden = True
+        self._launch_time = datetime.utcnow()
+
 
     @QSlot()
     def onMainComponentCompleted(self) -> None:
@@ -86,7 +88,7 @@ class UIManager(QObject):
             # don't detect direction !!!
             # log.info(
             #     f"LAUNCH TIME:{self._application.gcd.launch_time} TX TIME:{tx.timeHuman}")
-            if tx.time >= self._application.gcd.launch_time.timestamp() and \
+            if tx.time >= self._launch_time.timestamp() and \
                     tx not in self.__notified_tx_list and \
                     True:
                 self.__notified_tx_list.add(tx)

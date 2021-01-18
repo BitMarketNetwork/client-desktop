@@ -68,8 +68,8 @@ class MutableTransaction:
 
     @classmethod
     def make_dummy(cls, address: str, parent) -> 'MutableTransaction':
-        from ..application import CoreApplication
-        out = cls(address, CoreApplication.instance().gcd.fee_man)
+        from ..ui.gui import Application
+        out = cls(address, Application.instance().feeManager)
         # third
         out.__receiver = 'tb1qs5cz8f0f0l6tf87ez90ageyfm4a7w7rhryzdl2'
         out.__amount = 0.01

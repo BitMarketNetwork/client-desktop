@@ -41,7 +41,7 @@ class TxController(qt_core.QObject):
         from . import Application
         self.__tx = mutable_tx.MutableTransaction(
             address,
-            Application.instance().gcd.fee_man,
+            Application.instance().feeManager,
             self
         )
         # we should keep it avoiding rounding issues when user input amount manually

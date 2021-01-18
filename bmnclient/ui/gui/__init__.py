@@ -24,6 +24,7 @@ from .ui_manager import UIManager, UIManager
 from ...application import CoreApplication
 from ...command_line import debug_mode
 from ...debug_manager import DebugManager
+from ...wallet.fee_manager import FeeManager
 from ...key_store import KeyStore
 from ...language import Language
 from ...server.network_factory import NetworkFactory
@@ -48,6 +49,8 @@ class Application(CoreApplication):
         self._ui_manager = UIManager(self)
         self._coin_manager = CoinManager(self)
         self._receive_manager = ReceiveManager(self)
+        self._fee_manager = FeeManager(self)
+        self._debug_manager = DebugManager(self)
         self._backend_context = BackendContext(self)
 
         self._settings_manager.currentLanguageNameChanged.connect(
@@ -115,6 +118,14 @@ class Application(CoreApplication):
     @property
     def receiveManager(self) -> ReceiveManager:
         return self._receive_manager
+
+    @property
+    def feeManager(self) -> FeeManager:
+        return self._fee_manager
+
+    @property
+    def debugManager(self) -> DebugManager:
+        return self._debug_manager
 
     @property
     def backendContext(self) -> BackendContext:
@@ -186,7 +197,7 @@ class BackendContext(QObject):
 
     @QProperty(DebugManager, constant=True)
     def debugManager(self) -> DebugManager:
-        return self._application.gcd.debug_man
+        return self._application.debugManager
 
     @QProperty(KeyStore, constant=True)
     def keyStore(self) -> KeyStore:
