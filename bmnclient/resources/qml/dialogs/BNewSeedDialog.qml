@@ -24,6 +24,7 @@ BDialog {
         BDialogInputRadioButton {
             id: _restoreBackupButton
             text: qsTr("Restore wallet from backup")
+            enabled: false
         }
     }
 

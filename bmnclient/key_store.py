@@ -110,32 +110,6 @@ class KeyStore(QObject):
     ############################################################################
     # TODO
 
-    @QSlot()
-    def resetWallet(self):
-        #self.gcd.reset_wallet()
-        #self.mnemoRequested.emit()
-        pass
-
-    @QSlot()
-    def exportWallet(self):
-        #iexport = import_export.ImportExportDialog()
-        #filename = iexport.doExport(
-        #    self.tr("Select file to save backup copy"))
-        #if filename:
-        #    self.gcd.export_wallet(filename)
-        pass
-
-    @QSlot(result=bool)
-    def importWallet(self) -> bool:
-        #iexport = import_export.ImportExportDialog()
-        #filename = iexport.doImport(
-        #    self.tr("Select file with backup"))
-        #self._logger.debug(f"Import result: {filename}")
-        #if filename:
-        #    self.gcd.import_wallet(filename)
-        #    return True
-        return False
-
     @property
     def gcd(self):
         from .application import CoreApplication

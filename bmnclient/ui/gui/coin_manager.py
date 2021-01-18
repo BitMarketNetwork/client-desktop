@@ -238,14 +238,6 @@ class CoinManager(QObject):
             self.coin[address_index])  # pylint: disable=unsubscriptable-object
         self.__tx_model.clear(self.coin[address_index])
 
-    @qt_core.Slot(str, str)
-    def exportWallet(self, fpath: str, password: str):
-        return self._application.gcd.export_wallet(fpath, password)
-
-    @qt_core.Slot(str, str)
-    def importWallet(self, fpath: str, password: str):
-        return self._application.gcd.import_wallet(fpath, password)
-
     @qt_core.Slot(int)
     def exportTransactions(self, address_index: int):
         if self.coin is None or address_index < 0:

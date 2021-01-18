@@ -3,8 +3,7 @@ import logging
 from typing import List, Optional, Union
 import PySide2.QtCore as qt_core
 from . import meta
-from .wallet import address, coins, serialization, util
-from .application import CoreApplication
+from .wallet import address, coins
 log = logging.getLogger(__name__)
 
 
@@ -71,41 +70,6 @@ class GCD(meta.QSeq):
         except StopIteration:
             self.__wallet_iter = iter(next(self.__coin_iter))
             return next(self.__wallet_iter)
-
-    def export_wallet(self, fpath: str):
-        password = self._passphrase  # TODO
-        log.debug(f"Exporting wallet to {fpath} using psw:{password}")
-        srl = serialization.Serializator(
-            serialization.SerializationType.DEBUG
-            | serialization.SerializationType.CYPHER,
-            password=password)
-        # TODO srl.add_one("seed", CoreApplication.instance().keyStore.master_seed_hex)
-        srl.add_many("coins", iter(self.__all_coins))
-        srl.to_file(fpath)
-
-    def import_wallet(self, fpath: str):
-        password = self._passphrase  # TODO
-        log.debug(f"Importing wallet from {fpath} using psw:{password}")
-        dsrl = serialization.DeSerializator(fpath, password=password)
-        # need to cleanup old stuff
-        self.resetDb.emit(self._passphrase)  # TODO
-        CoreApplication.instance().keyStore.apply_master_seed(
-            util.hex_to_bytes(dsrl["seed"]))
-        for coin_t in dsrl["coins"]:
-            coin = next(
-                (c for c in self.__all_coins if c.name == coin_t["name"]), None)
-            if coin is not None:
-                coin.from_table(coin_t)
-            else:
-                log.warning(f"Coin {coin_t['name']} isn't found")
-        CoreApplication.instance().databaseThread.save_coins_with_addresses()
-        from .ui.gui import Application
-        Application.instance().coinManager.update_coin_model()
-
-    def reset_wallet(self):
-        CoreApplication.instance().databaseThread.reset_db()
-        for c in self.__all_coins:
-            c.clear()
 
     def __getitem__(self, val: Union[int, str]):
         if isinstance(val, str):

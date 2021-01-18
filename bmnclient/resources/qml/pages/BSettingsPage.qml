@@ -47,13 +47,10 @@ BApplicationPage {
         }
 
         onBackupWallet: {
-            BBackend.keyStore.exportWallet()
         }
         onRestoreWallet: {
-            BBackend.keyStore.importWallet()
         }
         onClearWallet: {
-            BBackend.keyStore.resetWallet()
         }
 
         onRevealSeedPhraseWallet: {

@@ -70,6 +70,7 @@ BPane {
                 (_applicationStyle.dialogInputAlignment & ~Qt.AlignHorizontal_Mask)
                 | Qt.AlignHCenter
             text: qsTr("Backup wallet...")
+            enabled: false
             onClicked: {
                 _base.backupWallet()
             }
@@ -80,6 +81,7 @@ BPane {
                 (_applicationStyle.dialogInputAlignment & ~Qt.AlignHorizontal_Mask)
                 | Qt.AlignHCenter
             text: qsTr("Restore wallet...")
+            enabled: false
             onClicked: {
                 _resetMessageBox.title = text
                 _resetMessageBox.accepted.connect(_base.restoreWallet)
@@ -92,6 +94,7 @@ BPane {
                 (_applicationStyle.dialogInputAlignment & ~Qt.AlignHorizontal_Mask)
                 | Qt.AlignHCenter
             text: qsTr("Clear wallet...")
+            enabled: false
             onClicked: {
                 _resetMessageBox.title = text
                 _resetMessageBox.accepted.connect(_base.clearWallet)
