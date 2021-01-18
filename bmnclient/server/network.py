@@ -16,7 +16,7 @@ class Network(network_impl.NetworkImpl):
         # connect
         parent.updateAddress.connect(
             self.update_address, qt_core.Qt.QueuedConnection)
-        gcd.retrieveCoinHistory.connect(
+        parent.retrieveCoinHistory.connect(
             self.retrieve_coin_history, qt_core.Qt.QueuedConnection)
         parent.unspentsOfWallet.connect(
             self.wallet_utxo_list, qt_core.Qt.QueuedConnection)

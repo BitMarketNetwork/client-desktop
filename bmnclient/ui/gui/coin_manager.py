@@ -37,7 +37,7 @@ class CoinManager(QObject):
         self.__tx_model = tx_model.TxProxyModel(self)
         self.__tx_model.setSourceModel(tx_source)
         self.__coins_model = coin_model.CoinModel(self, self._application.gcd)
-        self._application.gcd.heightChanged.connect(self.coin_height_changed)
+        self._application.networkThread.heightChanged.connect(self.coin_height_changed)
         self.showEmptyBalances = True
         self.coinModelChanged.connect(
             self.update_coin_model, qt_core.Qt.QueuedConnection)

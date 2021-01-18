@@ -146,16 +146,6 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
                 self.heightChanged, qt_core.Qt.QueuedConnection)
         # self.setParent(wall)
 
-    """
-    DISABLED FOR A WHILE
-    SEE TxListPanel.qml
-
-    @qt_core.Slot()
-    def testHeight(self):
-        self.heightChanged.emit()
-        log.error(f"height:{self.confirmCount} => {self.__wallet.coin.height}")
-        """
-
     @property
     def coin_base(self) -> int:
         return 1 if self.__coin_base else 0
