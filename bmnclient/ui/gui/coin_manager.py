@@ -177,14 +177,14 @@ class CoinManager(QObject):
             # TODO: we shouldn't get unspents from read only addresses
             for addr in self.coin:  # pylint: disable=not-an-iterable
                 if not addr.readOnly and addr.balance > 0:
-                    self._application.gcd.unspent_list(addr)
+                    self._application.networkThread.unspent_list(addr)
         else:
             log.warn("No current coin")
 
     @qt_core.Slot()
     def getAddressUnspentList(self):
         if self.address:
-            self._application.gcd.unspent_list(self.address)
+            self._application.networkThread.unspent_list(self.address)
 
     @qt_core.Slot(int, str, bool)
     def makeAddress(self, coin_index: int, label: str, segwit: bool):

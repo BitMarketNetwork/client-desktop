@@ -1,12 +1,15 @@
 import threading
 import PySide2.QtCore as qt_core
 from ..wallet.coins import CoinType
+from ..wallet.address import CAddress
+
 
 class ServerThread(qt_core.QThread):
     mempoolEveryCoin = qt_core.Signal()
     mempoolCoin = qt_core.Signal(CoinType, arguments=["coin"])
     validateAddress = qt_core.Signal(CoinType, str, arguments=["coin,address"])
     lookForHDChain = qt_core.Signal(CoinType, arguments=["coin"])
+    unspentsOfWallet = qt_core.Signal(CAddress, arguments=["wallet"])
 
     def __init__(self):
         super().__init__()
@@ -71,3 +74,7 @@ class ServerThread(qt_core.QThread):
         for coin in Application.instance().gcd.all_enabled_coins:
             #log.debug(f"Looking for HD chain: {coin}")
             self.lookForHDChain.emit(coin)
+
+    def unspent_list(self, address):
+        if address.wants_update_unspents:
+            self.unspentsOfWallet.emit(address)

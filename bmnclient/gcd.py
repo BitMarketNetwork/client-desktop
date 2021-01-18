@@ -24,7 +24,6 @@ class GCD(meta.QSeq):
     eraseWallet = qt_core.Signal(address.CAddress, arguments=["wallet"])
     removeTxList = qt_core.Signal(list)
     undoTx = qt_core.Signal(coins.CoinType, int)
-    unspentsOfWallet = qt_core.Signal(address.CAddress, arguments=["wallet"])
     retrieveCoinHistory = qt_core.Signal(coins.CoinType, arguments=["coin"])
     netError = qt_core.Signal(int, str, arguments=["code,error"])
     resetDb = qt_core.Signal(bytes, arguments=["password"])
@@ -172,12 +171,3 @@ class GCD(meta.QSeq):
         wlist = [w for w in self]
         for w in wlist:
             self.delete_wallet(w)
-
-    def process_all_txs(self):
-        for w in self:
-            for tx_ in w.txs:
-                tx_.process()
-
-    def unspent_list(self, address):
-        if address.wants_update_unspents:
-            self.unspentsOfWallet.emit(address)

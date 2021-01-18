@@ -23,10 +23,6 @@ class DebugManager(qt_core.QObject):
         CoreApplication.instance().networkThread.stop_poll()
 
     @qt_core.Slot()
-    def reprocesstxlist(self):
-        self.gcd.process_all_txs()
-
-    @qt_core.Slot()
     def retrieveFee(self):
         CoreApplication.instance().networkThread.retrieve_fee()
 
