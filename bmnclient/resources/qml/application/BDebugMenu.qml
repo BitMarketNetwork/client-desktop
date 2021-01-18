@@ -151,13 +151,4 @@ BMenu {
             }
         }
     }
-    BMenu {
-        title: "Mempool scenarios"
-        BMenuItem {
-            text: "Explore coin mempool"
-            onTriggered: {
-                BBackend.coinManager.retrieveCoinMempool()
-            }
-        }
-    }
 }

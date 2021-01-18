@@ -24,7 +24,6 @@ class GCD(meta.QSeq):
     updateAddress = qt_core.Signal(address.CAddress, arguments=["wallet"])
     validateAddress = qt_core.Signal(
         coins.CoinType, str, arguments=["coin,address"])
-    mempoolCoin = qt_core.Signal(coins.CoinType, arguments=["coin"])
     updateTxStatus = qt_core.Signal(tx.Transaction)
     heightChanged = qt_core.Signal(coins.CoinType, arguments=["coin"])
     eraseWallet = qt_core.Signal(address.CAddress, arguments=["wallet"])

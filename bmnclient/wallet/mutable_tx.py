@@ -273,7 +273,7 @@ class MutableTransaction:
             tx_.height = None
             for w in address_set:
                 w.add_tx(tx_)
-            CoreApplication.instance().gcd.mempoolCoin.emit(self.__address.coin)
+            CoreApplication.instance().networkThread.mempoolCoin.emit(self.__address.coin)
             # to debug
             self.__tx = tx_
         else:

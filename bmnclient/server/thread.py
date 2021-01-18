@@ -4,6 +4,7 @@ import PySide2.QtCore as qt_core
 
 class ServerThread(qt_core.QThread):
     mempoolEveryCoin = qt_core.Signal()
+    mempoolCoin = qt_core.Signal(coins.CoinType, arguments=["coin"])
 
     def __init__(self):
         super().__init__()

@@ -20,7 +20,7 @@ class Network(network_impl.NetworkImpl):
             self.retrieve_coin_history, qt_core.Qt.QueuedConnection)
         gcd.unspentsOfWallet.connect(
             self.wallet_utxo_list, qt_core.Qt.QueuedConnection)
-        gcd.mempoolCoin.connect(
+        parent.mempoolCoin.connect(
             self.retreive_mempool_coin, qt_core.Qt.QueuedConnection)
         parent.mempoolEveryCoin.connect(
             self.retreive_mempool, qt_core.Qt.QueuedConnection)

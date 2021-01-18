@@ -277,14 +277,6 @@ class CoinManager(QObject):
             log.debug(f"dummy transaction made: {tx}")
             addr.add_tx(tx, check_new=True)
 
-    @qt_core.Slot()
-    def retrieveCoinMempool(self):
-        coin = self.coin
-        if coin:
-            self._application.gcd.mempoolCoin.emit(coin)
-        else:
-            log.warning("No current coin")
-
     def address_validated_handler(self, coin: 'coins.CoinType', address: str, result: bool) -> None:
         self.addressValid.emit(
             self._application.gcd.all_visible_coins.index(coin), address, result)
