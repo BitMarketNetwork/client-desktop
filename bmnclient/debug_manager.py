@@ -35,5 +35,5 @@ class DebugManager(QObject):
     @QSlot(int, int)
     def undoTransaction(self, coin: int, count: int) -> None:
         self._application.networkThread.undoTx.emit(
-            self._application.gcd[coin],
+            self._application.coinList[coin],
             count)

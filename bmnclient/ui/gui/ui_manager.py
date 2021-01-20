@@ -98,7 +98,7 @@ class UIManager(QObject):
 
     def fill_coin_info_model(self, coin_map):
         for name, data in coin_map.items():
-            item = coin_daemon_model.CoinDaemonModel(self._application.gcd.coin(name), None, **data)
+            item = coin_daemon_model.CoinDaemonModel(self._application.coinList[name], None, **data)
             item.moveToThread(self.__server_coin_model.thread())
             item.setParent(self.__server_coin_model)
             self.__server_coin_model.append(item)

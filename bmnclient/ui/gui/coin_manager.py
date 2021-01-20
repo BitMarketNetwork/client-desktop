@@ -80,7 +80,7 @@ class CoinManager(QObject):
     @qt_core.Property(coins.CoinType, notify=coinIndexChanged)
     def coin(self) -> 'coins.CoinType':
         if self.__current_coin_idx >= 0:
-            return self._application.gcd[self.__current_coin_idx]
+            return self._application.coinList[self.__current_coin_idx]
 
     @qt_core.Property(address.CAddress, notify=addressIndexChanged)
     def address(self) -> address.CAddress:
@@ -100,7 +100,7 @@ class CoinManager(QObject):
     def __set_coin_index(self, idx: int):
         if idx == self.__current_coin_idx:
             return
-        assert idx < len(self._application.gcd)
+        assert idx < len(self._application.coinList)
         if self.coin is not None and self.__current_address_idx >= 0:
             self.coin.current_wallet = self.__current_address_idx
             # log.debug("Current wallet: %s", self.__current_address_idx)
@@ -166,10 +166,6 @@ class CoinManager(QObject):
     def update_tx_model(self):
         self.__tx_model.address = self.address
 
-    @qt_core.Slot(int, result=int)
-    def walletsCount(self, coin_index: int) -> int:
-        return len(self._application.gcd.all_coins[coin_index])
-
     @qt_core.Slot()
     def getCoinUnspentList(self):
         if self.coin:
@@ -190,7 +186,7 @@ class CoinManager(QObject):
         if coin_index >= 0:
             log.debug(f"Coin idx:{coin_index}")
             try:
-                coin = self._application.gcd[coin_index]
+                coin = self._application.coinList[coin_index]
                 coin.make_address(
                     key.AddressType.P2WPKH if segwit else key.AddressType.P2PKH, label)
             except address.AddressError as ca:
@@ -209,7 +205,7 @@ class CoinManager(QObject):
         """
         if coin_index >= 0:
             log.debug(f"Coin idx:{coin_index}")
-            coin = self._application.gcd[coin_index]
+            coin = self._application.coinList[coin_index]
             coin.add_watch_address(name, label)
         else:
             log.error(f"No coin selected {coin_index}!")

@@ -74,7 +74,7 @@ class ServerThread(qt_core.QThread):
 
     def validate_address(self, coin_index: int, address: str) -> None:
         from ..ui.gui import Application
-        coin = Application.instance().gcd[coin_index]
+        coin = Application.instance().coinList[coin_index]
         self.validateAddress.emit(coin, address)
 
     def look_for_HD(self):

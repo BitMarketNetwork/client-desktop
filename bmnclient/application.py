@@ -148,6 +148,10 @@ class CoreApplication(QObject):
         return self._server_thread
 
     @property
+    def coinList(self) -> CoinList:
+        return self._coin_list
+
+    @property
     def title(self) -> str:
         return self._title
 

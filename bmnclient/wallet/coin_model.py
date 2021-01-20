@@ -46,7 +46,9 @@ class CoinModel(qt_core.QAbstractListModel):
 
     def data(self, index, role=qt_core.Qt.DisplayRole):
         if 0 <= index.row() < self.rowCount() and index.isValid():
-            return self.SELECTOR[role](self.__gcd[index.row()])
+            from ..application import CoreApplication
+            return self.SELECTOR[role](
+                CoreApplication.instance().coinList[index.row()])
 
     def roleNames(self) -> dict:
         return {
@@ -82,4 +84,5 @@ class CoinModel(qt_core.QAbstractListModel):
 
     @qt_core.Slot(int, result=coins.CoinType)
     def get(self, index: int) -> "coins.CoinType":
-        return self.__gcd[index]
+        from ..application import CoreApplication
+        return CoreApplication.instance().coinList[index]

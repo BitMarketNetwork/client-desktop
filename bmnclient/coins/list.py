@@ -13,3 +13,7 @@ class CoinList(Sequence):
             coins.BitcoinTest(None),
             coins.Litecoin(None),
         )
+
+    def __len__(self) -> int:
+        return len(self._list)
+

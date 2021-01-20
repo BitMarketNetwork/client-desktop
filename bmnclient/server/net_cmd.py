@@ -336,7 +336,8 @@ class UpdateCoinsInfoCommand(CoinInfoCommand):
             verbose = self.verbose and coin_name == self.verbose_filter
             if verbose:
                 log.warning(f"{coin_name} => {data}")
-            coin = self._gcd[coin_name]
+            from ..application import CoreApplication
+            coin = CoreApplication.instance().coinList[coin_name]
             # don't swear here. we've sworn already
             if coin is not None and coin.parse_coin(data, self._poll, verbose=verbose):
                 """
