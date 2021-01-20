@@ -196,7 +196,7 @@ class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
         # self.output(self.tr("Server error"), error.get('detail'))
         log.critical(f"Server error: {error.get('detail')}")
 
-    def connect_(self, _):
+    def connect_(self):
         pass
 
     def __str__(self):
@@ -293,8 +293,8 @@ class CheckServerVersionCommand(ServerSysInfoCommand):
         if gui_api:
             gui_api.uiManager.fill_coin_info_model(table["coins"])
 
-    def connect_(self, gcd):
-        super().connect_(gcd)
+    def connect_(self):
+        super().connect_()
         self.serverVersion.connect(
             gcd.onServerVersion, qt_core.Qt.QueuedConnection)
 

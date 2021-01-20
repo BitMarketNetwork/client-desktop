@@ -4,7 +4,6 @@ import PySide2.QtCore as qt_core
 import PySide2.QtNetwork as qt_network
 
 from .. import loading_level
-import bmnclient.command_line as e_config
 from ..wallet import address, fee_manager, tx
 from . import debug_cmd, net_cmd, progress_view, url_composer
 from ..application import CoreApplication
@@ -16,7 +15,7 @@ class NetworkImpl(qt_core.QObject):
     CMD_DELAY = 1000
     REPLY_TIMEOUT = 5000
 
-    def __init__(self, gcd, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent=parent)
 
         # self.__net_manager = qt_network.QNetworkAccessManager(self)
@@ -109,7 +108,7 @@ class NetworkImpl(qt_core.QObject):
         else:
             if not cmd.silenced:
                 log.debug(f"cmd to run:{cmd}")
-            cmd.connect_(self.__gcd)
+            cmd.connect_()
             self.__cmd = cmd
             # when we statrt to get history then go out from starting mode
             self.__in_progress = True

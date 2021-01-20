@@ -29,14 +29,13 @@ class CoinManager(QObject):
         super().__init__()
         self._application = application
 
-        self.__gcd = self._application.gcd
         self.__current_coin_idx = -1
         self.__coin_expanded = False
         self.__current_address_idx = -1
         tx_source = tx_model.TxModel(self)
         self.__tx_model = tx_model.TxProxyModel(self)
         self.__tx_model.setSourceModel(tx_source)
-        self.__coins_model = coin_model.CoinModel(self, self._application.gcd)
+        self.__coins_model = coin_model.CoinModel(self)
         self._application.networkThread.heightChanged.connect(self.coin_height_changed)
         self.showEmptyBalances = True
         self.coinModelChanged.connect(

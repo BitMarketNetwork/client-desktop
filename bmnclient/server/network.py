@@ -11,8 +11,7 @@ log = logging.getLogger(__name__)
 class Network(network_impl.NetworkImpl):
     def __init__(self, parent):
         from ..ui.gui import Application
-        gcd = Application.instance().gcd
-        super().__init__(gcd)
+        super().__init__()
         # connect
         parent.updateAddress.connect(
             self.update_address, qt_core.Qt.QueuedConnection)

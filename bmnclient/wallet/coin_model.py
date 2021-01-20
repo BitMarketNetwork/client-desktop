@@ -31,9 +31,8 @@ class CoinModel(qt_core.QAbstractListModel):
         Role.ADDRESS_MODEL_ROLE: lambda coin_: coin_.addressModel,
     }
 
-    def __init__(self, parent, gcd):
+    def __init__(self, parent):
         super().__init__(parent=parent)
-        self.__gcd = gcd
         # import pdb;pdb.set_trace()
         self.__mapper = qt_core.QSignalMapper(self)
         for i, c in enumerate(gcd.all_coins):
