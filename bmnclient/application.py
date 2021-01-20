@@ -1,8 +1,7 @@
-# JOK+
 from __future__ import annotations
 
 from typing import Union, Optional, Type
-
+from functools import partial
 from PySide2.QtCore import \
     QCoreApplication, \
     QLocale, \
@@ -21,7 +20,7 @@ from .logger import getClassLogger
 from .signal_handler import SignalHandler
 from .server.thread import ServerThread
 from .wallet.thread import WalletThread
-
+from .coins.list import CoinList
 
 class CoreApplication(QObject):
     _instance: CoreApplication = None
@@ -86,6 +85,21 @@ class CoreApplication(QObject):
 
         self._wallet_thread = WalletThread()
         self._server_thread = ServerThread()
+
+        self._coin_list = CoinList()
+
+        # TODO
+        for coin in self.__all_coins:
+            self._wallet_thread.heightChanged.connect(
+                partial(
+                    lambda c: self._server_thread.retrieveCoinHistory.emit(c),
+                    coin),
+                Qt.UniqueConnection)
+            self._server_thread.heightChanged.connect(
+                partial(
+                    lambda c: self._wallet_thread.heightChanged.emit(c),
+                    coin),
+                Qt.UniqueConnection)
 
     def run(self) -> int:
         QMetaObject.invokeMethod(self, "_onRunPrivate", Qt.QueuedConnection)
