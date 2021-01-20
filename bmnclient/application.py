@@ -89,8 +89,8 @@ class CoreApplication(QObject):
         self._coin_list = CoinList()
 
         # TODO
-        for coin in self.__all_coins:
-            self._wallet_thread.heightChanged.connect(
+        for coin in self._coin_list:
+            self._server_thread.heightChanged.connect(
                 partial(
                     lambda c: self._server_thread.retrieveCoinHistory.emit(c),
                     coin),

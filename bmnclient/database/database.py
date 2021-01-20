@@ -52,7 +52,8 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
     @qt_core.Slot()
     def save_coins_with_addresses(self):
         # TODO: one query
-        for coin in self._gcd.all_coins:
+        from ..application import CoreApplication
+        for coin in CoreApplication.instance().coinList:
             self._add_coin(coin, False)
             for wal in coin.wallets:
                 self._add_or_save_wallet(wal)
@@ -61,7 +62,8 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
     def save_coins_settings(self):
         log.debug("updating all coins in db")
         # TODO: one query
-        for coin in self._gcd.all_coins:
+        from ..application import CoreApplication
+        for coin in CoreApplication.instance().coinList:
             self._update_coin(coin)
 
     @qt_core.Slot(address.CAddress)
@@ -75,7 +77,8 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
     # @qt_core.Slot()
     def load_everything(self, coins=None):
         if coins is None:
-            coins = self._gcd.all_coins
+            from ..application import CoreApplication
+            coins = CoreApplication.instance().coinList
         self._read_all_coins(coins)
         adds = self._read_all_addresses(coins)
         self._parent.db_level_loaded(loading_level.LoadingLevel.ADDRESSES)
@@ -83,13 +86,6 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
         self._parent.db_level_loaded(loading_level.LoadingLevel.TRANSACTIONS)
         inputs = self._read_all_inputs(txs)
         self._parent.db_level_loaded(loading_level.LoadingLevel.INPUTS)
-
-    def __update_wallets(self):
-        qt_core.QMetaObject.invokeMethod(
-            self._parent,
-            "update_wallets",
-            qt_core.Qt.QueuedConnection
-        )
 
     def timerEvent(self, event: qt_core.QTimerEvent):
         if event.timerId() == self._save_address_timer.timerId():

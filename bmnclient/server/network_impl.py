@@ -188,7 +188,8 @@ class NetworkImpl(qt_core.QObject):
         self._run_cmd(net_cmd.AddressMultyMempoolCommand(coin.wallets, self))
 
     def retreive_mempool(self):
-        for c in self.__gcd.all_visible_coins:
+        from ..application import CoreApplication
+        for c in CoreApplication.instance().coinList:
             self._run_cmd(net_cmd.MempoolMonitorCommand(c, self))
 
     def validate_address(self, coin: "CoinType", address: str):

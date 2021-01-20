@@ -278,7 +278,6 @@ class CheckServerVersionCommand(ServerSysInfoCommand):
 
     For now we just compare it with version from DB
     """
-    serverVersion = qt_core.Signal(int, str, arguments=["version", "human"])
     verbose = False
     level = loading_level.LoadingLevel.NONE
 
@@ -287,16 +286,12 @@ class CheckServerVersionCommand(ServerSysInfoCommand):
 
     def process_attr(self, table):
         versions = table["version"][::-1]
-        self.serverVersion.emit(*versions)
+        log.debug(f"server version {versions[0]} / {versions[1]}")
         from ..ui.gui import Application
         gui_api = Application.instance()
         if gui_api:
+            gui_api.uiManager.serverVersion = versions[1]
             gui_api.uiManager.fill_coin_info_model(table["coins"])
-
-    def connect_(self):
-        super().connect_()
-        self.serverVersion.connect(
-            gcd.onServerVersion, qt_core.Qt.QueuedConnection)
 
 
 class CoinInfoCommand(JsonStreamMixin, BaseNetworkCommand):
@@ -976,7 +971,8 @@ class GetCoinRatesCommand(ExtHostCommand):
 
     @ property
     def args_get(self):
-        self._coins = self._gcd.all_enabled_coins
+        from ..application import CoreApplication
+        self._coins = CoreApplication.instance().coinList
         if self._source:
             return self._source.get_arguments(self._coins, self.CURRENCY)
         coins_ = ",".join([c.basename for c in self._coins])

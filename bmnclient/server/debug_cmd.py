@@ -36,7 +36,7 @@ class DummyCommandBase:
 
 class IncomingTransferCommand(net_cmd.AddressHistoryCommand, DummyCommandBase):
 
-    def __init__(self, gcd_, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.connect_()
 

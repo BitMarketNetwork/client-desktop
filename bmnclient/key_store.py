@@ -239,7 +239,8 @@ class KeyStore(QObject):
         # TODO
         master_hd = hd.HDNode.make_master(seed)
         _44_node = master_hd.make_child_prv(44, True)
-        for coin in self.gcd.all_coins:
+        from .application import CoreApplication
+        for coin in CoreApplication.instance().coinList:
             if coin.enabled:
                 coin.make_hd_node(_44_node)
                 self._logger.debug(f"Make HD prv for {coin}")

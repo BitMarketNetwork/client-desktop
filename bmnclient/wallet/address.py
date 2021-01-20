@@ -92,16 +92,20 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
     def __connect_tx_model(self):
         from ..ui.gui import Application
         api_ = Application.instance()
-        if api_.coinManager:
-            model = api_.coinManager.txModel
-            self.addTx.connect(functools.partial(model.append, self))
-            self.addTxList.connect(functools.partial(model.append_list, self))
-            self.addComplete.connect(
-                functools.partial(model.append_complete, self))
-            self.removeTxList.connect(
-                functools.partial(model.remove_list, self))
-            self.removeComplete.connect(
-                functools.partial(model.remove_complete, self))
+        try:
+            if not api_.coinManager:
+                return
+        except AttributeError:
+            return
+        model = api_.coinManager.txModel
+        self.addTx.connect(functools.partial(model.append, self))
+        self.addTxList.connect(functools.partial(model.append_list, self))
+        self.addComplete.connect(
+            functools.partial(model.append_complete, self))
+        self.removeTxList.connect(
+            functools.partial(model.remove_list, self))
+        self.removeComplete.connect(
+            functools.partial(model.remove_complete, self))
 
     def to_table(self) -> dict:
         res = {

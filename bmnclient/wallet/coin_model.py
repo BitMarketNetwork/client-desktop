@@ -35,14 +35,16 @@ class CoinModel(qt_core.QAbstractListModel):
         super().__init__(parent=parent)
         # import pdb;pdb.set_trace()
         self.__mapper = qt_core.QSignalMapper(self)
-        for i, c in enumerate(gcd.all_coins):
+        from ..application import CoreApplication
+        for i, c in enumerate(CoreApplication.instance().coinList):
             c.balanceChanged.connect(self.__mapper.map)
             self.__mapper.setMapping(c, i)
         self.__mapper.mapped.connect(self.balance_changed)
         self.__show_empty_addresses = True
 
     def rowCount(self, parent=qt_core.QModelIndex()) -> int:
-        return len(self.__gcd)
+        from ..application import CoreApplication
+        return len(CoreApplication.instance().coinList)
 
     def data(self, index, role=qt_core.Qt.DisplayRole):
         if 0 <= index.row() < self.rowCount() and index.isValid():

@@ -77,9 +77,3 @@ class WalletThread(qt_core.QThread):
         wallet.coin.expanded = False
         self.eraseWallet.emit(wallet)
         wallet.coin.remove_wallet(wallet)
-
-    def delete_all_wallets(self):
-        from ..ui.gui import Application
-        wlist = [w for w in Application.instance().gcd]
-        for w in wlist:
-            self.delete_wallet(w)

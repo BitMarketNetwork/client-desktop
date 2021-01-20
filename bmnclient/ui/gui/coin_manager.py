@@ -60,7 +60,7 @@ class CoinManager(QObject):
 
     @qt_core.Property('QVariantList', constant=True)
     def staticCoinModel(self) -> 'QVariantList':
-        return self._application.gcd.all_coins
+        return self._application.coinList
 
     @qt_core.Property(int, notify=coinIndexChanged)
     def coinIndex(self) -> int:
@@ -157,7 +157,7 @@ class CoinManager(QObject):
         if self.__coins_model.show_empty_addresses == value:
             return
         self.__coins_model.show_empty_addresses = value
-        for c in self._application.gcd.all_coins:
+        for c in self._application.coinList:
             c.show_empty = value
         self.emptyBalancesChanged.emit()
         # yeah!
@@ -265,8 +265,11 @@ class CoinManager(QObject):
             addr.add_tx(tx, check_new=True)
 
     def address_validated_handler(self, coin: 'coins.CoinType', address: str, result: bool) -> None:
-        self.addressValid.emit(
-            self._application.gcd.all_visible_coins.index(coin), address, result)
+        for c in self._application.coinList:
+            if c is coin:
+                self.addressValid.emit(c, address, result)
+                return
+        pass
 
     def update_tx(self, tx_: 'tx.Transaction') -> None:
         if self.address == tx_.wallet:
@@ -274,13 +277,10 @@ class CoinManager(QObject):
             self.__tx_model.update_confirm_count(3)
 
     def render_cell(self, coin):
-        self.renderCell.emit(self._application.gcd.all_visible_coins.index(coin))
-
-    @qt_core.Slot()
-    def clear(self):
-        self._application.databaseThread.delete_all_wallets()
-        self.coinIndex = -1
-        self._application.networkThread.look_for_HD()
+        for c in self._application.coinList:
+            if c is coin:
+                self.renderCell.emit(c)
+                return
 
     @qt_core.Slot()
     def addTxRow(self):

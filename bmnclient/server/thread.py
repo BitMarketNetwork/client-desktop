@@ -79,7 +79,7 @@ class ServerThread(qt_core.QThread):
 
     def look_for_HD(self):
         from ..ui.gui import Application
-        for coin in Application.instance().gcd.all_enabled_coins:
+        for coin in Application.instance().coinList:
             #log.debug(f"Looking for HD chain: {coin}")
             self.lookForHDChain.emit(coin)
 
@@ -89,11 +89,3 @@ class ServerThread(qt_core.QThread):
 
     def update_wallet(self, wallet):
         self.updateAddress.emit(wallet)
-
-    @qt_core.Slot(CAddress)
-    def update_wallets(self, coin=None):
-        from ..ui.gui import Application
-        if coin is None:
-            coin = Application.instance().gcd
-        for addr in coin:
-            self.update_wallet(addr)
