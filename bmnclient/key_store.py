@@ -108,14 +108,6 @@ class KeyStore(QObject):
         return True
 
     ############################################################################
-    # TODO
-
-    @property
-    def gcd(self):
-        from .application import CoreApplication
-        return CoreApplication.instance().gcd
-
-    ############################################################################
 
     @QSlot(str, result=str)
     def prepareGenerateSeedPhrase(self, language: str = None) -> str:

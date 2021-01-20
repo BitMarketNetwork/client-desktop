@@ -196,15 +196,8 @@ class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
         # self.output(self.tr("Server error"), error.get('detail'))
         log.critical(f"Server error: {error.get('detail')}")
 
-    def connect_(self, gcd):
-        """
-        Connect command via slot/signal connections
-        """
-        self._gcd = gcd
-
-    @property
-    def gcd(self):
-        return self._gcd
+    def connect_(self, _):
+        pass
 
     def __str__(self):
         return self.__class__.__name__

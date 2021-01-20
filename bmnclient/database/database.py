@@ -16,33 +16,29 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
         from ..ui.gui import Application
         super().__init__()
         log.info(f"SQLITE version {sql.sqlite_version}")
-        self._gcd = Application.instance().gcd
         parent.applyPassword.connect(
             self._apply_password, qt_core.Qt.QueuedConnection)
 
     def _init_actions(self):
-        if self._gcd:  # it can happen during testing
-            assert self._gcd.thread() != self.thread()
-
-            self._parent.saveCoin.connect(
-                self._update_coin, qt_core.Qt.QueuedConnection)
-            self._parent.saveAddress.connect(
-                self._add_or_save_wallet, qt_core.Qt.QueuedConnection)
-            self._parent.eraseWallet.connect(
-                self.erase_wallet, qt_core.Qt.QueuedConnection)
-            self._parent.saveTx.connect(
-                self._write_transaction, qt_core.Qt.QueuedConnection)
-            self._parent.saveTxList.connect(
-                self._write_transactions, qt_core.Qt.QueuedConnection)
-            self._parent.removeTxList.connect(
-                self._remove_tx_list, qt_core.Qt.QueuedConnection)
-            self._parent.clearAddressTx.connect(
-                self._clear_tx, qt_core.Qt.QueuedConnection)
-            self._parent.dropDb.connect(
-                self.drop_db, qt_core.Qt.QueuedConnection)
-            self._parent.resetDb.connect(
-                self.reset_db, qt_core.Qt.QueuedConnection)
-            self.load_everything()
+        self._parent.saveCoin.connect(
+            self._update_coin, qt_core.Qt.QueuedConnection)
+        self._parent.saveAddress.connect(
+            self._add_or_save_wallet, qt_core.Qt.QueuedConnection)
+        self._parent.eraseWallet.connect(
+            self.erase_wallet, qt_core.Qt.QueuedConnection)
+        self._parent.saveTx.connect(
+            self._write_transaction, qt_core.Qt.QueuedConnection)
+        self._parent.saveTxList.connect(
+            self._write_transactions, qt_core.Qt.QueuedConnection)
+        self._parent.removeTxList.connect(
+            self._remove_tx_list, qt_core.Qt.QueuedConnection)
+        self._parent.clearAddressTx.connect(
+            self._clear_tx, qt_core.Qt.QueuedConnection)
+        self._parent.dropDb.connect(
+            self.drop_db, qt_core.Qt.QueuedConnection)
+        self._parent.resetDb.connect(
+            self.reset_db, qt_core.Qt.QueuedConnection)
+        self.load_everything()
 
     @qt_core.Slot()
     def abort(self):

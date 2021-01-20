@@ -86,8 +86,6 @@ class UIManager(QObject):
             # if: tx time more than launch time
             # and if: tx not already notified
             # don't detect direction !!!
-            # log.info(
-            #     f"LAUNCH TIME:{self._application.gcd.launch_time} TX TIME:{tx.timeHuman}")
             if tx.time >= self._launch_time.timestamp() and \
                     tx not in self.__notified_tx_list and \
                     True:

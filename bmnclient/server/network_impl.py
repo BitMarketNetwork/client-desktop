@@ -25,7 +25,6 @@ class NetworkImpl(qt_core.QObject):
         self.__url_manager = url_composer.UrlComposer(self.API_VERSION)
         self.__progress = progress_view.ProgressView()
         self.__cmd = None
-        self.__gcd = gcd
         self.__cmd_queue = []
         self.__in_progress = False
         log.info("SSL info: support:%s\tbuild:%s(%s)\tversion:%s(%s)",

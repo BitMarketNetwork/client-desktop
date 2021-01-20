@@ -619,10 +619,6 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         from ..application import CoreApplication
         CoreApplication.instance().databaseThread.save_wallet(self)
 
-    @property
-    def gcd(self) -> "GCD":
-        return self._coin.parent()
-
     def __len__(self):
         return len(self.__tx_list)
 

@@ -298,7 +298,7 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
         for w in self.__wallet_list:
             w.update_tx_list(from_, remove_txs_from, verbose)
         # it must be called when height changed
-        # self.gcd.coin_height_changed(self)
+        # CoreApplication.instance().networkThread.retrieveCoinHistory.emit(coin)
 
     def parse_coin(self, data: dict, poll: bool, **kwargs) -> bool:
         """
@@ -398,10 +398,6 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
 
     def _get_height(self) -> int:
         return self.__height
-
-    @property
-    def gcd(self) -> "GCD":
-        return self.parent()
 
     @property
     def offset(self) -> Optional[str]:

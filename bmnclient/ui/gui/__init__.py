@@ -14,7 +14,6 @@ from PySide2.QtQuickControls2 import QQuickStyle
 from PySide2.QtWidgets import QApplication
 
 import bmnclient.version
-from bmnclient.gcd import GCD
 from . import tx_controller, ui_manager, \
     receive_manager, coin_manager, settings_manager
 from .coin_manager import CoinManager, CoinManager
