@@ -71,17 +71,6 @@ class CoinBase(db_entry.DbEntry):
     def decimalLevel(self) -> int:
         return self._decimal_level
 
-    @classmethod
-    def costs(cls, another: 'CoinBase') -> float:
-        "returns how much costs ANOTHER coin in THIS coins"
-        if cls == another:
-            return 1.
-        if hasattr(cls, "_btc_rate") and hasattr(another, "_btc_rate"):
-            return another._btc_rate / cls._btc_rate
-        # less accurate and stable
-        if hasattr(cls, "_usd_rate") and hasattr(another, "_usd_rate"):
-            return another._usd_rate / cls._usd_rate
-
     def balance_human(self, amount: float = None) -> str:
         if amount is None:
             amount = self._balance

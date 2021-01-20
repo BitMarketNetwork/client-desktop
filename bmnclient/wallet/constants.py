@@ -7,12 +7,6 @@ HASH_TYPE = 0x01.to_bytes(4, byteorder='little')
 WIT_MARKER = b'\x00'
 WIT_FLAG = b'\x01'
 MESSAGE_LIMIT = 80
-# Units:
-# https://en.bitcoin.it/wiki/Units
-SATOSHI = 1
-uBTC = 10 ** 2
-mBTC = 10 ** 5
-BTC = 10 ** 8
 
 # Scripts:
 OP_0 = b'\x00'

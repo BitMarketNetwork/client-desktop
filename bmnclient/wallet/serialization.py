@@ -25,10 +25,6 @@ class SerializationError(Exception):
     pass
 
 
-class DeSerializationError(Exception):
-    pass
-
-
 class Serializator:
 
     def __init__(self, type_: SerializationType = SerializationType.DEBUG, password: str = None):
@@ -74,24 +70,3 @@ class Serializator:
                     json.dump(self._main_table, fh, **kwargs)
         except OSError as oe:
             raise SerializationError(f"Can't save to {fpath}") from oe
-
-
-class DeSerializator:
-    def __init__(self, fpath: str, password: str = None):
-        self._password = password
-        try:
-            with open(fpath, "rb") as fh:
-                if FILE_HEADER == fh.read(len(FILE_HEADER)):
-                    self._type = int.from_bytes(fh.read(1), byteorder="little")
-                    #data = aes.decode(fh.read() , True)
-                    #self._main_table = json.loads(data)
-                else:
-                    fh.close()
-                    with open(fpath, "r") as fh:
-                        self._main_table = json.load(fh)
-        except OSError as oe:
-            raise DeSerializationError(
-                f"Can't open {fpath}") from oe
-
-    def __getitem__(self, name: str):
-        return self._main_table.get(name)
