@@ -1,5 +1,13 @@
 # BitMarket Network Client Change Log
 
+## 0.11 (xx.01.2021)
+
+* new encryption format for private data (seed, phrase, databases). Not
+  compatible with a previous version.
+* temporarily removed the СUI version of the application.
+* temporarily removed the wallet import, export, reset tools.
+* big code optimization/reimplementation
+
 ## 0.10.1 (31.12.2020)
 
 * fixes for public release
