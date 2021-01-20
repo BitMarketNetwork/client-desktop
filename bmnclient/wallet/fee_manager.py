@@ -40,7 +40,8 @@ class FeeManager(qt_core.QObject):
         log.debug(sorted(self._time_values))
 
     def _update(self):
-        if self.parent():
+        #if self.parent():
+        if True:
             if self._timer.isNull() or self._timer.elapsed() > UPDATE_FORCE_FEE_TIMEOUT:
                 from ..application import CoreApplication
                 self._timer.restart()

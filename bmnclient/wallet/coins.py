@@ -104,8 +104,8 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
         Application.instance().coinManager.render_cell(self)
         # self.reset_cell()
 
-        if self.parent():
-            Application.instance().networkThread.update_wallet(wallet)
+        #if self.parent():
+        Application.instance().networkThread.update_wallet(wallet)
         wallet.updatingChanged.connect(
             partial(self.__address_model.address_updated, wallet), qt_core.Qt.QueuedConnection)
         wallet.balanceChanged.connect(
@@ -134,7 +134,8 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
         wallet._message = message
         # log.debug(
         #     f"New wallet {wallet}  created from HD: {new_hd.chain_path} net:{self.network}")
-        if self.parent():
+        #if self.parent():
+        if True:
             from ..application import CoreApplication
             CoreApplication.instance().databaseThread.save_wallet(wallet)
             self.addAddress.emit(wallet)
@@ -147,7 +148,8 @@ class CoinType(abs_coin.CoinBase, serialization.SerializeMixin):
         adr = address.CAddress(name, self, created=True)
         adr.create()
         adr.label = label
-        if self.parent():
+        #if self.parent():
+        if True:
             self.addAddress.emit(adr)
             from ..application import CoreApplication
             CoreApplication.instance().databaseThread.save_wallet(adr)
