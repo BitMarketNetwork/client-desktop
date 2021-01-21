@@ -262,12 +262,12 @@ Please use this version carefully for reference only, as it is intended for demo
 <context>
     <name>BApplicationStyle</name>
     <message>
-        <location filename="../qml/application/BApplicationStyle.qml" line="20"/>
+        <location filename="../qml/application/BApplicationStyle.qml" line="14"/>
         <source>Light (Default)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/application/BApplicationStyle.qml" line="26"/>
+        <location filename="../qml/application/BApplicationStyle.qml" line="20"/>
         <source>Dark</source>
         <translation type="unfinished"></translation>
     </message>
@@ -313,60 +313,21 @@ Please use this version carefully for reference only, as it is intended for demo
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/dialogs/BKeyStorePasswordDialog.qml" line="21"/>
-        <source>Your current database version isn&apos;t supported in this application version (%1).
-You can reset your database either use old application version.
-
-Your master key won&apos;t be deleted.
-In case you reset databse you should wait some time to sinchornize data.
-
-Reset database?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/dialogs/BKeyStorePasswordDialog.qml" line="49"/>
+        <location filename="../qml/dialogs/BKeyStorePasswordDialog.qml" line="29"/>
         <source>Forgot your password?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/dialogs/BKeyStorePasswordDialog.qml" line="50"/>
+        <location filename="../qml/dialogs/BKeyStorePasswordDialog.qml" line="30"/>
         <source>Reset wallet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/dialogs/BKeyStorePasswordDialog.qml" line="55"/>
+        <location filename="../qml/dialogs/BKeyStorePasswordDialog.qml" line="35"/>
         <source>This will destroy all saved information and you can lose your money!
 Please make sure you remember the seed phrase.
 
 Reset?</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>BMasterKeyDialog</name>
-    <message>
-        <location filename="../qml/dialogs/BMasterKeyDialog.qml" line="8"/>
-        <source>Master key generation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/dialogs/BMasterKeyDialog.qml" line="17"/>
-        <source>Generate new master key</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/dialogs/BMasterKeyDialog.qml" line="22"/>
-        <source>Restore from seed phrase</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/dialogs/BMasterKeyDialog.qml" line="26"/>
-        <source>Restore wallet from backup</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/dialogs/BMasterKeyDialog.qml" line="93"/>
-        <source>Wrong seed pharse.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -400,6 +361,39 @@ Reset?</source>
     <message>
         <location filename="../qml/dialogs/BNewPasswordDialog.qml" line="51"/>
         <source>Show password:</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BNewSeedDialog</name>
+    <message>
+        <location filename="../qml/dialogs/BNewSeedDialog.qml" line="8"/>
+        <source>Master key generation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BNewSeedDialog.qml" line="17"/>
+        <source>Generate new master key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BNewSeedDialog.qml" line="22"/>
+        <source>Restore from seed phrase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BNewSeedDialog.qml" line="26"/>
+        <source>Restore wallet from backup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BNewSeedDialog.qml" line="89"/>
+        <source>Wrong seed pharse.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BNewSeedDialog.qml" line="114"/>
+        <source>Invalid seed pharse.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -462,37 +456,37 @@ Reset?</source>
 <context>
     <name>BSeedPhraseDialog</name>
     <message>
-        <location filename="../qml/dialogs/BSeedPhraseDialog.qml" line="27"/>
+        <location filename="../qml/dialogs/BSeedPhraseDialog.qml" line="26"/>
         <source>Generate new seed phrase</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/dialogs/BSeedPhraseDialog.qml" line="29"/>
+        <location filename="../qml/dialogs/BSeedPhraseDialog.qml" line="28"/>
         <source>Test yourself whether you memorized the seed phrase</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/dialogs/BSeedPhraseDialog.qml" line="31"/>
+        <location filename="../qml/dialogs/BSeedPhraseDialog.qml" line="30"/>
         <source>Restore seed phrase</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/dialogs/BSeedPhraseDialog.qml" line="33"/>
-        <source>Seed phrase</source>
+        <location filename="../qml/dialogs/BSeedPhraseDialog.qml" line="32"/>
+        <source>Reveal seed phrase</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/dialogs/BSeedPhraseDialog.qml" line="48"/>
+        <location filename="../qml/dialogs/BSeedPhraseDialog.qml" line="47"/>
         <source>None</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/dialogs/BSeedPhraseDialog.qml" line="50"/>
+        <location filename="../qml/dialogs/BSeedPhraseDialog.qml" line="49"/>
         <source>Re-enter generated seed phrase</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/dialogs/BSeedPhraseDialog.qml" line="52"/>
+        <location filename="../qml/dialogs/BSeedPhraseDialog.qml" line="51"/>
         <source>Enter your seed phrase</source>
         <translation type="unfinished"></translation>
     </message>
@@ -500,7 +494,7 @@ Reset?</source>
 <context>
     <name>BSeedSaltDialog</name>
     <message>
-        <location filename="../qml/dialogs/BSeedSaltDialog.qml" line="36"/>
+        <location filename="../qml/dialogs/BSeedSaltDialog.qml" line="45"/>
         <source>Move cursor and press keyboard keys randomly to generate seed phrase</source>
         <translation type="unfinished"></translation>
     </message>
@@ -513,32 +507,32 @@ Reset?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="25"/>
+        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="26"/>
         <source>Application font:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="41"/>
+        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="42"/>
         <source>Hide to tray on closing:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="53"/>
+        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="51"/>
         <source>Fiat value source:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="61"/>
+        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="59"/>
         <source>Always send change to a new address:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="74"/>
+        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="72"/>
         <source>Backup wallet...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="84"/>
+        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="83"/>
         <source>Restore wallet...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -548,19 +542,19 @@ Reset?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="111"/>
+        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="112"/>
         <source>Reveal seed phrase...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="120"/>
+        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="121"/>
         <source>This will destroy all your keys and lead to a risk of losing money! Please make sure that you made a backup.
 
 Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="130"/>
+        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="131"/>
         <source>Select a preferable font</source>
         <translation type="unfinished"></translation>
     </message>
@@ -604,7 +598,7 @@ Continue?</source>
 <context>
     <name>BSettingsPage</name>
     <message>
-        <location filename="../qml/pages/BSettingsPage.qml" line="8"/>
+        <location filename="../qml/pages/BSettingsPage.qml" line="7"/>
         <source>Application settings</source>
         <translation type="unfinished"></translation>
     </message>
