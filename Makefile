@@ -101,7 +101,7 @@ define BMN_VERSION
 endef
 
 export BMN_PACKAGE_NAME = bmnclient
-export BMN_UPLOAD_DIR = frontend2:/srv/htdocs/download
+export BMN_UPLOAD_DIR = bmn-upload:public/
 
 $(info Loading version from ${BMN_PACKAGE_NAME} package...)
 export BMN_MAINTAINER := $(or $(strip \
