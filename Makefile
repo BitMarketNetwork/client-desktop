@@ -331,7 +331,6 @@ include $(CONTRIB_PLATFORM_DIR)/dist.mk
 upload: DIST_TARGET_NAME := $(notdir $(DIST_TARGET))
 upload: DIST_TARGET_NAME := $(basename $(DIST_TARGET_NAME))-$(call FILE_MTIME,$(DIST_TARGET))$(suffix $(DIST_TARGET_NAME))
 upload:
-	echo "$(DIST_TARGET_NAME)"
 	$(RSYNC) \
 		--progress \
 		--human-readable \
