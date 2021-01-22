@@ -3,7 +3,7 @@ import logging
 from typing import Union, List
 import PySide2.QtCore as qt_core
 
-from . import rate_source_impl
+from . import rate_source_impl, coins
 log = logging.getLogger(__name__)
 
 """
@@ -64,7 +64,7 @@ class RateSource(qt_core.QObject):
     def get_arguments(self, coins: list, currencies: Union[list, str]) -> dict:
         return self._worker.get_arguments(coins, currencies)
 
-    def process_result(self, coins: List["CoinBase"], currencies: Union[list, str], table: dict) -> None:
+    def process_result(self, coins: List[coins.CoinType], currencies: Union[list, str], table: dict) -> None:
         # log.debug(f"coins:{coins} fiat:{currencies} table:{table}")
         return self._worker.process_result(coins, currencies, table)
 

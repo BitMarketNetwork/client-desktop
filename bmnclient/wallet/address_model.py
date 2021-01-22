@@ -1,9 +1,14 @@
+from __future__ import annotations
 import enum
 import logging
 
 import PySide2.QtCore as qt_core  # pylint: disable=import-error
 from .model_shared import IntEnum, ba
+from typing import TYPE_CHECKING
 log = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from . import coins
 
 
 class Role(IntEnum):
@@ -37,7 +42,7 @@ class AddressModel(qt_core.QAbstractListModel):
         return len(self.__coin)
 
     @property
-    def coin(self) -> "CoinBase":
+    def coin(self) -> coins.CoinType:
         return self.__coin
 
     def data(self, index, role=qt_core.Qt.DisplayRole):
