@@ -96,12 +96,17 @@ TRANSLATIONS := $(sort \
 )
 
 define BMN_VERSION
-	$(shell $(PYTHON) -c \
-		'from $(BMN_PACKAGE_NAME) import version;print(str(version.$(1)))')
+$(strip $(shell $(PYTHON) -c \
+'from $(BMN_PACKAGE_NAME) import version;print(str(version.$(1)))'))
+endef
+
+define CURRENT_TIME
+$(strip $(shell $(PYTHON) -c \
+'import datetime;print(datetime.datetime.utcnow().strftime("%y%m%d_%H%M%S"))'))
 endef
 
 export BMN_PACKAGE_NAME = bmnclient
-export BMN_UPLOAD_DIR = bmn-upload:public/
+export BMN_UPLOAD_DIR = bmn-upload:public
 
 $(info Loading version from ${BMN_PACKAGE_NAME} package...)
 export BMN_MAINTAINER := $(or $(strip \
@@ -317,7 +322,10 @@ include $(CONTRIB_PLATFORM_DIR)/dist.mk
 ################################################################################
 
 .PHONY: upload
+upload: DIST_TARGET_NAME := $(notdir $(DIST_TARGET))
+upload: DIST_TARGET_NAME := $(basename $(DIST_TARGET_NAME))-$(CURRENT_TIME)$(suffix $(DIST_TARGET_NAME))
 upload:
+	echo "$(DIST_TARGET_NAME)"
 	$(RSYNC) \
 		--progress \
 		--human-readable \
@@ -326,4 +334,4 @@ upload:
 		--times \
 		--stats \
 		"$(DIST_TARGET)" \
-		"$(BMN_UPLOAD_DIR)"
+		"$(BMN_UPLOAD_DIR)/$(DIST_TARGET_NAME)"
