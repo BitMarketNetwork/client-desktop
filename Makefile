@@ -97,12 +97,18 @@ TRANSLATIONS := $(sort \
 
 define BMN_VERSION
 $(strip $(shell $(PYTHON) -c \
-'from $(BMN_PACKAGE_NAME) import version;print(str(version.$(1)))'))
+'from $(BMN_PACKAGE_NAME) import version;\
+print(str(version.$(1)))\
+'))
 endef
 
-define CURRENT_TIME
+define FILE_MTIME
 $(strip $(shell $(PYTHON) -c \
-'import datetime;print(datetime.datetime.utcnow().strftime("%y%m%d_%H%M%S"))'))
+'import datetime;import os;\
+mtime=os.stat("$(1)").st_mtime;\
+mtime=datetime.datetime.utcfromtimestamp(mtime);\
+print(mtime.strftime("%y%m%d_%H%M%S"))\
+'))
 endef
 
 export BMN_PACKAGE_NAME = bmnclient
@@ -323,7 +329,7 @@ include $(CONTRIB_PLATFORM_DIR)/dist.mk
 
 .PHONY: upload
 upload: DIST_TARGET_NAME := $(notdir $(DIST_TARGET))
-upload: DIST_TARGET_NAME := $(basename $(DIST_TARGET_NAME))-$(CURRENT_TIME)$(suffix $(DIST_TARGET_NAME))
+upload: DIST_TARGET_NAME := $(basename $(DIST_TARGET_NAME))-$(call FILE_MTIME,$(DIST_TARGET))$(suffix $(DIST_TARGET_NAME))
 upload:
 	echo "$(DIST_TARGET_NAME)"
 	$(RSYNC) \
