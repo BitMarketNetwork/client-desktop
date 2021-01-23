@@ -88,7 +88,8 @@ def configure(file_path: str = None, level: int = logging.DEBUG) -> None:
         #  -> Shiboken::GilState::GilState()
         #  -> PyGILState_Ensure()
         #  == deadlock
-        if CURRENT_PLATFORM != Platform.DARWIN:
+        # 2021.01.22: Now i found this deadlock on Windows...
+        if CURRENT_PLATFORM not in (Platform.DARWIN, Platform.WINDOWS):
             QtCore.qInstallMessageHandler(_qtMessageHandler)
 
         _is_configured = True

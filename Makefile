@@ -189,7 +189,7 @@ TR_OBJECTS := $(addprefix $(TEMP_DIR)/$(notdir $(TRANSLATIONS_DIR))/,\
 # QRC
 ################################################################################
 
-USE_QML_QRC ?= 1
+export USE_QML_QRC ?= 1
 
 ifeq ($(USE_QML_QRC), 1)
 QRC_SOURCES := $(sort $(call RWILDCARD,$(RESOURCES_DIR)/,*.qml *.svg *qmldir))

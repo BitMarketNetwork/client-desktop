@@ -60,7 +60,7 @@ VIAddVersionKey LegalCopyright "© ${BMN_MAINTAINER}. All rights reserved."
 !define MUI_ABORTWARNING_TEXT "Are you sure you want to quit?"
 
 !insertmacro MUI_PAGE_WELCOME
-!insertmacro MUI_PAGE_LICENSE "../../LICENSE"
+!insertmacro MUI_PAGE_LICENSE "..\..\LICENSE"
 !insertmacro MULTIUSER_PAGE_INSTALLMODE
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
