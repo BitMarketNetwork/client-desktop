@@ -32,9 +32,6 @@
     </message>
 </context>
 <context>
-    <name>Console</name>
-</context>
-<context>
     <name>KeyStore</name>
     <message>
         <location filename="key_store.py" line="180"/>
@@ -112,9 +109,6 @@
         <source>Russian ruble</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>SettingsManagerImpl</name>
 </context>
 <context>
     <name>SystemTrayIcon</name>
