@@ -1,5 +1,6 @@
 .DS_Store
 __pycache__
+/contrib/make-*
 /dist
 /bmnclient/resources/qrc.py
 /tmp
