@@ -7,13 +7,6 @@ BMenu {
     BMenu {
         title: "UI tests"
         BMenuItem {
-            text: "Insert TX"
-            enabled: BBackend.coinManager.addressIndex >= 0
-            onTriggered: {
-                BBackend.coinManager.addTxRow()
-            }
-        }
-        BMenuItem {
             text: "OS notification test"
             onTriggered: {
                 BBackend.uiManager.notify(
@@ -36,23 +29,6 @@ BMenu {
             onTriggered: {
                 // TODO dont work, no visual changes
                 BBackend.coinManager.coin.height += 1
-            }
-        }
-        BMenuItem {
-            text: "Toggle current address updatind state"
-            enabled: BBackend.coinManager.addressIndex >= 0
-            checkable: true
-            onCheckedChanged: {
-                // TODO cannot test, not ui updating marker
-                BBackend.coinManager.address.isUpdating = checked
-            }
-        }
-        BMenuItem {
-            text: "Remove current wallet"
-            enabled: BBackend.coinManager.addressIndex >= 0
-            onTriggered: {
-                // TODO test, actived for addressIndex, used as deleteCurrentWallet, check it
-                BBackend.coinManager.deleteCurrentWallet()
             }
         }
         BMenuItem {

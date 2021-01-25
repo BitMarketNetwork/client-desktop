@@ -29,7 +29,6 @@ class CoinManager(QObject):
         self._application = application
 
         self.__current_coin_idx = -1
-        self.__current_address_idx = -1
         tx_source = tx_model.TxModel(self)
         self.__tx_model = tx_model.TxProxyModel(self)
         self.__tx_model.setSourceModel(tx_source)
@@ -80,51 +79,23 @@ class CoinManager(QObject):
     def address(self) -> address.CAddress:
         coin = self.coin
         if coin is not None:
-            assert self.__current_address_idx < len(
-                coin), f"{self.__current_address_idx} < {len(coin)}"
-            if self.__current_address_idx >= 0:
-                return coin(self.__current_address_idx)  # pylint: disable=unsubscriptable-object
             return coin.root
-
-    @qt_core.Property(int, notify=addressIndexChanged)
-    def addressIndex(self) -> int:
-        return self.__current_address_idx
 
     @coinIndex.setter
     def __set_coin_index(self, idx: int):
         if idx == self.__current_coin_idx:
             return
         assert idx < len(self._application.coinList)
-        if self.coin is not None and self.__current_address_idx >= 0:
-            self.coin.current_wallet = self.__current_address_idx
-            # log.debug("Current wallet: %s", self.__current_address_idx)
         self.__current_coin_idx = idx
-        self.__set_address_index(-1, force=True)
+        self.update_tx_model()
+        self.addressIndexChanged.emit()
         self.update_tx_model()
         # self.addressIndexChanged.emit()
         self.coinIndexChanged.emit()
 
-    @addressIndex.setter
-    def __set_address_index(self, idx: int,  force: bool = False):
-        # it happens if no wallets
-        # log.warning(f"wallet index: {idx} old:{self.__current_address_idx}")
-        if (idx == self.__current_address_idx and not force) or idx >= len(self.coin):
-            return
-        self.__current_address_idx = idx
-        self.update_tx_model()
-        self.addressIndexChanged.emit()
-        if idx >= 0:
-            self._application.networkThread.update_wallet(self.address)
-
     @qt_core.Property(str, constant=True)
     def currency(self) -> str:
         return "USD"  # TODO
-
-    @qt_core.Slot()
-    def deleteCurrentWallet(self):
-        if self.address:
-            self._application.databaseThread.delete_wallet(self.address)
-            self.addressIndex = 0
 
     @qt_core.Property(qt_core.QObject, constant=True)
     def txModel(self) -> qt_core.QObject:
@@ -263,14 +234,6 @@ class CoinManager(QObject):
             if c is coin:
                 self.renderCell.emit(c)
                 return
-
-    @qt_core.Slot()
-    def addTxRow(self):
-        source: address.CAddress = self.address
-        assert source
-        tx_: tx.Transaction = source.make_dummy_tx()
-        tx_.height = self.coin.height + 1
-        source.add_tx(tx_)
 
     @qt_core.Slot(int)
     def increaseBalance(self, address_idx: int) -> int:

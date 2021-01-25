@@ -22,12 +22,6 @@ BPane {
                 amount.fiatUnit: _base.coin.fiatAmountUnit // TODO
             }
             contextMenu: _contextMenu
-
-            onHighlightedChanged: { // TODO bad
-                if (highlighted) {
-                    BBackend.coinManager.addressIndex = model.index
-                }
-            }
         }
         templateDelegate: BAddressItem {
             address: BAddressObject {

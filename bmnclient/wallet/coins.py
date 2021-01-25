@@ -73,7 +73,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         address_model_ = address_model.AddressModel(self)
         self.__address_model = address_model.AddressProxyModel(self)
         self.__address_model.setSourceModel(address_model_)
-        self.__current_wallet = 0
         self.__hd_node = None
         self.__visible = True
         self.__tx_set = orderedset.OrderedSet()
@@ -512,13 +511,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     def active(self) -> bool:
         return self.enabled and self.__status == 1
 
-    def _set_current_wallet(self, cw: int):
-        if cw != self.__current_wallet:
-            self.__current_wallet = cw
-
-    def _get_current_wallet(self) -> int:
-        return self.__current_wallet if self.__current_wallet < len(self.__wallet_list) else 0
-
     def _set_status(self, status: int):
         if status != self.__status:
             self.statusChanged.emit()
@@ -590,8 +582,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         int, _get_status, _set_status, notify=statusChanged)
     height = qt_core.Property(
         int, _get_height, _set_height, notify=heightChanged)
-
-    current_wallet = property(_get_current_wallet, _set_current_wallet)
 
 
 class Bitcoin(CoinType):
