@@ -74,6 +74,5 @@ class WalletThread(qt_core.QThread):
         self.saveAddress.emit(wallet, delay_ms)
 
     def delete_wallet(self, wallet):
-        wallet.coin.expanded = False
         self.eraseWallet.emit(wallet)
         wallet.coin.remove_wallet(wallet)

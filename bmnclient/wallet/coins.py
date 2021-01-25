@@ -48,7 +48,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     statusChanged = qt_core.Signal()
     heightChanged = qt_core.Signal()
     balanceChanged = qt_core.Signal()
-    expandedChanged = qt_core.Signal()
     visibleChanged = qt_core.Signal()
     invalidServer = qt_core.Signal()
     addAddress = qt_core.Signal(address.CAddress)
@@ -76,7 +75,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         self.__address_model.setSourceModel(address_model_)
         self.__current_wallet = 0
         self.__hd_node = None
-        self.__expanded = False
         self.__visible = True
         self.__tx_set = orderedset.OrderedSet()
         self.root = root_address.RootAddress(self)
@@ -581,16 +579,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         self.__address_model.emptyFilter = not value
         for w in self.__wallet_list:
             w.set_old()
-
-    @qt_core.Property(bool, notify=expandedChanged)
-    def expanded(self) -> bool:
-        return self.__expanded
-
-    @expanded.setter
-    def _set_expanded(self, ex: bool):
-        if ex != self.__expanded:
-            self.__expanded = ex
-            self.expandedChanged.emit()
 
     @visible.setter
     def _set_visible(self, ex: bool):

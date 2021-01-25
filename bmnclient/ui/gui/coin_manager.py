@@ -17,7 +17,6 @@ log = logging.getLogger(__name__)
 
 class CoinManager(QObject):
     coinIndexChanged = QSignal()
-    expandedChanged = QSignal()
     addressIndexChanged = QSignal()
     coinModelChanged = QSignal()
     renderCell = QSignal(int, arguments=["index"])
@@ -30,7 +29,6 @@ class CoinManager(QObject):
         self._application = application
 
         self.__current_coin_idx = -1
-        self.__coin_expanded = False
         self.__current_address_idx = -1
         tx_source = tx_model.TxModel(self)
         self.__tx_model = tx_model.TxProxyModel(self)
@@ -65,10 +63,6 @@ class CoinManager(QObject):
     @qt_core.Property(int, notify=coinIndexChanged)
     def coinIndex(self) -> int:
         return self.__current_coin_idx
-
-    @qt_core.Property(bool, notify=expandedChanged)
-    def expanded(self) -> bool:
-        return self.__coin_expanded
 
     @qt_core.Property(str, notify=coinIndexChanged)
     def unit(self) -> str:
@@ -109,18 +103,6 @@ class CoinManager(QObject):
         self.update_tx_model()
         # self.addressIndexChanged.emit()
         self.coinIndexChanged.emit()
-
-    @expanded.setter
-    def __set_expanded(self, value: bool):
-        if self.__coin_expanded == value:
-            return
-        # log.warning(f"value: {value} empty:{self.coin.empty(not self.showEmptyBalances)}")
-        if value and self.coin.empty(not self.showEmptyBalances):
-            return
-        # log.warning(f"coin ex: {value}")
-        self.__coin_expanded = value
-        self.expandedChanged.emit()
-        self.__set_address_index(-1)
 
     @addressIndex.setter
     def __set_address_index(self, idx: int,  force: bool = False):
