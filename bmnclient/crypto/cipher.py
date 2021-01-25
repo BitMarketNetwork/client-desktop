@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives.ciphers import aead
 from .. import version
 
 
-class Cipher:
+class AeadCipher:
     CIPHER = aead.AESGCM
     NONCE_LENGTH = 96 // 8  # NIST recommends
     KEY_LENGTH = 128 // 8
@@ -42,7 +42,7 @@ class Cipher:
             return None
 
 
-class MessageCipher(Cipher):
+class MessageCipher(AeadCipher):
     def __init(self, key: bytes):
         super().__init__(key, None)
 

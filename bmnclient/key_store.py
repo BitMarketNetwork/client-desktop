@@ -14,7 +14,7 @@ from cryptography.hazmat.primitives.hashes import Hash
 
 from . import version
 from .config import UserConfig
-from .crypto.cipher import Cipher, MessageCipher
+from .crypto.cipher import AeadCipher, MessageCipher
 from .crypto.kdf import SecretStore
 from .crypto.password import PasswordStrength
 from .logger import getClassLogger
@@ -64,13 +64,15 @@ class KeyStore(QObject):
     def _getKey(self, key_index: KeyIndex) -> Optional[bytes]:
         return self._key_list[key_index.value]
 
-    def deriveCipher(self, key_index: KeyIndex) -> Optional[Cipher]:
+    def deriveCipher(self, key_index: KeyIndex) -> Optional[AeadCipher]:
         with self._lock:
             assert self._getKey(key_index)
             assert self._getNonce(key_index)
-            return Cipher(self._getKey(key_index), self._getNonce(key_index))
+            return AeadCipher(
+                self._getKey(key_index),
+                self._getNonce(key_index))
 
-    def deriveMessageCipher(self, key_index: KeyIndex) -> Optional[Cipher]:
+    def deriveMessageCipher(self, key_index: KeyIndex) -> Optional[AeadCipher]:
         with self._lock:
             assert self._getKey(key_index)
             return MessageCipher(self._getKey(key_index))
@@ -82,9 +84,9 @@ class KeyStore(QObject):
                 version.VERSION_STRING,
 
             "nonce_{:d}".format(KeyIndex.WALLET_DATABASE.value):
-                Cipher.generateNonce().hex(),
+                AeadCipher.generateNonce().hex(),
             "key_{:d}".format(KeyIndex.WALLET_DATABASE.value):
-                Cipher.generateKey().hex(),
+                AeadCipher.generateKey().hex(),
 
             "nonce_{:d}".format(KeyIndex.SEED.value):
                 MessageCipher.generateNonce().hex(),
