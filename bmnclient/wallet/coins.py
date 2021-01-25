@@ -13,9 +13,6 @@ from . import db_entry
 
 log = logging.getLogger(__name__)
 
-ADDRESS_NAMES = "__address_names"
-
-
 class SelectAddressError(Exception):
     pass
 
@@ -38,8 +35,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     _test: bool = False
     #
     _usd_rate: float = 0.
-    # more stable
-    _btc_rate: float = 0.
     _convertion_ratio: float = 100000000.
 
     # decimal points
@@ -178,7 +173,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         self.__wallet_list.append(wallet)
         self.update_balance()
         self.__address_model.append_complete()
-        self._reset_address_names()
 
         #
         from ..ui.gui import Application
@@ -283,7 +277,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         for addr_t in table["addresses"]:
             wallet = address.CAddress.from_table(addr_t, self)
             self.__wallet_list.append(wallet)
-        self._reset_address_names()
 
     @classmethod
     def match(cls, name: str) -> bool:
@@ -466,7 +459,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         del self.__wallet_list[index]
         self.__address_model.remove_complete()
         self.update_balance()
-        self._reset_address_names()
 
     def clear(self):
         for addr in self.__wallet_list:
@@ -606,19 +598,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
             self.__visible = ex
             self.visibleChanged.emit()
 
-    @property
-    def address_names(self) -> List[str]:
-        """
-        all children addresses as list[string]
-        it expected to be called very frequently
-        """
-        return meta.setdefaultattr(self, ADDRESS_NAMES,
-                                   [w.name for w in self.__wallet_list])
-
-    def _reset_address_names(self):
-        if hasattr(self, ADDRESS_NAMES):
-            delattr(self, ADDRESS_NAMES)
-
     status = qt_core.Property(
         int, _get_status, _set_status, notify=statusChanged)
     height = qt_core.Property(
@@ -635,7 +614,6 @@ class Bitcoin(CoinType):
     _decimal_level = 7
     _hd_index = 0
     _usd_rate = 9400.51
-    _btc_rate = 1.
 
 
 class BitcoinTest(Bitcoin):
@@ -645,7 +623,6 @@ class BitcoinTest(Bitcoin):
     network = coin_network.BitcoinTestNetwork
     _test = True
     _usd_rate = 9400.51
-    _btc_rate = 1.
 
 
 class Litecoin(CoinType):
@@ -656,4 +633,3 @@ class Litecoin(CoinType):
     _decimal_level = 7
     _hd_index = 2
     _usd_rate = 39.83
-    _btc_rate = 0.0073
