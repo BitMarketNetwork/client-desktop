@@ -1,20 +1,16 @@
 
 import logging
 from typing import Union, Tuple, Generator
-import hmac
 import enum
 import binascii
-import random
 import sys
 import os
-import base64
 import functools
 import hashlib
-import unicodedata
 import decimal
-from . import segwit_addr
 from . import coin_network
 from . import constants
+from ..crypto.bech32 import Bech32
 
 log = logging.getLogger(__name__)
 
@@ -204,12 +200,6 @@ def b58_check_decode(data: bytes) -> bytes:
         raise ConvertionError("Hash mismatch")
 
 
-def segwit_scriptpubkey(witver: int, witprog: bytes) -> bytes:
-    # log.debug(f" SEGWIT SCRIPT: {witver} {witprog}")
-    """Construct a Segwit scriptPubKey for a given witness program."""
-    return bytes([witver + 0x50 if witver else 0, len(witprog)] + witprog)
-
-
 def number_to_bytes(number: int, length: int) -> bytes:
     return number.to_bytes(length=length, byteorder="big")
 
@@ -240,18 +230,18 @@ def script_push(val: int) -> bytes:
 
 
 def get_version(address: str) -> str:
-    version, _ = segwit_addr.bech32_decode(address)
-    if version is None:
-        version = b58_check_decode(address)[:1]
-    if (version in coin_network.MAIN_NET_PREFIX_SET or
-            version in coin_network.MAIN_BECH_HRP_SET):
+    hrp, _, _ = Bech32.decode(address)
+    if hrp is None:
+        hrp = b58_check_decode(address)[:1]
+    if (hrp in coin_network.MAIN_NET_PREFIX_SET or
+            hrp in coin_network.MAIN_BECH_HRP_SET):
         return 'main'
-    elif (version in coin_network.TEST_NET_PREFIX_SET or
-          version in coin_network.TEST_BECH_HRP_SET):
+    elif (hrp in coin_network.TEST_NET_PREFIX_SET or
+          hrp in coin_network.TEST_BECH_HRP_SET):
         return 'test'
     else:
         raise ConvertionError(
-            f'{version} does not correspond to a mainnet nor testnet address.')
+            f'{hrp} does not correspond to a mainnet nor testnet address.')
 
 
 def address_to_scriptpubkey(address: str) -> str:
@@ -260,8 +250,8 @@ def address_to_scriptpubkey(address: str) -> str:
     try:
         version = b58_check_decode(address)[:1]
     except ConvertionError:
-        witver, data = segwit_addr.decode(address)
-        return segwit_scriptpubkey(witver, data)
+        hrp, witver, data = Bech32.decode(address)
+        return bytes([witver + 0x50 if witver else 0, len(data)]) + data
 
     if version in coin_network.PUBLIC_HASH_LIST:
         return (constants.OP_DUP + constants.OP_HASH160 + constants.OP_PUSH_20 +

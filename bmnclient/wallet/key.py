@@ -5,12 +5,11 @@ import logging
 from typing import Any, Optional, Union
 
 from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 import ecdsa
+from ..crypto.bech32 import Bech32
 
-from . import coin_network, constants, db_entry, segwit_addr, util
+from . import coin_network, constants, util
 
 
 log = logging.getLogger(__name__)
@@ -51,8 +50,7 @@ class AddressString:
 
     @classmethod
     def is_segwit(cls, address: str) -> bool:
-        # TODO: there is no bech32 segwit address type!!
-        hrp, _ = segwit_addr.decode(address)
+        hrp, _, _ = Bech32.decode(address)
         return hrp is not None
 
     @classmethod
@@ -222,7 +220,7 @@ class PublicKey(Keybase, AddressBase):
                 if self.compressed:
                     if len(self._data) != 33:
                         raise KeyError("SEGWIT only for compressed keys")
-                    return segwit_addr.encode(self._network.BECH32_HRP, witver, util.hash160(self._data))
+                    return Bech32.encode(self._network.BECH32_HRP, witver, util.hash160(self._data))
                     # return util.b58_check_encode(self._network.SCRIPT_BYTE_PREFIX + util.hash160(b'\x00\x14' + util.hash160(self._data)))
             else:
                 raise KeyError(f"Unsupported address type {type_}")

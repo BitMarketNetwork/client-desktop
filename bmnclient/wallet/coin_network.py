@@ -87,11 +87,6 @@ class BitcoinTestNetwork(CoinNetworkBase):
     TITLE = "test"
 
 
-class BitcoinRegTestNetwork(CoinNetworkBase):
-    BECH32_HRP = 'bcrt'
-    TITLE = "regtest"
-
-
 class LitecoinMainNetwork(CoinNetworkBase):
     EX_PREFIX_PRV = 0x019da462
     EX_PREFIX_PUB = 0x019da462

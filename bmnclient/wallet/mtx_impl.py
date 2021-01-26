@@ -11,7 +11,7 @@ from typing import Union, List, Tuple
 from datetime import datetime
 
 from .. import meta
-from . import coin_network, constants, segwit_addr, util, tx
+from . import constants, util, tx
 
 
 log = logging.getLogger(__name__)
