@@ -2,6 +2,7 @@
 https://en.bitcoin.it/wiki/Protocol_documentation
 """
 
+from functools import lru_cache
 import itertools
 import logging
 import random
@@ -299,15 +300,15 @@ class Mtx:
         out.unspents = unspents
         return out
 
-    @meta.lazy_property
+    @lru_cache()
     def in_amount(self):
         return sum(inc.amount_int for inc in self.TxIn)
 
-    @meta.lazy_property
+    @lru_cache()
     def out_amount(self):
         return sum(out.amount_int for out in self.TxOut)
 
-    @meta.lazy_property
+    @lru_cache()
     def fee(self):
         return self.in_amount - self.out_amount
 

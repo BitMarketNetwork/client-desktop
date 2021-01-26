@@ -10,6 +10,7 @@ from .. import meta, orderedset
 from . import (address, root_address, address_model, coin_network, hd, key,
                serialization)
 from . import db_entry
+from .. import coins
 
 log = logging.getLogger(__name__)
 
@@ -584,7 +585,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         int, _get_height, _set_height, notify=heightChanged)
 
 
-class Bitcoin(CoinType):
+class Bitcoin(CoinType, coins.Bitcoin):
     name = "btc"
     full_name = "Bitcoin"
     network = coin_network.BitcoinMainNetwork
@@ -594,7 +595,7 @@ class Bitcoin(CoinType):
     _usd_rate = 9400.51
 
 
-class BitcoinTest(Bitcoin):
+class BitcoinTest(Bitcoin, coins.BitcoinTest):
     name = "btctest"
     full_name = "Bitcoin Test"
     net_name = "btc-testnet"
@@ -603,7 +604,7 @@ class BitcoinTest(Bitcoin):
     _usd_rate = 9400.51
 
 
-class Litecoin(CoinType):
+class Litecoin(CoinType, coins.Litecoin):
     name = "ltc"
     full_name = "Litecoin"
     network = coin_network.LitecoinMainNetwork

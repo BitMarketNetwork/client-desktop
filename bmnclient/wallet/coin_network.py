@@ -1,22 +1,13 @@
-
-
 import logging
 from typing import List, Optional, Tuple
 
-import PySide2.QtCore as qt_core
-
 from .. import meta
-
-log = logging.getLogger(__name__)
 
 
 class CoinNetworkBase:
     EX_PREFIX_PRV = None
     EX_PREFIX_PUB = None
     PRIVATE_KEY = None
-    # just for tests
-    TITLE = "abstact"
-    #
 
     def __str__(self):
         return self.__class__.__name__
@@ -28,7 +19,6 @@ class CoinNetworkBase:
     @meta.classproperty
     def bech32_hrps(cls) -> List[str]:  # pylint: disable=no-self-argument
         return [me.BECH32_HRP for me in cls.all]
-
 
     @classmethod
     def from_prv_version(cls, version) -> "CoinNetworkBase":
@@ -71,7 +61,6 @@ class BitcoinMainNetwork(CoinNetworkBase):
     ADDRESS_PREFIX = '1'
     SCRIPT_ADDRESS_PREFIX = '3'
     PRIVATE_KEY = b'\x80'
-    TITLE = "main"
 
 
 class BitcoinTestNetwork(CoinNetworkBase):
@@ -84,7 +73,6 @@ class BitcoinTestNetwork(CoinNetworkBase):
     ADDRESS_PREFIX_2 = 'n'
     SCRIPT_ADDRESS_PREFIX = '2'
     PRIVATE_KEY = b'\xef'
-    TITLE = "test"
 
 
 class LitecoinMainNetwork(CoinNetworkBase):
