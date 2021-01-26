@@ -1,7 +1,7 @@
 # JOK
 import argparse
 
-import bmnclient.version
+from .version import Product
 
 ARGUMENTS = None
 
@@ -12,7 +12,7 @@ def parse(argv) -> None:
     # TODO sync decorations/names/description with server cli, append qsTr()
     parser = argparse.ArgumentParser(
         prog=argv[0],
-        description=bmnclient.version.NAME)
+        description=Product.NAME)
     parser.add_argument(
         "-l",
         "--logfile",

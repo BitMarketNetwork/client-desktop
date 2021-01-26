@@ -116,32 +116,32 @@ export BMN_UPLOAD_DIR = bmn-upload:public
 
 $(info Loading version from ${BMN_PACKAGE_NAME} package...)
 export BMN_MAINTAINER := $(or $(strip \
-	$(call BMN_VERSION,MAINTAINER)),\
+	$(call BMN_VERSION,Product.MAINTAINER)),\
 	$(error BMN_MAINTAINER not defined.))
 export BMN_MAINTAINER_DOMAIN := $(or $(strip \
-	$(call BMN_VERSION,MAINTAINER_DOMAIN)),\
+	$(call BMN_VERSION,Product.MAINTAINER_DOMAIN)),\
 	$(error BMN_MAINTAINER_DOMAIN not defined.))
 export BMN_MAINTAINER_URL := $(or $(strip \
-	$(call BMN_VERSION,MAINTAINER_URL)),\
+	$(call BMN_VERSION,Product.MAINTAINER_URL)),\
 	$(error BMN_MAINTAINER_URL not defined.))
 export BMN_NAME := $(or $(strip \
-	$(call BMN_VERSION,NAME)),\
+	$(call BMN_VERSION,Product.NAME)),\
 	$(error BMN_NAME not defined.))
 export BMN_SHORT_NAME := $(or $(strip \
-	$(call BMN_VERSION,SHORT_NAME)),\
+	$(call BMN_VERSION,Product.SHORT_NAME)),\
 	$(error BMN_SHORT_NAME not defined.))
 export BMN_VERSION_STRING := $(or $(strip \
-	$(call BMN_VERSION,VERSION_STRING)),\
+	$(call BMN_VERSION,Product.VERSION_STRING)),\
 	$(error BMN_VERSION_STRING not defined.))
 export BMN_ICON_WINDOWS_FILE_PATH := $(or $(strip \
-	$(call BMN_VERSION,ICON_WINDOWS_FILE_PATH)),\
-	$(error ICON_WINDOWS_FILE_PATH not defined.))
+	$(call BMN_VERSION,Paths.ICON_WINDOWS_FILE_PATH)),\
+	$(error BMN_ICON_WINDOWS_FILE_PATH not defined.))
 export BMN_ICON_DARWIN_FILE_PATH := $(or $(strip \
-	$(call BMN_VERSION,ICON_DARWIN_FILE_PATH)),\
-	$(error ICON_DARWIN_FILE_PATH not defined.))
+	$(call BMN_VERSION,Paths.ICON_DARWIN_FILE_PATH)),\
+	$(error BMN_ICON_DARWIN_FILE_PATH not defined.))
 export BMN_ICON_LINUX_FILE_PATH := $(or $(strip \
-	$(call BMN_VERSION,ICON_LINUX_FILE_PATH)),\
-	$(error ICON_LINUX_FILE_PATH not defined.))
+	$(call BMN_VERSION,Paths.ICON_LINUX_FILE_PATH)),\
+	$(error BMN_ICON_LINUX_FILE_PATH not defined.))
 
 TARGET_SUFFIX_RELEASE =
 TARGET_SUFFIX_DEBUG = _debug

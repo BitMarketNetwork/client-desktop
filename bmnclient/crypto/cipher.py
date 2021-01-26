@@ -5,14 +5,14 @@ from typing import Optional
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers import aead
 
-from .. import version
+from ..version import Product
 
 
 class AeadCipher:
     CIPHER = aead.AESGCM
     NONCE_LENGTH = 96 // 8  # NIST recommends
     KEY_LENGTH = 128 // 8
-    ASSOCIATED_DATA = version.SHORT_NAME.encode(encoding=version.ENCODING)
+    ASSOCIATED_DATA = Product.SHORT_NAME.encode(encoding=Product.ENCODING)
 
     def __init__(self, key: bytes, nonce: Optional[bytes] = None) -> None:
         self._cipher = self.CIPHER(key)
@@ -49,7 +49,7 @@ class MessageCipher(AeadCipher):
     def encrypt(
             self,
             data: bytes,
-            separator: str = version.STRING_SEPARATOR) -> str:
+            separator: str = Product.STRING_SEPARATOR) -> str:
         nonce = self.generateNonce()
         cipher_text = super().encrypt(nonce, data)
         return nonce.hex() + separator + cipher_text.hex()
@@ -57,7 +57,7 @@ class MessageCipher(AeadCipher):
     def decrypt(
             self,
             text: str,
-            separator: str = version.STRING_SEPARATOR) -> Optional[bytes]:
+            separator: str = Product.STRING_SEPARATOR) -> Optional[bytes]:
         try:
             (nonce, data) = text.split(separator, 1)
             return super().decrypt(

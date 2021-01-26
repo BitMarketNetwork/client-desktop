@@ -5,9 +5,9 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-from bmnclient import version
 from bmnclient.config import UserConfig
 from bmnclient.key_store import KeyIndex, KeyStore
+from bmnclient.version import Product
 from bmnclient.wallet.mnemonic import Mnemonic
 from tests import getLogger
 
@@ -18,7 +18,7 @@ class TestKeyStore(TestCase):
     def setUp(self) -> None:
         self.password = "123123Qaz"
         self.user_config_path = \
-            Path(tempfile.gettempdir()) / (version.SHORT_NAME + "-config.json")
+            Path(tempfile.gettempdir()) / (Product.SHORT_NAME + "-config.json")
         if self.user_config_path.exists():
             self.user_config_path.unlink()
         self.user_config = UserConfig(self.user_config_path)
@@ -40,7 +40,7 @@ class TestKeyStore(TestCase):
         value = KeyStore._generateSecretStoreValue()
         self.assertIsInstance(value, bytes)
 
-        json_value = json.loads(value.decode(encoding=version.ENCODING))
+        json_value = json.loads(value.decode(encoding=Product.ENCODING))
         self.assertIsInstance(json_value, dict)
 
         self.assertTrue(key_store._loadSecretStoreValue(value))

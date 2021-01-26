@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from typing import Union, Optional, Type
 from functools import partial
+from typing import Union, Optional, Type
+
 from PySide2.QtCore import \
     QCoreApplication, \
     QLocale, \
@@ -12,15 +13,17 @@ from PySide2.QtCore import \
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 
-from . import version, resources
+from . import resources
+from .coins.list import CoinList
 from .config import UserConfig
 from .key_store import KeyStore
 from .language import Language
 from .logger import getClassLogger
-from .signal_handler import SignalHandler
 from .server.thread import ServerThread
+from .signal_handler import SignalHandler
+from .version import Product
 from .wallet.thread import WalletThread
-from .coins.list import CoinList
+
 
 class CoreApplication(QObject):
     _instance: CoreApplication = None
@@ -34,7 +37,7 @@ class CoreApplication(QObject):
 
         CoreApplication._instance = self
         self._logger = getClassLogger(__name__, self.__class__)
-        self._title = "{} {}".format(version.NAME, version.VERSION_STRING)
+        self._title = "{} {}".format(Product.NAME, Product.VERSION_STRING)
         self._icon = QIcon(str(resources.ICON_FILE_PATH))
         self._language: Optional[Language] = None
         self._exit_code = 0
@@ -53,10 +56,10 @@ class CoreApplication(QObject):
         qt_class.setAttribute(Qt.AA_DisableShaderDiskCache)
         qt_class.setAttribute(Qt.AA_DisableWindowContextHelpButton)
 
-        qt_class.setApplicationName(version.NAME)
-        qt_class.setApplicationVersion(version.VERSION_STRING)
-        qt_class.setOrganizationName(version.MAINTAINER)
-        qt_class.setOrganizationDomain(version.MAINTAINER_DOMAIN)
+        qt_class.setApplicationName(Product.NAME)
+        qt_class.setApplicationVersion(Product.VERSION_STRING)
+        qt_class.setOrganizationName(Product.MAINTAINER)
+        qt_class.setOrganizationDomain(Product.MAINTAINER_DOMAIN)
 
         # QCoreApplication
         self._qt_application = qt_class(argv)
@@ -111,11 +114,11 @@ class CoreApplication(QObject):
         if self._exit_code == 0:
             self._logger.info(
                 "%s terminated successfully.",
-                version.NAME)
+                Product.NAME)
         else:
             self._logger.warning(
                 "%s terminated with error.",
-                version.NAME)
+                Product.NAME)
         return self._exit_code
 
     def setExitEvent(self, code: int = 0) -> None:

@@ -5,7 +5,7 @@ from typing import Optional, List, Union, Iterable
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-from bmnclient import version
+from ..version import Paths
 
 
 # Adapted from:
@@ -13,7 +13,7 @@ from bmnclient import version
 class Mnemonic:
     ENCODING = "utf-8"
     WORD_COUNT = 2048
-    SOURCE_PATH = version.RESOURCES_PATH / "wordlist"
+    SOURCE_PATH = Paths.RESOURCES_PATH / "wordlist"
     PBKDF2_ROUNDS = 2048
 
     DATA_LENGTH_LIST = (16, 20, 24, 28, 32)

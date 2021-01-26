@@ -9,8 +9,8 @@ from typing import Optional, Type
 
 from PySide2 import QtCore
 
-from . import version
 from .platform import CURRENT_PLATFORM, Platform
+from .version import Product
 
 _qt_logger: Optional[logging.Logger] = None
 _configure_lock = Lock()
@@ -63,7 +63,7 @@ def configure(file_path: str = None, level: int = logging.DEBUG) -> None:
             handler = logging.FileHandler(
                 file_path,
                 mode="at",
-                encoding=version.ENCODING)
+                encoding=Product.ENCODING)
         else:
             handler = logging.StreamHandler(stream=sys.stderr)
         handler.setFormatter(Formatter())

@@ -12,12 +12,12 @@ from PySide2.QtCore import \
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.hashes import Hash
 
-from . import version
 from .config import UserConfig
 from .crypto.cipher import AeadCipher, MessageCipher
 from .crypto.kdf import SecretStore
 from .crypto.password import PasswordStrength
 from .logger import getClassLogger
+from .version import Product
 from .wallet import hd
 from .wallet.mnemonic import Mnemonic
 
@@ -81,7 +81,7 @@ class KeyStore(QObject):
     def _generateSecretStoreValue(cls) -> bytes:
         value = {
             "version":
-                version.VERSION_STRING,
+                Product.VERSION_STRING,
 
             "nonce_{:d}".format(KeyIndex.WALLET_DATABASE.value):
                 AeadCipher.generateNonce().hex(),
@@ -93,11 +93,11 @@ class KeyStore(QObject):
             "key_{:d}".format(KeyIndex.SEED.value):
                 MessageCipher.generateKey().hex()
         }
-        return json.dumps(value).encode(encoding=version.ENCODING)
+        return json.dumps(value).encode(encoding=Product.ENCODING)
 
     def _loadSecretStoreValue(self, value: bytes) -> bool:
         try:
-            value = json.loads(value.decode(encoding=version.ENCODING))
+            value = json.loads(value.decode(encoding=Product.ENCODING))
             for k, v in value.items():
                 if k.startswith("nonce_"):
                     k = int(k[6:])
@@ -127,7 +127,7 @@ class KeyStore(QObject):
             if self._mnemonic and self._mnemonic_salt_hash:
                 if salt:
                     self._mnemonic_salt_hash.update(
-                        salt.encode(encoding=version.ENCODING))
+                        salt.encode(encoding=Product.ENCODING))
                     self._mnemonic_salt_hash.update(os.urandom(4))
                 result = self._mnemonic_salt_hash.copy().finalize()
                 result = result[:Mnemonic.DEFAULT_DATA_LENGTH]
@@ -190,11 +190,11 @@ class KeyStore(QObject):
             return self._has_seed
 
     def _saveSeedWithPhrase(self, language: str, phrase: str) -> bool:
-        if version.STRING_SEPARATOR in language:
+        if Product.STRING_SEPARATOR in language:
             return False
 
         seed = Mnemonic.phraseToSeed(phrase)
-        phrase = version.STRING_SEPARATOR.join((language, phrase))
+        phrase = Product.STRING_SEPARATOR.join((language, phrase))
 
         with self._user_config.lock:
             if not self._user_config.set(
@@ -205,7 +205,7 @@ class KeyStore(QObject):
             if not self._user_config.set(
                     UserConfig.KEY_KEY_STORE_SEED_PHRASE,
                     self.deriveMessageCipher(KeyIndex.SEED).encrypt(
-                        phrase.encode(encoding=version.ENCODING)),
+                        phrase.encode(encoding=Product.ENCODING)),
                     save=False):
                 return False
             if not self._user_config.save():
@@ -224,8 +224,8 @@ class KeyStore(QObject):
             return None
         value = self.deriveMessageCipher(KeyIndex.SEED).decrypt(value)
         try:
-            value = value.decode(encoding=version.ENCODING)
-            (language, phrase) = value.split(version.STRING_SEPARATOR, 1)
+            value = value.decode(encoding=Product.ENCODING)
+            (language, phrase) = value.split(Product.STRING_SEPARATOR, 1)
         except (UnicodeError, ValueError):
             return None
 
@@ -242,12 +242,13 @@ class KeyStore(QObject):
         master_hd = hd.HDNode.make_master(seed)
         _44_node = master_hd.make_child_prv(44, True)
         from .application import CoreApplication
-        for coin in CoreApplication.instance().coinList:
-            if coin.enabled:
-                coin.make_hd_node(_44_node)
-                self._logger.debug(f"Make HD prv for {coin}")
-        from .ui.gui import Application
-        Application.instance().networkThread.look_for_HD()
+        if CoreApplication.instance():
+            for coin in CoreApplication.instance().coinList:
+                if coin.enabled:
+                    coin.make_hd_node(_44_node)
+                    self._logger.debug(f"Make HD prv for {coin}")
+            from .ui.gui import Application
+            Application.instance().networkThread.look_for_HD()
         return True
 
     ############################################################################

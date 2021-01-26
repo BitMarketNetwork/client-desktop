@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from bmnclient import version
 from bmnclient.crypto.base58 import Base58
+from bmnclient.version import Product
 
 TEST_LIST = (
     (
@@ -15,7 +15,7 @@ TEST_LIST = (
         ""
     ), (
         "2NEpo7TZRhna7vSvL",
-        "Hello world!".encode(encoding=version.ENCODING).hex()
+        "Hello world!".encode(encoding=Product.ENCODING).hex()
     ), (
         "BAD_",
         None

@@ -4,7 +4,7 @@ import sys
 from enum import Enum, auto
 from pathlib import Path, PurePath
 
-from . import version
+from .version import Product
 
 
 class Platform(Enum):
@@ -35,16 +35,16 @@ if CURRENT_PLATFORM == Platform.WINDOWS:
     USER_CONFIG_PATH = PurePath(USER_CONFIG_PATH)
     USER_APPLICATION_CONFIG_PATH = \
         USER_CONFIG_PATH / \
-        version.NAME
+        Product.NAME
 elif CURRENT_PLATFORM == Platform.DARWIN:
     USER_CONFIG_PATH = USER_HOME_PATH / "Library" / "Application Support"
     USER_APPLICATION_CONFIG_PATH = \
         USER_CONFIG_PATH / \
-        version.NAME
+        Product.NAME
 elif CURRENT_PLATFORM == Platform.LINUX:
     USER_CONFIG_PATH = USER_HOME_PATH / ".config"
     USER_APPLICATION_CONFIG_PATH = \
         USER_CONFIG_PATH / \
-        version.SHORT_NAME.lower()
+        Product.SHORT_NAME.lower()
 else:
     raise RuntimeError("Can't determine user directories.")

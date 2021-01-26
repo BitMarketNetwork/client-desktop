@@ -6,8 +6,9 @@ from pathlib import PurePath
 from threading import RLock
 from typing import Any, Type
 
-from . import platform, version
+from . import platform
 from .logger import getClassLogger, osErrorToString
+from .version import Product
 
 USER_CONFIG_FILE_PATH = \
     platform.USER_APPLICATION_CONFIG_PATH / \
@@ -49,7 +50,7 @@ class UserConfig:
                 with open(
                         self._file_path,
                         mode="rt",
-                        encoding=version.ENCODING,
+                        encoding=Product.ENCODING,
                         errors="replace") as file:
                     self._config = json.load(file)
                 self._updateVersion()
@@ -78,7 +79,7 @@ class UserConfig:
                 with open(
                         self._file_path,
                         mode="w+t",
-                        encoding=version.ENCODING,
+                        encoding=Product.ENCODING,
                         errors="replace") as file:
                     json.dump(
                         self._config,
@@ -139,4 +140,4 @@ class UserConfig:
 
     def _updateVersion(self) -> None:
         if not self.get(self.KEY_VERSION, str):
-            self.set(self.KEY_VERSION, version.VERSION_STRING, save=False)
+            self.set(self.KEY_VERSION, Product.VERSION_STRING, save=False)

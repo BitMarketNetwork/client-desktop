@@ -2,18 +2,19 @@
 import sys
 from typing import List
 
-from . import version, command_line, logger
+from . import command_line, logger
 from .ui.gui import Application
+from .version import Product
 
-if sys.version_info[:3] < version.PYTHON_MINIMAL_VERSION:
+if sys.version_info[:3] < Product.PYTHON_MINIMAL_VERSION:
     raise RuntimeError(
         "{} requires Python version {}.{}.{} or above. "
         "Current Python version is {}.{}.{}."
         .format(
-            version.NAME,
-            version.PYTHON_MINIMAL_VERSION[0],
-            version.PYTHON_MINIMAL_VERSION[1],
-            version.PYTHON_MINIMAL_VERSION[2],
+            Product.NAME,
+            Product.PYTHON_MINIMAL_VERSION[0],
+            Product.PYTHON_MINIMAL_VERSION[1],
+            Product.PYTHON_MINIMAL_VERSION[2],
             sys.version_info[0],
             sys.version_info[1],
             sys.version_info[2]))

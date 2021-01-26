@@ -1,4 +1,4 @@
-# JOK+
+# JOK++
 import signal
 import socket
 import sys
