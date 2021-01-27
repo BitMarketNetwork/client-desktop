@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from argparse import ArgumentParser, Namespace
 from functools import partial
+from pathlib import PurePath
 from typing import Union, Optional, Type
 
 from PySide2.QtCore import \
@@ -23,6 +25,38 @@ from .server.thread import ServerThread
 from .signal_handler import SignalHandler
 from .version import Product
 from .wallet.thread import WalletThread
+
+
+class CommandLine:
+    _arguments = Namespace()
+
+    @classmethod
+    def parse(cls, argv) -> None:
+        # TODO sync decorations/names/description with server cli, append qsTr()
+        parser = ArgumentParser(
+            prog=argv[0],
+            description=Product.NAME)
+        parser.add_argument(
+            "-l",
+            "--logfile",
+            help="set file name for logging")
+        parser.add_argument(
+            '-d',
+            '--debug_mode',
+            default=False,
+            dest='debug_mode',
+            action='store_true')
+        cls._arguments = parser.parse_args(argv[1:])
+
+    @classmethod
+    def logFilePath(cls) -> Optional[PurePath]:
+        if cls._arguments.logfile:
+            return PurePath(cls._arguments.logfile)
+        return None
+
+    @classmethod
+    def isDebugMode(cls) -> bool:
+        return cls._arguments.debug_mode
 
 
 class CoreApplication(QObject):

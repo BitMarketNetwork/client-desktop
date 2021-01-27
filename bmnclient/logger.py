@@ -1,9 +1,10 @@
-# JOK+
+# JOK++
 import logging
 import os
 import sys
 import time
 import traceback
+from pathlib import PurePath
 from threading import Lock
 from typing import Optional, Type
 
@@ -53,7 +54,7 @@ class Logger:
     @classmethod
     def configure(
             cls,
-            file_path: str = None,
+            file_path: Optional[PurePath] = None,
             level: int = logging.DEBUG) -> None:
         global _is_configured
         global _configure_lock
@@ -63,10 +64,9 @@ class Logger:
             if _is_configured:
                 return
 
-            # TODO pathlib
-            if isinstance(file_path, str) and len(file_path) > 0:
+            if file_path:
                 handler = logging.FileHandler(
-                    file_path,
+                    str(file_path),
                     mode="at",
                     encoding=Product.ENCODING)
             else:

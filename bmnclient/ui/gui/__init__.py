@@ -21,7 +21,7 @@ from .receive_manager import ReceiveManager, ReceiveManager
 from .settings_manager import SettingsManager, SettingsManager
 from .ui_manager import UIManager, UIManager
 from ...application import CoreApplication
-from ...command_line import debug_mode
+from ...application import CommandLine
 from ...debug_manager import DebugManager
 from ...wallet.fee_manager import FeeManager
 from ...key_store import KeyStore
@@ -190,8 +190,8 @@ class BackendContext(QObject):
         self._application = application
 
     @QProperty(bool, constant=True)
-    def debugMode(self) -> bool:
-        return debug_mode()
+    def isDebugMode(self) -> bool:
+        return CommandLine.isDebugMode()
 
     @QProperty(DebugManager, constant=True)
     def debugManager(self) -> DebugManager:

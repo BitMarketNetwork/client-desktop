@@ -6,7 +6,7 @@ import "../basiccontrols"
 BDialog {
     id: _base
     readonly property string acceptDelayText: BStandardText.buttonText.acceptRole + " (%1)"
-    readonly property int acceptDelay: BBackend.debugMode ? 1 : 10
+    readonly property int acceptDelay: BBackend.isDebugMode ? 1 : 10
 
     title: // TODO move to MessageDialog
         "<font color=\"%1\">".arg(Material.color(Material.Red))
