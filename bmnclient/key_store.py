@@ -9,10 +9,9 @@ from PySide2.QtCore import \
     Property as QProperty, \
     QObject, \
     Slot as QSlot
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.hashes import Hash
 
 from .config import UserConfig
+from .crypto.digest import Digest, Sha256Digest
 from .crypto.cipher import AeadCipher, MessageCipher
 from .crypto.kdf import SecretStore
 from .crypto.password import PasswordStrength
@@ -38,7 +37,7 @@ class KeyStore(QObject):
         self._key_list: List[Optional[bytes]] = [None] * len(KeyIndex)
 
         self._mnemonic: Optional[Mnemonic] = None
-        self._mnemonic_salt_hash: Optional[Hash] = None
+        self._mnemonic_salt_hash: Optional[Digest] = None
 
         self._has_seed = False
 
@@ -115,9 +114,9 @@ class KeyStore(QObject):
     def prepareGenerateSeedPhrase(self, language: str = None) -> str:
         with self._lock:
             self._mnemonic = Mnemonic(language)
-            self._mnemonic_salt_hash = Hash(hashes.SHA256())
+            self._mnemonic_salt_hash = Sha256Digest()
             self._mnemonic_salt_hash.update(os.urandom(64))
-            result = self._mnemonic_salt_hash.copy().finalize()
+            result = self._mnemonic_salt_hash.copy().final()
             result = result[:Mnemonic.DEFAULT_DATA_LENGTH]
             return self._mnemonic.getPhrase(result)
 
@@ -129,7 +128,7 @@ class KeyStore(QObject):
                     self._mnemonic_salt_hash.update(
                         salt.encode(encoding=Product.ENCODING))
                     self._mnemonic_salt_hash.update(os.urandom(4))
-                result = self._mnemonic_salt_hash.copy().finalize()
+                result = self._mnemonic_salt_hash.copy().final()
                 result = result[:Mnemonic.DEFAULT_DATA_LENGTH]
                 return self._mnemonic.getPhrase(result)
         return ""

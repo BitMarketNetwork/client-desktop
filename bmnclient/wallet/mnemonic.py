@@ -5,6 +5,7 @@ from typing import Optional, List, Union, Iterable
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+from ..crypto.digest import Sha256Digest
 from ..version import ProductPaths
 
 
@@ -42,9 +43,9 @@ class Mnemonic:
                 "Data length should be one of the following: {}, "
                 "but data length {}."
                 .format(self.DATA_LENGTH_LIST, len(data)))
-        h = hashes.Hash(hashes.SHA256())
+        h = Sha256Digest()
         h.update(data)
-        h = h.finalize().hex()
+        h = h.final().hex()
 
         b = bin(int.from_bytes(data, byteorder="big"))[2:].zfill(len(data) * 8)
         b += bin(int(h, 16))[2:].zfill(256)[: len(data) * 8 // 32]
@@ -71,9 +72,9 @@ class Mnemonic:
         h = b[-j // 33:]
         nd = int(d, 2).to_bytes(j // 33 * 4, byteorder="big")
 
-        nh = hashes.Hash(hashes.SHA256())
+        nh = Sha256Digest()
         nh.update(nd)
-        nh = nh.finalize().hex()
+        nh = nh.final().hex()
         nh = bin(int(nh, 16))[2:].zfill(256)[: j // 33]
         return h == nh
 

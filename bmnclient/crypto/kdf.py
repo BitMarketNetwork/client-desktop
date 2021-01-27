@@ -2,24 +2,24 @@
 import os
 from typing import Optional
 
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 
 from .cipher import MessageCipher
+from .digest import Blake2bDigest
 from ..version import Product
 
 
 class KeyDerivationFunction:
-    HASH_ALGORITHM = hashes.BLAKE2b(64)
+    HASH_ALGORITHM = Blake2bDigest
     KEY_COST = 18
 
     def __init__(self, password: str) -> None:
-        password_hash = hashes.Hash(self.HASH_ALGORITHM)
+        password_hash = self.HASH_ALGORITHM()
         password_hash.update(
             Product.SHORT_NAME.encode(encoding=Product.ENCODING))
         password_hash.update(
             password.encode(encoding=Product.ENCODING))
-        password_hash = password_hash.finalize()
+        password_hash = password_hash.final()
         self._password_hash = password_hash
 
     def derive(

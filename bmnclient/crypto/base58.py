@@ -1,7 +1,7 @@
-# JOK+
+# JOK++
 from typing import Optional
 
-from cryptography.hazmat.primitives.hashes import Hash, SHA256
+from .digest import Sha256Digest
 
 
 class Base58:
@@ -60,8 +60,8 @@ class Base58:
 
     @classmethod
     def _digest(cls, source: bytes) -> bytes:
-        digest0 = Hash(SHA256())
-        digest1 = Hash(SHA256())
+        digest0 = Sha256Digest()
+        digest1 = Sha256Digest()
         digest0.update(source)
-        digest1.update(digest0.finalize())
-        return digest1.finalize()[:cls.CHECKSUM_SIZE]
+        digest1.update(digest0.final())
+        return digest1.final()[:cls.CHECKSUM_SIZE]
