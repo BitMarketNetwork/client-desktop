@@ -5,7 +5,7 @@ from typing import Optional, List, Union, Iterable
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-from ..version import Paths
+from ..version import ProductPaths
 
 
 # Adapted from:
@@ -13,7 +13,7 @@ from ..version import Paths
 class Mnemonic:
     ENCODING = "utf-8"
     WORD_COUNT = 2048
-    SOURCE_PATH = Paths.RESOURCES_PATH / "wordlist"
+    SOURCE_PATH = ProductPaths.RESOURCES_PATH / "wordlist"
     PBKDF2_ROUNDS = 2048
 
     DATA_LENGTH_LIST = (16, 20, 24, 28, 32)

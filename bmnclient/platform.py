@@ -1,50 +1,72 @@
-# JOK+
+# JOK++
 import os
 import sys
 from enum import Enum, auto
 from pathlib import Path, PurePath
+from typing import Final
 
 from .version import Product
 
 
-class Platform(Enum):
-    UNKNOWN = auto()
-    WINDOWS = auto()
-    DARWIN = auto()
-    LINUX = auto()
+class Platform:
+    class Type(Enum):
+        UNKNOWN = auto()
+        WINDOWS = auto()
+        DARWIN = auto()
+        LINUX = auto()
+
+    if sys.platform.startswith("win32"):
+        TYPE: Final = Type.WINDOWS
+    elif sys.platform.startswith("darwin"):
+        TYPE: Final = Type.DARWIN
+    elif sys.platform.startswith("linux"):
+        TYPE: Final = Type.LINUX
+    else:
+        TYPE: Final = Type.UNKNOWN
+        raise RuntimeError("Unsupported platform \"{}\".".format(sys.platform))
+
+    @classmethod
+    def isWindows(cls) -> bool:
+        return cls.TYPE == cls.Type.WINDOWS
+
+    @classmethod
+    def isDarwin(cls) -> bool:
+        return cls.TYPE == cls.Type.DARWIN
+
+    @classmethod
+    def isLinux(cls) -> bool:
+        return cls.TYPE == cls.Type.LINUX
 
 
-# Detect platform
-if sys.platform.startswith("win32"):
-    CURRENT_PLATFORM = Platform.WINDOWS
-elif sys.platform.startswith("darwin"):
-    CURRENT_PLATFORM = Platform.DARWIN
-elif sys.platform.startswith("linux"):
-    CURRENT_PLATFORM = Platform.LINUX
-else:
-    CURRENT_PLATFORM = Platform.UNKNOWN
-    raise RuntimeError("Unsupported platform \"{}\".".format(sys.platform))
+def _userConfigPath(user_home_path: PurePath) -> PurePath:
+    if Platform.isWindows():
+        v = os.environ.get("APPDATA")
+        if not v:
+            raise RuntimeError("Can't determine APPDATA directory.")
+        return PurePath(v)
+    elif Platform.isDarwin():
+        return user_home_path / "Library" / "Application Support"
+    elif Platform.isLinux():
+        return user_home_path / ".config"
+    else:
+        raise RuntimeError("Can't determine user directories.")
 
-# Detect system paths
-USER_HOME_PATH = Path.home()
-if CURRENT_PLATFORM == Platform.WINDOWS:
-    USER_CONFIG_PATH = os.environ.get("APPDATA")
-    if USER_CONFIG_PATH is None:
-        raise RuntimeError("Can't determine APPDATA directory.")
 
-    USER_CONFIG_PATH = PurePath(USER_CONFIG_PATH)
-    USER_APPLICATION_CONFIG_PATH = \
-        USER_CONFIG_PATH / \
-        Product.NAME
-elif CURRENT_PLATFORM == Platform.DARWIN:
-    USER_CONFIG_PATH = USER_HOME_PATH / "Library" / "Application Support"
-    USER_APPLICATION_CONFIG_PATH = \
-        USER_CONFIG_PATH / \
-        Product.NAME
-elif CURRENT_PLATFORM == Platform.LINUX:
-    USER_CONFIG_PATH = USER_HOME_PATH / ".config"
-    USER_APPLICATION_CONFIG_PATH = \
-        USER_CONFIG_PATH / \
-        Product.SHORT_NAME.lower()
-else:
-    raise RuntimeError("Can't determine user directories.")
+def _userApplicationConfigPath(user_config_path: PurePath) -> PurePath:
+    if Platform.isWindows():
+        return user_config_path / Product.NAME
+    elif Platform.isDarwin():
+        return user_config_path / Product.NAME
+    elif Platform.isLinux():
+        return user_config_path / Product.SHORT_NAME.lower()
+    else:
+        raise RuntimeError("Can't determine user directories.")
+
+
+class PlatformPaths:
+    USER_HOME_PATH: Final = \
+        Path.home()
+    USER_CONFIG_PATH: Final = \
+        _userConfigPath(USER_HOME_PATH)
+    USER_APPLICATION_CONFIG_PATH: Final = \
+        _userApplicationConfigPath(USER_CONFIG_PATH)

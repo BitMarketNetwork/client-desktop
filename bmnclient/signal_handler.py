@@ -11,7 +11,7 @@ from PySide2.QtCore import \
 from PySide2.QtNetwork import QAbstractSocket
 
 from .logger import getClassLogger
-from .platform import CURRENT_PLATFORM, Platform
+from .platform import Platform
 
 
 class SignalHandler(QObject):
@@ -20,14 +20,12 @@ class SignalHandler(QObject):
     SIGQUIT = QSignal()
     SIGTERM = QSignal()
 
-    if CURRENT_PLATFORM == Platform.WINDOWS:
+    if Platform.isWindows():
         SIGNAL_LIST = (
             (signal.SIGINT, "SIGINT"),
             (signal.SIGTERM, "SIGTERM"),
         )
-    elif \
-            CURRENT_PLATFORM == Platform.DARWIN or \
-            CURRENT_PLATFORM == Platform.LINUX:
+    elif Platform.isDarwin() or Platform.isLinux():
         SIGNAL_LIST = (
             (signal.SIGHUP, "SIGHUP"),
             (signal.SIGINT, "SIGINT"),
@@ -36,7 +34,7 @@ class SignalHandler(QObject):
         )
     else:
         raise RuntimeError(
-            "Unsupported platform \"{}\".".format(CURRENT_PLATFORM))
+            "Unsupported platform \"{}\".".format(Platform.TYPE))
 
     def __init__(self, parent: Optional[QObject] = None) -> None:
         super().__init__(parent=parent)

@@ -10,7 +10,7 @@ from PySide2.QtCore import \
     QTranslator
 
 from .logger import getClassLogger
-from .version import Paths
+from .version import ProductPaths
 
 
 class Language:
@@ -67,7 +67,7 @@ class Language:
             cls._createAvailableTranslationItem(cls.PRIMARY_NAME)
         ]
         it = QDirIterator(
-            str(Paths.TRANSLATIONS_PATH),
+            str(ProductPaths.TRANSLATIONS_PATH),
             (cls.FILE_MATH,),
             QDir.Files)
         while it.next():
@@ -97,7 +97,7 @@ class Language:
             locale,
             "",
             "",
-            str(Paths.TRANSLATIONS_PATH),
+            str(ProductPaths.TRANSLATIONS_PATH),
             suffix)
 
         if not result:

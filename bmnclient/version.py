@@ -17,7 +17,7 @@ class Product:
     PYTHON_MINIMAL_VERSION: Final = (3, 7, 0)
 
 
-class Paths:
+class ProductPaths:
     BASE_PATH: Final = Path(__file__).parent.resolve()
     RESOURCES_PATH: Final = BASE_PATH / "resources"
 

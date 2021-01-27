@@ -6,16 +6,16 @@ from pathlib import PurePath
 from threading import RLock
 from typing import Any, Type
 
-from . import platform
+from .platform import PlatformPaths
 from .logger import getClassLogger, osErrorToString
 from .version import Product
 
 USER_CONFIG_FILE_PATH = \
-    platform.USER_APPLICATION_CONFIG_PATH / \
+    PlatformPaths.USER_APPLICATION_CONFIG_PATH / \
     "config.json"
 
 USER_DATABASE_FILE_PATH = \
-    platform.USER_APPLICATION_CONFIG_PATH / \
+    PlatformPaths.USER_APPLICATION_CONFIG_PATH / \
     "database.db"
 
 

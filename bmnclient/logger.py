@@ -9,7 +9,7 @@ from typing import Optional, Type
 
 from PySide2 import QtCore
 
-from .platform import CURRENT_PLATFORM, Platform
+from .platform import Platform
 from .version import Product
 
 _qt_logger: Optional[logging.Logger] = None
@@ -89,7 +89,7 @@ def configure(file_path: str = None, level: int = logging.DEBUG) -> None:
         #  -> PyGILState_Ensure()
         #  == deadlock
         # 2021.01.22: Now i found this deadlock on Windows...
-        if CURRENT_PLATFORM not in (Platform.DARWIN, Platform.WINDOWS):
+        if Platform.TYPE not in (Platform.Type.DARWIN, Platform.Type.WINDOWS):
             QtCore.qInstallMessageHandler(_qtMessageHandler)
 
         _is_configured = True

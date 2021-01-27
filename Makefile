@@ -134,13 +134,13 @@ export BMN_VERSION_STRING := $(or $(strip \
 	$(call BMN_VERSION,Product.VERSION_STRING)),\
 	$(error BMN_VERSION_STRING not defined.))
 export BMN_ICON_WINDOWS_FILE_PATH := $(or $(strip \
-	$(call BMN_VERSION,Paths.ICON_WINDOWS_FILE_PATH)),\
+	$(call BMN_VERSION,ProductPaths.ICON_WINDOWS_FILE_PATH)),\
 	$(error BMN_ICON_WINDOWS_FILE_PATH not defined.))
 export BMN_ICON_DARWIN_FILE_PATH := $(or $(strip \
-	$(call BMN_VERSION,Paths.ICON_DARWIN_FILE_PATH)),\
+	$(call BMN_VERSION,ProductPaths.ICON_DARWIN_FILE_PATH)),\
 	$(error BMN_ICON_DARWIN_FILE_PATH not defined.))
 export BMN_ICON_LINUX_FILE_PATH := $(or $(strip \
-	$(call BMN_VERSION,Paths.ICON_LINUX_FILE_PATH)),\
+	$(call BMN_VERSION,ProductPaths.ICON_LINUX_FILE_PATH)),\
 	$(error BMN_ICON_LINUX_FILE_PATH not defined.))
 
 TARGET_SUFFIX_RELEASE =
