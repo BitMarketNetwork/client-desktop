@@ -18,7 +18,7 @@ from .coins.list import CoinList
 from .config import UserConfig
 from .key_store import KeyStore
 from .language import Language
-from .logger import getClassLogger
+from .logger import Logger
 from .server.thread import ServerThread
 from .signal_handler import SignalHandler
 from .version import Product
@@ -36,7 +36,7 @@ class CoreApplication(QObject):
         super().__init__()
 
         CoreApplication._instance = self
-        self._logger = getClassLogger(__name__, self.__class__)
+        self._logger = Logger.getClassLogger(__name__, self.__class__)
         self._title = "{} {}".format(Product.NAME, Product.VERSION_STRING)
         self._icon = QIcon(str(resources.ICON_FILE_PATH))
         self._language: Optional[Language] = None

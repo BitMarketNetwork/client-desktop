@@ -9,7 +9,7 @@ from PySide2.QtCore import \
     QLocale, \
     QTranslator
 
-from .logger import getClassLogger
+from .logger import Logger
 from .version import ProductPaths
 
 
@@ -19,7 +19,7 @@ class Language:
     PRIMARY_NAME = "en_US"
 
     def __init__(self, name: str = PRIMARY_NAME) -> None:
-        self._logger = getClassLogger(__name__, self.__class__, name)
+        self._logger = Logger.getClassLogger(__name__, self.__class__, name)
 
         if name is None:
             self._locale = QLocale()
@@ -101,7 +101,7 @@ class Language:
             suffix)
 
         if not result:
-            getClassLogger(__name__, cls).error(
+            Logger.getClassLogger(__name__, cls).error(
                 "Failed to load translator: locale \"{}\", suffix \"{}\"."
                 .format(locale.name(), suffix))
             return None

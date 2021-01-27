@@ -10,7 +10,7 @@ from PySide2.QtCore import \
     Slot as QSlot
 from PySide2.QtNetwork import QAbstractSocket
 
-from .logger import getClassLogger
+from .logger import Logger
 from .platform import Platform
 
 
@@ -38,7 +38,7 @@ class SignalHandler(QObject):
 
     def __init__(self, parent: Optional[QObject] = None) -> None:
         super().__init__(parent=parent)
-        self._logger = getClassLogger(__name__, self.__class__)
+        self._logger = Logger.getClassLogger(__name__, self.__class__)
 
         read_socket, self._write_socket = socket.socketpair(
             type=socket.SOCK_STREAM)

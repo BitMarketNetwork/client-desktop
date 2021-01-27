@@ -2,7 +2,8 @@
 import sys
 from typing import List
 
-from . import command_line, logger
+from . import command_line
+from .logger import Logger
 from .ui.gui import Application
 from .version import Product
 
@@ -23,11 +24,11 @@ if sys.version_info[:3] < Product.PYTHON_MINIMAL_VERSION:
 def main(argv: List[str]) -> int:
     try:
         command_line.parse(argv)
-        logger.configure(command_line.log_file())
+        Logger.configure(command_line.log_file())
         exit_code = Application(argv).run()
     except SystemExit as e:
         exit_code = e.args[0]
     except BaseException:
         exit_code = 1
-        logger.fatalException()
+        Logger.fatalException()
     return exit_code

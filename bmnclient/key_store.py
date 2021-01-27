@@ -16,7 +16,7 @@ from .config import UserConfig
 from .crypto.cipher import AeadCipher, MessageCipher
 from .crypto.kdf import SecretStore
 from .crypto.password import PasswordStrength
-from .logger import getClassLogger
+from .logger import Logger
 from .version import Product
 from .wallet import hd
 from .wallet.mnemonic import Mnemonic
@@ -31,7 +31,7 @@ class KeyStore(QObject):
     def __init__(self, user_config: UserConfig) -> None:
         super().__init__()
         self._user_config = user_config
-        self._logger = getClassLogger(__name__, self.__class__)
+        self._logger = Logger.getClassLogger(__name__, self.__class__)
         self._lock = RLock()
 
         self._nonce_list: List[Optional[bytes]] = [None] * len(KeyIndex)

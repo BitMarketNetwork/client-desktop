@@ -8,7 +8,7 @@ from PySide2.QtCore import \
     Slot as QSlot
 from PySide2.QtWidgets import QSystemTrayIcon, QMenu
 
-from bmnclient.logger import getClassLogger
+from bmnclient.logger import Logger
 from ...application import CoreApplication
 
 
@@ -26,7 +26,7 @@ class SystemTrayIcon(QObject):
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent=parent)
-        self._logger = getClassLogger(__name__, self.__class__)
+        self._logger = Logger.getClassLogger(__name__, self.__class__)
 
         if not QSystemTrayIcon.isSystemTrayAvailable():
             self._logger.warning("System tray is not available.")

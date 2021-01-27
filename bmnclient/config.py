@@ -7,7 +7,7 @@ from threading import RLock
 from typing import Any, Type
 
 from .platform import PlatformPaths
-from .logger import getClassLogger, osErrorToString
+from .logger import Logger
 from .version import Product
 
 USER_CONFIG_FILE_PATH = \
@@ -35,7 +35,7 @@ class UserConfig:
     def __init__(
             self,
             file_path: PurePath = USER_CONFIG_FILE_PATH) -> None:
-        self._logger = getClassLogger(__name__, self.__class__)
+        self._logger = Logger.getClassLogger(__name__, self.__class__)
         self._file_path = file_path
         self._config = dict()
         self._lock = RLock()
@@ -59,7 +59,7 @@ class UserConfig:
                 self._logger.warning(
                     "Failed to read configuration file \"%s\". %s",
                     self._file_path,
-                    osErrorToString(e))
+                    Logger.osErrorToString(e))
             except JSONDecodeError as e:
                 self._logger.warning(
                     "Failed to parse configuration file \"%s\". "
@@ -93,7 +93,7 @@ class UserConfig:
                 self._logger.warning(
                     "Failed to write configuration file \"%s\". %s",
                     self._file_path,
-                    osErrorToString(e))
+                    Logger.osErrorToString(e))
         return False
 
     def get(
