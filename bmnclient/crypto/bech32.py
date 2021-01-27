@@ -1,21 +1,20 @@
-# JOK+
-from typing import Optional, Tuple, Union
+# JOK++
+from typing import Optional, Tuple, Union, Final
 
 
 class Bech32:
-    CHAR_LIST = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
-    CHECKSUM_SIZE = 6
-    MAX_SIZE = 90
+    CHAR_LIST: Final = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
+    CHECKSUM_SIZE: Final = 6
+    MAX_SIZE: Final = 90
+    SEPARATOR: Final = "1"
 
     @classmethod
     def encode(
             cls,
             hrp: str,
             version: int,
-            data: bytes,
-            *,
-            strict=True) -> Optional[str]:
-        if not hrp or not cls._verifyVersion(version, data, strict):
+            data: bytes) -> Optional[str]:
+        if not hrp or not 0 <= version <= 16:
             return None
 
         data = cls._convertBits(data, 8, 5)
@@ -27,23 +26,21 @@ class Bech32:
 
         data = bytes([version]) + data
         data += cls._createChecksum(hrp, data)
-        data = hrp + "1" + "".join(cls.CHAR_LIST[i] for i in data)
+        data = hrp + cls.SEPARATOR + "".join(cls.CHAR_LIST[i] for i in data)
         assert result_size == len(data)
         return data
 
     @classmethod
     def decode(
             cls,
-            source: str,
-            *,
-            strict=True) \
+            source: str) \
             -> Union[Tuple[None, None, None], Tuple[str, int, bytes]]:
         result_none = (None, None, None)
         if len(source) > cls.MAX_SIZE:
             return result_none
 
         source = source.lower()
-        separator = source.rfind("1")
+        separator = source.rfind(cls.SEPARATOR)
         if separator < 1 or separator + 1 + cls.CHECKSUM_SIZE >= len(source):
             return result_none
 
@@ -62,21 +59,10 @@ class Bech32:
             return result_none
 
         data = cls._convertBits(data[1:-cls.CHECKSUM_SIZE], 5, 8, False)
-        if data is None or not cls._verifyVersion(version, data, strict):
+        if data is None or not 0 <= version <= 16:
             return result_none
 
         return hrp, version, data
-
-    @classmethod
-    def _verifyVersion(cls, version: int, data: bytes, strict) -> bool:
-        if not 0 <= version <= 16:
-            return False
-        if strict:
-            if not 2 <= len(data) <= 40:
-                return False
-            if version == 0 and len(data) != 20 and len(data) != 32:
-                return False
-        return True
 
     @classmethod
     def _hrpExpand(cls, hrp: str) -> bytes:

@@ -57,11 +57,8 @@ class TestBech32(TestCase):
             "f1pxyerxdql9k5af",
             Bech32.encode("f", 1, b"1234"))
         self.assertEqual(
-            None,
-            Bech32.encode("f", 0, b"1234"))
-        self.assertEqual(
             "f1qxyerxdqz6k94r",
-            Bech32.encode("f", 0, b"1234", strict=False),)
+            Bech32.encode("f", 0, b"1234"),)
         self.assertEqual(
             "f1sxyerxdqhxk0c8",
             Bech32.encode("f", 16, b"1234"))
@@ -69,24 +66,18 @@ class TestBech32(TestCase):
             None,
             Bech32.encode("f", 17, b"1234"))
         self.assertEqual(
-            None,
+            "a1q3g6mn3",
             Bech32.encode("a", 0, b""))
         self.assertEqual(
-            "a1q3g6mn3",
-            Bech32.encode("a", 0, b"", strict=False))
-        self.assertEqual(
             "bc1qlud2hqlk",
-            Bech32.encode("bc", 0, b"\xff", strict=False))
+            Bech32.encode("bc", 0, b"\xff"))
         self.assertEqual(
             "bc12gny8wv",
-            Bech32.encode("bc", 10, b"", strict=False))
+            Bech32.encode("bc", 10, b""))
 
         self.assertEqual(
-            None,
-            Bech32.encode("f", 0, b"1234567890" * 1))
-        self.assertEqual(
             "f1qxyerxdp4xcmnswfsj7r2mj",
-            Bech32.encode("f", 0, b"1234567890" * 1, strict=False))
+            Bech32.encode("f", 0, b"1234567890" * 1))
         self.assertEqual(
             "f1qxyerxdp4xcmnswfsxyerxdp4xcmnswfsg544fr",
             Bech32.encode("f", 0, b"1234567890" * 2))
@@ -112,17 +103,11 @@ class TestBech32(TestCase):
             ("f", 16, b"1234"),
             Bech32.decode("f1sxyerxdqhxk0c8"))
         self.assertEqual(
-            result_none,
-            Bech32.decode("a1q3g6mn3", strict=True))
-        self.assertEqual(
             ("a", 0, b""),
-            Bech32.decode("a1q3g6mn3", strict=False))
-        self.assertEqual(
-            result_none,
-            Bech32.decode("f1qxyerxdp4xcmnswfsj7r2mj"))
+            Bech32.decode("a1q3g6mn3"))
         self.assertEqual(
             ("f", 0, b"1234567890" * 1),
-            Bech32.decode("f1qxyerxdp4xcmnswfsj7r2mj", strict=False))
+            Bech32.decode("f1qxyerxdp4xcmnswfsj7r2mj"))
 
         for (address, hrp, version, value) in TEST_LIST:
             self.assertEqual(
