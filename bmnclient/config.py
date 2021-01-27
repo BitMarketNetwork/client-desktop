@@ -10,6 +10,7 @@ from .platform import PlatformPaths
 from .logger import Logger
 from .version import Product
 
+# TODO move to platform
 USER_CONFIG_FILE_PATH = \
     PlatformPaths.USER_APPLICATION_CONFIG_PATH / \
     "config.json"

@@ -192,16 +192,6 @@ class NetworkImpl(qt_core.QObject):
         for c in CoreApplication.instance().coinList:
             self._run_cmd(net_cmd.MempoolMonitorCommand(c, self))
 
-    def validate_address(self, coin: "CoinType", address: str):
-        def callback(result: bool):
-            from ..ui.gui import Application
-            api_ = Application.instance()
-            if api_:
-                api_.coinManager.address_validated_handler(
-                    coin, address, result)
-        self._run_cmd(net_cmd.ValidateAddressCommand(
-            coin, address, callback, self))
-
     def undo_tx(self, coin: "CoinType", count: int) -> None:
         self._run_cmd(debug_cmd.UndoTransactionCommand(coin, count, self))
 

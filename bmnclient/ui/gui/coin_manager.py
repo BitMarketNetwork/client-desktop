@@ -21,8 +21,6 @@ class CoinManager(QObject):
     coinModelChanged = QSignal()
     renderCell = QSignal(int, arguments=["index"])
     emptyBalancesChanged = QSignal()
-    addressValid = QSignal(int, str, bool, arguments=[
-                                  "coin", "address", "valid"])
 
     def __init__(self, application: Application) -> None:
         super().__init__()
@@ -149,7 +147,7 @@ class CoinManager(QObject):
 
     @qt_core.Slot(int, str)
     def validateAddress(self, coin_index: int, name: str) -> None:
-        self._application.networkThread.validate_address(coin_index, name)
+        raise NotImplementedError
 
     @qt_core.Slot(int, str, str)
     def addWatchAddress(self, coin_index: int, name: str, label: str) -> None:
@@ -216,13 +214,6 @@ class CoinManager(QObject):
             tx = addr.make_dummy_tx(addr)
             log.debug(f"dummy transaction made: {tx}")
             addr.add_tx(tx, check_new=True)
-
-    def address_validated_handler(self, coin: 'coins.CoinType', address: str, result: bool) -> None:
-        for c in self._application.coinList:
-            if c is coin:
-                self.addressValid.emit(c, address, result)
-                return
-        pass
 
     def update_tx(self, tx_: 'tx.Transaction') -> None:
         if self.address == tx_.wallet:

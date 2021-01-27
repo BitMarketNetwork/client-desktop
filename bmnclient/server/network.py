@@ -27,8 +27,6 @@ class Network(network_impl.NetworkImpl):
             self.broadcast_tx, qt_core.Qt.QueuedConnection)
         parent.lookForHDChain.connect(
             self.look_for_hd_addresses, qt_core.Qt.QueuedConnection)
-        parent.validateAddress.connect(
-            self.validate_address, qt_core.Qt.QueuedConnection)
         parent.undoTx.connect(
             self.undo_tx, qt_core.Qt.QueuedConnection)
         Application.instance().databaseThread.dbLoaded.connect(

@@ -1,4 +1,4 @@
-# JOK+
+# JOK++
 import sys
 
 from . import main

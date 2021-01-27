@@ -8,7 +8,6 @@ from ..wallet import mutable_tx, tx
 class ServerThread(qt_core.QThread):
     mempoolEveryCoin = qt_core.Signal()
     mempoolCoin = qt_core.Signal(CoinType, arguments=["coin"])
-    validateAddress = qt_core.Signal(CoinType, str, arguments=["coin,address"])
     lookForHDChain = qt_core.Signal(CoinType, arguments=["coin"])
     unspentsOfWallet = qt_core.Signal(CAddress, arguments=["wallet"])
     updateAddress = qt_core.Signal(CAddress, arguments=["wallet"])
@@ -71,11 +70,6 @@ class ServerThread(qt_core.QThread):
             self._network,
             "retrieve_fee",
             qt_core.Qt.QueuedConnection,)
-
-    def validate_address(self, coin_index: int, address: str) -> None:
-        from ..ui.gui import Application
-        coin = Application.instance().coinList[coin_index]
-        self.validateAddress.emit(coin, address)
 
     def look_for_HD(self):
         from ..ui.gui import Application

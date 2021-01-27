@@ -373,32 +373,6 @@ class AddressInfoCommand(JsonStreamMixin, BaseNetworkCommand):
         return f"{self.__class__.__name__}: {self._wallet.name}"
 
 
-class ValidateAddressCommand(JsonStreamMixin, BaseNetworkCommand):
-    action = "coins"
-    _server_action = "address"
-    level = loading_level.LoadingLevel.NONE
-    _high_priority = True
-
-    def __init__(self, coin: coins.CoinType, address: str, callback: Callable[[bool], None], parent):
-        super().__init__(parent=parent)
-        self._coin = coin
-        self._address = address
-        self._callback = callback
-
-    @property
-    def args(self):
-        return [self._coin.name, self._address]
-
-    def process_attr(self, table):
-        self._callback(table["address"] == self._address)
-
-    def handle_errors(self, errors):
-        self._callback(False)
-
-    def __str__(self):
-        return f"{self.__class__.__name__}: {self._address}"
-
-
 class LookForHDAddresses(AddressInfoCommand):
     """
     search all HD addresses with non zero balances
