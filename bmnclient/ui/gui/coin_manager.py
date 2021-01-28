@@ -6,8 +6,9 @@ import PySide2.QtCore as qt_core
 from PySide2.QtCore import \
     QObject, \
     Signal as QSignal
-from ...wallet import address, coin_model, key, tx, tx_model, coins
+from ...wallet import address, key, tx, tx_model, coins
 from . import import_export
+from ...models.coin_list import CoinListModel
 
 if TYPE_CHECKING:
     from . import Application
@@ -30,7 +31,7 @@ class CoinManager(QObject):
         tx_source = tx_model.TxModel(self)
         self.__tx_model = tx_model.TxProxyModel(self)
         self.__tx_model.setSourceModel(tx_source)
-        self.__coins_model = coin_model.CoinModel(self)
+        self.__coins_model = CoinListModel(self._application)
         self._application.networkThread.heightChanged.connect(self.coin_height_changed)
         self.showEmptyBalances = True
         self.coinModelChanged.connect(
@@ -38,9 +39,8 @@ class CoinManager(QObject):
 
     def update_coin_model(self):
         if self.thread() == qt_core.QThread.currentThread():
-            self.__coins_model.reset()
-            #
-            self.__coins_model.reset_complete()
+            self.__coins_model.beginResetModel()
+            self.__coins_model.endResetModel()
         else:
             self.coinModelChanged.emit()
 

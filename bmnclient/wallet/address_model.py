@@ -3,7 +3,8 @@ import enum
 import logging
 
 import PySide2.QtCore as qt_core  # pylint: disable=import-error
-from .model_shared import IntEnum, ba
+from PySide2.QtCore import QByteArray
+from ..models import RoleEnum
 from typing import TYPE_CHECKING
 log = logging.getLogger(__name__)
 
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
     from . import coins
 
 
-class Role(IntEnum):
+class Role(RoleEnum):
     NAME_ROLE = enum.auto()
     LABEL_ROLE = enum.auto()
     BALANCE_ROLE = enum.auto()
@@ -57,12 +58,12 @@ class AddressModel(qt_core.QAbstractListModel):
 
     def roleNames(self):
         return {
-            Role.NAME_ROLE: ba(b"name"),
-            Role.LABEL_ROLE: ba(b"label"),
-            Role.BALANCE_ROLE: ba(b"balance"),
-            Role.FIAT_BALANCE_ROLE: ba(b"fiatBalance"),
-            Role.READONLY_ROLE: ba(b"readOnly"),
-            Role.UPDATING_ROLE: ba(b"isUpdating"),
+            Role.NAME_ROLE: QByteArray(b"name"),
+            Role.LABEL_ROLE: QByteArray(b"label"),
+            Role.BALANCE_ROLE: QByteArray(b"balance"),
+            Role.FIAT_BALANCE_ROLE: QByteArray(b"fiatBalance"),
+            Role.READONLY_ROLE: QByteArray(b"readOnly"),
+            Role.UPDATING_ROLE: QByteArray(b"isUpdating"),
         }
 
 

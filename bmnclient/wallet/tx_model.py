@@ -4,13 +4,13 @@ import enum
 from typing import Optional, Union
 
 import PySide2.QtCore as qt_core  # pylint: disable=import-error
-
-from .model_shared import IntEnum, ba
+from PySide2.QtCore import QByteArray
+from ..models import RoleEnum
 from ..wallet import tx  # pylint
 log = logging.getLogger(__name__)
 
 
-class Role(IntEnum):
+class Role(RoleEnum):
     ID_ROLE = enum.auto()
     AMOUNT_ROLE = enum.auto()
     STATUS_ROLE = enum.auto()
@@ -57,15 +57,15 @@ class TxModel(qt_core.QAbstractListModel):
 
     def roleNames(self) -> dict:
         return {
-            Role.ID_ROLE: ba(b"name"),
-            Role.AMOUNT_ROLE: ba(b"balance"),
-            Role.STATUS_ROLE: ba(b"status"),
-            Role.BLOCK_ROLE: ba(b"block"),
-            Role.TIME_ROLE: ba(b"timeHuman"),
-            Role.FEE_ROLE: ba(b"feeHuman"),
-            Role.CONFIRM_ROLE: ba(b"confirmCount"),
-            Role.INPUTS_ROLE: ba(b"inputsModel"),
-            Role.OUTPUTS_ROLE: ba(b"outputsModel"),
+            Role.ID_ROLE: QByteArray(b"name"),
+            Role.AMOUNT_ROLE: QByteArray(b"balance"),
+            Role.STATUS_ROLE: QByteArray(b"status"),
+            Role.BLOCK_ROLE: QByteArray(b"block"),
+            Role.TIME_ROLE: QByteArray(b"timeHuman"),
+            Role.FEE_ROLE: QByteArray(b"feeHuman"),
+            Role.CONFIRM_ROLE: QByteArray(b"confirmCount"),
+            Role.INPUTS_ROLE: QByteArray(b"inputsModel"),
+            Role.OUTPUTS_ROLE: QByteArray(b"outputsModel"),
         }
 
 

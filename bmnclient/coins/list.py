@@ -1,9 +1,13 @@
+# JOK++
 from __future__ import annotations
-from ..wallet import coins
+
+from collections.abc import Sequence
 from typing import Iterator, Union, Optional
 
+from ..wallet import coins
 
-class CoinList:
+
+class CoinList(Sequence):
     def __init__(self) -> None:
         self._list = (
             coins.Bitcoin(None),

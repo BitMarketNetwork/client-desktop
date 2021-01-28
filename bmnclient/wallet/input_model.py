@@ -3,11 +3,12 @@ import enum
 import logging
 
 import PySide2.QtCore as qt_core  # pylint: disable=import-error
-from .model_shared import IntEnum, ba
+from PySide2.QtCore import QByteArray
+from ..models import RoleEnum
 log = logging.getLogger(__name__)
 
 
-class Role(IntEnum):
+class Role(RoleEnum):
     ADDRESS_ROLE = enum.auto()
     BALANCE_ROLE = enum.auto()
     TYPE_ROLE = enum.auto()
@@ -37,7 +38,7 @@ class InputModel(qt_core.QAbstractListModel):
 
     def roleNames(self) -> dict:
         return {
-            Role.ADDRESS_ROLE: ba(b"addressName"),
-            Role.BALANCE_ROLE: ba(b"amountHuman"),
-            Role.TYPE_ROLE: ba(b"type"),
+            Role.ADDRESS_ROLE: QByteArray(b"addressName"),
+            Role.BALANCE_ROLE: QByteArray(b"amountHuman"),
+            Role.TYPE_ROLE: QByteArray(b"type"),
         }
