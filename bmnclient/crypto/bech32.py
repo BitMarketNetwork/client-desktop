@@ -44,6 +44,10 @@ class Bech32:
         if separator < 1 or separator + 1 + cls.CHECKSUM_SIZE >= len(source):
             return result_none
 
+        for c in source[:separator]:
+            if ord(c) < 33 or ord(c) > 126:
+                return result_none
+
         data = []
         for c in source[separator + 1:]:
             c = cls.CHAR_LIST.find(c)

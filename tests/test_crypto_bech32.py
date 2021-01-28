@@ -58,7 +58,7 @@ class TestBech32(TestCase):
             Bech32.encode("f", 1, b"1234"))
         self.assertEqual(
             "f1qxyerxdqz6k94r",
-            Bech32.encode("f", 0, b"1234"),)
+            Bech32.encode("f", 0, b"1234"), )
         self.assertEqual(
             "f1sxyerxdqhxk0c8",
             Bech32.encode("f", 16, b"1234"))
