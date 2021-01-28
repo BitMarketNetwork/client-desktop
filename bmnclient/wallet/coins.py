@@ -27,7 +27,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
 
     name: str = None
     _decimal_level: int = 0
-    full_name: str = None
     # for web explrores
     net_name: str = None
     # it differs from self._status! the former is hardcoded but the latter depends on the server daemon
@@ -87,7 +86,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         #    print(f"coin => {cls.__name__}")
 
     def __str__(self) -> str:
-        return f"<{self.full_name},{self.rowid} vis:{self.__visible}>"
+        return f"<{self.fullName},{self.rowid} vis:{self.__visible}>"
 
     @qt_core.Property(str, constant=True)
     def unit(self) -> str:
@@ -107,14 +106,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     @qt_core.Property(bool, constant=True)
     def enabled(self) -> bool:
         return self._enabled
-
-    @qt_core.Property(str, constant=True)
-    def fullName(self) -> str:
-        return self.full_name
-
-    @qt_core.Property(str, constant=True)
-    def shortName(self) -> str:
-        return self.name
 
     @qt_core.Property(str, constant=True)
     def netName(self) -> str:
@@ -282,7 +273,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         name_ = name.strip().casefold()
         return name_ in [
             cls.name.casefold(),
-            cls.full_name.casefold(),
+            cls.fullName.casefold(),
         ]
 
     def _validate_address(self, addr: str):
@@ -524,8 +515,8 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     def basename(self) -> str:
         if self._test:
             # TODO: use super instead
-            return self.full_name.partition(' ')[0].lower()
-        return self.full_name.lower()
+            return self.fullName.partition(' ')[0].lower()
+        return self.fullName.lower()
 
     # qml bindings
     @qt_core.Property(bool, notify=visibleChanged)
@@ -587,7 +578,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
 
 class Bitcoin(CoinType, coins.Bitcoin):
     name = "btc"
-    full_name = "Bitcoin"
     network = coin_network.BitcoinMainNetwork
     _enabled = True
     _decimal_level = 7
@@ -597,7 +587,6 @@ class Bitcoin(CoinType, coins.Bitcoin):
 
 class BitcoinTest(Bitcoin, coins.BitcoinTest):
     name = "btctest"
-    full_name = "Bitcoin Test"
     net_name = "btc-testnet"
     network = coin_network.BitcoinTestNetwork
     _test = True
@@ -606,7 +595,6 @@ class BitcoinTest(Bitcoin, coins.BitcoinTest):
 
 class Litecoin(CoinType, coins.Litecoin):
     name = "ltc"
-    full_name = "Litecoin"
     network = coin_network.LitecoinMainNetwork
     _enabled = True
     _decimal_level = 7
