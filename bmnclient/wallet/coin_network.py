@@ -58,8 +58,6 @@ class BitcoinMainNetwork(CoinNetworkBase):
     ADDRESS_BYTE_PREFIX = b'\x00'
     SCRIPT_BYTE_PREFIX = b'\x05'
     BECH32_HRP = 'bc'
-    ADDRESS_PREFIX = '1'
-    SCRIPT_ADDRESS_PREFIX = '3'
     PRIVATE_KEY = b'\x80'
 
 
@@ -69,18 +67,12 @@ class BitcoinTestNetwork(CoinNetworkBase):
     ADDRESS_BYTE_PREFIX = b'\x6f'
     SCRIPT_BYTE_PREFIX = b'\xc4'
     BECH32_HRP = 'tb'
-    ADDRESS_PREFIX = 'm'
-    ADDRESS_PREFIX_2 = 'n'
-    SCRIPT_ADDRESS_PREFIX = '2'
     PRIVATE_KEY = b'\xef'
 
 
 class LitecoinMainNetwork(CoinNetworkBase):
     EX_PREFIX_PRV = 0x019da462
     EX_PREFIX_PUB = 0x019da462
-    ADDRESS_PREFIX = 'l'
-    SCRIPT_ADDRESS_PREFIX = '3'
-    SCRIPT_ADDRESS_PREFIX_2 = 'm'
     ADDRESS_BYTE_PREFIX = b'\x30'
     SCRIPT_BYTE_PREFIX = b'\x05'
     SCRIPT_BYTE_PREFIX_2 = b'\x32'
@@ -91,31 +83,12 @@ class LitecoinMainNetwork(CoinNetworkBase):
 class LitecoinTestNetwork(CoinNetworkBase):
     EX_PREFIX_PRV = 0x0436ef7d
     EX_PREFIX_PUB = 0x0436f6e1
-    ADDRESS_PREFIX = 'm'
-    ADDRESS_PREFIX_2 = 'n'
-    SCRIPT_ADDRESS_PREFIX = '2'
-    SCRIPT_ADDRESS_PREFIX_2 = 'q'
     ADDRESS_BYTE_PREFIX = b'\x6f'
     SCRIPT_BYTE_PREFIX = b'\xc4'
     SCRIPT_BYTE_PREFIX_2 = b'\x3A'
     PRIVATE_KEY = b'\xef'
     BECH32_HRP = 'tltc'
 
-
-ADDRESS_PREFIX_LIST = (
-                        BitcoinMainNetwork.ADDRESS_PREFIX,
-                       BitcoinMainNetwork.SCRIPT_ADDRESS_PREFIX,
-                       BitcoinTestNetwork.ADDRESS_PREFIX,
-                       BitcoinTestNetwork.ADDRESS_PREFIX_2,
-                    #    BitcoinTestNetwork.SCRIPT_ADDRESS_PREFIX,
-                    #    LitecoinMainNetwork.ADDRESS_PREFIX,
-                    #    LitecoinMainNetwork.SCRIPT_ADDRESS_PREFIX,
-                    #    LitecoinMainNetwork.SCRIPT_ADDRESS_PREFIX_2,
-                    #    LitecoinTestNetwork.ADDRESS_PREFIX,
-                    #    LitecoinTestNetwork.ADDRESS_PREFIX_2,
-                    #    LitecoinTestNetwork.SCRIPT_ADDRESS_PREFIX,
-                    #    LitecoinTestNetwork.SCRIPT_ADDRESS_PREFIX_2,
-                       )
 
 PUBLIC_HASH_LIST = [
     BitcoinMainNetwork.ADDRESS_BYTE_PREFIX,

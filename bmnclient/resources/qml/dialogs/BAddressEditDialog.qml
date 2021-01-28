@@ -16,10 +16,11 @@ BDialog {
     contentItem: BAddressEditBox {
         id: _box
         onAddressTextChanged: {
-            if (_box.type === BAddressEditBox.Type.AddWatchOnly) {
-                // TODO offline validator, use clientlib
-                // BBackend.coinManager.validateAddress(coinIndex, dialog.coinAddress)
-                _acceptButton.enabled = (addressText.length > 10)
+            if (type === BAddressEditBox.Type.AddWatchOnly) {
+                // TODO show invalid address message
+                _acceptButton.enabled = BBackend.coinManager.isValidAddress(
+                            coin.shortName,
+                            addressText)
             }
         }
     }

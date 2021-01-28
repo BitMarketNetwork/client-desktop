@@ -16,6 +16,7 @@ from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 
 from . import resources
+from .coins import CoinBase
 from .coins.list import CoinList
 from .config import UserConfig
 from .key_store import KeyStore
@@ -187,6 +188,12 @@ class CoreApplication(QObject):
     @property
     def coinList(self) -> CoinList:
         return self._coin_list
+
+    def findCoin(self, short_name: str) -> Optional[CoinBase]:
+        for coin in self._coin_list:
+            if coin.shortName == short_name:
+                return coin
+        return None
 
     @property
     def title(self) -> str:

@@ -145,9 +145,12 @@ class CoinManager(QObject):
         else:
             log.error(f"No coin selected {coin_index}!")
 
-    @qt_core.Slot(int, str)
-    def validateAddress(self, coin_index: int, name: str) -> None:
-        raise NotImplementedError
+    @qt_core.Slot(str, str, result=bool)
+    def isValidAddress(self, coin_short_name: str, address_name: str) -> bool:
+        coin = self._application.findCoin(coin_short_name)
+        if coin is None or coin.address.decode(address_name) is None:
+            return False
+        return True
 
     @qt_core.Slot(int, str, str)
     def addWatchAddress(self, coin_index: int, name: str, label: str) -> None:
