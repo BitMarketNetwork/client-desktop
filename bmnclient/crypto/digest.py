@@ -1,3 +1,4 @@
+# JOK++
 from __future__ import annotations
 
 import hashlib
@@ -22,7 +23,7 @@ class Digest(metaclass=ABCMeta):
 
 
 class Ripemd160Digest(Digest):
-    SIZE: Final = 20
+    SIZE: Final = 160 // 8
 
     def __init__(self, context: Optional[Digest] = None) -> None:
         self._context = context or hashlib.new("ripemd160")
@@ -38,7 +39,7 @@ class Ripemd160Digest(Digest):
 
 
 class Sha256Digest(Digest):
-    SIZE: Final = 32
+    SIZE: Final = 256 // 8
 
     def __init__(self, context: Optional[Digest] = None) -> None:
         self._context = context or Hash(SHA256())
@@ -54,10 +55,10 @@ class Sha256Digest(Digest):
 
 
 class Blake2bDigest(Digest):
-    SIZE: Final = 64
+    SIZE: Final = 512 // 8
 
     def __init__(self, context: Optional[Digest] = None) -> None:
-        self._context = context or Hash(BLAKE2b(64))
+        self._context = context or Hash(BLAKE2b(self.SIZE))
 
     def update(self, data: bytes) -> None:
         self._context.update(data)

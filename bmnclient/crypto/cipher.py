@@ -1,6 +1,6 @@
-# JOK+
+# JOK++
 import os
-from typing import Optional
+from typing import Optional, Final
 
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers import aead
@@ -9,10 +9,10 @@ from ..version import Product
 
 
 class AeadCipher:
-    CIPHER = aead.AESGCM
-    NONCE_LENGTH = 96 // 8  # NIST recommends
-    KEY_LENGTH = 128 // 8
-    ASSOCIATED_DATA = Product.SHORT_NAME.encode(encoding=Product.ENCODING)
+    CIPHER: Final = aead.AESGCM
+    NONCE_LENGTH: Final = 96 // 8  # NIST recommends
+    KEY_LENGTH: Final = 128 // 8
+    ASSOCIATED_DATA: Final = Product.SHORT_NAME.encode(encoding=Product.ENCODING)
 
     def __init__(self, key: bytes, nonce: Optional[bytes] = None) -> None:
         self._cipher = self.CIPHER(key)

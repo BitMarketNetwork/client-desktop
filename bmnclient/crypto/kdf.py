@@ -1,6 +1,6 @@
-# JOK+
+# JOK++
 import os
-from typing import Optional
+from typing import Optional, Final
 
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 
@@ -10,8 +10,8 @@ from ..version import Product
 
 
 class KeyDerivationFunction:
-    HASH_ALGORITHM = Blake2bDigest
-    KEY_COST = 18
+    HASH_ALGORITHM: Final = Blake2bDigest
+    KEY_COST: Final = 18
 
     def __init__(self, password: str) -> None:
         password_hash = self.HASH_ALGORITHM()
@@ -38,9 +38,9 @@ class KeyDerivationFunction:
 
 
 class SecretStore(KeyDerivationFunction):
-    SECRET_VERSION = "v1"
-    SECRET_SALT_LENGTH = 128 // 8
-    SECRET_KEY_LENGTH = 128 // 8
+    SECRET_VERSION: Final = "v1"
+    SECRET_SALT_LENGTH: Final = 128 // 8
+    SECRET_KEY_LENGTH: Final = 128 // 8
 
     def encryptValue(self, value: bytes) -> str:
         salt = os.urandom(self.SECRET_SALT_LENGTH)

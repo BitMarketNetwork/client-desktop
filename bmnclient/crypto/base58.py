@@ -1,14 +1,15 @@
 # JOK++
-from typing import Optional
+from typing import Optional, Final
 
 from .digest import Sha256Digest
 
 
 class Base58:
-    CHAR_LIST = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-    CHAR_LIST_MAP = {c: i for i, c in enumerate(CHAR_LIST)}
-    BASE = len(CHAR_LIST)
-    CHECKSUM_SIZE = 4
+    CHAR_LIST: Final = \
+        "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+    CHAR_LIST_MAP: Final = {c: i for i, c in enumerate(CHAR_LIST)}
+    BASE: Final = len(CHAR_LIST)
+    CHECKSUM_SIZE: Final = 4
 
     @classmethod
     def encode(cls, source: bytes, check=True) -> str:
