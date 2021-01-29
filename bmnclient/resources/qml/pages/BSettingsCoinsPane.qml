@@ -4,7 +4,7 @@ import "../basiccontrols"
 BPane {
     id: _base
     property string title: qsTr("Coins")
-    property string iconSource: _applicationManager.imageSource("icon-coins.svg")
+    property string iconPath: _applicationManager.imagePath("icon-coins.svg")
     property variant coinListModel: null
 
     contentItem: BDialogScrollableLayout {

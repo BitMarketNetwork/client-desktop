@@ -3,7 +3,7 @@ import "../basiccontrols"
 
 BPane {
     property string title: qsTr("Application")
-    property string iconSource: _applicationManager.imageSource("icon-info.svg")
+    property string iconPath: _applicationManager.imagePath("icon-info.svg")
 
     contentItem: BDialogScrollableLayout {
         BLogoImage {

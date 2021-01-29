@@ -130,7 +130,7 @@ BControl {
             text: qsTr("Coin:")
         }
         BDialogInputLabel {
-            text: _base.coin.name
+            text: _base.coin.fullName
         }
 
         BDialogSeparator {}

@@ -14,9 +14,11 @@ BApplicationPage {
         visible: model.visible
         enabled: model.enabled
         coin: BCoinObject {
-            name: model.fullName
+            shortName: model.shortName
+            fullName: model.fullName
+            iconPath: _applicationManager.imagePath(model.iconPath)
+
             index: model.index
-            iconSource: _applicationManager.imageSource(model.icon)
             amount.valueHuman: BBackend.settingsManager.coinBalance(model.balance) // TODO move to BWalletCoinPane?
             amount.unit: BBackend.settingsManager.coinUnit(model.unit) // TODO
             amount.fiatValueHuman: model.fiatBalance // TODO kill char '$' // TODO move to BWalletCoinPane?
@@ -39,9 +41,11 @@ BApplicationPage {
             active: false
             sourceComponent: BWalletCoinPage {
                 coin: BCoinObject {
-                    name: model.fullName
+                    shortName: model.shortName
+                    fullName: model.fullName
+                    iconPath: _applicationManager.imagePath(model.iconPath)
+
                     index: model.index
-                    iconSource: _applicationManager.imageSource(model.icon)
                     amount.valueHuman: BBackend.settingsManager.coinBalance(model.balance) // TODO move to BWalletCoinPane?
                     amount.unit: BBackend.settingsManager.coinUnit(model.unit) // TODO
                     amount.fiatValueHuman: model.fiatBalance // TODO kill char '$' // TODO move to BWalletCoinPane?

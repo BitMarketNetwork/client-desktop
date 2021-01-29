@@ -22,7 +22,7 @@ BControl {
             delegate: BItemDelegate {
                 id: _item
                 text: _stack.children[index + 1].title
-                icon.source: _stack.children[index + 1].iconSource
+                icon.source: _stack.children[index + 1].iconPath
                 contentItem: BIconLabel {
                     display: _item.display
                     icon: _item.icon

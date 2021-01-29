@@ -12,11 +12,8 @@ QtObject {
         BBackend.uiManager.exit(code)
     }
 
-    function imageSource(filePath) {
-        return Qt.resolvedUrl("../../images/" + filePath)
-    }
-    function coinImageSource(shortName) {
-        return Qt.resolvedUrl("../../images/coins/" + shortName + ".svg")
+    function imagePath(path) {
+        return Qt.resolvedUrl("../../images/" + path)
     }
 
     function createObject(parent, filePath, properties) {

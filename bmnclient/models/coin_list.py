@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class Role(RoleEnum):
     SHORT_NAME = auto()
     FULL_NAME = auto()
-    ICON = auto()
+    ICON_PATH = auto()
     BALANCE = auto()
     FIAT_BALANCE = auto()
     UNIT = auto()
@@ -33,9 +33,10 @@ class CoinListModel(AbstractListModel):
         Role.FULL_NAME: (
             b"fullName",
             lambda c: c.fullName),
-        Role.ICON: (
-            b"icon",
-            lambda c: c.icon),
+        Role.ICON_PATH: (
+            b"iconPath",
+            lambda c: c.iconPath),
+
         Role.BALANCE: (
             b"balance",
             lambda c: c.balance),

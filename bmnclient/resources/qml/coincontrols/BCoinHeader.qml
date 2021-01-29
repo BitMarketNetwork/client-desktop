@@ -11,10 +11,10 @@ BControl {
             BLayout.fillWidth: true
             icon.width: _applicationStyle.icon.largeWidth
             icon.height: _applicationStyle.icon.largeHeight
-            icon.source: _base.coin.iconSource
+            icon.source: _base.coin.iconPath
             font.bold: true
             font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.huge
-            text: _base.coin.name
+            text: _base.coin.fullName
         }
         BAmountLabel {
             amount: coin.amount

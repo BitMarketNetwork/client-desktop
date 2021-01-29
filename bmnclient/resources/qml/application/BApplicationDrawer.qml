@@ -14,7 +14,7 @@ BNavigationDrawer {
 
     BToolButton {
         id: _barsButton
-        icon.source: _applicationManager.imageSource("icon-bars.svg")
+        icon.source: _applicationManager.imagePath("icon-bars.svg")
         onClicked: {
             if (_base.barsDisplay === BNavigationDrawerItem.TextBesideIcon) {
                 _base.barsDisplay = BNavigationDrawerItem.IconOnly
@@ -42,7 +42,7 @@ BNavigationDrawer {
     BNavigationDrawerItem {
         checked: true
         text: qsTr("Wallet")
-        icon.source: _applicationManager.imageSource("icon-wallet.svg")
+        icon.source: _applicationManager.imagePath("icon-wallet.svg")
         onClicked: {
             _base.showWallet()
         }
@@ -50,7 +50,7 @@ BNavigationDrawer {
     BNavigationDrawerItem {
         visible: false
         text: qsTr("Market")
-        icon.source: _applicationManager.imageSource("icon-market.svg")
+        icon.source: _applicationManager.imagePath("icon-market.svg")
         onClicked: {
             _base.showMarket()
         }
@@ -60,21 +60,21 @@ BNavigationDrawer {
 
     BNavigationDrawerItem {
         text: qsTr("About")
-        icon.source: _applicationManager.imageSource("icon-info.svg")
+        icon.source: _applicationManager.imagePath("icon-info.svg")
         onClicked: {
             _base.showAbout()
         }
     }
     BNavigationDrawerItem {
         text: qsTr("Settings")
-        icon.source: _applicationManager.imageSource("icon-cog.svg")
+        icon.source: _applicationManager.imagePath("icon-cog.svg")
         onClicked: {
             _base.showSettings()
         }
     }
     BNavigationDrawerItem {
         text: qsTr("Quit")
-        icon.source: _applicationManager.imageSource("icon-exit.svg")
+        icon.source: _applicationManager.imagePath("icon-exit.svg")
         onClicked: {
             _base.exit()
         }

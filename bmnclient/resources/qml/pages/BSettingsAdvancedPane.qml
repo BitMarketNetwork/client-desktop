@@ -6,7 +6,7 @@ import "../dialogs"
 BPane {
     id: _base
     property string title: qsTr("Advanced")
-    property string iconSource: _applicationManager.imageSource("icon-tools.svg")
+    property string iconPath: _applicationManager.imagePath("icon-tools.svg")
 
     property alias applicationFont: _fontDialog.font
     property alias hideToTray: _hideToTray.checked

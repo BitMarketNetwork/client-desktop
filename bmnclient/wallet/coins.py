@@ -97,12 +97,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
             return self.name[:-4].upper()
         return self.name.upper()
 
-    @qt_core.Property(str, constant=True)
-    def icon(self) -> str:
-        if self._test:
-            return f"coins/{self.name[:-4]}.svg"
-        return f"coins/{self.name}.svg"
-
     @qt_core.Property(bool, constant=True)
     def enabled(self) -> bool:
         return self._enabled

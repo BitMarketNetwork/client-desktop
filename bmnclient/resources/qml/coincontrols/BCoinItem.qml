@@ -5,8 +5,8 @@ BItemDelegate {
     id: _base
     property BCoinObject coin: null
 
-    text: coin.name
-    icon.source: coin.iconSource
+    text: coin.fullName
+    icon.source: coin.iconPath
 
     contentItem: BRowLayout {
         BIconLabel {

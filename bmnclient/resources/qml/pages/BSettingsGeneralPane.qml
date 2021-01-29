@@ -3,7 +3,7 @@ import "../basiccontrols"
 
 BPane {
     property string title: qsTr("General")
-    property string iconSource: _applicationManager.imageSource("icon-cog.svg")
+    property string iconPath: _applicationManager.imagePath("icon-cog.svg")
 
     property alias fiatUnityModel: _fiatUnit.model
     property alias currentFiatUnitIndex: _fiatUnit.currentIndex

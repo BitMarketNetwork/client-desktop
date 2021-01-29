@@ -7,7 +7,7 @@ BControl {
     property bool huge: false
     property real imageWidth: 0 // _applicationStyle.icon.largeWidth
     property real imageHeight: _applicationStyle.icon.largeHeight * (huge ? 2 : 1)
-    property string source: _applicationManager.imageSource("logo.svg")
+    property string source: _applicationManager.imagePath("logo.svg")
 
     contentItem: BIconImage {
         id: _image

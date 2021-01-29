@@ -24,7 +24,7 @@ BPane {
                 }
                 BDialogInputLabel {
                     BLayout.columnSpan: 2
-                    text: _base.coin.name
+                    text: _base.coin.fullName
                 }
 
                 BDialogSeparator {}

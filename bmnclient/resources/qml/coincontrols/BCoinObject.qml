@@ -1,9 +1,11 @@
 import QtQuick 2.15
 
 QtObject {
-    property string name: "N/A"
+    property string shortName: "N/A"
+    property string fullName: "N/A"
+    property string iconPath: ""
+
     property int index: -1
-    property string iconSource: ""
 
     property BAmountObject amount: BAmountObject {}
 
