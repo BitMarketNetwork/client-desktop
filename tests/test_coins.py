@@ -1,4 +1,6 @@
 import unittest
+from bmnclient.coins import \
+    Bitcoin
 from bmnclient.coins.address import \
     BitcoinAddress, \
     BitcoinTestAddress, \
@@ -108,7 +110,7 @@ LITECOIN_ADDRESS_LIST = (
 
 
 class TestCoins(unittest.TestCase):
-    def _test_bitcoin_address_decode(
+    def _test_address_decode(
             self,
             address_cls,
             address_list) -> None:
@@ -122,13 +124,33 @@ class TestCoins(unittest.TestCase):
                 self.assertEqual(version, a.version)
                 self.assertEqual(data, a.data.hex())
 
-    def test_bitcoin_address_decode(self) -> None:
-        self._test_bitcoin_address_decode(
+    def test_address_decode(self) -> None:
+        self._test_address_decode(
             BitcoinAddress,
             BITCOIN_ADDRESS_LIST)
-        self._test_bitcoin_address_decode(
+        self._test_address_decode(
             BitcoinTestAddress,
             BITCOIN_TEST_ADDRESS_LIST)
         self._test_bitcoin_address_decode(
             LitecoinAddress,
             LITECOIN_ADDRESS_LIST)
+
+    def test_amount_to_string(self) -> None:
+        b = Bitcoin()
+
+        self.assertEqual(b.amountToString(0), "0")
+        self.assertEqual(b.amountToString(-1 * 10 ** 8), "-1")
+        self.assertEqual(b.amountToString(+1 * 10 ** 8), "1")
+
+        for (s, d) in {
+            1: "0.00000001",
+            10: "0.0000001",
+            1000: "0.00001",
+            1200000: "0.012",
+            880000000: "8.8",
+            880000001: "8.80000001",
+            880000010: "8.8000001",
+            88000000000: "880"
+        }.items():
+            self.assertEqual(b.amountToString(-s), "-" + d)
+            self.assertEqual(b.amountToString(s), d)
