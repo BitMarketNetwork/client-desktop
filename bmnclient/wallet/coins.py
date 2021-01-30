@@ -11,7 +11,7 @@ from . import (address, root_address, address_model, coin_network, hd, key,
                serialization)
 from . import db_entry
 from .. import coins
-from ..models.coin_list import AmountModel, StateModel
+from ..models.coin_list import AmountModel, StateModel, RemoteStateModel
 
 log = logging.getLogger(__name__)
 
@@ -60,6 +60,9 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         self._balance = 0
         self._amount_model = AmountModel(self)
         self._state_model = StateModel(self)
+        self._remote_state_model = RemoteStateModel(self)
+
+        self._remote = {}  # TODO
 
         self._set_object_name(self.name)
         self.__height = None
@@ -91,6 +94,10 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     @qt_core.Property(qt_core.QObject, constant=True)
     def stateModel(self) -> StateModel:
         return self._state_model
+
+    @qt_core.Property(qt_core.QObject, constant=True)
+    def remoteStateModel(self) -> RemoteStateModel:
+        return self._remote_state_model
 
     @qt_core.Property(str, constant=True)
     def unit(self) -> str:

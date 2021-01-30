@@ -1,9 +1,15 @@
 # JOK++
 from enum import IntEnum
 from functools import lru_cache
-from typing import List, Sequence, Any
+from typing import List, Sequence, Any, Optional
 
-from PySide2.QtCore import QAbstractListModel, QModelIndex, Qt, QByteArray
+from PySide2.QtCore import \
+    QAbstractListModel, \
+    QByteArray, \
+    QModelIndex, \
+    QObject, \
+    Qt, \
+    Signal as QSignal
 
 
 class RoleEnum(IntEnum):
@@ -35,3 +41,11 @@ class AbstractListModel(QAbstractListModel):
         if not 0 <= index.row() < self.rowCount() or not index.isValid():
             return None
         return self._ROLE_MAP[role][1](self._source_list[index.row()])
+
+
+class AbstractStateModel(QObject):
+    _stateChanged: Optional[QSignal] = None
+
+    def refresh(self) -> None:
+        if self._stateChanged:
+            self._stateChanged.emit()

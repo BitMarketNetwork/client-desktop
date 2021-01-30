@@ -22,6 +22,8 @@ BControl {
             delegate: BItemDelegate {
                 id: _item
                 text: _stack.children[index + 1].title
+                enabled: _stack.children[index + 1].enabled
+                visible: _stack.children[index + 1].enabled
                 icon.source: _stack.children[index + 1].iconPath
                 contentItem: BIconLabel {
                     display: _item.display

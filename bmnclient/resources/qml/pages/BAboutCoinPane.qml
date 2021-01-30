@@ -3,8 +3,9 @@ import "../basiccontrols"
 
 BPane {
     id: _base
-    property string title: object.coin.fullName
-    property string iconSource: _applicationManager.coinImageSource(object.coin.shortName)
+    property var coin // CoinListModel item
+    property string title: coin.fullName
+    property string iconPath: _applicationManager.imagePath(coin.iconPath)
 
     contentItem: BDialogScrollableLayout {
         BLayout.maximumWidth: -1
@@ -13,7 +14,7 @@ BPane {
             BLayout.minimumWidth: implicitWidth
             BLayout.alignment: Qt.AlignTop | Qt.AlignHCenter
             huge: true
-            source: _base.iconSource
+            source: _base.iconPath
         }
 
         BDialogSeparator {
@@ -29,7 +30,7 @@ BPane {
                 text: qsTr("Full name:")
             }
             BInfoValue {
-                text: object.coin.fullName
+                text: _base.coin.fullName
             }
             BInfoSeparator {}
 
@@ -37,7 +38,7 @@ BPane {
                 text: qsTr("Short name:")
             }
             BInfoValue {
-                text: object.coin.shortName
+                text: _base.coin.shortName
             }
             BInfoSeparator {}
 
@@ -45,8 +46,8 @@ BPane {
                 text: qsTr("Daemon status:")
             }
             BInfoValue {
-                text: object.status > 0 ? "Online" : "Offline"
-                color: Material.color(object.status > 0 ? Material.Green : Material.Red)
+                text: _base.coin.remoteState.status > 0 ? "Online" : "Offline"
+                color: Material.color(_base.coin.remoteState.status > 0 ? Material.Green : Material.Red)
             }
             BInfoSeparator {}
 
@@ -54,7 +55,7 @@ BPane {
                 text: qsTr("Daemon version:")
             }
             BInfoValue {
-                text: "\"%1\" (%2)".arg(object.versionString).arg(object.version)
+                text: "\"%1\" (%2)".arg(_base.coin.remoteState.humanVersion).arg(_base.coin.remoteState.version)
             }
             BInfoSeparator {}
 
@@ -62,7 +63,7 @@ BPane {
                 text: qsTr("Daemon height:")
             }
             BInfoValue {
-                text: _applicationManager.integerToLocaleString(object.height)
+                text: _applicationManager.integerToLocaleString(_base.coin.remoteState.height)
             }
             BInfoSeparator {}
         }

@@ -243,9 +243,8 @@ class KeyStore(QObject):
         from .application import CoreApplication
         if CoreApplication.instance():
             for coin in CoreApplication.instance().coinList:
-                if coin.enabled:
-                    coin.make_hd_node(_44_node)
-                    self._logger.debug(f"Make HD prv for {coin}")
+                coin.make_hd_node(_44_node)
+                self._logger.debug(f"Make HD prv for {coin}")
             from .ui.gui import Application
             Application.instance().networkThread.look_for_HD()
         return True

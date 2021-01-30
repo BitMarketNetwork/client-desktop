@@ -49,6 +49,7 @@ class Network(network_impl.NetworkImpl):
 
     @qt_core.Slot()
     def poll_coins(self):
+        self._run_cmd(net_cmd.CheckServerVersionCommand(self))
         self._run_cmd(net_cmd.UpdateCoinsInfoCommand(
             True, self), run_first=True)
 
