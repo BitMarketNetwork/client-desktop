@@ -87,15 +87,15 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     def __str__(self) -> str:
         return f"<{self.fullName},{self.rowid} vis:{self.__visible}>"
 
-    @qt_core.Property(qt_core.QObject, constant=True)
+    @property
     def amountModel(self) -> AmountModel:
         return self._amount_model
 
-    @qt_core.Property(qt_core.QObject, constant=True)
+    @property
     def stateModel(self) -> StateModel:
         return self._state_model
 
-    @qt_core.Property(qt_core.QObject, constant=True)
+    @property
     def remoteStateModel(self) -> RemoteStateModel:
         return self._remote_state_model
 
@@ -107,14 +107,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         if self._test:
             return self.name[:-4].upper()
         return self.name.upper()
-
-    @qt_core.Property(str, constant=True)
-    def netName(self) -> str:
-        return self.net_name or self.name
-
-    @qt_core.Property(int, constant=True)
-    def decimalLevel(self) -> int:
-        return self._decimal_level
 
     def balance_human(self, amount: float = None) -> str:
         if amount is None:
@@ -153,9 +145,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
             False,
             self.network)
 
-    def reset_cell(self):
-        self.__address_model.reset()
-
     @qt_core.Slot(address.CAddress)
     def addAddressImpl(self, wallet: address.CAddress) -> None:
         assert qt_core.QThread.currentThread() == self.thread()
@@ -167,7 +156,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         #
         from ..ui.gui import Application
         Application.instance().coinManager.render_cell(self)
-        # self.reset_cell()
+        # self.__address_model.reset()
 
         #if self.parent():
         Application.instance().networkThread.update_wallet(wallet)
@@ -177,7 +166,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
             partial(self.__address_model.balance_changed, wallet), qt_core.Qt.QueuedConnection)
 
     def _next_hd_index(self):
-        idxs = [a.hd_index for a in self.__wallet_list]
+        idxs = [a.hd_index for a in self._address_list]
         return next(k for k in itertools.count(1) if k not in idxs)
 
     def make_address(self, type_: key.AddressType = key.AddressType.P2WPKH, label: str = "", message: str = "") -> address.CAddress:
@@ -187,7 +176,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         if self.__hd_node is None:
             raise address.AddressError(f"There's no private key in {self}")
         hd_index = 1
-        while any(w.hd_index == hd_index for w in self.__wallet_list):
+        while any(w.hd_index == hd_index for w in self._address_list):
             hd_index += 1
         new_hd = self.__hd_node.make_child_prv(
             self._next_hd_index(),
@@ -228,7 +217,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         """
         make address structure from data.
         """
-        has = [n for n in self.__wallet_list if name.strip().casefold() ==
+        has = [n for n in self._address_list if name.strip().casefold() ==
                n.name.casefold()]
         if has:
             log.warn(f"Address {name} already exists")
@@ -257,16 +246,16 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         return {
             "name": self.name,
             "visible": self.__visible,
-            "addresses": [w.to_table() for w in self.__wallet_list],
+            "addresses": [w.to_table() for w in self._address_list],
         }
 
     def from_table(self, table: dict):
         assert self.name == table["name"]
         self.visible = table["visible"]
-        self.__wallet_list.clear()
+        self._address_list.clear()
         for addr_t in table["addresses"]:
             wallet = address.CAddress.from_table(addr_t, self)
-            self.__wallet_list.append(wallet)
+            self._address_list.append(wallet)
 
     @classmethod
     def match(cls, name: str) -> bool:
@@ -282,7 +271,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
 
     def update_balance(self):
         self._balance = sum(int(w.balance)
-                            for w in self.__wallet_list if not w.readOnly)
+                            for w in self._address_list if not w.readOnly)
         self.balanceChanged.emit()
         self._amount_model.refresh()
 
@@ -309,28 +298,24 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
 
     def update_tx_list(self):
         self.__tx_set.clear()
-        for w in self.__wallet_list:
+        for w in self._address_list:
             self.add_tx_list(w.tx_list)
 
     @property
     def tx_count(self) -> int:
-        # return sum(len(w) for w in self.__wallet_list)
+        # return sum(len(w) for w in self._address_list)
         return len(self.__tx_set)
 
     def get_tx(self, idx: int) -> 'tx.Transaction':
         return self.__tx_set[idx]
 
-    @property
-    def server_tx_count(self) -> int:
-        return sum(w.txCount for w in self.__wallet_list)
-
     def empty(self, skip_zero: bool) -> bool:
         if skip_zero:
-            return next((w for w in self.__wallet_list if not w.empty_balance), None) is None
+            return next((w for w in self._address_list if not w.empty_balance), None) is None
         return not self
 
     def __iter__(self) -> "CoinType":
-        self.__wallet_iter = iter(self.__wallet_list)
+        self.__wallet_iter = iter(self._address_list)
         return self
 
     def __next__(self) -> address.CAddress:
@@ -340,20 +325,20 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     def __contains__(self, value: Union[str, address.CAddress]) -> bool:
         if not isinstance(value, str):
             value = value.name
-        return any(value == add.name for add in self.__wallet_list)
+        return any(value == add.name for add in self._address_list)
 
     def __len__(self) -> int:
-        return len(self.__wallet_list)
+        return len(self._address_list)
 
     def __bool__(self) -> bool:
-        return bool(self.__wallet_list)
+        return bool(self._address_list)
 
     # don't bind not_empty with addressModel !!! . beware recursion
     def __getitem__(self, key: Union[int, str]) -> address.CAddress:
         if isinstance(key, int):
-            return self.__wallet_list[key]
+            return self._address_list[key]
         if isinstance(key, str):
-            return next((w for w in self.__wallet_list if w.name == key), None)
+            return next((w for w in self._address_list if w.name == key), None)
 
     def __call__(self, idx: int) -> address.CAddress:
         "Filtered version of getitem"
@@ -361,7 +346,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
 
     def __update_wallets(self, from_=Optional[int], remove_txs_from: Optional[int] = None, verbose: bool = False):
         "from old to new one !!!"
-        for w in self.__wallet_list:
+        for w in self._address_list:
             w.update_tx_list(from_, remove_txs_from, verbose)
         # it must be called when height changed
         # CoreApplication.instance().networkThread.retrieveCoinHistory.emit(coin)
@@ -442,18 +427,18 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         return False
 
     def remove_wallet(self, wallet: address.CAddress):
-        index = self.__wallet_list.index(wallet)
-        # self.__wallet_list.remove(wallet)
+        index = self._address_list.index(wallet)
+        # self._address_list.remove(wallet)
         wallet.clear()
         self.__address_model.remove(index)
-        del self.__wallet_list[index]
+        del self._address_list[index]
         self.__address_model.remove_complete()
         self.update_balance()
 
     def clear(self):
-        for addr in self.__wallet_list:
+        for addr in self._address_list:
             addr.clear()
-        self.__wallet_list.clear()
+        self._address_list.clear()
         self.update_balance()
 
     def _set_height(self, hei: int):

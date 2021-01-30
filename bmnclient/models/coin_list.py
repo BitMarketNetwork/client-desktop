@@ -11,7 +11,6 @@ from PySide2.QtCore import \
 from . import RoleEnum, AbstractListModel, AbstractStateModel
 
 if TYPE_CHECKING:
-    from ..ui.gui import Application
     from ..wallet.coins import CoinType
 
 
@@ -81,7 +80,8 @@ class CoinListModel(AbstractListModel):
         AMOUNT = auto()
         STATE = auto()
         REMOTE_STATE = auto()
-        ADDRESS_MODEL = auto()
+        ADDRESS_LIST_MODEL = auto()
+        TX_LIST_MODEL = auto()
 
     _ROLE_MAP = {
         Role.SHORT_NAME: (

@@ -32,13 +32,14 @@ class CoinManager(QObject):
         tx_source = tx_model.TxModel(self)
         self.__tx_model = tx_model.TxProxyModel(self)
         self.__tx_model.setSourceModel(tx_source)
-        self._coin_list_model = CoinListModel(self._application)
+        self._coin_list_model = CoinListModel(self._application.coinList)
         self._application.networkThread.heightChanged.connect(self.coin_height_changed)
-        self.showEmptyBalances = True
         self.coinModelChanged.connect(
             self.update_coin_model, qt_core.Qt.QueuedConnection)
 
     def update_coin_model(self):
+        # TODO This also means that the current item and any selected items will
+        #  become invalid.
         if self.thread() == qt_core.QThread.currentThread():
             self._coin_list_model.beginResetModel()
             self._coin_list_model.endResetModel()
@@ -95,21 +96,6 @@ class CoinManager(QObject):
     @QProperty(qt_core.QObject, constant=True)
     def txModel(self) -> qt_core.QObject:
         return self.__tx_model
-
-    @QProperty(bool, notify=emptyBalancesChanged)
-    def showEmptyBalances(self) -> bool:
-        return self.__coins_model.show_empty_addresses
-
-    @showEmptyBalances.setter
-    def __set_show_empty_balances(self, value=bool):
-        if self.__coins_model.show_empty_addresses == value:
-            return
-        self.__coins_model.show_empty_addresses = value
-        for c in self._application.coinList:
-            c.show_empty = value
-        self.emptyBalancesChanged.emit()
-        # yeah!
-        self.addressIndexChanged.emit()
 
     def update_tx_model(self):
         self.__tx_model.address = self.address
