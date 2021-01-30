@@ -62,7 +62,7 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         self.__message = None
         # timestamp
         self.__created = None
-        self.__balance = 0.
+        self.__balance = 0
         self.__first_offset = None
         self.__last_offset = None
         self.__type = key.AddressType.P2PKH

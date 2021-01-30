@@ -9,24 +9,11 @@ BApplicationPage {
     title: qsTr("Wallet")
     placeholderText: qsTr("Select coin from the left list.")
 
-    list.model: BBackend.coinManager.coinModel
+    list.model: BBackend.coinManager.coinListModel
     list.delegate: BCoinItem {
-        visible: model.visible
-        enabled: model.enabled
-        coin: BCoinObject {
-            shortName: model.shortName
-            fullName: model.fullName
-            iconPath: _applicationManager.imagePath(model.iconPath)
-
-            index: model.index
-            amount.valueHuman: BBackend.settingsManager.coinBalance(model.balance) // TODO move to BWalletCoinPane?
-            amount.unit: BBackend.settingsManager.coinUnit(model.unit) // TODO
-            amount.fiatValueHuman: model.fiatBalance // TODO kill char '$' // TODO move to BWalletCoinPane?
-            amount.fiatUnit: "USD" // TODO BBackend.coinManager.currency
-            addressListModel: model.addressModel
-            txListModel: BBackend.coinManager.txModel
-        }
-
+        visible: model.state.visible
+        enabled: model.state.visible
+        coin: model
         onClicked: {
             BBackend.coinManager.coinIndex = coin.index // TODO kill
             _base.stack.currentIndex = _base.coinIndexToListIndex(coin.index)
@@ -35,25 +22,12 @@ BApplicationPage {
     }
 
     Repeater {
-        model: BBackend.coinManager.coinModel
+        model: BBackend.coinManager.coinListModel
         delegate: Loader {
             readonly property int coinIndex: model.index
             active: false
             sourceComponent: BWalletCoinPage {
-                coin: BCoinObject {
-                    shortName: model.shortName
-                    fullName: model.fullName
-                    iconPath: _applicationManager.imagePath(model.iconPath)
-
-                    index: model.index
-                    amount.valueHuman: BBackend.settingsManager.coinBalance(model.balance) // TODO move to BWalletCoinPane?
-                    amount.unit: BBackend.settingsManager.coinUnit(model.unit) // TODO
-                    amount.fiatValueHuman: model.fiatBalance // TODO kill char '$' // TODO move to BWalletCoinPane?
-                    amount.fiatUnit: "USD" // TODO BBackend.coinManager.currency
-                    addressListModel: model.addressModel
-                    txListModel: BBackend.coinManager.txModel
-                }
-
+                coin: model
                 onGenerateAddress: {
                     _base.generateAddress(coin)
                 }

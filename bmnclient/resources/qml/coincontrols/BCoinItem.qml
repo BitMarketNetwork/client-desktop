@@ -3,10 +3,10 @@ import "../basiccontrols"
 
 BItemDelegate {
     id: _base
-    property BCoinObject coin: null
+    property var coin // CoinListModel item
 
     text: coin.fullName
-    icon.source: coin.iconPath
+    icon.source: _applicationManager.imagePath(coin.iconPath)
 
     contentItem: BRowLayout {
         BIconLabel {
@@ -24,7 +24,7 @@ BItemDelegate {
 
             clip: true
             font.pointSize: Math.round(_base.font.pointSize * _applicationStyle.fontPointSizeFactor.small)
-            amount: coin.amount
+            amount: _base.coin.amount
         }
     }
 

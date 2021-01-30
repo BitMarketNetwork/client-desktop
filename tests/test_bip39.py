@@ -11,9 +11,8 @@ class TestHighLevel(unittest.TestCase):
         km = key_store.KeyStore(gcd_)
         self.assertTrue(km.generateMasterKey(seed, True))
         for coin in gcd_.all_coins:
-            if coin.enabled:
-                for _ in range(3):
-                    yield coin.make_address().name
+            for _ in range(3):
+                yield coin.make_address().name
 
     def test_persistency(self):
         one = self._make_adds(self.SEED)

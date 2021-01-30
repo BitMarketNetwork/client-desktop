@@ -11,6 +11,7 @@ from . import (address, root_address, address_model, coin_network, hd, key,
                serialization)
 from . import db_entry
 from .. import coins
+from ..models.coin_list import AmountModel, StateModel
 
 log = logging.getLogger(__name__)
 
@@ -29,8 +30,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     _decimal_level: int = 0
     # for web explrores
     net_name: str = None
-    # it differs from self._status! the former is hardcoded but the latter depends on the server daemon
-    _enabled: bool = False
     # test network or not
     _test: bool = False
     #
@@ -58,7 +57,9 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self._balance = 0.
+        self._balance = 0
+        self._amount_model = AmountModel(self)
+        self._state_model = StateModel(self)
 
         self._set_object_name(self.name)
         self.__height = None
@@ -80,13 +81,16 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         self.addAddress.connect(self.addAddressImpl,
                                 qt_core.Qt.QueuedConnection)
 
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        #if not e_logger.SILENCE_VERBOSITY and cls._enabled:
-        #    print(f"coin => {cls.__name__}")
-
     def __str__(self) -> str:
         return f"<{self.fullName},{self.rowid} vis:{self.__visible}>"
+
+    @qt_core.Property(qt_core.QObject, constant=True)
+    def amountModel(self) -> AmountModel:
+        return self._amount_model
+
+    @qt_core.Property(qt_core.QObject, constant=True)
+    def stateModel(self) -> StateModel:
+        return self._state_model
 
     @qt_core.Property(str, constant=True)
     def unit(self) -> str:
@@ -96,10 +100,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         if self._test:
             return self.name[:-4].upper()
         return self.name.upper()
-
-    @qt_core.Property(bool, constant=True)
-    def enabled(self) -> bool:
-        return self._enabled
 
     @qt_core.Property(str, constant=True)
     def netName(self) -> str:
@@ -276,8 +276,8 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     def update_balance(self):
         self._balance = sum(int(w.balance)
                             for w in self.__wallet_list if not w.readOnly)
-        # log.warning(f"BALANCE UPDATED: {self} {self._balance}")
         self.balanceChanged.emit()
+        self._amount_model.refresh()
 
     def make_hd_node(self, parent_node):
         self.__hd_node = parent_node.make_child_prv(
@@ -495,7 +495,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
 
     @property
     def active(self) -> bool:
-        return self.enabled and self.__status == 1
+        return self.__status == 1
 
     def _set_status(self, status: int):
         if status != self.__status:
@@ -563,6 +563,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         if ex != self.__visible:
             self.__visible = ex
             self.visibleChanged.emit()
+            self._state_model.refresh()
 
     status = qt_core.Property(
         int, _get_status, _set_status, notify=statusChanged)
@@ -573,7 +574,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
 class Bitcoin(CoinType, coins.Bitcoin):
     name = "btc"
     network = coin_network.BitcoinMainNetwork
-    _enabled = True
     _decimal_level = 7
     _hd_index = 0
     _usd_rate = 9400.51
@@ -590,7 +590,6 @@ class BitcoinTest(Bitcoin, coins.BitcoinTest):
 class Litecoin(CoinType, coins.Litecoin):
     name = "ltc"
     network = coin_network.LitecoinMainNetwork
-    _enabled = True
     _decimal_level = 7
     _hd_index = 2
     _usd_rate = 39.83

@@ -5,7 +5,6 @@ BPane {
     id: _base
     property string title: qsTr("Coins")
     property string iconPath: _applicationManager.imagePath("icon-coins.svg")
-    property variant coinListModel: null
 
     contentItem: BDialogScrollableLayout {
         BDialogPromtLabel {
@@ -13,23 +12,21 @@ BPane {
             text: qsTr("Uncheck unnecessary coins:")
         }
         Repeater {
-            model: _base.coinListModel
+            model: BBackend.coinManager.coinListModel
             delegate: BDialogPromtLabel {
                 BLayout.column: 0
                 BLayout.row: index + 1
-                enabled: modelData.enabled
-                text: modelData.fullName
+                text: model.fullName
             }
         }
         Repeater {
-            model: _base.coinListModel
+            model: BBackend.coinManager.coinListModel
             delegate: BDialogInputSwitch {
                 BLayout.column: 1
                 BLayout.row: index + 1
-                checked: modelData.visible
-                enabled: modelData.enabled
+                checked: model.state.visible
                 onCheckedChanged: {
-                    modelData.visible = checked
+                    model.state.visible = checked
                 }
             }
         }

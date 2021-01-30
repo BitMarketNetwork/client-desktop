@@ -17,9 +17,7 @@ BApplicationPage {
         }
     }
 
-    BSettingsCoinsPane {
-        coinListModel: BBackend.coinManager.staticCoinModel
-    }
+    BSettingsCoinsPane {}
 
     BSettingsAdvancedPane {
         applicationFont: Qt.font(BBackend.settingsManager.font)

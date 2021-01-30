@@ -2,7 +2,7 @@ import "../basiccontrols"
 
 BControl {
     id: _base
-    property BCoinObject coin: null
+    property var coin // CoinListModel item
     property BMenu contextMenu: null
 
     padding: _applicationStyle.padding
@@ -11,7 +11,7 @@ BControl {
             BLayout.fillWidth: true
             icon.width: _applicationStyle.icon.largeWidth
             icon.height: _applicationStyle.icon.largeHeight
-            icon.source: _base.coin.iconPath
+            icon.source: _applicationManager.imagePath(_base.coin.iconPath)
             font.bold: true
             font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.huge
             text: _base.coin.fullName

@@ -104,10 +104,6 @@ class UIManager(QObject):
             self.__server_coin_model.append(item)
         self.coinModelChanged.emit()
 
-    @QProperty(QObject, notify=coinModelChanged)
-    def coinInfoModel(self):
-        return self.__server_coin_model
-
     @QProperty(int, notify=coinIndexChanged)
     def coinDaemonIndex(self):
         return self.__server_coin_index

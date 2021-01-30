@@ -13,7 +13,8 @@ ItemDelegate {
     // } ICON
 
     highlighted: BListView.view ? BListView.isCurrentItem : false
-    width: BListView.view ? BListView.view.viewWidth : implicitWidth
+    width: BListView.view ? BListView.view.viewWidth : (visible ? implicitWidth : 0)
+    height: visible ? implicitHeight : 0
     display: BListView.view ? BListView.view.display : ItemDelegate.TextBesideIcon
 
     onImplicitWidthChanged: {

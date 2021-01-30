@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import PySide2.QtCore as qt_core
 from PySide2.QtCore import \
+    Property as QProperty, \
     QObject, \
     Signal as QSignal
 from ...wallet import address, key, tx, tx_model, coins
@@ -31,7 +32,7 @@ class CoinManager(QObject):
         tx_source = tx_model.TxModel(self)
         self.__tx_model = tx_model.TxProxyModel(self)
         self.__tx_model.setSourceModel(tx_source)
-        self.__coins_model = CoinListModel(self._application)
+        self._coin_list_model = CoinListModel(self._application)
         self._application.networkThread.heightChanged.connect(self.coin_height_changed)
         self.showEmptyBalances = True
         self.coinModelChanged.connect(
@@ -39,8 +40,8 @@ class CoinManager(QObject):
 
     def update_coin_model(self):
         if self.thread() == qt_core.QThread.currentThread():
-            self.__coins_model.beginResetModel()
-            self.__coins_model.endResetModel()
+            self._coin_list_model.beginResetModel()
+            self._coin_list_model.endResetModel()
         else:
             self.coinModelChanged.emit()
 
@@ -49,31 +50,27 @@ class CoinManager(QObject):
         if coin == self.coin:
             self.__tx_model.update_confirm_count()
 
-    @qt_core.Property(qt_core.QObject, constant=True)
-    def coinModel(self) -> qt_core.QObject:
-        return self.__coins_model
+    @QProperty(qt_core.QObject, constant=True)
+    def coinListModel(self) -> qt_core.QObject:
+        return self._coin_list_model
 
-    @qt_core.Property('QVariantList', constant=True)
-    def staticCoinModel(self) -> 'QVariantList':
-        return self._application.coinList
-
-    @qt_core.Property(int, notify=coinIndexChanged)
+    @QProperty(int, notify=coinIndexChanged)
     def coinIndex(self) -> int:
         return self.__current_coin_idx
 
-    @qt_core.Property(str, notify=coinIndexChanged)
+    @QProperty(str, notify=coinIndexChanged)
     def unit(self) -> str:
         """
         sugar.. don't delete please
         """
         return self.coin.unit if self.coin is not None else "BTC"
 
-    @qt_core.Property(coins.CoinType, notify=coinIndexChanged)
+    @QProperty(coins.CoinType, notify=coinIndexChanged)
     def coin(self) -> 'coins.CoinType':
         if self.__current_coin_idx >= 0:
             return self._application.coinList[self.__current_coin_idx]
 
-    @qt_core.Property(address.CAddress, notify=addressIndexChanged)
+    @QProperty(address.CAddress, notify=addressIndexChanged)
     def address(self) -> address.CAddress:
         coin = self.coin
         if coin is not None:
@@ -91,15 +88,15 @@ class CoinManager(QObject):
         # self.addressIndexChanged.emit()
         self.coinIndexChanged.emit()
 
-    @qt_core.Property(str, constant=True)
+    @QProperty(str, constant=True)
     def currency(self) -> str:
         return "USD"  # TODO
 
-    @qt_core.Property(qt_core.QObject, constant=True)
+    @QProperty(qt_core.QObject, constant=True)
     def txModel(self) -> qt_core.QObject:
         return self.__tx_model
 
-    @qt_core.Property(bool, notify=emptyBalancesChanged)
+    @QProperty(bool, notify=emptyBalancesChanged)
     def showEmptyBalances(self) -> bool:
         return self.__coins_model.show_empty_addresses
 
