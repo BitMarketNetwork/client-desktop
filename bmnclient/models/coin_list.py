@@ -57,7 +57,7 @@ class AmountModel(AbstractCoinStateModel):
 
     @QProperty(str, notify=_stateChanged)
     def valueHuman(self) -> str:
-        return self._coin.amountToString(self._coin.balance)
+        return self._coin.amountToString(self._coin.balance)  # TODO qml format
 
     @QProperty(str, constant=True)
     def unit(self) -> str:
@@ -65,11 +65,11 @@ class AmountModel(AbstractCoinStateModel):
 
     @QProperty(str, notify=_stateChanged)
     def fiatValueHuman(self) -> str:
-        return str(self._coin.fiatBalance)
+        return str(self._coin.fiatBalance)  # TODO qml format
 
     @QProperty(str, notify=_stateChanged)
     def fiatUnit(self) -> str:
-        return "USD"
+        return "USD"  # TODO
 
 
 class CoinListModel(AbstractListModel):
@@ -102,12 +102,10 @@ class CoinListModel(AbstractListModel):
         Role.REMOTE_STATE: (
             b"remoteState",
             lambda c: c.remoteStateModel),
-
-        Role.ADDRESS_MODEL: (
-            b"addressModel",
-            lambda c: c.addressModel),
+        Role.ADDRESS_LIST_MODEL: (
+            b"addressListModel",
+            lambda c: c.addressListModel),
+        Role.TX_LIST_MODEL: (
+            b"txListModel",
+            lambda c: c.addressListModel)  # TODO
     }
-
-    def __init__(self, application: Application) -> None:
-        super().__init__(application.coinList)
-        self._application = application
