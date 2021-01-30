@@ -9,7 +9,6 @@ from PySide2.QtCore import \
     Property as QProperty, \
     QTimer
 
-from ...models import list_model, coin_daemon_model
 from ...ui.gui.system_tray import SystemTrayIcon, MessageIcon
 from . import dialogs
 
@@ -26,8 +25,6 @@ class UIManager(QObject):
     statusMessageChanged = QSignal()
     outputInfo = QSignal(name="outputInfo", arguments=["key", "value"])
     serverVersionChanged = QSignal()
-    coinModelChanged = QSignal()
-    coinIndexChanged = QSignal()
     hide = QSignal()
     show = QSignal()
 
@@ -39,8 +36,6 @@ class UIManager(QObject):
         self.__status_message = ""
         self.__visible = False
         #
-        self.__server_coin_model = list_model.ObjectListModel(self)
-        self.__server_coin_index = 0
         self.__notified_tx_list = set()
         #
         self.__tray = SystemTrayIcon(self)
@@ -117,30 +112,7 @@ class UIManager(QObject):
             coin = self._application.findCoin(name)
             if coin is not None:
                 coin._remote = remote
-                print(remote)
                 coin.remoteStateModel.refresh()
-
-            item = coin_daemon_model.CoinDaemonModel(self._application.coinList[name], None, **data)
-            item.moveToThread(self.__server_coin_model.thread())
-            item.setParent(self.__server_coin_model)
-            self.__server_coin_model.append(item)
-        self.coinModelChanged.emit()
-
-    @QProperty(int, notify=coinIndexChanged)
-    def coinDaemonIndex(self):
-        return self.__server_coin_index
-
-    @QProperty(coin_daemon_model.CoinDaemonModel, notify=coinIndexChanged)
-    def coinDaemon(self):
-        if self.__server_coin_index < len(self.__server_coin_model._list):
-            return self.__server_coin_model._list[self.__server_coin_index]
-
-    @coinDaemonIndex.setter
-    def _set_coin_index(self, index):
-        if index == self.__server_coin_index:
-            return
-        self.__server_coin_index = index
-        self.coinIndexChanged.emit()
 
     @QProperty(bool, notify=statusChanged)
     def online(self):
