@@ -1,7 +1,7 @@
 # JOK++
 from enum import IntEnum
 from functools import lru_cache
-from typing import List, Sequence, Any, Optional
+from typing import Any, List, Optional, Sequence
 
 from PySide2.QtCore import \
     QAbstractListModel, \

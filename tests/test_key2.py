@@ -227,10 +227,6 @@ class TestBtcCore(unittest.TestCase):
                 self.assertEqual(prv.compressed, props['isCompressed'], idx)
                 # no equality - cause impossible distinguish regtest from test
                 self.assertIn(prv.network.TITLE, props['chain'], (idx, group))
-            else:
-                # TODO:
-                self.assertTrue(key.AddressString.validate_bool(
-                    group[0]), (idx, group))
 
     def test_invalid(self):
         body = json.loads(TEST_DATA_PATH.joinpath(
@@ -238,17 +234,6 @@ class TestBtcCore(unittest.TestCase):
         for idx, group in enumerate(body):
             with self.assertRaises(key.KeyError, msg=idx):
                 key.PrivateKey.from_wif(group[0])
-
-
-class TestData(unittest.TestCase):
-
-    def test_ui_addresses(self):
-        adds = [
-            "tb1qs5cz8f0f0l6tf87ez90ageyfm4a7w7rhryzdl2",
-            "tb1qrrdujkst4pf6eprpvv39g9fq0flkejwmh88dw5",
-        ]
-        for add in adds:
-            self.assertTrue(key.AddressString.validate_bool(add), add)
 
 
 class TestSignatureReal(unittest.TestCase):

@@ -60,7 +60,6 @@ BApplicationWindow {
     }
 
     Component.onCompleted: {
-        BBackend.coinManager.showEmptyBalances = true // TODO
         BBackend.uiManager.onMainComponentCompleted()
     }
 

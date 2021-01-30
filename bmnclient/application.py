@@ -3,7 +3,7 @@ from __future__ import annotations
 from argparse import ArgumentParser, Namespace
 from functools import partial
 from pathlib import PurePath
-from typing import Union, Optional, Type
+from typing import Optional, Type, Union
 
 from PySide2.QtCore import \
     QCoreApplication, \

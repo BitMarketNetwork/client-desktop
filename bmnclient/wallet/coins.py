@@ -266,9 +266,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
             cls.fullName.casefold(),
         ]
 
-    def _validate_address(self, addr: str):
-        key.AddressString.validate(addr)
-
     def update_balance(self):
         self._balance = sum(int(w.balance)
                             for w in self._address_list if not w.readOnly)
@@ -532,23 +529,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
 
     @qt_core.Property("QVariantList", constant=True)
     def wallets(self) -> List[address.CAddress]:
-        if self.show_empty:
-            return self.__wallet_list
-        return [w for w in self.__wallet_list if w.balance > 0]
-
-    @qt_core.Property(qt_core.QObject, constant=True)
-    def addressModel(self) -> qt_core.QObject:
-        return self.__address_model
-
-    @property
-    def show_empty(self) -> bool:
-        return not self.__address_model.emptyFilter
-
-    @show_empty.setter
-    def show_empty(self, value=bool) -> None:
-        self.__address_model.emptyFilter = not value
-        for w in self.__wallet_list:
-            w.set_old()
+        return self._address_list
 
     @visible.setter
     def _set_visible(self, ex: bool):

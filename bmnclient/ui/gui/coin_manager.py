@@ -20,7 +20,6 @@ log = logging.getLogger(__name__)
 class CoinManager(QObject):
     coinIndexChanged = QSignal()
     addressIndexChanged = QSignal()
-    coinModelChanged = QSignal()
     renderCell = QSignal(int, arguments=["index"])
     emptyBalancesChanged = QSignal()
 
@@ -34,17 +33,6 @@ class CoinManager(QObject):
         self.__tx_model.setSourceModel(tx_source)
         self._coin_list_model = CoinListModel(self._application.coinList)
         self._application.networkThread.heightChanged.connect(self.coin_height_changed)
-        self.coinModelChanged.connect(
-            self.update_coin_model, qt_core.Qt.QueuedConnection)
-
-    def update_coin_model(self):
-        # TODO This also means that the current item and any selected items will
-        #  become invalid.
-        if self.thread() == qt_core.QThread.currentThread():
-            self._coin_list_model.beginResetModel()
-            self._coin_list_model.endResetModel()
-        else:
-            self.coinModelChanged.emit()
 
     def coin_height_changed(self, coin: 'coins.CoinType') -> None:
         # log.critical(f"COIN HEIGHT CHANGED for {coin} => current {self.coin}")

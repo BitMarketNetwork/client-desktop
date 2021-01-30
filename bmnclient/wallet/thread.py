@@ -54,9 +54,6 @@ class WalletThread(qt_core.QThread):
 
     def db_level_loaded(self, level: int) -> None:
         self.dbLoaded.emit(level)
-        if level == LoadingLevel.ADDRESSES:
-            from ..ui.gui import Application
-            Application.instance().coinManager.update_coin_model()
 
     def save_tx_list(self, address, tx_list):
         self.saveTxList.emit(address, tx_list)

@@ -312,7 +312,7 @@ class MutableTransaction:
         if not self.__receiver:
             raise WrongReceiver("No receiver")
         # import pdb; pdb.set_trace()
-        if not key.AddressString.validate_bool(self.__receiver):
+        if not isinstance(self.__receiver, str):
             raise WrongReceiver("Invalid receiver address")
         target_net = coin_network.CoinNetworkBase.from_address(self.__receiver)
         if  target_net or self.__address.type == key.AddressType.P2WPKH:

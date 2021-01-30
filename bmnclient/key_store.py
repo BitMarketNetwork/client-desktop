@@ -3,7 +3,7 @@ import os
 from enum import Enum
 from json.decoder import JSONDecodeError
 from threading import RLock
-from typing import Optional, Tuple, List
+from typing import List, Optional, Tuple
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -11,8 +11,8 @@ from PySide2.QtCore import \
     Slot as QSlot
 
 from .config import UserConfig
-from .crypto.digest import Digest, Sha256Digest
 from .crypto.cipher import AeadCipher, MessageCipher
+from .crypto.digest import Digest, Sha256Digest
 from .crypto.kdf import SecretStore
 from .crypto.password import PasswordStrength
 from .logger import Logger

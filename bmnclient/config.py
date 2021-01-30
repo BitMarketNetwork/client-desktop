@@ -6,8 +6,8 @@ from pathlib import PurePath
 from threading import RLock
 from typing import Any, Type
 
-from .platform import PlatformPaths
 from .logger import Logger
+from .platform import PlatformPaths
 from .version import Product
 
 # TODO move to platform
