@@ -1,4 +1,3 @@
-
 import functools
 import logging
 from datetime import datetime
@@ -9,6 +8,7 @@ import PySide2.QtCore as qt_core
 from .. import orderedset
 from . import db_entry, hd, key, mtx_impl, serialization, tx, util
 from ..models.address_list import AddressAmountModel, AddressStateModel
+from ..models.tx_list import TxListModel, TxProxyModel
 
 log = logging.getLogger(__name__)
 

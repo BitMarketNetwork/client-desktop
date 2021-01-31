@@ -45,6 +45,7 @@ class AddressListModel(AbstractListModel):
         NAME = auto()
         AMOUNT = auto()
         STATE = auto()
+        TX_LIST_MODEL = auto()
 
     _ROLE_MAP = {
         Role.COIN: (
@@ -58,7 +59,10 @@ class AddressListModel(AbstractListModel):
             lambda a: a.amountModel),
         Role.STATE: (
             b"state",
-            lambda a: a.stateModel)
+            lambda a: a.stateModel),
+        Role.TX_LIST_MODEL: (
+            b"txListModel",
+            lambda a: a.txListModel)
     }
 
 

@@ -1,81 +1,81 @@
 
 import logging
-import enum
 from typing import Optional, Union
+from enum import auto
+from . import \
+    AbstractAddressStateModel, \
+    AbstractAmountModel, \
+    AbstractListModel, \
+    AbstractListSortedModel, \
+    RoleEnum
 
 import PySide2.QtCore as qt_core  # pylint: disable=import-error
-from PySide2.QtCore import QByteArray
 from ..models import RoleEnum
 from ..wallet import tx  # pylint
 log = logging.getLogger(__name__)
 
 
-class Role(RoleEnum):
-    ID_ROLE = enum.auto()
-    AMOUNT_ROLE = enum.auto()
-    STATUS_ROLE = enum.auto()
-    BLOCK_ROLE = enum.auto()
-    HEIGHT_ROLE = enum.auto()
-    TIME_ROLE = enum.auto()
-    CREATED_ROLE = enum.auto()
-    FEE_ROLE = enum.auto()
-    CONFIRM_ROLE = enum.auto()
-    INPUTS_ROLE = enum.auto()
-    OUTPUTS_ROLE = enum.auto()
+class TxListModel(AbstractListModel):
+    class Role(RoleEnum):
+        ID = auto()
+        AMOUNT = auto()
+        STATUS = auto()
+        BLOCK = auto()
+        HEIGHT = auto()
+        TIME = auto()
+        CREATED = auto()
+        FEE = auto()
+        CONFIRM = auto()
+        INPUTS = auto()
+        OUTPUTS = auto()
 
 
-class TxModel(qt_core.QAbstractListModel):
-    SELECTOR = {
-        Role.ID_ROLE: lambda tx_: tx_.name,
-        Role.AMOUNT_ROLE: lambda tx_: tx_.balance,
-        Role.STATUS_ROLE: lambda tx_: tx_.status,
-        Role.BLOCK_ROLE: lambda tx_: tx_.block,
-        Role.HEIGHT_ROLE: lambda tx_: tx_.height,
-        Role.TIME_ROLE: lambda tx_: tx_.timeHuman,
-        Role.CREATED_ROLE: lambda tx_: tx_.time,
-        Role.FEE_ROLE: lambda tx_: tx_.feeHuman,
-        Role.CONFIRM_ROLE: lambda tx_: tx_.confirmCount,
-        Role.INPUTS_ROLE: lambda tx_: tx_.inputsModel,
-        Role.OUTPUTS_ROLE: lambda tx_: tx_.outputsModel,
+    _ROLE_MAP = {
+        Role.ID: (
+            b"name",
+            lambda t: t.name),
+        Role.AMOUNT: (
+            b"balance",
+            lambda t: t.balance),
+        Role.STATUS: (
+            b"status",
+            lambda t: t.status),
+        Role.BLOCK: (
+            b"block",
+            lambda t: t.block),
+        Role.HEIGHT: (
+            b"height",
+            lambda t: t.height),
+        Role.TIME: (
+            b"timeHuman",
+            lambda t: t.timeHuman),
+        Role.CREATED: (
+            b"TODO1",
+            lambda t: t.time),
+        Role.FEE: (
+            b"feeHuman",
+            lambda t: t.feeHuman),
+        Role.CONFIRM: (
+            b"confirmCount",
+            lambda t: t.confirmCount),
+        Role.INPUTS: (
+            b"inputsModel",
+            lambda t: t.inputsModel),
+        Role.OUTPUTS: (
+            b"outputsModel",
+            lambda t: t.outputsModel)
     }
 
-    def __init__(self, parent):
-        super().__init__(parent=parent)
-        self.address = None
-
-    def rowCount(self, parent=qt_core.QModelIndex()) -> int:
-        if self.address:
-            return len(self.address)
-        return 0
-
-    def data(self, index, role=qt_core.Qt.DisplayRole):
-        if 0 <= index.row() < self.rowCount() and index.isValid():
-            return self.SELECTOR[role](self.address[index.row()])
-
-    def index_of(self, tx_) -> qt_core.QModelIndex:
-        return self.index(self.address.index(tx_))
-
-    def roleNames(self) -> dict:
-        return {
-            Role.ID_ROLE: QByteArray(b"name"),
-            Role.AMOUNT_ROLE: QByteArray(b"balance"),
-            Role.STATUS_ROLE: QByteArray(b"status"),
-            Role.BLOCK_ROLE: QByteArray(b"block"),
-            Role.TIME_ROLE: QByteArray(b"timeHuman"),
-            Role.FEE_ROLE: QByteArray(b"feeHuman"),
-            Role.CONFIRM_ROLE: QByteArray(b"confirmCount"),
-            Role.INPUTS_ROLE: QByteArray(b"inputsModel"),
-            Role.OUTPUTS_ROLE: QByteArray(b"outputsModel"),
-        }
+    def index_of(self, t) -> qt_core.QModelIndex:
+        return self.index(self.address.index(t))
 
 
 class TxProxyModel(qt_core.QSortFilterProxyModel):
-
     def __init__(self, parent):
         super().__init__(parent=parent)
         self.dynamicSortFilter = False
-        # self.setSortRole(Role.HEIGHT_ROLE)
-        self.setSortRole(Role.CREATED_ROLE)
+        # self.setSortRole(Role.HEIGHT)
+        self.setSortRole(Role.CREATED)
 
     @property
     def address(self) -> 'address.CAddress':
@@ -141,7 +141,7 @@ class TxProxyModel(qt_core.QSortFilterProxyModel):
         tx_ is int - update first
         tx_ is tx - update tx (doesnt work for a while)
         """
-        roles = [Role.CONFIRM_ROLE, Role.STATUS_ROLE, Role.BLOCK_ROLE]
+        roles = [Role.CONFIRM, Role.STATUS, Role.BLOCK]
         if tx_:
             if isinstance(tx_, int):
                 beg = self.index(0, 0)

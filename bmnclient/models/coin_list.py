@@ -100,5 +100,5 @@ class CoinListModel(AbstractListModel):
             lambda c: c.addressListModel),
         Role.TX_LIST_MODEL: (
             b"txListModel",
-            lambda c: c.addressListModel)  # TODO
+            lambda c: c.txListModel)
     }

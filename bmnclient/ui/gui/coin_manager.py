@@ -7,7 +7,7 @@ from PySide2.QtCore import \
     Property as QProperty, \
     QObject, \
     Signal as QSignal
-from ...wallet import address, key, tx, tx_model, coins
+from ...wallet import address, key, tx, coins
 from . import import_export
 from ...models.coin_list import CoinListModel
 

@@ -14,6 +14,7 @@ from ..models.coin_list import \
     CoinAmountModel, \
     CoinRemoteStateModel, \
     CoinStateModel
+from ..models.tx_list import TxListModel, TxProxyModel
 
 log = logging.getLogger(__name__)
 
