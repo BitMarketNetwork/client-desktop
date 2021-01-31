@@ -5,35 +5,20 @@ import "../coincontrols"
 BPane {
     id: _base
     property string title: qsTr("Addresses")
-    property BCoinObject coin: null
+    property var coin // CoinListModel item
 
     contentItem: BAddressListView {
         model: _base.coin.addressListModel
         delegate: BAddressItem {
-            address: BAddressObject {
-                coin: _base.coin
-                name: model.name
-                label: model.label
-                watchOnly: model.readOnly
-                updating: model.isUpdating
-                amount.valueHuman: BBackend.settingsManager.coinBalance(model.balance)
-                amount.unit: _base.coin.amountUnit // TODO
-                amount.fiatValueHuman: model.fiatBalance // TODO
-                amount.fiatUnit: _base.coin.fiatAmountUnit // TODO
-            }
+            address: model
             contextMenu: _contextMenu
         }
-        templateDelegate: BAddressItem {
-            address: BAddressObject {
-                coin: _base.tx.coin
-            }
-            contextMenu: _contextMenu
-        }
+        templateDelegate: BAddressItem {}
     }
 
     BMenu {
         id: _contextMenu
-        property BAddressObject address: null
+        property var address // AddressListModel item
 
         BMenuItem {
             text: qsTr("Copy address")

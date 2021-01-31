@@ -3,7 +3,7 @@ import "../application"
 
 BToolButton {
     id: _base
-    property BMenu menu: null
+    property BMenu menu
 
     font.bold: true
     text: BStandardText.buttonText.contextMenuRole

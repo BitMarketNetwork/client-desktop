@@ -8,6 +8,7 @@ import PySide2.QtCore as qt_core
 
 from .. import orderedset
 from . import db_entry, hd, key, mtx_impl, serialization, tx, util
+from ..models.address_list import AddressAmountModel, AddressStateModel
 
 log = logging.getLogger(__name__)
 
@@ -41,7 +42,6 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
     lastOffsetChanged = qt_core.Signal()
     useAsSourceChanged = qt_core.Signal()
     heightChanged = qt_core.Signal()
-    updatingChanged = qt_core.Signal()
     #
     addTx = qt_core.Signal()
     addTxList = qt_core.Signal(int, arguments=["count"])
@@ -88,6 +88,14 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         # this map can be updated before each transaction
         self.__unspents = []
         self.__connect_tx_model()
+
+    @property
+    def amountModel(self) -> AddressAmountModel:
+        return self._amount_model
+
+    @property
+    def stateModel(self) -> AddressStateModel:
+        return self._state_model
 
     def __connect_tx_model(self):
         from ..ui.gui import Application
@@ -147,7 +155,7 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         res = cls(hd__key.to_address(type_, witver), coin, created=True)
         res.create()
         res.__key = hd__key
-        res.updatingChanged.emit()
+        res._state_model.refresh()
         res.type = type_
         return res
 
@@ -162,9 +170,15 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
     @coin.setter
     def coin(self, value: "CoinType"):
         self._coin = value
-        if value is not None:
-            self._coin.heightChanged.connect(
-                self.heightChanged, qt_core.Qt.UniqueConnection)
+        if value is None:
+            return
+        from ..ui.gui import Application
+        self._amount_model = AddressAmountModel(Application.instance(), self)
+        self._amount_model.moveToThread(Application.instance().thread())
+        self._state_model = AddressStateModel(Application.instance(), self)
+        self._state_model.moveToThread(Application.instance().thread())
+        self._coin.heightChanged.connect(
+            self.heightChanged, qt_core.Qt.UniqueConnection)
 
     @property
     def hd_index(self) -> Optional[int]:
@@ -495,7 +509,7 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
                     f"HD generation failed: wrong result address: {adrr} != {self.__name} for {self}")
 
     # qml bindings
-    @qt_core.Property(bool, notify=updatingChanged)
+    @qt_core.Property(bool)
     def isUpdating(self) -> bool:
         self.__deleted = False
         return self.__updating_history
@@ -507,7 +521,7 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         if val == self.__updating_history:
             return
         self.__updating_history = bool(val)
-        self.updatingChanged.emit()
+        self._state_model.refresh()
 
     @property
     def is_going_update(self) -> bool:
@@ -546,9 +560,9 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
     def balance(self) -> int:
         return self.__balance
 
-    @qt_core.Property(str, notify=balanceChanged)
-    def fiatBalance(self) -> str:
-        return str(self._coin.fiat_amount(self.__balance))
+    @qt_core.Property(int, notify=balanceChanged)
+    def fiatBalance(self) -> int:
+        return self._coin.fiat_amount(self.__balance)
 
     @qt_core.Property(bool, notify=balanceChanged)
     def canSend(self) -> bool:
@@ -564,6 +578,7 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
             return
         self.__balance = bl
         self.balanceChanged.emit()
+        self._amount_model.refresh()
         if self._coin is not None:
             self._coin.update_balance()
 

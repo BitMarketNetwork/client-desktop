@@ -1,17 +1,19 @@
+import itertools
 import logging
 from functools import partial
-import itertools
 from typing import Iterable, List, Optional, Union
 
 import PySide2.QtCore as qt_core
 
-from .. import meta, orderedset
 # linter
-from . import (address, root_address, address_model, coin_network, hd, key,
-               serialization)
-from . import db_entry
-from .. import coins
-from ..models.coin_list import AmountModel, StateModel, RemoteStateModel
+from . import address, coin_network, db_entry, hd, key, root_address, \
+    serialization
+from .. import coins, meta, orderedset
+from ..models.address_list import AddressListModel, AddressListSortedModel
+from ..models.coin_list import \
+    CoinAmountModel, \
+    CoinRemoteStateModel, \
+    CoinStateModel
 
 log = logging.getLogger(__name__)
 
@@ -28,9 +30,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
 
     name: str = None
     _decimal_level: int = 0
-    # for web explrores
-    net_name: str = None
-    # test network or not
     _test: bool = False
     _usd_rate: float = 0.
 
@@ -59,10 +58,10 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
 
         self._balance = 0
 
-        from  ..ui.gui import Application
-        self._amount_model = AmountModel(Application.instance(), self)
-        self._state_model = StateModel(Application.instance(), self)
-        self._remote_state_model = RemoteStateModel(Application.instance(), self)
+        from ..ui.gui import Application
+        self._amount_model = CoinAmountModel(Application.instance(), self)
+        self._state_model = CoinStateModel(Application.instance(), self)
+        self._remote_state_model = CoinRemoteStateModel(Application.instance(), self)
         self._address_list_model = AddressListSortedModel(AddressListModel(self))
 
         self._remote = {}  # TODO
@@ -88,15 +87,15 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         return f"<{self.fullName},{self.rowid} vis:{self.__visible}>"
 
     @property
-    def amountModel(self) -> AmountModel:
+    def amountModel(self) -> CoinAmountModel:
         return self._amount_model
 
     @property
-    def stateModel(self) -> StateModel:
+    def stateModel(self) -> CoinStateModel:
         return self._state_model
 
     @property
-    def remoteStateModel(self) -> RemoteStateModel:
+    def remoteStateModel(self) -> CoinRemoteStateModel:
         return self._remote_state_model
 
     @property
@@ -154,22 +153,12 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     @qt_core.Slot(address.CAddress)
     def addAddressImpl(self, wallet: address.CAddress) -> None:
         assert qt_core.QThread.currentThread() == self.thread()
-        self.__address_model.append()
-        self.__wallet_list.append(wallet)
-        self.update_balance()
-        self.__address_model.append_complete()
-
-        #
+        with self._address_list_model.sourceModel().lockInsertRow():
+            self._address_list.append(wallet)
+            self.update_balance()
         from ..ui.gui import Application
         Application.instance().coinManager.render_cell(self)
-        # self.__address_model.reset()
-
-        #if self.parent():
         Application.instance().networkThread.update_wallet(wallet)
-        wallet.updatingChanged.connect(
-            partial(self._address_list_model.address_updated, wallet), qt_core.Qt.QueuedConnection)
-        wallet.balanceChanged.connect(
-            partial(self._address_list_model.balance_changed, wallet), qt_core.Qt.QueuedConnection)
 
     def _next_hd_index(self):
         idxs = [a.hd_index for a in self._address_list]
@@ -343,10 +332,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         if isinstance(key, str):
             return next((w for w in self._address_list if w.name == key), None)
 
-    def __call__(self, idx: int) -> address.CAddress:
-        "Filtered version of getitem"
-        return self._address_list_model(idx)
-
     def __update_wallets(self, from_=Optional[int], remove_txs_from: Optional[int] = None, verbose: bool = False):
         "from old to new one !!!"
         for w in self._address_list:
@@ -512,12 +497,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         return self._balance
 
     @qt_core.Property(str, notify=balanceChanged)
-    def balanceHuman(self) -> str:
-        return self.balance_human(self._balance)
-
-    @qt_core.Property(str, notify=balanceChanged)
-    def fiatBalance(self) -> str:
-        # log.warning(f"{self._balance} ==> {self.fiat_amount(self._balance)}")
+    def fiatBalance(self) -> float:
         return self.fiat_amount(self._balance)
 
     @qt_core.Property(bool, constant=True)
@@ -555,7 +535,6 @@ class Bitcoin(CoinType, coins.Bitcoin):
 
 class BitcoinTest(Bitcoin, coins.BitcoinTest):
     name = "btctest"
-    net_name = "btc-testnet"
     network = coin_network.BitcoinTestNetwork
     _test = True
     _usd_rate = 9400.51

@@ -5,18 +5,12 @@ import "../basiccontrols"
 
 BItemDelegate {
     id: _base
-    property BAddressObject address: null
-    property BMenu contextMenu: null
+    property var address // AddressListModel item
+    property BMenu contextMenu
 
-    text: {
-        if (address.label && address.label.length > 0) {
-            return address.label + " : " + address.name
-        } else {
-            return address.name
-        }
-    }
+    text: address ? (address.state.label ? address.state.label + " : " : "") + address.name : "-"
 
-    // TODO address.updating: show animation
+    // TODO address.state.isUpdating: show animation
 
     contentItem: BRowLayout {
         Loader {
@@ -39,16 +33,16 @@ BItemDelegate {
             BLayout.fillWidth: true
             elide: BLabel.ElideMiddle
             text: _base.text
-            color: address.watchOnly ? Material.hintTextColor : Material.foreground
+            color: _base.address && _base.address.state.watchOnly ? Material.hintTextColor : Material.foreground
         }
         BAmountLabel {
             font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
-            color: address.watchOnly ? Material.hintTextColor : Material.foreground
-            amount: address.amount
+            color: _base.address && _base.address.state.watchOnly ? Material.hintTextColor : Material.foreground
+            amount: _base.address ? _base.address.amount : null
         }
 
         Loader {
-            active: _base.contextMenu !== null
+            active: _base.address && _base.contextMenu
             sourceComponent: BContextMenuToolButton {
                 menu: null
                 onClicked: {
@@ -60,7 +54,7 @@ BItemDelegate {
     }
 
     onDoubleClicked: {
-        BBackend.uiManager.copyToClipboard(address.name)
+        BBackend.uiManager.copyToClipboard(address ? address.name : "")
     }
 
     // TODO right click

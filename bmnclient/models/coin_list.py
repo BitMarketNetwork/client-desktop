@@ -2,27 +2,19 @@
 from __future__ import annotations
 
 from enum import auto
-from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
     Signal as QSignal
 
-from . import RoleEnum, AbstractListModel, AbstractStateModel
-
-if TYPE_CHECKING:
-    from ..wallet.coins import CoinType
-    from ..ui.gui import Application
-
-
-class AbstractCoinStateModel(AbstractStateModel):
-    def __init__(self, application: Application, coin: CoinType) -> None:
-        super().__init__()
-        self._application = application
-        self._coin = coin
+from . import \
+    AbstractAmountModel, \
+    AbstractListModel, \
+    AbstractCoinStateModel, \
+    RoleEnum
 
 
-class StateModel(AbstractCoinStateModel):
+class CoinStateModel(AbstractCoinStateModel):
     _stateChanged = QSignal()
 
     @QProperty(bool, notify=_stateChanged)
@@ -34,23 +26,27 @@ class StateModel(AbstractCoinStateModel):
         self._coin.visible = value
 
 
-class RemoteStateModel(AbstractCoinStateModel):
+class CoinRemoteStateModel(AbstractCoinStateModel):
     _stateChanged = QSignal()
 
     @QProperty(str, notify=_stateChanged)
     def versionHuman(self) -> str:
+        # noinspection PyProtectedMember
         return self._coin._remote.get("version_string", "-")  # TODO
 
     @QProperty(int, notify=_stateChanged)
     def version(self) -> int:
+        # noinspection PyProtectedMember
         return self._coin._remote.get("version", -1)  # TODO
 
     @QProperty(int, notify=_stateChanged)
     def status(self) -> int:
+        # noinspection PyProtectedMember
         return self._coin._remote.get("status", -1)  # TODO
 
     @QProperty(int, notify=_stateChanged)
     def height(self) -> int:
+        # noinspection PyProtectedMember
         return self._coin._remote.get("height", -1)  # TODO
 
     @QProperty(str, notify=_stateChanged)
@@ -61,28 +57,12 @@ class RemoteStateModel(AbstractCoinStateModel):
         return self._application.language.locale.integerToString(height)
 
 
-class AmountModel(AbstractCoinStateModel):
-    _stateChanged = QSignal()
+class CoinAmountModel(AbstractAmountModel, AbstractCoinStateModel):
+    def _value(self) -> int:
+        return self._coin.balance
 
-    @QProperty(str, notify=_stateChanged)
-    def valueHuman(self) -> str:
-        return self._coin.amountToString(
-            self._coin.balance,
-            locale=self._application.language.locale)
-
-    @QProperty(str, constant=True)
-    def unit(self) -> str:
-        return self._coin.unit
-
-    @QProperty(str, notify=_stateChanged)
-    def fiatValueHuman(self) -> str:
-        return self._application.language.locale.floatToString(
-            self._coin.fiatBalance,
-            2)
-
-    @QProperty(str, notify=_stateChanged)
-    def fiatUnit(self) -> str:
-        return "USD"  # TODO
+    def _fiatValue(self) -> float:
+        return self._coin.fiatBalance
 
 
 class CoinListModel(AbstractListModel):

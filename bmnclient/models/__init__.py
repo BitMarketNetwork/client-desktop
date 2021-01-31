@@ -3,9 +3,10 @@ from __future__ import annotations
 
 from enum import IntEnum
 from functools import lru_cache
-from typing import Any, List, Optional, Sequence
+from typing import Any, List, Optional, Sequence, TYPE_CHECKING
 
 from PySide2.QtCore import \
+    Property as QProperty, \
     QAbstractListModel, \
     QByteArray, \
     QModelIndex, \
@@ -13,6 +14,11 @@ from PySide2.QtCore import \
     QSortFilterProxyModel, \
     Qt, \
     Signal as QSignal
+
+if TYPE_CHECKING:
+    from ..wallet.address import CAddress
+    from ..wallet.coins import CoinType
+    from ..ui.gui import Application
 
 
 class RoleEnum(IntEnum):
@@ -77,12 +83,64 @@ class AbstractListModel(QAbstractListModel):
 
 
 class AbstractListSortedModel(QSortFilterProxyModel):
-    pass
+    def __init__(self, source_model: AbstractListModel, sort_role: int) -> None:
+        super().__init__()
+        self.setSourceModel(source_model)
+        self.setSortRole(sort_role)
+        self.sort(0, Qt.AscendingOrder)
 
 
-class AbstractStateModel(QObject):
+class AbstractCoinStateModel(QObject):
     _stateChanged: Optional[QSignal] = None
+
+    def __init__(self, application: Application, coin: CoinType) -> None:
+        super().__init__()
+        self._application = application
+        self._coin = coin
 
     def refresh(self) -> None:
         if self._stateChanged:
             self._stateChanged.emit()
+
+
+class AbstractAddressStateModel(AbstractCoinStateModel):
+    def __init__(self, application: Application, address: CAddress) -> None:
+        super().__init__(application, address.coin)
+        self._address = address
+
+
+class AbstractAmountModel:
+    _stateChanged = QSignal()
+
+    def _value(self) -> int:
+        raise NotImplementedError
+
+    def _fiatValue(self) -> float:
+        raise NotImplementedError
+
+    @QProperty(str, notify=_stateChanged)
+    def value(self) -> int:
+        return self._value()
+
+    @QProperty(str, notify=_stateChanged)
+    def valueHuman(self) -> str:
+        # noinspection PyUnresolvedReferences
+        return self._coin.amountToString(
+            self._value(),
+            locale=self._application.language.locale)
+
+    @QProperty(str, constant=True)
+    def unit(self) -> str:
+        # noinspection PyUnresolvedReferences
+        return self._coin.unit
+
+    @QProperty(str, notify=_stateChanged)
+    def fiatValueHuman(self) -> str:
+        # noinspection PyUnresolvedReferences
+        return self._application.language.locale.floatToString(
+            self._fiatValue(),
+            2)
+
+    @QProperty(str, notify=_stateChanged)
+    def fiatUnit(self) -> str:
+        return "USD"  # TODO

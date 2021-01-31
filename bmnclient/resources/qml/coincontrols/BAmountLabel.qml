@@ -4,8 +4,8 @@ import "../basiccontrols"
 
 BControl {
     id: _base
-    property var amount // AmountModel
-    property color color: _base.enabled ? _base.Material.foreground : _base.Material.hintTextColor
+    property var amount // AbstractAmountModel
+    property color color: enabled ? Material.foreground : Material.hintTextColor
     property int orientation: Qt.Vertical
 
     contentItem: BGridLayout {
@@ -15,12 +15,12 @@ BControl {
             BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
             font.bold: true
             color: _base.color
-            text: amount.valueHuman
+            text: _base.amount ? _base.amount.valueHuman : "0.00"
         }
         BLabel {
             BLayout.alignment: Qt.AlignVCenter | Qt.AlignLeft
             color: _base.color
-            text: amount.unit
+            text: _base.amount ? _base.amount.unit : "XXX"
         }
 
         Loader {
@@ -36,12 +36,12 @@ BControl {
             BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
             font.bold: true
             color: _base.color
-            text: amount.fiatValueHuman
+            text: _base.amount ? _base.amount.fiatValueHuman : "0.00"
         }
         BLabel {
             BLayout.alignment: Qt.AlignVCenter | Qt.AlignLeft
             color: _base.color
-            text: amount.fiatUnit
+            text: _base.amount ? _base.amount.fiatUnit : "XXX"
         }
     }
 }
