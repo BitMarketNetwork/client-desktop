@@ -129,6 +129,11 @@ class Application(CoreApplication):
     def backendContext(self) -> BackendContext:
         return self._backend_context
 
+    @property
+    def language(self) -> Language:
+        assert self._language
+        return self._language
+
     def _onRun(self) -> None:
         super()._onRun()
         url = self._qml_engine.rootContext().resolvedUrl(QUrl(QML_FILE))

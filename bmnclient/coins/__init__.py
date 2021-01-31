@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from typing import Optional, TYPE_CHECKING, Type
+
 from .address import AddressBase
 
-from typing import Type
+if TYPE_CHECKING:
+    from ..language import Locale
 
 
 class CoinBase:
@@ -34,12 +37,16 @@ class CoinBase:
     def stringToAmount(self, source: str) -> int:
         raise NotImplementedError
 
-    def amountToString(self, amount: int) -> str:
+    def amountToString(
+            self,
+            amount: int,
+            *,
+            locale: Optional[Locale] = None) -> str:
         if not amount:
             return "0"
         if amount < 0:
-            amount *= -1
-            result = "-"
+            amount = abs(amount)
+            result = locale.negativeSign() if locale else "-"
         else:
             result = ""
 
@@ -50,12 +57,14 @@ class CoinBase:
             b //= 10
             zero_count += 1
 
+        result += locale.integerToString(a) if locale else str(a)
         if b:
             b = str(b)
             zero_count = self._DECIMAL_SIZE - len(b) - zero_count
-            return result + str(a) + "." + ("0" * zero_count) + str(b)
-        else:
-            return result + str(a)
+            result += locale.decimalPoint() if locale else "."
+            result += ("0" * zero_count) + str(b)
+
+        return result
 
 
 class Bitcoin(CoinBase):

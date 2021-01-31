@@ -87,8 +87,4 @@ QtObject {
         }
         return parent.mapFromItem(parent.Window.window.contentItem, point)
     }
-
-    function integerToLocaleString(value) {
-        return Number(value).toLocaleString(_applicationWindow.locale, 'f', 0)
-    }
 }

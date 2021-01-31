@@ -12,11 +12,13 @@ from . import RoleEnum, AbstractListModel, AbstractStateModel
 
 if TYPE_CHECKING:
     from ..wallet.coins import CoinType
+    from ..ui.gui import Application
 
 
 class AbstractCoinStateModel(AbstractStateModel):
-    def __init__(self, coin: CoinType) -> None:
+    def __init__(self, application: Application, coin: CoinType) -> None:
         super().__init__()
+        self._application = application
         self._coin = coin
 
 
@@ -36,7 +38,7 @@ class RemoteStateModel(AbstractCoinStateModel):
     _stateChanged = QSignal()
 
     @QProperty(str, notify=_stateChanged)
-    def humanVersion(self) -> str:
+    def versionHuman(self) -> str:
         return self._coin._remote.get("version_string", "-")  # TODO
 
     @QProperty(int, notify=_stateChanged)
@@ -51,13 +53,22 @@ class RemoteStateModel(AbstractCoinStateModel):
     def height(self) -> int:
         return self._coin._remote.get("height", -1)  # TODO
 
+    @QProperty(str, notify=_stateChanged)
+    def heightHuman(self) -> str:
+        height = self.height
+        if height < 0:
+            return "-"
+        return self._application.language.locale.integerToString(height)
+
 
 class AmountModel(AbstractCoinStateModel):
     _stateChanged = QSignal()
 
     @QProperty(str, notify=_stateChanged)
     def valueHuman(self) -> str:
-        return self._coin.amountToString(self._coin.balance)  # TODO qml format
+        return self._coin.amountToString(
+            self._coin.balance,
+            locale=self._application.language.locale)
 
     @QProperty(str, constant=True)
     def unit(self) -> str:
@@ -65,7 +76,9 @@ class AmountModel(AbstractCoinStateModel):
 
     @QProperty(str, notify=_stateChanged)
     def fiatValueHuman(self) -> str:
-        return str(self._coin.fiatBalance)  # TODO qml format
+        return self._application.language.locale.floatToString(
+            self._coin.fiatBalance,
+            2)
 
     @QProperty(str, notify=_stateChanged)
     def fiatUnit(self) -> str:

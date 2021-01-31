@@ -547,10 +547,6 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         return self.__balance
 
     @qt_core.Property(str, notify=balanceChanged)
-    def balanceHuman(self) -> str:
-        return str(self._coin.balance_human(self.__balance))
-
-    @qt_core.Property(str, notify=balanceChanged)
     def fiatBalance(self) -> str:
         return str(self._coin.fiat_amount(self.__balance))
 

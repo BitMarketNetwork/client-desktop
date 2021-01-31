@@ -131,16 +131,16 @@ class TestCoins(unittest.TestCase):
         self._test_address_decode(
             BitcoinTestAddress,
             BITCOIN_TEST_ADDRESS_LIST)
-        self._test_bitcoin_address_decode(
+        self._test_address_decode(
             LitecoinAddress,
             LITECOIN_ADDRESS_LIST)
 
     def test_amount_to_string(self) -> None:
         b = Bitcoin()
 
-        self.assertEqual(b.amountToString(0), "0")
-        self.assertEqual(b.amountToString(-1 * 10 ** 8), "-1")
-        self.assertEqual(b.amountToString(+1 * 10 ** 8), "1")
+        self.assertEqual("0", b.amountToString(0))
+        self.assertEqual("-1", b.amountToString(-1 * 10 ** 8))
+        self.assertEqual("1", b.amountToString(+1 * 10 ** 8))
 
         for (s, d) in {
             1: "0.00000001",
@@ -152,5 +152,5 @@ class TestCoins(unittest.TestCase):
             880000010: "8.8000001",
             88000000000: "880"
         }.items():
-            self.assertEqual(b.amountToString(-s), "-" + d)
-            self.assertEqual(b.amountToString(s), d)
+            self.assertEqual("-" + d, b.amountToString(-s))
+            self.assertEqual(d, b.amountToString(s))

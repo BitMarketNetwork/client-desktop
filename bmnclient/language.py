@@ -13,6 +13,23 @@ from .logger import Logger
 from .version import ProductPaths
 
 
+# QLocale: problems with negative numbers
+class Locale(QLocale):
+    def floatToString(self, value: float, precision=2):
+        if value < 0:
+            value = abs(value)
+            result = super().negativeSign()
+        else:
+            result = ""
+        return result + super().toString(value, "f", precision)
+
+    def integerToString(self, value: int):
+        if value < 0:
+            value = abs(value)
+            return super().negativeSign() + super().toString(value)
+        return super().toString(value)
+
+
 class Language:
     SUFFIX_LIST = (".qml.qm", ".py.qm",)
     FILE_MATH = "*.qml.qm"
@@ -22,9 +39,9 @@ class Language:
         self._logger = Logger.getClassLogger(__name__, self.__class__, name)
 
         if name is None:
-            self._locale = QLocale()
+            self._locale = Locale()
         else:
-            self._locale = QLocale(name)
+            self._locale = Locale(name)
 
         self._translator_list = []
         if name != self.PRIMARY_NAME:
@@ -40,6 +57,10 @@ class Language:
     @property
     def name(self) -> str:
         return self._locale.name()
+
+    @property
+    def locale(self) -> Locale:
+        return self._locale
 
     def install(self) -> bool:
         translated = False
@@ -78,19 +99,19 @@ class Language:
 
     @classmethod
     def _createAvailableTranslationItem(cls, name: str) -> dict:
-        locale = QLocale(name)
+        locale = Locale(name)
         assert locale.name() == name
         return {
             "name": name,
             "friendlyName": "{} - {}".format(
                 locale.nativeLanguageName().title(),
-                QLocale.languageToString(locale.language()).title())
+                Locale.languageToString(locale.language()).title())
         }
 
     @classmethod
     def _createTranslator(
             cls,
-            locale: QLocale,
+            locale: Locale,
             suffix: str) -> Optional[QTranslator]:
         translator = QTranslator()
         result = translator.load(

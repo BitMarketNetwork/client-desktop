@@ -32,9 +32,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     net_name: str = None
     # test network or not
     _test: bool = False
-    #
     _usd_rate: float = 0.
-    _convertion_ratio: float = 100000000.
 
     # decimal points
     _default_fee = 10000
@@ -57,10 +55,15 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self._address_list = []
+
         self._balance = 0
-        self._amount_model = AmountModel(self)
-        self._state_model = StateModel(self)
-        self._remote_state_model = RemoteStateModel(self)
+
+        from  ..ui.gui import Application
+        self._amount_model = AmountModel(Application.instance(), self)
+        self._state_model = StateModel(Application.instance(), self)
+        self._remote_state_model = RemoteStateModel(Application.instance(), self)
+        self._address_list_model = AddressListSortedModel(AddressListModel(self))
 
         self._remote = {}  # TODO
 
@@ -73,10 +76,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         self.__unverified_hash = None
         #
         self.__status = None
-        self.__wallet_list = []
-        address_model_ = address_model.AddressModel(self)
-        self.__address_model = address_model.AddressProxyModel(self)
-        self.__address_model.setSourceModel(address_model_)
+
         self.__hd_node = None
         self.__visible = True
         self.__tx_set = orderedset.OrderedSet()
@@ -99,6 +99,14 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     def remoteStateModel(self) -> RemoteStateModel:
         return self._remote_state_model
 
+    @property
+    def addressListModel(self) -> qt_core.QObject:
+        return self._address_list_model
+
+    @property
+    def addressList(self) -> List[address.CAddress]:
+        return self._address_list
+
     @qt_core.Property(str, constant=True)
     def unit(self) -> str:
         """
@@ -111,19 +119,17 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     def balance_human(self, amount: float = None) -> str:
         if amount is None:
             amount = self._balance
-        res = amount / self._convertion_ratio
-        # log.debug(f"{res} == {round(res, self._decimal_level)}")
+        res = amount / (10 ** self._DECIMAL_SIZE)
         res = format(round(res, self._decimal_level), 'f')
         if '.' in res:
             return res.rstrip("0.") or "0"
         return res
 
     def from_human(self, value: str) -> float:
-        return float(value) * self._convertion_ratio
+        return float(value) * 10 ** self._DECIMAL_SIZE
 
-    def fiat_amount(self, amount: float, convert=True) -> str:
-        # return locale.currency(round(amount * self._usd_rate / (self._convertion_ratio if convert else 1.), 2))
-        return '${:,.2f}'.format(round(amount * self._usd_rate / (self._convertion_ratio if convert else 1.), 2))
+    def fiat_amount(self, amount: float) -> float:
+        return amount * self._usd_rate / (10 ** self._DECIMAL_SIZE)
 
     def _get_rate(self)-> float:
         "USD rate"
@@ -161,9 +167,9 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         #if self.parent():
         Application.instance().networkThread.update_wallet(wallet)
         wallet.updatingChanged.connect(
-            partial(self.__address_model.address_updated, wallet), qt_core.Qt.QueuedConnection)
+            partial(self._address_list_model.address_updated, wallet), qt_core.Qt.QueuedConnection)
         wallet.balanceChanged.connect(
-            partial(self.__address_model.balance_changed, wallet), qt_core.Qt.QueuedConnection)
+            partial(self._address_list_model.balance_changed, wallet), qt_core.Qt.QueuedConnection)
 
     def _next_hd_index(self):
         idxs = [a.hd_index for a in self._address_list]
@@ -339,7 +345,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
 
     def __call__(self, idx: int) -> address.CAddress:
         "Filtered version of getitem"
-        return self.__address_model(idx)
+        return self._address_list_model(idx)
 
     def __update_wallets(self, from_=Optional[int], remove_txs_from: Optional[int] = None, verbose: bool = False):
         "from old to new one !!!"
@@ -427,9 +433,8 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         index = self._address_list.index(wallet)
         # self._address_list.remove(wallet)
         wallet.clear()
-        self.__address_model.remove(index)
-        del self._address_list[index]
-        self.__address_model.remove_complete()
+        with self._address_list_model.sourceModel().lockRemoveRow(index):
+            del self._address_list[index]
         self.update_balance()
 
     def clear(self):
@@ -477,10 +482,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     @verified_height.setter
     def verified_height(self, val):
         self.__verified_height = val
-
-    @property
-    def convertion_ratio(self) -> float:
-        return self._convertion_ratio
 
     @property
     def active(self) -> bool:

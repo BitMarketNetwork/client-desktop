@@ -55,7 +55,7 @@ BPane {
                 text: qsTr("Daemon version:")
             }
             BInfoValue {
-                text: "\"%1\" (%2)".arg(_base.coin.remoteState.humanVersion).arg(_base.coin.remoteState.version)
+                text: "\"%1\" (%2)".arg(_base.coin.remoteState.versionHuman).arg(_base.coin.remoteState.version)
             }
             BInfoSeparator {}
 
@@ -63,7 +63,7 @@ BPane {
                 text: qsTr("Daemon height:")
             }
             BInfoValue {
-                text: _applicationManager.integerToLocaleString(_base.coin.remoteState.height)
+                text: _base.coin.remoteState.heightHuman
             }
             BInfoSeparator {}
         }
