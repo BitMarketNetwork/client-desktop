@@ -58,6 +58,7 @@ class Blake2bDigest(Digest):
     SIZE: Final = 512 // 8
 
     def __init__(self, context: Optional[Digest] = None) -> None:
+        # noinspection PyArgumentList
         self._context = context or Hash(BLAKE2b(self.SIZE))
 
     def update(self, data: bytes) -> None:

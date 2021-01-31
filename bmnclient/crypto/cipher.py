@@ -12,7 +12,8 @@ class AeadCipher:
     CIPHER: Final = aead.AESGCM
     NONCE_LENGTH: Final = 96 // 8  # NIST recommends
     KEY_LENGTH: Final = 128 // 8
-    ASSOCIATED_DATA: Final = Product.SHORT_NAME.encode(encoding=Product.ENCODING)
+    ASSOCIATED_DATA: Final = Product.SHORT_NAME.encode(
+        encoding=Product.ENCODING)
 
     def __init__(self, key: bytes, nonce: Optional[bytes] = None) -> None:
         self._cipher = self.CIPHER(key)
