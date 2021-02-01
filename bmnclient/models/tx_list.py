@@ -1,63 +1,92 @@
+from __future__ import annotations
 
 import logging
-from typing import Optional, Union
+from typing import Optional, Union, TYPE_CHECKING
 from enum import auto
 from . import \
-    AbstractAddressStateModel, \
     AbstractAmountModel, \
     AbstractListModel, \
     AbstractListSortedModel, \
+    AbstractTxStateModel, \
     RoleEnum
 
+from PySide2.QtCore import \
+    Property as QProperty, \
+    QDateTime, \
+    QLocale, \
+    Signal as QSignal
+
 import PySide2.QtCore as qt_core  # pylint: disable=import-error
-from ..models import RoleEnum
-from ..wallet import tx  # pylint
+if TYPE_CHECKING:
+    from ..wallet import tx  # pylint
+
 log = logging.getLogger(__name__)
+
+
+class TxStateModel(AbstractTxStateModel):
+    _stateChanged = QSignal()
+
+    @QProperty(int, notify=_stateChanged)
+    def status(self) -> int:
+        return self._tx.status
+
+    @QProperty(str, notify=_stateChanged)
+    def timeHuman(self) -> str:
+        v = QDateTime()
+        v.setSecsSinceEpoch(self._tx.time)
+        return self._application.language.locale.toString(
+            v,
+            QLocale.LongFormat)
+
+    @QProperty(int, notify=_stateChanged)
+    def height(self) -> int:
+        return self._tx.height
+
+    @QProperty(int, notify=_stateChanged)
+    def confirmations(self) -> int:
+        return self._tx.confirmCount
+
+
+class TxAmountModel(AbstractAmountModel, AbstractTxStateModel):
+    def _value(self) -> int:
+        return self._tx.balance
+
+    def _fiatValue(self) -> float:
+        return self._tx.fiatBalance
+
+
+class TxFeeAmountModel(AbstractAmountModel, AbstractTxStateModel):
+    def _value(self) -> int:
+        return self._tx.fee
+
+    def _fiatValue(self) -> float:
+        return self._tx.feeFiatBalance
 
 
 class TxListModel(AbstractListModel):
     class Role(RoleEnum):
-        ID = auto()
+        NAME = auto()
         AMOUNT = auto()
-        STATUS = auto()
-        BLOCK = auto()
-        HEIGHT = auto()
-        TIME = auto()
-        CREATED = auto()
-        FEE = auto()
-        CONFIRM = auto()
+        FEE_AMOUNT = auto()
+        STATE = auto()
+
         INPUTS = auto()
         OUTPUTS = auto()
 
-
     _ROLE_MAP = {
-        Role.ID: (
+        Role.NAME: (
             b"name",
             lambda t: t.name),
         Role.AMOUNT: (
-            b"balance",
-            lambda t: t.balance),
-        Role.STATUS: (
-            b"status",
-            lambda t: t.status),
-        Role.BLOCK: (
-            b"block",
-            lambda t: t.block),
-        Role.HEIGHT: (
-            b"height",
-            lambda t: t.height),
-        Role.TIME: (
-            b"timeHuman",
-            lambda t: t.timeHuman),
-        Role.CREATED: (
-            b"TODO1",
-            lambda t: t.time),
-        Role.FEE: (
-            b"feeHuman",
-            lambda t: t.feeHuman),
-        Role.CONFIRM: (
-            b"confirmCount",
-            lambda t: t.confirmCount),
+            b"amount",
+            lambda t: t.amountModel),
+        Role.FEE_AMOUNT: (
+            b"feeAmount",
+            lambda t: t.feeAmountModel),
+        Role.STATE: (
+            b"state",
+            lambda t: t.stateModel),
+
         Role.INPUTS: (
             b"inputsModel",
             lambda t: t.inputsModel),

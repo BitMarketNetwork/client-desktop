@@ -7,7 +7,7 @@ from typing import Iterable, List, Optional, Tuple
 import PySide2.QtCore as qt_core
 
 from . import db_entry, input_model, serialization
-
+from ..models.tx_list import TxAmountModel, TxFeeAmountModel, TxListModel, TxStateModel, TxListSortedModel
 log = logging.getLogger(__name__)
 
 
@@ -28,7 +28,7 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
         # assert wallet is not None
 
         super().__init__(parent=None)
-        self.__wallet = wallet
+        self._address = wallet
         self.__inputs = []
         self.__outputs = []
         self.__coin_base = False
@@ -36,6 +36,26 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
         self.__local = False
         self.__input_model = input_model.InputModel(self, True)
         self.__output_model = input_model.InputModel(self, False)
+
+        from ..ui.gui import Application
+        self._amount_model = TxAmountModel(Application.instance(), self)
+        self._amount_model.moveToThread(Application.instance().thread())
+        self._fee_amount_model = TxFeeAmountModel(Application.instance(), self)
+        self._fee_amount_model.moveToThread(Application.instance().thread())
+        self._state_model = TxStateModel(Application.instance(), self)
+        self._state_model.moveToThread(Application.instance().thread())
+
+    @property
+    def amountModel(self) -> TxAmountModel:
+        return self._amount_model
+
+    @property
+    def feeAmountModel(self) -> TxFeeAmountModel:
+        return self._fee_amount_model
+
+    @property
+    def stateModel(self) -> TxStateModel:
+        return self._state_model
 
     @classmethod
     def make_dummy(cls, wallet: Optional["CAddress"]) -> "Transaction":
@@ -82,7 +102,7 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
         return self
 
     def dump(self) -> dict:
-        assert self.__wallet
+        assert self._address
         res = {
             "time": self.__time,
             "amount": self.__balance,
@@ -128,7 +148,7 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
 
     @property
     def wallet(self) -> "CAddress":
-        return self.__wallet
+        return self._address
 
     @property
     def local(self) -> bool:
@@ -140,9 +160,9 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
 
     @wallet.setter
     def wallet(self, wall: "CAddress"):
-        self.__wallet = wall
+        self._address = wall
         if wall:
-            self.__wallet.heightChanged.connect(
+            self._address.heightChanged.connect(
                 self.heightChanged, qt_core.Qt.QueuedConnection)
         # self.setParent(wall)
 
@@ -153,10 +173,10 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
     @qt_core.Property(int, notify=heightChanged)
     def confirmCount(self) -> int:
         if self.__height is not None \
-                and self.__wallet.coin.height:
-            return max(0, self.__wallet.coin.height - self.__height + 1)
+                and self._address.coin.height:
+            return max(0, self._address.coin.height - self.__height + 1)
         log.debug(
-            f"no confirm: height:{self.__height} => {self.__wallet.coin.height}")
+            f"no confirm: height:{self.__height} => {self._address.coin.height}")
         return 0
 
     @qt_core.Property(qt_core.QObject, constant=True)
@@ -225,7 +245,7 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
         return self.tr(f"Transaction of %s. Amount: %s %s") % (self.timeHuman,
                                                                sett.coinBalance(
                                                                    self.__balance),
-                                                               sett.coinUnit(self.__wallet.coin.unit))
+                                                               sett.coinUnit(self._address.coin.unit))
 
     def add_inputs(self, values: iter, in_type: bool = True):
         # import pdb; pdb.set_trace()
@@ -279,26 +299,23 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
 
     @qt_core.Property(str, constant=True)
     def unit(self) -> str:
-        return self.__wallet._coin.unit
+        return self._address.coin.unit
 
     @qt_core.Property(str, constant=True)
     def feeHuman(self) -> str:
-        return str(self.__wallet._coin.balance_human(self.__fee))
+        return str(self._address.coin.balance_human(self.__fee))
 
-    @qt_core.Property(str, constant=True)
-    def fiatBalance(self) -> str:
-        return str(self.__wallet._coin.fiat_amount(self.__balance))
+    @qt_core.Property(int, constant=True)
+    def feeFiatBalance(self) -> int:
+        return self._address.coin.fiat_amount(self.__fee)
+
+    @qt_core.Property(int, constant=True)
+    def fiatBalance(self) -> int:
+        return self._address.coin.fiat_amount(self.__balance)
 
     @qt_core.Property(str, constant=True)
     def timeHuman(self) -> str:
         return datetime.datetime.fromtimestamp(self.__time).strftime("%x %X")
-
-    @qt_core.Property(str, notify=heightChanged)
-    def block(self) -> str:
-        "can be none"
-        if self.__height is None:
-            return "-"
-        return str(self.__height)
 
     @qt_core.Property(int, notify=statusChanged)
     def status(self) -> int:

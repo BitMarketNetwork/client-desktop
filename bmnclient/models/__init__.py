@@ -18,6 +18,7 @@ from PySide2.QtCore import \
 if TYPE_CHECKING:
     from ..wallet.address import CAddress
     from ..wallet.coins import CoinType
+    from ..wallet.tx import Transaction
     from ..ui.gui import Application
 
 
@@ -107,6 +108,12 @@ class AbstractAddressStateModel(AbstractCoinStateModel):
     def __init__(self, application: Application, address: CAddress) -> None:
         super().__init__(application, address.coin)
         self._address = address
+
+
+class AbstractTxStateModel(AbstractAddressStateModel):
+    def __init__(self, application: Application, tx: Transaction) -> None:
+        super().__init__(application, tx.wallet)
+        self._tx = tx
 
 
 class AbstractAmountModel:

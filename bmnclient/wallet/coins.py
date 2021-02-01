@@ -14,7 +14,7 @@ from ..models.coin_list import \
     CoinAmountModel, \
     CoinRemoteStateModel, \
     CoinStateModel
-from ..models.tx_list import TxListModel, TxProxyModel
+from ..models.tx_list import TxListModel, TxListSortedModel
 
 log = logging.getLogger(__name__)
 
@@ -59,12 +59,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
 
         self._balance = 0
 
-        from ..ui.gui import Application
-        self._amount_model = CoinAmountModel(Application.instance(), self)
-        self._state_model = CoinStateModel(Application.instance(), self)
-        self._remote_state_model = CoinRemoteStateModel(Application.instance(), self)
-        self._address_list_model = AddressListSortedModel(AddressListModel(self))
-
         self._remote = {}  # TODO
 
         self._set_object_name(self.name)
@@ -83,6 +77,13 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         self.root = root_address.RootAddress(self)
         self.addAddress.connect(self.addAddressImpl,
                                 qt_core.Qt.QueuedConnection)
+
+        from ..ui.gui import Application
+        self._amount_model = CoinAmountModel(Application.instance(), self)
+        self._state_model = CoinStateModel(Application.instance(), self)
+        self._remote_state_model = CoinRemoteStateModel(Application.instance(), self)
+        self._address_list_model = AddressListSortedModel(AddressListModel(self))
+        self._tx_list_model = TxListSortedModel(TxListModel(self.__tx_set))
 
     def __str__(self) -> str:
         return f"<{self.fullName},{self.rowid} vis:{self.__visible}>"
@@ -106,6 +107,10 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     @property
     def addressList(self) -> List[address.CAddress]:
         return self._address_list
+
+    @property
+    def txListModel(self) -> TxListSortedModel:
+        return self._tx_list_model
 
     @qt_core.Property(str, constant=True)
     def unit(self) -> str:

@@ -5,11 +5,11 @@ import "../basiccontrols"
 
 BItemDelegate {
     id: _base
-    property BTxObject tx: null
+    property var tx // TxListModel item
     property BMenu contextMenu: null
     property real smallFontPointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
 
-    text: tx.hash
+    text: tx ? tx.name : "-"
 
     contentItem: BColumnLayout {
         BRowLayout {
@@ -41,8 +41,7 @@ BItemDelegate {
                 BAmountLabel {
                     BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
                     font.pointSize: _base.smallFontPointSize
-                    orientation: Qt.Horizontal
-                    amount: tx.amount
+                    amount: _base.tx ? _base.tx.amount : null
                 }
             }
             /* TODO BContextMenuToolButton {
