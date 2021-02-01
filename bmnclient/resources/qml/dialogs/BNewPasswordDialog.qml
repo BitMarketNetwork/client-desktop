@@ -61,12 +61,12 @@ BDialog {
         BButton {
             id: _acceptButton
             BDialogButtonBox.buttonRole: BDialogButtonBox.AcceptRole
-            text: BStandardText.buttonText.okRole
+            text: BStandardText.button.okRole
             enabled: false
         }
         BButton {
             BDialogButtonBox.buttonRole: BDialogButtonBox.RejectRole
-            text: BStandardText.buttonText.cancelRole
+            text: BStandardText.button.cancelRole
         }
     }
 

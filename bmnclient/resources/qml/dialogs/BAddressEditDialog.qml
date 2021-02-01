@@ -33,11 +33,11 @@ BDialog {
         }
         BButton {
             BDialogButtonBox.buttonRole: BDialogButtonBox.RejectRole
-            text: BStandardText.buttonText.cancelRole
+            text: BStandardText.button.cancelRole
         }
         BButton {
             BDialogButtonBox.buttonRole: BDialogButtonBox.ResetRole
-            text: BStandardText.buttonText.resetRole
+            text: BStandardText.button.resetRole
         }
     }
 

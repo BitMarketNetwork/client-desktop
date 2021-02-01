@@ -53,7 +53,7 @@ BDialog {
             }
             BButton {
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-                text: BStandardText.buttonText.cancelRole
+                text: BStandardText.button.cancelRole
                 onClicked: {
                     _base.reject()
                 }

@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls.Material 2.15
+import "../application"
 import "../basiccontrols"
 
 BControl {
@@ -15,12 +16,12 @@ BControl {
             BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
             font.bold: true
             color: _base.color
-            text: _base.amount ? _base.amount.valueHuman : "0.00"
+            text: _base.amount ? _base.amount.valueHuman : BStandardText.template.amount
         }
         BLabel {
             BLayout.alignment: Qt.AlignVCenter | Qt.AlignLeft
             color: _base.color
-            text: _base.amount ? _base.amount.unit : "XXX"
+            text: _base.amount ? _base.amount.unit : BStandardText.template.unit
         }
 
         Loader {
@@ -36,12 +37,12 @@ BControl {
             BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
             font.bold: true
             color: _base.color
-            text: _base.amount ? _base.amount.fiatValueHuman : "0.00"
+            text: _base.amount ? _base.amount.fiatValueHuman : BStandardText.template.amount
         }
         BLabel {
             BLayout.alignment: Qt.AlignVCenter | Qt.AlignLeft
             color: _base.color
-            text: _base.amount ? _base.amount.fiatUnit : "XXX"
+            text: _base.amount ? _base.amount.fiatUnit : BStandardText.template.unit
         }
     }
 }

@@ -110,7 +110,7 @@ BControl {
         case BAddressEditBox.Type.ViewRecipient:
             return qsTr("Copy address")
         case BAddressEditBox.Type.AddWatchOnly:
-            return BStandardText.buttonText.addRole
+            return BStandardText.button.addRole
         }
     }
 

@@ -4,7 +4,7 @@ import QtQuick 2.15
 import QtQuick.Controls.Material 2.15
 
 QtObject {
-    readonly property QtObject buttonText: QtObject {
+    readonly property QtObject button: QtObject {
         readonly property string contextMenuRole: "⋮"
         readonly property string unfoldControlRole: "+" // TODO bad
         readonly property string foldControlRole: "−" // TODO bad
@@ -31,6 +31,11 @@ QtObject {
         readonly property int acceptRoleMaterialColor: Material.Green
         readonly property string rejectRole: "✘"
         readonly property int rejectRoleMaterialColor: Material.Red
+    }
+
+    readonly property QtObject template: QtObject {
+        readonly property string amount: "0.00"
+        readonly property string unit: "XXX"
     }
 
     readonly property variant txStatusMap: [

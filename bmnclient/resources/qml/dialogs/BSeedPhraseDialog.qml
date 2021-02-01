@@ -17,7 +17,7 @@ BDialog {
     property bool readOnly: false
     property bool enableAccept: false
 
-    readonly property string closeDelayText: BStandardText.buttonText.closeRole + " (%1)"
+    readonly property string closeDelayText: BStandardText.button.closeRole + " (%1)"
     readonly property int closeDelay: 10
 
     title: {
@@ -67,7 +67,7 @@ BDialog {
             sourceComponent: BButton {
                 BDialogButtonBox.buttonRole: BDialogButtonBox.AcceptRole
                 parent: _buttonBox
-                text: BStandardText.buttonText.continueRole
+                text: BStandardText.button.continueRole
                 enabled: _base.enableAccept
             }
             onLoaded: {
@@ -87,7 +87,7 @@ BDialog {
                 case BSeedPhraseDialog.Type.Generate:
                 case BSeedPhraseDialog.Type.Validate:
                 case BSeedPhraseDialog.Type.Restore:
-                    return BStandardText.buttonText.cancelRole
+                    return BStandardText.button.cancelRole
                 case BSeedPhraseDialog.Type.Reveal:
                     return _base.closeDelayText.arg(_base.closeDelay)
                 }
@@ -106,10 +106,10 @@ BDialog {
                 text: {
                     switch (_base.type) {
                     case BSeedPhraseDialog.Type.Generate:
-                        return BStandardText.buttonText.refreshRole
+                        return BStandardText.button.refreshRole
                     case BSeedPhraseDialog.Type.Validate:
                     case BSeedPhraseDialog.Type.Restore:
-                        return BStandardText.buttonText.resetRole
+                        return BStandardText.button.resetRole
                     case BSeedPhraseDialog.Type.Reveal:
                         return ""
                     }

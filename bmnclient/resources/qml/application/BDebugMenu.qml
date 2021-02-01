@@ -84,24 +84,6 @@ BMenu {
     BMenu {
         title: "Debug scenarios"
         BMenuItem {
-            text: "SIGHUP simulation"
-            onTriggered: {
-                BBackend.debugManager.kill(1)
-            }
-        }
-        BMenuItem {
-            text: "SIGINT simulation"
-            onTriggered: {
-                BBackend.debugManager.kill(2)
-            }
-        }
-        BMenuItem {
-            text: "SIGQUIT simulation"
-            onTriggered: {
-                BBackend.debugManager.kill(3)
-            }
-        }
-        BMenuItem {
             text: "Add dummy TX"
             onTriggered: {
                 BBackend.coinManager.makeDummyTx()
