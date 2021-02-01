@@ -73,8 +73,8 @@ class CoinListModel(AbstractListModel):
         AMOUNT = auto()
         STATE = auto()
         REMOTE_STATE = auto()
-        ADDRESS_LIST_MODEL = auto()
-        TX_LIST_MODEL = auto()
+        ADDRESS_LIST = auto()
+        TX_LIST = auto()
 
     _ROLE_MAP = {
         Role.SHORT_NAME: (
@@ -95,10 +95,10 @@ class CoinListModel(AbstractListModel):
         Role.REMOTE_STATE: (
             b"remoteState",
             lambda c: c.remoteStateModel),
-        Role.ADDRESS_LIST_MODEL: (
-            b"addressListModel",
+        Role.ADDRESS_LIST: (
+            b"addressList",
             lambda c: c.addressListModel),
-        Role.TX_LIST_MODEL: (
-            b"txListModel",
+        Role.TX_LIST: (
+            b"txList",
             lambda c: c.txListModel)
     }

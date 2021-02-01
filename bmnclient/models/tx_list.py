@@ -69,9 +69,8 @@ class TxListModel(AbstractListModel):
         AMOUNT = auto()
         FEE_AMOUNT = auto()
         STATE = auto()
-
-        INPUTS = auto()
-        OUTPUTS = auto()
+        INPUT_LIST = auto()
+        OUTPUT_LIST = auto()
 
     _ROLE_MAP = {
         Role.NAME: (
@@ -86,12 +85,11 @@ class TxListModel(AbstractListModel):
         Role.STATE: (
             b"state",
             lambda t: t.stateModel),
-
-        Role.INPUTS: (
-            b"inputsModel",
+        Role.INPUT_LIST: (
+            b"inputList",
             lambda t: t.inputsModel),
-        Role.OUTPUTS: (
-            b"outputsModel",
+        Role.OUTPUT_LIST: (
+            b"outputList",
             lambda t: t.outputsModel)
     }
 
