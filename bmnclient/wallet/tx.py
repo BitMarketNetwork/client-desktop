@@ -281,10 +281,6 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
             self.__outputs = list(self.__outputs)
         return self.__outputs
 
-    # @qt_core.Property("QVariantList", constant=True)
-    # def outputsModel(self) -> list:
-    #     return self.outputs
-
     @name.setter
     def __set_name(self, value: str):
         self.__name = value

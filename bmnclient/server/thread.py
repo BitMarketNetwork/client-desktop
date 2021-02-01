@@ -43,13 +43,13 @@ class ServerThread(qt_core.QThread):
             if self._poll_timer.short:
                 #log.debug("increase polling timeout")
                 self._poll_timer.short = False
-                self._poll_timer.start(10 * 10000, self)
+                self._poll_timer.start(30 * 1000, self)
         elif event.timerId() == self._mempool_timer.timerId():
             self.mempoolEveryCoin.emit()
 
     def startTimers(self):
         self._poll_timer.short = True
-        self._poll_timer.start(3 * 1000, self)
+        self._poll_timer.start(5 * 1000, self)
         self._mempool_timer.start(10 * 1000, self)
 
     @property

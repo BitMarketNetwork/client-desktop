@@ -42,9 +42,19 @@ class TxStateModel(AbstractTxStateModel):
     def height(self) -> int:
         return self._tx.height
 
+    @QProperty(str, notify=_stateChanged)
+    def heightHuman(self) -> str:
+        return self._application.language.locale.integerToString(
+            self._tx.height)
+
     @QProperty(int, notify=_stateChanged)
     def confirmations(self) -> int:
         return self._tx.confirmCount
+
+    @QProperty(str, notify=_stateChanged)
+    def confirmationsHuman(self) -> str:
+        return self._application.language.locale.integerToString(
+            self._tx.confirmCount)
 
 
 class TxAmountModel(AbstractAmountModel, AbstractTxStateModel):

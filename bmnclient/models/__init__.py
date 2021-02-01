@@ -32,24 +32,34 @@ class RoleEnum(IntEnum):
 
 
 class AbstractListModel(QAbstractListModel):
-    class LockInsertRow:
-        def __init__(self, owner: AbstractListModel, index: int):
+    class _LockRows:
+        def __init__(
+                self,
+                owner: AbstractListModel,
+                first_index: int,
+                count: int):
+            if first_index < 0:
+                first_index = owner.rowCount()
             self._owner = owner
-            self._index = index
+            self._first_index = first_index
+            self._last_index = self._first_index + count - 1
 
+    class LockInsertRows(_LockRows):
         def __enter__(self) -> None:
-            self._owner.beginInsertRows(QModelIndex(), self._index, self._index)
+            self._owner.beginInsertRows(
+                QModelIndex(),
+                self._first_index,
+                self._last_index)
 
         def __exit__(self, exc_type, exc_value, traceback) -> None:
             self._owner.endInsertRows()
 
-    class LockRemoveRow:
-        def __init__(self, owner: AbstractListModel, index: int):
-            self._owner = owner
-            self._index = index
-
+    class LockRemoveRows(_LockRows):
         def __enter__(self) -> None:
-            self._owner.beginRemoveRows(QModelIndex(), self._index, self._index)
+            self._owner.beginRemoveRows(
+                QModelIndex(),
+                self._first_index,
+                self._last_index)
 
         def __exit__(self, exc_type, exc_value, traceback) -> None:
             self._owner.endRemoveRows()
@@ -74,13 +84,11 @@ class AbstractListModel(QAbstractListModel):
             return None
         return self._ROLE_MAP[role][1](self._source_list[index.row()])
 
-    def lockInsertRow(self, index: Optional[int] = None) -> LockInsertRow:
-        return self.LockInsertRow(
-            self,
-            self.rowCount() if index is None else index)
+    def lockInsertRows(self, first_index=-1, count=1) -> LockInsertRows:
+        return self.LockInsertRows(self, first_index, count)
 
-    def lockRemoveRow(self, index) -> LockRemoveRow:
-        return self.LockRemoveRow(self, index)
+    def lockRemoveRows(self, first_index=-1, count=1) -> LockRemoveRows:
+        return self.LockRemoveRows(self, first_index, count)
 
 
 class AbstractListSortedModel(QSortFilterProxyModel):
