@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from enum import auto
+from typing import Final
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -11,6 +12,7 @@ from PySide2.QtCore import \
 
 from . import \
     AbstractAmountModel, \
+    AbstractConcatenateModel, \
     AbstractListModel, \
     AbstractListSortedModel, \
     AbstractTxStateModel, \
@@ -18,7 +20,7 @@ from . import \
 
 
 class TxStateModel(AbstractTxStateModel):
-    _stateChanged = QSignal()
+    _stateChanged: Final = QSignal()
 
     @QProperty(int, notify=_stateChanged)
     def status(self) -> int:
@@ -69,14 +71,14 @@ class TxFeeAmountModel(AbstractTxStateModel, AbstractAmountModel):
 
 class TxListModel(AbstractListModel):
     class Role(RoleEnum):
-        NAME = auto()
-        AMOUNT = auto()
-        FEE_AMOUNT = auto()
-        STATE = auto()
-        INPUT_LIST = auto()
-        OUTPUT_LIST = auto()
+        NAME: Final = auto()
+        AMOUNT: Final = auto()
+        FEE_AMOUNT: Final = auto()
+        STATE: Final = auto()
+        INPUT_LIST: Final = auto()
+        OUTPUT_LIST: Final = auto()
 
-    _ROLE_MAP = {
+    ROLE_MAP: Final = {
         Role.NAME: (
             b"name",
             lambda t: t.name),
@@ -96,6 +98,10 @@ class TxListModel(AbstractListModel):
             b"outputList",
             lambda t: t.outputsModel)
     }
+
+
+class TxListConcatenateModel(AbstractConcatenateModel):
+    ROLE_MAP: Final = TxListModel.ROLE_MAP
 
 
 class TxListSortedModel(AbstractListSortedModel):

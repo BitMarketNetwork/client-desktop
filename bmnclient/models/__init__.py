@@ -3,12 +3,13 @@ from __future__ import annotations
 
 from enum import IntEnum
 from functools import lru_cache
-from typing import Any, List, Optional, Sequence, TYPE_CHECKING
+from typing import Any, Final, List, Optional, Sequence, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
     QAbstractListModel, \
     QByteArray, \
+    QConcatenateTablesProxyModel, \
     QModelIndex, \
     QObject, \
     QSortFilterProxyModel, \
@@ -64,7 +65,7 @@ class AbstractListModel(QAbstractListModel):
         def __exit__(self, exc_type, exc_value, traceback) -> None:
             self._owner.endRemoveRows()
 
-    _ROLE_MAP = {}
+    ROLE_MAP = {}
 
     def __init__(self, source_list: Sequence) -> None:
         super().__init__()
@@ -72,7 +73,7 @@ class AbstractListModel(QAbstractListModel):
 
     @lru_cache()
     def roleNames(self) -> dict:
-        return {k: QByteArray(v[0]) for (k, v) in self._ROLE_MAP.items()}
+        return {k: QByteArray(v[0]) for (k, v) in self.ROLE_MAP.items()}
 
     def rowCount(self, parent=QModelIndex()) -> int:
         if parent.isValid():
@@ -82,13 +83,24 @@ class AbstractListModel(QAbstractListModel):
     def data(self, index: QModelIndex, role=Qt.DisplayRole) -> Any:
         if not 0 <= index.row() < self.rowCount() or not index.isValid():
             return None
-        return self._ROLE_MAP[role][1](self._source_list[index.row()])
+        return self.ROLE_MAP[role][1](self._source_list[index.row()])
 
     def lockInsertRows(self, first_index=-1, count=1) -> LockInsertRows:
         return self.LockInsertRows(self, first_index, count)
 
     def lockRemoveRows(self, first_index=-1, count=1) -> LockRemoveRows:
         return self.LockRemoveRows(self, first_index, count)
+
+
+class AbstractConcatenateModel(QConcatenateTablesProxyModel):
+    ROLE_MAP = {}
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    @lru_cache()
+    def roleNames(self) -> dict:
+        return {k: QByteArray(v[0]) for (k, v) in self.ROLE_MAP.items()}
 
 
 class AbstractListSortedModel(QSortFilterProxyModel):
@@ -125,7 +137,7 @@ class AbstractTxStateModel(AbstractAddressStateModel):
 
 
 class AbstractAmountModel:
-    _stateChanged = QSignal()
+    _stateChanged: Final = QSignal()
 
     def _value(self) -> int:
         raise NotImplementedError

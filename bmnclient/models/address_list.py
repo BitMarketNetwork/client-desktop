@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from enum import auto
+from typing import Final
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -16,7 +17,7 @@ from . import \
 
 
 class AddressStateModel(AbstractAddressStateModel):
-    _stateChanged = QSignal()
+    _stateChanged: Final = QSignal()
 
     @QProperty(str, notify=_stateChanged)
     def label(self) -> str:
@@ -41,13 +42,13 @@ class AddressAmountModel(AbstractAmountModel, AbstractAddressStateModel):
 
 class AddressListModel(AbstractListModel):
     class Role(RoleEnum):
-        COIN = auto()
-        NAME = auto()
-        AMOUNT = auto()
-        STATE = auto()
-        TX_LIST = auto()
+        COIN: Final = auto()
+        NAME: Final = auto()
+        AMOUNT: Final = auto()
+        STATE: Final = auto()
+        TX_LIST: Final = auto()
 
-    _ROLE_MAP = {
+    ROLE_MAP: Final = {
         Role.COIN: (
             b"coin",
             lambda a: a.coin),

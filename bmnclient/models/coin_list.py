@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from enum import auto
+from typing import Final
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -15,7 +16,7 @@ from . import \
 
 
 class CoinStateModel(AbstractCoinStateModel):
-    _stateChanged = QSignal()
+    _stateChanged: Final = QSignal()
 
     @QProperty(bool, notify=_stateChanged)
     def visible(self) -> bool:
@@ -27,7 +28,7 @@ class CoinStateModel(AbstractCoinStateModel):
 
 
 class CoinRemoteStateModel(AbstractCoinStateModel):
-    _stateChanged = QSignal()
+    _stateChanged: Final = QSignal()
 
     @QProperty(str, notify=_stateChanged)
     def versionHuman(self) -> str:
@@ -67,16 +68,16 @@ class CoinAmountModel(AbstractAmountModel, AbstractCoinStateModel):
 
 class CoinListModel(AbstractListModel):
     class Role(RoleEnum):
-        SHORT_NAME = auto()
-        FULL_NAME = auto()
-        ICON_PATH = auto()
-        AMOUNT = auto()
-        STATE = auto()
-        REMOTE_STATE = auto()
-        ADDRESS_LIST = auto()
-        TX_LIST = auto()
+        SHORT_NAME: Final = auto()
+        FULL_NAME: Final = auto()
+        ICON_PATH: Final = auto()
+        AMOUNT: Final = auto()
+        STATE: Final = auto()
+        REMOTE_STATE: Final = auto()
+        ADDRESS_LIST: Final = auto()
+        TX_LIST: Final = auto()
 
-    _ROLE_MAP = {
+    ROLE_MAP: Final = {
         Role.SHORT_NAME: (
             b"shortName",
             lambda c: c.shortName),
