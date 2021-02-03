@@ -83,7 +83,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         self._state_model = CoinStateModel(Application.instance(), self)
         self._remote_state_model = CoinRemoteStateModel(Application.instance(), self)
         self._address_list_model = AddressListModel(self)
-        self._tx_list_model = TxListSortedModel(TxListModel(self.__tx_set))
+        self._tx_list_model = TxListModel(self.__tx_set)
 
     def __str__(self) -> str:
         return f"<{self.fullName},{self.rowid} vis:{self.__visible}>"
@@ -112,8 +112,11 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         return self._address_list
 
     @property
-    def txListModel(self) -> TxListSortedModel:
+    def txListModel(self) -> TxListModel:
         return self._tx_list_model
+
+    def txListSortedModel(self) -> TxListSortedModel:
+        return TxListSortedModel(self._tx_list_model)
 
     @qt_core.Property(str, constant=True)
     def unit(self) -> str:

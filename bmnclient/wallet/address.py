@@ -93,7 +93,7 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         return self._state_model
 
     @property
-    def txListModel(self) -> TxListSortedModel:
+    def txListModel(self) -> TxListModel:
         return self._tx_list_model
 
     def txListSortedModel(self) -> TxListSortedModel:

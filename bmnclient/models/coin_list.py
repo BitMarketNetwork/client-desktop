@@ -100,5 +100,5 @@ class CoinListModel(AbstractListModel):
             lambda c: c.addressListSortedModel()),
         Role.TX_LIST: (
             b"txList",
-            lambda c: c.txListModel)
+            lambda c: c.txListSortedModel())
     }
