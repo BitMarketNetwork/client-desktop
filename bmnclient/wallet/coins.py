@@ -82,7 +82,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         self._amount_model = CoinAmountModel(Application.instance(), self)
         self._state_model = CoinStateModel(Application.instance(), self)
         self._remote_state_model = CoinRemoteStateModel(Application.instance(), self)
-        self._address_list_model = AddressListSortedModel(AddressListModel(self))
+        self._address_list_model = AddressListModel(self)
         self._tx_list_model = TxListSortedModel(TxListModel(self.__tx_set))
 
     def __str__(self) -> str:
@@ -101,8 +101,11 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         return self._remote_state_model
 
     @property
-    def addressListModel(self) -> qt_core.QObject:
+    def addressListModel(self) -> AddressListModel:
         return self._address_list_model
+
+    def addressListSortedModel(self) -> AddressListSortedModel:
+        return AddressListSortedModel(self._address_list_model)
 
     @property
     def addressList(self) -> List[address.CAddress]:
@@ -159,7 +162,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     @qt_core.Slot(address.CAddress)
     def addAddressImpl(self, wallet: address.CAddress) -> None:
         assert qt_core.QThread.currentThread() == self.thread()
-        with self._address_list_model.sourceModel().lockInsertRows():
+        with self._address_list_model.lockInsertRows():
             self._address_list.append(wallet)
             self.update_balance()
         from ..ui.gui import Application
@@ -424,7 +427,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         index = self._address_list.index(wallet)
         # self._address_list.remove(wallet)
         wallet.clear()
-        with self._address_list_model.sourceModel().lockRemoveRows(index):
+        with self._address_list_model.lockRemoveRows(index):
             del self._address_list[index]
         self.update_balance()
 

@@ -8,7 +8,7 @@ import PySide2.QtCore as qt_core
 from .. import orderedset
 from . import db_entry, hd, key, mtx_impl, serialization, tx, util
 from ..models.address_list import AddressAmountModel, AddressStateModel
-from ..models.tx_list import TxListModel, TxProxyModel
+from ..models.tx_list import TxListModel, TxListSortedModel
 
 log = logging.getLogger(__name__)
 
@@ -43,17 +43,13 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
     useAsSourceChanged = qt_core.Signal()
     heightChanged = qt_core.Signal()
     #
-    addTx = qt_core.Signal()
-    addTxList = qt_core.Signal(int, arguments=["count"])
-    addComplete = qt_core.Signal()
-    removeTxList = qt_core.Signal(int, arguments=["count"])
-    removeComplete = qt_core.Signal()
     txCountChanged = qt_core.Signal()
     realTxCountChanged = qt_core.Signal()
 
     def __init__(self, name: str, coin: Optional["coins.CoinType"] = None, *, created: bool = False):
         super().__init__(parent=coin)
         assert(name)
+        self._tx_list = orderedset.OrderedSet()
         self._set_object_name(name)
         self.coin = coin
         self.__name = name
@@ -83,7 +79,6 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         self.__tx_count = 0
         self.__local__tx_count = 0
         #
-        self.__tx_list = orderedset.OrderedSet()
         self.__valid = True
         # this map can be updated before each transaction
         self.__unspents = []
@@ -97,6 +92,13 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
     def stateModel(self) -> AddressStateModel:
         return self._state_model
 
+    @property
+    def txListModel(self) -> TxListSortedModel:
+        return self._tx_list_model
+
+    def txListSortedModel(self) -> TxListSortedModel:
+        return TxListSortedModel(self._tx_list_model)
+
     def __connect_tx_model(self):
         from ..ui.gui import Application
         api_ = Application.instance()
@@ -105,15 +107,6 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
                 return
         except AttributeError:
             return
-        model = api_.coinManager.txModel
-        self.addTx.connect(functools.partial(model.append, self))
-        self.addTxList.connect(functools.partial(model.append_list, self))
-        self.addComplete.connect(
-            functools.partial(model.append_complete, self))
-        self.removeTxList.connect(
-            functools.partial(model.remove_list, self))
-        self.removeComplete.connect(
-            functools.partial(model.remove_complete, self))
 
     def to_table(self) -> dict:
         res = {
@@ -177,6 +170,9 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         self._amount_model.moveToThread(Application.instance().thread())
         self._state_model = AddressStateModel(Application.instance(), self)
         self._state_model.moveToThread(Application.instance().thread())
+        self._tx_list_model = TxListModel(self._tx_list)
+        self._tx_list_model.moveToThread(Application.instance().thread())
+
         self._coin.heightChanged.connect(
             self.heightChanged, qt_core.Qt.UniqueConnection)
 
@@ -285,9 +281,9 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
 
         important thing.. we call it from mempool only!!!!
         """
-        if tx_ in self.__tx_list:
+        if tx_ in self._tx_list:
             tx_ex = next(
-                (t for t in self.__tx_list if t.name == tx_.name), None)
+                (t for t in self._tx_list if t.name == tx_.name), None)
             tx_ex.height = tx_.height
             tx_ex.time = tx_.time
             if not tx_.local:
@@ -305,14 +301,11 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
             api_ = Application.instance()
             if api_:
                 api_.uiManager.process_incoming_tx(tx_)
-        self.addTx.emit()
-        self.__tx_list.raw_add(tx_, 0)
-        if tx_.wallet is None:
-            tx_.wallet = self
-        #
-        self.coin.add_tx(tx_)
-        #
-        self.addComplete.emit()
+        with self._tx_list_model.lockInsertRows():
+            self._tx_list.raw_add(tx_, 0)
+            if tx_.wallet is None:
+                tx_.wallet = self
+            self.coin.add_tx(tx_)
         self.txCountChanged.emit()
         self.realTxCountChanged.emit()
 
@@ -323,25 +316,22 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         unique = []
         not_unique = []
         for tx in txs:
-            if tx in self.__tx_list:
+            if tx in self._tx_list:
                 not_unique.append(tx)
             else:
                 unique.append(tx)
         if not_unique:
             log.debug(f"TX DOUBLES: {len(not_unique)}")
         txs[:] = unique
-        self.addTxList.emit(len(unique))
-        for tx in unique:
-            self.__tx_list.raw_add(tx, 0)
-        #
-        self.coin.add_tx_list(unique)
-        #
-        if check_new:
-            from ..ui.gui import Application
-            api_ = Application.instance()
-            if api_:
-                api_.uiManager.process_incoming_tx(unique)
-        self.addComplete.emit()
+        with self._tx_list_model.lockInsertRows(-1, len(unique) - 1):
+            for tx in unique:
+                self._tx_list.raw_add(tx, 0)
+            self.coin.add_tx_list(unique)
+            if check_new:
+                from ..ui.gui import Application
+                api_ = Application.instance()
+                if api_:
+                    api_.uiManager.process_incoming_tx(unique)
         self.realTxCountChanged.emit()
 
     def make_dummy_tx(self, parent=None) -> tx.Transaction:
@@ -382,7 +372,7 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         self.__first_offset = first_offset
         if clear_tx_from is not None:
             to_remove = []
-            for k in self.__tx_list:
+            for k in self._tx_list:
                 if k.height > clear_tx_from:
                     to_remove += [k]
                 else:
@@ -390,13 +380,12 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
             if to_remove:
                 from ..application import CoreApplication
                 CoreApplication.instance().databaseThread.removeTxList.emit(to_remove)
-                self.removeTxList.emit(len(to_remove))
-                self.__tx_list.remove(0, len(to_remove))
-                self.removeComplete.emit()
+                with self._tx_list_model.lockRemoveRows(0, len(to_remove)):
+                    self._tx_list.remove(0, len(to_remove))
                 self.txCount -= len(to_remove)
                 if verbose:
                     log.debug(
-                        f"{len(to_remove)} tx were removed and {len(self.__tx_list)} left in {self} ")
+                        f"{len(to_remove)} tx were removed and {len(self._tx_list)} left in {self} ")
 
     def _get_last_offset(self) -> str:
         return self.__last_offset
@@ -417,15 +406,11 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
 
     @qt_core.Property(int, notify=realTxCountChanged)
     def realTxCount(self) -> int:
-        return len(self.__tx_list)
+        return len(self._tx_list)
 
     @qt_core.Property(int, notify=txCountChanged)
     def txCount(self) -> int:
         return self.__tx_count + self.__local__tx_count
-
-    @qt_core.Property(int, notify=txCountChanged)
-    def safeTxCount(self) -> int:
-        return max(len(self.__tx_list), self.txCount)
 
     @txCount.setter
     def _set_tx_count(self, txc: int):
@@ -462,7 +447,7 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         self.__valid = val
 
     def clear(self):
-        self.__tx_list.clear()
+        self._tx_list.clear()
         self.__first_offset = None
         self.__last_offset = None
         self.__tx_count = 0
@@ -488,7 +473,7 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
     def export_txs(self, path: str):
         ser = serialization.Serializator()
         ser.add_one("address", self)
-        ser.add_many("transactions", self.__tx_list)
+        ser.add_many("transactions", self._tx_list)
         ser.to_file(path, pretty=True)
 
     def import_key(self, txt: str):
@@ -622,7 +607,7 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
     # @qt_core.Property('QVariantList', constant=True)
     @property
     def tx_list(self) -> List[db_entry.DbEntry]:
-        return list(self.__tx_list)
+        return list(self._tx_list)
 
     @qt_core.Property(bool, constant=True)
     def readOnly(self) -> bool:
@@ -635,10 +620,10 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         CoreApplication.instance().databaseThread.save_wallet(self)
 
     def __len__(self):
-        return len(self.__tx_list)
+        return len(self._tx_list)
 
     def __getitem__(self, val: int) -> tx.Transaction:
-        return self.__tx_list[val]
+        return self._tx_list[val]
 
     first_offset = property(_get_first_offset, _set_first_offset)
     last_offset = property(_get_last_offset, _set_last_offset)

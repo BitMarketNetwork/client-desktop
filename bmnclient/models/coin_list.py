@@ -97,7 +97,7 @@ class CoinListModel(AbstractListModel):
             lambda c: c.remoteStateModel),
         Role.ADDRESS_LIST: (
             b"addressList",
-            lambda c: c.addressListModel),
+            lambda c: c.addressListSortedModel()),
         Role.TX_LIST: (
             b"txList",
             lambda c: c.txListModel)

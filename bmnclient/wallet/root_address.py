@@ -24,11 +24,6 @@ class RootAddress(address.CAddress):
     def realTxCount(self) -> int:
         return self._coin.tx_count
 
-    @qt_core.Property(int, notify=txCountChanged)
-    def safeTxCount(self) -> int:
-        # TODO: i dont know server tx_count for coin so far
-        return self._coin.tx_count
-
     @qt_core.Property(str, notify=balanceChanged)
     def fiatBalance(self) -> str:
         return self._coin.fiatBalance

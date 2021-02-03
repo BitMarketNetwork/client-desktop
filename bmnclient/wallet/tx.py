@@ -198,6 +198,7 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
         self.__height = value
         self.heightChanged.emit()
         self.statusChanged.emit()
+        self._state_model.refresh()
 
     @property
     def base(self) -> bool:

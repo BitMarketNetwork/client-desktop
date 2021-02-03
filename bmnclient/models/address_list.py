@@ -62,7 +62,7 @@ class AddressListModel(AbstractListModel):
             lambda a: a.stateModel),
         Role.TX_LIST: (
             b"txList",
-            lambda a: a.txListModel)
+            lambda a: a.txListSortedModel)
     }
 
 
