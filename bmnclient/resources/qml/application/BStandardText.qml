@@ -36,6 +36,9 @@ QtObject {
     readonly property QtObject template: QtObject {
         readonly property string amount: "0.00"
         readonly property string unit: "XXX"
+        readonly property string timeDate: "01/01/1970 00:00:01 UTC"
+        readonly property string addressName: "unknown_address"
+        readonly property string txName: "0000000000000000000000000000000000000000000000000000000000000000"
     }
 
     readonly property variant txStatusMap: [

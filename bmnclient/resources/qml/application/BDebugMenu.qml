@@ -84,12 +84,6 @@ BMenu {
     BMenu {
         title: "Debug scenarios"
         BMenuItem {
-            text: "Add dummy TX"
-            onTriggered: {
-                BBackend.coinManager.makeDummyTx()
-            }
-        }
-        BMenuItem {
             text: "Online mode"
             onTriggered: {
                 BBackend.uiManager.online = !BBackend.uiManager.online

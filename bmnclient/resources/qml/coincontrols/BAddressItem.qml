@@ -8,7 +8,7 @@ BItemDelegate {
     property var address // AddressListModel item
     property BMenu contextMenu
 
-    text: address ? (address.state.label ? address.state.label + " : " : "") + address.name : "-"
+    text: address ? (address.state.label ? address.state.label + " : " : "") + address.name : BStandardText.template.addressName
 
     // TODO address.state.isUpdating: show animation
 
@@ -54,7 +54,9 @@ BItemDelegate {
     }
 
     onDoubleClicked: {
-        BBackend.uiManager.copyToClipboard(address ? address.name : "")
+        if (_base.address) {
+            BBackend.uiManager.copyToClipboard(_base.address.name)
+        }
     }
 
     // TODO right click

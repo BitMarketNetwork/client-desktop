@@ -1,25 +1,21 @@
 import itertools
 import logging
-from functools import partial
 from typing import Iterable, List, Optional, Union
 
 import PySide2.QtCore as qt_core
 
-# linter
 from . import address, coin_network, db_entry, hd, key, root_address, \
     serialization
-from .. import coins, meta, orderedset
+from .. import coins, meta
 from ..models.address_list import AddressListModel, AddressListSortedModel
 from ..models.coin_list import \
     CoinAmountModel, \
     CoinRemoteStateModel, \
     CoinStateModel
-from ..models.tx_list import TxListModel, TxListSortedModel
+from ..models.tx_list import TxListModel, TxListSortedModel, TxListConcatenateModel
 
 log = logging.getLogger(__name__)
 
-class SelectAddressError(Exception):
-    pass
 
 
 def network_tag(net: coin_network.CoinNetworkBase) -> str:
@@ -73,7 +69,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
 
         self.__hd_node = None
         self.__visible = True
-        self.__tx_set = orderedset.OrderedSet()
         self.root = root_address.RootAddress(self)
         self.addAddress.connect(self.addAddressImpl,
                                 qt_core.Qt.QueuedConnection)
@@ -83,7 +78,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         self._state_model = CoinStateModel(Application.instance(), self)
         self._remote_state_model = CoinRemoteStateModel(Application.instance(), self)
         self._address_list_model = AddressListModel(self)
-        self._tx_list_model = TxListModel(self.__tx_set)
+        self._tx_list_model = TxListConcatenateModel()
 
     def __str__(self) -> str:
         return f"<{self.fullName},{self.rowid} vis:{self.__visible}>"
@@ -168,6 +163,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         with self._address_list_model.lockInsertRows():
             self._address_list.append(wallet)
             self.update_balance()
+        self._tx_list_model.addSourceModel(wallet.txListModel)
         from ..ui.gui import Application
         Application.instance().coinManager.render_cell(self)
         Application.instance().networkThread.update_wallet(wallet)
@@ -263,6 +259,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         for addr_t in table["addresses"]:
             wallet = address.CAddress.from_table(addr_t, self)
             self._address_list.append(wallet)
+            self._tx_list_model.addSourceModel(wallet.txListModel)
 
     @classmethod
     def match(cls, name: str) -> bool:
@@ -292,26 +289,9 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         if self.__hd_node:
             return self.__hd_node.key
 
-    def add_tx(self, tx_: 'tx.Transaction') -> None:
-        self.__tx_set.add(tx_, 0)
-
-    def add_tx_list(self, tx_list: Iterable['tx.Transaction']) -> None:
-        # TDO: optimize
-        for tx_ in tx_list:
-            self.__tx_set.add(tx_, 0)
-
-    def update_tx_list(self):
-        self.__tx_set.clear()
-        for w in self._address_list:
-            self.add_tx_list(w.tx_list)
-
     @property
     def tx_count(self) -> int:
-        # return sum(len(w) for w in self._address_list)
-        return len(self.__tx_set)
-
-    def get_tx(self, idx: int) -> 'tx.Transaction':
-        return self.__tx_set[idx]
+        return sum(len(w) for w in self._address_list)
 
     def empty(self, skip_zero: bool) -> bool:
         if skip_zero:
@@ -429,6 +409,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     def remove_wallet(self, wallet: address.CAddress):
         index = self._address_list.index(wallet)
         # self._address_list.remove(wallet)
+        self._tx_list_model.removeSourceModel(self._address_list[index].txListModel)
         wallet.clear()
         with self._address_list_model.lockRemoveRows(index):
             del self._address_list[index]

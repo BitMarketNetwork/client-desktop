@@ -1,3 +1,4 @@
+// JOK++
 import QtQuick 2.15
 import QtQuick.Controls.Material 2.15
 import "../application"
@@ -9,7 +10,7 @@ BItemDelegate {
     property BMenu contextMenu: null
     property real smallFontPointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
 
-    text: tx ? tx.name : "-"
+    text: tx ? tx.hash : BStandardText.template.txName
 
     contentItem: BColumnLayout {
         BRowLayout {
@@ -27,7 +28,7 @@ BItemDelegate {
                 }
                 BLabel {
                     font.pointSize: _base.smallFontPointSize
-                    text: tx.timeHuman
+                    text: _base.tx ? _base.tx.state.timeHuman : BStandardText.template.timeDate
                 }
             }
             BColumnLayout {
@@ -35,8 +36,8 @@ BItemDelegate {
                     BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
                     font.pointSize: _base.smallFontPointSize
                     font.bold: true
-                    text: BStandardText.txStatusMap[tx.status][0]
-                    color: Material.color(BStandardText.txStatusMap[tx.status][1])
+                    text: BStandardText.txStatusMap[_base.tx ? _base.tx.state.status : 0][0]
+                    color: Material.color(BStandardText.txStatusMap[_base.tx ? _base.tx.state.status : 0][1])
                 }
                 BAmountLabel {
                     BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
@@ -62,7 +63,7 @@ BItemDelegate {
             active: false
             sourceComponent: BTxItemDetailsPane {
                 clip: true // for animation
-                tx: _base.tx
+                tx: _base.tx ? _base.tx : null
             }
 
             onLoaded: {
@@ -112,7 +113,9 @@ BItemDelegate {
     }
 
     onDoubleClicked: {
-        BBackend.uiManager.copyToClipboard(tx.hash)
+        if (_base.tx) {
+            BBackend.uiManager.copyToClipboard(_base.tx.hash)
+        }
     }
 
     // TODO right click

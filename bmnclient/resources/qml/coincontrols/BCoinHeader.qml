@@ -1,3 +1,4 @@
+// JOK++
 import "../basiccontrols"
 
 BControl {
@@ -17,7 +18,7 @@ BControl {
             text: _base.coin.fullName
         }
         BAmountLabel {
-            amount: coin.amount
+            amount: _base.coin.amount
         }
         BContextMenuToolButton {
             font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.huge

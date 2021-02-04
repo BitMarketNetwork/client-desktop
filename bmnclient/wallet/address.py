@@ -302,10 +302,9 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
             if api_:
                 api_.uiManager.process_incoming_tx(tx_)
         with self._tx_list_model.lockInsertRows():
-            self._tx_list.raw_add(tx_, 0)
+            self._tx_list.raw_add(tx_)
             if tx_.wallet is None:
                 tx_.wallet = self
-            self.coin.add_tx(tx_)
         self.txCountChanged.emit()
         self.realTxCountChanged.emit()
 
@@ -323,10 +322,9 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         if not_unique:
             log.debug(f"TX DOUBLES: {len(not_unique)}")
         txs[:] = unique
-        with self._tx_list_model.lockInsertRows(-1, len(unique) - 1):
+        with self._tx_list_model.lockInsertRows(-1, len(unique)):
             for tx in unique:
-                self._tx_list.raw_add(tx, 0)
-            self.coin.add_tx_list(unique)
+                self._tx_list.raw_add(tx)
             if check_new:
                 from ..ui.gui import Application
                 api_ = Application.instance()

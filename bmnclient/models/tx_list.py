@@ -71,7 +71,7 @@ class TxFeeAmountModel(AbstractTxStateModel, AbstractAmountModel):
 
 class TxListModel(AbstractListModel):
     class Role(RoleEnum):
-        NAME: Final = auto()
+        HASH: Final = auto()
         AMOUNT: Final = auto()
         FEE_AMOUNT: Final = auto()
         STATE: Final = auto()
@@ -79,8 +79,8 @@ class TxListModel(AbstractListModel):
         OUTPUT_LIST: Final = auto()
 
     ROLE_MAP: Final = {
-        Role.NAME: (
-            b"name",
+        Role.HASH: (
+            b"hash",
             lambda t: t.name),
         Role.AMOUNT: (
             b"amount",
@@ -106,4 +106,4 @@ class TxListConcatenateModel(AbstractConcatenateModel):
 
 class TxListSortedModel(AbstractListSortedModel):
     def __init__(self, source_model: TxListModel) -> None:
-        super().__init__(source_model, TxListModel.Role.NAME)
+        super().__init__(source_model, TxListModel.Role.HASH)
