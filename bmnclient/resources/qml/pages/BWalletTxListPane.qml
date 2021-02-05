@@ -4,11 +4,12 @@ import "../coincontrols"
 
 BPane {
     id: _base
-    property string title: qsTr("History")
+    property string title: qsTr("History (%1)").arg(_list.model.rowCountHuman)
     property var coin // CoinListModel item
 
     contentItem: BTxListView {
-        model: _base.coin.txListModel
+        id: _list
+        model: _base.coin.txList
         delegate: BTxItem {
             tx: model
             contextMenu: _contextMenu
@@ -17,7 +18,7 @@ BPane {
 
     BMenu {
         id: _contextMenu
-        property BTxObject tx: null
+        property var tx
 
         BMenuItem {
             text: "TODO" // TODO

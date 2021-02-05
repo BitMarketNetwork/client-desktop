@@ -179,16 +179,6 @@ class CoinManager(QObject):
         self._application.networkThread.updateAddress.emit(
             self.coin[address_index])  # pylint: disable=unsubscriptable-object
 
-    @qt_core.Slot()
-    def makeDummyTx(self):
-        addr = self.address
-        if addr.is_root:
-            addr = addr()
-        if addr:
-            tx = addr.make_dummy_tx(addr)
-            log.debug(f"dummy transaction made: {tx}")
-            addr.add_tx(tx, check_new=True)
-
     def update_tx(self, tx_: 'tx.Transaction') -> None:
         if self.address == tx_.wallet:
             # TODO: !!! use tx

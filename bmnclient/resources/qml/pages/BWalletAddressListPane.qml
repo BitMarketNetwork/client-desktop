@@ -4,10 +4,11 @@ import "../coincontrols"
 
 BPane {
     id: _base
-    property string title: qsTr("Addresses")
+    property string title: qsTr("Addresses (%1)").arg(_list.model.rowCountHuman)
     property var coin // CoinListModel item
 
     contentItem: BAddressListView {
+        id: _list
         model: _base.coin.addressList
         delegate: BAddressItem {
             address: model
