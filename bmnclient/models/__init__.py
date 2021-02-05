@@ -32,7 +32,24 @@ class RoleEnum(IntEnum):
         return Qt.UserRole + count
 
 
-class AbstractListModel(QAbstractListModel):
+class ListModelHelper:
+    _rowCountChanged = QSignal()
+
+    def __init__(self, application: Application) -> None:
+        self._application = application
+        # noinspection PyUnresolvedReferences
+        self.rowsInserted.connect(lambda **_: self._rowCountChanged.emit())
+        # noinspection PyUnresolvedReferences
+        self.rowsRemoved.connect(lambda **_: self._rowCountChanged.emit())
+
+    @QProperty(str, notify=_rowCountChanged)
+    def rowCountHuman(self) -> str:
+        # noinspection PyUnresolvedReferences
+        return self._application.language.locale.integerToString(
+            self.rowCount())
+
+
+class AbstractListModel(QAbstractListModel, ListModelHelper):
     class _LockRows:
         def __init__(
                 self,
@@ -67,8 +84,9 @@ class AbstractListModel(QAbstractListModel):
 
     ROLE_MAP = {}
 
-    def __init__(self, source_list: Sequence) -> None:
+    def __init__(self, application: Application, source_list: Sequence) -> None:
         super().__init__()
+        ListModelHelper.__init__(self, application)
         self._source_list = source_list
 
     @lru_cache()
@@ -92,20 +110,26 @@ class AbstractListModel(QAbstractListModel):
         return self.LockRemoveRows(self, first_index, count)
 
 
-class AbstractConcatenateModel(QConcatenateTablesProxyModel):
+class AbstractConcatenateModel(QConcatenateTablesProxyModel, ListModelHelper):
     ROLE_MAP = {}
 
-    def __init__(self) -> None:
+    def __init__(self, application: Application) -> None:
         super().__init__()
+        ListModelHelper.__init__(self, application)
 
     @lru_cache()
     def roleNames(self) -> dict:
         return {k: QByteArray(v[0]) for (k, v) in self.ROLE_MAP.items()}
 
 
-class AbstractListSortedModel(QSortFilterProxyModel):
-    def __init__(self, source_model: AbstractListModel, sort_role: int) -> None:
+class AbstractListSortedModel(QSortFilterProxyModel, ListModelHelper):
+    def __init__(
+            self,
+            application: Application,
+            source_model: AbstractListModel,
+            sort_role: int) -> None:
         super().__init__()
+        ListModelHelper.__init__(self, application)
         self.setSourceModel(source_model)
         self.setSortRole(sort_role)
         self.sort(0, Qt.AscendingOrder)

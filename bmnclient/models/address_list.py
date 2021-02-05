@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from enum import auto
-from typing import Final
+from typing import Final, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -14,6 +14,10 @@ from . import \
     AbstractListModel, \
     AbstractListSortedModel, \
     RoleEnum
+
+if TYPE_CHECKING:
+    from ..ui.gui import Application
+    from ..wallet.coins import CoinType
 
 
 class AddressStateModel(AbstractAddressStateModel):
@@ -33,6 +37,9 @@ class AddressStateModel(AbstractAddressStateModel):
 
 
 class AddressAmountModel(AbstractAmountModel, AbstractAddressStateModel):
+    def __init__(self, application: Application, coin: CoinType):
+        super().__init__(application, coin)
+
     def _value(self) -> int:
         return self._address.balance
 
@@ -68,5 +75,8 @@ class AddressListModel(AbstractListModel):
 
 
 class AddressListSortedModel(AbstractListSortedModel):
-    def __init__(self, source_model: AddressListModel) -> None:
-        super().__init__(source_model, AddressListModel.Role.NAME)
+    def __init__(
+            self,
+            application: Application,
+            source_model: AddressListModel) -> None:
+        super().__init__(application, source_model, AddressListModel.Role.NAME)

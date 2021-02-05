@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from enum import auto
-from typing import Final
+from typing import Final, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -17,6 +17,10 @@ from . import \
     AbstractListSortedModel, \
     AbstractTxStateModel, \
     RoleEnum
+
+if TYPE_CHECKING:
+    from ..ui.gui import Application
+    from ..wallet.coins import CoinType
 
 
 class TxStateModel(AbstractTxStateModel):
@@ -54,6 +58,9 @@ class TxStateModel(AbstractTxStateModel):
 
 
 class TxAmountModel(AbstractAmountModel, AbstractTxStateModel):
+    def __init__(self, application: Application, coin: CoinType):
+        super().__init__(application, coin)
+
     def _value(self) -> int:
         return self._tx.balance
 
@@ -62,6 +69,9 @@ class TxAmountModel(AbstractAmountModel, AbstractTxStateModel):
 
 
 class TxFeeAmountModel(AbstractAmountModel, AbstractTxStateModel):
+    def __init__(self, application: Application, coin: CoinType):
+        super().__init__(application, coin)
+
     def _value(self) -> int:
         return self._tx.fee
 
@@ -105,5 +115,8 @@ class TxListConcatenateModel(AbstractConcatenateModel):
 
 
 class TxListSortedModel(AbstractListSortedModel):
-    def __init__(self, source_model: TxListModel) -> None:
-        super().__init__(source_model, TxListModel.Role.HASH)
+    def __init__(
+            self,
+            application: Application,
+            source_model: TxListModel) -> None:
+        super().__init__(application, source_model, TxListModel.Role.HASH)
