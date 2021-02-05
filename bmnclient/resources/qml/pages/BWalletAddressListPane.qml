@@ -8,7 +8,7 @@ BPane {
     property var coin // CoinListModel item
 
     contentItem: BAddressListView {
-        model: _base.coin.addressListModel
+        model: _base.coin.addressList
         delegate: BAddressItem {
             address: model
             contextMenu: _contextMenu

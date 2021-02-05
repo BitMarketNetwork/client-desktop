@@ -34,7 +34,7 @@ BDialog {
             text: qsTr("Coin:")
         }
         BInfoValue {
-            text: _base.coin.name
+            text: _base.coin.fullName
         }
         BInfoSeparator {}
 
@@ -114,9 +114,9 @@ BDialog {
             text: {
                 switch (_base.type) {
                 case BTxApproveDialog.Type.Prepare:
-                    return BStandardText.buttonText.cancelRole
+                    return BStandardText.button.cancelRole
                 case BTxApproveDialog.Type.Final:
-                    return BStandardText.buttonText.closeRole
+                    return BStandardText.button.closeRole
                 }
             }
         }

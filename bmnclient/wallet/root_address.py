@@ -1,11 +1,7 @@
-import logging
 from typing import Optional
 import PySide2.QtCore as qt_core
 
 from . import address
-from .. import meta
-
-log = logging.getLogger(__name__)
 
 
 class RootAddress(address.CAddress):

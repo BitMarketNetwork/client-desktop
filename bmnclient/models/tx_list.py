@@ -53,7 +53,7 @@ class TxStateModel(AbstractTxStateModel):
             self._tx.confirmCount)
 
 
-class TxAmountModel(AbstractTxStateModel, AbstractAmountModel):
+class TxAmountModel(AbstractAmountModel, AbstractTxStateModel):
     def _value(self) -> int:
         return self._tx.balance
 
@@ -61,7 +61,7 @@ class TxAmountModel(AbstractTxStateModel, AbstractAmountModel):
         return self._tx.fiatBalance
 
 
-class TxFeeAmountModel(AbstractTxStateModel, AbstractAmountModel):
+class TxFeeAmountModel(AbstractAmountModel, AbstractTxStateModel):
     def _value(self) -> int:
         return self._tx.fee
 
