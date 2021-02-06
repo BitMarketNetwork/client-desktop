@@ -4,7 +4,7 @@ import "../basiccontrols"
 BControl {
     id: _base
     property var coin // CoinListModel item
-    property BMenu contextMenu: null
+    property BMenu contextMenu
 
     padding: _applicationStyle.padding
     contentItem: BRowLayout {

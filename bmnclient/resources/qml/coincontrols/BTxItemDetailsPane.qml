@@ -1,17 +1,14 @@
+// JOK++
 import QtQuick 2.15
 import QtQuick.Controls.Material 2.15
+import "../application"
 import "../basiccontrols"
 import "../coincontrols"
 
 BPane {
     id: _base
-    property BTxObject tx: null
-    property int visibleAddressCount: {
-        let rowCount = Math.max(
-                _base.tx.inputAddressListModel.rowCount(),
-                _base.tx.outputAddressListModel.rowCount())
-        return Math.min(2, rowCount)
-    }
+    property var tx // TxListModel item
+    property int visibleAddressCount: Math.min(2, Math.max(tx.inputList.rowCount(), tx.outputList.rowCount()))
 
     Material.elevation: 1 // for background, view QtQuick/Controls.2/Material/Pane.qml
     padding: _applicationStyle.padding
@@ -20,7 +17,7 @@ BPane {
             text: qsTr("Height:")
         }
         BInfoValue {
-            text: tx.height
+            text: _base.tx.state.heightHuman
         }
         BInfoSeparator {}
 
@@ -28,7 +25,7 @@ BPane {
             text: qsTr("Confirmations:")
         }
         BInfoValue {
-            text: tx.confirmationCount
+            text: _base.tx.state.confirmationsHuman
         }
         BInfoSeparator {}
 
@@ -36,7 +33,7 @@ BPane {
             text: qsTr("Fee:")
         }
         BAmountInfoValue {
-            amount: tx.feeAmount
+            amount: _base.tx.feeAmount
         }
         BInfoSeparator {}
 
@@ -44,52 +41,28 @@ BPane {
             BLayout.columnSpan: parent.columns
             BLayout.fillWidth: true
             BAddressListView {
-                property string title: qsTr("Inputs: %1").arg(_base.tx.inputAddressListModel.rowCount()) // TODO number format
+                property string title: qsTr("Inputs: %1").arg(_base.tx.inputList.rowCountHuman)
                 visibleItemCount: _base.visibleAddressCount
-                model: _base.tx.inputAddressListModel
+                model: _base.tx.inputList
                 delegate: BAddressItem {
-                    address: BAddressObject {
-                        coin: _base.tx.coin
-                        name: model.addressName
-                        label: model.index
-                        watchOnly: false
-                        updating: false
-                        amount.valueHuman: model.amountHuman
-                        amount.unit: _base.coin.amountUnit // TODO
-                        amount.fiatValueHuman: model.fiatBalance // TODO
-                        amount.fiatUnit: _base.coin.fiatAmountUnit // TODO
-                    }
+                    address: model
                     // TODO contextMenu: _base.contextMenu
                 }
                 templateDelegate: BAddressItem {
-                    address: BAddressObject {
-                        coin: _base.tx.coin
-                    }
+                    address: BStandardText.addressItemTemplate
                     // TODO contextMenu: _base.contextMenu
                 }
             }
             BAddressListView {
-                property string title: qsTr("Outputs: %1").arg(_base.tx.outputAddressListModel.rowCount()) // TODO number format
+                property string title: qsTr("Outputs: %1").arg(_base.tx.outputList.rowCountHuman)
                 visibleItemCount: _base.visibleAddressCount
-                model: _base.tx.outputAddressListModel
+                model: _base.tx.outputList
                 delegate: BAddressItem {
-                    address: BAddressObject {
-                        coin: _base.tx.coin
-                        name: model.addressName
-                        label: model.index
-                        watchOnly: false
-                        updating: false
-                        amount.valueHuman: model.amountHuman
-                        amount.unit: _base.coin.amountUnit // TODO
-                        amount.fiatValueHuman: model.fiatBalance // TODO
-                        amount.fiatUnit: _base.coin.fiatAmountUnit // TODO
-                    }
+                    address: model
                     // TODO contextMenu: _base.contextMenu
                 }
                 templateDelegate: BAddressItem {
-                    address: BAddressObject {
-                        coin: _base.tx.coin
-                    }
+                    address: BStandardText.addressItemTemplate
                     // TODO contextMenu: _base.contextMenu
                 }
             }

@@ -103,10 +103,10 @@ class TxListModel(AbstractListModel):
             lambda t: t.stateModel),
         Role.INPUT_LIST: (
             b"inputList",
-            lambda t: t.inputsModel),
+            lambda t: t.inputListModel),
         Role.OUTPUT_LIST: (
             b"outputList",
-            lambda t: t.outputsModel)
+            lambda t: t.outputListModel)
     }
 
 

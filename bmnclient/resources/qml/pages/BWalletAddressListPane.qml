@@ -1,3 +1,4 @@
+// JOK++
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
@@ -14,7 +15,9 @@ BPane {
             address: model
             contextMenu: _contextMenu
         }
-        templateDelegate: BAddressItem {}
+        templateDelegate: BAddressItem {
+            address: BStandardText.addressItemTemplate
+        }
     }
 
     BMenu {

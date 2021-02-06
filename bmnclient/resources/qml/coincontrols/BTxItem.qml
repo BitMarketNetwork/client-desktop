@@ -10,7 +10,7 @@ BItemDelegate {
     property BMenu contextMenu: null
     property real smallFontPointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
 
-    text: tx ? tx.hash : BStandardText.template.txName
+    text: tx.hash
 
     contentItem: BColumnLayout {
         BRowLayout {
@@ -28,7 +28,7 @@ BItemDelegate {
                 }
                 BLabel {
                     font.pointSize: _base.smallFontPointSize
-                    text: _base.tx ? _base.tx.state.timeHuman : BStandardText.template.timeDate
+                    text: _base.tx.state.timeHuman
                 }
             }
             BColumnLayout {
@@ -36,13 +36,13 @@ BItemDelegate {
                     BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
                     font.pointSize: _base.smallFontPointSize
                     font.bold: true
-                    text: BStandardText.txStatusMap[_base.tx ? _base.tx.state.status : 0][0]
-                    color: Material.color(BStandardText.txStatusMap[_base.tx ? _base.tx.state.status : 0][1])
+                    text: BStandardText.txStatusMap[_base.tx.state.status][0]
+                    color: Material.color(BStandardText.txStatusMap[_base.tx.state.status][1])
                 }
                 BAmountLabel {
                     BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
                     font.pointSize: _base.smallFontPointSize
-                    amount: _base.tx ? _base.tx.amount : null
+                    amount: _base.tx.amount
                 }
             }
             /* TODO BContextMenuToolButton {
@@ -63,7 +63,7 @@ BItemDelegate {
             active: false
             sourceComponent: BTxItemDetailsPane {
                 clip: true // for animation
-                tx: _base.tx ? _base.tx : null
+                tx: _base.tx
             }
 
             onLoaded: {
@@ -113,9 +113,7 @@ BItemDelegate {
     }
 
     onDoubleClicked: {
-        if (_base.tx) {
-            BBackend.uiManager.copyToClipboard(_base.tx.hash)
-        }
+        BBackend.uiManager.copyToClipboard(tx.hash)
     }
 
     // TODO right click

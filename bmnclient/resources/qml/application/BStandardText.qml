@@ -4,6 +4,8 @@ import QtQuick 2.15
 import QtQuick.Controls.Material 2.15
 
 QtObject {
+    id: _base
+
     readonly property QtObject button: QtObject {
         readonly property string contextMenuRole: "⋮"
         readonly property string unfoldControlRole: "+" // TODO bad
@@ -33,12 +35,43 @@ QtObject {
         readonly property int rejectRoleMaterialColor: Material.Red
     }
 
-    readonly property QtObject template: QtObject {
-        readonly property string amount: "0.00"
+    readonly property QtObject amountTemplate: QtObject {
+        readonly property int value: 0
+        readonly property string valueHuman: "0.00"
         readonly property string unit: "XXX"
-        readonly property string timeDate: "01/01/1970 00:00:01 UTC"
-        readonly property string addressName: "unknown_address"
-        readonly property string txName: "0000000000000000000000000000000000000000000000000000000000000000"
+        readonly property string fiatValueHuman: "0.00"
+        readonly property string fiatUnit: "YYY"
+    }
+
+    readonly property QtObject coinItemTemplate: QtObject {
+        // TODO
+    }
+
+    readonly property QtObject addressItemTemplate: QtObject {
+        readonly property string name: "unknown_address"
+        readonly property QtObject amount: _base.amountTemplate
+        readonly property QtObject state: QtObject {
+            readonly property string label: ""
+            readonly property bool watchOnly: False
+            readonly property bool isUpdating: False
+        }
+        readonly property var txList: [] // TODO ListModel
+    }
+
+    readonly property QtObject txItemTemplate: QtObject {
+        readonly property string hash: "0000000000000000000000000000000000000000000000000000000000000000"
+        readonly property QtObject amount: _base.amountTemplate
+        readonly property QtObject feeAmount: _base.amountTemplate
+        readonly property QtObject state: QtObject {
+            readonly property int status: 0
+            readonly property string timeHuman: "01/01/1970 00:00:00 UTC"
+            readonly property int height: 0
+            readonly property string heightHuman: "0"
+            readonly property int confirmations: 0
+            readonly property string confirmationsHuman: "0"
+        }
+        readonly property var inputList: [] // TODO ListModel
+        readonly property var outputList: [] // TODO ListModel
     }
 
     readonly property variant txStatusMap: [

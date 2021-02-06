@@ -1,7 +1,6 @@
 // JOK++
 import QtQuick 2.15
 import QtQuick.Controls.Material 2.15
-import "../application"
 import "../basiccontrols"
 
 BItemDelegate {
@@ -9,7 +8,7 @@ BItemDelegate {
     property var address // AddressListModel item
     property BMenu contextMenu
 
-    text: address ? (address.state.label ? address.state.label + " : " : "") + address.name : BStandardText.template.addressName
+    text: (address.state.label ? address.state.label + " : " : "") + address.name
 
     // TODO address.state.isUpdating: show animation
 
@@ -34,16 +33,16 @@ BItemDelegate {
             BLayout.fillWidth: true
             elide: BLabel.ElideMiddle
             text: _base.text
-            color: _base.address && _base.address.state.watchOnly ? Material.hintTextColor : Material.foreground
+            color: _base.address.state.watchOnly ? Material.hintTextColor : Material.foreground
         }
         BAmountLabel {
             font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
-            color: _base.address && _base.address.state.watchOnly ? Material.hintTextColor : Material.foreground
-            amount: _base.address ? _base.address.amount : null
+            color: _base.address.state.watchOnly ? Material.hintTextColor : Material.foreground
+            amount: _base.address.amount
         }
 
         Loader {
-            active: _base.address && _base.contextMenu
+            active: _base.contextMenu
             sourceComponent: BContextMenuToolButton {
                 menu: null
                 onClicked: {
@@ -55,9 +54,7 @@ BItemDelegate {
     }
 
     onDoubleClicked: {
-        if (_base.address) {
-            BBackend.uiManager.copyToClipboard(_base.address.name)
-        }
+        BBackend.uiManager.copyToClipboard(address.name)
     }
 
     // TODO right click

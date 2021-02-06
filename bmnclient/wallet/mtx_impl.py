@@ -11,7 +11,6 @@ from collections import namedtuple
 from typing import Union, List, Tuple
 from datetime import datetime
 
-from .. import meta
 from . import constants, util, tx
 
 
@@ -62,10 +61,6 @@ class UTXO:
         assert 'unknown' != self.type
         self.vsize = vsize if vsize else UNSPENT_TYPES[self.type]['vsize']
         self.segwit = UNSPENT_TYPES[self.type]['segwit']
-
-    @classmethod
-    def make_dummy(cls, amount: int, address):
-        return cls(amount, 0, "", "", 0, address=address)
 
     def to_dict(self):
         return {attr: getattr(self, attr) for attr in UTXO.__slots__}

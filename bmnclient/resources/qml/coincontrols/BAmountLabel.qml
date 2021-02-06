@@ -1,7 +1,6 @@
 // JOK++
 import QtQuick 2.15
 import QtQuick.Controls.Material 2.15
-import "../application"
 import "../basiccontrols"
 
 BControl {
@@ -17,12 +16,12 @@ BControl {
             BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
             font.bold: true
             color: _base.color
-            text: _base.amount ? _base.amount.valueHuman : BStandardText.template.amount
+            text: _base.amount.valueHuman
         }
         BLabel {
             BLayout.alignment: Qt.AlignVCenter | Qt.AlignLeft
             color: _base.color
-            text: _base.amount ? _base.amount.unit : BStandardText.template.unit
+            text: _base.amount.unit
         }
 
         Loader {
@@ -38,12 +37,12 @@ BControl {
             BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
             font.bold: true
             color: _base.color
-            text: _base.amount ? _base.amount.fiatValueHuman : BStandardText.template.amount
+            text: _base.amount.fiatValueHuman
         }
         BLabel {
             BLayout.alignment: Qt.AlignVCenter | Qt.AlignLeft
             color: _base.color
-            text: _base.amount ? _base.amount.fiatUnit : BStandardText.template.unit
+            text: _base.amount.fiatUnit
         }
     }
 }

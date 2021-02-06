@@ -66,16 +66,6 @@ class MutableTransaction:
         self.recalc_sources()
         self.set_max()
 
-    @classmethod
-    def make_dummy(cls, address: str, parent) -> 'MutableTransaction':
-        from ..ui.gui import Application
-        out = cls(address, Application.instance().feeManager)
-        # third
-        out.__receiver = 'tb1qs5cz8f0f0l6tf87ez90ageyfm4a7w7rhryzdl2'
-        out.__amount = 0.01
-        out.prepare()
-        return out
-
     def recalc_sources(self, auto: bool = False):
         if auto:
             for add in self.__sources:

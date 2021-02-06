@@ -49,16 +49,12 @@ class AddressAmountModel(AbstractAmountModel, AbstractAddressStateModel):
 
 class AddressListModel(AbstractListModel):
     class Role(RoleEnum):
-        COIN: Final = auto()
         NAME: Final = auto()
         AMOUNT: Final = auto()
         STATE: Final = auto()
         TX_LIST: Final = auto()
 
     ROLE_MAP: Final = {
-        Role.COIN: (
-            b"coin",
-            lambda a: a.coin),
         Role.NAME: (
             b"name",
             lambda a: a.name),

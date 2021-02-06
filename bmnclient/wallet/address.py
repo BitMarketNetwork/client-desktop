@@ -82,7 +82,6 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         self.__valid = True
         # this map can be updated before each transaction
         self.__unspents = []
-        self.__connect_tx_model()
 
     @property
     def amountModel(self) -> AddressAmountModel:
@@ -98,15 +97,6 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
 
     def txListSortedModel(self) -> TxListSortedModel:
         return TxListSortedModel(self._tx_list_model)
-
-    def __connect_tx_model(self):
-        from ..ui.gui import Application
-        api_ = Application.instance()
-        try:
-            if not api_.coinManager:
-                return
-        except AttributeError:
-            return
 
     def to_table(self) -> dict:
         res = {
