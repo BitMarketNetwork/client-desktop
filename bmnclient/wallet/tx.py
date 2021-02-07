@@ -1,17 +1,25 @@
+from __future__ import annotations
 
 import datetime
-import enum
 import logging
-from typing import Iterable, List, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple, TYPE_CHECKING
 
 import PySide2.QtCore as qt_core
 
-from . import db_entry, input_model, serialization
-from ..models.tx_list import TxAmountModel, TxFeeAmountModel, TxListModel, TxStateModel, TxListSortedModel
+from . import db_entry, serialization
+from ..models.tx_list import TransactionAmountModel, TransactionFeeAmountModel, TransactionListModel, TransactionStateModel, TransactionListSortedModel, TransactionIoListModel
+from ..models.address_list import AddressListModel
+
+from .address import CAddress
+
 log = logging.getLogger(__name__)
 
 
 class TxError(Exception):
+    pass
+
+
+class TransactionIo(CAddress):
     pass
 
 
@@ -22,43 +30,53 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
     infoChanged = qt_core.Signal()
     heightChanged = qt_core.Signal()
 
-    def __init__(self, wallet: "CAddress"):
+    def __init__(self, wallet: CAddress):
 
         # wallet can be none for handmade tx
         # assert wallet is not None
 
         super().__init__(parent=None)
         self._address = wallet
-        self.__inputs = []
-        self.__outputs = []
+        self._input_list: List[TransactionIo] = []
+        self._output_list: List[TransactionIo] = []
         self.__coin_base = False
         self.__height = 0
         self.__local = False
-        self.__input_model = input_model.InputModel(self, True)
-        self.__output_model = input_model.InputModel(self, False)
 
         from ..ui.gui import Application
-        self._amount_model = TxAmountModel(Application.instance(), self)
+        self._amount_model = TransactionAmountModel(Application.instance(), self)
         self._amount_model.moveToThread(Application.instance().thread())
-        self._fee_amount_model = TxFeeAmountModel(Application.instance(), self)
+        self._fee_amount_model = TransactionFeeAmountModel(Application.instance(), self)
         self._fee_amount_model.moveToThread(Application.instance().thread())
-        self._state_model = TxStateModel(Application.instance(), self)
+        self._state_model = TransactionStateModel(Application.instance(), self)
         self._state_model.moveToThread(Application.instance().thread())
+        self._input_list_model = TransactionIoListModel(Application.instance(), self._input_list)
+        self._input_list_model.moveToThread(Application.instance().thread())
+        self._output_list_model = TransactionIoListModel(Application.instance(), self._output_list)
+        self._output_list_model.moveToThread(Application.instance().thread())
 
     @property
-    def amountModel(self) -> TxAmountModel:
+    def amountModel(self) -> TransactionAmountModel:
         return self._amount_model
 
     @property
-    def feeAmountModel(self) -> TxFeeAmountModel:
+    def feeAmountModel(self) -> TransactionFeeAmountModel:
         return self._fee_amount_model
 
     @property
-    def stateModel(self) -> TxStateModel:
+    def stateModel(self) -> TransactionStateModel:
         return self._state_model
 
+    @property
+    def inputListModel(self) -> TransactionIoListModel:
+        return self._input_list_model
+
+    @property
+    def outputListModel(self) -> TransactionIoListModel:
+        return self._output_list_model
+
     @classmethod
-    def make_dummy(cls, wallet: Optional["CAddress"]) -> "Transaction":
+    def make_dummy(cls, wallet: Optional[CAddress]) -> Transaction:
         res = cls(wallet)
         res.__local = True
         return res
@@ -81,8 +99,8 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
             self.__time = next(arg_iter)
             self.__balance = next(arg_iter)
             self.__fee = next(arg_iter)
-            self.__inputs = []
-            self.__outputs = []
+            self._input_list.clear()
+            self._output_list.clear()
         except StopIteration:
             log.error("Too few arguments for TX {self}")
 
@@ -147,7 +165,7 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
         # inp.tx = self
 
     @property
-    def wallet(self) -> "CAddress":
+    def wallet(self) -> CAddress:
         return self._address
 
     @property
@@ -159,7 +177,7 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
         self.__local = on
 
     @wallet.setter
-    def wallet(self, wall: "CAddress"):
+    def wallet(self, wall: CAddress):
         self._address = wall
         if wall:
             self._address.heightChanged.connect(
@@ -178,14 +196,6 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
         log.debug(
             f"no confirm: height:{self.__height} => {self._address.coin.height}")
         return 0
-
-    @qt_core.Property(qt_core.QObject, constant=True)
-    def inputsModel(self) -> qt_core.QObject:
-        return self.__input_model
-
-    @qt_core.Property(qt_core.QObject, constant=True)
-    def outputsModel(self) -> qt_core.QObject:
-        return self.__output_model
 
     @property
     def height(self) -> int:
@@ -268,19 +278,11 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
 
     @property
     def inputs(self) -> list:
-        if not isinstance(self.__inputs, list):
-            self.__inputs = list(self.__inputs)
-        return self.__inputs
-
-    # @qt_core.Property("QVariantList", constant=True)
-    # def inputsModel(self) -> list:
-    #     return self.inputs
+        return self._input_list
 
     @property
     def outputs(self) -> list:
-        if not isinstance(self.__outputs, list):
-            self.__outputs = list(self.__outputs)
-        return self.__outputs
+        return self._output_list
 
     @name.setter
     def __set_name(self, value: str):
@@ -333,26 +335,6 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
         if cc == 0:
             return 1
         return 2
-
-
-class OutputType(enum.IntEnum):
-    NONSTANDART = enum.auto()
-    PUBKEY = enum.auto()
-    PUBKEYHASH = enum.auto()
-    SCRIPTHASH = enum.auto()
-    MULTISIG = enum.auto()
-    NULLDATA = enum.auto()
-    WITNESS_V0_KEYHASH = enum.auto()
-    WITNESS_V0_SCRIPTHASH = enum.auto()
-    WITNESS_UNKNOWN = enum.auto()
-
-
-class InputType(enum.IntFlag):
-    """
-    Keep it as flag for future use
-    """
-    INPUT = 0
-    OUTPUT = 1
 
 
 class Input:

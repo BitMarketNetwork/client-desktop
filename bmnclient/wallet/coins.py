@@ -12,7 +12,7 @@ from ..models.coin_list import \
     CoinAmountModel, \
     CoinRemoteStateModel, \
     CoinStateModel
-from ..models.tx_list import TxListModel, TxListSortedModel, TxListConcatenateModel
+from ..models.tx_list import TransactionListModel, TransactionListSortedModel, TransactionListConcatenateModel
 
 log = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         self._state_model = CoinStateModel(Application.instance(), self)
         self._remote_state_model = CoinRemoteStateModel(Application.instance(), self)
         self._address_list_model = AddressListModel(Application.instance(), self)
-        self._tx_list_model = TxListConcatenateModel(Application.instance())
+        self._tx_list_model = TransactionListConcatenateModel(Application.instance())
 
     def __str__(self) -> str:
         return f"<{self.fullName},{self.rowid} vis:{self.__visible}>"
@@ -108,12 +108,12 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         return self._address_list
 
     @property
-    def txListModel(self) -> TxListModel:
+    def txListModel(self) -> TransactionListModel:
         return self._tx_list_model
 
-    def txListSortedModel(self) -> TxListSortedModel:
+    def txListSortedModel(self) -> TransactionListSortedModel:
         from ..ui.gui import Application
-        return TxListSortedModel(Application.instance(), self._tx_list_model)
+        return TransactionListSortedModel(Application.instance(), self._tx_list_model)
 
     @qt_core.Property(str, constant=True)
     def unit(self) -> str:

@@ -6,7 +6,7 @@ import "../coincontrols"
 BPane {
     id: _base
     property string title: qsTr("Receive")
-    property BCoinObject coin: null
+    property var coin
 
     contentItem: BScrollView {
         id: _scrollView

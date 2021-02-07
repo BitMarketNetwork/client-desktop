@@ -1,14 +1,17 @@
-import functools
+from __future__ import annotations
 import logging
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import List, Optional, Union, TYPE_CHECKING
 
 import PySide2.QtCore as qt_core
 
 from .. import orderedset
-from . import db_entry, hd, key, mtx_impl, serialization, tx, util
+from . import db_entry, hd, key, mtx_impl, serialization
 from ..models.address_list import AddressAmountModel, AddressStateModel
-from ..models.tx_list import TxListModel, TxListSortedModel
+from ..models.tx_list import TransactionListModel, TransactionListSortedModel
+
+if TYPE_CHECKING:
+    from .tx import Transaction
 
 log = logging.getLogger(__name__)
 
@@ -92,11 +95,11 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         return self._state_model
 
     @property
-    def txListModel(self) -> TxListModel:
+    def txListModel(self) -> TransactionListModel:
         return self._tx_list_model
 
-    def txListSortedModel(self) -> TxListSortedModel:
-        return TxListSortedModel(self._tx_list_model)
+    def txListSortedModel(self) -> TransactionListSortedModel:
+        return TransactionListSortedModel(self._tx_list_model)
 
     def to_table(self) -> dict:
         res = {
@@ -160,7 +163,7 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         self._amount_model.moveToThread(Application.instance().thread())
         self._state_model = AddressStateModel(Application.instance(), self)
         self._state_model.moveToThread(Application.instance().thread())
-        self._tx_list_model = TxListModel(self._tx_list)
+        self._tx_list_model = TransactionListModel(Application.instance(), self._tx_list)
         self._tx_list_model.moveToThread(Application.instance().thread())
 
         self._coin.heightChanged.connect(
@@ -200,12 +203,6 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
                 f"Balance of {self} updated from {self.__balance} to {balance}. Processed: {len(self.__unspents)} utxo")
             # strict !!! remember notifiers
             self.balance = balance
-
-    def fill_with_dummy_unspents(self, balance: int):
-        log.warning(f"Filling {self} with fake utxo on {self.__balance}")
-        self.unspents = [
-            mtx_impl.UTXO.make_dummy(balance, self)
-        ]
 
     @property
     def wants_update_unspents(self) -> bool:
@@ -262,21 +259,21 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
     def match(self, pref: str) -> bool:
         return self.__name.lower().startswith(pref.lower())
 
-    def is_receiver(self, tx_: tx.Transaction) -> bool:
-        return any(self.name == o.address for o in tx_.output_iter)
+    def is_receiver(self, tx: Transaction) -> bool:
+        return any(self.name == o.address for o in tx.output_iter)
 
-    def add_tx(self, tx_: "tx.Transaction", check_new=False):
+    def add_tx(self, tx: Transaction, check_new=False):
         """
         too heavy for multiple items
 
         important thing.. we call it from mempool only!!!!
         """
-        if tx_ in self._tx_list:
+        if tx in self._tx_list:
             tx_ex = next(
-                (t for t in self._tx_list if t.name == tx_.name), None)
-            tx_ex.height = tx_.height
-            tx_ex.time = tx_.time
-            if not tx_.local:
+                (t for t in self._tx_list if t.name == tx.name), None)
+            tx_ex.height = tx.height
+            tx_ex.time = tx.time
+            if not tx.local:
                 # TODO: failure
                 # should be decremented for each approved address
                 self.__local__tx_count = 0
@@ -284,17 +281,17 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
             # we don't want to save it. it only for UI.. next session we'll get real TX
             self.txCountChanged.emit()
             raise tx.TxError("TX already exists")
-        if tx_.local:
+        if tx.local:
             self.__local__tx_count += 1
         if check_new:
             from ..ui.gui import Application
             api_ = Application.instance()
             if api_:
-                api_.uiManager.process_incoming_tx(tx_)
+                api_.uiManager.process_incoming_tx(tx)
         with self._tx_list_model.lockInsertRows():
-            self._tx_list.raw_add(tx_)
-            if tx_.wallet is None:
-                tx_.wallet = self
+            self._tx_list.raw_add(tx)
+            if tx.wallet is None:
+                tx.wallet = self
         self.txCountChanged.emit()
         self.realTxCountChanged.emit()
 
@@ -321,34 +318,6 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
                 if api_:
                     api_.uiManager.process_incoming_tx(unique)
         self.realTxCountChanged.emit()
-
-    def make_dummy_tx(self, parent=None) -> tx.Transaction:
-        tx_ = tx.Transaction.make_dummy(parent)
-        name = util.random_hex(32)
-        tx_.parse(name, {
-            'height': self.coin.height or 0 + 1,
-            'amount': 12000000,
-            'fee': 50000,
-            'time': datetime.utcnow().timestamp(),
-            'coinbase': 0,
-            'input': [
-                {
-                    'type': 'p2wpkh',
-                    'amount': 100,
-                    'address': self.name,
-                },
-            ],
-            'output': [
-                {
-                    'type': 'p2wpkh',
-                    'amount': 10000,
-                    'address': self.name,
-                },
-            ],
-        })
-        if parent:
-            parent.txCount += 1
-        return tx_
 
     def _get_first_offset(self) -> int:
         return self.__first_offset
@@ -610,7 +579,7 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
     def __len__(self):
         return len(self._tx_list)
 
-    def __getitem__(self, val: int) -> tx.Transaction:
+    def __getitem__(self, val: int) -> Transaction:
         return self._tx_list[val]
 
     first_offset = property(_get_first_offset, _set_first_offset)

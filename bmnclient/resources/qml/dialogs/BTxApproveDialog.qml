@@ -12,7 +12,7 @@ BDialog {
     }
 
     property int type: BTxApproveDialog.Type.Final
-    property BCoinObject coin: null
+    property var coin
     property alias txText: _tx.text
     property alias targetAddressText: _targetAddress.text
     property alias changeAddressText: _changeAddress.text

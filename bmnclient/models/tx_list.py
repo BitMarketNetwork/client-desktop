@@ -17,13 +17,14 @@ from . import \
     AbstractListSortedModel, \
     AbstractTxStateModel, \
     RoleEnum
+from .address_list import AddressListModel
 
 if TYPE_CHECKING:
     from ..ui.gui import Application
     from ..wallet.coins import CoinType
 
 
-class TxStateModel(AbstractTxStateModel):
+class TransactionStateModel(AbstractTxStateModel):
     _stateChanged: Final = QSignal()
 
     @QProperty(int, notify=_stateChanged)
@@ -57,7 +58,7 @@ class TxStateModel(AbstractTxStateModel):
             self._tx.confirmCount)
 
 
-class TxAmountModel(AbstractAmountModel, AbstractTxStateModel):
+class TransactionAmountModel(AbstractAmountModel, AbstractTxStateModel):
     def __init__(self, application: Application, coin: CoinType):
         super().__init__(application, coin)
 
@@ -68,7 +69,7 @@ class TxAmountModel(AbstractAmountModel, AbstractTxStateModel):
         return self._tx.fiatBalance
 
 
-class TxFeeAmountModel(AbstractAmountModel, AbstractTxStateModel):
+class TransactionFeeAmountModel(AbstractAmountModel, AbstractTxStateModel):
     def __init__(self, application: Application, coin: CoinType):
         super().__init__(application, coin)
 
@@ -79,7 +80,11 @@ class TxFeeAmountModel(AbstractAmountModel, AbstractTxStateModel):
         return self._tx.feeFiatBalance
 
 
-class TxListModel(AbstractListModel):
+class TransactionIoListModel(AddressListModel):
+    pass
+
+
+class TransactionListModel(AbstractListModel):
     class Role(RoleEnum):
         HASH: Final = auto()
         AMOUNT: Final = auto()
@@ -110,13 +115,13 @@ class TxListModel(AbstractListModel):
     }
 
 
-class TxListConcatenateModel(AbstractConcatenateModel):
-    ROLE_MAP: Final = TxListModel.ROLE_MAP
+class TransactionListConcatenateModel(AbstractConcatenateModel):
+    ROLE_MAP: Final = TransactionListModel.ROLE_MAP
 
 
-class TxListSortedModel(AbstractListSortedModel):
+class TransactionListSortedModel(AbstractListSortedModel):
     def __init__(
             self,
             application: Application,
-            source_model: TxListModel) -> None:
-        super().__init__(application, source_model, TxListModel.Role.HASH)
+            source_model: TransactionListModel) -> None:
+        super().__init__(application, source_model, TransactionListModel.Role.HASH)

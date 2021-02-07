@@ -6,7 +6,7 @@ import "../basiccontrols"
 
 BItemDelegate {
     id: _base
-    property var tx // TxListModel item
+    property var tx // TransactionListModel item
     property BMenu contextMenu: null
     property real smallFontPointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
 

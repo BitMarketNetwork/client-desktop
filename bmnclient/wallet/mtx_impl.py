@@ -1,6 +1,7 @@
 """
 https://en.bitcoin.it/wiki/Protocol_documentation
 """
+from __future__ import annotations
 
 from functools import lru_cache
 import itertools
@@ -8,10 +9,13 @@ import logging
 import random
 import re
 from collections import namedtuple
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, TYPE_CHECKING
 from datetime import datetime
 
-from . import constants, util, tx
+from . import constants, util
+
+if TYPE_CHECKING:
+    from .tx import Transaction
 
 
 log = logging.getLogger(__name__)
@@ -248,8 +252,9 @@ class Mtx:
     def __hash__(self):
         return hash(self.to_hex())
 
-    def to_tx(self) -> tx.Transaction:
-        tx_: tx.Transaction = tx.Transaction.make_dummy(None)
+    def to_tx(self) -> Transaction:
+        from .tx import Transaction
+        tx_: Transaction = Transaction.make_dummy(None)
         tx_.name = self.id
         tx_.fee = self.fee
         tx_.time = datetime.now().timestamp()

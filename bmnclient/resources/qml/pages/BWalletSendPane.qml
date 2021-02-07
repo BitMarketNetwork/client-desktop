@@ -7,7 +7,7 @@ import "../dialogs"
 BPane {
     id: _base
     property string title: qsTr("Send")
-    property BCoinObject coin: null
+    property var coin
 
     contentItem: BScrollView {
         id: _scrollView
