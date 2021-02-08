@@ -55,32 +55,54 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
                 self,
                 owner: AbstractListModel,
                 first_index: int,
-                count: int):
+                count: int) -> None:
             if first_index < 0:
                 first_index = owner.rowCount()
+            if count < 0:
+                count = owner.rowCount()
+
             self._owner = owner
             self._first_index = first_index
-            self._last_index = self._first_index + count - 1
+            self._last_index = first_index + count - 1
+            self._dummy = self._first_index > self._last_index
 
     class LockInsertRows(_LockRows):
         def __enter__(self) -> None:
+            if self._dummy:
+                return
             self._owner.beginInsertRows(
                 QModelIndex(),
                 self._first_index,
                 self._last_index)
 
         def __exit__(self, exc_type, exc_value, traceback) -> None:
+            if self._dummy:
+                return
             self._owner.endInsertRows()
 
     class LockRemoveRows(_LockRows):
         def __enter__(self) -> None:
+            if self._dummy:
+                return
             self._owner.beginRemoveRows(
                 QModelIndex(),
                 self._first_index,
                 self._last_index)
 
         def __exit__(self, exc_type, exc_value, traceback) -> None:
+            if self._dummy:
+                return
             self._owner.endRemoveRows()
+
+    class LockReset:
+        def __init__(self, owner: AbstractListModel) -> None:
+            self._owner = owner
+
+        def __enter__(self) -> None:
+            self._owner.beginResetModel()
+
+        def __exit__(self, exc_type, exc_value, traceback) -> None:
+            self._owner.endResetModel()
 
     ROLE_MAP = {}
 
@@ -106,8 +128,11 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
     def lockInsertRows(self, first_index=-1, count=1) -> LockInsertRows:
         return self.LockInsertRows(self, first_index, count)
 
-    def lockRemoveRows(self, first_index=-1, count=1) -> LockRemoveRows:
+    def lockRemoveRows(self, first_index=0, count=-1) -> LockRemoveRows:
         return self.LockRemoveRows(self, first_index, count)
+
+    def lockReset(self) -> LockReset:
+        return self.LockReset(self)
 
 
 class AbstractConcatenateModel(QConcatenateTablesProxyModel, ListModelHelper):
