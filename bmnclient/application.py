@@ -208,8 +208,8 @@ class CoreApplication(QObject):
         self._onRun()
 
     def _onRun(self) -> None:
-        self._wallet_thread.start()
-        self._server_thread.start()
+        self._wallet_thread.run()
+        self._server_thread.run()
 
     def __onAboutToQuit(self) -> None:
         self._logger.debug("Shutting down...");
