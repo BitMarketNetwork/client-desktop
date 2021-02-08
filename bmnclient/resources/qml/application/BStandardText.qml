@@ -52,8 +52,8 @@ QtObject {
         readonly property QtObject amount: _base.amountTemplate
         readonly property QtObject state: QtObject {
             readonly property string label: ""
-            readonly property bool watchOnly: False
-            readonly property bool isUpdating: False
+            readonly property bool watchOnly: false
+            readonly property bool isUpdating: false
         }
         readonly property var txList: [] // TODO ListModel
     }

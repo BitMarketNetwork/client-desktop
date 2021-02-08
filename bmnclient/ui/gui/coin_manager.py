@@ -20,18 +20,13 @@ log = logging.getLogger(__name__)
 class CoinManager(QObject):
     coinIndexChanged = QSignal()
     addressIndexChanged = QSignal()
-    renderCell = QSignal(int, arguments=["index"])
     emptyBalancesChanged = QSignal()
 
     def __init__(self, application: Application) -> None:
         super().__init__()
         self._application = application
-
         self.__current_coin_idx = -1
-        tx_source = tx_model.TxModel(self)
-        self.__tx_model = tx_model.TxProxyModel(self)
-        self.__tx_model.setSourceModel(tx_source)
-        self._coin_list_model = CoinListModel(self._application.coinList)
+        self._coin_list_model = CoinListModel(self._application, self._application.coinList)
         self._application.networkThread.heightChanged.connect(self.coin_height_changed)
 
     def coin_height_changed(self, coin: 'coins.CoinType') -> None:

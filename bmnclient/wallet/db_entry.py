@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 class DbEntry(meta.QSeq):
 
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         super().__init__(parent=parent)
         self._rowid = None
 

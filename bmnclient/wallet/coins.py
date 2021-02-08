@@ -164,10 +164,9 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         assert qt_core.QThread.currentThread() == self.thread()
         with self._address_list_model.lockInsertRows():
             self._address_list.append(wallet)
-            self.update_balance()
+        self.update_balance()
         self._tx_list_model.addSourceModel(wallet.txListModel)
         from ..ui.gui import Application
-        Application.instance().coinManager.render_cell(self)
         Application.instance().networkThread.update_wallet(wallet)
 
     def _next_hd_index(self):

@@ -5,7 +5,6 @@ from typing import List, Optional, Union, TYPE_CHECKING
 
 import PySide2.QtCore as qt_core
 
-from .. import orderedset
 from . import db_entry, hd, key, mtx_impl, serialization
 from ..models.address_list import AddressAmountModel, AddressStateModel
 from ..models.tx_list import TransactionListModel, TransactionListSortedModel
@@ -47,12 +46,11 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
     heightChanged = qt_core.Signal()
     #
     txCountChanged = qt_core.Signal()
-    realTxCountChanged = qt_core.Signal()
 
     def __init__(self, name: str, coin: Optional["coins.CoinType"] = None, *, created: bool = False):
         super().__init__(parent=coin)
         assert(name)
-        self._tx_list = orderedset.OrderedSet()
+        self._tx_list = []
         self._set_object_name(name)
         self.coin = coin
         self.__name = name
@@ -289,11 +287,10 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
             if api_:
                 api_.uiManager.process_incoming_tx(tx)
         with self._tx_list_model.lockInsertRows():
-            self._tx_list.raw_add(tx)
+            self._tx_list.append(tx)
             if tx.wallet is None:
                 tx.wallet = self
         self.txCountChanged.emit()
-        self.realTxCountChanged.emit()
 
     def add_tx_list(self, txs: list, check_new=False):
         """
@@ -311,13 +308,10 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         txs[:] = unique
         with self._tx_list_model.lockInsertRows(-1, len(unique)):
             for tx in unique:
-                self._tx_list.raw_add(tx)
-            if check_new:
-                from ..ui.gui import Application
-                api_ = Application.instance()
-                if api_:
-                    api_.uiManager.process_incoming_tx(unique)
-        self.realTxCountChanged.emit()
+                self._tx_list.append(tx)
+        if check_new:
+            from ..ui.gui import Application
+            Application.instance().uiManager.process_incoming_tx(unique)
 
     def _get_first_offset(self) -> int:
         return self.__first_offset
@@ -361,7 +355,7 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
             raise TypeError(type(bh))
         log.warning("Offsset skipped")
 
-    @qt_core.Property(int, notify=realTxCountChanged)
+    @property
     def realTxCount(self) -> int:
         return len(self._tx_list)
 
@@ -409,7 +403,6 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
         self.__last_offset = None
         self.__tx_count = 0
         self.__deleted = True
-        self.realTxCountChanged.emit()
 
     @property
     def private_key(self) -> str:

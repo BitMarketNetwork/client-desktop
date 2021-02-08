@@ -5,13 +5,13 @@ import sys
 import traceback
 from pathlib import Path
 from contextlib import closing
-# to debug
 from ..server import net_cmd
 import bmnclient.config
 
 import PySide2.QtCore as qt_core
 
-from ..wallet import address, coins, tx
+from ..wallet import address, coins
+from ..wallet.tx import Transaction, TransactionIo
 from . import sqlite_impl
 
 log = logging.getLogger(__name__)
@@ -208,13 +208,13 @@ class DbWrapper:
         txs = []
         for values in fetch:
             qt_core.QCoreApplication.processEvents()
-            tx_ = tx.Transaction(None)
-            tx_.from_args(iter(values))
-            txs.append(tx_)
-            self._read_input_list(tx_)
+            tx = Transaction(None)
+            tx.from_args(iter(values))
+            txs.append(tx)
+            self._read_input_list(tx)
         wallet.add_tx_list(txs)
 
-    def _read_input_list(self, tx: tx.Transaction) -> None:
+    def _read_input_list(self, tx: Transaction) -> None:
         """
         and outputs too of course
         """
@@ -250,23 +250,23 @@ class DbWrapper:
         with closing(self.__exec(query, (address.rowid,))):
             pass
 
-    def _remove_tx(self, tx_: tx.Transaction) -> None:
-        if tx_.rowid is None:
+    def _remove_tx(self, tx: Transaction) -> None:
+        if tx.rowid is None:
             query = f"""
             DELETE FROM {self.transactions_table}
             WHERE {self.name_column} == ?;
             """
-            with closing(self.__exec(query, (self.__impl(tx_.name),))):
+            with closing(self.__exec(query, (self.__impl(tx.name),))):
                 pass
         else:
             query = f"""
             DELETE FROM {self.transactions_table}
             WHERE id == ?;
             """
-            with closing(self.__exec(query, (self.__impl(tx_.rowid),))):
+            with closing(self.__exec(query, (self.__impl(tx.rowid),))):
                 pass
 
-    def _remove_tx_list(self, tx_list: List[tx.Transaction]) -> None:
+    def _remove_tx_list(self, tx_list: List[Transaction]) -> None:
         # TODO: optimize
         # may be row ids?
         # tx_hashes = f"({','.join(map(lambda t: self.__impl(t.name),tx_list))})"
@@ -277,8 +277,8 @@ class DbWrapper:
         # """
         # self._exec_(query, (tx_list,))
 
-        for tx_ in tx_list:
-            self._remove_tx(tx_)
+        for tx in tx_list:
+            self._remove_tx(tx)
 
     def _add_or_save_wallet(self, wallet: address.CAddress, timeout: int = None) -> None:
         if wallet.is_root:
@@ -387,7 +387,7 @@ class DbWrapper:
         self.open_db()
         self._init_actions()
 
-    def _write_transaction(self, tx: tx.Transaction) -> None:
+    def _write_transaction(self, tx: Transaction) -> None:
         try:
             query = f"""
             INSERT  INTO {self.transactions_table}
@@ -415,9 +415,9 @@ class DbWrapper:
             # make it in try block ( we don't need inputs withot tx )
             # inputs
             for inp in tx.inputs:
-                self._write_input(inp)
+                self._write_input(tx, inp, False)
             for out in tx.outputs:
-                self._write_input(out)
+                self._write_input(tx, out, True)
 
         except sql.IntegrityError as ie:
             # TODO: adjust query instead
@@ -460,9 +460,9 @@ class DbWrapper:
                 # make it in try block ( we don't need inputs withot tx )
                 # inputs
                 for inp in tx.inputs:
-                    self._write_input(inp)
+                    self._write_input(tx, inp, False)
                 for out in tx.outputs:
-                    self._write_input(out)
+                    self._write_input(tx, out, True)
 
             except sql.IntegrityError as ie:
                 if str(ie).find('UNIQUE') < 0:
@@ -474,10 +474,7 @@ class DbWrapper:
             except AssertionError:
                 sys.exit(1)
 
-    def _write_input(self, inp: tx.Input) -> None:
-        """
-        and outputs too of course
-        """
+    def _write_input(self, tx: Transaction, inp: TransactionIo, out) -> None:
         try:
             query = f"""
             INSERT INTO {self.inputs_table}
@@ -486,11 +483,11 @@ class DbWrapper:
             """
             with closing(self.__exec(query,
                                      (
-                                         self.__impl(inp.address),
-                                         inp.tx.rowid,
-                                         self.__impl(inp.amount),
-                                         self.__impl(inp.out),
-                                         self.__impl(inp.type),
+                                         self.__impl(inp.name),
+                                         tx.rowid,
+                                         self.__impl(inp.balance),
+                                         self.__impl(out),
+                                         self.__impl(''),
                                      ))):
                 pass
         except sql.IntegrityError as ie:
@@ -584,7 +581,7 @@ class DbWrapper:
             coin.update_balance()
         return adds
 
-    def _read_all_tx(self, adds: List[address.CAddress]) -> List[tx.Transaction]:
+    def _read_all_tx(self, adds: List[address.CAddress]) -> List[Transaction]:
         """
         we call this version on start
         """
@@ -619,10 +616,10 @@ class DbWrapper:
                 if add_cur is None:
                     log.critical(f"No address with row id:{values[0]}")
                     break
-            tx_ = tx.Transaction(add_cur)
-            tx_.from_args(iter(values[1:]))
-            txs.append(tx_)
-            add_cur.__txs.append(tx_)
+            tx = Transaction(add_cur)
+            tx.from_args(iter(values[1:]))
+            txs.append(tx)
+            add_cur.__txs.append(tx)
         for add in add_map.values():
             add.add_tx_list(add.__txs)
         return txs

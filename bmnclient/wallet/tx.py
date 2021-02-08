@@ -2,15 +2,17 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import Iterable, List, Optional, Tuple, TYPE_CHECKING
+from typing import Iterable, List, Optional
 
 import PySide2.QtCore as qt_core
 
 from . import db_entry, serialization
-from ..models.tx_list import TransactionAmountModel, TransactionFeeAmountModel, TransactionListModel, TransactionStateModel, TransactionListSortedModel, TransactionIoListModel
-from ..models.address_list import AddressListModel
-
 from .address import CAddress
+from ..models.tx_list import \
+    TransactionAmountModel, \
+    TransactionFeeAmountModel, \
+    TransactionIoListModel, \
+    TransactionStateModel
 
 log = logging.getLogger(__name__)
 
@@ -31,11 +33,7 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
     heightChanged = qt_core.Signal()
 
     def __init__(self, wallet: CAddress):
-
-        # wallet can be none for handmade tx
-        # assert wallet is not None
-
-        super().__init__(parent=None)
+        super().__init__()
         self._address = wallet
         self._input_list: List[TransactionIo] = []
         self._output_list: List[TransactionIo] = []
@@ -99,46 +97,43 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
             self.__time = next(arg_iter)
             self.__balance = next(arg_iter)
             self.__fee = next(arg_iter)
-            self._input_list.clear()
-            self._output_list.clear()
+
+            with self._input_list_model.lockReset():
+                self._input_list.clear()
+            with self._output_list_model.lockReset():
+                self._output_list.clear()
         except StopIteration:
             log.error("Too few arguments for TX {self}")
 
     def parse(self, name: str, body: dict):
         self.__name = name
         self._set_object_name(name)
-        # no heigth in mempool !
-        self.__height = body.get("height", None)
+        self.__height = body.get("height", 0)
         self.__time = body["time"]
         self.__balance = body["amount"]
         self.__fee = body["fee"]
         self.__coin_base = body["coinbase"] != 0
-        # leave iterators !!!
-        self.__inputs = map(lambda t: Input.from_dict(t, self), body["input"])
-        self.__outputs = map(
-            lambda t: Output.from_dict(t, self), body["output"])
-        return self
 
-    def dump(self) -> dict:
-        assert self._address
-        res = {
-            "time": self.__time,
-            "amount": self.__balance,
-            "fee": self.__fee,
-            "coinbase": 1 if self.__coin_base else 0,
-            # TODO
-            "input": [
-                i.dump() for i in self.inputs
-            ],
-            "output": [
-                i.dump() for i in self.outputs
-            ],
-        }
-        if self.__height is not None:
-            res.update({
-                "height": self.__height
-            })
-        return res
+        with self._input_list_model.lockReset():
+            self._input_list.clear()
+            for item in body["input"]:
+                item = Input.from_dict(item, self)
+                a = TransactionIo(item.address)
+                a.moveToThread(self.thread())
+                a.coin = self._address.coin
+                a.balance = item.amount
+                self._input_list.append(a)
+
+        with self._output_list_model.lockReset():
+            for item in body["output"]:
+                item = Output.from_dict(item, self)
+                a = TransactionIo(item.address)
+                a.moveToThread(self.thread())
+                a.coin = self._address.coin
+                a.balance = item.amount
+                self._output_list.append(a)
+
+        return self
 
     def to_table(self) -> dict:
         return {
@@ -152,17 +147,20 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
     def make_input(self, args: iter):
         if next(args):
             inp = Output(self)
-            if not isinstance(self.__outputs, list):
-                self.__outputs = list(self.__outputs)
-            self.__outputs.append(inp)
+            with self._output_list_model.lockInsertRows():
+                inp.from_args(args)
+                a = TransactionIo(inp.address)
+                a.coin = self._address.coin
+                a.balance = inp.amount
+                self._output_list.append(a)
         else:
             inp = Input(self)
-            if not isinstance(self.__inputs, list):
-                self.__inputs = list(self.__inputs)
-            self.__inputs.append(inp)
-        inp.from_args(args)
-        # inp.moveToThread(self.thread())
-        # inp.tx = self
+            with self._input_list_model.lockInsertRows():
+                inp.from_args(args)
+                a = TransactionIo(inp.address)
+                a.coin = self._address.coin
+                a.balance = inp.amount
+                self._input_list.append(a)
 
     @property
     def wallet(self) -> CAddress:
@@ -369,16 +367,6 @@ class Input:
             self.type = next(arg_iter)
         except StopIteration:
             log.error(f"Too few arguments for Input {self}")
-
-    @property
-    def amountHuman(self) -> int:
-        return self.tx.wallet.coin.balance_human(self.amount)
-
-    def dump(self) -> dict:
-        return {
-            'address': self.address,
-            'amount': self.amount,
-        }
 
     def __str__(self) -> str:
         return f"IN: {self.address}:{self.amount}"
