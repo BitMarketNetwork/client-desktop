@@ -4,10 +4,8 @@ from typing import Union, Tuple, Generator
 import enum
 import binascii
 import sys
-import os
 import functools
 import hashlib
-import decimal
 from . import coin_network
 from . import constants
 from ..crypto.bech32 import Bech32
@@ -31,59 +29,6 @@ def ensure_string_or_bytes(data: Union[str, bytes]):
     if not isinstance(data, (str, bytes, bytearray)):
         raise TypeError(f"{type(data)} is not string or bytes")
 
-# https://docs.python.org/3/library/decimal.html#recipes
-
-
-def moneyfmt(value, places=2, curr='', sep=',', dp='.',
-             pos='', neg='-', trailneg=''):
-    """Convert Decimal to a money formatted string.
-
-    places:  required number of places after the decimal point
-    curr:    optional currency symbol before the sign (may be blank)
-    sep:     optional grouping separator (comma, period, space, or blank)
-    dp:      decimal point indicator (comma or period)
-             only specify as blank when places is zero
-    pos:     optional sign for positive numbers: '+', space or blank
-    neg:     optional sign for negative numbers: '-', '(', space or blank
-    trailneg:optional trailing minus indicator:  '-', ')', space or blank
-
-    >>> d = Decimal('-1234567.8901')
-    >>> moneyfmt(d, curr='$')
-    '-$1,234,567.89'
-    >>> moneyfmt(d, places=0, sep='.', dp='', neg='', trailneg='-')
-    '1.234.568-'
-    >>> moneyfmt(d, curr='$', neg='(', trailneg=')')
-    '($1,234,567.89)'
-    >>> moneyfmt(Decimal(123456789), sep=' ')
-    '123 456 789.00'
-    >>> moneyfmt(Decimal('-0.02'), neg='<', trailneg='>')
-    '<0.02>'
-
-    """
-    q = decimal.Decimal(10) ** -places      # 2 places --> '0.01'
-    sign, digits, exp = value.quantize(q).as_tuple()
-    result = []
-    digits = list(map(str, digits))
-    build, next = result.append, digits.pop
-    if sign:
-        build(trailneg)
-    for i in range(places):
-        build(next() if digits else '0')
-    if places:
-        build(dp)
-    if not digits:
-        build('0')
-    i = 0
-    while digits:
-        build(next())
-        i += 1
-        if i == 3 and digits:
-            i = 0
-            build(sep)
-    build(curr)
-    build(neg if sign else pos)
-    return ''.join(reversed(result))
-
 
 def int_to_varint(val: int) -> bytes:
     if val < 253:
@@ -94,11 +39,6 @@ def int_to_varint(val: int) -> bytes:
         return b'\xfe'+val.to_bytes(4, 'little')
     else:
         return b'\xff'+val.to_bytes(8, 'little')
-
-
-def random_hex(len: int) -> str:
-    # return binascii.b2a_hex(os.urandom(len))
-    return os.urandom(len).hex()
 
 
 def read_var_int(stream: bytes) -> int:
@@ -182,15 +122,6 @@ def b58_check_encode(data: str) -> bytes:
     # return (CKey_58.re_encode(CKey_256, signed))
 
 
-def b58_check_validate(data: str) -> bool:
-    ensure_string_or_bytes(data)
-    try:
-        b58_check_decode(data)
-        return True
-    except ConvertionError:
-        return False
-
-
 def b58_check_decode(data: bytes) -> bytes:
     bytes_ = b58_decode(data)
     shortened = bytes_[:-4]
@@ -202,10 +133,6 @@ def b58_check_decode(data: bytes) -> bytes:
 
 def number_to_bytes(number: int, length: int) -> bytes:
     return number.to_bytes(length=length, byteorder="big")
-
-
-def number_to_hex(number: int, length: int) -> str:
-    return f"%0{length}x" % number
 
 
 def bytes_to_number(bytes_: bytes) -> int:
@@ -267,11 +194,6 @@ def address_to_public_key_hash(address) -> str:
     # Raise ConvertionError if we cannot identify the address.
     get_version(address)
     return b58_check_decode(address)[1:]
-
-
-def xor_bytes(data1: bytes, data2: bytes) -> bytes:
-    assert len(data1) == len(data2)
-    return bytes(a ^ b for (a, b) in zip(data1, data2))
 
 
 def bytes_to_hex(data: bytes, upper: bool = False) -> str:
