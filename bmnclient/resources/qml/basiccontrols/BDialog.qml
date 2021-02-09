@@ -14,6 +14,14 @@ Dialog {
     x: Math.round((parent.width - width) / 2)
     y: Math.round((parent.height - height) / 2)
 
+    // TODO temporary fix: Binding loop detected for property "implicitWidth"
+    // when: contentItem == BDialogLayout and header.elide != Text.ElideNone
+    // qt5/qtquickcontrols2/src/imports/controls/material/Dialog.qml
+    implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
+                            contentWidth + leftPadding + rightPadding,
+                            //implicitHeaderWidth,
+                            implicitFooterWidth)
+
     onClosed: {
         if(destroyOnClose) {
             autoDestroy()
