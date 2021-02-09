@@ -1,9 +1,8 @@
 import "../application"
 import "../basiccontrols"
 
-BControl {
+BDialogLayout {
     id: _base
-    default property alias children: _layout.children
 
     enum Type {
         Generate,
@@ -114,69 +113,65 @@ BControl {
         }
     }
 
-    contentItem: BDialogLayout {
-        id: _layout
+    BDialogDescription {
+        id: _description
+        text: _base.descriptionText
+        visible: text.length > 0
+    }
+    BDialogSeparator {
+        visible: _description.visible
+    }
 
-        BDialogDescription {
-            id: _description
-            text: _base.descriptionText
-            visible: text.length > 0
-        }
-        BDialogSeparator {
-            visible: _description.visible
-        }
+    BDialogPromtLabel {
+        text: qsTr("Coin:")
+    }
+    BDialogInputLabel {
+        text: _base.coin.fullName
+    }
 
-        BDialogPromtLabel {
-            text: qsTr("Coin:")
-        }
-        BDialogInputLabel {
-            text: _base.coin.fullName
-        }
+    BDialogSeparator {}
 
-        BDialogSeparator {}
+    BDialogPromtLabel {
+        text: _base.addressPromtText
+    }
+    BDialogInputTextField {
+        id: _address
+        enabled: _base.type !== BAddressEditBox.Type.Generate && _base.type !== BAddressEditBox.Type.GenerateRecipient
+        readOnly: _base.readOnly
+        placeholderText: _base.addressPlaceholderText
+    }
+    // TODO validator "✔", "✘"
 
-        BDialogPromtLabel {
-            text: _base.addressPromtText
-        }
-        BDialogInputTextField {
-            id: _address
-            enabled: _base.type !== BAddressEditBox.Type.Generate && _base.type !== BAddressEditBox.Type.GenerateRecipient
-            readOnly: _base.readOnly
-            placeholderText: _base.addressPlaceholderText
-        }
-        // TODO validator "✔", "✘"
+    BDialogPromtLabel {
+        visible: _base.type !== BAddressEditBox.Type.AddWatchOnly
+        text: _base.segwitPromtText
+    }
+    BDialogInputSwitch {
+        enabled: !_base.readOnly
+        id: _segwitSwitch
+        visible: _base.type !== BAddressEditBox.Type.AddWatchOnly
+        checked: true
+    }
 
-        BDialogPromtLabel {
-            visible: _base.type !== BAddressEditBox.Type.AddWatchOnly
-            text: _base.segwitPromtText
-        }
-        BDialogInputSwitch {
-            enabled: !_base.readOnly
-            id: _segwitSwitch
-            visible: _base.type !== BAddressEditBox.Type.AddWatchOnly
-            checked: true
-        }
+    BDialogSeparator {}
 
-        BDialogSeparator {}
+    BDialogPromtLabel {
+        text: _base.labelPromtText
+    }
+    BDialogInputTextField {
+        id: _label
+        readOnly: _base.readOnly
+        placeholderText: _base.labelPlaceholderText
+    }
 
-        BDialogPromtLabel {
-            text: _base.labelPromtText
-        }
-        BDialogInputTextField {
-            id: _label
-            readOnly: _base.readOnly
-            placeholderText: _base.labelPlaceholderText
-        }
-
-        BDialogPromtLabel {
-            text: _base.commentPromtText
-        }
-        BDialogInputTextArea {
-            id: _comment
-            readOnly: _base.readOnly
-            visibleLineCount: 6
-            placeholderText: _base.commentPlaceholderText
-        }
+    BDialogPromtLabel {
+        text: _base.commentPromtText
+    }
+    BDialogInputTextArea {
+        id: _comment
+        readOnly: _base.readOnly
+        visibleLineCount: 6
+        placeholderText: _base.commentPlaceholderText
     }
 
     onActiveFocusChanged: {
