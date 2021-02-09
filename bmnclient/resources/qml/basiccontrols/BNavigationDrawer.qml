@@ -2,7 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls.Material 2.15
 
 BControl {
-    default property alias content: _layout.children
+    default property alias children: _layout.children
 
     contentItem: BColumnLayout {
         BRowLayout {

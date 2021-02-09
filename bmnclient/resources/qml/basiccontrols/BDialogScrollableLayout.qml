@@ -2,7 +2,7 @@ import QtQml 2.15
 
 BScrollView {
     id: _base
-    default property alias content: _layout.children
+    default property alias children: _layout.children
 
     BColumnLayout {
         Binding on implicitWidth {

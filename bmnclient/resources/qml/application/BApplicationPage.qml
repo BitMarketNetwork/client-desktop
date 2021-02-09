@@ -4,7 +4,7 @@ import "../basiccontrols"
 
 BControl {
     id: _base
-    default property alias content: _stack.children
+    default property alias children: _stack.children
 
     property string title: ""
     property string placeholderText: ""

@@ -2,7 +2,7 @@ import QtQuick 2.15
 
 BControl {
     id: _base
-    default property alias content: _stack.children
+    default property alias children: _stack.children
     property alias stackItem: _stack
     property alias currentIndex: _tabBar.currentIndex
 

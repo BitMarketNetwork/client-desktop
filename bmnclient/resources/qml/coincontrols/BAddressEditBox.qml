@@ -3,7 +3,7 @@ import "../basiccontrols"
 
 BControl {
     id: _base
-    default property alias content: _layout.children
+    default property alias children: _layout.children
 
     enum Type {
         Generate,

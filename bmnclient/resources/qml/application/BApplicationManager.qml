@@ -6,7 +6,7 @@ import "../basiccontrols"
 import "../dialogs"
 
 QtObject {
-    property BApplicationWindow applicationWindow: null
+    required property BApplicationWindow applicationWindow
 
     function exit(code = 0) {
         BBackend.uiManager.exit(code)
