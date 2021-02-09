@@ -15,7 +15,7 @@ from . import \
     AbstractConcatenateModel, \
     AbstractListModel, \
     AbstractListSortedModel, \
-    AbstractTxStateModel, \
+    AbstractTransactionStateModel, \
     RoleEnum
 from .address_list import AddressListModel
 
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from ..wallet.coins import CoinType
 
 
-class TransactionStateModel(AbstractTxStateModel):
+class TransactionStateModel(AbstractTransactionStateModel):
     _stateChanged: Final = QSignal()
 
     @QProperty(int, notify=_stateChanged)
@@ -58,7 +58,7 @@ class TransactionStateModel(AbstractTxStateModel):
             self._tx.confirmCount)
 
 
-class TransactionAmountModel(AbstractAmountModel, AbstractTxStateModel):
+class TransactionAmountModel(AbstractAmountModel, AbstractTransactionStateModel):
     def __init__(self, application: Application, coin: CoinType):
         super().__init__(application, coin)
 
@@ -69,7 +69,7 @@ class TransactionAmountModel(AbstractAmountModel, AbstractTxStateModel):
         return self._tx.fiatBalance
 
 
-class TransactionFeeAmountModel(AbstractAmountModel, AbstractTxStateModel):
+class TransactionFeeAmountModel(AbstractAmountModel, AbstractTransactionStateModel):
     def __init__(self, application: Application, coin: CoinType):
         super().__init__(application, coin)
 

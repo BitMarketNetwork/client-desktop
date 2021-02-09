@@ -1,33 +1,32 @@
-
-
 import logging
 
-import PySide2.QtCore as qt_core
+from PySide2.QtCore import \
+    Property as QProperty, \
+    QObject, \
+    Signal as QSignal, \
+    Slot as QSlot
 
-from ...wallet import key, mutable_tx, tx
-
+from ...wallet import mutable_tx
 log = logging.getLogger(__name__)
 
 
-class TxController(qt_core.QObject):
-    amountChanged = qt_core.Signal()
-    feeChanged = qt_core.Signal()
-    changeChanged = qt_core.Signal()
-    canSendChanged = qt_core.Signal()
-    substractChanged = qt_core.Signal()
-    newAddressForLeftoverChanged = qt_core.Signal()
-    receiverChanged = qt_core.Signal()
-    maxAmountChanged = qt_core.Signal()
-    confirmChanged = qt_core.Signal()
-    changeAddressChanged = qt_core.Signal()
-    sourceModelChanged = qt_core.Signal()
-    useCoinBalanceChanged = qt_core.Signal()
+class TxController(QObject):
+    amountChanged = QSignal()
+    feeChanged = QSignal()
+    changeChanged = QSignal()
+    canSendChanged = QSignal()
+    substractChanged = QSignal()
+    newAddressForLeftoverChanged = QSignal()
+    receiverChanged = QSignal()
+    maxAmountChanged = QSignal()
+    confirmChanged = QSignal()
+    changeAddressChanged = QSignal()
+    sourceModelChanged = QSignal()
+    useCoinBalanceChanged = QSignal()
     #
-    sent = qt_core.Signal()
-    fail = qt_core.Signal(str, arguments=["error", ])
-    # broadcastResult = qt_core.Signal(bool, str, arguments=["success", "error"])
-    """
-    """
+    sent = QSignal()
+    fail = QSignal(str, arguments=["error", ])
+    # broadcastResult = QSignal(bool, str, arguments=["success", "error"])
 
     def __init__(self, parent=None, address=None):
         super().__init__(parent)
@@ -56,7 +55,7 @@ class TxController(qt_core.QObject):
         self.__negative_change = False
         self.use_hint = True
 
-    @qt_core.Slot()
+    @QSlot()
     def balance_changed(self):
         self.maxAmountChanged.emit()
         if self.__negative_change and self.use_hint:
@@ -70,16 +69,16 @@ class TxController(qt_core.QObject):
     def __parse(self, value: str) -> float:
         return self.__coin.from_human(value)
 
-    @qt_core.Property(str, notify=maxAmountChanged)
+    @QProperty(str, notify=maxAmountChanged)
     def maxAmount(self):
         return self.__round(self.__tx.source_amount)
 
-    @qt_core.Property(str, notify=amountChanged)
+    @QProperty(str, notify=amountChanged)
     def filteredAmount(self):
         "minimum amount to cover amount"
         return self.__round(self.__tx.filtered_amount)
 
-    @qt_core.Property(str, notify=amountChanged)
+    @QProperty(str, notify=amountChanged)
     def amount(self):
         return self.__human_amount
 
@@ -102,7 +101,7 @@ class TxController(qt_core.QObject):
         self.confirmChanged.emit()
         self.changeChanged.emit()
 
-    @qt_core.Property(bool, notify=newAddressForLeftoverChanged)
+    @QProperty(bool, notify=newAddressForLeftoverChanged)
     def newAddressForChange(self):
         return self.__tx.new_address_for_change
 
@@ -114,7 +113,7 @@ class TxController(qt_core.QObject):
         self.__tx.new_address_for_change = on
         self.newAddressForLeftoverChanged.emit()
 
-    @qt_core.Property(bool, notify=substractChanged)
+    @QProperty(bool, notify=substractChanged)
     def substractFee(self):
         return self.__tx.substract_fee
 
@@ -129,15 +128,15 @@ class TxController(qt_core.QObject):
         self.changeChanged.emit()
         self.canSendChanged.emit()
 
-    @qt_core.Property(str, notify=amountChanged)
+    @QProperty(str, notify=amountChanged)
     def fiatAmount(self):
         return self.__round(self.__tx.amount, True)
 
-    @qt_core.Property(str, notify=maxAmountChanged)
+    @QProperty(str, notify=maxAmountChanged)
     def fiatBalance(self):
         return self.__round(self.__tx.source_amount, True)
 
-    @qt_core.Property(str, notify=feeChanged)
+    @QProperty(str, notify=feeChanged)
     def spbAmount(self):
         return str(self.__tx.spb)
 
@@ -152,15 +151,15 @@ class TxController(qt_core.QObject):
         self.confirmChanged.emit()
         self.canSendChanged.emit()
 
-    @qt_core.Property(str, notify=feeChanged)
+    @QProperty(str, notify=feeChanged)
     def feeAmount(self):
         return self.__round(self.__tx.fee)
 
-    @qt_core.Property(str, notify=feeChanged)
+    @QProperty(str, notify=feeChanged)
     def feeFiatAmount(self):
         return self.__round(self.__tx.fee, True)
 
-    @qt_core.Property(float, notify=feeChanged)
+    @QProperty(float, notify=feeChanged)
     def spbFactor(self) -> float:
         return self.__spb_factor
 
@@ -179,7 +178,7 @@ class TxController(qt_core.QObject):
         self.confirmChanged.emit()
         self.canSendChanged.emit()
 
-    @qt_core.Property(str, notify=changeChanged)
+    @QProperty(str, notify=changeChanged)
     def changeAmount(self):
         return self.__round(max(0, self.__tx.change))
 
@@ -187,27 +186,27 @@ class TxController(qt_core.QObject):
         self.__negative_change = self.__tx.change < 0 or self.__tx.amount <= 0. or \
             (self.__tx.substract_fee and self.__tx.fee >= self.__tx.amount)
 
-    @qt_core.Property(bool, notify=changeChanged)
+    @QProperty(bool, notify=changeChanged)
     def hasChange(self) -> str:
         return not self.__negative_change and self.__tx.change > 0
 
-    @qt_core.Property(bool, notify=changeChanged)
+    @QProperty(bool, notify=changeChanged)
     def wrongAmount(self):
         return self.__negative_change
 
-    @qt_core.Property(str, notify=changeAddressChanged)
+    @QProperty(str, notify=changeAddressChanged)
     def changeAddress(self):
         return self.__tx.leftover_address
 
-    @qt_core.Property('QVariantList', notify=sourceModelChanged)
+    @QProperty('QVariantList', notify=sourceModelChanged)
     def sourceModel(self):
         return self.__tx.sources
 
-    @qt_core.Property(str, notify=receiverChanged)
+    @QProperty(str, notify=receiverChanged)
     def receiverAddress(self):
         return self.__tx.receiver
 
-    @qt_core.Property(bool, notify=receiverChanged)
+    @QProperty(bool, notify=receiverChanged)
     def receiverValid(self):
         return self.__tx.receiver_valid
 
@@ -217,12 +216,12 @@ class TxController(qt_core.QObject):
         self.receiverChanged.emit()
         self.canSendChanged.emit()
 
-    @qt_core.Property(int, notify=confirmChanged)
+    @QProperty(int, notify=confirmChanged)
     def confirmTime(self):
         "minutes"
         return self.__tx.estimate_confirm_time()
 
-    @qt_core.Property(bool, notify=canSendChanged)
+    @QProperty(bool, notify=canSendChanged)
     def canSend(self) -> bool:
         log.debug(
             f"amount: {self.__tx.amount} source amount:{self.__tx.source_amount } change:{self.__tx.change} fee:{self.__tx.fee}")
@@ -246,12 +245,12 @@ class TxController(qt_core.QObject):
             return False
         return True
 
-    @qt_core.Property('QVariantList', constant=True)
+    @QProperty('QVariantList', constant=True)
     def targetList(self):
         # if addr is not self.__cm.address] # why not?
         return [addr.name for addr in self.__cm.coin.wallets]
 
-    @qt_core.Property(bool, notify=useCoinBalanceChanged)
+    @QProperty(bool, notify=useCoinBalanceChanged)
     def useCoinBalance(self) -> bool:
         return self.__tx.use_coin_balance
 
@@ -271,29 +270,19 @@ class TxController(qt_core.QObject):
         self.sourceModelChanged.emit()
         self.canSendChanged.emit()
 
-    @qt_core.Slot()
-    def less(self):
-        #TODO: later
-        log.debug("amount less")
-
-    @qt_core.Slot()
-    def more(self):
-        #TODO: later
-        log.debug("amount more")
-
-    @qt_core.Slot()
+    @QSlot()
     def recalcSources(self):
         self.__tx.recalc_sources()
         self.maxAmountChanged.emit()
         self.canSendChanged.emit()
         self.changeChanged.emit()
 
-    @qt_core.Slot()
+    @QSlot()
     def setMax(self):
         self.__tx.set_max()
         self.__update_amount()
 
-    @qt_core.Slot(result=bool)
+    @QSlot(result=bool)
     def prepareSend(self):
         # stupid check but ..
         if not self.canSend:
@@ -310,7 +299,7 @@ class TxController(qt_core.QObject):
             return False
         return True
 
-    @qt_core.Slot(result=bool)
+    @QSlot(result=bool)
     def send(self) -> bool:
         # stupid check but ..
         if not self.canSend:
@@ -318,16 +307,11 @@ class TxController(qt_core.QObject):
         self.__tx.send()
         return True
 
-    @qt_core.Slot()
+    @QSlot()
     def cancel(self) -> None:
         log.debug("Cancelling TX")
         self.__tx.cancel()
 
-    @qt_core.Property(str, constant=True)
+    @QProperty(str, constant=True)
     def txHash(self) -> str:
         return self.__tx.tx_id or ""
-
-    # for tests
-    @property
-    def impl(self):
-        return self.__tx

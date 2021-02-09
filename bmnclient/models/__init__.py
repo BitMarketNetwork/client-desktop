@@ -179,7 +179,7 @@ class AbstractAddressStateModel(AbstractCoinStateModel):
         self._address = address
 
 
-class AbstractTxStateModel(AbstractAddressStateModel):
+class AbstractTransactionStateModel(AbstractAddressStateModel):
     def __init__(self, application: Application, tx: Transaction) -> None:
         super().__init__(application, tx.wallet)
         self._tx = tx
