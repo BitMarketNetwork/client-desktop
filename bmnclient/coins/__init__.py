@@ -34,15 +34,90 @@ class CoinBase:
     def address(self) -> Type[AddressBase]:
         raise NotImplementedError
 
-    def stringToAmount(self, source: str) -> int:
-        raise NotImplementedError
+    @property
+    def decimalValue(self) -> int:
+        return 10 ** self._DECIMAL_SIZE
+
+    @classmethod
+    def isValidAmount(cls, amount: int) -> bool:
+        # limit to int64
+        return -(2 ** 63) <= amount <= (2 ** 63 - 1)
+
+    def stringToAmount(
+            self,
+            source: str,
+            *,
+            locale: Optional[Locale] = None) -> Optional[int]:
+        if not source:
+            return None
+
+        sign = False
+        if (
+                source[0] == "-" or
+                (locale and source[0] == locale.negativeSign())
+        ):
+            sign = True
+            source = source[1:]
+        elif (
+                source[0] == "+" or
+                (locale and source[0] == locale.positiveSign())
+        ):
+            source = source[1:]
+
+        a = source.rsplit(locale.decimalPoint() if locale else ".")
+        if len(a) == 1:
+            b = ""
+            a = a[0]
+        elif len(a) == 2:
+            b = a[1]
+            a = a[0]
+        else:
+            return None
+        if not a and not b:
+            return None
+
+        result = 0
+        if a:
+            if locale:
+                a = locale.stringToInteger(a)
+            elif a.isalnum():
+                try:
+                    a = int(a, base=10)
+                except ValueError:
+                    a = None
+            else:
+                a = None
+            if a is None or a < 0:
+                return None
+            result = (-a if sign else a) * self.decimalValue
+
+        if b:
+            b_length = len(b)
+            if b_length > self._DECIMAL_SIZE:
+                return None
+            if b.isalnum():
+                try:
+                    b = int(b, base=10)
+                except ValueError:
+                    b = None
+            else:
+                b = None
+            if b is None or b < 0 or b >= self.decimalValue:
+                return None
+            for _ in range(b_length, self._DECIMAL_SIZE):
+                b *= 10
+            result += (-b if sign else b)
+
+        if not self.isValidAmount(result):
+            return None
+        return result
 
     def amountToString(
             self,
             amount: int,
             *,
             locale: Optional[Locale] = None) -> str:
-        if not amount:
+        if not amount or not self.isValidAmount(amount):
             return "0"
         if amount < 0:
             amount = abs(amount)
@@ -50,7 +125,7 @@ class CoinBase:
         else:
             result = ""
 
-        a, b = divmod(amount, 10 ** self._DECIMAL_SIZE)
+        a, b = divmod(amount, self.decimalValue)
 
         zero_count = 0
         while b and b % 10 == 0:

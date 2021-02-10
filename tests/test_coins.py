@@ -1,10 +1,12 @@
+# JOK++
 import unittest
-from bmnclient.coins import \
-    Bitcoin
+
+from bmnclient.coins import Bitcoin
 from bmnclient.coins.address import \
     BitcoinAddress, \
     BitcoinTestAddress, \
     LitecoinAddress
+from bmnclient.language import Locale
 
 BITCOIN_ADDRESS_LIST = (
     (
@@ -135,6 +137,85 @@ class TestCoins(unittest.TestCase):
             LitecoinAddress,
             LITECOIN_ADDRESS_LIST)
 
+    def test_string_to_amount(self) -> None:
+        b = Bitcoin()
+
+        for v in ("", "-", "+", "-.", "+.", "."):
+            self.assertIsNone(b.stringToAmount(v))
+
+        for v in ("--11", "++11", "-+11", "+-11", " 11", "11 ", "11. "):
+            self.assertIsNone(b.stringToAmount(v))
+
+        for (r, v) in (
+                (0, "0"),
+                (50 * b.decimalValue, "50"),
+                (-50 * b.decimalValue, "-50"),
+                (60 * b.decimalValue, "60."),
+                (-60 * b.decimalValue, "-60."),
+
+                (None, "60.123456789"),
+                (None, "-60.123456789"),
+
+                (6012345678, "60.12345678"),
+                (-6012345678, "-60.12345678"),
+                (6010000000, "60.1"),
+                (-6010000000, "-60.1"),
+                (6010000000, "60.10"),
+                (-6010000000, "-60.10"),
+                (6012345670, "60.1234567"),
+                (-6012345670, "-60.1234567"),
+                (12345670, "0.1234567"),
+                (-12345670, "-0.1234567"),
+                (11234567, ".11234567"),
+                (-11234567, "-.11234567"),
+                (11234567, "+.11234567"),
+
+                (0, "-0.00000000"),
+                (0, "+0.00000000"),
+
+                (-99999999, "-0.99999999"),
+                (None, "-0.099999999"),
+
+                (99999999, "0.99999999"),
+                (None, "-0.099999999"),
+
+                (-92233720368 * b.decimalValue, "-92233720368"),
+                (None, "-92233720369"),
+
+                (92233720368 * b.decimalValue, "92233720368"),
+                (None, "92233720369"),
+
+                (92233720368 * b.decimalValue, "+92233720368"),
+                (None, "+92233720369"),
+
+                (-(2 ** 63), "-92233720368.54775808"),
+                (None, "92233720369"),
+
+                ((2 ** 63) - 1, "92233720368.54775807"),
+                (None, "92233720368.54775808"),
+
+                ((2 ** 63) - 1, "+92233720368.54775807"),
+        ):
+            self.assertEqual(r, b.stringToAmount(v))
+
+    def test_string_to_amount_locale(self) -> None:
+        b = Bitcoin()
+        locale = Locale("en_US")
+        for (r, v) in (
+                (0, "0"),
+                (500000012345678, "5000000.12345678"),
+                (500000122345678, "5,000,001.22345678"),
+                (500000222345678, "+5,000,002.22345678"),
+                (-500000322345678, "-5,000,003.22345678"),
+                (None, " 5,000,000.32345678"),
+                (None, "5,000,000 .42345678"),
+                (None, "5.000,000.52345678"),
+                (None, "5 000 000.62345678"),
+                (99999999, "0.99999999"),
+                (-99999999, "-0.99999999"),
+        ):
+            self.assertEqual(r, b.stringToAmount(v, locale=locale))
+
     def test_amount_to_string(self) -> None:
         b = Bitcoin()
 
@@ -142,15 +223,28 @@ class TestCoins(unittest.TestCase):
         self.assertEqual("-1", b.amountToString(-1 * 10 ** 8))
         self.assertEqual("1", b.amountToString(+1 * 10 ** 8))
 
-        for (s, d) in {
-            1: "0.00000001",
-            10: "0.0000001",
-            1000: "0.00001",
-            1200000: "0.012",
-            880000000: "8.8",
-            880000001: "8.80000001",
-            880000010: "8.8000001",
-            88000000000: "880"
-        }.items():
+        for (s, d) in (
+                (1, "0.00000001"),
+                (10, "0.0000001"),
+                (1000, "0.00001"),
+                (1200000, "0.012"),
+                (880000000, "8.8"),
+                (880000001, "8.80000001"),
+                (880000010, "8.8000001"),
+                (88000000000, "880")
+        ):
             self.assertEqual("-" + d, b.amountToString(-s))
             self.assertEqual(d, b.amountToString(s))
+
+        self.assertEqual(
+            "92233720368.54775807",
+            b.amountToString(9223372036854775807))
+        self.assertEqual(
+            "0",
+            b.amountToString(9223372036854775808))
+        self.assertEqual(
+            "-92233720368.54775808",
+            b.amountToString(-9223372036854775808))
+        self.assertEqual(
+            "0",
+            b.amountToString(-9223372036854775809))

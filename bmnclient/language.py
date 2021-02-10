@@ -29,6 +29,15 @@ class Locale(QLocale):
             return super().negativeSign() + super().toString(value)
         return super().toString(value)
 
+    def stringToInteger(self, value: str, *, strict=True) -> Optional[int]:
+        if strict:
+            s = self.groupSeparator()
+            for v in value:
+                if not v.isnumeric() and v != s:
+                    return None
+        (value, ok) = super().toLongLong(value)
+        return value if ok else None
+
 
 class Language:
     SUFFIX_LIST = (".qml.qm", ".py.qm",)
