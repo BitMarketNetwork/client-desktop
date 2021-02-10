@@ -63,7 +63,7 @@ class CoinRemoteStateModel(AbstractCoinStateModel):
 
 
 class CoinAmountModel(AbstractAmountModel, AbstractCoinStateModel):
-    def __init__(self, application: Application, coin: CoinType):
+    def __init__(self, application: Application, coin: CoinType) -> None:
         super().__init__(application, coin)
 
     def _value(self) -> int:

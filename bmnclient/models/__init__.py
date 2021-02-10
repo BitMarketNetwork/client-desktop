@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from ..wallet.address import CAddress
     from ..wallet.coins import CoinType
     from ..wallet.tx import Transaction
+    from ..wallet.mutable_tx import MutableTransaction
     from ..ui.gui import Application
 
 
@@ -182,6 +183,15 @@ class AbstractAddressStateModel(AbstractCoinStateModel):
 class AbstractTransactionStateModel(AbstractAddressStateModel):
     def __init__(self, application: Application, tx: Transaction) -> None:
         super().__init__(application, tx.wallet)
+        self._tx = tx
+
+
+class AbstractTransactionBroadcastStateModel(AbstractCoinStateModel):
+    def __init__(
+            self,
+            application: Application,
+            tx: MutableTransaction) -> None:
+        super().__init__(application, tx.coin)
         self._tx = tx
 
 

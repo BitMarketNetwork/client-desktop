@@ -57,10 +57,7 @@ BPane {
                     BLayout.columnSpan: 2
                     BLayout.alignment: _applicationStyle.dialogInputAlignment
                     orientation: Qt.Horizontal
-                    amount.valueHuman: _tx_controller.maxAmount
-                    amount.unit: BBackend.coinManager.unit
-                    amount.fiatValueHuman: _tx_controller.fiatBalance
-                    amount.fiatUnit: BBackend.coinManager.currency
+                    amount: _tx_controller.availableAmount
                 }
 
                 BDialogPromtLabel {
@@ -219,9 +216,6 @@ BPane {
             _approveDialog.txText = txHash
             _approveDialog.open()
         }
-
-        function less() {}
-        function more() {}
     }
 
     BTxApproveDialog {

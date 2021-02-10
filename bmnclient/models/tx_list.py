@@ -21,7 +21,7 @@ from .address_list import AddressListModel
 
 if TYPE_CHECKING:
     from ..ui.gui import Application
-    from ..wallet.coins import CoinType
+    from ..wallet.tx import Transaction
 
 
 class TransactionStateModel(AbstractTransactionStateModel):
@@ -58,9 +58,11 @@ class TransactionStateModel(AbstractTransactionStateModel):
             self._tx.confirmCount)
 
 
-class TransactionAmountModel(AbstractAmountModel, AbstractTransactionStateModel):
-    def __init__(self, application: Application, coin: CoinType):
-        super().__init__(application, coin)
+class TransactionAmountModel(
+        AbstractAmountModel,
+        AbstractTransactionStateModel):
+    def __init__(self, application: Application, tx: Transaction) -> None:
+        super().__init__(application, tx)
 
     def _value(self) -> int:
         return self._tx.balance
@@ -69,9 +71,11 @@ class TransactionAmountModel(AbstractAmountModel, AbstractTransactionStateModel)
         return self._tx.fiatBalance
 
 
-class TransactionFeeAmountModel(AbstractAmountModel, AbstractTransactionStateModel):
-    def __init__(self, application: Application, coin: CoinType):
-        super().__init__(application, coin)
+class TransactionFeeAmountModel(
+        AbstractAmountModel,
+        AbstractTransactionStateModel):
+    def __init__(self, application: Application, tx: Transaction) -> None:
+        super().__init__(application, tx)
 
     def _value(self) -> int:
         return self._tx.fee
@@ -124,4 +128,7 @@ class TransactionListSortedModel(AbstractListSortedModel):
             self,
             application: Application,
             source_model: TransactionListModel) -> None:
-        super().__init__(application, source_model, TransactionListModel.Role.HASH)
+        super().__init__(
+            application,
+            source_model,
+            TransactionListModel.Role.HASH)

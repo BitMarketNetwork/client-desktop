@@ -7,6 +7,7 @@ from PySide2.QtCore import \
     Slot as QSlot
 
 from ...wallet import mutable_tx
+from ...models.tx_broadcast import TransactionBroadcastAvailableAmountModel
 log = logging.getLogger(__name__)
 
 
@@ -55,6 +56,13 @@ class TxController(QObject):
         self.__negative_change = False
         self.use_hint = True
 
+        from . import Application
+        self._available_amount_model = TransactionBroadcastAvailableAmountModel(Application.instance(), self.__tx)
+
+    @QProperty(TransactionBroadcastAvailableAmountModel, constant=True)
+    def availableAmount(self) -> TransactionBroadcastAvailableAmountModel:
+        return self._available_amount_model
+
     @QSlot()
     def balance_changed(self):
         self.maxAmountChanged.emit()
@@ -68,10 +76,6 @@ class TxController(QObject):
 
     def __parse(self, value: str) -> float:
         return self.__coin.from_human(value)
-
-    @QProperty(str, notify=maxAmountChanged)
-    def maxAmount(self):
-        return self.__round(self.__tx.source_amount)
 
     @QProperty(str, notify=amountChanged)
     def filteredAmount(self):
