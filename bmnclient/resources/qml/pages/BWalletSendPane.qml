@@ -9,39 +9,34 @@ BPane {
     property string title: qsTr("Send")
     property var coin
 
-    contentItem: BScrollView {
-        id: _scrollView
-        BControl {
-            width: _scrollView.viewWidth
-            height: _scrollView.viewHeight
-            padding: _applicationStyle.padding
+    contentItem: BDialogScrollableLayout {
+        columns: 3
 
-            contentItem: BDialogLayout {
-                columns: 3
+        BDialogPromtLabel {
+            text: qsTr("Coin:")
+        }
+        BDialogInputLabel {
+            BLayout.columnSpan: 2
+            text: _base.coin.fullName
+        }
 
-                BDialogPromtLabel {
-                    text: qsTr("Coin:")
-                }
-                BDialogInputLabel {
-                    BLayout.columnSpan: 2
-                    text: _base.coin.fullName
-                }
+        BDialogSeparator {}
 
-                BDialogSeparator {}
-
-                BDialogPromtLabel {
-                    text: qsTr("Send to:")
+        BDialogPromtLabel {
+            text: qsTr("Send to:")
+        }
+        BDialogInputTextField {
+            id: _receiverAddress
+            onTextChanged: {
+                _tx_controller.receiver.addressName = text
+            }
+        }
+        BDialogValidLabel {
+            mode: {
+                if (_receiverAddress.text.length < 1) {
+                    return BDialogValidLabel.Mode.Unset
                 }
-                BDialogInputTextField {
-                    id: _receiverAddress
-                    onTextChanged: {
-                        _tx_controller.receiverAddress = text
-                    }
-                }
-                BDialogValidLabel {
-                    mode: {
-                        if (_receiverAddress.text.length > 0) {
-                            return _tx_controller.receiverValid
+                return _tx_controller.receiver.isValidAddress
                                     ? BDialogValidLabel.Mode.Accept
                                     : BDialogValidLabel.Mode.Reject
                         } else {

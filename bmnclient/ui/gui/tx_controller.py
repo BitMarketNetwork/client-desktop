@@ -7,7 +7,9 @@ from PySide2.QtCore import \
     Slot as QSlot
 
 from ...wallet import mutable_tx
-from ...models.tx_broadcast import TransactionBroadcastAvailableAmountModel
+from ...models.tx_broadcast import \
+    TransactionBroadcastAvailableAmountModel, \
+    TransactionBroadcastReceiverModel
 log = logging.getLogger(__name__)
 
 
@@ -58,10 +60,16 @@ class TxController(QObject):
 
         from . import Application
         self._available_amount_model = TransactionBroadcastAvailableAmountModel(Application.instance(), self.__tx)
+        self._receiver_model = TransactionBroadcastReceiverModel(Application.instance(), self.__tx)
 
     @QProperty(TransactionBroadcastAvailableAmountModel, constant=True)
     def availableAmount(self) -> TransactionBroadcastAvailableAmountModel:
         return self._available_amount_model
+
+    @QProperty(TransactionBroadcastReceiverModel, constant=True)
+    def receiver(self) -> TransactionBroadcastReceiverModel:
+        return self._receiver_model
+
 
     @QSlot()
     def balance_changed(self):
