@@ -11,13 +11,13 @@ from PySide2.QtCore import \
     Signal as QSignal
 
 from . import \
-    AbstractAmountModel, \
     AbstractConcatenateModel, \
     AbstractListModel, \
     AbstractListSortedModel, \
     AbstractTransactionStateModel, \
     RoleEnum
 from .address_list import AddressListModel
+from .amount import AmountModel
 
 if TYPE_CHECKING:
     from ..ui.gui import Application
@@ -58,11 +58,10 @@ class TransactionStateModel(AbstractTransactionStateModel):
             self._tx.confirmCount)
 
 
-class TransactionAmountModel(
-        AbstractAmountModel,
-        AbstractTransactionStateModel):
+class TransactionAmountModel(AmountModel):
     def __init__(self, application: Application, tx: Transaction) -> None:
-        super().__init__(application, tx)
+        super().__init__(application, tx.wallet.coin)
+        self._tx = tx
 
     def _value(self) -> int:
         return self._tx.balance
@@ -71,11 +70,10 @@ class TransactionAmountModel(
         return self._tx.fiatBalance
 
 
-class TransactionFeeAmountModel(
-        AbstractAmountModel,
-        AbstractTransactionStateModel):
+class TransactionFeeAmountModel(AmountModel):
     def __init__(self, application: Application, tx: Transaction) -> None:
-        super().__init__(application, tx)
+        super().__init__(application, tx.wallet.coin)
+        self._tx = tx
 
     def _value(self) -> int:
         return self._tx.fee

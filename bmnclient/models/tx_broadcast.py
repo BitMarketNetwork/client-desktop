@@ -1,27 +1,26 @@
 from __future__ import annotations
 
+from typing import Final, TYPE_CHECKING
+
 from PySide2.QtCore import \
     Property as QProperty, \
-    QDateTime, \
-    QLocale, \
     Signal as QSignal
 
-from . import AbstractAmountModel, AbstractTransactionBroadcastStateModel
-from typing import Final, TYPE_CHECKING
+from . import AbstractTransactionBroadcastStateModel
+from .amount import AmountEditModel, AmountModel
 
 if TYPE_CHECKING:
     from ..ui.gui import Application
     from ..wallet.mutable_tx import MutableTransaction
 
 
-class TransactionBroadcastAvailableAmountModel(
-        AbstractAmountModel,
-        AbstractTransactionBroadcastStateModel):
+class TransactionBroadcastAvailableAmountModel(AmountModel):
     def __init__(
             self,
             application: Application,
             tx: MutableTransaction) -> None:
-        super().__init__(application, tx)
+        super().__init__(application, tx.coin)
+        self._tx = tx
 
     def _value(self) -> int:
         return self._tx.source_amount

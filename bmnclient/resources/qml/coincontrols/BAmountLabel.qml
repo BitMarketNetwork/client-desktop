@@ -5,7 +5,7 @@ import "../basiccontrols"
 
 BControl {
     id: _base
-    property var amount // AbstractAmountModel
+    property var amount // AmountModel
     property color color: enabled ? Material.foreground : Material.hintTextColor
     property int orientation: Qt.Vertical
 

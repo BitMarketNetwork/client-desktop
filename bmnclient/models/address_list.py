@@ -10,14 +10,14 @@ from PySide2.QtCore import \
 
 from . import \
     AbstractAddressStateModel, \
-    AbstractAmountModel, \
     AbstractListModel, \
     AbstractListSortedModel, \
     RoleEnum
+from .amount import AmountModel
 
 if TYPE_CHECKING:
     from ..ui.gui import Application
-    from ..wallet.coins import CoinType
+    from ..wallet.address import CAddress
 
 
 class AddressStateModel(AbstractAddressStateModel):
@@ -36,9 +36,10 @@ class AddressStateModel(AbstractAddressStateModel):
         return self._address.isUpdating
 
 
-class AddressAmountModel(AbstractAmountModel, AbstractAddressStateModel):
-    def __init__(self, application: Application, coin: CoinType):
-        super().__init__(application, coin)
+class AddressAmountModel(AmountModel):
+    def __init__(self, application: Application, address: CAddress) -> None:
+        super().__init__(application, address.coin)
+        self._address = address
 
     def _value(self) -> int:
         return self._address.balance

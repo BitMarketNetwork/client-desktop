@@ -2,7 +2,7 @@
 import "../basiccontrols"
 
 BInfoValue {
-    property var amount // AbstractAmountModel
+    property var amount // AmountModel
     text: "%1 %2 / %3 %4"
             .arg(amount.valueHuman)
             .arg(amount.unit)
