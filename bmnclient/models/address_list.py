@@ -41,10 +41,10 @@ class AddressAmountModel(AmountModel):
         super().__init__(application, address.coin)
         self._address = address
 
-    def _value(self) -> int:
+    def _getValue(self) -> int:
         return self._address.balance
 
-    def _fiatValue(self) -> float:
+    def _getFiatValue(self) -> float:
         return self._address.fiatBalance
 
 

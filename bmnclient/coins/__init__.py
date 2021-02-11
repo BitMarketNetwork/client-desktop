@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Optional, TYPE_CHECKING, Type
+from functools import lru_cache
 
 from .address import AddressBase
 
@@ -13,6 +14,7 @@ class CoinBase:
     _FULL_NAME = ""
     _UNIT = ""
     _DECIMAL_SIZE = 0
+    _AMOUNT_BITS = 63  # int64
 
     @property
     def shortName(self) -> str:
@@ -38,10 +40,16 @@ class CoinBase:
     def decimalValue(self) -> int:
         return 10 ** self._DECIMAL_SIZE
 
-    @classmethod
-    def isValidAmount(cls, amount: int) -> bool:
-        # limit to int64
-        return -(2 ** 63) <= amount <= (2 ** 63 - 1)
+    def isValidAmount(self, amount: int) -> bool:
+        b = 2 ** self._AMOUNT_BITS
+        return -b <= amount <= (b - 1)
+
+    @property
+    @lru_cache  # TODO to __init__
+    def amountStringTemplate(self) -> str:
+        v = len(self.amountToString(2 ** self._AMOUNT_BITS - 1))
+        assert v > 2
+        return "8" * (1 + v + v // 3)
 
     def stringToAmount(
             self,

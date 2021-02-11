@@ -18,16 +18,26 @@ class Locale(QLocale):
     def floatToString(self, value: float, precision=2):
         if value < 0:
             value = abs(value)
-            result = super().negativeSign()
+            result = self.negativeSign()
         else:
             result = ""
-        return result + super().toString(value, "f", precision)
+        # noinspection PyTypeChecker
+        return result + self.toString(value, "f", precision)
+
+    def stringToFloat(self, value: str, *, strict=True) -> Optional[float]:
+        if strict:
+            s = (self.groupSeparator(), self.decimalPoint())
+            for v in value:
+                if not v.isnumeric() and v not in s:
+                    return None
+        (value, ok) = self.toDouble(value)
+        return value if ok else None
 
     def integerToString(self, value: int):
         if value < 0:
             value = abs(value)
-            return super().negativeSign() + super().toString(value)
-        return super().toString(value)
+            return self.negativeSign() + self.toString(value)
+        return self.toString(value)
 
     def stringToInteger(self, value: str, *, strict=True) -> Optional[int]:
         if strict:
@@ -35,7 +45,7 @@ class Locale(QLocale):
             for v in value:
                 if not v.isnumeric() and v != s:
                     return None
-        (value, ok) = super().toLongLong(value)
+        (value, ok) = self.toLongLong(value)
         return value if ok else None
 
 

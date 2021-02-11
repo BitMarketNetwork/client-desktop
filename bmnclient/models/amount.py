@@ -1,6 +1,7 @@
 # JOK++
 from __future__ import annotations
 
+from abc import ABCMeta, abstractmethod
 from typing import Final, TYPE_CHECKING
 
 from PySide2.QtCore import \
@@ -14,7 +15,9 @@ if TYPE_CHECKING:
     from ..ui.gui import Application
 
 
-class AmountModel(QObject):
+class AmountModel(
+        QObject,
+        metaclass=type('AmountModelMeta', (ABCMeta, type(QObject)), {})):
     _stateChanged: Final = QSignal()
 
     def __init__(self, application: Application, coin: CoinType) -> None:
@@ -22,10 +25,12 @@ class AmountModel(QObject):
         self._application = application
         self._coin = coin
 
-    def _value(self) -> int:
+    @abstractmethod
+    def _getValue(self) -> int:
         raise NotImplementedError
 
-    def _fiatValue(self) -> float:
+    @abstractmethod
+    def _getFiatValue(self) -> float:
         raise NotImplementedError
 
     def refresh(self) -> None:
@@ -33,12 +38,12 @@ class AmountModel(QObject):
 
     @QProperty(str, notify=_stateChanged)
     def value(self) -> int:
-        return self._value()
+        return self._getValue()
 
     @QProperty(str, notify=_stateChanged)
     def valueHuman(self) -> str:
         return self._coin.amountToString(
-            self._value(),
+            self._getValue(),
             locale=self._application.language.locale)
 
     @QProperty(str, constant=True)
@@ -48,7 +53,7 @@ class AmountModel(QObject):
     @QProperty(str, notify=_stateChanged)
     def fiatValueHuman(self) -> str:
         return self._application.language.locale.floatToString(
-            self._fiatValue(),
+            self._getFiatValue(),
             2)
 
     @QProperty(str, notify=_stateChanged)
@@ -56,7 +61,7 @@ class AmountModel(QObject):
         return "USD"  # TODO
 
 
-class AmountEditModel(AmountModel):
+class AmountEditModel(AmountModel, metaclass=ABCMeta):
     class _Validator(QValidator):
         def __init__(self, owner: AmountEditModel):
             super().__init__()
@@ -66,12 +71,21 @@ class AmountEditModel(AmountModel):
             value = value.replace(
                 self._owner._application.language.locale.groupSeparator(),
                 '')
+            if value and value[0] in (
+                    "+",
+                    "-",
+                    self._owner._application.language.locale.positiveSign(),
+                    self._owner._application.language.locale.negativeSign()):
+                value = value[1:]
             return value
 
     class _ValueHumanValidator(_Validator):
         def validate(self, value: str, _) -> QValidator.State:
+            value = self._normalizeValue(value)
+            if not value:
+                return self.State.Intermediate
             value = self._owner._coin.stringToAmount(
-                self._normalizeValue(value),
+                value,
                 locale=self._owner._application.language.locale)
             if value is None:
                 return self.State.Invalid
@@ -91,10 +105,12 @@ class AmountEditModel(AmountModel):
         self._value_human_validator = self._ValueHumanValidator(self)
         self._fiat_value_human_validator = self._FiatValueHumanValidator(self)
 
-    def _setValue(self, value: int) -> None:
+    @abstractmethod
+    def _setValue(self, value: int) -> bool:
         raise NotImplementedError
 
-    def _setFiatValue(self, value: float) -> None:
+    @abstractmethod
+    def _setFiatValue(self, value: float) -> bool:
         raise NotImplementedError
 
     @QProperty(QValidator, constant=True)

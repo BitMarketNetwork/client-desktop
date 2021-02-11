@@ -63,10 +63,10 @@ class TransactionAmountModel(AmountModel):
         super().__init__(application, tx.wallet.coin)
         self._tx = tx
 
-    def _value(self) -> int:
+    def _getValue(self) -> int:
         return self._tx.balance
 
-    def _fiatValue(self) -> float:
+    def _getFiatValue(self) -> float:
         return self._tx.fiatBalance
 
 
@@ -75,10 +75,10 @@ class TransactionFeeAmountModel(AmountModel):
         super().__init__(application, tx.wallet.coin)
         self._tx = tx
 
-    def _value(self) -> int:
+    def _getValue(self) -> int:
         return self._tx.fee
 
-    def _fiatValue(self) -> float:
+    def _getFiatValue(self) -> float:
         return self._tx.feeFiatBalance
 
 
