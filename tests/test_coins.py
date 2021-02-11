@@ -1,7 +1,7 @@
 # JOK++
 import unittest
 
-from bmnclient.coins import Bitcoin
+from bmnclient.coins import Bitcoin, BitcoinTest
 from bmnclient.coins.address import \
     BitcoinAddress, \
     BitcoinTestAddress, \
@@ -138,20 +138,21 @@ class TestCoins(unittest.TestCase):
             LITECOIN_ADDRESS_LIST)
 
     def test_string_to_amount(self) -> None:
-        b = Bitcoin()
+        b = Bitcoin.Currency
+        satoshi_value = 10 ** 8
 
         for v in ("", "-", "+", "-.", "+.", "."):
-            self.assertIsNone(b.stringToAmount(v))
+            self.assertIsNone(b.fromString(v))
 
         for v in ("--11", "++11", "-+11", "+-11", " 11", "11 ", "11. "):
-            self.assertIsNone(b.stringToAmount(v))
+            self.assertIsNone(b.fromString(v))
 
         for (r, v) in (
                 (0, "0"),
-                (50 * b.decimalValue, "50"),
-                (-50 * b.decimalValue, "-50"),
-                (60 * b.decimalValue, "60."),
-                (-60 * b.decimalValue, "-60."),
+                (50 * satoshi_value, "50"),
+                (-50 * satoshi_value, "-50"),
+                (60 * satoshi_value, "60."),
+                (-60 * satoshi_value, "-60."),
 
                 (None, "60.123456789"),
                 (None, "-60.123456789"),
@@ -179,13 +180,13 @@ class TestCoins(unittest.TestCase):
                 (99999999, "0.99999999"),
                 (None, "-0.099999999"),
 
-                (-92233720368 * b.decimalValue, "-92233720368"),
+                (-92233720368 * satoshi_value, "-92233720368"),
                 (None, "-92233720369"),
 
-                (92233720368 * b.decimalValue, "92233720368"),
+                (92233720368 * satoshi_value, "92233720368"),
                 (None, "92233720369"),
 
-                (92233720368 * b.decimalValue, "+92233720368"),
+                (92233720368 * satoshi_value, "+92233720368"),
                 (None, "+92233720369"),
 
                 (-(2 ** 63), "-92233720368.54775808"),
@@ -196,10 +197,10 @@ class TestCoins(unittest.TestCase):
 
                 ((2 ** 63) - 1, "+92233720368.54775807"),
         ):
-            self.assertEqual(r, b.stringToAmount(v))
+            self.assertEqual(r, b.fromString(v))
 
     def test_string_to_amount_locale(self) -> None:
-        b = Bitcoin()
+        b = BitcoinTest.Currency
         locale = Locale("en_US")
         for (r, v) in (
                 (0, "0"),
@@ -214,14 +215,14 @@ class TestCoins(unittest.TestCase):
                 (99999999, "0.99999999"),
                 (-99999999, "-0.99999999"),
         ):
-            self.assertEqual(r, b.stringToAmount(v, locale=locale))
+            self.assertEqual(r, b.fromString(v, locale=locale))
 
     def test_amount_to_string(self) -> None:
-        b = Bitcoin()
+        b = Bitcoin.Currency
 
-        self.assertEqual("0", b.amountToString(0))
-        self.assertEqual("-1", b.amountToString(-1 * 10 ** 8))
-        self.assertEqual("1", b.amountToString(+1 * 10 ** 8))
+        self.assertEqual("0", b.toString(0))
+        self.assertEqual("-1", b.toString(-1 * 10 ** 8))
+        self.assertEqual("1", b.toString(+1 * 10 ** 8))
 
         for (s, d) in (
                 (1, "0.00000001"),
@@ -233,18 +234,18 @@ class TestCoins(unittest.TestCase):
                 (880000010, "8.8000001"),
                 (88000000000, "880")
         ):
-            self.assertEqual("-" + d, b.amountToString(-s))
-            self.assertEqual(d, b.amountToString(s))
+            self.assertEqual("-" + d, b.toString(-s))
+            self.assertEqual(d, b.toString(s))
 
         self.assertEqual(
             "92233720368.54775807",
-            b.amountToString(9223372036854775807))
+            b.toString(9223372036854775807))
         self.assertEqual(
             "0",
-            b.amountToString(9223372036854775808))
+            b.toString(9223372036854775808))
         self.assertEqual(
             "-92233720368.54775808",
-            b.amountToString(-9223372036854775808))
+            b.toString(-9223372036854775808))
         self.assertEqual(
             "0",
-            b.amountToString(-9223372036854775809))
+            b.toString(-9223372036854775809))
