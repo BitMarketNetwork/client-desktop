@@ -1,6 +1,8 @@
 import abc
 import logging
 from typing import Union
+from ..coins.currency import UsdFiatCurrency, FiatRate
+
 log = logging.getLogger(__name__)
 
 
@@ -29,7 +31,7 @@ class CoinGeckoWorker(RateSourceWorkerBase):
 
     def process_result(self, coins: list, currencies: Union[list, str], table: dict) -> None:
         for coin in coins:
-            coin.rate = table[coin.basename][currencies]
+            coin.fiatRate = FiatRate(int(table[coin.basename][currencies] * 100), UsdFiatCurrency)
 
 # NOT READY!!!
 class CoinMarkerCapWorker(RateSourceWorkerBase):
@@ -45,7 +47,7 @@ class CoinMarkerCapWorker(RateSourceWorkerBase):
 
     def process_result(self, coins: list, currencies: Union[list, str], table: dict) -> None:
         for coin in coins:
-            coin.rate = table[coin.basename][currencies]
+            coin.fiatRate = FiatRate(int(table[coin.basename][currencies] * 100), UsdFiatCurrency)
 
 
 class CoinLayerWorker(RateSourceWorkerBase):
@@ -55,7 +57,7 @@ class CoinLayerWorker(RateSourceWorkerBase):
 
     def get_arguments(self, coins: list, currencies: Union[list, str]) -> dict:
         return {
-            "symbols": ",".join([c.unit for c in coins]),
+            "symbols": ",".join([c.currency.unit for c in coins]),
             "access_key": self.API_KEY,
             "target": currencies,
         }
@@ -66,7 +68,6 @@ class CoinLayerWorker(RateSourceWorkerBase):
             rates = table["rates"]
             # only for USD
             for coin in coins:
-                rate = rates.get(coin.unit,None)
+                rate = rates.get(coin.currency.unit, None)
                 if rate:
-                    coin.rate = rate
-                    log.debug(f"{coin} === {coin.rate}")
+                    coin.fiatRate = FiatRate(int(rate * 100), UsdFiatCurrency)

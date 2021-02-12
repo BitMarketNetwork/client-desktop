@@ -7,6 +7,7 @@ import logging
 import traceback
 import sys
 from typing import Callable, List, Tuple, Iterable
+from ..coins.currency import UsdFiatCurrency, FiatRate
 
 import PySide2.QtCore as qt_core
 import PySide2.QtNetwork as qt_network
@@ -970,7 +971,7 @@ class GetCoinRatesCommand(ExtHostCommand):
             self._source.process_result(self._coins, self.CURRENCY, table)
         else:
             for coin in self._coins:
-                coin.rate = table[coin.basename][self.CURRENCY]
+                coin.fiatRate = FiatRate(int(table[coin.basename][self.CURRENCY] * 100), UsdFiatCurrency)
 
 
 class GetRecommendFeeCommand(ExtHostCommand):

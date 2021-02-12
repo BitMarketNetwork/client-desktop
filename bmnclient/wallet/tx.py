@@ -254,7 +254,7 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
         return self.tr(f"Transaction of %s. Amount: %s %s") % (self.timeHuman,
                                                                sett.coinBalance(
                                                                    self.__balance),
-                                                               sett.coinUnit(self._address.coin.unit))
+                                                               sett.coinUnit(self._address.coin.currency.unit))
 
     def add_inputs(self, values: iter, in_type: bool = True):
         # import pdb; pdb.set_trace()
@@ -296,7 +296,7 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
 
     @qt_core.Property(str, constant=True)
     def unit(self) -> str:
-        return self._address.coin.unit
+        return self._address.coin.currency.unit
 
     @qt_core.Property(str, constant=True)
     def feeHuman(self) -> str:

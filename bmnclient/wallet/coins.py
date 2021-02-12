@@ -23,12 +23,11 @@ def network_tag(net: coin_network.CoinNetworkBase) -> str:
 
 
 class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
-    rateChanged = qt_core.Signal()
+    rateChanged = qt_core.Signal() # TODO
 
     name: str = None
     _decimal_level: int = 0
     _test: bool = False
-    _usd_rate: float = 0.
 
     # decimal points
     _default_fee = 10000
@@ -52,8 +51,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     def __init__(self, parent):
         super().__init__(parent)
         self._address_list = []
-
-        self._balance = 0
 
         self._remote = {}  # TODO
 
@@ -115,41 +112,17 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         from ..ui.gui import Application
         return TransactionListSortedModel(Application.instance(), self._tx_list_model)
 
-    @qt_core.Property(str, constant=True)
-    def unit(self) -> str:
-        """
-        Coin unit name
-        """
-        if self._test:
-            return self.name[:-4].upper()
-        return self.name.upper()
-
     def balance_human(self, amount: float = None) -> str:
         if amount is None:
-            amount = self._balance
-        res = amount / (10 ** self._DECIMAL_SIZE)
+            amount = self._amount
+        res = amount / (10 ** self._DECIMAL_SIZE[1])
         res = format(round(res, self._decimal_level), 'f')
         if '.' in res:
             return res.rstrip("0.") or "0"
         return res
 
-    def from_human(self, value: str) -> float:
-        return float(value) * 10 ** self._DECIMAL_SIZE
-
     def fiat_amount(self, amount: float) -> float:
-        return amount * self._usd_rate / (10 ** self._DECIMAL_SIZE)
-
-    def _get_rate(self)-> float:
-        "USD rate"
-        return self._usd_rate
-
-    def _set_rate(self, rt: float):
-        if rt == self._usd_rate:
-            return
-        self._usd_rate = rt
-        self.rateChanged.emit()
-
-    rate = qt_core.Property(int, _get_rate, _set_rate, notify=rateChanged)
+        return amount * self._usd_rate / (10 ** self._DECIMAL_SIZE[1])
 
     def hd_address(self, hd_index: int) -> str:
         if self.__hd_node is None:
@@ -272,7 +245,7 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         ]
 
     def update_balance(self):
-        self._balance = sum(int(w.balance)
+        self._amount = sum(int(w.balance)
                             for w in self._address_list if not w.readOnly)
         self.balanceChanged.emit()
         self._amount_model.refresh()
@@ -488,11 +461,11 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
 
     @qt_core.Property(int, notify=balanceChanged)
     def balance(self) -> int:
-        return self._balance
+        return self._amount
 
     @qt_core.Property(str, notify=balanceChanged)
     def fiatBalance(self) -> float:
-        return self.fiat_amount(self._balance)
+        return self.fiat_amount(self._amount)
 
     @qt_core.Property(bool, constant=True)
     def test(self) -> bool:
@@ -524,14 +497,15 @@ class Bitcoin(CoinType, coins.Bitcoin):
     network = coin_network.BitcoinMainNetwork
     _decimal_level = 7
     _hd_index = 0
-    _usd_rate = 9400.51
 
+    def __init__(self, parent):
+        super().__init__(parent)
+        coins.Bitcoin.__init__(self)
 
 class BitcoinTest(Bitcoin, coins.BitcoinTest):
     name = "btctest"
     network = coin_network.BitcoinTestNetwork
     _test = True
-    _usd_rate = 9400.51
 
 
 class Litecoin(CoinType, coins.Litecoin):
@@ -539,4 +513,7 @@ class Litecoin(CoinType, coins.Litecoin):
     network = coin_network.LitecoinMainNetwork
     _decimal_level = 7
     _hd_index = 2
-    _usd_rate = 39.83
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        coins.Litecoin.__init__(self)

@@ -10,7 +10,7 @@ from bmnclient.language import Locale
 
 BITCOIN_ADDRESS_LIST = (
     (
-        "1PMycacnJaSqwwJqjawXBErnLsZ7RkXUAs",
+        "1PMycacnJaSqwwJqjawXBErnLsZ7RkXUAs", # noqa
         BitcoinAddress.Type.PUBKEY_HASH,
         0,
         "f54a5851e9372b87810a8e60cdd2e7cfd80b6e31"
@@ -20,15 +20,15 @@ BITCOIN_ADDRESS_LIST = (
         5,
         "f33c134a48d70818bdc2cf09631316ce90f71366"
     ), (
-        "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4",
+        "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4", # noqa
         BitcoinAddress.Type.WITNESS_V0_KEY_HASH,
         0,
         "751e76e8199196d454941c45d1b3a323f1433bd6"
     ), (
-        "bc1qeklep85ntjz4605drds6aww9u0qr46qzrv5xswd35uhjuj8ahfcqgf6hak",
+        "bc1qeklep85ntjz4605drds6aww9u0qr46qzrv5xswd35uhjuj8ahfcqgf6hak", # noqa
         BitcoinAddress.Type.WITNESS_V0_SCRIPT_HASH,
         0,
-        "cdbf909e935c855d3e8d1b61aeb9c5e3c03ae8021b286839b1a72f2e48fdba70"
+        "cdbf909e935c855d3e8d1b61aeb9c5e3c03ae8021b286839b1a72f2e48fdba70" # noqa
     ), (
         "bc1sw50qa3jx3s",
         BitcoinAddress.Type.WITNESS_UNKNOWN,
@@ -40,7 +40,7 @@ BITCOIN_ADDRESS_LIST = (
         None,
         None
     ), (
-        "BC1QR508D6QEJXTDG4Y5R3ZARVARYV98GJ9P",
+        "BC1QR508D6QEJXTDG4Y5R3ZARVARYV98GJ9P", # noqa
         None,
         None,
         None
@@ -49,64 +49,64 @@ BITCOIN_ADDRESS_LIST = (
 
 BITCOIN_TEST_ADDRESS_LIST = (
     (
-        "mxVFsFW5N4mu1HPkxPttorvocvzeZ7KZyk",
+        "mxVFsFW5N4mu1HPkxPttorvocvzeZ7KZyk", # noqa
         BitcoinTestAddress.Type.PUBKEY_HASH,
         0x6f,
-        "ba27f99e007c7f605a8305e318c1abde3cd220ac"
+        "ba27f99e007c7f605a8305e318c1abde3cd220ac" # noqa
     ), (
        "n49mqVncWxMYwCmZDHXba3Y9RVPzAFTUoX",
        BitcoinTestAddress.Type.PUBKEY_HASH,
        0x6f,
        "f8496d9390c68a99b96e7c438af90f316739a839"
     ), (
-        "2N7EFdToQVZviaVC2Wfkidm6HzntiqtVmDE",
+        "2N7EFdToQVZviaVC2Wfkidm6HzntiqtVmDE", # noqa
         BitcoinTestAddress.Type.SCRIPT_HASH,
         0xc4,
         "9962b7013858273326d2e36057bde8c844f831a1"
     ), (
-        "tb1qu03l73f3rdcjh0ywnhc8vc3yp5gumvgummhv7f",
+        "tb1qu03l73f3rdcjh0ywnhc8vc3yp5gumvgummhv7f", # noqa
         BitcoinTestAddress.Type.WITNESS_V0_KEY_HASH,
         0,
         "e3e3ff45311b712bbc8e9df07662240d11cdb11c"
     ), (
-        "tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy",
+        "tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy", # noqa
         BitcoinTestAddress.Type.WITNESS_V0_SCRIPT_HASH,
         0,
         "000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433"
     ), (
-        "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7",
+        "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7", # noqa
         BitcoinTestAddress.Type.WITNESS_V0_SCRIPT_HASH,
         0,
         "1863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262"
     ), (
-        "tb1s424qnvez45",
+        "tb1s424qnvez45", # noqa
         BitcoinTestAddress.Type.WITNESS_UNKNOWN,
         16,
-        "aaaa"
+        "aaaa" # noqa
     ),
 )
 
 LITECOIN_ADDRESS_LIST = (
     (
-        "LaMT348PWRnrqeeWArpwQPbuanpXDZGEUz",
+        "LaMT348PWRnrqeeWArpwQPbuanpXDZGEUz", # noqa
         LitecoinAddress.Type.PUBKEY_HASH,
         0x30,
-        "a5f4d12ce3685781b227c1f39548ddef429e9783"
+        "a5f4d12ce3685781b227c1f39548ddef429e9783" # noqa
     ), (
         "MQMcJhpWHYVeQArcZR3sBgyPZxxRtnH441",
         LitecoinAddress.Type.SCRIPT_HASH,
         0x32,
-        "b48297bff5dadecc5f36145cec6a5f20d57c8f9b"
+        "b48297bff5dadecc5f36145cec6a5f20d57c8f9b" # noqa
     ), (
-        "ltc1q7nlrhuxks5rvc7aumcpzttm3xll3f5zqlp0pyv",
+        "ltc1q7nlrhuxks5rvc7aumcpzttm3xll3f5zqlp0pyv", # noqa
         LitecoinAddress.Type.WITNESS_V0_KEY_HASH,
         0,
-        "f4fe3bf0d68506cc7bbcde0225af7137ff14d040"
+        "f4fe3bf0d68506cc7bbcde0225af7137ff14d040" # noqa
     ), (
-        "ltc1q5det08ke2gpet06wczcdfs2v3hgfqllxw28uln8vxxx82qlue6uswceljm",
+        "ltc1q5det08ke2gpet06wczcdfs2v3hgfqllxw28uln8vxxx82qlue6uswceljm", # noqa
         LitecoinAddress.Type.WITNESS_V0_SCRIPT_HASH,
         0,
-        "a372b79ed9520395bf4ec0b0d4c14c8dd0907fe6728fcfccec318c7503fcceb9"
+        "a372b79ed9520395bf4ec0b0d4c14c8dd0907fe6728fcfccec318c7503fcceb9" # noqa
     )
 )
 
@@ -138,7 +138,7 @@ class TestCoins(unittest.TestCase):
             LITECOIN_ADDRESS_LIST)
 
     def test_string_to_amount(self) -> None:
-        b = Bitcoin.Currency
+        b = Bitcoin.currency
         satoshi_value = 10 ** 8
 
         for v in ("", "-", "+", "-.", "+.", "."):
@@ -200,7 +200,7 @@ class TestCoins(unittest.TestCase):
             self.assertEqual(r, b.fromString(v))
 
     def test_string_to_amount_locale(self) -> None:
-        b = BitcoinTest.Currency
+        b = BitcoinTest.currency
         locale = Locale("en_US")
         for (r, v) in (
                 (0, "0"),
@@ -218,7 +218,7 @@ class TestCoins(unittest.TestCase):
             self.assertEqual(r, b.fromString(v, locale=locale))
 
     def test_amount_to_string(self) -> None:
-        b = Bitcoin.Currency
+        b = Bitcoin.currency
 
         self.assertEqual("0", b.toString(0))
         self.assertEqual("-1", b.toString(-1 * 10 ** 8))

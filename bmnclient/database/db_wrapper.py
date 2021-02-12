@@ -7,6 +7,7 @@ from pathlib import Path
 from contextlib import closing
 from ..server import net_cmd
 import bmnclient.config
+from ..coins.currency import UsdFiatCurrency, FiatRate
 
 import PySide2.QtCore as qt_core
 
@@ -77,7 +78,7 @@ class DbWrapper:
         offset = self.__impl(coin.offset)
         unverified_offset = self.__impl(coin.unverified_offset)
         unverified_signature = self.__impl(coin.unverified_signature)
-        rate = self.__impl(coin.rate)
+        rate = self.__impl(coin.fiatRate.value)
         visible = self.__impl(coin.visible)
         try:
             query = f"""
@@ -158,7 +159,7 @@ class DbWrapper:
                 self.__impl(coin.offset),
                 self.__impl(coin.unverified_offset),
                 self.__impl(coin.unverified_signature),
-                self.__impl(coin.rate),
+                self.__impl(coin.fiatRate.value),
                 coin.rowid,
             ))) as c:
                 pass
@@ -534,7 +535,7 @@ class DbWrapper:
                 coin.verified_height = vheight
                 coin.unverified_offset = uoffset
                 coin.unverified_signature = usig
-                coin.rate = rate
+                coin.fiatRate = FiatRate(rate, UsdFiatCurrency)
                 # let height will be the last
                 coin.height = height
             else:

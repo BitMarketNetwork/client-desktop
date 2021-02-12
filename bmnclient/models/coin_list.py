@@ -60,10 +60,7 @@ class CoinRemoteStateModel(AbstractCoinStateModel):
 
 class CoinAmountModel(AmountModel):
     def _getValue(self) -> int:
-        return self._coin.balance
-
-    def _getFiatValue(self) -> float:
-        return self._coin.fiatBalance
+        return self._coin.amount
 
 
 class CoinListModel(AbstractListModel):

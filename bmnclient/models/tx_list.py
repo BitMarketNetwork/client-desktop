@@ -66,9 +66,6 @@ class TransactionAmountModel(AmountModel):
     def _getValue(self) -> int:
         return self._tx.balance
 
-    def _getFiatValue(self) -> float:
-        return self._tx.fiatBalance
-
 
 class TransactionFeeAmountModel(AmountModel):
     def __init__(self, application: Application, tx: Transaction) -> None:
@@ -77,9 +74,6 @@ class TransactionFeeAmountModel(AmountModel):
 
     def _getValue(self) -> int:
         return self._tx.fee
-
-    def _getFiatValue(self) -> float:
-        return self._tx.feeFiatBalance
 
 
 class TransactionIoListModel(AddressListModel):

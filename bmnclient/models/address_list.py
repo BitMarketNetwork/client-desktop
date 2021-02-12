@@ -44,9 +44,6 @@ class AddressAmountModel(AmountModel):
     def _getValue(self) -> int:
         return self._address.balance
 
-    def _getFiatValue(self) -> float:
-        return self._address.fiatBalance
-
 
 class AddressListModel(AbstractListModel):
     class Role(RoleEnum):

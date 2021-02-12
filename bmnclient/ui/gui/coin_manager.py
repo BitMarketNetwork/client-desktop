@@ -47,7 +47,7 @@ class CoinManager(QObject):
         """
         sugar.. don't delete please
         """
-        return self.coin.unit if self.coin is not None else "BTC"
+        return self.coin.currency.unit if self.coin is not None else "BTC"
 
     @QProperty(coins.CoinType, notify=coinIndexChanged)
     def coin(self) -> 'coins.CoinType':

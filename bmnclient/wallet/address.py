@@ -497,7 +497,7 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
 
     @qt_core.Property(int, notify=balanceChanged)
     def fiatBalance(self) -> int:
-        return self._coin.fiat_amount(self.__balance)
+        return self._coin.fiatAmount(self.__balance)
 
     @qt_core.Property(bool, notify=balanceChanged)
     def canSend(self) -> bool:

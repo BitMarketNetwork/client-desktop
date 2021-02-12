@@ -1,31 +1,46 @@
+# JOK++
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, Type
+
+from ..utils.meta import classproperty
 
 if TYPE_CHECKING:
     from ..language import Locale
 
 
 class AbstractCurrency:
-    _DECIMAL_SIZE = 0
+    _DECIMAL_SIZE = (0, 0)
     _VALUE_BITS = 63  # int64
     _UNIT = "YYY"
 
     def __init__(self) -> None:
         raise TypeError
 
+    @classproperty
+    def unit(cls) -> str: # noqa
+        return cls._UNIT
+
+    @classproperty
+    def decimalSize(cls) -> int: # noqa
+        return cls._DECIMAL_SIZE[1]
+
+    @classproperty
+    def decimalDivisor(cls) -> int: # noqa
+        return 10 ** cls._DECIMAL_SIZE[1]
+
+    @classproperty
+    @lru_cache
+    def stringTemplate(cls) -> str: # noqa
+        v = len(cls.toString(2 ** cls._VALUE_BITS - 1))
+        assert v > 2
+        return "8" * (1 + v + v // 3)
+
     @classmethod
     def isValidValue(cls, value: int) -> bool:
         b = 2 ** cls._VALUE_BITS
         return -b <= value <= (b - 1)
-
-    @classmethod
-    @lru_cache
-    def stringTemplate(cls) -> str:
-        v = len(cls.toString(2 ** cls._VALUE_BITS - 1))
-        assert v > 2
-        return "8" * (1 + v + v // 3)
 
     @classmethod
     def fromString(
@@ -74,11 +89,11 @@ class AbstractCurrency:
                 a = None
             if a is None or a < 0:
                 return None
-            result = (-a if sign else a) * (10 ** cls._DECIMAL_SIZE)
+            result = (-a if sign else a) * cls.decimalDivisor
 
         if b:
             b_length = len(b)
-            if b_length > cls._DECIMAL_SIZE:
+            if b_length > cls._DECIMAL_SIZE[1]:
                 return None
             if b.isalnum():
                 try:
@@ -87,9 +102,9 @@ class AbstractCurrency:
                     b = None
             else:
                 b = None
-            if b is None or b < 0 or b >= (10 ** cls._DECIMAL_SIZE):
+            if b is None or b < 0 or b >= cls.decimalDivisor:
                 return None
-            for _ in range(b_length, cls._DECIMAL_SIZE):
+            for _ in range(b_length, cls._DECIMAL_SIZE[1]):
                 b *= 10
             result += (-b if sign else b)
 
@@ -111,7 +126,7 @@ class AbstractCurrency:
         else:
             result = ""
 
-        a, b = divmod(value, (10 ** cls._DECIMAL_SIZE))
+        a, b = divmod(value, cls.decimalDivisor)
 
         zero_count = 0
         while b and b % 10 == 0:
@@ -121,8 +136,34 @@ class AbstractCurrency:
         result += locale.integerToString(a) if locale else str(a)
         if b:
             b = str(b)
-            zero_count = cls._DECIMAL_SIZE - len(b) - zero_count
+            zero_count = cls._DECIMAL_SIZE[1] - len(b) - zero_count
             result += locale.decimalPoint() if locale else "."
-            result += ("0" * zero_count) + str(b)
+            result += "0" * zero_count + b
+
+            zero_count += len(b)
+            if zero_count < cls._DECIMAL_SIZE[0]:
+                result += "0" * (cls._DECIMAL_SIZE[0] - zero_count)
 
         return result
+
+
+class FiatCurrency(AbstractCurrency):
+    _DECIMAL_SIZE = (2, 2)
+
+
+class UsdFiatCurrency(FiatCurrency):
+    _UNIT = "USD"
+
+
+class FiatRate:
+    def __init__(self, value: int, currency: Type[FiatCurrency]) -> None:
+        self._value = value
+        self._currency = currency
+
+    @property
+    def value(self) -> int:
+        return self._value
+
+    @property
+    def currency(self) -> Type[FiatCurrency]:
+        return self._currency

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Final, TYPE_CHECKING
+from typing import Any, Callable, Final, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -29,10 +29,6 @@ class AmountModel(
     def _getValue(self) -> int:
         raise NotImplementedError
 
-    @abstractmethod
-    def _getFiatValue(self) -> float:
-        raise NotImplementedError
-
     def refresh(self) -> None:
         self._stateChanged.emit()
 
@@ -42,23 +38,23 @@ class AmountModel(
 
     @QProperty(str, notify=_stateChanged)
     def valueHuman(self) -> str:
-        return self._coin.amountToString(
+        return self._coin.currency.toString(
             self._getValue(),
             locale=self._application.language.locale)
 
     @QProperty(str, constant=True)
     def unit(self) -> str:
-        return self._coin.unit
+        return self._coin.currency.unit
 
     @QProperty(str, notify=_stateChanged)
     def fiatValueHuman(self) -> str:
-        return self._application.language.locale.floatToString(
-            self._getFiatValue(),
-            2)
+        return self._coin.fiatRate.currency.toString(
+            self._coin.fiatAmount(self._getValue()),
+            locale=self._application.language.locale)
 
     @QProperty(str, notify=_stateChanged)
     def fiatUnit(self) -> str:
-        return "USD"  # TODO
+        return self._coin.fiatRate.currency.unit
 
 
 class AmountEditModel(AmountModel, metaclass=ABCMeta):

@@ -3,7 +3,7 @@ from __future__ import annotations
 from argparse import ArgumentParser, Namespace
 from functools import partial
 from pathlib import PurePath
-from typing import Optional, Type, Union
+from typing import Optional, Type, Union, TYPE_CHECKING
 
 from PySide2.QtCore import \
     QCoreApplication, \
@@ -16,7 +16,6 @@ from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 
 from . import resources
-from .coins import CoinBase
 from .coins.list import CoinList
 from .config import UserConfig
 from .key_store import KeyStore
@@ -26,6 +25,9 @@ from .server.thread import ServerThread
 from .signal_handler import SignalHandler
 from .version import Product
 from .wallet.thread import WalletThread
+
+if TYPE_CHECKING:
+    from .coins import AbstractCoin
 
 
 class CommandLine:
@@ -189,7 +191,7 @@ class CoreApplication(QObject):
     def coinList(self) -> CoinList:
         return self._coin_list
 
-    def findCoin(self, short_name: str) -> Optional[CoinBase]:
+    def findCoin(self, short_name: str) -> Optional[AbstractCoin]:
         for coin in self._coin_list:
             if coin.shortName == short_name:
                 return coin
