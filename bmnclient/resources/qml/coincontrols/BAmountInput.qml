@@ -1,29 +1,20 @@
+// JOK++
 import QtQuick 2.15
+import QtQml 2.15
 import QtQuick.Controls.Material 2.15
 import "../basiccontrols"
 
 BControl {
     id: _base
-    property BAmountObject amount: BAmountObject {}
-    property alias value: _valueField.text
-    property alias fiatValue: _fiatValueField.text
+    property var amount // AmountInputModel
     property color color: _base.enabled ? _base.Material.foreground : _base.Material.hintTextColor
     property int orientation: Qt.Vertical
+    property int validStatus: BDialogValidLabel.Status.Unset
 
-    property RegularExpressionValidator valueValidator: RegularExpressionValidator {
-        regularExpression: /^\d{1,12}(?:[.]\d{0,8}|$)$/ // TODO dynamic, allow start with dot
-    }
-    property RegularExpressionValidator fiatValueValidator: RegularExpressionValidator {
-        regularExpression: /^^\d{1,12}(?:[.]\d{0,2}|$)$$/ // TODO dynamic, allow start with dot
-    }
     property TextMetrics valueTextMetrics: TextMetrics {
-        text: "_888888888888.88888888_" // TODO dynamic
+        text: _base.amount.valueHumanTemplate
         font: _valueField.font
     }
-
-    signal setMaxValue
-    signal valueEdited
-    signal fiatValueEdited
 
     contentItem: BGridLayout {
         columns: _base.orientation === Qt.Vertical ? 3 : 7
@@ -32,21 +23,26 @@ BControl {
 
         BTextField {
             id: _valueField
+            property bool isValid: true
 
             BLayout.column: 0
             BLayout.row: 0
-            BLayout.minimumWidth: BLayout.preferredWidth
             BLayout.preferredWidth: leftPadding + rightPadding + _base.valueTextMetrics.width
 
-            inputMethodHints: Qt.ImhFormattedNumbersOnly
-            validator: valueValidator
+            validator: _base.amount.valueHumanValidator
             horizontalAlignment: BTextField.AlignRight
-
             placeholderText: qsTr("Amount")
-            text: amount.valueHuman
+
+            Binding on text {
+                restoreMode: Binding.RestoreNone
+                when: !_valueField.focus && _valueField.isValid
+                value: _base.amount.valueHuman
+            }
 
             onTextEdited: {
-                processTextEdited(_valueField, _base.valueEdited)
+                if (focus) {
+                    _base.processValue(_valueField, _fiatValueField)
+                }
             }
         }
         BLabel {
@@ -54,7 +50,7 @@ BControl {
             BLayout.row: 0
 
             color: _base.color
-            text: amount.unit
+            text: _base.amount.unit
         }
 
         Loader {
@@ -70,22 +66,26 @@ BControl {
 
         BTextField {
             id: _fiatValueField
+            property bool isValid: true
 
             BLayout.column: _base.orientation === Qt.Vertical ? 0 : 3
             BLayout.row: _base.orientation === Qt.Vertical ? 1 : 0
-            BLayout.minimumWidth: BLayout.preferredWidth
             BLayout.preferredWidth: leftPadding + rightPadding + _base.valueTextMetrics.width
 
-            inputMethodHints: Qt.ImhFormattedNumbersOnly
-            validator: fiatValueValidator
+            validator: _base.amount.fiatValueHumanValidator
             horizontalAlignment: BTextField.AlignRight
-
             placeholderText: qsTr("Fiat amount")
-            text: amount.fiatValueHuman
-            readOnly: true // TODO no api support
+
+            Binding on text {
+                restoreMode: Binding.RestoreNone
+                when: !_fiatValueField.focus && _fiatValueField.isValid
+                value: _base.amount.fiatValueHuman
+            }
 
             onTextEdited: {
-                processTextEdited(_fiatValueField, _base.fiatValueEdited)
+                if (focus) {
+                    _base.processValue(_fiatValueField, _valueField)
+                }
             }
         }
         BLabel {
@@ -93,7 +93,7 @@ BControl {
             BLayout.row: _base.orientation === Qt.Vertical ? 1 : 0
 
             color: _base.color
-            text: amount.fiatUnit
+            text: _base.amount.fiatUnit
         }
 
         Loader {
@@ -115,19 +115,40 @@ BControl {
 
             text: qsTr("max")
             onClicked: {
-                _base.setMaxValue()
+                if (focus) {
+                    _base.setMaxValue()
+                }
             }
         }
     }
 
-    function processTextEdited(field, callback) {
-        if (field.text.length === 0) {
-            field.text = "0"
-            field.selectAll()
-            callback()
+    function processValue(currentFiled, alternativeFiled) {
+        let isValid
+        if (currentFiled === _valueField) {
+            isValid = amount.setValueHuman(currentFiled.text)
+        } else {
+            isValid = amount.setFiatValueHuman(currentFiled.text)
         }
-        else if (field.acceptableInput) {
-            callback()
+        if (isValid) {
+            // bindings will update the text
+            currentFiled.isValid = true
+            alternativeFiled.isValid = true
+            alternativeFiled.focus = false // paranoid
+            validStatus = BDialogValidLabel.Status.Accept
+        } else {
+            currentFiled.isValid = false
+            validStatus = BDialogValidLabel.Status.Reject
+        }
+    }
+
+    function setMaxValue() {
+        if (amount.setMaxValue()) {
+            // bindings will update the text
+            _valueField.isValid = true
+            _valueField.focus = false // paranoid
+            _fiatValueField.isValid = true
+            _fiatValueField.focus = false // paranoid
+            validStatus = BDialogValidLabel.Status.Accept
         }
     }
 }

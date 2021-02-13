@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from typing import Optional, Type
-
+import math
 from .currency import \
     AbstractCurrency, \
     FiatRate, \
@@ -57,12 +57,17 @@ class AbstractCoin:  # TODO ABCMeta
     def fiatRate(self, fiat_rate: FiatRate) -> None:
         self._fiat_rate = fiat_rate
 
-    def fiatAmount(self, value: Optional[int] = None) -> int:
+    def toFiatAmount(self, value: Optional[int] = None) -> Optional[int]:
         if value is None:
             value = self._amount
         value *= self._fiat_rate.value
         value //= self._Currency.decimalDivisor
-        return value
+        return value if self._fiat_rate.currency.isValidValue(value) else None
+
+    def fromFiatAmount(self, value: int) -> Optional[int]:
+        value *= self._Currency.decimalDivisor
+        value = math.ceil(value / self._fiat_rate.value)
+        return value if self._Currency.isValidValue(value) else None
 
 
 class Bitcoin(AbstractCoin):

@@ -1,7 +1,6 @@
 # JOK++
 from __future__ import annotations
 
-from functools import lru_cache
 from typing import Optional, TYPE_CHECKING, Type
 
 from ..utils.meta import classproperty
@@ -14,6 +13,7 @@ class AbstractCurrency:
     _DECIMAL_SIZE = (0, 0)
     _VALUE_BITS = 63  # int64
     _UNIT = "YYY"
+    __string_template: str = None
 
     def __init__(self) -> None:
         raise TypeError
@@ -31,11 +31,12 @@ class AbstractCurrency:
         return 10 ** cls._DECIMAL_SIZE[1]
 
     @classproperty
-    @lru_cache
     def stringTemplate(cls) -> str: # noqa
-        v = len(cls.toString(2 ** cls._VALUE_BITS - 1))
-        assert v > 2
-        return "8" * (1 + v + v // 3)
+        if not cls.__string_template:
+            v = len(cls.toString(2 ** cls._VALUE_BITS - 1))
+            assert v > 2
+            cls.__string_template = "8" * (1 + v + v // 3)
+        return cls.__string_template
 
     @classmethod
     def isValidValue(cls, value: int) -> bool:
@@ -47,6 +48,7 @@ class AbstractCurrency:
             cls,
             source: str,
             *,
+            strict=True,
             locale: Optional[Locale] = None) -> Optional[int]:
         if not source:
             return None
@@ -79,6 +81,8 @@ class AbstractCurrency:
         result = 0
         if a:
             if locale:
+                if not strict:
+                    a = a.replace(locale.groupSeparator(), '')
                 a = locale.stringToInteger(a)
             elif a.isalnum():
                 try:

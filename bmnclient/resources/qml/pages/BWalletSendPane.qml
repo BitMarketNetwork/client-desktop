@@ -34,16 +34,15 @@ BPane {
         BDialogValidLabel {
             mode: {
                 if (_receiverAddress.text.length < 1) {
-                    return BDialogValidLabel.Mode.Unset
+                    return BDialogValidLabel.Status.Unset
                 }
                 return _tx_controller.receiver.isValidAddress
-                                    ? BDialogValidLabel.Mode.Accept
-                                    : BDialogValidLabel.Mode.Reject
-                        } else {
-                            return BDialogValidLabel.Mode.Unset
-                        }
-                    }
-                }
+                    ? BDialogValidLabel.Status.Accept
+                    : BDialogValidLabel.Status.Reject
+            }
+        }
+
+        BDialogSeparator {}
 
                 BDialogPromtLabel {
                     text: qsTr("Available amount:")
@@ -62,31 +61,10 @@ BPane {
                     id: _amount
                     BLayout.alignment: _applicationStyle.dialogInputAlignment
                     orientation: Qt.Horizontal
-                    amount.valueHuman: _tx_controller.amount
-                    amount.unit: BBackend.coinManager.coin.unit
-                    amount.fiatValueHuman: _tx_controller.fiatAmount
-                    amount.fiatUnit: BBackend.coinManager.currency
-
-                    onSetMaxValue: {
-                        _tx_controller.setMax()
-                    }
-                    onValueEdited: {
-                        _tx_controller.amount = value
-                    }
-                    onFiatValueEdited: {
-                        // TODO
-                    }
+                    amount: _tx_controller.amount
                 }
                 BDialogValidLabel {
-                    mode: {
-                        if (_amount.value.length > 0) {
-                            return !_tx_controller.wrongAmount
-                                ? BDialogValidLabel.Mode.Accept
-                                : BDialogValidLabel.Mode.Reject
-                        } else {
-                            return BDialogValidLabel.Mode.Unset
-                        }
-                    }
+                    mode: _amount.validStatus
                 }
 
                 BDialogSeparator {}

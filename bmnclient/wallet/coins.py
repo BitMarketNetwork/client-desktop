@@ -463,10 +463,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     def balance(self) -> int:
         return self._amount
 
-    @qt_core.Property(str, notify=balanceChanged)
-    def fiatBalance(self) -> float:
-        return self.fiat_amount(self._amount)
-
     @qt_core.Property(bool, constant=True)
     def test(self) -> bool:
         return self._test

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Any, Callable, Final, TYPE_CHECKING
+from typing import Callable, Final, Optional, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -13,6 +13,7 @@ from PySide2.QtGui import QValidator
 if TYPE_CHECKING:
     from ..wallet.coins import CoinType
     from ..ui.gui import Application
+    from ..coins.currency import AbstractCurrency
 
 
 class AmountModel(
@@ -49,7 +50,7 @@ class AmountModel(
     @QProperty(str, notify=_stateChanged)
     def fiatValueHuman(self) -> str:
         return self._coin.fiatRate.currency.toString(
-            self._coin.fiatAmount(self._getValue()),
+            self._coin.toFiatAmount(self._getValue()),
             locale=self._application.language.locale)
 
     @QProperty(str, notify=_stateChanged)
@@ -57,9 +58,11 @@ class AmountModel(
         return self._coin.fiatRate.currency.unit
 
 
-class AmountEditModel(AmountModel, metaclass=ABCMeta):
+class AmountInputModel(AmountModel, metaclass=ABCMeta):
+    _stateChanged2: Final = QSignal()
+
     class _Validator(QValidator):
-        def __init__(self, owner: AmountEditModel):
+        def __init__(self, owner: AmountInputModel):
             super().__init__()
             self._owner = owner
 
@@ -75,26 +78,37 @@ class AmountEditModel(AmountModel, metaclass=ABCMeta):
                 value = value[1:]
             return value
 
-    class _ValueHumanValidator(_Validator):
-        def validate(self, value: str, _) -> QValidator.State:
+        def _validateHelper(
+                self,
+                value: str,
+                currency: AbstractCurrency,
+                unit_convert: Optional[Callable[[int], int]] = None) \
+                -> QValidator.State:
             value = self._normalizeValue(value)
             if not value:
-                return self.State.Intermediate
-            value = self._owner._coin.stringToAmount(
+                return QValidator.State.Intermediate
+
+            value = currency.fromString(
                 value,
+                strict=False,
                 locale=self._owner._application.language.locale)
-            if value is None:
-                return self.State.Invalid
-            else:
-                return self.State.Acceptable
+            if value is not None:
+                if not unit_convert or unit_convert(value) is not None:
+                    return QValidator.State.Acceptable
+            return QValidator.State.Invalid
+
+    class _ValueHumanValidator(_Validator):
+        def validate(self, value: str, _) -> QValidator.State:
+            return self._validateHelper(
+                value,
+                self._owner._coin.currency)
 
     class _FiatValueHumanValidator(_Validator):
         def validate(self, value: str, _) -> QValidator.State:
-            # TODO
-            if not value:
-                return self.State.Invalid
-            else:
-                return self.State.Acceptable
+            return self._validateHelper(
+                value,
+                self._owner._coin.fiatRate.currency,
+                self._owner._coin.fromFiatAmount)
 
     def __init__(self, application: Application, coin: CoinType) -> None:
         super().__init__(application, coin)
@@ -106,32 +120,71 @@ class AmountEditModel(AmountModel, metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def _setFiatValue(self, value: float) -> bool:
+    def _setMaxValue(self) -> None:
         raise NotImplementedError
+
+    def _setValueHelper(
+            self,
+            value: str,
+            currency: AbstractCurrency,
+            unit_convert: Optional[Callable[[int], int]] = None) -> bool:
+        if not value:
+            value = 0
+        else:
+            value = currency.fromString(
+                value,
+                strict=False,
+                locale=self._application.language.locale)
+            if value is None:
+                return False
+
+        if unit_convert:
+            value = unit_convert(value)
+            if value is None:
+                return False
+
+        if value != self._getValue():
+            if not self._setValue(value):
+                return False
+            self.refresh()
+        return True
+
+    def refresh(self) -> None:
+        super().refresh()
+        self._stateChanged2.emit()
 
     @QProperty(QValidator, constant=True)
     def valueHumanValidator(self) -> QValidator:
         return self._value_human_validator
 
+    @QProperty(QValidator, notify=_stateChanged2)
+    def fiatValueHumanValidator(self) -> QValidator:
+        return self._fiat_value_human_validator
+
+    @QProperty(str, notify=_stateChanged2)
+    def valueHumanTemplate(self) -> str:
+        a = self._coin.currency.stringTemplate
+        b = self._coin.fiatRate.currency.stringTemplate
+        return a if len(a) > len(b) else b
+
     # noinspection PyTypeChecker
     @QSlot(str, result=bool)
     def setValueHuman(self, value: str) -> bool:
-        value = self._coin.stringToAmount(
+        return self._setValueHelper(
             value,
-            locale=self._application.language.locale)
-        if value is None:
-            return False
-        if value != self._value():
-            self._setValue(value)
-            self.refresh()
-        return True
-
-    @QProperty(QValidator, constant=True)
-    def fiatValueHumanValidator(self) -> QValidator:
-        return self._fiat_value_human_validator
+            self._coin.currency)
 
     # noinspection PyTypeChecker
     @QSlot(str, result=bool)
     def setFiatValueHuman(self, value: str) -> bool:
-        # TODO
-        return False
+        return self._setValueHelper(
+            value,
+            self._coin.fiatRate.currency,
+            self._coin.fromFiatAmount)
+
+    # noinspection PyTypeChecker
+    @QSlot(result=bool)
+    def setMaxValue(self) -> bool:
+        self._setMaxValue()
+        self.refresh()
+        return True

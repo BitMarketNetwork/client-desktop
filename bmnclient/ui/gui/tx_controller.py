@@ -140,14 +140,6 @@ class TxController(QObject):
         self.changeChanged.emit()
         self.canSendChanged.emit()
 
-    @QProperty(str, notify=amountChanged)
-    def fiatAmount(self):
-        return self.__round(self.__tx.amount, True)
-
-    @QProperty(str, notify=maxAmountChanged)
-    def fiatBalance(self):
-        return self.__round(self.__tx.source_amount, True)
-
     @QProperty(str, notify=feeChanged)
     def spbAmount(self):
         return str(self.__tx.spb)
@@ -288,11 +280,6 @@ class TxController(QObject):
         self.maxAmountChanged.emit()
         self.canSendChanged.emit()
         self.changeChanged.emit()
-
-    @QSlot()
-    def setMax(self):
-        self.__tx.set_max()
-        self.__update_amount()
 
     @QSlot(result=bool)
     def prepareSend(self):

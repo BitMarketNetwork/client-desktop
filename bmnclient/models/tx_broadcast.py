@@ -7,7 +7,7 @@ from PySide2.QtCore import \
     Signal as QSignal
 
 from . import AbstractTransactionBroadcastStateModel
-from .amount import AmountEditModel, AmountModel
+from .amount import AmountInputModel, AmountModel
 
 if TYPE_CHECKING:
     from ..ui.gui import Application
@@ -22,11 +22,29 @@ class TransactionBroadcastAvailableAmountModel(AmountModel):
         super().__init__(application, tx.coin)
         self._tx = tx
 
-    def _value(self) -> int:
+    def _getValue(self) -> int:
         return self._tx.source_amount
 
-    def _fiatValue(self) -> float:
-        return self._coin.fiat_amount(self._tx.source_amount)
+
+class TransactionBroadcastAmountModel(AmountInputModel):
+    def __init__(
+            self,
+            application: Application,
+            tx: MutableTransaction) -> None:
+        super().__init__(application, tx.coin)
+        self._tx = tx
+
+    def _getValue(self) -> int:
+        return self._tx.amount
+
+    def _setValue(self, value: int) -> bool:
+        if value >= 0:
+            self._tx.amount = value
+            return True
+        return False
+
+    def _setMaxValue(self) -> None:
+        self._tx.set_max()
 
 
 class TransactionBroadcastReceiverModel(AbstractTransactionBroadcastStateModel):
