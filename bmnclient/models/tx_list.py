@@ -25,13 +25,13 @@ if TYPE_CHECKING:
 
 
 class TransactionStateModel(AbstractTransactionStateModel):
-    _stateChanged: Final = QSignal()
+    stateChanged: Final = QSignal()
 
-    @QProperty(int, notify=_stateChanged)
+    @QProperty(int, notify=stateChanged)
     def status(self) -> int:
         return self._tx.status
 
-    @QProperty(str, notify=_stateChanged)
+    @QProperty(str, notify=stateChanged)
     def timeHuman(self) -> str:
         v = QDateTime()
         v.setSecsSinceEpoch(self._tx.time)
@@ -39,20 +39,20 @@ class TransactionStateModel(AbstractTransactionStateModel):
             v,
             QLocale.LongFormat)
 
-    @QProperty(int, notify=_stateChanged)
+    @QProperty(int, notify=stateChanged)
     def height(self) -> int:
         return self._tx.height
 
-    @QProperty(str, notify=_stateChanged)
+    @QProperty(str, notify=stateChanged)
     def heightHuman(self) -> str:
         return self._application.language.locale.integerToString(
             self._tx.height)
 
-    @QProperty(int, notify=_stateChanged)
+    @QProperty(int, notify=stateChanged)
     def confirmations(self) -> int:
         return self._tx.confirmCount
 
-    @QProperty(str, notify=_stateChanged)
+    @QProperty(str, notify=stateChanged)
     def confirmationsHuman(self) -> str:
         return self._application.language.locale.integerToString(
             self._tx.confirmCount)

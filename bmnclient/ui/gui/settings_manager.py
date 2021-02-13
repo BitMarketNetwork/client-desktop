@@ -106,7 +106,7 @@ class SettingsManager(QObject):
         return self._current_language_name
 
     @currentLanguageName.setter
-    def _setCurrentLanguageName(self, name) -> None:
+    def _setCurrentLanguageName(self, name: str) -> None:
         assert type(name) is str
         if not self._isValidLanguageName(name):
             log.error(f"Unknown language \"{name}\".")
@@ -144,7 +144,7 @@ class SettingsManager(QObject):
         return self._current_theme_name
 
     @currentThemeName.setter
-    def _setCurrentThemeName(self, name) -> None:
+    def _setCurrentThemeName(self, name: str) -> None:
         assert type(name) is str
         self._application.userConfig.set(UserConfig.KEY_UI_THEME, name)
         if self._current_theme_name != name:
@@ -277,12 +277,6 @@ class SettingsManager(QObject):
         except OverflowError as oe:
             log.error(f"Overflow {amount}")
             raise OverflowError(f"{oe} for {res}") from oe
-
-    @QSlot(str, result=str)
-    def coinUnit(self, unit: Optional[str]) -> str:
-        if unit is None:
-            unit = self._application.coinManager.coin.unit
-        return unit
 
     @QProperty("QVariantList", constant=True)
     def rateSourceModel(self) -> "QVariantList":

@@ -4,7 +4,8 @@ from typing import Final, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
-    Signal as QSignal
+    Signal as QSignal, \
+    Slot as QSlot
 
 from . import AbstractTransactionBroadcastStateModel
 from .amount import AmountInputModel, AmountModel
@@ -43,14 +44,14 @@ class TransactionBroadcastAmountModel(AmountInputModel):
             return True
         return False
 
-    def _setMaxValue(self) -> None:
+    def _setMaxValue(self) -> bool:
         self._tx.set_max()
 
 
 class TransactionBroadcastReceiverModel(AbstractTransactionBroadcastStateModel):
-    _stateChanged: Final = QSignal()
+    stateChanged: Final = QSignal()
 
-    @QProperty(str, notify=_stateChanged)
+    @QProperty(str, notify=stateChanged)
     def addressName(self) -> str:
         return self._tx.receiver
 
@@ -59,6 +60,6 @@ class TransactionBroadcastReceiverModel(AbstractTransactionBroadcastStateModel):
         self._tx.receiver = name
         self.refresh()
 
-    @QProperty(bool, notify=_stateChanged)
+    @QProperty(bool, notify=stateChanged)
     def isValidAddress(self) -> bool:
         return self._tx.receiver_valid

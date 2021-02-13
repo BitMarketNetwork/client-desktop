@@ -46,7 +46,7 @@ BPane {
         }
         BMenuItem {
             text: qsTr("Update")
-            enabled: !_contextMenu.address.updating
+            //enabled: !_contextMenu.address.updating
             onTriggered: {
                 // TODO broken api, dont use BBackend.coinManager.coinIndex
                 //BBackend.coinManager.updateAddress(addressIndex)
@@ -54,7 +54,7 @@ BPane {
         }
         BMenuItem {
             text: qsTr("Remove address")
-            enabled: !_contextMenu.address.updating
+            //enabled: !_contextMenu.address.updating
             onTriggered: {
                 // TODO broken api, dont use BBackend.coinManager.coinIndex
                 //BBackend.coinManager.removeAddress(addressIndex)
@@ -62,7 +62,7 @@ BPane {
         }
         BMenuItem {
             text: qsTr("Clear transactions")
-            enabled: !_contextMenu.address.updating
+            //enabled: !_contextMenu.address.updating
             onTriggered: {
                 // TODO broken api, dont use BBackend.coinManager.coinIndex
                 //BBackend.coinManager.clearTransactions(api.addressIndex)

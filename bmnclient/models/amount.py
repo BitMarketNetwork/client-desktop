@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 class AmountModel(
         QObject,
         metaclass=type('AmountModelMeta', (ABCMeta, type(QObject)), {})):
-    _stateChanged: Final = QSignal()
+    stateChanged: Final = QSignal()
 
     def __init__(self, application: Application, coin: CoinType) -> None:
         super().__init__()
@@ -31,13 +31,13 @@ class AmountModel(
         raise NotImplementedError
 
     def refresh(self) -> None:
-        self._stateChanged.emit()
+        self.stateChanged.emit()
 
-    @QProperty(str, notify=_stateChanged)
+    @QProperty(str, notify=stateChanged)
     def value(self) -> int:
         return self._getValue()
 
-    @QProperty(str, notify=_stateChanged)
+    @QProperty(str, notify=stateChanged)
     def valueHuman(self) -> str:
         return self._coin.currency.toString(
             self._getValue(),
@@ -47,19 +47,19 @@ class AmountModel(
     def unit(self) -> str:
         return self._coin.currency.unit
 
-    @QProperty(str, notify=_stateChanged)
+    @QProperty(str, notify=stateChanged)
     def fiatValueHuman(self) -> str:
         return self._coin.fiatRate.currency.toString(
             self._coin.toFiatAmount(self._getValue()),
             locale=self._application.language.locale)
 
-    @QProperty(str, notify=_stateChanged)
+    @QProperty(str, notify=stateChanged)
     def fiatUnit(self) -> str:
         return self._coin.fiatRate.currency.unit
 
 
 class AmountInputModel(AmountModel, metaclass=ABCMeta):
-    _stateChanged2: Final = QSignal()
+    __stateChanged = QSignal()
 
     class _Validator(QValidator):
         def __init__(self, owner: AmountInputModel):
@@ -120,7 +120,7 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def _setMaxValue(self) -> None:
+    def _setMaxValue(self) -> bool:
         raise NotImplementedError
 
     def _setValueHelper(
@@ -151,17 +151,17 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
 
     def refresh(self) -> None:
         super().refresh()
-        self._stateChanged2.emit()
+        self.__stateChanged.emit()
 
     @QProperty(QValidator, constant=True)
     def valueHumanValidator(self) -> QValidator:
         return self._value_human_validator
 
-    @QProperty(QValidator, notify=_stateChanged2)
+    @QProperty(QValidator, notify=__stateChanged)
     def fiatValueHumanValidator(self) -> QValidator:
         return self._fiat_value_human_validator
 
-    @QProperty(str, notify=_stateChanged2)
+    @QProperty(str, notify=__stateChanged)
     def valueHumanTemplate(self) -> str:
         a = self._coin.currency.stringTemplate
         b = self._coin.fiatRate.currency.stringTemplate
@@ -185,6 +185,7 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
     # noinspection PyTypeChecker
     @QSlot(result=bool)
     def setMaxValue(self) -> bool:
-        self._setMaxValue()
-        self.refresh()
-        return True
+        if self._setMaxValue():
+            self.refresh()
+            return True
+        return False

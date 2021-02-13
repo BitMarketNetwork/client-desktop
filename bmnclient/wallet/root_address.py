@@ -20,10 +20,6 @@ class RootAddress(address.CAddress):
     def realTxCount(self) -> int:
         return self._coin.tx_count
 
-    @qt_core.Property(str, notify=balanceChanged)
-    def fiatBalance(self) -> str:
-        return self._coin.fiatBalance
-
     @qt_core.Property(bool, constant=True)
     def canSend(self) -> bool:
         return True

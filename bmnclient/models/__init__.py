@@ -162,7 +162,7 @@ class AbstractListSortedModel(QSortFilterProxyModel, ListModelHelper):
 
 
 class AbstractCoinStateModel(QObject):
-    _stateChanged: Optional[QSignal] = None
+    stateChanged: Optional[QSignal] = None
 
     def __init__(self, application: Application, coin: CoinType) -> None:
         super().__init__()
@@ -170,8 +170,8 @@ class AbstractCoinStateModel(QObject):
         self._coin = coin
 
     def refresh(self) -> None:
-        if self._stateChanged:
-            self._stateChanged.emit()
+        if self.stateChanged:
+            self.stateChanged.emit()
 
 
 class AbstractAddressStateModel(AbstractCoinStateModel):

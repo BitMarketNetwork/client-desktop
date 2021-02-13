@@ -316,7 +316,7 @@ class MutableTransaction:
 
     @ property
     def receiver_valid(self) -> bool:
-        return self.__receiver_valid
+        return self.coin.address.decode(self.__receiver) is not None
 
     @ receiver.setter
     def receiver(self, addr: str) -> None:

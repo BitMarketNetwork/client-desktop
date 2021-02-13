@@ -21,9 +21,9 @@ if TYPE_CHECKING:
 
 
 class AddressStateModel(AbstractAddressStateModel):
-    _stateChanged: Final = QSignal()
+    stateChanged: Final = QSignal()
 
-    @QProperty(str, notify=_stateChanged)
+    @QProperty(str, notify=stateChanged)
     def label(self) -> str:
         return self._address.label
 
@@ -31,7 +31,7 @@ class AddressStateModel(AbstractAddressStateModel):
     def watchOnly(self) -> bool:
         return self._address.readOnly
 
-    @QProperty(bool, notify=_stateChanged)
+    @QProperty(bool, notify=stateChanged)
     def isUpdating(self) -> bool:
         return self._address.isUpdating
 
