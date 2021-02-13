@@ -90,13 +90,13 @@ BDialog {
 
     function updatePasswordState() {
         if (_password1.text.length > 0 && _password1.text === _password2.text) {
-            _confirmed.mode = BDialogValidLabel.Mode.Accept
+            _confirmed.mode = BDialogValidLabel.Status.Accept
             _acceptButton.enabled = BPasswordStrength.isAcceptable(BPasswordStrength.getIndex(_password1.text))
         } else {
             if (_password1.text.length === 0 && _password2.text.length === 0) {
-                _confirmed.mode = BDialogValidLabel.Mode.Unset
+                _confirmed.mode = BDialogValidLabel.Status.Unset
             } else {
-                _confirmed.mode = BDialogValidLabel.Mode.Reject
+                _confirmed.mode = BDialogValidLabel.Status.Reject
             }
             _acceptButton.enabled = false
         }

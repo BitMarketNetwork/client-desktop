@@ -8,13 +8,13 @@ import "../basiccontrols"
 QtObject {
     // TODO move to bmnclient.cipher.password.PasswordStrength
     readonly property variant map: [
-        [ false, "",                BDialogValidLabel.Mode.Unset  ],
-        [ false, qsTr("Horrible"),  BDialogValidLabel.Mode.Reject ],
-        [ false, qsTr("Weak"),      BDialogValidLabel.Mode.Reject ],
-        [ false, qsTr("Medium"),    BDialogValidLabel.Mode.Reject ],
-        [ true,  qsTr("Good"),      BDialogValidLabel.Mode.Accept ],
-        [ true,  qsTr("Strong"),    BDialogValidLabel.Mode.Accept ],
-        [ true,  qsTr("Paranoiac"), BDialogValidLabel.Mode.Accept ]
+        [ false, "",                BDialogValidLabel.Status.Unset  ],
+        [ false, qsTr("Horrible"),  BDialogValidLabel.Status.Reject ],
+        [ false, qsTr("Weak"),      BDialogValidLabel.Status.Reject ],
+        [ false, qsTr("Medium"),    BDialogValidLabel.Status.Reject ],
+        [ true,  qsTr("Good"),      BDialogValidLabel.Status.Accept ],
+        [ true,  qsTr("Strong"),    BDialogValidLabel.Status.Accept ],
+        [ true,  qsTr("Paranoiac"), BDialogValidLabel.Status.Accept ]
     ]
 
     function getMaxStringLength() {
