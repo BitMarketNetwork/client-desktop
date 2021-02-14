@@ -44,7 +44,7 @@ class TransactionBroadcastAmountModel(AmountInputModel):
             return True
         return False
 
-    def _setMaxValue(self) -> bool:
+    def _setDefaultValue(self) -> bool:
         self._tx.set_max()
 
 

@@ -30,6 +30,11 @@ class AmountModel(
     def _getValue(self) -> int:
         raise NotImplementedError
 
+    def _toHumanValue(self, value: int, currency: AbstractCurrency) -> str:
+        return currency.toString(
+            value,
+            locale=self._application.language.locale)
+
     def refresh(self) -> None:
         self.stateChanged.emit()
 
@@ -39,9 +44,7 @@ class AmountModel(
 
     @QProperty(str, notify=stateChanged)
     def valueHuman(self) -> str:
-        return self._coin.currency.toString(
-            self._getValue(),
-            locale=self._application.language.locale)
+        return self._toHumanValue(self._getValue(), self._coin.currency)
 
     @QProperty(str, constant=True)
     def unit(self) -> str:
@@ -49,9 +52,9 @@ class AmountModel(
 
     @QProperty(str, notify=stateChanged)
     def fiatValueHuman(self) -> str:
-        return self._coin.fiatRate.currency.toString(
+        return self._toHumanValue(
             self._coin.toFiatAmount(self._getValue()),
-            locale=self._application.language.locale)
+            self._coin.fiatRate.currency)
 
     @QProperty(str, notify=stateChanged)
     def fiatUnit(self) -> str:
@@ -87,15 +90,10 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
             value = self._normalizeValue(value)
             if not value:
                 return QValidator.State.Intermediate
-
-            value = currency.fromString(
-                value,
-                strict=False,
-                locale=self._owner._application.language.locale)
-            if value is not None:
-                if not unit_convert or unit_convert(value) is not None:
-                    return QValidator.State.Acceptable
-            return QValidator.State.Invalid
+            value = self._owner._fromHumanValue(value, currency, unit_convert)
+            if value is None:
+                return QValidator.State.Invalid
+            return QValidator.State.Acceptable
 
     class _ValueHumanValidator(_Validator):
         def validate(self, value: str, _) -> QValidator.State:
@@ -120,14 +118,15 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def _setMaxValue(self) -> bool:
+    def _setDefaultValue(self) -> bool:
         raise NotImplementedError
 
-    def _setValueHelper(
+    def _fromHumanValue(
             self,
             value: str,
             currency: AbstractCurrency,
-            unit_convert: Optional[Callable[[int], int]] = None) -> bool:
+            unit_convert: Optional[Callable[[int], Optional[int]]] = None) \
+            -> Optional[int]:
         if not value:
             value = 0
         else:
@@ -136,12 +135,21 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
                 strict=False,
                 locale=self._application.language.locale)
             if value is None:
-                return False
+                return None
 
         if unit_convert:
             value = unit_convert(value)
-            if value is None:
-                return False
+        return value
+
+    def _setValueHelper(
+            self,
+            value: str,
+            currency: AbstractCurrency,
+            unit_convert: Optional[Callable[[int], Optional[int]]] = None) \
+            -> bool:
+        value = self._fromHumanValue(value, currency, unit_convert)
+        if value is None:
+            return False
 
         if value != self._getValue():
             if not self._setValue(value):
@@ -184,8 +192,8 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
 
     # noinspection PyTypeChecker
     @QSlot(result=bool)
-    def setMaxValue(self) -> bool:
-        if self._setMaxValue():
+    def setDefaultValue(self) -> bool:
+        if self._setDefaultValue():
             self.refresh()
             return True
         return False
