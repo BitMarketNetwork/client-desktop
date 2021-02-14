@@ -12,7 +12,7 @@ BLabel {
     }
     property real maxAdvancedTextLength: 0
     property string advancedText: ""
-    property int mode: BDialogValidLabel.Status.Unset
+    property int status: BDialogValidLabel.Status.Unset
 
     BLayout.alignment: _applicationStyle.dialogInputAlignment
     BLayout.preferredWidth: fontMetrics.averageCharacterWidth * (2 + maxAdvancedTextLength) * 1.5
@@ -22,7 +22,7 @@ BLabel {
 
     text: {
         let result
-        switch (mode) {
+        switch (status) {
         case BDialogValidLabel.Status.Accept:
             result = BStandardText.symbol.acceptRole
             break
@@ -39,7 +39,7 @@ BLabel {
     }
 
     color: {
-        switch (mode) {
+        switch (status) {
         case BDialogValidLabel.Status.Accept:
             return Material.color(BStandardText.symbol.acceptRoleMaterialColor)
         case BDialogValidLabel.Status.Reject:

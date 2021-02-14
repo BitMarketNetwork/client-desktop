@@ -35,7 +35,7 @@ class AbstractCurrency:
         if not cls.__string_template:
             v = len(cls.toString(2 ** cls._VALUE_BITS - 1))
             assert v > 2
-            cls.__string_template = "8" * (1 + v + v // 3)
+            cls.__string_template = "8" * (v + v // 3 - 1)
         return cls.__string_template
 
     @classmethod

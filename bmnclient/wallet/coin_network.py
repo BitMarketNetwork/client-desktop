@@ -27,17 +27,6 @@ class CoinNetworkBase:
                 return net
 
     @classmethod
-    def from_address(cls, address: str) -> "CoinNetworkBase":
-        if address and isinstance(address, str):
-            from .key import AddressString
-            # TODO: not segwit
-            segwit = AddressString.is_segwit(address)
-            if segwit:
-                for net in cls.all:
-                    if address.startswith(net.BECH32_HRP):
-                        return net
-
-    @classmethod
     def from_ex_prefix(cls, pref: int) -> Tuple["CoinNetworkBase", Optional[bool]]:
         """
         returns net, bool[prv else pub] or None , None

@@ -39,13 +39,73 @@ class TransactionBroadcastAmountModel(AmountInputModel):
         return self._tx.amount
 
     def _setValue(self, value: int) -> bool:
-        if value >= 0:
-            self._tx.amount = value
-            return True
-        return False
+        if value < 0:
+            # TODO set _tx invalid value
+            return False
+        self._tx.amount = value
+        return True
 
     def _setDefaultValue(self) -> bool:
         self._tx.set_max()
+        return True
+
+
+class TransactionBroadcastFeeAmountModel(AmountInputModel):
+    __stateChanged = QSignal()
+
+    def __init__(
+            self,
+            application: Application,
+            tx: MutableTransaction) -> None:
+        super().__init__(application, tx.coin)
+        self._tx = tx
+
+    def refresh(self) -> None:
+        super().refresh()
+        self.__stateChanged.emit()
+
+    def _getValue(self) -> int:
+        return self._tx.fee
+
+    def _setValue(self, value: int) -> bool:
+        if value < 0:
+            # TODO set _tx invalid value
+            return False
+        self._tx.fee = value
+        return True
+
+    def _setDefaultValue(self) -> bool:
+        self._tx.spb = -1  # TODO
+        return True
+
+    @QProperty(str, notify=__stateChanged)
+    def amountPerKiBHuman(self) -> str:
+        return self._toHumanValue(self._tx.spb * 1024, self._coin.currency)
+
+    # noinspection PyTypeChecker
+    @QSlot(str, result=bool)
+    def setAmountPerKiBHuman(self, value: str) -> bool:
+        value = self._fromHumanValue(value, self._coin.currency)
+        if value is None or value < 0:
+            # TODO set _tx invalid value
+            return False
+        value //= 1024
+        if self._tx.spb != value:
+            self._tx.spb = value
+            self.refresh()
+        return True
+
+
+class TransactionBroadcastChangeAmountModel(AmountModel):
+    def __init__(
+            self,
+            application: Application,
+            tx: MutableTransaction) -> None:
+        super().__init__(application, tx.coin)
+        self._tx = tx
+
+    def _getValue(self) -> int:
+        return self._tx.change
 
 
 class TransactionBroadcastReceiverModel(AbstractTransactionBroadcastStateModel):
@@ -55,11 +115,10 @@ class TransactionBroadcastReceiverModel(AbstractTransactionBroadcastStateModel):
     def addressName(self) -> str:
         return self._tx.receiver
 
-    @addressName.setter
-    def _setAddressName(self, name: str) -> None:
-        self._tx.receiver = name
-        self.refresh()
-
-    @QProperty(bool, notify=stateChanged)
-    def isValidAddress(self) -> bool:
-        return self._tx.receiver_valid
+    # noinspection PyTypeChecker
+    @QSlot(str, result=bool)
+    def setAddressName(self, name: str) -> bool:
+        if self._tx.setReceiverAddressName(name):
+            self.refresh()
+            return True
+        return False

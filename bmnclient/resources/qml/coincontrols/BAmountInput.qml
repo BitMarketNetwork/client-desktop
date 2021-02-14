@@ -4,6 +4,7 @@ import QtQml 2.15
 import QtQuick.Controls.Material 2.15
 import "../basiccontrols"
 
+// SYNC: BFeeAmountInput
 BControl {
     id: _base
     property var amount // AmountInputModel
@@ -116,7 +117,7 @@ BControl {
             text: qsTr("max")
             onClicked: {
                 if (focus) {
-                    _base.setMaxValue()
+                    _base.setDefaultValue()
                 }
             }
         }
@@ -141,8 +142,8 @@ BControl {
         }
     }
 
-    function setMaxValue() {
-        if (amount.setMaxValue()) {
+    function setDefaultValue() {
+        if (amount.setDefaultValue()) {
             // bindings will update the text
             _valueField.isValid = true
             _valueField.focus = false // paranoid

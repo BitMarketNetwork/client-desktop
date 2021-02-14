@@ -16,55 +16,51 @@ BPane {
             text: qsTr("Coin:")
         }
         BDialogInputLabel {
-            BLayout.columnSpan: 2
+            BLayout.columnSpan: parent.columns - 1
             text: _base.coin.fullName
         }
 
         BDialogSeparator {}
 
         BDialogPromtLabel {
-            text: qsTr("Send to:")
+            text: qsTr("Pay to:")
         }
         BDialogInputTextField {
-            id: _receiverAddress
             onTextChanged: {
-                _tx_controller.receiver.addressName = text
+                if (_tx_controller.receiver.setAddressName(text)) {
+                    _receiverAddressValid.status = BDialogValidLabel.Status.Accept
+                } else {
+                    _receiverAddressValid.status = BDialogValidLabel.Status.Reject
+                }
             }
         }
         BDialogValidLabel {
-            mode: {
-                if (_receiverAddress.text.length < 1) {
-                    return BDialogValidLabel.Status.Unset
-                }
-                return _tx_controller.receiver.isValidAddress
-                    ? BDialogValidLabel.Status.Accept
-                    : BDialogValidLabel.Status.Reject
-            }
+            id: _receiverAddressValid
         }
 
         BDialogSeparator {}
 
-                BDialogPromtLabel {
-                    text: qsTr("Available amount:")
-                }
-                BAmountLabel {
-                    BLayout.columnSpan: 2
-                    BLayout.alignment: _applicationStyle.dialogInputAlignment
-                    orientation: Qt.Horizontal
-                    amount: _tx_controller.availableAmount
-                }
+        BDialogPromtLabel {
+            text: qsTr("Available amount:")
+        }
+        BAmountLabel {
+            BLayout.columnSpan: parent.columns - 1
+            BLayout.alignment: _applicationStyle.dialogInputAlignment
+            orientation: Qt.Horizontal
+            amount: _tx_controller.availableAmount
+        }
 
-                BDialogPromtLabel {
-                    text: qsTr("Amount:")
-                }
-                BAmountInput {
-                    id: _amount
-                    BLayout.alignment: _applicationStyle.dialogInputAlignment
-                    orientation: Qt.Horizontal
-                    amount: _tx_controller.amount
-                }
-                BDialogValidLabel {
-                    mode: _amount.validStatus
+        BDialogPromtLabel {
+            text: qsTr("Amount:")
+        }
+        BAmountInput {
+            id: _amount
+            BLayout.alignment: _applicationStyle.dialogInputAlignment
+            orientation: Qt.Horizontal
+            amount: _tx_controller.amount
+        }
+        BDialogValidLabel {
+            status: _amount.validStatus
                 }
 
                 BDialogSeparator {}

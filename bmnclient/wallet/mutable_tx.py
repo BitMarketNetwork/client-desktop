@@ -26,9 +26,6 @@ class WrongReceiver(NewTxerror):
 
 
 class MutableTransaction:
-    """
-    wrapper around Mtx
-    """
     MAX_SPB_FEE = 200
     MIN_SPB_FEE = 1
     MAX_TX_SIZE = 1024
@@ -42,8 +39,7 @@ class MutableTransaction:
         self.__raw__mtx = None
         self.__mtx = None
         self.__address = address
-        self.__receiver: str = ""
-        self.__receiver_valid: bool = False
+        self.__receiver = ""
         self.__amount = None
         self.new_address_for_change = True
         self.__leftover_address = None
@@ -149,11 +145,6 @@ class MutableTransaction:
         #     self.__filtered_inputs)
 
     def prepare(self):
-        """
-        raise stricly before any changes !!!
-        """
-        self.__test_receiver()
-        #
         if 0 == self.fee:
             raise NewTxerror(f"No fee")
         if self.__substract_fee and self.fee > self.__amount:
@@ -297,19 +288,6 @@ class MutableTransaction:
         minutes = self.__fee_man.get_minutes(spb)
         return minutes
 
-    def __test_receiver(self) -> None:
-        self.__receiver_valid = False
-        if not self.__receiver:
-            raise WrongReceiver("No receiver")
-        # import pdb; pdb.set_trace()
-        if not isinstance(self.__receiver, str):
-            raise WrongReceiver("Invalid receiver address")
-        target_net = coin_network.CoinNetworkBase.from_address(self.__receiver)
-        if  target_net or self.__address.type == key.AddressType.P2WPKH:
-            if target_net != self.__address.coin.network:
-                raise WrongReceiver("Wrong network")
-        self.__receiver_valid = True
-
     @ property
     def receiver(self) -> str:
         return self.__receiver
@@ -318,14 +296,12 @@ class MutableTransaction:
     def receiver_valid(self) -> bool:
         return self.coin.address.decode(self.__receiver) is not None
 
-    @ receiver.setter
-    def receiver(self, addr: str) -> None:
-        self.__receiver = addr
-        try:
-            self.__test_receiver()
-        except WrongReceiver as err:
-            log.warning(f"{addr} => {err}")
+    def setReceiverAddressName(self, name: str):
+        if self.coin.address.decode(name) is None:
             self.__receiver = ""
+            return False
+        self.__receiver = name
+        return True
 
     @ property
     def source_amount(self) -> int:
@@ -391,6 +367,10 @@ class MutableTransaction:
     def fee(self) -> int:
         return int(self._spb * self.tx_size)
 
+    @fee.setter
+    def fee(self, value: int):
+        self._spb = value // self.tx_size
+
     @ property
     def sources(self):
         return self.__sources
@@ -414,6 +394,8 @@ class MutableTransaction:
 
     @ spb.setter
     def spb(self, value):
+        if value == -1:
+            value = self.__fee_man.max_spb
         log.debug(f"SPB: {value}")
         self._spb = value
         self.filter_sources()

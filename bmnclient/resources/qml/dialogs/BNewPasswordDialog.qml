@@ -22,7 +22,7 @@ BDialog {
             onTextChanged: {
                 let index = BPasswordStrength.getIndex(text)
                 _strength.advancedText = BPasswordStrength.getString(index)
-                _strength.mode = BPasswordStrength.getValidMode(index)
+                _strength.status = BPasswordStrength.getValidMode(index)
                 updatePasswordState()
             }
         }
@@ -90,13 +90,13 @@ BDialog {
 
     function updatePasswordState() {
         if (_password1.text.length > 0 && _password1.text === _password2.text) {
-            _confirmed.mode = BDialogValidLabel.Status.Accept
+            _confirmed.status = BDialogValidLabel.Status.Accept
             _acceptButton.enabled = BPasswordStrength.isAcceptable(BPasswordStrength.getIndex(_password1.text))
         } else {
             if (_password1.text.length === 0 && _password2.text.length === 0) {
-                _confirmed.mode = BDialogValidLabel.Status.Unset
+                _confirmed.status = BDialogValidLabel.Status.Unset
             } else {
-                _confirmed.mode = BDialogValidLabel.Status.Reject
+                _confirmed.status = BDialogValidLabel.Status.Reject
             }
             _acceptButton.enabled = false
         }
