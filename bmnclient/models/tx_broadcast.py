@@ -109,6 +109,8 @@ class TransactionBroadcastFeeAmountModel(AmountInputModel):
 
 
 class TransactionBroadcastChangeAmountModel(AmountModel):
+    __stateChanged = QSignal()
+
     def __init__(
             self,
             application: Application,
@@ -116,8 +118,24 @@ class TransactionBroadcastChangeAmountModel(AmountModel):
         super().__init__(application, tx.coin)
         self._tx = tx
 
+    def refresh(self) -> None:
+        super().refresh()
+        self.__stateChanged.emit()
+
     def _getValue(self) -> int:
         return self._tx.change
+
+    @QProperty(bool, notify=__stateChanged)
+    def toNewAddress(self) -> bool:
+        return self._tx.new_address_for_change
+
+    # noinspection PyTypeChecker
+    @QSlot(bool, result=bool)
+    def setToNewAddress(self, value: bool) -> bool:
+        if value != self._tx.new_address_for_change:
+            self._tx.new_address_for_change = value
+            self.refresh()
+        return True
 
 
 class TransactionBroadcastReceiverModel(AbstractTransactionBroadcastStateModel):

@@ -21,7 +21,6 @@ log = logging.getLogger(__name__)
 class TxController(QObject):
     changeChanged = QSignal()
     canSendChanged = QSignal()
-    newAddressForLeftoverChanged = QSignal()
     maxAmountChanged = QSignal()
     confirmChanged = QSignal()
     changeAddressChanged = QSignal()
@@ -130,18 +129,6 @@ class TxController(QObject):
             self.canSendChanged.emit()
             self.confirmChanged.emit()
             self.changeChanged.emit()
-
-    @QProperty(bool, notify=newAddressForLeftoverChanged)
-    def newAddressForChange(self):
-        return self.__tx.new_address_for_change
-
-    @newAddressForChange.setter
-    def set_new_address_for_leftover(self, on):
-        if on == self.__tx.new_address_for_change:
-            return
-        log.debug(f"use new address for change: {on}")
-        self.__tx.new_address_for_change = on
-        self.newAddressForLeftoverChanged.emit()
 
     def __validate_change(self):
         self.__negative_change = self.__tx.change < 0 or self.__tx.amount <= 0. or \

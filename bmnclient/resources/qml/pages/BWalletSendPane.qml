@@ -97,34 +97,32 @@ BPane {
                 _tx_controller.feeAmount.setSubtractFromAmount(checked)
             }
         }
-                    confirmTime: _tx_controller.confirmTime
-                }
 
-                BDialogSeparator {}
+        BDialogSeparator {}
 
-                BDialogPromtLabel {
-                    text: qsTr("Change:")
-                }
-                BAmountLabel {
-                    BLayout.columnSpan: 2
-                    BLayout.alignment: _applicationStyle.dialogInputAlignment
-                    orientation: Qt.Horizontal
-                    amount.valueHuman: _tx_controller.changeAmount
-                    amount.unit: BBackend.coinManager.unit
-                    amount.fiatValueHuman: "-" // TODO
-                    amount.fiatUnit: BBackend.coinManager.currency
-                }
+        BDialogPromtLabel {
+            text: qsTr("Change:")
+        }
+        BAmountLabel {
+            BLayout.columnSpan: parent.columns - 1
+            BLayout.alignment: _applicationStyle.dialogInputAlignment
+            orientation: Qt.Horizontal
+            amount: _tx_controller.changeAmount
+        }
 
-                BDialogPromtLabel {
-                    text: qsTr("Send change to new address:")
-                }
-                BDialogInputSwitch {
-                    BLayout.columnSpan: 2
-                    checked: _tx_controller.newAddressForChange
-                    onCheckedChanged: {
-                        _tx_controller.newAddressForChange = checked
-                    }
-                }
+        BDialogPromtLabel {
+            text: qsTr("Send change to new address:")
+        }
+        BDialogInputSwitch {
+            BLayout.columnSpan: 2
+            checked: _tx_controller.changeAmount.toNewAddress
+            onCheckedChanged: {
+                _tx_controller.changeAmount.setToNewAddress(checked)
+            }
+        }
+
+
+
 
                 BDialogSeparator {}
 
