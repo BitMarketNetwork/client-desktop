@@ -61,49 +61,42 @@ BPane {
         }
         BDialogValidLabel {
             status: _amount.validStatus
-                }
+        }
 
-                BDialogSeparator {}
+        BDialogSeparator {}
 
-                BDialogPromtLabel {
-                    text: qsTr("Substract fee from amount:")
-                }
-                BDialogInputSwitch {
-                    BLayout.columnSpan: 2
-                    checked: _tx_controller.substractFee
-                    onCheckedChanged: {
-                        _tx_controller.substractFee = checked
-                    }
-                }
+        BDialogPromtLabel {
+            text: qsTr("Transaction fee:")
+        }
+        BAmountLabel {
+            BLayout.columnSpan: parent.columns - 1
+            BLayout.alignment: _applicationStyle.dialogInputAlignment
+            orientation: Qt.Horizontal
+            amount: _tx_controller.feeAmount
+        }
 
-                BDialogPromtLabel {
-                    text: qsTr("Fee:")
-                }
-                BAmountLabel {
-                    BLayout.columnSpan: 2
-                    BLayout.alignment: _applicationStyle.dialogInputAlignment
-                    orientation: Qt.Horizontal
-                    amount.valueHuman: _tx_controller.feeAmount
-                    amount.unit: BBackend.coinManager.unit
-                    amount.fiatValueHuman: "-" // TODO
-                    amount.fiatUnit: BBackend.coinManager.currency
-                }
+        BDialogPromtLabel {
+            text: qsTr("per kilobyte:")
+        }
+        BFeeAmountInput {
+            id: _feeAmount
+            BLayout.alignment: _applicationStyle.dialogInputAlignment
+            amount: _tx_controller.feeAmount
+        }
+        BDialogValidLabel {
+            status: _feeAmount.validStatus
+        }
 
-                BDialogPromtLabel {}
-                BFeeInput {
-                    BLayout.columnSpan: 2
-                    BLayout.alignment: _applicationStyle.dialogInputAlignment
-
-                    feeFactor: _tx_controller.spbFactor
-                    onFeeFactorChanged: {
-                        _tx_controller.spbFactor = feeFactor
-                    }
-
-                    feeAmount: _tx_controller.spbAmount
-                    onFeeAmountChanged: {
-                        _tx_controller.spbAmount = feeAmount
-                    }
-
+        BDialogPromtLabel {
+            text: qsTr("Subtract fee from amount:")
+        }
+        BDialogInputSwitch {
+            BLayout.columnSpan: parent.columns - 1
+            checked: _tx_controller.feeAmount.subtractFromAmount
+            onCheckedChanged: {
+                _tx_controller.feeAmount.setSubtractFromAmount(checked)
+            }
+        }
                     confirmTime: _tx_controller.confirmTime
                 }
 

@@ -156,10 +156,10 @@ class TestContr(unittest.TestCase, ParseMixin):
         self.assertGreaterEqual(ctr.change, 0)
         #
         ctr.amount = TO_SEND
-        ctr.substract_fee = False
+        ctr.subtract_fee = False
         self.assertEqual(ctr.amount + ctr.fee +
                          ctr.change, ctr.filtered_amount)
-        ctr.substract_fee = True
+        ctr.subtract_fee = True
         # we substrct fee from amount in prepare !!!!
         self.assertEqual(ctr.amount + ctr.change, ctr.filtered_amount)
         self.assertGreaterEqual(ctr.change, 0)
@@ -187,12 +187,12 @@ class TestContr(unittest.TestCase, ParseMixin):
             ctr.prepare()
 
         ctr.receiver = btc_target.name
-        ctr.substract_fee = False
+        ctr.subtract_fee = False
         ctr.new_address_for_change = False
         self.assertGreaterEqual(ctr.change, 0)
         ctr.prepare()
         self.assertEqual(len(self.btc_coin), 2)
-        ctr.substract_fee = True
+        ctr.subtract_fee = True
         ctr.new_address_for_change = True
         self.assertGreaterEqual(ctr.change, 0)
         ctr.prepare()

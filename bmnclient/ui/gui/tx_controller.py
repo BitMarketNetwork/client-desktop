@@ -21,7 +21,6 @@ log = logging.getLogger(__name__)
 class TxController(QObject):
     changeChanged = QSignal()
     canSendChanged = QSignal()
-    substractChanged = QSignal()
     newAddressForLeftoverChanged = QSignal()
     maxAmountChanged = QSignal()
     confirmChanged = QSignal()
@@ -117,6 +116,7 @@ class TxController(QObject):
                     a = getattr(self, a)
                     if initiator is not a and hasattr(a, "refresh"):
                         a.refresh()
+            self.__validate_change()
             self._refresh_lock.release()
 
 
@@ -143,25 +143,9 @@ class TxController(QObject):
         self.__tx.new_address_for_change = on
         self.newAddressForLeftoverChanged.emit()
 
-    @QProperty(bool, notify=substractChanged)
-    def substractFee(self):
-        return self.__tx.substract_fee
-
-    @substractFee.setter
-    def set_substract_fee(self, on):
-        if on == self.__tx.substract_fee:
-            return
-        log.debug(f" substract fee: {on}")
-        self.__tx.substract_fee = on
-        self.__validate_change()
-        self.substractChanged.emit()
-        self.changeChanged.emit()
-        self.canSendChanged.emit()
-        self._amount_model.refresh()
-
     def __validate_change(self):
         self.__negative_change = self.__tx.change < 0 or self.__tx.amount <= 0. or \
-            (self.__tx.substract_fee and self.__tx.fee >= self.__tx.amount)
+            (self.__tx.subtract_fee and self.__tx.fee >= self.__tx.amount)
 
     @QProperty(bool, notify=changeChanged)
     def hasChange(self) -> str:
@@ -193,7 +177,7 @@ class TxController(QObject):
         if self.__tx.spb < self.__tx.MIN_SPB_FEE:
             log.debug("too low SPB")
             return False
-        if self.__tx.substract_fee and self.__tx.fee >= self.__tx.amount:
+        if self.__tx.subtract_fee and self.__tx.fee >= self.__tx.amount:
             log.debug("fee is more than amount")
             return False
         if not self.__tx.receiver_valid:

@@ -349,7 +349,7 @@ class MutableTransaction:
     def change(self):
         # res = int(self.__filtered_amount - self.__amount - (0 if self.__substract_fee else self.fee))
         # log.info(f"source:{self.__filtered_amount} am:{self.__amount} \
-        #     fee:{self.fee} substract: {self.substract_fee}: change:{res}")
+        #     fee:{self.fee} substract: {self.subtract_fee}: change:{res}")
         return int(self.__filtered_amount - self.__amount -
                    (0 if self.__substract_fee else self.fee))
 
@@ -380,11 +380,11 @@ class MutableTransaction:
         return self.__address.coin
 
     @ property
-    def substract_fee(self) -> bool:
+    def subtract_fee(self) -> bool:
         return self.__substract_fee
 
-    @ substract_fee.setter
-    def substract_fee(self, value: bool) -> None:
+    @ subtract_fee.setter
+    def subtract_fee(self, value: bool) -> None:
         self.__substract_fee = value
         self.filter_sources()
 

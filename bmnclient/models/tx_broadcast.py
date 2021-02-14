@@ -95,6 +95,18 @@ class TransactionBroadcastFeeAmountModel(AmountInputModel):
             self.refresh()
         return True
 
+    @QProperty(bool, notify=__stateChanged)
+    def subtractFromAmount(self) -> bool:
+        return self._tx.subtract_fee
+
+    # noinspection PyTypeChecker
+    @QSlot(bool, result=bool)
+    def setSubtractFromAmount(self, value: bool) -> bool:
+        if value != self._tx.subtract_fee:
+            self._tx.subtract_fee = value
+            self.refresh()
+        return True
+
 
 class TransactionBroadcastChangeAmountModel(AmountModel):
     def __init__(
