@@ -6,9 +6,11 @@ from typing import Callable, Final, Optional, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
-    QObject, Signal as QSignal, \
+    Signal as QSignal, \
     Slot as QSlot
 from PySide2.QtGui import QValidator
+
+from . import AbstractStateModel
 
 if TYPE_CHECKING:
     from ..wallet.coins import CoinType
@@ -17,26 +19,19 @@ if TYPE_CHECKING:
 
 
 class AmountModel(
-        QObject,
-        metaclass=type('AmountModelMeta', (ABCMeta, type(QObject)), {})):
+        AbstractStateModel,
+        metaclass=type(
+            'AmountModelMeta',
+            (ABCMeta, type(AbstractStateModel)),
+            {})):
     stateChanged: Final = QSignal()
-
-    def __init__(self, application: Application, coin: CoinType) -> None:
-        super().__init__()
-        self._application = application
-        self._coin = coin
 
     @abstractmethod
     def _getValue(self) -> int:
         raise NotImplementedError
 
     def _toHumanValue(self, value: int, currency: AbstractCurrency) -> str:
-        return currency.toString(
-            value,
-            locale=self._application.language.locale)
-
-    def refresh(self) -> None:
-        self.stateChanged.emit()
+        return currency.toString(value, locale=self.locale)
 
     @QProperty(str, notify=stateChanged)
     def value(self) -> int:
@@ -71,13 +66,13 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
 
         def _normalizeValue(self, value: str) -> str:
             value = value.replace(
-                self._owner._application.language.locale.groupSeparator(),
+                self._owner.locale.groupSeparator(),
                 '')
             if value and value[0] in (
                     "+",
                     "-",
-                    self._owner._application.language.locale.positiveSign(),
-                    self._owner._application.language.locale.negativeSign()):
+                    self._owner.locale.positiveSign(),
+                    self._owner.locale.negativeSign()):
                 value = value[1:]
             return value
 
@@ -130,10 +125,7 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
         if not value:
             value = 0
         else:
-            value = currency.fromString(
-                value,
-                strict=False,
-                locale=self._application.language.locale)
+            value = currency.fromString(value, strict=False, locale=self.locale)
             if value is None:
                 return None
 

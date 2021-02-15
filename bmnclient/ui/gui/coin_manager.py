@@ -9,7 +9,7 @@ from PySide2.QtCore import \
     Signal as QSignal
 from ...wallet import address, key, tx, coins
 from . import import_export
-from ...models.coin_list import CoinListModel
+from ...models.coin import CoinListModel
 
 if TYPE_CHECKING:
     from . import Application

@@ -8,14 +8,14 @@ from PySide2.QtCore import \
     Property as QProperty, \
     Signal as QSignal
 
-from . import \
-    AbstractCoinStateModel, \
+from . import AbstractModel, AbstractStateModel
+from .amount import AmountModel
+from .list import \
     AbstractListModel, \
     RoleEnum
-from .amount import AmountModel
 
 
-class CoinStateModel(AbstractCoinStateModel):
+class CoinStateModel(AbstractStateModel):
     stateChanged: Final = QSignal()
 
     @QProperty(bool, notify=stateChanged)
@@ -27,7 +27,7 @@ class CoinStateModel(AbstractCoinStateModel):
         self._coin.visible = value
 
 
-class CoinRemoteStateModel(AbstractCoinStateModel):
+class CoinRemoteStateModel(AbstractStateModel):
     stateChanged: Final = QSignal()
 
     @QProperty(str, notify=stateChanged)
@@ -55,7 +55,7 @@ class CoinRemoteStateModel(AbstractCoinStateModel):
         height = self.height
         if height < 0:
             return "-"
-        return self._application.language.locale.integerToString(height)
+        return self.locale.integerToString(height)
 
 
 class CoinAmountModel(AmountModel):
@@ -100,3 +100,8 @@ class CoinListModel(AbstractListModel):
             b"txList",
             lambda c: c.txListSortedModel())
     }
+
+
+class CoinModel(AbstractModel):
+    # TODO
+    pass

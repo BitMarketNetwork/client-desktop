@@ -8,7 +8,7 @@ import PySide2.QtCore as qt_core
 
 from . import db_entry, serialization
 from .address import CAddress
-from ..models.tx_list import \
+from ..models.tx import \
     TransactionAmountModel, \
     TransactionFeeAmountModel, \
     TransactionIoListModel, \

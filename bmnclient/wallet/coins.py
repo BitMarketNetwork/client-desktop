@@ -7,12 +7,12 @@ import PySide2.QtCore as qt_core
 from . import address, coin_network, db_entry, hd, key, root_address, \
     serialization
 from .. import coins, meta
-from ..models.address_list import AddressListModel, AddressListSortedModel
-from ..models.coin_list import \
+from ..models.address import AddressListModel, AddressListSortedModel
+from ..models.coin import \
     CoinAmountModel, \
     CoinRemoteStateModel, \
     CoinStateModel
-from ..models.tx_list import TransactionListModel, TransactionListSortedModel, TransactionListConcatenateModel
+from ..models.tx import TransactionListModel, TransactionListSortedModel, TransactionListConcatenateModel
 
 log = logging.getLogger(__name__)
 

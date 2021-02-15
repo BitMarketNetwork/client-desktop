@@ -7,21 +7,26 @@ from typing import Final, TYPE_CHECKING
 from PySide2.QtCore import \
     Property as QProperty, \
     QDateTime, \
-    QLocale, \
     Signal as QSignal
 
-from . import \
+from . import AbstractModel, AbstractStateModel
+from .address import AddressListModel
+from .amount import AmountModel
+from .list import \
     AbstractConcatenateModel, \
     AbstractListModel, \
     AbstractListSortedModel, \
-    AbstractTransactionStateModel, \
     RoleEnum
-from .address_list import AddressListModel
-from .amount import AmountModel
 
 if TYPE_CHECKING:
     from ..ui.gui import Application
     from ..wallet.tx import Transaction
+
+
+class AbstractTransactionStateModel(AbstractStateModel):
+    def __init__(self, application: Application, tx: Transaction) -> None:
+        super().__init__(application, tx.wallet.coin)
+        self._tx = tx
 
 
 class TransactionStateModel(AbstractTransactionStateModel):
@@ -35,9 +40,7 @@ class TransactionStateModel(AbstractTransactionStateModel):
     def timeHuman(self) -> str:
         v = QDateTime()
         v.setSecsSinceEpoch(self._tx.time)
-        return self._application.language.locale.toString(
-            v,
-            QLocale.LongFormat)
+        return self.locale.toString(v, self.locale.LongFormat)
 
     @QProperty(int, notify=stateChanged)
     def height(self) -> int:
@@ -45,8 +48,7 @@ class TransactionStateModel(AbstractTransactionStateModel):
 
     @QProperty(str, notify=stateChanged)
     def heightHuman(self) -> str:
-        return self._application.language.locale.integerToString(
-            self._tx.height)
+        return self.locale.integerToString(self._tx.height)
 
     @QProperty(int, notify=stateChanged)
     def confirmations(self) -> int:
@@ -54,8 +56,7 @@ class TransactionStateModel(AbstractTransactionStateModel):
 
     @QProperty(str, notify=stateChanged)
     def confirmationsHuman(self) -> str:
-        return self._application.language.locale.integerToString(
-            self._tx.confirmCount)
+        return self.locale.integerToString(self._tx.confirmCount)
 
 
 class TransactionAmountModel(AmountModel):
@@ -124,3 +125,8 @@ class TransactionListSortedModel(AbstractListSortedModel):
             application,
             source_model,
             TransactionListModel.Role.HASH)
+
+
+class TransactionModel(AbstractModel):
+    # TODO
+    pass

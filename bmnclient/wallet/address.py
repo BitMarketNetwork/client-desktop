@@ -6,8 +6,8 @@ from typing import List, Optional, Union, TYPE_CHECKING
 import PySide2.QtCore as qt_core
 
 from . import db_entry, hd, key, mtx_impl, serialization
-from ..models.address_list import AddressAmountModel, AddressStateModel
-from ..models.tx_list import TransactionListModel, TransactionListSortedModel
+from ..models.address import AddressAmountModel, AddressStateModel
+from ..models.tx import TransactionListModel, TransactionListSortedModel
 
 if TYPE_CHECKING:
     from .tx import Transaction

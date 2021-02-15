@@ -8,16 +8,22 @@ from PySide2.QtCore import \
     Property as QProperty, \
     Signal as QSignal
 
-from . import \
-    AbstractAddressStateModel, \
+from . import AbstractModel, AbstractStateModel
+from .amount import AmountModel
+from .list import \
     AbstractListModel, \
     AbstractListSortedModel, \
     RoleEnum
-from .amount import AmountModel
 
 if TYPE_CHECKING:
     from ..ui.gui import Application
     from ..wallet.address import CAddress
+
+
+class AbstractAddressStateModel(AbstractStateModel):
+    def __init__(self, application: Application, address: CAddress) -> None:
+        super().__init__(application, address.coin)
+        self._address = address
 
 
 class AddressStateModel(AbstractAddressStateModel):
@@ -74,3 +80,8 @@ class AddressListSortedModel(AbstractListSortedModel):
             application: Application,
             source_model: AddressListModel) -> None:
         super().__init__(application, source_model, AddressListModel.Role.NAME)
+
+
+class AddressModel(AbstractModel):
+    # TODO
+    pass

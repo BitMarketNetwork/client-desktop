@@ -1,5 +1,4 @@
 import logging
-from threading import Lock
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -7,12 +6,7 @@ from PySide2.QtCore import \
     Signal as QSignal, \
     Slot as QSlot
 
-from ...models.tx_broadcast import \
-    TransactionBroadcastAmountModel, \
-    TransactionBroadcastAvailableAmountModel, \
-    TransactionBroadcastChangeAmountModel, \
-    TransactionBroadcastFeeAmountModel, \
-    TransactionBroadcastReceiverModel
+from ...models.tx_broadcast import TransactionBroadcastModel
 from ...wallet import mutable_tx
 
 log = logging.getLogger(__name__)
@@ -26,101 +20,37 @@ class TxController(QObject):
     changeAddressChanged = QSignal()
     sourceModelChanged = QSignal()
     useCoinBalanceChanged = QSignal()
-    #
     sent = QSignal()
     fail = QSignal(str, arguments=["error", ])
     # broadcastResult = QSignal(bool, str, arguments=["success", "error"])
 
     def __init__(self, parent=None, address=None):
         super().__init__(parent)
+        from . import Application
+        self._application = Application.instance()
+
         if address is None:
-            from . import Application
-            self.__cm = Application.instance().coinManager
+            self.__cm = self._application.coinManager
             self.__cm.getCoinUnspentList()
             address = self.__cm.address
         assert address
         self.__coin = address.coin
-        from . import Application
         self.__tx = mutable_tx.MutableTransaction(
             address,
-            Application.instance().feeManager,
-            self
-        )
-        # while we can send only from one address then we show max amount from this address only
-        # update UTXO right now
+            self._application.feeManager,
+            self)
         self.__coin.balanceChanged.connect(self.balance_changed)
-        # do we need make it too often ?
-        # qt_core.QTimer.singleShot(1000, self.recalcSources)
         self.__negative_change = False
         self.use_hint = True
 
-        from . import Application
-        self._application = Application.instance()
-        self._refresh_lock = Lock()
+        self._model = TransactionBroadcastModel(self._application, self.__tx)
 
-        self._available_amount_model = TransactionBroadcastAvailableAmountModel(
-            self._application,
-            self.__tx)
-        self._available_amount_model.stateChanged.connect(
-            lambda: self.refresh(self._available_amount_model))
-
-        self._amount_model = TransactionBroadcastAmountModel(
-            self._application,
-            self.__tx)
-        self._amount_model.stateChanged.connect(
-            lambda: self.refresh(self._amount_model))
-
-        self._fee_amount_model = TransactionBroadcastFeeAmountModel(
-            self._application,
-            self.__tx)
-        self._fee_amount_model.stateChanged.connect(
-            lambda: self.refresh(self._fee_amount_model))
-
-        self._change_amount_model = TransactionBroadcastChangeAmountModel(
-            self._application,
-            self.__tx)
-        self._change_amount_model.stateChanged.connect(
-            lambda: self.refresh(self._change_amount_model))
-
-        self._receiver_model = TransactionBroadcastReceiverModel(
-            self._application,
-            self.__tx)
-        self._receiver_model.stateChanged.connect(
-            lambda: self.refresh(self._receiver_model))
-
-    @QProperty(TransactionBroadcastAvailableAmountModel, constant=True)
-    def availableAmount(self) -> TransactionBroadcastAvailableAmountModel:
-        return self._available_amount_model
-
-    @QProperty(TransactionBroadcastAmountModel, constant=True)
-    def amount(self) -> TransactionBroadcastAmountModel:
-        return self._amount_model
-
-    @QProperty(TransactionBroadcastFeeAmountModel, constant=True)
-    def feeAmount(self) -> TransactionBroadcastFeeAmountModel:
-        return self._fee_amount_model
-
-    @QProperty(TransactionBroadcastChangeAmountModel, constant=True)
-    def changeAmount(self) -> TransactionBroadcastChangeAmountModel:
-        return self._change_amount_model
-
-    @QProperty(TransactionBroadcastReceiverModel, constant=True)
-    def receiver(self) -> TransactionBroadcastReceiverModel:
-        return self._receiver_model
-
-    def refresh(self, initiator: object) -> None:
-        if self._refresh_lock.acquire(False):
-            for a in dir(self):
-                if a.startswith("_") and a.endswith("_model"):
-                    a = getattr(self, a)
-                    if initiator is not a and hasattr(a, "refresh"):
-                        a.refresh()
-            self.__validate_change()
-            self._refresh_lock.release()
-
+    @QProperty(QObject, constant=True)
+    def model(self) -> TransactionBroadcastModel:
+        return self._model
 
     @QSlot()
-    def balance_changed(self):
+    def balance_changed(self) -> None:
         self.maxAmountChanged.emit()
         if self.__negative_change and self.use_hint:
             if self.__tx.source_amount is not None:

@@ -4,15 +4,26 @@ from typing import Final, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
+    QObject, \
     Signal as QSignal, \
     Slot as QSlot
 
-from . import AbstractTransactionBroadcastStateModel
+from . import AbstractModel, AbstractStateModel
+from .address import AddressListModel
 from .amount import AmountInputModel, AmountModel
 
 if TYPE_CHECKING:
     from ..ui.gui import Application
     from ..wallet.mutable_tx import MutableTransaction
+
+
+class AbstractTransactionBroadcastStateModel(AbstractStateModel):
+    def __init__(
+            self,
+            application: Application,
+            tx: MutableTransaction) -> None:
+        super().__init__(application, tx.coin)
+        self._tx = tx
 
 
 class TransactionBroadcastAvailableAmountModel(AmountModel):
