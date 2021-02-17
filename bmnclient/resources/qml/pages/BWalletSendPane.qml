@@ -50,7 +50,6 @@ BPane {
             text: qsTr("Amount:")
         }
         BAmountInput {
-            id: _amount
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
             amount: _tx_controller.model.amount

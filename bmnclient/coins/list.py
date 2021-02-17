@@ -10,9 +10,9 @@ from ..wallet import coins
 class CoinList(Sequence):
     def __init__(self) -> None:
         self._list = (
-            coins.Bitcoin(None),
-            coins.BitcoinTest(None),
-            coins.Litecoin(None),
+            coins.Bitcoin(),
+            coins.BitcoinTest(),
+            coins.Litecoin(),
         )
 
     def __iter__(self) -> Iterator[coins.CoinType]:

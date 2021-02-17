@@ -48,8 +48,8 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     def all(cls) -> Iterable:  # pylint: disable=E0213
         return (val for _, val in globals().items() if isinstance(val, type) and issubclass(val, cls) and val is not cls)
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self):
+        super().__init__()
         self._address_list = []
 
         self._remote = {}  # TODO
@@ -494,14 +494,16 @@ class Bitcoin(CoinType, coins.Bitcoin):
     _decimal_level = 7
     _hd_index = 0
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self):
+        super().__init__()
         coins.Bitcoin.__init__(self)
+
 
 class BitcoinTest(Bitcoin, coins.BitcoinTest):
     name = "btctest"
     network = coin_network.BitcoinTestNetwork
     _test = True
+
 
 
 class Litecoin(CoinType, coins.Litecoin):
@@ -510,6 +512,6 @@ class Litecoin(CoinType, coins.Litecoin):
     _decimal_level = 7
     _hd_index = 2
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self):
+        super().__init__()
         coins.Litecoin.__init__(self)
