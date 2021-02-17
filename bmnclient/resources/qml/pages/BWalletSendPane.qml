@@ -27,15 +27,11 @@ BPane {
         }
         BDialogInputTextField {
             onTextChanged: {
-                if (_tx_controller.receiver.setAddressName(text)) {
-                    _receiverAddressValid.status = BDialogValidLabel.Status.Accept
-                } else {
-                    _receiverAddressValid.status = BDialogValidLabel.Status.Reject
-                }
+                _tx_controller.model.receiver.setAddressName(text)
             }
         }
         BDialogValidLabel {
-            id: _receiverAddressValid
+            status: _tx_controller.model.receiver.validStatus
         }
 
         BDialogSeparator {}

@@ -8,7 +8,7 @@ from PySide2.QtCore import \
     Signal as QSignal, \
     Slot as QSlot
 
-from . import AbstractModel, AbstractStateModel
+from . import AbstractModel, AbstractStateModel, ValidStatus
 from .address import AddressListModel
 from .amount import AmountInputModel, AmountModel
 
@@ -71,10 +71,6 @@ class TransactionBroadcastFeeAmountModel(AmountInputModel):
         super().__init__(application, tx.coin)
         self._tx = tx
 
-    def refresh(self) -> None:
-        super().refresh()
-        self.__stateChanged.emit()
-
     def _getValue(self) -> int:
         return self._tx.fee
 
@@ -129,10 +125,6 @@ class TransactionBroadcastChangeAmountModel(AmountModel):
         super().__init__(application, tx.coin)
         self._tx = tx
 
-    def refresh(self) -> None:
-        super().refresh()
-        self.__stateChanged.emit()
-
     def _getValue(self) -> int:
         return self._tx.change
 
@@ -150,16 +142,92 @@ class TransactionBroadcastChangeAmountModel(AmountModel):
 
 
 class TransactionBroadcastReceiverModel(AbstractTransactionBroadcastStateModel):
-    stateChanged: Final = QSignal()
+    __stateChanged = QSignal()
 
-    @QProperty(str, notify=stateChanged)
+    def __init__(
+            self,
+            application: Application,
+            tx: MutableTransaction) -> None:
+        super().__init__(application, tx)
+        self._first_use = True
+
+    @QProperty(str, notify=__stateChanged)
     def addressName(self) -> str:
         return self._tx.receiver
 
     # noinspection PyTypeChecker
     @QSlot(str, result=bool)
     def setAddressName(self, name: str) -> bool:
-        if self._tx.setReceiverAddressName(name):
-            self.refresh()
-            return True
-        return False
+        r = self._tx.setReceiverAddressName(name)
+        self._first_use = False
+        self.refresh()
+        return r
+
+    def _getValidStatus(self) -> ValidStatus:
+        if self._tx.receiver_valid:
+            return ValidStatus.Accept
+        elif self._first_use:
+            return ValidStatus.Unset
+        return ValidStatus.Reject
+
+
+class TransactionBroadcastModel(AbstractModel):
+    def __init__(
+            self,
+            application: Application,
+            tx: MutableTransaction) -> None:
+        super().__init__(application)
+        self._tx = tx
+
+        self._available_amount = TransactionBroadcastAvailableAmountModel(
+            self._application,
+            self._tx)
+        self.connectModelRefresh(self._available_amount)
+
+        self._amount = TransactionBroadcastAmountModel(
+            self._application,
+            self._tx)
+        self.connectModelRefresh(self._amount)
+
+        self._fee_amount = TransactionBroadcastFeeAmountModel(
+            self._application,
+            self._tx)
+        self.connectModelRefresh(self._fee_amount)
+
+        self._change_amount = TransactionBroadcastChangeAmountModel(
+            self._application,
+            self._tx)
+        self.connectModelRefresh(self._change_amount)
+
+        self._receiver = TransactionBroadcastReceiverModel(
+            self._application,
+            self._tx)
+        self.connectModelRefresh(self._receiver)
+
+        self._address_input_list = AddressListModel(
+            self._application,
+            self._tx.sources)
+
+    @QProperty(QObject, constant=True)
+    def availableAmount(self) -> TransactionBroadcastAvailableAmountModel:
+        return self._available_amount
+
+    @QProperty(QObject, constant=True)
+    def amount(self) -> TransactionBroadcastAmountModel:
+        return self._amount
+
+    @QProperty(QObject, constant=True)
+    def feeAmount(self) -> TransactionBroadcastFeeAmountModel:
+        return self._fee_amount
+
+    @QProperty(QObject, constant=True)
+    def changeAmount(self) -> TransactionBroadcastChangeAmountModel:
+        return self._change_amount
+
+    @QProperty(QObject, constant=True)
+    def receiver(self) -> TransactionBroadcastReceiverModel:
+        return self._receiver
+
+    @QProperty(QObject, constant=True)
+    def addressInputList(self) -> AddressListModel:
+        return self._address_input_list

@@ -43,6 +43,7 @@ class AbstractStateModel(QObject):
     def locale(self) -> Locale:
         return self._application.language.locale
 
+    # noinspection PyMethodMayBeStatic
     def _getValidStatus(self) -> ValidStatus:
         return ValidStatus.Accept
 
@@ -63,7 +64,7 @@ class AbstractModel(QObject):
     def locale(self) -> Locale:
         return self._application.language.locale
 
-    def refresh(self, initiator: object) -> None:
+    def refresh(self, initiator: QObject) -> None:
         if self._refresh_lock.acquire(False):
             for a in dir(self):
                 if not a.startswith("_"):
@@ -75,3 +76,6 @@ class AbstractModel(QObject):
                     a.refresh()
             self._refresh_lock.release()
             self.stateChanged.emit()
+
+    def connectModelRefresh(self, model: QObject) -> None:
+        model.stateChanged.connect(lambda: self.refresh(model))
