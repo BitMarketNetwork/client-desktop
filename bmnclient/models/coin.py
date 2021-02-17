@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from enum import auto
-from typing import Final
+from typing import Final, Optional
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -59,7 +59,7 @@ class CoinRemoteStateModel(AbstractStateModel):
 
 
 class CoinAmountModel(AmountModel):
-    def _getValue(self) -> int:
+    def _getValue(self) -> Optional[int]:
         return self._coin.amount
 
 

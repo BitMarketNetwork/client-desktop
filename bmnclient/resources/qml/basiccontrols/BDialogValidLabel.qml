@@ -5,7 +5,7 @@ import "../application"
 BLabel {
     id: _base
 
-    enum Status {
+    enum Status { // SYNC models.ValidStatus
         Unset,
         Accept,
         Reject

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Final, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -34,7 +34,7 @@ class TransactionBroadcastAvailableAmountModel(AmountModel):
         super().__init__(application, tx.coin)
         self._tx = tx
 
-    def _getValue(self) -> int:
+    def _getValue(self) -> Optional[int]:
         return self._tx.source_amount
 
 
@@ -46,19 +46,26 @@ class TransactionBroadcastAmountModel(AmountInputModel):
         super().__init__(application, tx.coin)
         self._tx = tx
 
-    def _getValue(self) -> int:
-        return self._tx.amount
+    def _getValue(self) -> Optional[int]:
+        return None if self._tx.amount < 0 else self._tx.amount  # TODO
 
-    def _setValue(self, value: int) -> bool:
-        if value < 0:
-            # TODO set _tx invalid value
+    def _getDefaultValue(self) -> Optional[int]:
+        v = self._tx.get_max()
+        return None if v < 0 else v
+
+    def _setValue(self, value: Optional[int]) -> bool:
+        if value is None or value < 0:
+            self._tx.amount = -1   # TODO
             return False
-        self._tx.amount = value
-        return True
+        else:
+            self._tx.amount = value
+            return True
 
-    def _setDefaultValue(self) -> bool:
-        self._tx.set_max()
-        return True
+    def _getValidStatus(self) -> ValidStatus:
+        if self._tx.amount >= 0:   # TODO
+            return ValidStatus.Accept
+        else:
+            return ValidStatus.Reject
 
 
 class TransactionBroadcastFeeAmountModel(AmountInputModel):
@@ -71,7 +78,7 @@ class TransactionBroadcastFeeAmountModel(AmountInputModel):
         super().__init__(application, tx.coin)
         self._tx = tx
 
-    def _getValue(self) -> int:
+    def _getValue(self) -> Optional[int]:
         return self._tx.fee
 
     def _setValue(self, value: int) -> bool:
@@ -125,7 +132,7 @@ class TransactionBroadcastChangeAmountModel(AmountModel):
         super().__init__(application, tx.coin)
         self._tx = tx
 
-    def _getValue(self) -> int:
+    def _getValue(self) -> Optional[int]:
         return self._tx.change
 
     @QProperty(bool, notify=__stateChanged)

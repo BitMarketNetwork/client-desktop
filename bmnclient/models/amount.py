@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Callable, Optional, TYPE_CHECKING
+from typing import Callable, Optional, TYPE_CHECKING, Union
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -27,7 +27,7 @@ class AmountModel(
     __stateChanged = QSignal()
 
     @abstractmethod
-    def _getValue(self) -> int:
+    def _getValue(self) -> Optional[int]:
         raise NotImplementedError
 
     def _toHumanValue(self, value: int, currency: AbstractCurrency) -> str:
@@ -35,11 +35,12 @@ class AmountModel(
 
     @QProperty(str, notify=__stateChanged)
     def value(self) -> int:
-        return self._getValue()
+        v = self._getValue()
+        return 0 if v is None else v
 
     @QProperty(str, notify=__stateChanged)
     def valueHuman(self) -> str:
-        return self._toHumanValue(self._getValue(), self._coin.currency)
+        return self._toHumanValue(self.value, self._coin.currency)
 
     @QProperty(str, constant=True)
     def unit(self) -> str:
@@ -48,7 +49,7 @@ class AmountModel(
     @QProperty(str, notify=__stateChanged)
     def fiatValueHuman(self) -> str:
         return self._toHumanValue(
-            self._coin.toFiatAmount(self._getValue()),
+            self._coin.toFiatAmount(self.value),
             self._coin.fiatRate.currency)
 
     @QProperty(str, notify=__stateChanged)
@@ -109,11 +110,11 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
         self._fiat_value_human_validator = self._FiatValueHumanValidator(self)
 
     @abstractmethod
-    def _setValue(self, value: int) -> bool:
+    def _setValue(self, value: Optional[int]) -> bool:
         raise NotImplementedError
 
     @abstractmethod
-    def _setDefaultValue(self) -> bool:
+    def _getDefaultValue(self) -> Optional[int]:
         raise NotImplementedError
 
     def _fromHumanValue(
@@ -135,19 +136,20 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
 
     def _setValueHelper(
             self,
-            value: str,
+            value: Optional[Union[str, int]],
             currency: AbstractCurrency,
             unit_convert: Optional[Callable[[int], Optional[int]]] = None) \
             -> bool:
-        value = self._fromHumanValue(value, currency, unit_convert)
-        if value is None:
-            return False
-
+        if isinstance(value, str):
+            value = self._fromHumanValue(value, currency, unit_convert)
+        result = value is not None
         if value != self._getValue():
-            if not self._setValue(value):
-                return False
+            if value is None:
+                self._setValue(None)
+            else:
+                result = self._setValue(value)
             self.refresh()
-        return True
+        return result
 
     @QProperty(QValidator, constant=True)
     def valueHumanValidator(self) -> QValidator:
@@ -181,7 +183,6 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
     # noinspection PyTypeChecker
     @QSlot(result=bool)
     def setDefaultValue(self) -> bool:
-        if self._setDefaultValue():
-            self.refresh()
-            return True
-        return False
+        return self._setValueHelper(
+            self._getDefaultValue(),
+            self._coin.currency)

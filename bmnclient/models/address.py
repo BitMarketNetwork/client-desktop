@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from enum import auto
-from typing import Final, TYPE_CHECKING
+from typing import Final, Optional, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -47,7 +47,7 @@ class AddressAmountModel(AmountModel):
         super().__init__(application, address.coin)
         self._address = address
 
-    def _getValue(self) -> int:
+    def _getValue(self) -> Optional[int]:
         return self._address.balance
 
 

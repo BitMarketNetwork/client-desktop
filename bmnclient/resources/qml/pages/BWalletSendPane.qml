@@ -43,7 +43,7 @@ BPane {
             BLayout.columnSpan: parent.columns - 1
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _tx_controller.availableAmount
+            amount: _tx_controller.model.availableAmount
         }
 
         BDialogPromtLabel {
@@ -53,10 +53,10 @@ BPane {
             id: _amount
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _tx_controller.amount
+            amount: _tx_controller.model.amount
         }
         BDialogValidLabel {
-            status: _amount.validStatus
+            status: _tx_controller.model.amount.validStatus
         }
 
         BDialogSeparator {}
@@ -68,7 +68,7 @@ BPane {
             BLayout.columnSpan: parent.columns - 1
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _tx_controller.feeAmount
+            amount: _tx_controller.model.feeAmount
         }
 
         BDialogPromtLabel {

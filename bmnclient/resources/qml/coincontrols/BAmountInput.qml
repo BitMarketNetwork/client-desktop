@@ -10,7 +10,6 @@ BControl {
     property var amount // AmountInputModel
     property color color: _base.enabled ? _base.Material.foreground : _base.Material.hintTextColor
     property int orientation: Qt.Vertical
-    property int validStatus: BDialogValidLabel.Status.Unset
 
     property TextMetrics valueTextMetrics: TextMetrics {
         text: _base.amount.valueHumanTemplate
@@ -24,7 +23,6 @@ BControl {
 
         BTextField {
             id: _valueField
-            property bool isValid: true
 
             BLayout.column: 0
             BLayout.row: 0
@@ -36,13 +34,14 @@ BControl {
 
             Binding on text {
                 restoreMode: Binding.RestoreNone
-                when: !_valueField.focus && _valueField.isValid
+                when: !_valueField.focus && _base.amount.validStatus === BDialogValidLabel.Status.Accept
                 value: _base.amount.valueHuman
             }
 
             onTextEdited: {
                 if (focus) {
-                    _base.processValue(_valueField, _fiatValueField)
+                    _base.amount.setValueHuman(text)
+                    _fiatValueField.focus = false // paranoid
                 }
             }
         }
@@ -67,7 +66,6 @@ BControl {
 
         BTextField {
             id: _fiatValueField
-            property bool isValid: true
 
             BLayout.column: _base.orientation === Qt.Vertical ? 0 : 3
             BLayout.row: _base.orientation === Qt.Vertical ? 1 : 0
@@ -79,13 +77,14 @@ BControl {
 
             Binding on text {
                 restoreMode: Binding.RestoreNone
-                when: !_fiatValueField.focus && _fiatValueField.isValid
+                when: !_fiatValueField.focus && _base.amount.validStatus === BDialogValidLabel.Status.Accept
                 value: _base.amount.fiatValueHuman
             }
 
             onTextEdited: {
                 if (focus) {
-                    _base.processValue(_fiatValueField, _valueField)
+                    _base.amount.setFiatValueHuman(text)
+                    _valueField.focus = false // paranoid
                 }
             }
         }
@@ -117,39 +116,11 @@ BControl {
             text: qsTr("max")
             onClicked: {
                 if (focus) {
-                    _base.setDefaultValue()
+                    _base.amount.setDefaultValue()
+                    _valueField.focus = false // paranoid
+                    _fiatValueField.focus = false // paranoid
                 }
             }
-        }
-    }
-
-    function processValue(currentFiled, alternativeFiled) {
-        let isValid
-        if (currentFiled === _valueField) {
-            isValid = amount.setValueHuman(currentFiled.text)
-        } else {
-            isValid = amount.setFiatValueHuman(currentFiled.text)
-        }
-        if (isValid) {
-            // bindings will update the text
-            currentFiled.isValid = true
-            alternativeFiled.isValid = true
-            alternativeFiled.focus = false // paranoid
-            validStatus = BDialogValidLabel.Status.Accept
-        } else {
-            currentFiled.isValid = false
-            validStatus = BDialogValidLabel.Status.Reject
-        }
-    }
-
-    function setDefaultValue() {
-        if (amount.setDefaultValue()) {
-            // bindings will update the text
-            _valueField.isValid = true
-            _valueField.focus = false // paranoid
-            _fiatValueField.isValid = true
-            _fiatValueField.focus = false // paranoid
-            validStatus = BDialogValidLabel.Status.Accept
         }
     }
 }

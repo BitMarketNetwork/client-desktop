@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from enum import auto
-from typing import Final, TYPE_CHECKING
+from typing import Final, Optional, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -64,7 +64,7 @@ class TransactionAmountModel(AmountModel):
         super().__init__(application, tx.wallet.coin)
         self._tx = tx
 
-    def _getValue(self) -> int:
+    def _getValue(self) -> Optional[int]:
         return self._tx.balance
 
 
@@ -73,7 +73,7 @@ class TransactionFeeAmountModel(AmountModel):
         super().__init__(application, tx.wallet.coin)
         self._tx = tx
 
-    def _getValue(self) -> int:
+    def _getValue(self) -> Optional[int]:
         return self._tx.fee
 
 
