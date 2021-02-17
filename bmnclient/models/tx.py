@@ -1,6 +1,7 @@
 # JOK++
 from __future__ import annotations
 
+from abc import ABCMeta
 from enum import auto
 from typing import Final, Optional, TYPE_CHECKING
 
@@ -24,6 +25,12 @@ if TYPE_CHECKING:
 
 
 class AbstractTransactionStateModel(AbstractStateModel):
+    def __init__(self, application: Application, tx: Transaction) -> None:
+        super().__init__(application, tx.wallet.coin)
+        self._tx = tx
+
+
+class AbstractTransactionAmountModel(AmountModel, metaclass=ABCMeta):
     def __init__(self, application: Application, tx: Transaction) -> None:
         super().__init__(application, tx.wallet.coin)
         self._tx = tx
@@ -59,20 +66,12 @@ class TransactionStateModel(AbstractTransactionStateModel):
         return self.locale.integerToString(self._tx.confirmCount)
 
 
-class TransactionAmountModel(AmountModel):
-    def __init__(self, application: Application, tx: Transaction) -> None:
-        super().__init__(application, tx.wallet.coin)
-        self._tx = tx
-
+class TransactionAmountModel(AbstractTransactionAmountModel):
     def _getValue(self) -> Optional[int]:
         return self._tx.balance
 
 
-class TransactionFeeAmountModel(AmountModel):
-    def __init__(self, application: Application, tx: Transaction) -> None:
-        super().__init__(application, tx.wallet.coin)
-        self._tx = tx
-
+class TransactionFeeAmountModel(AbstractTransactionAmountModel):
     def _getValue(self) -> Optional[int]:
         return self._tx.fee
 

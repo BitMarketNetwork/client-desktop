@@ -1,6 +1,7 @@
 # JOK++
 from __future__ import annotations
 
+from abc import ABCMeta
 from enum import auto
 from typing import Final, Optional, TYPE_CHECKING
 
@@ -26,6 +27,12 @@ class AbstractAddressStateModel(AbstractStateModel):
         self._address = address
 
 
+class AbstractAddressAmountModel(AmountModel, metaclass=ABCMeta):
+    def __init__(self, application: Application, address: CAddress) -> None:
+        super().__init__(application, address.coin)
+        self._address = address
+
+
 class AddressStateModel(AbstractAddressStateModel):
     __stateChanged = QSignal()
 
@@ -42,11 +49,7 @@ class AddressStateModel(AbstractAddressStateModel):
         return self._address.isUpdating
 
 
-class AddressAmountModel(AmountModel):
-    def __init__(self, application: Application, address: CAddress) -> None:
-        super().__init__(application, address.coin)
-        self._address = address
-
+class AddressAmountModel(AbstractAddressAmountModel):
     def _getValue(self) -> Optional[int]:
         return self._address.balance
 
