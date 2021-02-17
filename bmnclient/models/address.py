@@ -27,9 +27,9 @@ class AbstractAddressStateModel(AbstractStateModel):
 
 
 class AddressStateModel(AbstractAddressStateModel):
-    stateChanged: Final = QSignal()
+    __stateChanged = QSignal()
 
-    @QProperty(str, notify=stateChanged)
+    @QProperty(str, notify=__stateChanged)
     def label(self) -> str:
         return self._address.label
 
@@ -37,7 +37,7 @@ class AddressStateModel(AbstractAddressStateModel):
     def watchOnly(self) -> bool:
         return self._address.readOnly
 
-    @QProperty(bool, notify=stateChanged)
+    @QProperty(bool, notify=__stateChanged)
     def isUpdating(self) -> bool:
         return self._address.isUpdating
 

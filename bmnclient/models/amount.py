@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Callable, Final, Optional, TYPE_CHECKING
+from typing import Callable, Optional, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -24,7 +24,7 @@ class AmountModel(
             'AmountModelMeta',
             (ABCMeta, type(AbstractStateModel)),
             {})):
-    stateChanged: Final = QSignal()
+    __stateChanged = QSignal()
 
     @abstractmethod
     def _getValue(self) -> int:
@@ -33,11 +33,11 @@ class AmountModel(
     def _toHumanValue(self, value: int, currency: AbstractCurrency) -> str:
         return currency.toString(value, locale=self.locale)
 
-    @QProperty(str, notify=stateChanged)
+    @QProperty(str, notify=__stateChanged)
     def value(self) -> int:
         return self._getValue()
 
-    @QProperty(str, notify=stateChanged)
+    @QProperty(str, notify=__stateChanged)
     def valueHuman(self) -> str:
         return self._toHumanValue(self._getValue(), self._coin.currency)
 
@@ -45,13 +45,13 @@ class AmountModel(
     def unit(self) -> str:
         return self._coin.currency.unit
 
-    @QProperty(str, notify=stateChanged)
+    @QProperty(str, notify=__stateChanged)
     def fiatValueHuman(self) -> str:
         return self._toHumanValue(
             self._coin.toFiatAmount(self._getValue()),
             self._coin.fiatRate.currency)
 
-    @QProperty(str, notify=stateChanged)
+    @QProperty(str, notify=__stateChanged)
     def fiatUnit(self) -> str:
         return self._coin.fiatRate.currency.unit
 
@@ -148,10 +148,6 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
                 return False
             self.refresh()
         return True
-
-    def refresh(self) -> None:
-        super().refresh()
-        self.__stateChanged.emit()
 
     @QProperty(QValidator, constant=True)
     def valueHumanValidator(self) -> QValidator:

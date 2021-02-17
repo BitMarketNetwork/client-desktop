@@ -16,9 +16,9 @@ from .list import \
 
 
 class CoinStateModel(AbstractStateModel):
-    stateChanged: Final = QSignal()
+    __stateChanged = QSignal()
 
-    @QProperty(bool, notify=stateChanged)
+    @QProperty(bool, notify=__stateChanged)
     def visible(self) -> bool:
         return self._coin.visible
 
@@ -28,29 +28,29 @@ class CoinStateModel(AbstractStateModel):
 
 
 class CoinRemoteStateModel(AbstractStateModel):
-    stateChanged: Final = QSignal()
+    __stateChanged = QSignal()
 
-    @QProperty(str, notify=stateChanged)
+    @QProperty(str, notify=__stateChanged)
     def versionHuman(self) -> str:
         # noinspection PyProtectedMember
         return self._coin._remote.get("version_string", "-")  # TODO
 
-    @QProperty(int, notify=stateChanged)
+    @QProperty(int, notify=__stateChanged)
     def version(self) -> int:
         # noinspection PyProtectedMember
         return self._coin._remote.get("version", -1)  # TODO
 
-    @QProperty(int, notify=stateChanged)
+    @QProperty(int, notify=__stateChanged)
     def status(self) -> int:
         # noinspection PyProtectedMember
         return self._coin._remote.get("status", -1)  # TODO
 
-    @QProperty(int, notify=stateChanged)
+    @QProperty(int, notify=__stateChanged)
     def height(self) -> int:
         # noinspection PyProtectedMember
         return self._coin._remote.get("height", -1)  # TODO
 
-    @QProperty(str, notify=stateChanged)
+    @QProperty(str, notify=__stateChanged)
     def heightHuman(self) -> str:
         height = self.height
         if height < 0:

@@ -30,31 +30,31 @@ class AbstractTransactionStateModel(AbstractStateModel):
 
 
 class TransactionStateModel(AbstractTransactionStateModel):
-    stateChanged: Final = QSignal()
+    __stateChanged = QSignal()
 
-    @QProperty(int, notify=stateChanged)
+    @QProperty(int, notify=__stateChanged)
     def status(self) -> int:
         return self._tx.status
 
-    @QProperty(str, notify=stateChanged)
+    @QProperty(str, notify=__stateChanged)
     def timeHuman(self) -> str:
         v = QDateTime()
         v.setSecsSinceEpoch(self._tx.time)
         return self.locale.toString(v, self.locale.LongFormat)
 
-    @QProperty(int, notify=stateChanged)
+    @QProperty(int, notify=__stateChanged)
     def height(self) -> int:
         return self._tx.height
 
-    @QProperty(str, notify=stateChanged)
+    @QProperty(str, notify=__stateChanged)
     def heightHuman(self) -> str:
         return self.locale.integerToString(self._tx.height)
 
-    @QProperty(int, notify=stateChanged)
+    @QProperty(int, notify=__stateChanged)
     def confirmations(self) -> int:
         return self._tx.confirmCount
 
-    @QProperty(str, notify=stateChanged)
+    @QProperty(str, notify=__stateChanged)
     def confirmationsHuman(self) -> str:
         return self.locale.integerToString(self._tx.confirmCount)
 
