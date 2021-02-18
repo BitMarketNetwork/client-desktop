@@ -4,12 +4,12 @@ import QtQml 2.15
 import QtQuick.Controls.Material 2.15
 import "../basiccontrols"
 
-// SYNC: BFeeAmountInput
 BControl {
     id: _base
     property var amount // AmountInputModel
     property color color: _base.enabled ? _base.Material.foreground : _base.Material.hintTextColor
     property int orientation: Qt.Vertical
+    property alias defaultButtonText: _defaultButton.text
 
     property TextMetrics valueTextMetrics: TextMetrics {
         text: _base.amount.valueHumanTemplate
@@ -109,6 +109,7 @@ BControl {
         }
 
         BButton {
+            id: _defaultButton
             BLayout.column: _base.orientation === Qt.Vertical ? 2 : 6
             BLayout.row: 0
             BLayout.rowSpan: _base.orientation === Qt.Vertical ? 2 : 1

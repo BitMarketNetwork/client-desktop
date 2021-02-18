@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import ABCMeta
 from typing import Optional, TYPE_CHECKING
 
 from PySide2.QtCore import \
@@ -26,7 +27,7 @@ class AbstractTransactionBroadcastStateModel(AbstractStateModel):
         self._tx = tx
 
 
-class TransactionBroadcastAvailableAmountModel(AmountModel):
+class AbstractTransactionAmountModel(AmountModel, metaclass=ABCMeta):
     def __init__(
             self,
             application: Application,
@@ -34,32 +35,35 @@ class TransactionBroadcastAvailableAmountModel(AmountModel):
         super().__init__(application, tx.coin)
         self._tx = tx
 
+
+class AbstractTransactionAmountInputModel(AmountInputModel, metaclass=ABCMeta):
+    def __init__(
+            self,
+            application: Application,
+            tx: MutableTransaction) -> None:
+        super().__init__(application, tx.coin)
+        self._tx = tx
+
+
+class TransactionBroadcastAvailableAmountModel(AbstractTransactionAmountModel):
     def _getValue(self) -> Optional[int]:
         return self._tx.source_amount
 
 
-class TransactionBroadcastAmountModel(AmountInputModel):
-    def __init__(
-            self,
-            application: Application,
-            tx: MutableTransaction) -> None:
-        super().__init__(application, tx.coin)
-        self._tx = tx
-
+class TransactionBroadcastAmountModel(AbstractTransactionAmountInputModel):
     def _getValue(self) -> Optional[int]:
         return None if self._tx.amount < 0 else self._tx.amount  # TODO
-
-    def _getDefaultValue(self) -> Optional[int]:
-        v = self._tx.get_max()
-        return None if v < 0 else v
 
     def _setValue(self, value: Optional[int]) -> bool:
         if value is None or value < 0:
             self._tx.amount = -1   # TODO
             return False
-        else:
-            self._tx.amount = value
-            return True
+        self._tx.amount = value
+        return True
+
+    def _getDefaultValue(self) -> Optional[int]:
+        v = self._tx.get_max_amount()
+        return None if v < 0 else v   # TODO
 
     def _getValidStatus(self) -> ValidStatus:
         if self._tx.amount >= 0:   # TODO
@@ -68,46 +72,11 @@ class TransactionBroadcastAmountModel(AmountInputModel):
             return ValidStatus.Reject
 
 
-class TransactionBroadcastFeeAmountModel(AmountInputModel):
+class TransactionBroadcastFeeAmountModel(AbstractTransactionAmountModel):
     __stateChanged = QSignal()
 
-    def __init__(
-            self,
-            application: Application,
-            tx: MutableTransaction) -> None:
-        super().__init__(application, tx.coin)
-        self._tx = tx
-
     def _getValue(self) -> Optional[int]:
-        return self._tx.fee
-
-    def _setValue(self, value: int) -> bool:
-        if value < 0:
-            # TODO set _tx invalid value
-            return False
-        self._tx.fee = value
-        return True
-
-    def _setDefaultValue(self) -> bool:
-        self._tx.spb = -1  # TODO
-        return True
-
-    @QProperty(str, notify=__stateChanged)
-    def amountPerKiBHuman(self) -> str:
-        return self._toHumanValue(self._tx.spb * 1024, self._coin.currency)
-
-    # noinspection PyTypeChecker
-    @QSlot(str, result=bool)
-    def setAmountPerKiBHuman(self, value: str) -> bool:
-        value = self._fromHumanValue(value, self._coin.currency)
-        if value is None or value < 0:
-            # TODO set _tx invalid value
-            return False
-        value //= 1024
-        if self._tx.spb != value:
-            self._tx.spb = value
-            self.refresh()
-        return True
+        return None if self._tx.spb < 0 else self._tx.fee  # TODO
 
     @QProperty(bool, notify=__stateChanged)
     def subtractFromAmount(self) -> bool:
@@ -122,15 +91,31 @@ class TransactionBroadcastFeeAmountModel(AmountInputModel):
         return True
 
 
-class TransactionBroadcastChangeAmountModel(AmountModel):
-    __stateChanged = QSignal()
+class TransactionBroadcastKibFeeAmountModel(
+        AbstractTransactionAmountInputModel):
+    def _getValue(self) -> Optional[int]:
+        return None if self._tx.spb < 0 else (self._tx.spb * 1024)  # TODO
 
-    def __init__(
-            self,
-            application: Application,
-            tx: MutableTransaction) -> None:
-        super().__init__(application, tx.coin)
-        self._tx = tx
+    def _setValue(self, value: Optional[int]) -> bool:
+        if value is None or value < 0:
+            self._tx.spb = -1
+            return False
+        self._tx.spb = value // 1024
+        return True
+
+    def _getDefaultValue(self) -> Optional[int]:
+        v = self._tx.spb_default()
+        return None if v < 0 else (v * 1024)
+
+    def _getValidStatus(self) -> ValidStatus:
+        if self._tx.spb >= 0:  # TODO
+            return ValidStatus.Accept
+        else:
+            return ValidStatus.Reject
+
+
+class TransactionBroadcastChangeAmountModel(AbstractTransactionAmountModel):
+    __stateChanged = QSignal()
 
     def _getValue(self) -> Optional[int]:
         return self._tx.change
@@ -201,6 +186,11 @@ class TransactionBroadcastModel(AbstractModel):
             self._tx)
         self.connectModelRefresh(self._fee_amount)
 
+        self._kib_fee_amount = TransactionBroadcastKibFeeAmountModel(
+            self._application,
+            self._tx)
+        self.connectModelRefresh(self._kib_fee_amount)
+
         self._change_amount = TransactionBroadcastChangeAmountModel(
             self._application,
             self._tx)
@@ -226,6 +216,10 @@ class TransactionBroadcastModel(AbstractModel):
     @QProperty(QObject, constant=True)
     def feeAmount(self) -> TransactionBroadcastFeeAmountModel:
         return self._fee_amount
+
+    @QProperty(QObject, constant=True)
+    def kibFeeAmount(self) -> TransactionBroadcastKibFeeAmountModel:
+        return self._kib_fee_amount
 
     @QProperty(QObject, constant=True)
     def changeAmount(self) -> TransactionBroadcastChangeAmountModel:

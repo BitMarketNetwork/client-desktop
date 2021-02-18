@@ -73,13 +73,14 @@ BPane {
         BDialogPromtLabel {
             text: qsTr("per kilobyte:")
         }
-        BFeeAmountInput {
-            id: _feeAmount
+        BAmountInput {
             BLayout.alignment: _applicationStyle.dialogInputAlignment
-            amount: _tx_controller.feeAmount
+            orientation: Qt.Horizontal
+            amount: _tx_controller.model.kibFeeAmount
+            defaultButtonText: qsTr("Recommended")
         }
         BDialogValidLabel {
-            status: _feeAmount.validStatus
+            status: _tx_controller.model.kibFeeAmount.validStatus
         }
 
         BDialogPromtLabel {
@@ -87,9 +88,9 @@ BPane {
         }
         BDialogInputSwitch {
             BLayout.columnSpan: parent.columns - 1
-            checked: _tx_controller.feeAmount.subtractFromAmount
+            checked: _tx_controller.model.feeAmount.subtractFromAmount
             onCheckedChanged: {
-                _tx_controller.feeAmount.setSubtractFromAmount(checked)
+                _tx_controller.model.feeAmount.setSubtractFromAmount(checked)
             }
         }
 
@@ -102,32 +103,28 @@ BPane {
             BLayout.columnSpan: parent.columns - 1
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _tx_controller.changeAmount
+            amount: _tx_controller.model.changeAmount
         }
 
         BDialogPromtLabel {
             text: qsTr("Send change to new address:")
         }
         BDialogInputSwitch {
-            BLayout.columnSpan: 2
-            checked: _tx_controller.changeAmount.toNewAddress
+            BLayout.columnSpan: parent.columns - 1
+            checked: _tx_controller.model.changeAmount.toNewAddress
             onCheckedChanged: {
-                _tx_controller.changeAmount.setToNewAddress(checked)
+                _tx_controller.model.changeAmount.setToNewAddress(checked)
             }
         }
 
+        BDialogSeparator {}
 
-
-
-                BDialogSeparator {}
-
-                BDialogPromtLabel {
-                    text: qsTr("Source inputs:")
-                }
-                BAddressSourceBox {
-                    model: _tx_controller.sourceModel
-                    onChanged: {
-                        _tx_controller.recalcSources()
+        BDialogPromtLabel {}
+        BDialogInputButton {
+            BLayout.columnSpan: parent.columns - 1
+            text: "Select inputs..."
+            onClicked: {
+                        _inputListDialog.open()
                     }
                 }
 
