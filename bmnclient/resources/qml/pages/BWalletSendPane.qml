@@ -26,8 +26,9 @@ BPane {
             text: qsTr("Pay to:")
         }
         BDialogInputTextField {
-            onTextChanged: {
-                _tx_controller.model.receiver.setAddressName(text)
+            text: ""
+            onTextEdited: {
+                _tx_controller.model.receiver.addressName = text
             }
         }
         BDialogValidLabel {
@@ -90,7 +91,7 @@ BPane {
             BLayout.columnSpan: parent.columns - 1
             checked: _tx_controller.model.feeAmount.subtractFromAmount
             onCheckedChanged: {
-                _tx_controller.model.feeAmount.setSubtractFromAmount(checked)
+                _tx_controller.model.feeAmount.subtractFromAmount = checked
             }
         }
 
@@ -113,7 +114,7 @@ BPane {
             BLayout.columnSpan: parent.columns - 1
             checked: _tx_controller.model.changeAmount.toNewAddress
             onCheckedChanged: {
-                _tx_controller.model.changeAmount.setToNewAddress(checked)
+                _tx_controller.model.changeAmount.toNewAddress = checked
             }
         }
 

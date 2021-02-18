@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 from abc import ABCMeta
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, Sequence, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
     QObject, \
-    Signal as QSignal, \
-    Slot as QSlot
+    Signal as QSignal
 
 from . import AbstractModel, AbstractStateModel, ValidStatus
-from .address import AddressListModel
 from .amount import AmountInputModel, AmountModel
+from .tx import TransactionIoListModel
 
 if TYPE_CHECKING:
     from ..ui.gui import Application
@@ -82,13 +81,11 @@ class TransactionBroadcastFeeAmountModel(AbstractTransactionAmountModel):
     def subtractFromAmount(self) -> bool:
         return self._tx.subtract_fee
 
-    # noinspection PyTypeChecker
-    @QSlot(bool, result=bool)
-    def setSubtractFromAmount(self, value: bool) -> bool:
+    @subtractFromAmount.setter
+    def _setSubtractFromAmount(self, value: bool) -> None:
         if value != self._tx.subtract_fee:
             self._tx.subtract_fee = value
             self.refresh()
-        return True
 
 
 class TransactionBroadcastKibFeeAmountModel(
@@ -124,13 +121,11 @@ class TransactionBroadcastChangeAmountModel(AbstractTransactionAmountModel):
     def toNewAddress(self) -> bool:
         return self._tx.new_address_for_change
 
-    # noinspection PyTypeChecker
-    @QSlot(bool, result=bool)
-    def setToNewAddress(self, value: bool) -> bool:
+    @toNewAddress.setter
+    def _setToNewAddress(self, value: bool) -> None:
         if value != self._tx.new_address_for_change:
             self._tx.new_address_for_change = value
             self.refresh()
-        return True
 
 
 class TransactionBroadcastReceiverModel(AbstractTransactionBroadcastStateModel):
@@ -147,13 +142,11 @@ class TransactionBroadcastReceiverModel(AbstractTransactionBroadcastStateModel):
     def addressName(self) -> str:
         return self._tx.receiver
 
-    # noinspection PyTypeChecker
-    @QSlot(str, result=bool)
-    def setAddressName(self, name: str) -> bool:
-        r = self._tx.setReceiverAddressName(name)
+    @addressName.setter
+    def _setAddressName(self, value: str) -> None:
+        self._tx.setReceiverAddressName(value)
         self._first_use = False
         self.refresh()
-        return r
 
     def _getValidStatus(self) -> ValidStatus:
         if self._tx.receiver_valid:
@@ -161,6 +154,34 @@ class TransactionBroadcastReceiverModel(AbstractTransactionBroadcastStateModel):
         elif self._first_use:
             return ValidStatus.Unset
         return ValidStatus.Reject
+
+
+class TransactionBroadcastInputListModel(TransactionIoListModel):
+    __stateChanged = QSignal()
+
+    def __init__(self, application: Application, source_list: Sequence) -> None:
+        super().__init__(application, source_list)
+        self.rowsInserted.connect(lambda **_: self.__stateChanged.emit())
+        self.rowsRemoved.connect(lambda **_: self.__stateChanged.emit())
+
+    @QProperty(bool, notify=__stateChanged)
+    def useAllInputs(self) -> bool:
+        for i in range(0, self.rowCount()):
+            state = self.data(self.index(i), self.Role.STATE)
+            if not state.useAsTransactionInput:
+                return False
+        return True
+
+    @useAllInputs.setter
+    def _setUseAllInputs(self, value: bool) -> None:
+        changed = False
+        for i in range(0, self.rowCount()):
+            state = self.data(self.index(i), self.Role.STATE)
+            if state.useAsTransactionInput != value:
+                state.useAsTransactionInput = value
+                changed = True
+        if changed:
+            self.__stateChanged.emit()
 
 
 class TransactionBroadcastModel(AbstractModel):
@@ -201,7 +222,7 @@ class TransactionBroadcastModel(AbstractModel):
             self._tx)
         self.connectModelRefresh(self._receiver)
 
-        self._address_input_list = AddressListModel(
+        self._input_list = TransactionBroadcastInputListModel(
             self._application,
             self._tx.sources)
 
@@ -230,5 +251,5 @@ class TransactionBroadcastModel(AbstractModel):
         return self._receiver
 
     @QProperty(QObject, constant=True)
-    def addressInputList(self) -> AddressListModel:
-        return self._address_input_list
+    def inputList(self) -> TransactionBroadcastInputListModel:
+        return self._input_list

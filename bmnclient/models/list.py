@@ -29,16 +29,16 @@ class RoleEnum(IntEnum):
 
 
 class ListModelHelper:
-    _rowCountChanged = QSignal()
+    __rowCountChanged = QSignal()
 
     def __init__(self, application: Application) -> None:
         self._application = application
         # noinspection PyUnresolvedReferences
-        self.rowsInserted.connect(lambda **_: self._rowCountChanged.emit())
+        self.rowsInserted.connect(lambda **_: self.__rowCountChanged.emit())
         # noinspection PyUnresolvedReferences
-        self.rowsRemoved.connect(lambda **_: self._rowCountChanged.emit())
+        self.rowsRemoved.connect(lambda **_: self.__rowCountChanged.emit())
 
-    @QProperty(str, notify=_rowCountChanged)
+    @QProperty(str, notify=__rowCountChanged)
     def rowCountHuman(self) -> str:
         # noinspection PyUnresolvedReferences
         return self._application.language.locale.integerToString(

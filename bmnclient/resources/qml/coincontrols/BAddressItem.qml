@@ -33,14 +33,12 @@ BItemDelegate {
             BLayout.fillWidth: true
             elide: BLabel.ElideMiddle
             text: _base.text
-            color: _base.address.state.watchOnly ? Material.hintTextColor : Material.foreground
         }
         BAmountLabel {
             font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
-            color: _base.address.state.watchOnly ? Material.hintTextColor : Material.foreground
+            font.strikeout: _base.address.state.watchOnly // TODO tmp
             amount: _base.address.amount
         }
-
         Loader {
             active: _base.contextMenu
             sourceComponent: BContextMenuToolButton {
