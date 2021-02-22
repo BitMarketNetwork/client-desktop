@@ -6,7 +6,7 @@ BToolButton {
     property BMenu menu
 
     font.bold: true
-    text: BStandardText.button.contextMenuRole
+    text: BCommon.button.contextMenuRole
 
     onClicked: {
         if (menu) {

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from enum import Enum
 from threading import Lock
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -64,7 +64,7 @@ class AbstractModel(QObject):
     def locale(self) -> Locale:
         return self._application.language.locale
 
-    def refresh(self, initiator: QObject) -> None:
+    def refresh(self, initiator: Optional[QObject] = None) -> None:
         if self._refresh_lock.acquire(False):
             for a in dir(self):
                 if not a.startswith("_"):

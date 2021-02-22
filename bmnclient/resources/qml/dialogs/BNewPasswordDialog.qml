@@ -61,12 +61,12 @@ BDialog {
         BButton {
             id: _acceptButton
             BDialogButtonBox.buttonRole: BDialogButtonBox.AcceptRole
-            text: BStandardText.button.okRole
+            text: BCommon.button.okRole
             enabled: false
         }
         BButton {
             BDialogButtonBox.buttonRole: BDialogButtonBox.RejectRole
-            text: BStandardText.button.cancelRole
+            text: BCommon.button.cancelRole
         }
     }
 
@@ -90,13 +90,13 @@ BDialog {
 
     function updatePasswordState() {
         if (_password1.text.length > 0 && _password1.text === _password2.text) {
-            _confirmed.status = BDialogValidLabel.Status.Accept
+            _confirmed.status = BCommon.ValidStatus.Accept
             _acceptButton.enabled = BPasswordStrength.isAcceptable(BPasswordStrength.getIndex(_password1.text))
         } else {
             if (_password1.text.length === 0 && _password2.text.length === 0) {
-                _confirmed.status = BDialogValidLabel.Status.Unset
+                _confirmed.status = BCommon.ValidStatus.Unset
             } else {
-                _confirmed.status = BDialogValidLabel.Status.Reject
+                _confirmed.status = BCommon.ValidStatus.Reject
             }
             _acceptButton.enabled = false
         }

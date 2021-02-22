@@ -41,7 +41,7 @@ BDialog {
                 }
             }
             templateDelegate: BAddressItem {
-                address: BStandardText.addressItemTemplate
+                address: BCommon.addressItemTemplate
                 checkable: true
             }
         }
@@ -49,7 +49,7 @@ BDialog {
     footer: BDialogButtonBox {
         BButton {
             BDialogButtonBox.buttonRole: BDialogButtonBox.AcceptRole
-            text: BStandardText.button.closeRole
+            text: BCommon.button.closeRole
         }
     }
 }

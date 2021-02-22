@@ -25,7 +25,7 @@ BPane {
                     }
                     BButton {
                         BDialogButtonBox.buttonRole: BDialogButtonBox.ResetRole
-                        text: BStandardText.button.resetRole
+                        text: BCommon.button.resetRole
                     }
                     onReset: {
                         _inputBox.reset()
@@ -60,7 +60,7 @@ BPane {
                         }
                         BButton {
                             BDialogButtonBox.buttonRole: BDialogButtonBox.ResetRole
-                            text: BStandardText.button.resetRole
+                            text: BCommon.button.resetRole
                         }
                         onReset: {
                             _layout.currentIndex = 0

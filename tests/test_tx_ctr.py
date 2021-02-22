@@ -210,9 +210,6 @@ class TestContr(unittest.TestCase, ParseMixin):
         address.unspents = UNSPENTS_SEGWIT
         txc = tx_controller.TxController(None, address)
 
-        # test slot
-        txc.maxAmountChanged.emit()
-
         #
         self.assertEqual(txc.maxAmount, self.cast(SOURCE_BALANCE))
         self.assertEqual(txc.fiatBalance, self.fiat(SOURCE_BALANCE))

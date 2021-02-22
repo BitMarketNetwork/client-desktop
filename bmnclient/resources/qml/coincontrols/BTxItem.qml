@@ -36,8 +36,8 @@ BItemDelegate {
                     BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
                     font.pointSize: _base.smallFontPointSize
                     font.bold: true
-                    text: BStandardText.txStatusMap[_base.tx.state.status][0]
-                    color: Material.color(BStandardText.txStatusMap[_base.tx.state.status][1])
+                    text: BCommon.txStatusMap[_base.tx.state.status][0]
+                    color: Material.color(BCommon.txStatusMap[_base.tx.state.status][1])
                 }
                 BAmountLabel {
                     BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight

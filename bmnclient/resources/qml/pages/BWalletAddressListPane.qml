@@ -16,7 +16,7 @@ BPane {
             contextMenu: _contextMenu
         }
         templateDelegate: BAddressItem {
-            address: BStandardText.addressItemTemplate
+            address: BCommon.addressItemTemplate
         }
     }
 

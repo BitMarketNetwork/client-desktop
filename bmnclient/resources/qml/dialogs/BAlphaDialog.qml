@@ -5,7 +5,7 @@ import "../basiccontrols"
 
 BDialog {
     id: _base
-    readonly property string acceptDelayText: BStandardText.button.acceptRole + " (%1)"
+    readonly property string acceptDelayText: BCommon.button.acceptRole + " (%1)"
     readonly property int acceptDelay: BBackend.isDebugMode ? 1 : 10
 
     title: // TODO move to MessageDialog
@@ -38,7 +38,7 @@ BDialog {
         }
         BButton {
             BDialogButtonBox.buttonRole: BDialogButtonBox.RejectRole
-            text: BStandardText.button.declineRole
+            text: BCommon.button.declineRole
         }
     }
 
@@ -55,7 +55,7 @@ BDialog {
         onTriggered: {
             if (--counter === 0) {
                 stop()
-                _acceptButton.text = BStandardText.button.acceptRole
+                _acceptButton.text = BCommon.button.acceptRole
                 _acceptButton.enabled = true
             } else {
                 _acceptButton.text = acceptDelayText.arg(counter)

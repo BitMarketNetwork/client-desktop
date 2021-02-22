@@ -6,6 +6,12 @@ import QtQuick.Controls.Material 2.15
 QtObject {
     id: _base
 
+    enum ValidStatus { // SYNC models.ValidStatus
+        Unset,
+        Reject,
+        Accept
+    }
+
     readonly property QtObject button: QtObject {
         readonly property string contextMenuRole: "⋮"
         readonly property string unfoldControlRole: "+" // TODO bad

@@ -34,7 +34,7 @@ BControl {
 
             Binding on text {
                 restoreMode: Binding.RestoreNone
-                when: !_valueField.focus && _base.amount.validStatus === BDialogValidLabel.Status.Accept
+                when: !_valueField.focus && _base.amount.validStatus === BCommon.ValidStatus.Accept
                 value: _base.amount.valueHuman
             }
 
@@ -77,7 +77,7 @@ BControl {
 
             Binding on text {
                 restoreMode: Binding.RestoreNone
-                when: !_fiatValueField.focus && _base.amount.validStatus === BDialogValidLabel.Status.Accept
+                when: !_fiatValueField.focus && _base.amount.validStatus === BCommon.ValidStatus.Accept
                 value: _base.amount.fiatValueHuman
             }
 

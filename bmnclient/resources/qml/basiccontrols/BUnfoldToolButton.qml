@@ -5,5 +5,5 @@ BToolButton {
 
     checkable: true
     font.bold: true
-    text: checked ? BStandardText.button.foldControlRole : BStandardText.button.unfoldControlRole
+    text: checked ? BCommon.button.foldControlRole : BCommon.button.unfoldControlRole
 }

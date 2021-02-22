@@ -49,7 +49,7 @@ BPane {
                     // TODO contextMenu: _base.contextMenu
                 }
                 templateDelegate: BAddressItem {
-                    address: BStandardText.addressItemTemplate
+                    address: BCommon.addressItemTemplate
                     // TODO contextMenu: _base.contextMenu
                 }
             }
@@ -62,7 +62,7 @@ BPane {
                     // TODO contextMenu: _base.contextMenu
                 }
                 templateDelegate: BAddressItem {
-                    address: BStandardText.addressItemTemplate
+                    address: BCommon.addressItemTemplate
                     // TODO contextMenu: _base.contextMenu
                 }
             }

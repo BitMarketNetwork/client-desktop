@@ -5,14 +5,9 @@ import "../application"
 BLabel {
     id: _base
 
-    enum Status { // SYNC models.ValidStatus
-        Unset,
-        Accept,
-        Reject
-    }
     property real maxAdvancedTextLength: 0
     property string advancedText: ""
-    property int status: BDialogValidLabel.Status.Unset
+    property int status: BCommon.ValidStatus.Unset
 
     BLayout.alignment: _applicationStyle.dialogInputAlignment
     BLayout.preferredWidth: fontMetrics.averageCharacterWidth * (2 + maxAdvancedTextLength) * 1.5
@@ -23,11 +18,11 @@ BLabel {
     text: {
         let result
         switch (status) {
-        case BDialogValidLabel.Status.Accept:
-            result = BStandardText.symbol.acceptRole
+        case BCommon.ValidStatus.Accept:
+            result = BCommon.symbol.acceptRole
             break
-        case BDialogValidLabel.Status.Reject:
-            result = BStandardText.symbol.rejectRole
+        case BCommon.ValidStatus.Reject:
+            result = BCommon.symbol.rejectRole
             break
         default:
             return ""
@@ -40,10 +35,10 @@ BLabel {
 
     color: {
         switch (status) {
-        case BDialogValidLabel.Status.Accept:
-            return Material.color(BStandardText.symbol.acceptRoleMaterialColor)
-        case BDialogValidLabel.Status.Reject:
-            return Material.color(BStandardText.symbol.rejectRoleMaterialColor)
+        case BCommon.ValidStatus.Accept:
+            return Material.color(BCommon.symbol.acceptRoleMaterialColor)
+        case BCommon.ValidStatus.Reject:
+            return Material.color(BCommon.symbol.rejectRoleMaterialColor)
         default:
             return Material.foreground
         }

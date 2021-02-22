@@ -31,12 +31,12 @@ BDialog {
     footer: BDialogButtonBox {
         BButton {
             BDialogButtonBox.buttonRole: BDialogButtonBox.AcceptRole
-            text: BStandardText.button.okRole
+            text: BCommon.button.okRole
             enabled: _password1.text.length > 0
         }
         BButton {
             BDialogButtonBox.buttonRole: BDialogButtonBox.RejectRole
-            text: BStandardText.button.cancelRole
+            text: BCommon.button.cancelRole
         }
     }
 

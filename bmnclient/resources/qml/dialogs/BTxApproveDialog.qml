@@ -114,9 +114,9 @@ BDialog {
             text: {
                 switch (_base.type) {
                 case BTxApproveDialog.Type.Prepare:
-                    return BStandardText.button.cancelRole
+                    return BCommon.button.cancelRole
                 case BTxApproveDialog.Type.Final:
-                    return BStandardText.button.closeRole
+                    return BCommon.button.closeRole
                 }
             }
         }

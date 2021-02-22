@@ -1,2 +1,2 @@
 singleton BPasswordStrength BPasswordStrength.qml
-singleton BStandardText BStandardText.qml
+singleton BCommon BCommon.qml

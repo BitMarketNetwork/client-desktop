@@ -109,7 +109,7 @@ BDialogLayout {
         case BAddressEditBox.Type.ViewRecipient:
             return qsTr("Copy address")
         case BAddressEditBox.Type.AddWatchOnly:
-            return BStandardText.button.addRole
+            return BCommon.button.addRole
         }
     }
 
