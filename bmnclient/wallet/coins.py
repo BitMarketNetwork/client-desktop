@@ -4,8 +4,7 @@ from typing import Iterable, List, Optional, Union
 
 import PySide2.QtCore as qt_core
 
-from . import address, coin_network, db_entry, hd, key, root_address, \
-    serialization
+from . import address, coin_network, db_entry, hd, key, root_address
 from .. import coins, meta
 from ..models.address import AddressListModel, AddressListSortedModel
 from ..models.coin import \
@@ -22,14 +21,12 @@ def network_tag(net: coin_network.CoinNetworkBase) -> str:
     return next(c.name for c in CoinType.all if c.network == net)  # pylint: disable=E1133
 
 
-class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
+class CoinType(db_entry.DbEntry):
     rateChanged = qt_core.Signal()  # TODO
 
     name: str = None
     _test: bool = False
 
-    # decimal points
-    _default_fee = 10000
     # [[https://github.com/satoshilabs/slips/blob/master/slip-0044.md|SLIP-0044 : Registered coin types for BIP-0044]]
     _hd_index: int = None
     network: coin_network.CoinNetworkBase = None
@@ -208,22 +205,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
         self.addAddress.emit(w)
 
         return w
-
-    def to_table(self) -> dict:
-        return {
-            "name": self.name,
-            "visible": self.__visible,
-            "addresses": [w.to_table() for w in self._address_list],
-        }
-
-    def from_table(self, table: dict):
-        assert self.name == table["name"]
-        self.visible = table["visible"]
-        self._address_list.clear()
-        for addr_t in table["addresses"]:
-            wallet = address.CAddress.from_table(addr_t, self)
-            self._address_list.append(wallet)
-            self._tx_list_model.addSourceModel(wallet.txListModel)
 
     @classmethod
     def match(cls, name: str) -> bool:

@@ -6,7 +6,7 @@ from typing import Iterable, List, Optional
 
 import PySide2.QtCore as qt_core
 
-from . import db_entry, serialization
+from . import db_entry
 from .address import CAddress
 from ..models.tx import \
     TransactionAmountModel, \
@@ -25,7 +25,7 @@ class TransactionIo(CAddress):
     pass
 
 
-class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
+class Transaction(db_entry.DbEntry):
     READY_CONFIRM_COUNT = 6
     statusChanged = qt_core.Signal()
     # constant fields can be changed while reprocessing
@@ -134,15 +134,6 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
                 self._output_list.append(a)
 
         return self
-
-    def to_table(self) -> dict:
-        return {
-            "hash": self.__name,
-            "amount": self.__balance,
-            "fee": self.__fee,
-            "height": self.__height,
-            "time": self.__time,
-        }
 
     def make_input(self, args: iter):
         if next(args):

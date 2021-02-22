@@ -5,7 +5,7 @@ from typing import List, Optional, Union, TYPE_CHECKING
 
 import PySide2.QtCore as qt_core
 
-from . import db_entry, hd, key, mtx_impl, serialization
+from . import db_entry, hd, key, mtx_impl
 from ..models.address import AddressAmountModel, AddressStateModel
 from ..models.tx import TransactionListModel, TransactionListSortedModel
 
@@ -32,7 +32,7 @@ class AddressError(Exception):
     pass
 
 
-class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
+class CAddress(db_entry.DbEntry):
     # get unspents once a minute
     UNSPENTS_TIMEOUT = 60000
     is_root = False
@@ -99,39 +99,12 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
     def txListSortedModel(self) -> TransactionListSortedModel:
         return TransactionListSortedModel(self._tx_list_model)
 
-    def to_table(self) -> dict:
-        res = {
-            "name": self.__name,
-            "type": self.__type,
-            "created": self.__created.timestamp(),
-        }
-        if self.__label:
-            res["label"] = self.__label
-        if self.__message:
-            res["message"] = self.__message
-        if self.__key:
-            res["wif"] = self.export_key()
-        return res
-
     def create(self):
         self.__created = datetime.now()
 
     # no getter for it for security reasons
     def set_prv_key(self, value: Union[hd.HDNode, key.PrivateKey]) -> None:
         self.__key = value
-
-    @classmethod
-    def from_table(cls, table: dict, coin: "coins.CoinType") -> "CAddress":
-        w = cls(table["name"], coin)
-        w.type = table["type"]
-        w.label = table.get("label")
-        w.__message = table.get("message")
-        # some fields can'be missed in some old backups
-        w.__created = datetime.fromtimestamp(
-            table.get("created", datetime.now().timestamp()))
-        if "wif" in table:
-            w.import_key(table["wif"])
-        return w
 
     @classmethod
     def make_from_hd(cls, hd__key: hd.HDNode, coin, type_: key.AddressType,
@@ -419,12 +392,6 @@ class CAddress(db_entry.DbEntry, serialization.SerializeMixin):
                 return self.__key.to_wif
             log.warn(f"Unknown key type {type(self.__key)} in {self}")
         return ""
-
-    def export_txs(self, path: str):
-        ser = serialization.Serializator()
-        ser.add_one("address", self)
-        ser.add_many("transactions", self._tx_list)
-        ser.to_file(path, pretty=True)
 
     def import_key(self, txt: str):
         """
