@@ -9,10 +9,10 @@ import PySide2.QtCore as qt_core
 from . import db_entry
 from .address import CAddress
 from ..models.tx import \
-    TransactionAmountModel, \
-    TransactionFeeAmountModel, \
-    TransactionIoListModel, \
-    TransactionStateModel
+    TxAmountModel, \
+    TxFeeAmountModel, \
+    TxIoListModel, \
+    TxStateModel
 
 log = logging.getLogger(__name__)
 
@@ -42,35 +42,35 @@ class Transaction(db_entry.DbEntry):
         self.__local = False
 
         from ..ui.gui import Application
-        self._amount_model = TransactionAmountModel(Application.instance(), self)
+        self._amount_model = TxAmountModel(Application.instance(), self)
         self._amount_model.moveToThread(Application.instance().thread())
-        self._fee_amount_model = TransactionFeeAmountModel(Application.instance(), self)
+        self._fee_amount_model = TxFeeAmountModel(Application.instance(), self)
         self._fee_amount_model.moveToThread(Application.instance().thread())
-        self._state_model = TransactionStateModel(Application.instance(), self)
+        self._state_model = TxStateModel(Application.instance(), self)
         self._state_model.moveToThread(Application.instance().thread())
-        self._input_list_model = TransactionIoListModel(Application.instance(), self._input_list)
+        self._input_list_model = TxIoListModel(Application.instance(), self._input_list)
         self._input_list_model.moveToThread(Application.instance().thread())
-        self._output_list_model = TransactionIoListModel(Application.instance(), self._output_list)
+        self._output_list_model = TxIoListModel(Application.instance(), self._output_list)
         self._output_list_model.moveToThread(Application.instance().thread())
 
     @property
-    def amountModel(self) -> TransactionAmountModel:
+    def amountModel(self) -> TxAmountModel:
         return self._amount_model
 
     @property
-    def feeAmountModel(self) -> TransactionFeeAmountModel:
+    def feeAmountModel(self) -> TxFeeAmountModel:
         return self._fee_amount_model
 
     @property
-    def stateModel(self) -> TransactionStateModel:
+    def stateModel(self) -> TxStateModel:
         return self._state_model
 
     @property
-    def inputListModel(self) -> TransactionIoListModel:
+    def inputListModel(self) -> TxIoListModel:
         return self._input_list_model
 
     @property
-    def outputListModel(self) -> TransactionIoListModel:
+    def outputListModel(self) -> TxIoListModel:
         return self._output_list_model
 
     @classmethod

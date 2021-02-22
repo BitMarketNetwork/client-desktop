@@ -6,7 +6,7 @@ from PySide2.QtCore import \
     Signal as QSignal, \
     Slot as QSlot
 
-from ...models.tx_broadcast import TransactionBroadcastModel
+from ...models.tx_broadcast import TxBroadcastModel
 from ...wallet import mutable_tx
 
 log = logging.getLogger(__name__)

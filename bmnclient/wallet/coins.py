@@ -11,7 +11,7 @@ from ..models.coin import \
     CoinAmountModel, \
     CoinRemoteStateModel, \
     CoinStateModel
-from ..models.tx import TransactionListModel, TransactionListSortedModel, TransactionListConcatenateModel
+from ..models.tx import TxListModel, TxListSortedModel, TxListConcatenateModel
 
 log = logging.getLogger(__name__)
 

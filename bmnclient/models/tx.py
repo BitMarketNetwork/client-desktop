@@ -24,19 +24,19 @@ if TYPE_CHECKING:
     from ..wallet.tx import Transaction
 
 
-class AbstractTransactionStateModel(AbstractStateModel):
+class AbstractTxStateModel(AbstractStateModel):
     def __init__(self, application: Application, tx: Transaction) -> None:
         super().__init__(application, tx.wallet.coin)
         self._tx = tx
 
 
-class AbstractTransactionAmountModel(AmountModel, metaclass=ABCMeta):
+class AbstractTxAmountModel(AmountModel, metaclass=ABCMeta):
     def __init__(self, application: Application, tx: Transaction) -> None:
         super().__init__(application, tx.wallet.coin)
         self._tx = tx
 
 
-class TransactionStateModel(AbstractTransactionStateModel):
+class TxStateModel(AbstractTxStateModel):
     __stateChanged = QSignal()
 
     @QProperty(int, notify=__stateChanged)
@@ -66,21 +66,21 @@ class TransactionStateModel(AbstractTransactionStateModel):
         return self.locale.integerToString(self._tx.confirmCount)
 
 
-class TransactionAmountModel(AbstractTransactionAmountModel):
+class TxAmountModel(AbstractTxAmountModel):
     def _getValue(self) -> Optional[int]:
         return self._tx.balance
 
 
-class TransactionFeeAmountModel(AbstractTransactionAmountModel):
+class TxFeeAmountModel(AbstractTxAmountModel):
     def _getValue(self) -> Optional[int]:
         return self._tx.fee
 
 
-class TransactionIoListModel(AddressListModel):
+class TxIoListModel(AddressListModel):
     pass
 
 
-class TransactionListModel(AbstractListModel):
+class TxListModel(AbstractListModel):
     class Role(RoleEnum):
         HASH: Final = auto()
         AMOUNT: Final = auto()
@@ -111,21 +111,21 @@ class TransactionListModel(AbstractListModel):
     }
 
 
-class TransactionListConcatenateModel(AbstractConcatenateModel):
-    ROLE_MAP: Final = TransactionListModel.ROLE_MAP
+class TxListConcatenateModel(AbstractConcatenateModel):
+    ROLE_MAP: Final = TxListModel.ROLE_MAP
 
 
-class TransactionListSortedModel(AbstractListSortedModel):
+class TxListSortedModel(AbstractListSortedModel):
     def __init__(
             self,
             application: Application,
-            source_model: TransactionListModel) -> None:
+            source_model: TxListModel) -> None:
         super().__init__(
             application,
             source_model,
-            TransactionListModel.Role.HASH)
+            TxListModel.Role.HASH)
 
 
-class TransactionModel(AbstractModel):
+class TxModel(AbstractModel):
     # TODO
     pass

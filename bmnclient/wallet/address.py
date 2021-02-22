@@ -7,7 +7,7 @@ import PySide2.QtCore as qt_core
 
 from . import db_entry, hd, key, mtx_impl
 from ..models.address import AddressAmountModel, AddressStateModel
-from ..models.tx import TransactionListModel, TransactionListSortedModel
+from ..models.tx import TxListModel, TxListSortedModel
 
 if TYPE_CHECKING:
     from .tx import Transaction
@@ -93,11 +93,11 @@ class CAddress(db_entry.DbEntry):
         return self._state_model
 
     @property
-    def txListModel(self) -> TransactionListModel:
+    def txListModel(self) -> TxListModel:
         return self._tx_list_model
 
-    def txListSortedModel(self) -> TransactionListSortedModel:
-        return TransactionListSortedModel(self._tx_list_model)
+    def txListSortedModel(self) -> TxListSortedModel:
+        return TxListSortedModel(self._tx_list_model)
 
     def create(self):
         self.__created = datetime.now()
@@ -134,7 +134,7 @@ class CAddress(db_entry.DbEntry):
         self._amount_model.moveToThread(Application.instance().thread())
         self._state_model = AddressStateModel(Application.instance(), self)
         self._state_model.moveToThread(Application.instance().thread())
-        self._tx_list_model = TransactionListModel(Application.instance(), self._tx_list)
+        self._tx_list_model = TxListModel(Application.instance(), self._tx_list)
         self._tx_list_model.moveToThread(Application.instance().thread())
 
         self._coin.heightChanged.connect(

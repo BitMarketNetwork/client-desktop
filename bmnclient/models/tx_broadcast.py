@@ -11,14 +11,14 @@ from PySide2.QtCore import \
 
 from . import AbstractModel, AbstractStateModel, ValidStatus
 from .amount import AmountInputModel, AmountModel
-from .tx import TransactionIoListModel
+from .tx import TxIoListModel
 
 if TYPE_CHECKING:
     from ..ui.gui import Application
     from ..wallet.mutable_tx import MutableTransaction
 
 
-class AbstractTransactionBroadcastStateModel(AbstractStateModel):
+class AbstractTxBroadcastStateModel(AbstractStateModel):
     def __init__(
             self,
             application: Application,
@@ -27,7 +27,7 @@ class AbstractTransactionBroadcastStateModel(AbstractStateModel):
         self._tx = tx
 
 
-class AbstractTransactionAmountModel(AmountModel, metaclass=ABCMeta):
+class AbstractTxAmountModel(AmountModel, metaclass=ABCMeta):
     def __init__(
             self,
             application: Application,
@@ -36,7 +36,7 @@ class AbstractTransactionAmountModel(AmountModel, metaclass=ABCMeta):
         self._tx = tx
 
 
-class AbstractTransactionAmountInputModel(AmountInputModel, metaclass=ABCMeta):
+class AbstractTxAmountInputModel(AmountInputModel, metaclass=ABCMeta):
     def __init__(
             self,
             application: Application,
@@ -45,12 +45,12 @@ class AbstractTransactionAmountInputModel(AmountInputModel, metaclass=ABCMeta):
         self._tx = tx
 
 
-class TransactionBroadcastAvailableAmountModel(AbstractTransactionAmountModel):
+class TxBroadcastAvailableAmountModel(AbstractTxAmountModel):
     def _getValue(self) -> Optional[int]:
         return self._tx.source_amount
 
 
-class TransactionBroadcastAmountModel(AbstractTransactionAmountInputModel):
+class TxBroadcastAmountModel(AbstractTxAmountInputModel):
     def _getValue(self) -> Optional[int]:
         return None if self._tx.amount < 0 else self._tx.amount  # TODO
 
@@ -72,7 +72,7 @@ class TransactionBroadcastAmountModel(AbstractTransactionAmountInputModel):
         return ValidStatus.Reject
 
 
-class TransactionBroadcastFeeAmountModel(AbstractTransactionAmountModel):
+class TxBroadcastFeeAmountModel(AbstractTxAmountModel):
     __stateChanged = QSignal()
 
     def _getValue(self) -> Optional[int]:
@@ -89,8 +89,8 @@ class TransactionBroadcastFeeAmountModel(AbstractTransactionAmountModel):
             self.refresh()
 
 
-class TransactionBroadcastKibFeeAmountModel(
-        AbstractTransactionAmountInputModel):
+class TxBroadcastKibFeeAmountModel(
+        AbstractTxAmountInputModel):
     def _getValue(self) -> Optional[int]:
         return None if self._tx.spb < 0 else (self._tx.spb * 1024)  # TODO
 
@@ -113,7 +113,7 @@ class TransactionBroadcastKibFeeAmountModel(
         return ValidStatus.Accept
 
 
-class TransactionBroadcastChangeAmountModel(AbstractTransactionAmountModel):
+class TxBroadcastChangeAmountModel(AbstractTxAmountModel):
     __stateChanged = QSignal()
 
     def _getValue(self) -> Optional[int]:
@@ -130,7 +130,7 @@ class TransactionBroadcastChangeAmountModel(AbstractTransactionAmountModel):
             self.refresh()
 
 
-class TransactionBroadcastReceiverModel(AbstractTransactionBroadcastStateModel):
+class TxBroadcastReceiverModel(AbstractTxBroadcastStateModel):
     __stateChanged = QSignal()
 
     def __init__(
@@ -158,7 +158,7 @@ class TransactionBroadcastReceiverModel(AbstractTransactionBroadcastStateModel):
         return ValidStatus.Reject
 
 
-class TransactionBroadcastInputListModel(TransactionIoListModel):
+class TxBroadcastInputListModel(TxIoListModel):
     __stateChanged = QSignal()
 
     def __init__(self, application: Application, source_list: Sequence) -> None:
@@ -186,7 +186,7 @@ class TransactionBroadcastInputListModel(TransactionIoListModel):
             self.__stateChanged.emit()
 
 
-class TransactionBroadcastModel(AbstractModel):
+class TxBroadcastModel(AbstractModel):
     def __init__(
             self,
             application: Application,
@@ -194,64 +194,75 @@ class TransactionBroadcastModel(AbstractModel):
         super().__init__(application)
         self._tx = tx
 
-        self._available_amount = TransactionBroadcastAvailableAmountModel(
+        self._available_amount = TxBroadcastAvailableAmountModel(
             self._application,
             self._tx)
         self.connectModelRefresh(self._available_amount)
 
-        self._amount = TransactionBroadcastAmountModel(
+        self._amount = TxBroadcastAmountModel(
             self._application,
             self._tx)
         self.connectModelRefresh(self._amount)
 
-        self._fee_amount = TransactionBroadcastFeeAmountModel(
+        self._fee_amount = TxBroadcastFeeAmountModel(
             self._application,
             self._tx)
         self.connectModelRefresh(self._fee_amount)
 
-        self._kib_fee_amount = TransactionBroadcastKibFeeAmountModel(
+        self._kib_fee_amount = TxBroadcastKibFeeAmountModel(
             self._application,
             self._tx)
         self.connectModelRefresh(self._kib_fee_amount)
 
-        self._change_amount = TransactionBroadcastChangeAmountModel(
+        self._change_amount = TxBroadcastChangeAmountModel(
             self._application,
             self._tx)
         self.connectModelRefresh(self._change_amount)
 
-        self._receiver = TransactionBroadcastReceiverModel(
+        self._receiver = TxBroadcastReceiverModel(
             self._application,
             self._tx)
         self.connectModelRefresh(self._receiver)
 
-        self._input_list = TransactionBroadcastInputListModel(
+        self._input_list = TxBroadcastInputListModel(
             self._application,
             self._tx.sources)
 
     @QProperty(QObject, constant=True)
-    def availableAmount(self) -> TransactionBroadcastAvailableAmountModel:
+    def availableAmount(self) -> TxBroadcastAvailableAmountModel:
         return self._available_amount
 
     @QProperty(QObject, constant=True)
-    def amount(self) -> TransactionBroadcastAmountModel:
+    def amount(self) -> TxBroadcastAmountModel:
         return self._amount
 
     @QProperty(QObject, constant=True)
-    def feeAmount(self) -> TransactionBroadcastFeeAmountModel:
+    def feeAmount(self) -> TxBroadcastFeeAmountModel:
         return self._fee_amount
 
     @QProperty(QObject, constant=True)
-    def kibFeeAmount(self) -> TransactionBroadcastKibFeeAmountModel:
+    def kibFeeAmount(self) -> TxBroadcastKibFeeAmountModel:
         return self._kib_fee_amount
 
     @QProperty(QObject, constant=True)
-    def changeAmount(self) -> TransactionBroadcastChangeAmountModel:
+    def changeAmount(self) -> TxBroadcastChangeAmountModel:
         return self._change_amount
 
     @QProperty(QObject, constant=True)
-    def receiver(self) -> TransactionBroadcastReceiverModel:
+    def receiver(self) -> TxBroadcastReceiverModel:
         return self._receiver
 
     @QProperty(QObject, constant=True)
-    def inputList(self) -> TransactionBroadcastInputListModel:
+    def inputList(self) -> TxBroadcastInputListModel:
         return self._input_list
+
+    # noinspection PyTypeChecker
+    @QSlot(result=bool)
+    def sign(self) -> bool:  # TODO ask password
+        pass
+
+    # noinspection PyTypeChecker
+    @QSlot(result=bool)
+    def broadcast(self) -> bool:
+        self._tx.send()  # TODO result
+        return True

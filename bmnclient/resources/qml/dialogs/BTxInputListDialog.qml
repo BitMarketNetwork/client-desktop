@@ -6,7 +6,7 @@ import "../coincontrols"
 
 BDialog {
     id: _base
-    property var inputList // TransactionBroadcastInputListModel
+    property var inputList // TxBroadcastInputListModel
 
     title: qsTr("Transaction inputs")
     contentItem: BDialogLayout {
