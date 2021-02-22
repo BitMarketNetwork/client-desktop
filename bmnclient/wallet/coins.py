@@ -23,10 +23,9 @@ def network_tag(net: coin_network.CoinNetworkBase) -> str:
 
 
 class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
-    rateChanged = qt_core.Signal() # TODO
+    rateChanged = qt_core.Signal()  # TODO
 
     name: str = None
-    _decimal_level: int = 0
     _test: bool = False
 
     # decimal points
@@ -111,15 +110,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     def txListSortedModel(self) -> TransactionListSortedModel:
         from ..ui.gui import Application
         return TransactionListSortedModel(Application.instance(), self._tx_list_model)
-
-    def balance_human(self, amount: float = None) -> str:
-        if amount is None:
-            amount = self._amount
-        res = amount / (10 ** self._DECIMAL_SIZE[1])
-        res = format(round(res, self._decimal_level), 'f')
-        if '.' in res:
-            return res.rstrip("0.") or "0"
-        return res
 
     def fiat_amount(self, amount: float) -> float:
         return amount * self._usd_rate / (10 ** self._DECIMAL_SIZE[1])
@@ -467,10 +457,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
     def test(self) -> bool:
         return self._test
 
-    @qt_core.Property(str, constant=True)
-    def defaultFee(self) -> str:
-        return self.balance_human(self._default_fee)
-
     @qt_core.Property("QVariantList", constant=True)
     def wallets(self) -> List[address.CAddress]:
         return self._address_list
@@ -491,7 +477,6 @@ class CoinType(db_entry.DbEntry, serialization.SerializeMixin):
 class Bitcoin(CoinType, coins.Bitcoin):
     name = "btc"
     network = coin_network.BitcoinMainNetwork
-    _decimal_level = 7
     _hd_index = 0
 
     def __init__(self):
@@ -509,7 +494,6 @@ class BitcoinTest(Bitcoin, coins.BitcoinTest):
 class Litecoin(CoinType, coins.Litecoin):
     name = "ltc"
     network = coin_network.LitecoinMainNetwork
-    _decimal_level = 7
     _hd_index = 2
 
     def __init__(self):

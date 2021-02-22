@@ -1,9 +1,9 @@
 # JOK++
 from __future__ import annotations
 
-from enum import Enum
+from enum import IntEnum
 from threading import Lock
-from typing import Optional, TYPE_CHECKING
+from typing import Iterable, Optional, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -17,10 +17,10 @@ if TYPE_CHECKING:
     from ..language import Locale
 
 
-class ValidStatus(Enum):
+class ValidStatus(IntEnum):
     Unset = 0
-    Accept = 1
-    Reject = 2
+    Reject = 1
+    Accept = 2
 
 
 class AbstractStateModel(QObject):
@@ -48,8 +48,12 @@ class AbstractStateModel(QObject):
         return ValidStatus.Accept
 
     @QProperty(int, notify=stateChanged)
-    def validStatus(self) -> int:
-        return self._getValidStatus().value
+    def validStatus(self) -> ValidStatus:
+        return self._getValidStatus()
+
+    @QProperty(bool, notify=stateChanged)
+    def isValid(self) -> bool:
+        return self._getValidStatus() == ValidStatus.Accept
 
 
 class AbstractModel(QObject):
@@ -60,22 +64,39 @@ class AbstractModel(QObject):
         self._refresh_lock = Lock()
         self._application = application
 
+    def iterateStateModels(self) -> Iterable[AbstractStateModel]:
+        for a in dir(self):
+            if a.startswith("_"):
+                a = getattr(self, a)
+                if isinstance(a, AbstractStateModel):
+                    yield a
+
     @property
     def locale(self) -> Locale:
         return self._application.language.locale
 
     def refresh(self, initiator: Optional[QObject] = None) -> None:
         if self._refresh_lock.acquire(False):
-            for a in dir(self):
-                if not a.startswith("_"):
-                    continue
-                a = getattr(self, a)
-                if not isinstance(a, AbstractStateModel):
-                    continue
-                if initiator is not a and hasattr(a, "refresh"):
+            for a in self.iterateStateModels():
+                if a is not initiator:
                     a.refresh()
             self._refresh_lock.release()
             self.stateChanged.emit()
 
     def connectModelRefresh(self, model: QObject) -> None:
         model.stateChanged.connect(lambda: self.refresh(model))
+
+    @QProperty(int, notify=stateChanged)
+    def validStatus(self) -> ValidStatus:
+        result = ValidStatus.Accept
+        for a in self.iterateStateModels():
+            a = a.validStatus
+            if a < result:
+                result = a
+        if result == ValidStatus.Unset:
+            result = ValidStatus.Reject
+        return result
+
+    @QProperty(bool, notify=stateChanged)
+    def isValid(self) -> bool:
+        return self.validStatus == ValidStatus.Accept

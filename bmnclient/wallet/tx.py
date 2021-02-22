@@ -298,10 +298,6 @@ class Transaction(db_entry.DbEntry, serialization.SerializeMixin):
     def unit(self) -> str:
         return self._address.coin.currency.unit
 
-    @qt_core.Property(str, constant=True)
-    def feeHuman(self) -> str:
-        return str(self._address.coin.balance_human(self.__fee))
-
     @qt_core.Property(int, constant=True)
     def feeFiatBalance(self) -> int:
         return self._address.coin.fiat_amount(self.__fee)

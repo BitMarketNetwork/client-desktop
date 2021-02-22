@@ -15,7 +15,6 @@ log = logging.getLogger(__name__)
 class TxController(QObject):
     changeChanged = QSignal()
     canSendChanged = QSignal()
-    maxAmountChanged = QSignal()
     confirmChanged = QSignal()
     changeAddressChanged = QSignal()
     sourceModelChanged = QSignal()
@@ -44,6 +43,8 @@ class TxController(QObject):
         self.use_hint = True
 
         self._model = TransactionBroadcastModel(self._application, self.__tx)
+        self._model.stateChanged.connect(self.__validate_change)
+
 
     @QProperty(QObject, constant=True)
     def model(self) -> TransactionBroadcastModel:
@@ -51,7 +52,7 @@ class TxController(QObject):
 
     @QSlot()
     def balance_changed(self) -> None:
-        self.maxAmountChanged.emit()
+        self._model.refresh()
         if self.__negative_change and self.use_hint:
             if self.__tx.source_amount is not None:
                 self.__tx.amount = self.__tx.source_amount
@@ -72,43 +73,10 @@ class TxController(QObject):
     def changeAddress(self):
         return self.__tx.leftover_address
 
-    @QProperty('QVariantList', notify=sourceModelChanged)
-    def sourceModel(self):
-        return self.__tx.sources
-
     @QProperty(int, notify=confirmChanged)
     def confirmTime(self):
         "minutes"
         return self.__tx.estimate_confirm_time()
-
-    @QProperty(bool, notify=canSendChanged)
-    def canSend(self) -> bool:
-        log.debug(
-            f"amount: {self.__tx.amount} source amount:{self.__tx.source_amount } change:{self.__tx.change} fee:{self.__tx.fee}")
-        if self.__tx.amount <= 0 or self.__tx.fee < 0:
-            log.debug("negative amount or change")
-            return False
-        if self.__tx.change < 0:
-            log.debug("negative change")
-            return False
-        if self.__tx.spb < self.__tx.MIN_SPB_FEE:
-            log.debug("too low SPB")
-            return False
-        if self.__tx.subtract_fee and self.__tx.fee >= self.__tx.amount:
-            log.debug("fee is more than amount")
-            return False
-        if not self.__tx.receiver_valid:
-            log.debug("wrong receiver")
-            return False
-        if self.__tx.amount > self.__tx.source_amount:
-            log.debug("amount more than balance")
-            return False
-        return True
-
-    @QProperty('QVariantList', constant=True)
-    def targetList(self):
-        # if addr is not self.__cm.address] # why not?
-        return [addr.name for addr in self.__cm.coin.wallets]
 
     @QProperty(bool, notify=useCoinBalanceChanged)
     def useCoinBalance(self) -> bool:
@@ -121,8 +89,8 @@ class TxController(QObject):
         self.__tx.use_coin_balance = value
         self.__tx.recalc_sources(True)
         self.__validate_change()
+        self._model.refresh()
         self.useCoinBalanceChanged.emit()
-        self.maxAmountChanged.emit()
         self.changeChanged.emit()
         self.sourceModelChanged.emit()
         self.canSendChanged.emit()
@@ -130,9 +98,9 @@ class TxController(QObject):
     @QSlot()
     def recalcSources(self):
         self.__tx.recalc_sources()
-        self.maxAmountChanged.emit()
         self.canSendChanged.emit()
         self.changeChanged.emit()
+        self._model.refresh()
 
     @QSlot(result=bool)
     def prepareSend(self):

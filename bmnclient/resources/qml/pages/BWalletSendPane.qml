@@ -125,32 +125,29 @@ BPane {
             BLayout.columnSpan: parent.columns - 1
             text: "Select inputs..."
             onClicked: {
-                        _inputListDialog.open()
-                    }
-                }
+                _inputListDialog.open()
+            }
+        }
 
-                BDialogInputButtonBox {
-                    BButton {
-                        id: _acceptButton
-                        BDialogButtonBox.buttonRole: BDialogButtonBox.AcceptRole
-                        text: qsTr("Prepare...")
-                        enabled: _tx_controller.canSend
-                    }
-                    BButton {
-                        BDialogButtonBox.buttonRole: BDialogButtonBox.ResetRole
-                        text: BStandardText.button.resetRole
-                    }
-                    onReset: {
-                    }
-                    onAccepted: {
-                        if (_tx_controller.prepareSend()) {
-                            _approveDialog.type = BTxApproveDialog.Type.Prepare
-                            _approveDialog.txText = ""
-                            _approveDialog.open()
-                        }
-                    }
+        BDialogInputButtonBox {
+            BButton {
+                BDialogButtonBox.buttonRole: BDialogButtonBox.AcceptRole
+                text: qsTr("Prepare...")
+                enabled: _tx_controller.model.isValid
+            }
+            BButton {
+                BDialogButtonBox.buttonRole: BDialogButtonBox.ResetRole
+                text: BCommon.button.resetRole
+            }
+            onReset: {
+                // TODO
+            }
+            onAccepted: {
+                if (_tx_controller.model.isValid) {
+                    _approveDialog.type = BTxApproveDialog.Type.Prepare
+                    _approveDialog.txText = ""
+                    _approveDialog.open()
                 }
-                BDialogSpacer {}
             }
         }
     }

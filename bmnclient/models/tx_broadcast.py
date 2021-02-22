@@ -6,7 +6,8 @@ from typing import Optional, Sequence, TYPE_CHECKING
 from PySide2.QtCore import \
     Property as QProperty, \
     QObject, \
-    Signal as QSignal
+    Signal as QSignal, \
+    Slot as QSlot
 
 from . import AbstractModel, AbstractStateModel, ValidStatus
 from .amount import AmountInputModel, AmountModel
@@ -65,10 +66,10 @@ class TransactionBroadcastAmountModel(AbstractTransactionAmountInputModel):
         return None if v < 0 else v   # TODO
 
     def _getValidStatus(self) -> ValidStatus:
-        if self._tx.amount >= 0:   # TODO
-            return ValidStatus.Accept
-        else:
-            return ValidStatus.Reject
+        if self._tx.amount >= 0 and self._tx.change >= 0:   # TODO
+            if self._tx.amount <= self._tx.source_amount:
+                return ValidStatus.Accept
+        return ValidStatus.Reject
 
 
 class TransactionBroadcastFeeAmountModel(AbstractTransactionAmountModel):
@@ -105,10 +106,11 @@ class TransactionBroadcastKibFeeAmountModel(
         return None if v < 0 else (v * 1024)
 
     def _getValidStatus(self) -> ValidStatus:
-        if self._tx.spb >= 0:  # TODO
-            return ValidStatus.Accept
-        else:
+        if self._tx.spb < 0:  # TODO
             return ValidStatus.Reject
+        if self._tx.subtract_fee and self._tx.fee > self._tx.amount:  # TODO
+            return ValidStatus.Reject
+        return ValidStatus.Accept
 
 
 class TransactionBroadcastChangeAmountModel(AbstractTransactionAmountModel):
