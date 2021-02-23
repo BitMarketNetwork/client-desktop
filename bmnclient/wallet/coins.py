@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import itertools
 import logging
 from typing import Iterable, List, Optional, Union
@@ -6,12 +8,6 @@ import PySide2.QtCore as qt_core
 
 from . import address, coin_network, db_entry, hd, key, root_address
 from .. import coins, meta
-from ..models.address import AddressListModel, AddressListSortedModel
-from ..models.coin import \
-    CoinAmountModel, \
-    CoinRemoteStateModel, \
-    CoinStateModel
-from ..models.tx import TxListModel, TxListSortedModel, TxListConcatenateModel
 
 log = logging.getLogger(__name__)
 
@@ -46,7 +42,6 @@ class CoinType(db_entry.DbEntry):
 
     def __init__(self):
         super().__init__()
-        self._address_list = []
 
         self._remote = {}  # TODO
 
@@ -65,51 +60,6 @@ class CoinType(db_entry.DbEntry):
         self.root = root_address.RootAddress(self)
         self.addAddress.connect(self.addAddressImpl,
                                 qt_core.Qt.QueuedConnection)
-
-        from ..ui.gui import Application
-        self._amount_model = CoinAmountModel(Application.instance(), self)
-        self._state_model = CoinStateModel(Application.instance(), self)
-        self._remote_state_model = CoinRemoteStateModel(Application.instance(), self)
-        self._address_list_model = AddressListModel(Application.instance(), self)
-        self._tx_list_model = TransactionListConcatenateModel(Application.instance())
-
-    def __str__(self) -> str:
-        return f"<{self.fullName},{self.rowid} vis:{self.__visible}>"
-
-    @property
-    def amountModel(self) -> CoinAmountModel:
-        return self._amount_model
-
-    @property
-    def stateModel(self) -> CoinStateModel:
-        return self._state_model
-
-    @property
-    def remoteStateModel(self) -> CoinRemoteStateModel:
-        return self._remote_state_model
-
-    @property
-    def addressListModel(self) -> AddressListModel:
-        return self._address_list_model
-
-    def addressListSortedModel(self) -> AddressListSortedModel:
-        from ..ui.gui import Application
-        return AddressListSortedModel(Application.instance(), self._address_list_model)
-
-    @property
-    def addressList(self) -> List[address.CAddress]:
-        return self._address_list
-
-    @property
-    def txListModel(self) -> TransactionListModel:
-        return self._tx_list_model
-
-    def txListSortedModel(self) -> TransactionListSortedModel:
-        from ..ui.gui import Application
-        return TransactionListSortedModel(Application.instance(), self._tx_list_model)
-
-    def fiat_amount(self, amount: float) -> float:
-        return amount * self._usd_rate / (10 ** self._DECIMAL_SIZE[1])
 
     def hd_address(self, hd_index: int) -> str:
         if self.__hd_node is None:

@@ -48,7 +48,7 @@ class CAddress(db_entry.DbEntry):
     txCountChanged = qt_core.Signal()
 
     def __init__(self, name: str, coin: Optional["coins.CoinType"] = None, *, created: bool = False):
-        super().__init__(parent=coin)
+        super().__init__()
         assert(name)
         self._tx_list = []
         self._set_object_name(name)

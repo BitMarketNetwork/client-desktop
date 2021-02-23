@@ -8,12 +8,12 @@ from ..crypto.bech32 import Bech32
 from ..crypto.digest import Ripemd160Digest, Sha256Digest
 
 
-class AddressBase:
+class AbstractAddress:
     def __init__(self, data: bytes) -> None:
         self._data = data
 
     @classmethod
-    def decode(cls, source: str) -> Optional[AddressBase]:
+    def decode(cls, source: str) -> Optional[AbstractAddress]:
         raise NotImplementedError
 
     @property
@@ -21,7 +21,7 @@ class AddressBase:
         return self._data
 
 
-class BitcoinAddress(AddressBase):
+class BitcoinAddress(AbstractAddress):
     _PUBKEY_HASH_PREFIX_LIST = ("1",)
     _SCRIPT_HASH_PREFIX_LIST = ("3",)
     _HRP = "bc"

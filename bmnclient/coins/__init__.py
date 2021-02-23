@@ -1,28 +1,30 @@
 # JOK++
 from __future__ import annotations
 
-from typing import Optional, Type
 import math
+from typing import List, Optional, Type
+
 from .currency import \
     AbstractCurrency, \
-    FiatRate, \
     FiatCurrency, \
+    FiatRate, \
     UsdFiatCurrency
 from ..utils.meta import classproperty
 
 
-class AbstractCoin:  # TODO ABCMeta
+class AbstractCoin:
     _SHORT_NAME = ""
     _FULL_NAME = ""
 
     class _Currency(AbstractCurrency):
         pass
 
-    from .address import AddressBase as _Address
+    from .address import AbstractAddress as _Address
 
     def __init__(self) -> None:
         self._fiat_rate = FiatRate(0, UsdFiatCurrency)
         self._amount = 0
+        self._address_list = []
 
     @classproperty
     def shortName(cls) -> str: # noqa
@@ -40,6 +42,13 @@ class AbstractCoin:  # TODO ABCMeta
     @classproperty
     def address(cls) -> Type[_Address]: # noqa
         return cls._Address
+
+    def putAddress(self, address: _Address) -> None:
+        self._address_list.append(address)
+
+    @property
+    def addressList(self) -> List[_Address]:
+        return self._address_list
 
     @classproperty
     def currency(cls) -> Type[_Currency]: # noqa

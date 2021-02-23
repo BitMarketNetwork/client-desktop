@@ -289,10 +289,6 @@ class Transaction(db_entry.DbEntry):
     def unit(self) -> str:
         return self._address.coin.currency.unit
 
-    @qt_core.Property(int, constant=True)
-    def feeFiatBalance(self) -> int:
-        return self._address.coin.fiat_amount(self.__fee)
-
     @qt_core.Property(str, constant=True)
     def timeHuman(self) -> str:
         return datetime.datetime.fromtimestamp(self.__time).strftime("%x %X")

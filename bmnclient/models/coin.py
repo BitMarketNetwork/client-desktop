@@ -11,7 +11,10 @@ from PySide2.QtCore import \
     Slot as QSlot
 
 from . import AbstractModel, AbstractStateModel
-from .address import AddressListModel, AddressListSortedModel
+from .address import \
+    AddressListModel, \
+    AddressListSortedModel, \
+    AddressModel
 from .amount import AmountModel
 from .list import \
     AbstractListModel, \
@@ -20,6 +23,8 @@ from .tx import \
     TxListConcatenateModel, \
     TxListModel, \
     TxListSortedModel
+from ..coins.address import AbstractAddress
+from ..utils.meta import classproperty
 
 if TYPE_CHECKING:
     from ..ui.gui import Application

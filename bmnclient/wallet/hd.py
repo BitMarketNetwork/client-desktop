@@ -20,7 +20,7 @@ class HDError(Exception):
 
 
 # https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
-class HDNode(key.AddressBase):
+class HDNode(key.AbstractAddress):
     def __init__(self, key: key.PrivateKey, parent=None):
         """
         TODO:

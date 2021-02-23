@@ -367,6 +367,9 @@ class MutableTransaction:
     def fee(self) -> int:
         return int(self._spb * self.tx_size)
 
+    def fee_default(self):
+        return int(self.__fee_man.max_spb * self.tx_size)
+
     @fee.setter
     def fee(self, value: int):
         self._spb = value // self.tx_size
@@ -387,6 +390,9 @@ class MutableTransaction:
     def subtract_fee(self, value: bool) -> None:
         self.__substract_fee = value
         self.filter_sources()
+
+    def spb_default(self):
+        return self.__fee_man.max_spb
 
     @ property
     def spb(self) -> int:

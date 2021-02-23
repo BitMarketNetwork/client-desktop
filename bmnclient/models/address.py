@@ -64,6 +64,11 @@ class AddressAmountModel(AbstractAddressAmountModel):
         return self._address.balance
 
 
+class AddressModel(AbstractModel):
+    # TODO
+    pass
+
+
 class AddressListModel(AbstractListModel):
     class Role(RoleEnum):
         NAME: Final = auto()
@@ -93,8 +98,3 @@ class AddressListSortedModel(AbstractListSortedModel):
             application: Application,
             source_model: AddressListModel) -> None:
         super().__init__(application, source_model, AddressListModel.Role.NAME)
-
-
-class AddressModel(AbstractModel):
-    # TODO
-    pass

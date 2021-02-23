@@ -1,16 +1,9 @@
-import logging
-
-import PySide2.QtCore as qt_core
-
-from bmnclient import meta
-
-log = logging.getLogger(__name__)
+from PySide2.QtCore import QObject
 
 
-class DbEntry(meta.QSeq):
-
-    def __init__(self, parent=None):
-        super().__init__(parent=parent)
+class DbEntry(QObject):
+    def __init__(self):
+        super().__init__()
         self._rowid = None
 
     def __get_rowid(self):
@@ -24,6 +17,6 @@ class DbEntry(meta.QSeq):
         raise NotImplementedError()
 
     def _set_object_name(self, name):
-        super().setObjectName(name)
+        self.setObjectName(name)
 
     rowid = property(__get_rowid, __set_rowid)

@@ -50,7 +50,7 @@ class AddressString:
         return hrp is not None
 
 
-class AddressBase(abc.ABC):
+class AbstractAddress(abc.ABC):
 
     @abc.abstractproperty
     def to_address(self, type_):
@@ -119,7 +119,7 @@ class Keybase(abc.ABC):
         return self._network
 
 
-class PublicKey(Keybase, AddressBase):
+class PublicKey(Keybase, AbstractAddress):
 
     # def __init__(self, data: Union[bytes, ec.EllipticCurvePublicKey], network: coin_network.CoinNetworkBase, compressed: bool = True):
     def __init__(self, data: Union[bytes, ecdsa.VerifyingKey], network: coin_network.CoinNetworkBase, compressed: bool = True):
@@ -170,7 +170,7 @@ class PublicKey(Keybase, AddressBase):
         return constants.OP_0 + constants.OP_PUSH_20 + util.hash160(self._data)
 
 
-class PrivateKey(Keybase, AddressBase):
+class PrivateKey(Keybase, AbstractAddress):
     EC_CURVE = ec.SECP256K1()
 
     def __init__(self, data: bytes, network: coin_network.CoinNetworkBase, compressed=True):
