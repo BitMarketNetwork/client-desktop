@@ -6,8 +6,7 @@ from typing import List, Optional, Union, TYPE_CHECKING
 import PySide2.QtCore as qt_core
 
 from . import db_entry, hd, key, mtx_impl
-from ..models.address import AddressAmountModel, AddressStateModel
-from ..models.tx import TxListModel, TxListSortedModel
+from ..coins.address import AbstractAddress
 
 if TYPE_CHECKING:
     from .tx import Transaction
@@ -32,20 +31,19 @@ class AddressError(Exception):
     pass
 
 
-class CAddress(db_entry.DbEntry):
+class CAddress(db_entry.DbEntry, AbstractAddress):
     is_root = False
     balanceChanged = qt_core.Signal()
     labelChanged = qt_core.Signal()
     lastOffsetChanged = qt_core.Signal()
     useAsSourceChanged = qt_core.Signal()
     heightChanged = qt_core.Signal()
-    #
     txCountChanged = qt_core.Signal()
 
     def __init__(self, name: str, coin: Optional["coins.CoinType"] = None, *, created: bool = False):
         super().__init__()
+        AbstractAddress.__init__(self, b'')
         assert(name)
-        self._tx_list = []
         self._set_object_name(name)
         self.coin = coin
         self.__name = name
@@ -79,21 +77,6 @@ class CAddress(db_entry.DbEntry):
         # this map can be updated before each transaction
         self.__unspents = []
 
-    @property
-    def amountModel(self) -> AddressAmountModel:
-        return self._amount_model
-
-    @property
-    def stateModel(self) -> AddressStateModel:
-        return self._state_model
-
-    @property
-    def txListModel(self) -> TxListModel:
-        return self._tx_list_model
-
-    def txListSortedModel(self) -> TxListSortedModel:
-        return TxListSortedModel(self._tx_list_model)
-
     def create(self):
         self.__created = datetime.now()
 
@@ -124,16 +107,7 @@ class CAddress(db_entry.DbEntry):
         self._coin = value
         if value is None:
             return
-        from ..ui.gui import Application
-        self._amount_model = AddressAmountModel(Application.instance(), self)
-        self._amount_model.moveToThread(Application.instance().thread())
-        self._state_model = AddressStateModel(Application.instance(), self)
-        self._state_model.moveToThread(Application.instance().thread())
-        self._tx_list_model = TxListModel(Application.instance(), self._tx_list)
-        self._tx_list_model.moveToThread(Application.instance().thread())
-
-        self._coin.heightChanged.connect(
-            self.heightChanged, qt_core.Qt.UniqueConnection)
+        self._coin.heightChanged.connect(self.heightChanged)
 
     @property
     def hd_index(self) -> Optional[int]:
@@ -229,11 +203,6 @@ class CAddress(db_entry.DbEntry):
         return any(self.name == o.address for o in tx.output_iter)
 
     def add_tx(self, tx: Transaction, check_new=False):
-        """
-        too heavy for multiple items
-
-        important thing.. we call it from mempool only!!!!
-        """
         if tx in self._tx_list:
             tx_ex = next(
                 (t for t in self._tx_list if t.name == tx.name), None)
@@ -261,9 +230,6 @@ class CAddress(db_entry.DbEntry):
         self.txCountChanged.emit()
 
     def add_tx_list(self, txs: list, check_new=False):
-        """
-        pay attention !! this scope very important
-        """
         unique = []
         not_unique = []
         for tx in txs:

@@ -7,7 +7,9 @@ from typing import Final, Optional, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
-    Signal as QSignal
+    QObject, \
+    Signal as QSignal, \
+    Slot as QSlot
 
 from . import AbstractModel, AbstractStateModel
 from .amount import AmountModel
@@ -17,8 +19,10 @@ from .list import \
     RoleEnum
 
 if TYPE_CHECKING:
+    from .tx import TxListModel, TxListSortedModel
     from ..ui.gui import Application
     from ..wallet.address import CAddress
+    from ..wallet.tx import Transaction
 
 
 class AbstractAddressStateModel(AbstractStateModel):

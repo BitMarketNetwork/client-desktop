@@ -76,6 +76,12 @@ class TxFeeAmountModel(AbstractTxAmountModel):
         return self._tx.fee
 
 
+class TxModel(AbstractModel):
+    def __init__(self, application: Application, tx: Transaction) -> None:
+        super().__init__(application, tx)
+        self._tx = tx
+
+
 class TxIoListModel(AddressListModel):
     pass
 
@@ -124,8 +130,3 @@ class TxListSortedModel(AbstractListSortedModel):
             application,
             source_model,
             TxListModel.Role.HASH)
-
-
-class TxModel(AbstractModel):
-    # TODO
-    pass

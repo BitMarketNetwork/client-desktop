@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Optional, Final
+from typing import Final, List, Optional
 
 from ..crypto.base58 import Base58
 from ..crypto.bech32 import Bech32
@@ -9,8 +9,11 @@ from ..crypto.digest import Ripemd160Digest, Sha256Digest
 
 
 class AbstractAddress:
+    from .tx import AbstractTx as _Tx
+
     def __init__(self, data: bytes) -> None:
         self._data = data
+        self._tx_list = []
 
     @classmethod
     def decode(cls, source: str) -> Optional[AbstractAddress]:

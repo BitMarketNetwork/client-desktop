@@ -43,6 +43,10 @@ class AbstractCoin:
     def address(cls) -> Type[_Address]: # noqa
         return cls._Address
 
+    @property
+    def addressList(self) -> List[_Address]:
+        return self._address_list
+
     def findAddressByName(self, name: str) -> Optional[_Address]:
         name = name.strip().casefold()  # TODO tmp, old wrapper
         for address in self._address_list:
@@ -56,10 +60,6 @@ class AbstractCoin:
             return False
         self._address_list.append(address)
         return True
-
-    @property
-    def addressList(self) -> List[_Address]:
-        return self._address_list
 
     @classproperty
     def currency(cls) -> Type[_Currency]: # noqa
