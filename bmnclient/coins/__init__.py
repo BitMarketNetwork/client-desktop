@@ -43,8 +43,19 @@ class AbstractCoin:
     def address(cls) -> Type[_Address]: # noqa
         return cls._Address
 
-    def putAddress(self, address: _Address) -> None:
+    def findAddressByName(self, name: str) -> Optional[_Address]:
+        name = name.strip().casefold()  # TODO tmp, old wrapper
+        for address in self._address_list:
+            if name == address.name.casefold():
+                return address
+        return None
+
+    def putAddress(self, address: _Address, *, check=True) -> bool:
+        # TODO tmp, old wrapper
+        if check and self.findAddressByName(address.name) is not None:  # noqa
+            return False
         self._address_list.append(address)
+        return True
 
     @property
     def addressList(self) -> List[_Address]:

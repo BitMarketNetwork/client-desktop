@@ -102,13 +102,9 @@ class CoinType(db_entry.DbEntry):
         wallet._message = message
         # log.debug(
         #     f"New wallet {wallet}  created from HD: {new_hd.chain_path} net:{self.network}")
-        #if self.parent():
-        if True:
-            from ..application import CoreApplication
-            CoreApplication.instance().databaseThread.save_wallet(wallet)
-            self.addAddress.emit(wallet)
-        else:
-            self.addAddressImpl(wallet)
+        from ..application import CoreApplication
+        CoreApplication.instance().databaseThread.save_wallet(wallet)
+        self.addAddress.emit(wallet)
         return wallet
 
     def add_watch_address(self, name: str, label: str = "") -> address.CAddress:
@@ -116,14 +112,9 @@ class CoinType(db_entry.DbEntry):
         adr = address.CAddress(name, self, created=True)
         adr.create()
         adr.label = label
-        #if self.parent():
-        if True:
-            self.addAddress.emit(adr)
-            from ..application import CoreApplication
-            CoreApplication.instance().databaseThread.save_wallet(adr)
-        else:
-            # for tests
-            self.addAddressImpl(adr)
+        self.addAddress.emit(adr)
+        from ..application import CoreApplication
+        CoreApplication.instance().databaseThread.save_wallet(adr)
         return adr
 
     def append_address(self, name: str, *args) -> address.CAddress:
@@ -136,15 +127,7 @@ class CoinType(db_entry.DbEntry):
         if has:
             log.warn(f"Address {name} already exists")
             return has[0]
-        #
-        if qt_core.QThread.currentThread() != self.thread():
-            w = address.CAddress(name)
-            w.moveToThread(self.thread())
-            w.setParent(self)
-            # USE SETTER !!! pay attention to connections
-            w.coin = self
-        else:
-            w = address.CAddress(name, self)
+        w = address.CAddress(name, self)
         w.create()
         if args:
             try:

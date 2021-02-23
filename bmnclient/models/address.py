@@ -65,8 +65,9 @@ class AddressAmountModel(AbstractAddressAmountModel):
 
 
 class AddressModel(AbstractModel):
-    # TODO
-    pass
+    def __init__(self, application: Application, address: CAddress) -> None:
+        super().__init__(application, address)
+        self._address = address
 
 
 class AddressListModel(AbstractListModel):

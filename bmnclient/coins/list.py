@@ -8,11 +8,11 @@ from ..wallet import coins
 
 
 class CoinList(Sequence):
-    def __init__(self, model: Type, **kwargs) -> None:
+    def __init__(self, wrapper: Type, **kwargs) -> None:
         self._list = (
-            type("Bitcoin", (model, coins.Bitcoin), {})(**kwargs),
-            type("BitcoinTest", (model, coins.BitcoinTest), {})(**kwargs),
-            type("Litecoin", (model, coins.Litecoin), {})(**kwargs),
+            wrapper(**kwargs, coin=coins.Bitcoin()),
+            wrapper(**kwargs, coin=coins.BitcoinTest()),
+            wrapper(**kwargs, coin=coins.Litecoin()),
         )
 
     def __iter__(self) -> Iterator[coins.CoinType]:

@@ -23,10 +23,10 @@ from .tx import \
     TxListConcatenateModel, \
     TxListModel, \
     TxListSortedModel
-from ..coins.address import AbstractAddress
-from ..utils.meta import classproperty
+from ..wallet.address import CAddress
 
 if TYPE_CHECKING:
+    from ..wallet.coins import CoinType
     from ..ui.gui import Application
 
 
@@ -79,19 +79,28 @@ class CoinAmountModel(AmountModel):
 
 
 class CoinModel(AbstractModel):
-    def __init__(self, application: Application) -> None:
-        super().__init__(application)
+    def __init__(self, application: Application, coin: CoinType) -> None:
+        super().__init__(application, coin)
+        self._coin = coin
 
-        self._amount_model = CoinAmountModel(self._application, self)
+        self._amount_model = CoinAmountModel(
+            self._application,
+            self._coin)
         self.connectModelRefresh(self._amount_model)
 
-        self._state_model = CoinStateModel(self._application, self)
+        self._state_model = CoinStateModel(
+            self._application,
+            self._coin)
         self.connectModelRefresh(self._state_model)
 
-        self._remote_state_model = CoinRemoteStateModel(self._application, self)
+        self._remote_state_model = CoinRemoteStateModel(
+            self._application,
+            self._coin)
         self.connectModelRefresh(self._remote_state_model)
 
-        self._address_list_model = AddressListModel(self._application, self)
+        self._address_list_model = AddressListModel(
+            self._application,
+            self._coin.addressList)
         self._tx_list_model = TxListConcatenateModel(self._application)
 
     @QProperty(QObject, constant=True)
@@ -125,6 +134,22 @@ class CoinModel(AbstractModel):
     @QSlot(result=QObject)
     def txListSortedModel(self) -> TxListSortedModel:
         return TxListSortedModel(self._application, self._tx_list_model)
+
+    def putAddress(self, address: CAddress, *, check=True) -> bool:
+        # TODO tmp, old wrapper
+        if check and self._coin.findAddressByName(address.name) is not None:
+            return False
+
+        address = AddressModel(self._application, address)
+        with self._address_list_model.lockInsertRows():
+            self._coin.putAddress(address, check=False)
+        self._tx_list_model.addSourceModel(address.txListModel)
+
+        # TODO
+        self._coin.update_balance()
+        self._amount_model.refresh()
+        self._application.networkThread.update_wallet(address)
+        return True
 
 
 class CoinListModel(AbstractListModel):

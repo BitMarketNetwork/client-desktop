@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from enum import IntEnum
 from threading import Lock
-from typing import Iterable, Optional, TYPE_CHECKING
+from typing import Any, Iterable, Optional, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -56,13 +56,23 @@ class AbstractStateModel(QObject):
         return self._getValidStatus() == ValidStatus.Accept
 
 
-class AbstractModel(QObject):
+class AbstractModelMeta(type(QObject)):
+    def __getattr__(self, name: str) -> Any:
+        # TODO
+        raise AttributeError
+
+
+class AbstractModel(QObject, metaclass=AbstractModelMeta):
     stateChanged = QSignal()
 
-    def __init__(self, application: Application) -> None:
+    def __init__(self, application: Application, owner: object) -> None:
         super().__init__()
+        self.__owner = owner
         self._refresh_lock = Lock()
         self._application = application
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.__owner, name)
 
     def iterateStateModels(self) -> Iterable[AbstractStateModel]:
         for a in dir(self):
