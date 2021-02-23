@@ -33,12 +33,7 @@ class AddressError(Exception):
 
 
 class CAddress(db_entry.DbEntry):
-    # get unspents once a minute
-    UNSPENTS_TIMEOUT = 60000
     is_root = False
-    """
-    one entry in wallet
-    """
     balanceChanged = qt_core.Signal()
     labelChanged = qt_core.Signal()
     lastOffsetChanged = qt_core.Signal()
@@ -177,7 +172,7 @@ class CAddress(db_entry.DbEntry):
 
     @property
     def wants_update_unspents(self) -> bool:
-        return self.__unspents_time.isNull() or self.__unspents_time.elapsed() > self.UNSPENTS_TIMEOUT
+        return self.__unspents_time.isNull() or self.__unspents_time.elapsed() > 60000
 
     def process_unspents(self, unspents: List[dict]) -> None:
         def mapper(table):
@@ -478,7 +473,7 @@ class CAddress(db_entry.DbEntry):
         self.balanceChanged.emit()
         self._amount_model.refresh()
         if self._coin is not None:
-            self._coin.update_balance()
+            self._coin.refreshAmount()
 
     @qt_core.Property(str, notify=labelChanged)
     def label(self) -> str:

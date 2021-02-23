@@ -395,7 +395,7 @@ class LookForHDAddresses(AddressInfoCommand):
             self._hd: hd.HDNode = hd_ or coin.hd_address(hd_index)
             self._address: str = self._hd.to_address(
                 key.AddressType.P2WPKH if segwit else key.AddressType.P2PKH)
-            while self._address in self._coin:
+            while self._address in self._coin.addressList:
                 if self.verbose:
                     log.warning(f"address exists :{self._address}")
                 self._empty_count = 0
@@ -427,7 +427,9 @@ class LookForHDAddresses(AddressInfoCommand):
         else:
             self._empty_count = 0
             # TODO: we can provide some information to new address
-            wallet = self._coin.append_address(self._address)
+            wallet = address.CAddress(self._address, self._coin)
+            wallet.create()
+            self._coin.putAddress(wallet)
             wallet.set_prv_key(self._hd)
             log.debug(
                 f"New no empty address found: {wallet}")
@@ -779,7 +781,7 @@ class MempoolMonitorCommand(AbstractMultyMempoolCommand):
     verbose = True
 
     def __init__(self, coin: coins.CoinType, parent, hash_=None):
-        super().__init__(wallet_list=iter(coin), parent=parent, hash_=hash_)
+        super().__init__(wallet_list=iter(coin.addressList), parent=parent, hash_=hash_)
         self._coin = coin
 
     def on_data_end(self, http_code):

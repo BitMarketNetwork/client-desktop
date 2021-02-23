@@ -130,7 +130,7 @@ class DbWrapper:
         #
         if read_addresses:
             self._read_address_list(coin)
-        coin.update_balance()
+        coin.refreshAmount()
 
     def _update_coin(self, coin: coins.CoinType) -> None:
         """
@@ -186,7 +186,10 @@ class DbWrapper:
         with closing(self.__exec(query, (coin.rowid,))) as c:
             fetch = c.fetchall()
         for values in fetch:
-            wallet = coin.append_address(*values)
+            wallet = address.CAddress(values[0], c)
+            wallet.create()
+            wallet.from_args(iter(values[1:]))
+            c.putAddress(wallet)
             self._read_tx_list(wallet)
             wallet.valid = True
             ##
@@ -576,10 +579,13 @@ class DbWrapper:
                     log.critical(
                         f"No coin with row id:{values[0]} in {coin_map.keys()}")
                     continue
-            addr = coin_cur.append_address(*values[1:])
+            addr = address.CAddress(values[1], coin_cur)
+            addr.create()
+            addr.from_args(iter(values[2:]))
+            coin_cur.putAddress(addr)
             adds.append(addr)
         for coin in coin_map.values():
-            coin.update_balance()
+            coin.refreshAmount()
         return adds
 
     def _read_all_tx(self, adds: List[address.CAddress]) -> List[Transaction]:

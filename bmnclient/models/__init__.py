@@ -74,6 +74,14 @@ class AbstractModel(QObject, metaclass=AbstractModelMeta):
     def __getattr__(self, name: str) -> Any:
         return getattr(self.__owner, name)
 
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name.startswith("_") or name == "stateChanged":
+            super().__setattr__(name, value)
+        elif hasattr(self.__owner, name):
+            setattr(self.__owner, name, value)
+        else:
+            raise AttributeError
+
     def iterateStateModels(self) -> Iterable[AbstractStateModel]:
         for a in dir(self):
             if a.startswith("_"):

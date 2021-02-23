@@ -31,10 +31,8 @@ class CoinType(db_entry.DbEntry):
     #
     statusChanged = qt_core.Signal()
     heightChanged = qt_core.Signal()
-    balanceChanged = qt_core.Signal()
     visibleChanged = qt_core.Signal()
     invalidServer = qt_core.Signal()
-    addAddress = qt_core.Signal(address.CAddress)
 
     @meta.classproperty
     def all(cls) -> Iterable:  # pylint: disable=E0213
@@ -58,8 +56,6 @@ class CoinType(db_entry.DbEntry):
         self.__hd_node = None
         self.__visible = True
         self.root = root_address.RootAddress(self)
-        self.addAddress.connect(self.addAddressImpl,
-                                qt_core.Qt.QueuedConnection)
 
     def hd_address(self, hd_index: int) -> str:
         if self.__hd_node is None:
@@ -68,16 +64,6 @@ class CoinType(db_entry.DbEntry):
             hd_index,
             False,
             self.network)
-
-    @qt_core.Slot(address.CAddress)
-    def addAddressImpl(self, wallet: address.CAddress) -> None:
-        assert qt_core.QThread.currentThread() == self.thread()
-        with self._address_list_model.lockInsertRows():
-            self._address_list.append(wallet)
-        self.update_balance()
-        self._tx_list_model.addSourceModel(wallet.txListModel)
-        from ..ui.gui import Application
-        Application.instance().networkThread.update_wallet(wallet)
 
     def _next_hd_index(self):
         idxs = [a.hd_index for a in self._address_list]
@@ -117,28 +103,6 @@ class CoinType(db_entry.DbEntry):
         CoreApplication.instance().databaseThread.save_wallet(adr)
         return adr
 
-    def append_address(self, name: str, *args) -> address.CAddress:
-        assert isinstance(name, str), f"name is {type(name)}: {name}"
-        """
-        make address structure from data.
-        """
-        has = [n for n in self._address_list if name.strip().casefold() ==
-               n.name.casefold()]
-        if has:
-            log.warn(f"Address {name} already exists")
-            return has[0]
-        w = address.CAddress(name, self)
-        w.create()
-        if args:
-            try:
-                w.from_args(iter(args))
-            except TypeError as terr:
-                log.warning(
-                    f"bad arguments: {args} for loading address:{terr}")
-        self.addAddress.emit(w)
-
-        return w
-
     @classmethod
     def match(cls, name: str) -> bool:
         "Match coin by string input"
@@ -147,12 +111,6 @@ class CoinType(db_entry.DbEntry):
             cls.name.casefold(),
             cls.fullName.casefold(),
         ]
-
-    def update_balance(self):
-        self._amount = sum(int(w.balance)
-                            for w in self._address_list if not w.readOnly)
-        self.balanceChanged.emit()
-        self._amount_model.refresh()
 
     def make_hd_node(self, parent_node):
         self.__hd_node = parent_node.make_child_prv(
@@ -291,13 +249,13 @@ class CoinType(db_entry.DbEntry):
         wallet.clear()
         with self._address_list_model.lockRemoveRows(index):
             del self._address_list[index]
-        self.update_balance()
+        self.refreshAmount()  # TODO
 
     def clear(self):
         for addr in self._address_list:
             addr.clear()
         self._address_list.clear()
-        self.update_balance()
+        self.refreshAmount()  # TODO
 
     def _set_height(self, hei: int):
         if hei != self.__height:
@@ -362,10 +320,6 @@ class CoinType(db_entry.DbEntry):
     @qt_core.Property(bool, notify=visibleChanged)
     def visible(self) -> bool:
         return self.__visible
-
-    @qt_core.Property(int, notify=balanceChanged)
-    def balance(self) -> int:
-        return self._amount
 
     @qt_core.Property(bool, constant=True)
     def test(self) -> bool:

@@ -69,6 +69,10 @@ class AbstractCoin:
     def amount(self) -> int:
         return self._amount
 
+    def refreshAmount(self) -> None:
+        a = sum(a.balance for a in self._address_list if not a.readOnly)
+        self._amount = a
+
     @property
     def fiatRate(self) -> FiatRate:
         return self._fiat_rate

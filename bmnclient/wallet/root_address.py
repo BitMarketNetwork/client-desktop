@@ -38,9 +38,6 @@ class RootAddress(address.CAddress):
     def __len__(self):
         return self._coin.tx_count
 
-    def __getitem__(self, val: int) -> 'tx.Transaction':
-        return self._coin.get_tx(val)
-
     def __str__(self) -> str:
         return f"root address for {self._coin.name}"
 

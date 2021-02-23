@@ -28,6 +28,7 @@ from ..wallet.address import CAddress
 if TYPE_CHECKING:
     from ..wallet.coins import CoinType
     from ..ui.gui import Application
+    from ..coins.currency import FiatRate
 
 
 class CoinStateModel(AbstractStateModel):
@@ -144,12 +145,24 @@ class CoinModel(AbstractModel):
         with self._address_list_model.lockInsertRows():
             self._coin.putAddress(address, check=False)
         self._tx_list_model.addSourceModel(address.txListModel)
+        self.refreshAmount()
 
         # TODO
-        self._coin.update_balance()
-        self._amount_model.refresh()
         self._application.networkThread.update_wallet(address)
         return True
+
+    def refreshAmount(self) -> None:
+        self._coin.refreshAmount()
+        self._amount_model.refresh()
+
+    @property
+    def fiatRate(self) -> FiatRate:
+        return self._coin.fiatRate
+
+    @fiatRate.setter
+    def fiatRate(self, fiat_rate: FiatRate) -> None:
+        self._coin.fiatRate = fiat_rate
+        self._amount_model.refresh()
 
 
 class CoinListModel(AbstractListModel):

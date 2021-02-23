@@ -52,6 +52,7 @@ class Network(network_impl.NetworkImpl):
         self._run_cmd(net_cmd.CheckServerVersionCommand(self))
         self._run_cmd(net_cmd.UpdateCoinsInfoCommand(
             True, self), run_first=True)
+        self._run_cmd(net_cmd.GetCoinRatesCommand(self))
 
     @qt_core.Slot()
     def retrieve_fee(self):
