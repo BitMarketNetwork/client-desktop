@@ -14,19 +14,23 @@ from PySide2.QtQuickControls2 import QQuickStyle
 from PySide2.QtWidgets import QApplication
 
 import bmnclient.version
-from . import tx_controller, ui_manager, \
-    receive_manager, coin_manager, settings_manager
+from . import \
+    coin_manager, \
+    receive_manager, \
+    settings_manager, \
+    tx_controller, \
+    ui_manager
 from .coin_manager import CoinManager, CoinManager
 from .receive_manager import ReceiveManager, ReceiveManager
 from .settings_manager import SettingsManager, SettingsManager
 from .ui_manager import UIManager, UIManager
-from ...application import CoreApplication
-from ...application import CommandLine
+from ...application import CommandLine, CoreApplication
 from ...debug_manager import DebugManager
-from ...wallet.fee_manager import FeeManager
 from ...key_store import KeyStore
 from ...language import Language
+from ...models.coin import CoinModel
 from ...server.network_factory import NetworkFactory
+from ...wallet.fee_manager import FeeManager
 
 log = logging.getLogger(__name__)
 
@@ -38,6 +42,7 @@ QML_CONTEXT_NAME = "BBackend"
 class Application(CoreApplication):
     def __init__(self, argv) -> None:
         super().__init__(QApplication, argv)
+        self._initCoinList(CoinModel, application=self)
 
         # TODO kill
         self._coin_manager = None

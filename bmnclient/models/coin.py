@@ -2,17 +2,27 @@
 from __future__ import annotations
 
 from enum import auto
-from typing import Final, Optional
+from typing import Final, Optional, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
-    Signal as QSignal
+    QObject, \
+    Signal as QSignal, \
+    Slot as QSlot
 
 from . import AbstractModel, AbstractStateModel
+from .address import AddressListModel, AddressListSortedModel
 from .amount import AmountModel
 from .list import \
     AbstractListModel, \
     RoleEnum
+from .tx import \
+    TxListConcatenateModel, \
+    TxListModel, \
+    TxListSortedModel
+
+if TYPE_CHECKING:
+    from ..ui.gui import Application
 
 
 class CoinStateModel(AbstractStateModel):
@@ -63,6 +73,55 @@ class CoinAmountModel(AmountModel):
         return self._coin.amount
 
 
+class CoinModel(AbstractModel):
+    def __init__(self, application: Application) -> None:
+        super().__init__(application)
+
+        self._amount_model = CoinAmountModel(self._application, self)
+        self.connectModelRefresh(self._amount_model)
+
+        self._state_model = CoinStateModel(self._application, self)
+        self.connectModelRefresh(self._state_model)
+
+        self._remote_state_model = CoinRemoteStateModel(self._application, self)
+        self.connectModelRefresh(self._remote_state_model)
+
+        self._address_list_model = AddressListModel(self._application, self)
+        self._tx_list_model = TxListConcatenateModel(self._application)
+
+    @QProperty(QObject, constant=True)
+    def amountModel(self) -> CoinAmountModel:
+        return self._amount_model
+
+    @QProperty(QObject, constant=True)
+    def stateModel(self) -> CoinStateModel:
+        return self._state_model
+
+    @QProperty(QObject, constant=True)
+    def remoteStateModel(self) -> CoinRemoteStateModel:
+        return self._remote_state_model
+
+    @QProperty(QObject, constant=True)
+    def addressListModel(self) -> AddressListModel:
+        return self._address_list_model
+
+    # noinspection PyTypeChecker
+    @QSlot(result=QObject)
+    def addressListSortedModel(self) -> AddressListSortedModel:
+        return AddressListSortedModel(
+            self._application,
+            self._address_list_model)
+
+    @QProperty(QObject, constant=True)
+    def txListModel(self) -> TxListModel:
+        return self._tx_list_model
+
+    # noinspection PyTypeChecker
+    @QSlot(result=QObject)
+    def txListSortedModel(self) -> TxListSortedModel:
+        return TxListSortedModel(self._application, self._tx_list_model)
+
+
 class CoinListModel(AbstractListModel):
     class Role(RoleEnum):
         SHORT_NAME: Final = auto()
@@ -100,8 +159,3 @@ class CoinListModel(AbstractListModel):
             b"txList",
             lambda c: c.txListSortedModel())
     }
-
-
-class CoinModel(AbstractModel):
-    # TODO
-    pass

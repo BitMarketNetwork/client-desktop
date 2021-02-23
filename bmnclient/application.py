@@ -3,7 +3,7 @@ from __future__ import annotations
 from argparse import ArgumentParser, Namespace
 from functools import partial
 from pathlib import PurePath
-from typing import Optional, Type, Union, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, Type, Union
 
 from PySide2.QtCore import \
     QCoreApplication, \
@@ -99,6 +99,7 @@ class CoreApplication(QObject):
         qt_class.setOrganizationDomain(Product.MAINTAINER_DOMAIN)
 
         # QCoreApplication
+        # noinspection PyArgumentList
         self._qt_application = qt_class(argv)
 
         if issubclass(qt_class, QApplication):
@@ -126,7 +127,10 @@ class CoreApplication(QObject):
         self._wallet_thread = WalletThread()
         self._server_thread = ServerThread()
 
-        self._coin_list = CoinList()
+        self._coin_list = []
+
+    def _initCoinList(self, model, **kwargs) -> None:
+        self._coin_list = CoinList(model, **kwargs)
 
         # TODO
         for coin in self._coin_list:
@@ -142,6 +146,7 @@ class CoreApplication(QObject):
                 Qt.UniqueConnection)
 
     def run(self) -> int:
+        # noinspection PyTypeChecker
         QMetaObject.invokeMethod(self, "_onRunPrivate", Qt.QueuedConnection)
 
         assert not self._on_exit_called
