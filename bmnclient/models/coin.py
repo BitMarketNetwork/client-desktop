@@ -20,13 +20,12 @@ from .list import \
     RoleEnum
 from .tx import \
     TxListConcatenateModel, \
-    TxListModel, \
     TxListSortedModel
 from ..coins.coin import CoinModelInterface
-from ..wallet.address import CAddress
 
 if TYPE_CHECKING:
-    from ..wallet.coins import CoinType
+    from ..coins.address import AbstractAddress
+    from ..coins.coin import AbstractCoin
     from ..ui.gui import Application
 
 
@@ -79,7 +78,7 @@ class CoinAmountModel(AmountModel):
 
 
 class CoinModel(CoinModelInterface, AbstractModel):
-    def __init__(self, application: Application, coin: CoinType) -> None:
+    def __init__(self, application: Application, coin: AbstractCoin) -> None:
         super().__init__(application)
         self._coin = coin
 
@@ -139,7 +138,7 @@ class CoinModel(CoinModelInterface, AbstractModel):
             self._address_list_model)
 
     @QProperty(QObject, constant=True)
-    def txList(self) -> TxListModel:
+    def txList(self) -> TxListConcatenateModel:
         return self._tx_list_model
 
     # noinspection PyTypeChecker
@@ -147,10 +146,10 @@ class CoinModel(CoinModelInterface, AbstractModel):
     def txListSorted(self) -> TxListSortedModel:
         return TxListSortedModel(self._application, self._tx_list_model)
 
-    def beforeAppendAddress(self, address: CAddress) -> None:
+    def beforeAppendAddress(self, address: AbstractAddress) -> None:
         self._address_list_model.lock(self._address_list_model.lockInsertRows())
 
-    def afterAppendAddress(self, address: CAddress) -> None:
+    def afterAppendAddress(self, address: AbstractAddress) -> None:
         self._address_list_model.unlock()
         # noinspection PyUnresolvedReferences
         self._tx_list_model.addSourceModel(address.model.txList)

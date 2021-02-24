@@ -8,6 +8,7 @@ from typing import Final, Optional, TYPE_CHECKING
 from PySide2.QtCore import \
     Property as QProperty, \
     QDateTime, \
+    QObject, \
     Signal as QSignal
 
 from . import AbstractModel, AbstractStateModel
@@ -18,21 +19,22 @@ from .list import \
     AbstractListModel, \
     AbstractListSortedModel, \
     RoleEnum
+from ..coins.tx import TxModelInterface
 
 if TYPE_CHECKING:
     from ..ui.gui import Application
-    from ..wallet.tx import Transaction
+    from ..coins.tx import AbstractTx, AbstractTxIo
 
 
 class AbstractTxStateModel(AbstractStateModel):
-    def __init__(self, application: Application, tx: Transaction) -> None:
-        super().__init__(application, tx.wallet.coin)
+    def __init__(self, application: Application, tx: AbstractTx) -> None:
+        super().__init__(application, tx.address.coin)
         self._tx = tx
 
 
 class AbstractTxAmountModel(AmountModel, metaclass=ABCMeta):
-    def __init__(self, application: Application, tx: Transaction) -> None:
-        super().__init__(application, tx.wallet.coin)
+    def __init__(self, application: Application, tx: AbstractTx) -> None:
+        super().__init__(application, tx.address.coin)
         self._tx = tx
 
 
@@ -76,10 +78,68 @@ class TxFeeAmountModel(AbstractTxAmountModel):
         return self._tx.fee
 
 
-class TxModel(AbstractModel):
-    def __init__(self, application: Application, tx: Transaction) -> None:
-        super().__init__(application, tx)
+class TxModel(TxModelInterface, AbstractModel):
+    def __init__(self, application: Application, tx: AbstractTx) -> None:
+        super().__init__(application)
         self._tx = tx
+
+        self._amount_model = TxAmountModel(
+            self._application,
+            self._tx)
+        self.connectModelRefresh(self._amount_model)
+
+        self._fee_amount_model = TxFeeAmountModel(
+            self._application,
+            self._tx)
+        self.connectModelRefresh(self._fee_amount_model)
+
+        self._state_model = TxStateModel(
+            self._application,
+            self._tx)
+        self.connectModelRefresh(self._state_model)
+
+        self._input_list_model = TxIoListModel(
+            self._application,
+            self._tx.inputList)
+        self._output_list_model = TxIoListModel(
+            self._application,
+            self._tx.outputList)
+
+    @QProperty(str, constant=True)
+    def name(self) -> str:
+        return self._tx.name
+
+    @QProperty(QObject, constant=True)
+    def amount(self) -> TxAmountModel:
+        return self._amount_model
+
+    @QProperty(QObject, constant=True)
+    def feeAmount(self) -> TxFeeAmountModel:
+        return self._fee_amount_model
+
+    @QProperty(QObject, constant=True)
+    def state(self) -> TxStateModel:
+        return self._state_model
+
+    @QProperty(QObject, constant=True)
+    def inputList(self) -> TxIoListModel:
+        return self._input_list_model
+
+    @QProperty(QObject, constant=True)
+    def outputList(self) -> TxIoListModel:
+        return self._output_list_model
+
+    def beforeAppendInput(self, tx_input: AbstractTxIo) -> None:
+        self._input_list_model.lock(self._input_list_model.lockInsertRows())
+
+    def afterAppendInput(self, tx_input: AbstractTxIo) -> None:
+        self._input_list_model.unlock()
+
+    def beforeAppendOutput(self, tx_output: AbstractTxIo) -> None:
+        self._output_list_model.lock(self._output_list_model.lockInsertRows())
+
+    def afterAppendOutput(self, tx_output: AbstractTxIo) -> None:
+        self._output_list_model.unlock()
 
 
 class TxIoListModel(AddressListModel):
@@ -98,22 +158,22 @@ class TxListModel(AbstractListModel):
     ROLE_MAP: Final = {
         Role.HASH: (
             b"hash",
-            lambda t: t.name),
+            lambda t: t.model.name),
         Role.AMOUNT: (
             b"amount",
-            lambda t: t.amountModel),
+            lambda t: t.model.amount),
         Role.FEE_AMOUNT: (
             b"feeAmount",
-            lambda t: t.feeAmountModel),
+            lambda t: t.model.feeAmount),
         Role.STATE: (
             b"state",
-            lambda t: t.stateModel),
+            lambda t: t.model.state),
         Role.INPUT_LIST: (
             b"inputList",
-            lambda t: t.inputListModel),
+            lambda t: t.model.inputList),
         Role.OUTPUT_LIST: (
             b"outputList",
-            lambda t: t.outputListModel)
+            lambda t: t.model.outputList)
     }
 
 

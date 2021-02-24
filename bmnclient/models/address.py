@@ -21,19 +21,25 @@ from ..coins.address import AddressModelInterface
 
 if TYPE_CHECKING:
     from .tx import TxListModel, TxListSortedModel
+    from ..coins.address import AbstractAddress
+    from ..coins.tx import AbstractTx
     from ..ui.gui import Application
-    from ..wallet.address import CAddress
-    from ..wallet.tx import Transaction
 
 
 class AbstractAddressStateModel(AbstractStateModel):
-    def __init__(self, application: Application, address: CAddress) -> None:
+    def __init__(
+            self,
+            application: Application,
+            address: AbstractAddress) -> None:
         super().__init__(application, address.coin)
         self._address = address
 
 
 class AbstractAddressAmountModel(AmountModel, metaclass=ABCMeta):
-    def __init__(self, application: Application, address: CAddress) -> None:
+    def __init__(
+            self,
+            application: Application,
+            address: AbstractAddress) -> None:
         super().__init__(application, address.coin)
         self._address = address
 
@@ -70,7 +76,10 @@ class AddressAmountModel(AbstractAddressAmountModel):
 
 
 class AddressModel(AddressModelInterface, AbstractModel):
-    def __init__(self, application: Application, address: CAddress) -> None:
+    def __init__(
+            self,
+            application: Application,
+            address: AbstractAddress) -> None:
         super().__init__(application)
         self._address = address
 
@@ -113,10 +122,10 @@ class AddressModel(AddressModelInterface, AbstractModel):
             self._application,
             self._tx_list_model)
 
-    def beforeAppendTx(self, tx: Transaction) -> None:
+    def beforeAppendTx(self, tx: AbstractTx) -> None:
         self._tx_list_model.lock(self._tx_list_model.lockInsertRows())
 
-    def afterAppendTx(self, tx: Transaction) -> None:
+    def afterAppendTx(self, tx: AbstractTx) -> None:
         self._tx_list_model.unlock()
 
 

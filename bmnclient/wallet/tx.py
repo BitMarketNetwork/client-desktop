@@ -8,11 +8,7 @@ import PySide2.QtCore as qt_core
 
 from . import db_entry
 from .address import CAddress
-from ..models.tx import \
-    TxAmountModel, \
-    TxFeeAmountModel, \
-    TxIoListModel, \
-    TxStateModel
+from ..coins.tx import AbstractTx
 
 log = logging.getLogger(__name__)
 
@@ -25,53 +21,22 @@ class TransactionIo(CAddress):
     pass
 
 
-class Transaction(db_entry.DbEntry):
+class Transaction(db_entry.DbEntry, AbstractTx):
     READY_CONFIRM_COUNT = 6
     statusChanged = qt_core.Signal()
     # constant fields can be changed while reprocessing
     infoChanged = qt_core.Signal()
     heightChanged = qt_core.Signal()
 
-    def __init__(self, wallet: CAddress):
+    def __init__(self, address: CAddress):
         super().__init__()
-        self._address = wallet
+        AbstractTx.__init__(self, address=address)
+
         self._input_list: List[TransactionIo] = []
         self._output_list: List[TransactionIo] = []
         self.__coin_base = False
         self.__height = 0
         self.__local = False
-
-        from ..ui.gui import Application
-        self._amount_model = TxAmountModel(Application.instance(), self)
-        self._amount_model.moveToThread(Application.instance().thread())
-        self._fee_amount_model = TxFeeAmountModel(Application.instance(), self)
-        self._fee_amount_model.moveToThread(Application.instance().thread())
-        self._state_model = TxStateModel(Application.instance(), self)
-        self._state_model.moveToThread(Application.instance().thread())
-        self._input_list_model = TxIoListModel(Application.instance(), self._input_list)
-        self._input_list_model.moveToThread(Application.instance().thread())
-        self._output_list_model = TxIoListModel(Application.instance(), self._output_list)
-        self._output_list_model.moveToThread(Application.instance().thread())
-
-    @property
-    def amountModel(self) -> TxAmountModel:
-        return self._amount_model
-
-    @property
-    def feeAmountModel(self) -> TxFeeAmountModel:
-        return self._fee_amount_model
-
-    @property
-    def stateModel(self) -> TxStateModel:
-        return self._state_model
-
-    @property
-    def inputListModel(self) -> TxIoListModel:
-        return self._input_list_model
-
-    @property
-    def outputListModel(self) -> TxIoListModel:
-        return self._output_list_model
 
     @classmethod
     def make_dummy(cls, wallet: Optional[CAddress]) -> Transaction:

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Callable, Optional, TYPE_CHECKING, Union
+from typing import Callable, Optional, TYPE_CHECKING, Type, Union
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -13,9 +13,9 @@ from PySide2.QtGui import QValidator
 from . import AbstractStateModel
 
 if TYPE_CHECKING:
-    from ..wallet.coins import CoinType
-    from ..ui.gui import Application
+    from ..coins.coin import AbstractCoin
     from ..coins.currency import AbstractCurrency
+    from ..ui.gui import Application
 
 
 class AmountModel(
@@ -30,7 +30,10 @@ class AmountModel(
     def _getValue(self) -> Optional[int]:
         raise NotImplementedError
 
-    def _toHumanValue(self, value: int, currency: AbstractCurrency) -> str:
+    def _toHumanValue(
+            self,
+            value: int,
+            currency: Type[AbstractCurrency]) -> str:
         return currency.toString(value, locale=self.locale)
 
     @QProperty(str, notify=__stateChanged)
@@ -80,7 +83,7 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
         def _validateHelper(
                 self,
                 value: str,
-                currency: AbstractCurrency,
+                currency: Type[AbstractCurrency],
                 unit_convert: Optional[Callable[[int], int]] = None) \
                 -> QValidator.State:
             value = self._normalizeValue(value)
@@ -104,7 +107,7 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
                 self._owner._coin.fiatRate.currency,
                 self._owner._coin.fromFiatAmount)
 
-    def __init__(self, application: Application, coin: CoinType) -> None:
+    def __init__(self, application: Application, coin: AbstractCoin) -> None:
         super().__init__(application, coin)
         self._value_human_validator = self._ValueHumanValidator(self)
         self._fiat_value_human_validator = self._FiatValueHumanValidator(self)
@@ -120,7 +123,7 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
     def _fromHumanValue(
             self,
             value: str,
-            currency: AbstractCurrency,
+            currency: Type[AbstractCurrency],
             unit_convert: Optional[Callable[[int], Optional[int]]] = None) \
             -> Optional[int]:
         if not value:
@@ -137,7 +140,7 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
     def _setValueHelper(
             self,
             value: Optional[Union[str, int]],
-            currency: AbstractCurrency,
+            currency: Type[AbstractCurrency],
             unit_convert: Optional[Callable[[int], Optional[int]]] = None) \
             -> bool:
         if isinstance(value, str):

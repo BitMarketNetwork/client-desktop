@@ -120,9 +120,9 @@ class AbstractCoin:
                 return address
         return None
 
-    def putAddress(self, address: _Address, *, check=True) -> bool:
+    def appendAddress(self, address: _Address) -> bool:
         # TODO tmp, old wrapper
-        if check and self.findAddressByName(address.name) is not None:  # noqa
+        if self.findAddressByName(address.name) is not None:  # noqa
             return False
 
         if self._model:

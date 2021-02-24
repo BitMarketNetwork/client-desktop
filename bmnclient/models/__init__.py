@@ -12,9 +12,9 @@ from PySide2.QtCore import \
     SignalInstance as QSignalInstance
 
 if TYPE_CHECKING:
-    from ..wallet.coins import CoinType
-    from ..ui.gui import Application
+    from ..coins.coin import AbstractCoin
     from ..language import Locale
+    from ..ui.gui import Application
 
 
 class ValidStatus(IntEnum):
@@ -26,7 +26,7 @@ class ValidStatus(IntEnum):
 class AbstractStateModel(QObject):
     stateChanged = QSignal()
 
-    def __init__(self, application: Application, coin: CoinType) -> None:
+    def __init__(self, application: Application, coin: AbstractCoin) -> None:
         super().__init__()
         self._application = application
         self._coin = coin
