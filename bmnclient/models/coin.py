@@ -22,6 +22,7 @@ from .tx import \
     TxListConcatenateModel, \
     TxListSortedModel
 from ..coins.coin import CoinModelInterface
+from ..ui.gui.tx_controller import TxController
 
 if TYPE_CHECKING:
     from ..coins.address import AbstractAddress
@@ -102,6 +103,11 @@ class CoinModel(CoinModelInterface, AbstractModel):
             self._coin.addressList)
         self._tx_list_model = TxListConcatenateModel(self._application)
 
+        # TODO tmp
+        self._tx_controller = TxController(
+            self._application,
+            self._coin)
+
     @QProperty(str, constant=True)
     def shortName(self) -> str:
         return self._coin.shortName
@@ -146,6 +152,11 @@ class CoinModel(CoinModelInterface, AbstractModel):
     def txListSorted(self) -> TxListSortedModel:
         return TxListSortedModel(self._application, self._tx_list_model)
 
+    # TODO tmp
+    @QProperty(QObject, constant=True)
+    def txController(self) -> TxController:
+        return self._tx_controller
+
     def beforeAppendAddress(self, address: AbstractAddress) -> None:
         self._address_list_model.lock(self._address_list_model.lockInsertRows())
 
@@ -172,6 +183,7 @@ class CoinListModel(AbstractListModel):
         REMOTE_STATE: Final = auto()
         ADDRESS_LIST: Final = auto()
         TX_LIST: Final = auto()
+        TX_CONTROLLER: Final = auto()
 
     ROLE_MAP: Final = {
         Role.SHORT_NAME: (
@@ -197,5 +209,8 @@ class CoinListModel(AbstractListModel):
             lambda c: c.model.addressListSorted()),
         Role.TX_LIST: (
             b"txList",
-            lambda c: c.model.txListSorted())
+            lambda c: c.model.txListSorted()),
+        Role.TX_CONTROLLER: (
+            b"txController",
+            lambda c: c.model.txController.model)
     }

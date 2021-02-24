@@ -42,6 +42,7 @@ QML_CONTEXT_NAME = "BBackend"
 class Application(CoreApplication):
     def __init__(self, argv) -> None:
         super().__init__(QApplication, argv)
+        self._fee_manager = FeeManager(self)
         self._initCoinList(lambda o: modelFactory(self, o))
 
         # TODO kill
@@ -52,7 +53,6 @@ class Application(CoreApplication):
         self._ui_manager = UIManager(self)
         self._coin_manager = CoinManager(self)
         self._receive_manager = ReceiveManager(self)
-        self._fee_manager = FeeManager(self)
         self._debug_manager = DebugManager(self)
         self._backend_context = BackendContext(self)
 
@@ -85,13 +85,6 @@ class Application(CoreApplication):
         qml_root_context.setContextProperty(
             QML_CONTEXT_NAME,
             self._backend_context)
-
-        # TODO kill
-        qmlRegisterType(
-            tx_controller.TxController,
-            "Bmn",
-            1, 0,
-            "TxController")
 
         self._qml_engine.objectCreated.connect(self._onQmlObjectCreated)
         # TODO self._qml_engine.warnings.connect(self._onQmlWarnings)
