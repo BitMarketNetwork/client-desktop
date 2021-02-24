@@ -12,7 +12,7 @@ from ..coins.currency import UsdFiatCurrency, FiatRate
 import PySide2.QtCore as qt_core
 
 from ..wallet import address, coins
-from ..wallet.tx import Transaction, TransactionIo
+from ..wallet.tx import Transaction
 from . import sqlite_impl
 
 log = logging.getLogger(__name__)
@@ -189,7 +189,7 @@ class DbWrapper:
             wallet = address.CAddress(values[0], c)
             wallet.create()
             wallet.from_args(iter(values[1:]))
-            c.putAddress(wallet)
+            c.appendAddress(wallet)
             self._read_tx_list(wallet)
             wallet.valid = True
             ##
@@ -209,14 +209,12 @@ class DbWrapper:
         """
         with closing(self.__exec(query, (wallet.rowid,))) as c:
             fetch = c.fetchall()
-        txs = []
         for values in fetch:
             qt_core.QCoreApplication.processEvents()
-            tx = Transaction(None)
+            tx = Transaction(wallet)
             tx.from_args(iter(values))
-            txs.append(tx)
             self._read_input_list(tx)
-        wallet.add_tx_list(txs)
+            wallet.appendTx(tx)
 
     def _read_input_list(self, tx: Transaction) -> None:
         """
@@ -478,7 +476,7 @@ class DbWrapper:
             except AssertionError:
                 sys.exit(1)
 
-    def _write_input(self, tx: Transaction, inp: TransactionIo, out) -> None:
+    def _write_input(self, tx: Transaction, inp, out) -> None:
         try:
             query = f"""
             INSERT INTO {self.inputs_table}
@@ -582,7 +580,7 @@ class DbWrapper:
             addr = address.CAddress(values[1], coin_cur)
             addr.create()
             addr.from_args(iter(values[2:]))
-            coin_cur.putAddress(addr)
+            coin_cur.appendAddress(addr)
             adds.append(addr)
         for coin in coin_map.values():
             coin.refreshAmount()
@@ -628,7 +626,8 @@ class DbWrapper:
             txs.append(tx)
             add_cur.__txs.append(tx)
         for add in add_map.values():
-            add.add_tx_list(add.__txs)
+            for tx in add.__txs:
+                add.appendTx(tx)
         return txs
 
     def _read_all_inputs(self, txs):

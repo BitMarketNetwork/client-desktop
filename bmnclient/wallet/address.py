@@ -10,6 +10,7 @@ from ..coins.address import AbstractAddress
 
 if TYPE_CHECKING:
     from .tx import Transaction
+    from .coins import CoinType
 
 log = logging.getLogger(__name__)
 
@@ -40,19 +41,23 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
     heightChanged = qt_core.Signal()
     txCountChanged = qt_core.Signal()
 
-    def __init__(self, name: str, coin: Optional["coins.CoinType"] = None, *, created: bool = False):
+    def __init__(self, name: str, coin: CoinType, *, created: bool = False):
+        assert name
+        assert coin is not None
+
         super().__init__()
-        AbstractAddress.__init__(self, b'')
-        assert(name)
+        AbstractAddress.__init__(self, b'', coin=coin)
+
         self._set_object_name(name)
-        self.coin = coin
+        self._coin = coin
+        self._coin.heightChanged.connect(self.heightChanged)
+
         self.__name = name
         self.__label = ""
         # user reminder
         self.__message = None
         # timestamp
         self.__created = None
-        self.__balance = 0
         self.__first_offset = None
         self.__last_offset = None
         self.__type = key.AddressType.P2PKH
@@ -102,13 +107,6 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
     def deleted(self) -> bool:
         return self.__deleted
 
-    @coin.setter
-    def coin(self, value: "CoinType"):
-        self._coin = value
-        if value is None:
-            return
-        self._coin.heightChanged.connect(self.heightChanged)
-
     @property
     def hd_index(self) -> Optional[int]:
         if self.__key and isinstance(self.__key, hd.HDNode):
@@ -138,9 +136,9 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
             u.address = self
             return int(u.amount)
         balance = sum(map(summ, self.__unspents))
-        if balance != self.__balance:
+        if balance != self._amount:
             log.debug(
-                f"Balance of {self} updated from {self.__balance} to {balance}. Processed: {len(self.__unspents)} utxo")
+                f"Balance of {self} updated from {self._amount} to {balance}. Processed: {len(self.__unspents)} utxo")
             # strict !!! remember notifiers
             self.balance = balance
 
@@ -184,7 +182,7 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
             #
             self.__created = datetime.fromtimestamp(next(arg_iter))
             self.__type = next(arg_iter)
-            self.__balance = next(arg_iter)
+            self._amount = next(arg_iter)
             #
             self.__tx_count = next(arg_iter)
             # use setters !!
@@ -311,7 +309,7 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
         return self is not None
 
     def __repr__(self) -> str:
-        return f"""<{self._coin.name if self._coin is not None else 'none'}:{self.__name} <{self.__label}>[row:{self._rowid}; foff:{self.__first_offset};loff:{self.__last_offset}]{self.__balance}>"""
+        return f"""<{self._coin.name if self._coin is not None else 'none'}:{self.__name} <{self.__label}>[row:{self._rowid}; foff:{self.__first_offset};loff:{self.__last_offset}]{self._amount}>"""
 
     def __hash__(self):
         return hash(self.__name)
@@ -414,18 +412,18 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
 
     @property
     def empty_balance(self) -> bool:
-        return not self.__just_created and self.__balance == 0
+        return not self.__just_created and self._amount == 0
 
     def set_old(self):
         self.__just_created = False
 
     @qt_core.Property("qint64", notify=balanceChanged)
     def balance(self) -> int:
-        return self.__balance
+        return self._amount
 
     @qt_core.Property(bool, notify=balanceChanged)
     def canSend(self) -> bool:
-        return not self.readOnly and self.__balance > 0
+        return not self.readOnly and self._amount > 0
 
     @qt_core.Property(bool, constant=True)
     def isRoot(self) -> bool:
@@ -433,9 +431,9 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
 
     @balance.setter
     def _set_balance(self, bl: str):
-        if bl == self.__balance:
+        if bl == self._amount:
             return
-        self.__balance = bl
+        self._amount = bl
         self.balanceChanged.emit()
         self._amount_model.refresh()
         if self._coin is not None:

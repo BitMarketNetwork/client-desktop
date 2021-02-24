@@ -17,10 +17,6 @@ class TxError(Exception):
     pass
 
 
-class TransactionIo(CAddress):
-    pass
-
-
 class Transaction(db_entry.DbEntry, AbstractTx):
     READY_CONFIRM_COUNT = 6
     statusChanged = qt_core.Signal()
@@ -32,8 +28,6 @@ class Transaction(db_entry.DbEntry, AbstractTx):
         super().__init__()
         AbstractTx.__init__(self, address=address)
 
-        self._input_list: List[TransactionIo] = []
-        self._output_list: List[TransactionIo] = []
         self.__coin_base = False
         self.__height = 0
         self.__local = False
@@ -79,44 +73,33 @@ class Transaction(db_entry.DbEntry, AbstractTx):
         self.__fee = body["fee"]
         self.__coin_base = body["coinbase"] != 0
 
-        with self._input_list_model.lockReset():
-            self._input_list.clear()
-            for item in body["input"]:
-                item = Input.from_dict(item, self)
-                a = TransactionIo(item.address)
-                a.moveToThread(self.thread())
-                a.coin = self._address.coin
-                a.balance = item.amount
-                self._input_list.append(a)
+        for item in body["input"]:
+            item = Input.from_dict(item, self)
+            a = CAddress(item.address, self._address.coin)
+            a.balance = item.amount
+            self.appendInput(a)
 
-        with self._output_list_model.lockReset():
-            for item in body["output"]:
-                item = Output.from_dict(item, self)
-                a = TransactionIo(item.address)
-                a.moveToThread(self.thread())
-                a.coin = self._address.coin
-                a.balance = item.amount
-                self._output_list.append(a)
+        for item in body["output"]:
+            item = Output.from_dict(item, self)
+            a = CAddress(item.address, self._address.coin)
+            a.balance = item.amount
+            self.appendOutput(a)
 
         return self
 
     def make_input(self, args: iter):
         if next(args):
             inp = Output(self)
-            with self._output_list_model.lockInsertRows():
-                inp.from_args(args)
-                a = TransactionIo(inp.address)
-                a.coin = self._address.coin
-                a.balance = inp.amount
-                self._output_list.append(a)
+            inp.from_args(args)
+            a = CAddress(inp.address, coin=self._address.coin)
+            a.balance = inp.amount
+            self.appendOutput(a)
         else:
             inp = Input(self)
-            with self._input_list_model.lockInsertRows():
-                inp.from_args(args)
-                a = TransactionIo(inp.address)
-                a.coin = self._address.coin
-                a.balance = inp.amount
-                self._input_list.append(a)
+            inp.from_args(args)
+            a = CAddress(inp.address, coin=self._address.coin)
+            a.balance = inp.amount
+            self.appendInput(a)
 
     @property
     def wallet(self) -> CAddress:

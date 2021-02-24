@@ -61,8 +61,6 @@ class AbstractAddress:
         # TODO tmp, old wrapper
         if self.findTxByName(tx.name) is not None:  # noqa
             return False
-        if tx.wallet is None:  # TODO tmp
-            tx.wallet = self
 
         if self._model:
             self._model.beforeAppendTx(tx)

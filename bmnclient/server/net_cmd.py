@@ -13,8 +13,9 @@ import PySide2.QtCore as qt_core
 import PySide2.QtNetwork as qt_network
 
 from .. import loading_level
-from ..wallet import address, coins, hd, key, mtx_impl, mutable_tx, tx
+from ..wallet import address, coins, hd, key, mtx_impl, mutable_tx
 from . import server_error
+from ..wallet.tx import Transaction, TxError
 
 log = logging.getLogger(__name__)
 
@@ -357,11 +358,11 @@ class AddressInfoCommand(JsonStreamMixin, BaseNetworkCommand):
 
     def __init__(self, wallet: address.CAddress, parent=None, **kwargs):
         super().__init__(parent=parent, **kwargs)
-        self._wallet = wallet
+        self._address = wallet
 
     @property
     def args(self):
-        return [self._wallet.coin.name, self._wallet.name]
+        return [self._address.coin.name, self._address.name]
 
     def process_attr(self, table):
         self.output(self.tr("Coin type"), table["type"])
@@ -371,7 +372,7 @@ class AddressInfoCommand(JsonStreamMixin, BaseNetworkCommand):
         self.output(self.tr("Balance"), table["balance"])
 
     def __str__(self):
-        return f"{self.__class__.__name__}: {self._wallet.name}"
+        return f"{self.__class__.__name__}: {self._address.name}"
 
 
 class LookForHDAddresses(AddressInfoCommand):
@@ -429,7 +430,7 @@ class LookForHDAddresses(AddressInfoCommand):
             # TODO: we can provide some information to new address
             wallet = address.CAddress(self._address, self._coin)
             wallet.create()
-            self._coin.putAddress(wallet)
+            self._coin.appendAddress(wallet)
             wallet.set_prv_key(self._hd)
             log.debug(
                 f"New no empty address found: {wallet}")
@@ -463,29 +464,29 @@ class UpdateAddressInfoCommand(AddressInfoCommand):
 
     @property
     def args(self):
-        return [self._wallet.coin.name, self._wallet.name]
+        return [self._address.coin.name, self._address.name]
 
     def process_attr(self, table):
-        assert self._wallet.name == table["address"]
+        assert self._address.name == table["address"]
         if self.verbose:
             log.warning(table)
         # type important!! do not remove
         type_ = table["type"]
         txCount = table["number_of_transactions"]
         balance = table["balance"]
-        if balance != self._wallet.balance or \
-                txCount != self._wallet.txCount or \
-                type_ != self._wallet.type:
-            self._wallet.type = type_
-            self._wallet.balance = balance
-            self._wallet.txCount = txCount
+        if balance != self._address.balance or \
+                txCount != self._address.txCount or \
+                type_ != self._address.type:
+            self._address.type = type_
+            self._address.balance = balance
+            self._address.txCount = txCount
             from ..application import CoreApplication
-            CoreApplication.instance().databaseThread.save_wallet(self._wallet)
-            diff = txCount - self._wallet.realTxCount
-            if diff > 0 and not self._wallet.is_going_update:
+            CoreApplication.instance().databaseThread.save_wallet(self._address)
+            diff = txCount - self._address.realTxCount
+            if diff > 0 and not self._address.is_going_update:
                 log.debug("Need to download more %s tx for %s",
-                          diff, self._wallet)
-                return AddressHistoryCommand(self._wallet, parent=self,  high_priority=True)
+                          diff, self._address)
+                return AddressHistoryCommand(self._address, parent=self,  high_priority=True)
 
 
 class AddressHistoryCommand(AddressInfoCommand):
@@ -509,7 +510,7 @@ class AddressHistoryCommand(AddressInfoCommand):
                  ):
         super().__init__(wallet, parent, **kwargs)
         # don't touch it!!!!!!!!!!!!!!!!!!! crucial meaning
-        self._wallet.is_going_update = True
+        self._address.is_going_update = True
         self.__forth = forth
         if self.__prev_wallet and self.__prev_wallet.name != wallet.name:
             self.__prev_wallet.is_going_update = False
@@ -530,37 +531,37 @@ class AddressHistoryCommand(AddressInfoCommand):
                 f"request: FORTH:{self.__forth} first off:{self.__first_offset} last off:{self.__last_offset}")
 
     def process_attr(self, table):
-        assert table.get("address") == self._wallet.name
+        assert table.get("address") == self._address.name
         if self.verbose:
             log.debug(
                 f"answer: first off:{table['first_offset']} last off:{table['last_offset']}")
         last_offset = table["last_offset"]
         # beware getter!
-        self._wallet.last_offset = last_offset
+        self._address.last_offset = last_offset
         if self.__forth and self.__first_offset == 'best':
-            self._wallet.first_offset = table["first_offset"]
-        self._wallet.last_offset = last_offset
+            self._address.first_offset = table["first_offset"]
+        self._address.last_offset = last_offset
         # use setter !!!
         self.__process_transactions(table["tx_list"])
         #  - we have to save new wallet offsets ?? .. cause app can be closed before next net calls
         from ..application import CoreApplication
-        CoreApplication.instance().databaseThread.save_wallet(self._wallet, 500)
+        CoreApplication.instance().databaseThread.save_wallet(self._address, 500)
         ###
         qt_core.QCoreApplication.processEvents()
-        # self._wallet.isUpdating = False
+        # self._address.isUpdating = False
         if self.__limit is None or self.tx_count < self.__limit:
             if self.__forth and last_offset is not None:
-                log.debug(f"Next FORTH history request for {self._wallet!r}")
+                log.debug(f"Next FORTH history request for {self._address!r}")
                 return self.clone(last_offset)
             elif self.__forth or last_offset is not None:
-                log.debug(f"Next BACK history request for {self._wallet!r}")
+                log.debug(f"Next BACK history request for {self._address!r}")
                 return self.clone(forth=False)
-        self._wallet.is_going_update = False
-        self._wallet.isUpdating = False
+        self._address.is_going_update = False
+        self._address.isUpdating = False
 
     def clone(self, first_offset=None, forth=True):
         return self.__class__(
-            wallet=self._wallet,
+            wallet=self._address,
             limit=self.__limit,
             tx_count=self.__tx_count,
             first_offset=first_offset,
@@ -575,8 +576,8 @@ class AddressHistoryCommand(AddressInfoCommand):
 
     @ property
     def args(self):
-        self._wallet.isUpdating = True
-        return [self._wallet.coin.name, self._wallet.name, self._server_action]
+        self._address.isUpdating = True
+        return [self._address.coin.name, self._address.name, self._server_action]
 
     @ property
     def tx_count(self):
@@ -603,7 +604,7 @@ class AddressHistoryCommand(AddressInfoCommand):
         return get
 
     def __process_transactions(self, txs: dict):
-        tx_list = [tx.Transaction(self._wallet).parse(*a) for a in txs.items()]
+        tx_list = [Transaction(self._address).parse(*a) for a in txs.items()]
         # strict order !!
 
         # raw count
@@ -613,14 +614,14 @@ class AddressHistoryCommand(AddressInfoCommand):
         # lsit updated !!
         if tx_list:
             from ..application import CoreApplication
-            CoreApplication.instance().databaseThread.save_tx_list(self._wallet, tx_list)
+            CoreApplication.instance().databaseThread.save_tx_list(self._address, tx_list)
 
     @ property
     def skip(self) -> bool:
-        return self._wallet.deleted
+        return self._address.deleted
 
     def __str__(self):
-        return f"<{super().__str__()}> [wallet={self._wallet} foff:{self.__first_offset}]"
+        return f"<{super().__str__()}> [wallet={self._address} foff:{self.__first_offset}]"
 
 
 class AddressMempoolCommand(AddressInfoCommand):
@@ -638,7 +639,7 @@ class AddressMempoolCommand(AddressInfoCommand):
 
     @ property
     def args(self):
-        return [self._wallet.coin.name, self._wallet.name, self._server_action]
+        return [self._address.coin.name, self._address.name, self._server_action]
 
     def process_attr(self, table):
         # TODO: process hash
@@ -655,13 +656,13 @@ class AddressMempoolCommand(AddressInfoCommand):
                 to -= self.WAIT_CHUNK
                 qt_core.QThread.currentThread().msleep(self.WAIT_CHUNK)
                 qt_core.QCoreApplication.processEvents()
-            return AddressMempoolCommand(self._wallet, self, counter=self._counter + 1)
+            return AddressMempoolCommand(self._address, self, counter=self._counter + 1)
         self.__process_transactions(txs)
 
     def __process_transactions(self, txs: dict):
         for name, body in txs.items():
-            # tx = coins.Transaction(self._wallet) WRONG THREAD!
-            tx_ = tx.Transaction(self._wallet)
+            # tx = coins.Transaction(self._address) WRONG THREAD!
+            tx_ = Transaction(self._address)
             tx_.parse(name, body)
             try:
                 self._wallet.add_tx(tx_, check_new=True)
@@ -742,7 +743,7 @@ class AddressMultyMempoolCommand(AbstractMultyMempoolCommand):
         for inp in body["input"] + body["output"]:
             w = self._coin[inp["address"]]
             if w is not None:
-                tx_ = tx.Transaction(w)
+                tx_ = Transaction(w)
                 tx_.parse(name, body)
                 tx_.height = w.coin.height + 1
                 try:
@@ -803,7 +804,7 @@ class MempoolMonitorCommand(AbstractMultyMempoolCommand):
         for inp in body["input"] + body["output"]:
             w = self._coin[inp["address"]]
             if w is not None:
-                tx_ = tx.Transaction(w)
+                tx_ = Transaction(w)
                 tx_.parse(name, body)
                 tx_.height = w.coin.height + 1
                 try:
@@ -830,7 +831,7 @@ class AddressUnspentCommand(AddressInfoCommand):
 
     @ property
     def args(self):
-        return [self._wallet.coin.name, self._wallet.name, self._server_action]
+        return [self._address.coin.name, self._address.name, self._server_action]
 
     @ property
     def args_get(self):
@@ -846,21 +847,21 @@ class AddressUnspentCommand(AddressInfoCommand):
         return get
 
     def process_attr(self, table):
-        assert table.get("address") == self._wallet.name
+        assert table.get("address") == self._address.name
         last_offset = table["last_offset"]
         if self.verbose:
             log.debug("TX IN ANSWER %d ,%s", len(table["tx_list"]), self)
         self._unspent += table["tx_list"]
         if last_offset is not None:
             if self.verbose:
-                log.debug(f"Next history request for {self._wallet}")
+                log.debug(f"Next history request for {self._address}")
             return self.clone(last_offset)
         else:
             self.__process_transactions()
 
     def clone(self, first_offset):
         return self.__class__(
-            wallet=self._wallet,
+            wallet=self._address,
             unspent=self._unspent,
             first_offset=first_offset,
             calls=self._calls + 1,
@@ -871,7 +872,7 @@ class AddressUnspentCommand(AddressInfoCommand):
         if self.verbose:
             log.debug(
                 f"UNSPENT COUNT: {len(self._unspent)} from {self._calls} calls")
-        self._wallet.process_unspents(self._unspent)
+        self._address.process_unspents(self._unspent)
 
 
 class BroadcastTxCommand(JsonStreamMixin, BaseNetworkCommand):

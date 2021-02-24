@@ -112,7 +112,7 @@ class UIManager(QObject):
             coin = self._application.findCoin(name)
             if coin is not None:
                 coin._remote = remote
-                coin.remoteStateModel.refresh()
+                coin.model.remoteState.refresh()
 
     @QProperty(bool, notify=statusChanged)
     def online(self):
