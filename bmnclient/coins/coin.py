@@ -13,10 +13,10 @@ from ..utils.meta import classproperty
 
 
 class AbstractCoinModel:
-    def beforeAppendAddress(self) -> None:
+    def beforeAppendAddress(self, address: AbstractAddress) -> None:
         raise NotImplementedError
 
-    def afterAppendAddress(self) -> None:
+    def afterAppendAddress(self, address: AbstractAddress) -> None:
         raise NotImplementedError
 
     def afterRefreshAmount(self) -> None:
@@ -40,12 +40,12 @@ class AbstractCoin:
             self,
             *,
             model_factory: Optional[Callable[[object], object]] = None) -> None:
-        self._model_factory = model_factory
-        self._model: Optional[AbstractCoinModel] = self.model_factory(self)
-
         self._fiat_rate = FiatRate(0, UsdFiatCurrency)
         self._amount = 0
         self._address_list = []
+
+        self._model_factory = model_factory
+        self._model: Optional[AbstractCoinModel] = self.model_factory(self)
 
     def model_factory(self, owner: object) -> Optional[object]:
         if self._model_factory:
@@ -85,10 +85,11 @@ class AbstractCoin:
         if check and self.findAddressByName(address.name) is not None:  # noqa
             return False
         if self._model:
-            self._model.beforeAppendAddress()
+            self._model.beforeAppendAddress(address)
         self._address_list.append(address)
         if self._model:
-            self._model.afterAppendAddress()
+            self._model.afterAppendAddress(address)
+        self.refreshAmount()
         return True
 
     @property

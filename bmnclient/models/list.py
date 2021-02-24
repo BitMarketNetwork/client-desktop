@@ -62,33 +62,35 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
             self._last_index = first_index + count - 1
             self._dummy = self._first_index > self._last_index
 
-    class LockInsertRows(_LockRows):
         def __enter__(self) -> None:
-            if self._dummy:
-                return
-            self._owner.beginInsertRows(
-                QModelIndex(),
-                self._first_index,
-                self._last_index)
+            raise NotImplementedError
 
         def __exit__(self, exc_type, exc_value, traceback) -> None:
-            if self._dummy:
-                return
-            self._owner.endInsertRows()
+            raise NotImplementedError
+
+    class LockInsertRows(_LockRows):
+        def __enter__(self) -> None:
+            if not self._dummy:
+                self._owner.beginInsertRows(
+                    QModelIndex(),
+                    self._first_index,
+                    self._last_index)
+
+        def __exit__(self, exc_type, exc_value, traceback) -> None:
+            if not self._dummy:
+                self._owner.endInsertRows()
 
     class LockRemoveRows(_LockRows):
         def __enter__(self) -> None:
-            if self._dummy:
-                return
-            self._owner.beginRemoveRows(
-                QModelIndex(),
-                self._first_index,
-                self._last_index)
+            if not self._dummy:
+                self._owner.beginRemoveRows(
+                    QModelIndex(),
+                    self._first_index,
+                    self._last_index)
 
         def __exit__(self, exc_type, exc_value, traceback) -> None:
-            if self._dummy:
-                return
-            self._owner.endRemoveRows()
+            if not self._dummy:
+                self._owner.endRemoveRows()
 
     class LockReset:
         def __init__(self, owner: AbstractListModel) -> None:
@@ -106,6 +108,7 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
         super().__init__()
         ListModelHelper.__init__(self, application)
         self._source_list = source_list
+        self.__lock = None
 
     @lru_cache()
     def roleNames(self) -> dict:
@@ -129,6 +132,16 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
 
     def lockReset(self) -> LockReset:
         return self.LockReset(self)
+
+    def lock(self, lock: _LockRows):
+        assert self.__lock is None
+        self.__lock = lock
+        self.__lock.__enter__()
+
+    def unlock(self) -> None:
+        assert self.__lock
+        self.__lock.__exit__(None, None, None)
+        self.__lock = None
 
 
 class AbstractConcatenateModel(QConcatenateTablesProxyModel, ListModelHelper):

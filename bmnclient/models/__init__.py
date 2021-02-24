@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from enum import IntEnum
 from threading import Lock
-from typing import Any, Iterable, Optional, TYPE_CHECKING
+from typing import Iterable, Optional, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -56,31 +56,13 @@ class AbstractStateModel(QObject):
         return self._getValidStatus() == ValidStatus.Accept
 
 
-class AbstractModelMeta(type(QObject)):
-    def __getattr__(self, name: str) -> Any:
-        # TODO
-        raise AttributeError
-
-
-class AbstractModel(QObject, metaclass=AbstractModelMeta):
+class AbstractModel(QObject):
     stateChanged = QSignal()
 
-    def __init__(self, application: Application, owner: object) -> None:
+    def __init__(self, application: Application) -> None:
         super().__init__()
-        self.__owner = owner
         self._refresh_lock = Lock()
         self._application = application
-
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self.__owner, name)
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        if name.startswith("_") or name == "stateChanged":
-            super().__setattr__(name, value)
-        elif hasattr(self.__owner, name):
-            setattr(self.__owner, name, value)
-        else:
-            raise AttributeError
 
     def iterateStateModels(self) -> Iterable[AbstractStateModel]:
         for a in dir(self):
@@ -93,6 +75,7 @@ class AbstractModel(QObject, metaclass=AbstractModelMeta):
     def locale(self) -> Locale:
         return self._application.language.locale
 
+    # TODO check usage
     def refresh(self, initiator: Optional[QObject] = None) -> None:
         if self._refresh_lock.acquire(False):
             for a in self.iterateStateModels():
@@ -104,6 +87,7 @@ class AbstractModel(QObject, metaclass=AbstractModelMeta):
     def connectModelRefresh(self, model: QObject) -> None:
         model.stateChanged.connect(lambda: self.refresh(model))
 
+    # TODO check usage
     @QProperty(int, notify=stateChanged)
     def validStatus(self) -> ValidStatus:
         result = ValidStatus.Accept

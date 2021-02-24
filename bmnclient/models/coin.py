@@ -104,36 +104,48 @@ class CoinModel(AbstractModel):
             self._coin.addressList)
         self._tx_list_model = TxListConcatenateModel(self._application)
 
+    @QProperty(str, constant=True)
+    def shortName(self) -> str:
+        return self._coin.shortName
+
+    @QProperty(str, constant=True)
+    def fullName(self) -> str:
+        return self._coin.fullName
+
+    @QProperty(str, constant=True)
+    def iconPath(self) -> str:
+        return self._coin.iconPath
+
     @QProperty(QObject, constant=True)
-    def amountModel(self) -> CoinAmountModel:
+    def amount(self) -> CoinAmountModel:
         return self._amount_model
 
     @QProperty(QObject, constant=True)
-    def stateModel(self) -> CoinStateModel:
+    def state(self) -> CoinStateModel:
         return self._state_model
 
     @QProperty(QObject, constant=True)
-    def remoteStateModel(self) -> CoinRemoteStateModel:
+    def remoteState(self) -> CoinRemoteStateModel:
         return self._remote_state_model
 
     @QProperty(QObject, constant=True)
-    def addressListModel(self) -> AddressListModel:
+    def addressList(self) -> AddressListModel:
         return self._address_list_model
 
     # noinspection PyTypeChecker
     @QSlot(result=QObject)
-    def addressListSortedModel(self) -> AddressListSortedModel:
+    def addressListSorted(self) -> AddressListSortedModel:
         return AddressListSortedModel(
             self._application,
             self._address_list_model)
 
     @QProperty(QObject, constant=True)
-    def txListModel(self) -> TxListModel:
+    def txList(self) -> TxListModel:
         return self._tx_list_model
 
     # noinspection PyTypeChecker
     @QSlot(result=QObject)
-    def txListSortedModel(self) -> TxListSortedModel:
+    def txListSorted(self) -> TxListSortedModel:
         return TxListSortedModel(self._application, self._tx_list_model)
 
     def putAddress(self, address: CAddress, *, check=True) -> bool:
@@ -179,26 +191,26 @@ class CoinListModel(AbstractListModel):
     ROLE_MAP: Final = {
         Role.SHORT_NAME: (
             b"shortName",
-            lambda c: c.shortName),
+            lambda c: c.model.shortName),
         Role.FULL_NAME: (
             b"fullName",
-            lambda c: c.fullName),
+            lambda c: c.model.fullName),
         Role.ICON_PATH: (
             b"iconPath",
-            lambda c: c.iconPath),
+            lambda c: c.model.iconPath),
         Role.AMOUNT: (
             b"amount",
-            lambda c: c.amountModel),
+            lambda c: c.model.amount),
         Role.STATE: (
             b"state",
-            lambda c: c.stateModel),
+            lambda c: c.model.state),
         Role.REMOTE_STATE: (
             b"remoteState",
-            lambda c: c.remoteStateModel),
+            lambda c: c.model.remoteState),
         Role.ADDRESS_LIST: (
             b"addressList",
-            lambda c: c.addressListSortedModel()),
+            lambda c: c.model.addressListSorted()),
         Role.TX_LIST: (
             b"txList",
-            lambda c: c.txListSortedModel())
+            lambda c: c.model.txListSorted())
     }

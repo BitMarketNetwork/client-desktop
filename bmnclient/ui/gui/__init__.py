@@ -28,7 +28,7 @@ from ...application import CommandLine, CoreApplication
 from ...debug_manager import DebugManager
 from ...key_store import KeyStore
 from ...language import Language
-from ...models import modelFactory
+from ...models.factory import modelFactory
 from ...server.network_factory import NetworkFactory
 from ...wallet.fee_manager import FeeManager
 
