@@ -7,7 +7,9 @@ from typing import Iterable, List, Optional, Union
 import PySide2.QtCore as qt_core
 
 from . import address, coin_network, db_entry, hd, key, root_address
-from .. import coins, meta
+from .. import meta
+from ..coins import coin_bitcoin
+from ..coins import coin_litecoin
 
 log = logging.getLogger(__name__)
 
@@ -342,28 +344,28 @@ class CoinType(db_entry.DbEntry):
         int, _get_height, _set_height, notify=heightChanged)
 
 
-class Bitcoin(CoinType, coins.Bitcoin):
+class Bitcoin(CoinType, coin_bitcoin.Bitcoin):
     name = "btc"
     network = coin_network.BitcoinMainNetwork
     _hd_index = 0
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
-        coins.Bitcoin.__init__(self)
+        coin_bitcoin.Bitcoin.__init__(self, **kwargs)
 
 
-class BitcoinTest(Bitcoin, coins.BitcoinTest):
+class BitcoinTest(Bitcoin, coin_bitcoin.BitcoinTest):
     name = "btctest"
     network = coin_network.BitcoinTestNetwork
     _test = True
 
 
 
-class Litecoin(CoinType, coins.Litecoin):
+class Litecoin(CoinType, coin_litecoin.Litecoin):
     name = "ltc"
     network = coin_network.LitecoinMainNetwork
     _hd_index = 2
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
-        coins.Litecoin.__init__(self)
+        coin_litecoin.Litecoin.__init__(self, **kwargs)
