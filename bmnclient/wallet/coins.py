@@ -6,7 +6,7 @@ from typing import Iterable, List, Optional, Union
 
 import PySide2.QtCore as qt_core
 
-from . import address, coin_network, db_entry, hd, key, root_address
+from . import address, coin_network, db_entry, hd, key
 from .. import meta
 from ..coins import coin_bitcoin
 from ..coins import coin_litecoin
@@ -57,7 +57,6 @@ class CoinType(db_entry.DbEntry):
 
         self.__hd_node = None
         self.__visible = True
-        self.root = root_address.RootAddress(self)
 
     def hd_address(self, hd_index: int) -> str:
         if self.__hd_node is None:

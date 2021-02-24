@@ -54,12 +54,6 @@ class CoinManager(QObject):
         if self.__current_coin_idx >= 0:
             return self._application.coinList[self.__current_coin_idx]
 
-    @QProperty(address.CAddress, notify=addressIndexChanged)
-    def address(self) -> address.CAddress:
-        coin = self.coin
-        if coin is not None:
-            return coin.root
-
     @coinIndex.setter
     def __set_coin_index(self, idx: int):
         if idx == self.__current_coin_idx:
