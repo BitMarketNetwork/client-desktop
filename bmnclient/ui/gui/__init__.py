@@ -28,7 +28,7 @@ from ...application import CommandLine, CoreApplication
 from ...debug_manager import DebugManager
 from ...key_store import KeyStore
 from ...language import Language
-from ...models.coin import CoinModel
+from ...models import modelFactory
 from ...server.network_factory import NetworkFactory
 from ...wallet.fee_manager import FeeManager
 
@@ -42,7 +42,7 @@ QML_CONTEXT_NAME = "BBackend"
 class Application(CoreApplication):
     def __init__(self, argv) -> None:
         super().__init__(QApplication, argv)
-        self._initCoinList(CoinModel, application=self)
+        self._initCoinList(lambda o: modelFactory(self, o))
 
         # TODO kill
         self._coin_manager = None

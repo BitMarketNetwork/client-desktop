@@ -3,7 +3,7 @@ from __future__ import annotations
 from argparse import ArgumentParser, Namespace
 from functools import partial
 from pathlib import PurePath
-from typing import Optional, TYPE_CHECKING, Type, Union
+from typing import Callable, Optional, TYPE_CHECKING, Type, Union
 
 from PySide2.QtCore import \
     QCoreApplication, \
@@ -129,8 +129,10 @@ class CoreApplication(QObject):
 
         self._coin_list = []
 
-    def _initCoinList(self, model, **kwargs) -> None:
-        self._coin_list = CoinList(model, **kwargs)
+    def _initCoinList(
+            self,
+            model_factory: Optional[Callable[[object], object]] = None) -> None:
+        self._coin_list = CoinList(model_factory=model_factory)
 
         # TODO
         for coin in self._coin_list:

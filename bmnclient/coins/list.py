@@ -2,17 +2,20 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Iterator, Optional, Type, Union
+from typing import Callable, Iterator, Optional, Union
 
 from ..wallet import coins
 
 
 class CoinList(Sequence):
-    def __init__(self, wrapper: Type, **kwargs) -> None:
+    def __init__(
+            self,
+            *,
+            model_factory: Optional[Callable[[object], object]] = None) -> None:
         self._list = (
-            wrapper(**kwargs, coin=coins.Bitcoin()),
-            wrapper(**kwargs, coin=coins.BitcoinTest()),
-            wrapper(**kwargs, coin=coins.Litecoin()),
+            coins.Bitcoin(model_factory=model_factory),
+            coins.BitcoinTest(model_factory=model_factory),
+            coins.Litecoin(model_factory=model_factory)
         )
 
     def __iter__(self) -> Iterator[coins.CoinType]:

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import math
-from typing import List, Optional, Type
+from typing import Callable, List, Optional, Type
 
 from .currency import \
     AbstractCurrency, \
@@ -10,6 +10,20 @@ from .currency import \
     FiatRate, \
     UsdFiatCurrency
 from ..utils.meta import classproperty
+
+
+class AbstractCoinModel:
+    def beforeAppendAddress(self) -> None:
+        raise NotImplementedError
+
+    def afterAppendAddress(self) -> None:
+        raise NotImplementedError
+
+    def afterRefreshAmount(self) -> None:
+        raise NotImplementedError
+
+    def afterSetFiatRate(self) -> None:
+        raise NotImplementedError
 
 
 class AbstractCoin:
@@ -21,10 +35,25 @@ class AbstractCoin:
 
     from .address import AbstractAddress as _Address
 
-    def __init__(self) -> None:
+    def __init__(
+            self,
+            *,
+            model_factory: Optional[Callable[[object], object]] = None) -> None:
+        self._model_factory = model_factory
+        self._model: Optional[AbstractCoinModel] = self.model_factory(self)
+
         self._fiat_rate = FiatRate(0, UsdFiatCurrency)
         self._amount = 0
         self._address_list = []
+
+    def model_factory(self, owner: object) -> Optional[object]:
+        if self._model_factory:
+            return self._model_factory(owner)
+        return None
+
+    @property
+    def model(self) -> Optional[AbstractCoinModel]:
+        return self._model
 
     @classproperty
     def shortName(cls) -> str: # noqa
@@ -58,7 +87,11 @@ class AbstractCoin:
         # TODO tmp, old wrapper
         if check and self.findAddressByName(address.name) is not None:  # noqa
             return False
+        if self._model:
+            self._model.beforeAppendAddress()
         self._address_list.append(address)
+        if self._model:
+            self._model.afterAppendAddress()
         return True
 
     @classproperty
@@ -72,6 +105,8 @@ class AbstractCoin:
     def refreshAmount(self) -> None:
         a = sum(a.balance for a in self._address_list if not a.readOnly)
         self._amount = a
+        if self._model:
+            self._model.afterRefreshAmount()
 
     @property
     def fiatRate(self) -> FiatRate:
@@ -80,6 +115,8 @@ class AbstractCoin:
     @fiatRate.setter
     def fiatRate(self, fiat_rate: FiatRate) -> None:
         self._fiat_rate = fiat_rate
+        if self._model:
+            self._model.afterSetFiatRate()
 
     def toFiatAmount(self, value: Optional[int] = None) -> Optional[int]:
         if value is None:
