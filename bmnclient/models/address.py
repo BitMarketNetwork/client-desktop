@@ -17,6 +17,7 @@ from .list import \
     AbstractListModel, \
     AbstractListSortedModel, \
     RoleEnum
+from ..coins.address import AddressModelInterface
 
 if TYPE_CHECKING:
     from .tx import TxListModel, TxListSortedModel
@@ -68,10 +69,55 @@ class AddressAmountModel(AbstractAddressAmountModel):
         return self._address.balance
 
 
-class AddressModel(AbstractModel):
+class AddressModel(AddressModelInterface, AbstractModel):
     def __init__(self, application: Application, address: CAddress) -> None:
-        super().__init__(application, address)
+        super().__init__(application)
         self._address = address
+
+        self._amount_model = AddressAmountModel(
+            self._application,
+            self._address)
+        self.connectModelRefresh(self._amount_model)
+
+        self._state_model = AddressStateModel(
+            self._application,
+            self._address)
+        self.connectModelRefresh(self._state_model)
+
+        from .tx import TxListModel
+        self._tx_list_model = TxListModel(
+            self._application,
+            self._address.txList)
+
+    @QProperty(str, constant=True)
+    def name(self) -> str:
+        return self._address.name
+
+    @QProperty(QObject, constant=True)
+    def amount(self) -> AddressAmountModel:
+        return self._amount_model
+
+    @QProperty(QObject, constant=True)
+    def state(self) -> AddressStateModel:
+        return self._state_model
+
+    @QProperty(QObject, constant=True)
+    def txList(self) -> TxListModel:
+        return self._tx_list_model
+
+    # noinspection PyTypeChecker
+    @QSlot(result=QObject)
+    def txListSorted(self) -> TxListSortedModel:
+        from .tx import TxListSortedModel
+        return TxListSortedModel(
+            self._application,
+            self._tx_list_model)
+
+    def beforeAppendTx(self, tx: Transaction) -> None:
+        self._tx_list_model.lock(self._tx_list_model.lockInsertRows())
+
+    def afterAppendTx(self, tx: Transaction) -> None:
+        self._tx_list_model.unlock()
 
 
 class AddressListModel(AbstractListModel):
@@ -84,16 +130,16 @@ class AddressListModel(AbstractListModel):
     ROLE_MAP: Final = {
         Role.NAME: (
             b"name",
-            lambda a: a.name),
+            lambda a: a.model.name),
         Role.AMOUNT: (
             b"amount",
-            lambda a: a.amountModel),
+            lambda a: a.model.amount),
         Role.STATE: (
             b"state",
-            lambda a: a.stateModel),
+            lambda a: a.model.state),
         Role.TX_LIST: (
             b"txList",
-            lambda a: a.txListSortedModel)
+            lambda a: a.model.txListSorted)
     }
 
 

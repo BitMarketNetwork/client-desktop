@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import math
-from typing import Callable, List, Optional, Type
+from typing import Callable, List, Optional
 
 from .address import AbstractAddress
 from .currency import \
@@ -78,39 +78,6 @@ class AbstractCoin:
         return "coins/" + cls._SHORT_NAME + ".svg"
 
     @property
-    def addressList(self) -> List[_Address]:
-        return self._address_list
-
-    def findAddressByName(self, name: str) -> Optional[_Address]:
-        name = name.strip().casefold()  # TODO tmp, old wrapper
-        for address in self._address_list:
-            if name == address.name.casefold():
-                return address
-        return None
-
-    def putAddress(self, address: _Address, *, check=True) -> bool:
-        # TODO tmp, old wrapper
-        if check and self.findAddressByName(address.name) is not None:  # noqa
-            return False
-        if self._model:
-            self._model.beforeAppendAddress(address)
-        self._address_list.append(address)
-        if self._model:
-            self._model.afterAppendAddress(address)
-        self.refreshAmount()
-        return True
-
-    @property
-    def amount(self) -> int:
-        return self._amount
-
-    def refreshAmount(self) -> None:
-        a = sum(a.balance for a in self._address_list if not a.readOnly)
-        self._amount = a
-        if self._model:
-            self._model.afterRefreshAmount()
-
-    @property
     def fiatRate(self) -> FiatRate:
         return self._fiat_rate
 
@@ -131,3 +98,38 @@ class AbstractCoin:
         value *= self.currency.decimalDivisor
         value = math.ceil(value / self._fiat_rate.value)
         return value if self.currency.isValidValue(value) else None
+
+    @property
+    def amount(self) -> int:
+        return self._amount
+
+    def refreshAmount(self) -> None:
+        a = sum(a.balance for a in self._address_list if not a.readOnly)
+        self._amount = a
+        if self._model:
+            self._model.afterRefreshAmount()
+
+    @property
+    def addressList(self) -> List[_Address]:
+        return self._address_list
+
+    def findAddressByName(self, name: str) -> Optional[_Address]:
+        name = name.strip().casefold()  # TODO tmp, old wrapper
+        for address in self._address_list:
+            if name == address.name.casefold():
+                return address
+        return None
+
+    def putAddress(self, address: _Address, *, check=True) -> bool:
+        # TODO tmp, old wrapper
+        if check and self.findAddressByName(address.name) is not None:  # noqa
+            return False
+
+        if self._model:
+            self._model.beforeAppendAddress(address)
+        self._address_list.append(address)
+        if self._model:
+            self._model.afterAppendAddress(address)
+
+        self.refreshAmount()
+        return True

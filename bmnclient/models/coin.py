@@ -152,7 +152,8 @@ class CoinModel(CoinModelInterface, AbstractModel):
 
     def afterAppendAddress(self, address: CAddress) -> None:
         self._address_list_model.unlock()
-        #self._tx_list_model.addSourceModel(address.model.txList) # TODO
+        # noinspection PyUnresolvedReferences
+        self._tx_list_model.addSourceModel(address.model.txList)
         self._application.networkThread.update_wallet(address)  # TODO
 
     def afterRefreshAmount(self) -> None:

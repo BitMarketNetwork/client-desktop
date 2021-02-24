@@ -139,7 +139,7 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
         self.__lock.__enter__()
 
     def unlock(self) -> None:
-        assert self.__lock
+        assert self.__lock is not None
         self.__lock.__exit__(None, None, None)
         self.__lock = None
 
