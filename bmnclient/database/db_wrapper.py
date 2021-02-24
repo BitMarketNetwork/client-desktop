@@ -283,10 +283,6 @@ class DbWrapper:
             self._remove_tx(tx)
 
     def _add_or_save_wallet(self, wallet: address.CAddress, timeout: int = None) -> None:
-        if wallet.is_root:
-            log.error(f"attempt to save root address")
-            traceback.print_stack()
-            return
         if not timeout:
             self._add_or_save_wallet_impl(wallet)
         else:
@@ -296,8 +292,6 @@ class DbWrapper:
             self._save_address_timer.start(timeout, self)
 
     def _add_or_save_wallet_impl(self, wallet: address.CAddress) -> None:
-        if wallet.is_root:
-            return
         assert wallet.coin.rowid
         if wallet.rowid is None:
             query = f"""

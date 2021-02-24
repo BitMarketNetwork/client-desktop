@@ -56,11 +56,6 @@ class Transaction(db_entry.DbEntry, AbstractTx):
             self.__time = next(arg_iter)
             self.__balance = next(arg_iter)
             self.__fee = next(arg_iter)
-
-            with self._input_list_model.lockReset():
-                self._input_list.clear()
-            with self._output_list_model.lockReset():
-                self._output_list.clear()
         except StopIteration:
             log.error("Too few arguments for TX {self}")
 

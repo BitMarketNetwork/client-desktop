@@ -609,8 +609,11 @@ class AddressHistoryCommand(AddressInfoCommand):
 
         # raw count
         self.__tx_count += len(tx_list)
-        self._wallet.add_tx_list(
-            tx_list, check_new=self.__forth and self.__first_offset == 'best')
+        for tx in tx_list:
+            if self._address.appendTx(tx) and self.__forth and self.__first_offset == 'best':
+                from ..ui.gui import Application
+                Application.instance().uiManager.process_incoming_tx(tx)
+
         # lsit updated !!
         if tx_list:
             from ..application import CoreApplication
@@ -665,10 +668,11 @@ class AddressMempoolCommand(AddressInfoCommand):
             tx_ = Transaction(self._address)
             tx_.parse(name, body)
             try:
-                self._wallet.add_tx(tx_, check_new=True)
-                from ..application import CoreApplication
-                CoreApplication.instance().databaseThread.saveTx.emit(tx_)
-            except tx.TxError as txe:
+                self._address.appendTx(tx_)
+                from ..ui.gui import Application
+                Application.instance().uiManager.process_incoming_tx(tx_)
+                Application.instance().databaseThread.saveTx.emit(tx_)
+            except TxError as txe:
                 if self.verbose:
                     log.warn(f"{txe}")
 
@@ -747,8 +751,10 @@ class AddressMultyMempoolCommand(AbstractMultyMempoolCommand):
                 tx_.parse(name, body)
                 tx_.height = w.coin.height + 1
                 try:
-                    w.add_tx(tx_, check_new=True)
-                except tx.TxError as txe:
+                    w.appendTx(tx_)
+                    from ..ui.gui import Application
+                    Application.instance().uiManager.process_incoming_tx(tx_)
+                except TxError as txe:
                     # everythig's good !!!
                     from ..application import CoreApplication
                     CoreApplication.instance().databaseThread.saveTx.emit(tx_)
@@ -808,8 +814,10 @@ class MempoolMonitorCommand(AbstractMultyMempoolCommand):
                 tx_.parse(name, body)
                 tx_.height = w.coin.height + 1
                 try:
-                    w.add_tx(tx_, check_new=True)
-                except tx.TxError as txe:
+                    w.appendTx(tx_)
+                    from ..ui.gui import Application
+                    Application.instance().uiManager.process_incoming_tx(tx_)
+                except TxError as txe:
                     if self.verbose:
                         log.warn(f"{txe}")
 

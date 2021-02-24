@@ -200,51 +200,6 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
     def is_receiver(self, tx: Transaction) -> bool:
         return any(self.name == o.address for o in tx.output_iter)
 
-    def add_tx(self, tx: Transaction, check_new=False):
-        if tx in self._tx_list:
-            tx_ex = next(
-                (t for t in self._tx_list if t.name == tx.name), None)
-            tx_ex.height = tx.height
-            tx_ex.time = tx.time
-            if not tx.local:
-                # TODO: failure
-                # should be decremented for each approved address
-                self.__local__tx_count = 0
-            tx_ex.local = False
-            # we don't want to save it. it only for UI.. next session we'll get real TX
-            self.txCountChanged.emit()
-            raise tx.TxError("TX already exists")
-        if tx.local:
-            self.__local__tx_count += 1
-        if check_new:
-            from ..ui.gui import Application
-            api_ = Application.instance()
-            if api_:
-                api_.uiManager.process_incoming_tx(tx)
-        with self._tx_list_model.lockInsertRows():
-            self._tx_list.append(tx)
-            if tx.wallet is None:
-                tx.wallet = self
-        self.txCountChanged.emit()
-
-    def add_tx_list(self, txs: list, check_new=False):
-        unique = []
-        not_unique = []
-        for tx in txs:
-            if tx in self._tx_list:
-                not_unique.append(tx)
-            else:
-                unique.append(tx)
-        if not_unique:
-            log.debug(f"TX DOUBLES: {len(not_unique)}")
-        txs[:] = unique
-        with self._tx_list_model.lockInsertRows(-1, len(unique)):
-            for tx in unique:
-                self._tx_list.append(tx)
-        if check_new:
-            from ..ui.gui import Application
-            Application.instance().uiManager.process_incoming_tx(unique)
-
     def _get_first_offset(self) -> int:
         return self.__first_offset
 
@@ -424,10 +379,6 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
     @qt_core.Property(bool, notify=balanceChanged)
     def canSend(self) -> bool:
         return not self.readOnly and self._amount > 0
-
-    @qt_core.Property(bool, constant=True)
-    def isRoot(self) -> bool:
-        return self.is_root
 
     @balance.setter
     def _set_balance(self, bl: str):

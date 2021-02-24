@@ -42,13 +42,6 @@ class CoinManager(QObject):
     def coinIndex(self) -> int:
         return self.__current_coin_idx
 
-    @QProperty(str, notify=coinIndexChanged)
-    def unit(self) -> str:
-        """
-        sugar.. don't delete please
-        """
-        return self.coin.currency.unit if self.coin is not None else "BTC"
-
     @QProperty(coins.CoinType, notify=coinIndexChanged)
     def coin(self) -> 'coins.CoinType':
         if self.__current_coin_idx >= 0:
@@ -81,7 +74,7 @@ class CoinManager(QObject):
     def getCoinUnspentList(self):
         if self.coin:
             # TODO: we shouldn't get unspents from read only addresses
-            for addr in self.coin:  # pylint: disable=not-an-iterable
+            for addr in self.coin.addressList:  # pylint: disable=not-an-iterable
                 if not addr.readOnly and addr.balance > 0:
                     self._application.networkThread.unspent_list(addr)
         else:
