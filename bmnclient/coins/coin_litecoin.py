@@ -31,8 +31,8 @@ class Litecoin(Bitcoin):
     _SHORT_NAME = "ltc"
     _FULL_NAME = "Litecoin"
 
-    class Currency(Bitcoin.Currency):
+    class _Currency(Bitcoin._Currency):
         _UNIT = "LTC"
 
-    class Address(LitecoinAddress):
+    class _Address(LitecoinAddress):
         pass

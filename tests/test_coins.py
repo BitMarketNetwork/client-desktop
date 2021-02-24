@@ -1,10 +1,12 @@
 # JOK++
 import unittest
 
-from bmnclient.coins import Bitcoin, BitcoinTest
-from bmnclient.coins.address import \
+from bmnclient.coins.coin_bitcoin import \
+    Bitcoin, \
     BitcoinAddress, \
-    BitcoinTestAddress, \
+    BitcoinTest, \
+    BitcoinTestAddress
+from bmnclient.coins.coin_litecoin import \
     LitecoinAddress
 from bmnclient.language import Locale
 

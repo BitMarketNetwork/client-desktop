@@ -5,7 +5,7 @@ from typing import List, Optional
 from .tx import AbstractTx
 
 
-class AbstractAddressModel:
+class AddressModelInterface:
     # TODO
     pass
 
@@ -19,7 +19,7 @@ class AbstractAddress:
         self._tx_list = []
 
     @property
-    def model(self) -> Optional[AbstractAddressModel]:
+    def model(self) -> Optional[AddressModelInterface]:
         # TODO
         return None
 

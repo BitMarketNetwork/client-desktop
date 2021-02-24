@@ -106,11 +106,11 @@ class Bitcoin(AbstractCoin):
     _SHORT_NAME = "btc"
     _FULL_NAME = "Bitcoin"
 
-    class Currency(AbstractCoin.Currency):
+    class _Currency(AbstractCoin._Currency):
         _DECIMAL_SIZE = (0, 8)
         _UNIT = "BTC"
 
-    class Address(BitcoinAddress):
+    class _Address(BitcoinAddress):
         pass
 
 
@@ -138,8 +138,5 @@ class BitcoinTest(Bitcoin):
     _SHORT_NAME = "btctest"
     _FULL_NAME = "Bitcoin Testnet"
 
-    class Currency(Bitcoin.Currency):
-        _UNIT = "BTC"
-
-    class Address(BitcoinTestAddress):
+    class _Address(BitcoinTestAddress):
         pass

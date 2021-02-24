@@ -13,8 +13,7 @@ from PySide2.QtCore import \
 from . import AbstractModel, AbstractStateModel
 from .address import \
     AddressListModel, \
-    AddressListSortedModel, \
-    AddressModel
+    AddressListSortedModel
 from .amount import AmountModel
 from .list import \
     AbstractListModel, \
@@ -23,12 +22,12 @@ from .tx import \
     TxListConcatenateModel, \
     TxListModel, \
     TxListSortedModel
+from ..coins.coin import CoinModelInterface
 from ..wallet.address import CAddress
 
 if TYPE_CHECKING:
     from ..wallet.coins import CoinType
     from ..ui.gui import Application
-    from ..coins.currency import FiatRate
 
 
 class CoinStateModel(AbstractStateModel):
@@ -79,9 +78,9 @@ class CoinAmountModel(AmountModel):
         return self._coin.amount
 
 
-class CoinModel(AbstractModel):
+class CoinModel(CoinModelInterface, AbstractModel):
     def __init__(self, application: Application, coin: CoinType) -> None:
-        super().__init__(application, coin)
+        super().__init__(application)
         self._coin = coin
 
         self._amount_model = CoinAmountModel(
@@ -148,32 +147,18 @@ class CoinModel(AbstractModel):
     def txListSorted(self) -> TxListSortedModel:
         return TxListSortedModel(self._application, self._tx_list_model)
 
-    def putAddress(self, address: CAddress, *, check=True) -> bool:
-        # TODO tmp, old wrapper
-        if check and self._coin.findAddressByName(address.name) is not None:
-            return False
+    def beforeAppendAddress(self, address: CAddress) -> None:
+        self._address_list_model.lock(self._address_list_model.lockInsertRows())
 
-        address = AddressModel(self._application, address)
-        with self._address_list_model.lockInsertRows():
-            self._coin.putAddress(address, check=False)
-        self._tx_list_model.addSourceModel(address.txListModel)
-        self.refreshAmount()
+    def afterAppendAddress(self, address: CAddress) -> None:
+        self._address_list_model.unlock()
+        #self._tx_list_model.addSourceModel(address.model.txList) # TODO
+        self._application.networkThread.update_wallet(address)  # TODO
 
-        # TODO
-        self._application.networkThread.update_wallet(address)
-        return True
-
-    def refreshAmount(self) -> None:
-        self._coin.refreshAmount()
+    def afterRefreshAmount(self) -> None:
         self._amount_model.refresh()
 
-    @property
-    def fiatRate(self) -> FiatRate:
-        return self._coin.fiatRate
-
-    @fiatRate.setter
-    def fiatRate(self, fiat_rate: FiatRate) -> None:
-        self._coin.fiatRate = fiat_rate
+    def afterSetFiatRate(self) -> None:
         self._amount_model.refresh()
 
 

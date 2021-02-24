@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import math
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Type
 
 from .address import AbstractAddress
 from .currency import \
@@ -12,7 +12,7 @@ from .currency import \
 from ..utils.meta import classproperty
 
 
-class AbstractCoinModel:
+class CoinModelInterface:
     def beforeAppendAddress(self, address: AbstractAddress) -> None:
         raise NotImplementedError
 
@@ -30,10 +30,10 @@ class AbstractCoin:
     _SHORT_NAME = ""
     _FULL_NAME = ""
 
-    class Currency(AbstractCurrency):
+    class _Currency(AbstractCurrency):
         pass
 
-    class Address(AbstractAddress):
+    class _Address(AbstractAddress):
         pass
 
     def __init__(
@@ -45,7 +45,7 @@ class AbstractCoin:
         self._address_list = []
 
         self._model_factory = model_factory
-        self._model: Optional[AbstractCoinModel] = self.model_factory(self)
+        self._model: Optional[CoinModelInterface] = self.model_factory(self)
 
     def model_factory(self, owner: object) -> Optional[object]:
         if self._model_factory:
@@ -53,8 +53,16 @@ class AbstractCoin:
         return None
 
     @property
-    def model(self) -> Optional[AbstractCoinModel]:
+    def model(self) -> Optional[CoinModelInterface]:
         return self._model
+
+    @classproperty
+    def currency(cls) -> Type[_Currency]:  # noqa
+        return cls._Currency
+
+    @classproperty
+    def address(cls) -> Type[_Address]:  # noqa
+        return cls._Address
 
     @classproperty
     def shortName(cls) -> str: # noqa
@@ -70,17 +78,17 @@ class AbstractCoin:
         return "coins/" + cls._SHORT_NAME + ".svg"
 
     @property
-    def addressList(self) -> List[Address]:
+    def addressList(self) -> List[_Address]:
         return self._address_list
 
-    def findAddressByName(self, name: str) -> Optional[Address]:
+    def findAddressByName(self, name: str) -> Optional[_Address]:
         name = name.strip().casefold()  # TODO tmp, old wrapper
         for address in self._address_list:
             if name == address.name.casefold():
                 return address
         return None
 
-    def putAddress(self, address: Address, *, check=True) -> bool:
+    def putAddress(self, address: _Address, *, check=True) -> bool:
         # TODO tmp, old wrapper
         if check and self.findAddressByName(address.name) is not None:  # noqa
             return False
@@ -116,10 +124,10 @@ class AbstractCoin:
         if value is None:
             value = self._amount
         value *= self._fiat_rate.value
-        value //= self.Currency.decimalDivisor
+        value //= self.currency.decimalDivisor
         return value if self._fiat_rate.currency.isValidValue(value) else None
 
     def fromFiatAmount(self, value: int) -> Optional[int]:
-        value *= self.Currency.decimalDivisor
+        value *= self.currency.decimalDivisor
         value = math.ceil(value / self._fiat_rate.value)
-        return value if self.Currency.isValidValue(value) else None
+        return value if self.currency.isValidValue(value) else None
