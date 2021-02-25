@@ -25,8 +25,13 @@ class BitcoinAddress(AbstractAddress):
         WITNESS_V0_SCRIPT_HASH: Final = (0x00, Sha256Digest.SIZE, "p2wsh")
         WITNESS_UNKNOWN: Final = (0x00, -40, "witness_unknown")
 
-    def __init__(self, type_: Type, version, data) -> None:
-        super().__init__(data)
+    def __init__(
+            self,
+            type_: Type,
+            version, data,
+            *,
+            coin: Bitcoin) -> None:
+        super().__init__(data, coin=coin)
         self._type = type_
         self._version = version
 
@@ -39,27 +44,35 @@ class BitcoinAddress(AbstractAddress):
         return self._version
 
     @classmethod
-    def decode(cls, source: str) -> Optional[BitcoinAddress]:
+    def decode(
+            cls,
+            source: str,
+            *,
+            coin: Bitcoin) -> Optional[BitcoinAddress]:
         if len(source) <= len(cls._HRP) + 1:
             return None
 
         if source[0] in cls._PUBKEY_HASH_PREFIX_LIST:
-            return cls._decode(cls.Type.PUBKEY_HASH, source)
+            return cls._decode(cls.Type.PUBKEY_HASH, source, coin)
         if source[0] in cls._SCRIPT_HASH_PREFIX_LIST:
-            return cls._decode(cls.Type.SCRIPT_HASH, source)
+            return cls._decode(cls.Type.SCRIPT_HASH, source, coin)
 
         if source[len(cls._HRP)] != Bech32.SEPARATOR:
             return None
 
         if len(source) == len(cls._HRP) + 1 + 39:
-            return cls._decode(cls.Type.WITNESS_V0_KEY_HASH, source)
+            return cls._decode(cls.Type.WITNESS_V0_KEY_HASH, source, coin)
         if len(source) == len(cls._HRP) + 1 + 59:
-            return cls._decode(cls.Type.WITNESS_V0_SCRIPT_HASH, source)
+            return cls._decode(cls.Type.WITNESS_V0_SCRIPT_HASH, source, coin)
 
-        return cls._decode(cls.Type.WITNESS_UNKNOWN, source)
+        return cls._decode(cls.Type.WITNESS_UNKNOWN, source, coin)
 
     @classmethod
-    def _decode(cls, type_: Type, source: str) -> Optional[BitcoinAddress]:
+    def _decode(
+            cls,
+            type_: Type,
+            source: str,
+            coin: Bitcoin) -> Optional[BitcoinAddress]:
         if not type_.value:
             return None
 
@@ -99,7 +112,7 @@ class BitcoinAddress(AbstractAddress):
             if len(data) <= 0 or len(data) > abs(type_.value[1]):
                 return None
 
-        return cls(type_, version, data)
+        return cls(type_, version, data, coin=coin)
 
 
 class Bitcoin(AbstractCoin):

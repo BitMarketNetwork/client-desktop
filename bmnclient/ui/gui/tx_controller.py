@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 
 from PySide2.QtCore import \

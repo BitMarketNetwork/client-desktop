@@ -5,7 +5,7 @@ import "../coincontrols"
 BPane {
     id: _base
     property string title: qsTr("History (%1)").arg(_list.model.rowCountHuman)
-    property var coin // CoinListModel item
+    property var coin // CoinModel
 
     contentItem: BTxListView {
         id: _list

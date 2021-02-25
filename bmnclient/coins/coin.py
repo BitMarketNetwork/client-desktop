@@ -109,6 +109,9 @@ class AbstractCoin:
         if self._model:
             self._model.afterRefreshAmount()
 
+    def decodeAddress(self, source: str) -> Optional[_Address]:
+        return self._Address.decode(source, coin=self)
+
     @property
     def addressList(self) -> List[_Address]:
         return self._address_list

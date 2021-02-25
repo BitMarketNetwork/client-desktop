@@ -35,7 +35,11 @@ class AbstractAddress:
         return self._model
 
     @classmethod
-    def decode(cls, source: str) -> Optional[AbstractAddress]:
+    def decode(
+            cls,
+            source: str,
+            *,
+            coin: AbstractCoin) -> Optional[AbstractAddress]:
         return None
 
     @property

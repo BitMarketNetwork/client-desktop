@@ -3,7 +3,7 @@ import "../basiccontrols"
 
 BPane {
     id: _base
-    property var coin // CoinListModel item
+    property var coin // CoinModel
     property string title: coin.fullName
     property string iconPath: _applicationManager.imagePath(coin.iconPath)
 

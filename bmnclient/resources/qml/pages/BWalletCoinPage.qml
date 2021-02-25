@@ -3,7 +3,7 @@ import "../coincontrols"
 
 BControl {
     id: _base
-    property var coin // CoinListModel item
+    property var coin // CoinModel
 
     signal generateAddress
     signal addWatchOnlyAddress

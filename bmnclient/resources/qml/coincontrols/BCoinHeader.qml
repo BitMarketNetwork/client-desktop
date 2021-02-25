@@ -3,7 +3,7 @@ import "../basiccontrols"
 
 BControl {
     id: _base
-    property var coin // CoinListModel item
+    property var coin // CoinModel
     property BMenu contextMenu
 
     padding: _applicationStyle.padding

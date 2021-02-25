@@ -4,7 +4,7 @@ import "../basiccontrols"
 
 BItemDelegate {
     id: _base
-    property var coin // CoinListModel item
+    property var coin // CoinModel
 
     text: coin.fullName
     icon.source: _applicationManager.imagePath(coin.iconPath)

@@ -33,7 +33,6 @@ class AddressError(Exception):
 
 
 class CAddress(db_entry.DbEntry, AbstractAddress):
-    is_root = False
     balanceChanged = qt_core.Signal()
     labelChanged = qt_core.Signal()
     lastOffsetChanged = qt_core.Signal()

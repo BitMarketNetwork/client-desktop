@@ -1,4 +1,3 @@
-import Bmn 1.0
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
@@ -7,7 +6,7 @@ import "../dialogs"
 BPane {
     id: _base
     property string title: qsTr("Send")
-    property var coin
+    property var coin // CoinModel
 
     contentItem: BDialogScrollableLayout {
         columns: 3
@@ -28,11 +27,11 @@ BPane {
         BDialogInputTextField {
             text: ""
             onTextEdited: {
-                _tx_controller.model.receiver.addressName = text
+                _base.coin.txController.receiver.addressName = text
             }
         }
         BDialogValidLabel {
-            status: _tx_controller.model.receiver.validStatus
+            status: _base.coin.txController.receiver.validStatus
         }
 
         BDialogSeparator {}

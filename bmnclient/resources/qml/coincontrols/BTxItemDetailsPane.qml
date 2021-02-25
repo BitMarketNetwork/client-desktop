@@ -7,7 +7,7 @@ import "../coincontrols"
 
 BPane {
     id: _base
-    property var tx // TxListModel item
+    property var tx // TxModel
     property int visibleAddressCount: Math.min(4, Math.max(tx.inputList.rowCount(), tx.outputList.rowCount()))
 
     Material.elevation: 1 // for background, view QtQuick/Controls.2/Material/Pane.qml

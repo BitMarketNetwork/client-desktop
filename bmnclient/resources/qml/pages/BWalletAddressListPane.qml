@@ -6,7 +6,7 @@ import "../coincontrols"
 BPane {
     id: _base
     property string title: qsTr("Addresses (%1)").arg(_list.model.rowCountHuman)
-    property var coin // CoinListModel item
+    property var coin // CoinModel
 
     contentItem: BAddressListView {
         id: _list
@@ -22,7 +22,7 @@ BPane {
 
     BMenu {
         id: _contextMenu
-        property var address // AddressListModel item
+        property var address // AddressModel
 
         BMenuItem {
             text: qsTr("Copy address")

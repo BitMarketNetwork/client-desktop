@@ -7,6 +7,7 @@ from bmnclient.coins.coin_bitcoin import \
     BitcoinTest, \
     BitcoinTestAddress
 from bmnclient.coins.coin_litecoin import \
+    Litecoin, \
     LitecoinAddress
 from bmnclient.language import Locale
 
@@ -116,10 +117,11 @@ LITECOIN_ADDRESS_LIST = (
 class TestCoins(unittest.TestCase):
     def _test_address_decode(
             self,
+            coin,
             address_cls,
             address_list) -> None:
         for (address, type_, version, data) in address_list:
-            a = address_cls.decode(address)
+            a = address_cls.decode(address, coin=coin)
             if type_ is None:
                 self.assertIsNone(a)
             else:
@@ -130,12 +132,15 @@ class TestCoins(unittest.TestCase):
 
     def test_address_decode(self) -> None:
         self._test_address_decode(
+            Bitcoin(),
             BitcoinAddress,
             BITCOIN_ADDRESS_LIST)
         self._test_address_decode(
+            BitcoinTest(),
             BitcoinTestAddress,
             BITCOIN_TEST_ADDRESS_LIST)
         self._test_address_decode(
+            Litecoin(),
             LitecoinAddress,
             LITECOIN_ADDRESS_LIST)
 

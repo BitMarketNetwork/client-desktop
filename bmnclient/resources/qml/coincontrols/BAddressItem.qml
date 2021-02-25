@@ -5,7 +5,7 @@ import "../basiccontrols"
 
 BItemDelegate {
     id: _base
-    property var address // AddressListModel item
+    property var address // AddressModel
     property BMenu contextMenu
 
     text: (address.state.label ? address.state.label + " : " : "") + address.name
