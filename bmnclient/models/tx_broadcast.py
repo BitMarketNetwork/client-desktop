@@ -129,6 +129,10 @@ class TxBroadcastChangeAmountModel(AbstractTxAmountModel):
             self._tx.new_address_for_change = value
             self.refresh()
 
+    @QProperty(str, notify=__stateChanged)
+    def addressName(self) -> str:
+        return self._tx.leftover_address
+
 
 class TxBroadcastReceiverModel(AbstractTxBroadcastStateModel):
     __stateChanged = QSignal()
@@ -187,6 +191,8 @@ class TxBroadcastInputListModel(TxIoListModel):
 
 
 class TxBroadcastModel(AbstractModel):
+    __stateChanged = QSignal()
+
     def __init__(
             self,
             application: Application,
@@ -228,6 +234,10 @@ class TxBroadcastModel(AbstractModel):
             self._application,
             self._tx.sources)
 
+    @QProperty(str, notify=__stateChanged)
+    def name(self) -> str:
+        return self._tx.tx_id
+
     @QProperty(QObject, constant=True)
     def availableAmount(self) -> TxBroadcastAvailableAmountModel:
         return self._available_amount
@@ -255,6 +265,12 @@ class TxBroadcastModel(AbstractModel):
     @QProperty(QObject, constant=True)
     def inputList(self) -> TxBroadcastInputListModel:
         return self._input_list
+
+    # noinspection PyTypeChecker
+    @QSlot(result=bool)
+    def prepare(self) -> bool:
+        self._tx.prepare()
+        return True
 
     # noinspection PyTypeChecker
     @QSlot(result=bool)

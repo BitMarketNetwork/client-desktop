@@ -1,3 +1,4 @@
+// JOK++
 import QtQuick 2.15
 import "../application"
 import "../basiccontrols"
@@ -5,6 +6,7 @@ import "../coincontrols"
 
 BDialog {
     id: _base
+    property var coin // CoinModel
 
     enum Type {
         Prepare,
@@ -12,13 +14,6 @@ BDialog {
     }
 
     property int type: BTxApproveDialog.Type.Final
-    property var coin
-    property alias txText: _tx.text
-    property alias targetAddressText: _targetAddress.text
-    property alias changeAddressText: _changeAddress.text
-    property alias amount: _amount.amount
-    property alias feeAmount: _feeAmount.amount
-    property alias changeAmount: _changeAmount.amount
 
     title: {
         switch (type) {
@@ -42,8 +37,8 @@ BDialog {
             text: qsTr("Transaction ID:")
         }
         BInfoValue {
-            id: _tx
             placeholderText: qsTr("None")
+            text: _base.coin.txController.name
         }
         BInfoSeparator {}
 
@@ -55,7 +50,7 @@ BDialog {
             text: qsTr("Recipient address:")
         }
         BInfoValue {
-            id: _targetAddress
+            text: _base.coin.txController.receiver.addressName
         }
         BInfoSeparator {}
 
@@ -63,7 +58,7 @@ BDialog {
             text: qsTr("Amount:")
         }
         BAmountInfoValue {
-            id: _amount
+            amount: _base.coin.txController.amount
         }
         BInfoSeparator {}
 
@@ -71,7 +66,7 @@ BDialog {
             text: qsTr("Fee:")
         }
         BAmountInfoValue {
-            id: _feeAmount
+            amount: _base.coin.txController.feeAmount
         }
         BInfoSeparator {}
 
@@ -83,7 +78,7 @@ BDialog {
             text: qsTr("Send change to:")
         }
         BInfoValue {
-            id: _changeAddress
+            text: _base.coin.txController.changeAmount.addressName
         }
         BInfoSeparator {}
 
@@ -91,7 +86,7 @@ BDialog {
             text: qsTr("Change:")
         }
         BAmountInfoValue {
-            id: _changeAmount
+            amount: _base.coin.txController.changeAmount
         }
         BInfoSeparator {}
     }

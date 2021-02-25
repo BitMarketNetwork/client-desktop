@@ -1,3 +1,4 @@
+// JOK++
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
@@ -43,7 +44,7 @@ BPane {
             BLayout.columnSpan: parent.columns - 1
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _tx_controller.model.availableAmount
+            amount: _base.coin.txController.availableAmount
         }
 
         BDialogPromtLabel {
@@ -52,10 +53,10 @@ BPane {
         BAmountInput {
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _tx_controller.model.amount
+            amount: _base.coin.txController.amount
         }
         BDialogValidLabel {
-            status: _tx_controller.model.amount.validStatus
+            status: _base.coin.txController.amount.validStatus
         }
 
         BDialogSeparator {}
@@ -67,7 +68,7 @@ BPane {
             BLayout.columnSpan: parent.columns - 1
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _tx_controller.model.feeAmount
+            amount: _base.coin.txController.feeAmount
         }
 
         BDialogPromtLabel {
@@ -76,11 +77,11 @@ BPane {
         BAmountInput {
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _tx_controller.model.kibFeeAmount
+            amount: _base.coin.txController.kibFeeAmount
             defaultButtonText: qsTr("Recommended")
         }
         BDialogValidLabel {
-            status: _tx_controller.model.kibFeeAmount.validStatus
+            status: _base.coin.txController.kibFeeAmount.validStatus
         }
 
         BDialogPromtLabel {
@@ -88,9 +89,9 @@ BPane {
         }
         BDialogInputSwitch {
             BLayout.columnSpan: parent.columns - 1
-            checked: _tx_controller.model.feeAmount.subtractFromAmount
+            checked: _base.coin.txController.feeAmount.subtractFromAmount
             onCheckedChanged: {
-                _tx_controller.model.feeAmount.subtractFromAmount = checked
+                _base.coin.txController.feeAmount.subtractFromAmount = checked
             }
         }
 
@@ -103,7 +104,7 @@ BPane {
             BLayout.columnSpan: parent.columns - 1
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _tx_controller.model.changeAmount
+            amount: _base.coin.txController.changeAmount
         }
 
         BDialogPromtLabel {
@@ -111,9 +112,9 @@ BPane {
         }
         BDialogInputSwitch {
             BLayout.columnSpan: parent.columns - 1
-            checked: _tx_controller.model.changeAmount.toNewAddress
+            checked: _base.coin.txController.changeAmount.toNewAddress
             onCheckedChanged: {
-                _tx_controller.model.changeAmount.toNewAddress = checked
+                _base.coin.txController.changeAmount.toNewAddress = checked
             }
         }
 
@@ -132,7 +133,7 @@ BPane {
             BButton {
                 BDialogButtonBox.buttonRole: BDialogButtonBox.AcceptRole
                 text: qsTr("Prepare...")
-                enabled: _tx_controller.model.isValid
+                enabled: _base.coin.txController.isValid
             }
             BButton {
                 BDialogButtonBox.buttonRole: BDialogButtonBox.ResetRole
@@ -142,57 +143,26 @@ BPane {
                 // TODO
             }
             onAccepted: {
-                if (_tx_controller.model.isValid) {
-                    _approveDialog.type = BTxApproveDialog.Type.Prepare
-                    _approveDialog.txText = ""
-                    _approveDialog.open()
+                if (_base.coin.txController.isValid && _base.coin.txController.prepare()) {
+                    let dialog = _applicationManager.createDialog(
+                                "BTxApproveDialog", {
+                                    "type": BTxApproveDialog.Type.Prepare,
+                                    "coin": _base.coin
+                                })
+                    dialog.onAccepted.connect(function () {
+                        _base.coin.txController.broadcast() // TODO on error
+                    })
+                    dialog.open()
                 }
             }
         }
     }
 
-    TxController {
-        id: _tx_controller
-
-        useCoinBalance: true // TODO temporary fix
-
-        onFail: {
-            console.error(error)
-            _applicationManager.messageDialog(error)
-        }
-        onSent: {
-            _approveDialog.type = BTxApproveDialog.Type.Final
-            _approveDialog.txText = txHash
-            _approveDialog.open()
-        }
-    }
-
-    BTxApproveDialog {
-        id: _approveDialog
-        type: BTxApproveDialog.Type.Final
-        coin: _base.coin // TODO BBackend.coinManager.coin.netName ???
-
-        targetAddressText: _tx_controller.receiverAddress
-        changeAddressText: _tx_controller.changeAddress
-
-        amount.valueHuman: _tx_controller.amount
-        amount.unit: BBackend.coinManager.unit
-        // TODO amount.fiatValueHuman
-        // TODO amount.fiatUnit:
-        feeAmount.valueHuman: _tx_controller.feeAmount
-        feeAmount.unit: BBackend.coinManager.unit
-        // TODO feeAmount.fiatValueHuman
-        // TODO feeAmount.fiatUnit:
-        changeAmount.valueHuman: _tx_controller.changeAmount
-        changeAmount.unit: BBackend.coinManager.unit
-        // TODO changeAmount.fiatValueHuman
-        // TODO changeAmount.fiatUnit:
-
-        onAccepted: {
-            if (type === BTxApproveDialog.Type.Prepare) {
-                // TODO ask password
-                _tx_controller.send()
-            }
+    BTxInputListDialog {
+        id: _inputListDialog
+        inputList: _base.coin.txController.inputList
+        onClosed: {
+            _base.coin.txController.recalcSources()
         }
     }
 }

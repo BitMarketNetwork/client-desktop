@@ -7,6 +7,7 @@ from typing import Optional, List, Tuple, DefaultDict
 
 
 from . import coin_network, key, mtx_impl
+from .coins import CoinType
 
 log = logging.getLogger(__name__)
 

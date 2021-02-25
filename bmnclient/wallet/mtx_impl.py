@@ -300,15 +300,15 @@ class Mtx:
         out.unspents = unspents
         return out
 
-    @lru_cache()
+    @property
     def in_amount(self):
         return sum(inc.amount_int for inc in self.TxIn)
 
-    @lru_cache()
+    @property
     def out_amount(self):
         return sum(out.amount_int for out in self.TxOut)
 
-    @lru_cache()
+    @property
     def fee(self):
         return self.in_amount - self.out_amount
 
