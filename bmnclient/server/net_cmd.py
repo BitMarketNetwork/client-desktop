@@ -1,13 +1,14 @@
 
 import abc
-import enum
+from enum import Enum, auto
 import io
 import json
 import logging
 import traceback
 import sys
-from typing import Callable, List, Tuple, Iterable
+from typing import Callable, List, Tuple, Iterable, Optional
 from ..coins.currency import UsdFiatCurrency, FiatRate
+from ..logger import Logger
 
 import PySide2.QtCore as qt_core
 import PySide2.QtNetwork as qt_network
@@ -26,7 +27,6 @@ SILENCE_CHECKS = True
 
 
 class AbstractNetworkCommand(qt_core.QObject):
-
     def __init__(self, parent):
         super().__init__(parent=parent)
 
@@ -35,12 +35,35 @@ class FinalMeta(type(qt_core.QObject), type(abc.ABCMeta)):
     pass
 
 
-class HTTPProtocol(enum.IntEnum):
-    GET = enum.auto()
-    POST = enum.auto()
+class HttpMethod(Enum):
+    GET = auto()
+    POST = auto()
 
 
 class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
+    _METHOD = HttpMethod.GET
+
+    @property
+    def method(self) -> HttpMethod:
+        return self._METHOD
+
+    @property
+    def statusCode(self) -> Optional[int]:
+        return self.__status_code
+
+    @statusCode.setter
+    def statusCode(self, value: int):
+        if self.__status_code is None:
+            self.__status_code = value
+        else:
+            AttributeError("status is already set.")
+
+    def onResponseData(self, data: bytes) -> bool:
+        raise NotImplementedError
+
+    def onResponseFinished(self) -> None:
+        raise NotImplementedError
+
     action = None
     _server_action = None
     # high verbosity
@@ -48,16 +71,16 @@ class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
     # low verbosity
     silenced = False
     host = None
-    protocol = HTTPProtocol.GET
     level = loading_level.LoadingLevel.NONE
     _high_priority = False
     _low_priority = False
-    # for debugging purposes
-    _ltc_filter = True
     unique = False
 
     def __init__(self, parent, **kwargs):
         super().__init__(parent=parent)
+        self._logger = Logger.getClassLogger(__name__, self.__class__)
+        self.__status_code: Optional[int] = None
+
         self.__high_priority = kwargs.pop("high_priority", False)
         self.__low_priority = kwargs.pop("low_priority", False)
         self.level = kwargs.pop("level", loading_level.LoadingLevel.NONE)
@@ -77,12 +100,6 @@ class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
     @property
     def ext(self) -> bool:
         return self.host is not None
-
-    @property
-    def is_ltc(self) -> bool:
-        if hasattr(self, "_coin"):
-            return isinstance(self._coin, coins.Litecoin)
-        return False
 
     @property
     def high_priority(self) -> bool:
@@ -136,15 +153,6 @@ class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
     @property
     def args_post(self) -> Tuple[str, dict]:
         return "", {}
-
-    def on_data(self, data):
-        if self.verbose:
-            log.debug(f'{self}: got data: %f kB', len(data) / 1024.)
-        # raise NotImplementedError()
-
-    @abc.abstractmethod
-    def on_data_end(self, http_code=200):
-        raise NotImplementedError()
 
     def process_answer(self, data) -> AbstractNetworkCommand:
         if not data:
@@ -213,38 +221,30 @@ class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
 
 
 class JsonStreamMixin:
-    """
-    simple collect data strategy:
-    - it wastes memory and we can implement more sufficient algorithm later
-    """
-
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
         self._json = io.BytesIO()
 
-    def on_data(self, data):
-        super().on_data(data)
+    def onResponseData(self, data) -> bool:
+        super().onResponseData(data)
         self._json.write(data)
+        return True
 
-    def on_data_end(self, http_code):
+    def onResponseFinished(self) -> None:
         try:
             next_ = self.process_answer(self._json.getvalue())
             # important !!! ( for debugging for a while)
             self._json = io.BytesIO()
-            return next_
+            from ..ui.gui import CoreApplication
+            CoreApplication.instance().networkThread.network.push_cmd(next_)
         except server_error.BaseNetError as se:
             HEAD_LEN = 1024
-            log.error(f"Processing answer error: {se}. HTTP CODE: {http_code}")
+            log.error(f"Processing answer error: {se}. HTTP CODE: TODO")
             log.error(
                 f"full answer(first {HEAD_LEN} symbols): {self._json.getvalue()[:HEAD_LEN]}")
             log.error(traceback.format_exc(limit=5, chain=True))
 
     def __len__(self):
-        """
-            .getbuffer().nbytes - too heavy
-            sys.getsizeof(..) -  GC overhead
-            remember buffering
-        """
         return self._json.__sizeof__()
 
 
@@ -419,8 +419,6 @@ class LookForHDAddresses(AddressInfoCommand):
 
     def process_attr(self, table):
         assert self._address == table["address"]
-        if self.verbose and self.is_ltc:
-            log.warning(f"{self._empty_count}: {table}")
         if table["balance"] == 0 and table["number_of_transactions"] == 0:
             self._empty_count += 1
             if self._empty_count > self.MAX_EMPTY_NUMBER * 2:  # remember SW + no SW
@@ -569,10 +567,11 @@ class AddressHistoryCommand(AddressInfoCommand):
             parent=self,
         )
 
-    def on_data(self, data):
+    def onResponseData(self, data) -> bool:
         # too much prints
-        # super().on_data(data)
+        # super().onResponseData(data)
         self._json.write(data)
+        return True
 
     @ property
     def args(self):
@@ -678,9 +677,10 @@ class AddressMempoolCommand(AddressInfoCommand):
 
 
 class AbstractMultyMempoolCommand(JsonStreamMixin, BaseNetworkCommand):
+    _METHOD = HttpMethod.POST
+
     action = "coins"
     _server_action = "unconfirmed"
-    protocol = HTTPProtocol.POST
     level = loading_level.LoadingLevel.ADDRESSES
 
     def __init__(self, wallet_list: Iterable[address.CAddress], parent, hash_=None):
@@ -734,7 +734,7 @@ class AddressMultyMempoolCommand(AbstractMultyMempoolCommand):
         if txs:
             self.__counter += 1
             self.__process_transactions(txs)
-        return self.__send_again()
+        self.__send_again()
 
     def __process_transactions(self, txs: dict):
         for name, body in txs.items():
@@ -772,12 +772,19 @@ class AddressMultyMempoolCommand(AbstractMultyMempoolCommand):
                 to -= self.WAIT_CHUNK
                 qt_core.QThread.currentThread().msleep(self.WAIT_CHUNK)
                 qt_core.QCoreApplication.processEvents()
-            return AddressMultyMempoolCommand(self._wallet_list, self, counter=self.__counter, hash_=self._hash)
 
-    def on_data_end(self, http_code):
-        if http_code == 304:
-            return self.__send_again()
-        return super().on_data_end(http_code)
+            cmd = AddressMultyMempoolCommand(
+                self._wallet_list,
+                self,
+                counter=self.__counter,
+                hash_=self._hash)
+            from ..ui.gui import CoreApplication
+            CoreApplication.instance().networkThread.network.push_cmd(cmd)
+
+    def onResponseFinished(self) -> None:
+        if self.statusCode == 304:
+            self.__send_again()
+        super().onResponseFinished()
 
     @ property
     def counter(self) -> int:
@@ -791,10 +798,9 @@ class MempoolMonitorCommand(AbstractMultyMempoolCommand):
         super().__init__(wallet_list=iter(coin.addressList), parent=parent, hash_=hash_)
         self._coin = coin
 
-    def on_data_end(self, http_code):
-        if http_code == 304:
-            return None
-        return super().on_data_end(http_code)
+    def onResponseFinished(self) -> None:
+        if self.statusCode != 304:
+            super().onResponseFinished()
 
     def process_attr(self, table):
         if self.verbose:
@@ -884,8 +890,8 @@ class AddressUnspentCommand(AddressInfoCommand):
 
 
 class BroadcastTxCommand(JsonStreamMixin, BaseNetworkCommand):
+    _METHOD = HttpMethod.POST
     action = "coins"
-    protocol = HTTPProtocol.POST
     verbose = False
     level = loading_level.LoadingLevel.NONE
     _high_priority = True
@@ -929,8 +935,8 @@ class ExtHostCommand(JsonStreamMixin, BaseNetworkCommand):
         if not isinstance(data, dict):
             try:
                 body = json.loads(data)
-            except Exception:
-                raise server_error.JsonError(ex)
+            except Exception as e:
+                raise server_error.JsonError(e)
         else:
             body = data
         self.process_attr(body)
@@ -949,13 +955,10 @@ class GetCoinRatesCommand(ExtHostCommand):
 
     def __init__(self, parent=None, ):
         super().__init__(parent)
-        self._source = None
         from ..ui.gui import Application
-        api_ = Application.instance()
-        if api_:
-            self._source = api_.settingsManager.rateSource
+        self._source = Application.instance().settingsManager.rateSource
 
-    @ property
+    @property
     def args_get(self):
         from ..application import CoreApplication
         self._coins = CoreApplication.instance().coinList

@@ -26,16 +26,10 @@ class ServerThread(qt_core.QThread):
         self._mempool_timer = None
 
     def run(self):
-        #threading.current_thread().name = "ServerThread"
         from .network import Network
         self._poll_timer = qt_core.QBasicTimer()
         self._mempool_timer = qt_core.QBasicTimer()
         self._network = Network(self)
-        #self.setPriority(qt_core.QThread.LowPriority)
-        # self.finished.connect(self.??.close,    qt_core.Qt.QueuedConnection)
-        #self.exec_()
-        #self._mempool_timer.stop()
-        #self._poll_timer.stop()
 
     def timerEvent(self, event: qt_core.QTimerEvent):
         if event.timerId() == self._poll_timer.timerId():

@@ -23,12 +23,12 @@ class DummyCommandBase:
                     'timeframe': 1,
                 }
             }
-            self.on_data(json.dumps(data).encode()  # pylint: disable=no-member
-                         )
+            self.onResponseData(json.dumps(data).encode())
         else:
-            self.on_data(data.encode())  # pylint: disable=no-member
+            self.onResponseData(data.encode())
             raise NotImplementedError
-        return self.on_data_end(200)  # pylint: disable=no-member
+        self.statusCode = 200
+        return self.onResponseFinished()
 
     def run(self):
         pass
@@ -77,9 +77,10 @@ class IncomingTransferCommand(net_cmd.AddressHistoryCommand, DummyCommandBase):
     def clone(self, first_offset=None, forth=True):
         return None
 
+
 class UndoTransactionCommand(net_cmd.BaseNetworkCommand):
+    _METHOD = net_cmd.HttpMethod.POST
     action = "coins"
-    protocol = net_cmd.HTTPProtocol.POST
     level = loading_level.LoadingLevel.NONE
 
     def __init__(self, coin, count: int, parent):
@@ -97,5 +98,5 @@ class UndoTransactionCommand(net_cmd.BaseNetworkCommand):
             "coin": self._count,
         }
 
-    def on_data_end(self, http_code=200):
+    def onResponseFinished(self) -> None:
         pass

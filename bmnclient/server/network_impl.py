@@ -1,7 +1,9 @@
 import logging
 
+import os
 import PySide2.QtCore as qt_core
 import PySide2.QtNetwork as qt_network
+from PySide2.QtNetwork import QNetworkRequest
 
 from .. import loading_level
 from ..wallet import address, fee_manager, tx
@@ -11,6 +13,18 @@ log = logging.getLogger(__name__)
 
 
 class NetworkImpl(qt_core.QObject):
+    def _setResponseStatusCode(self) -> bool:
+        if self.__cmd.statusCode is not None:
+            return False
+        http_status = self.__reply.attribute(
+            QNetworkRequest.HttpStatusCodeAttribute)
+        if not http_status:
+            os.abort()
+        self.__cmd.statusCode = int(http_status)
+        return True
+
+
+
     API_VERSION = 1
     CMD_DELAY = 1000
     REPLY_TIMEOUT = 5000
@@ -44,9 +58,14 @@ class NetworkImpl(qt_core.QObject):
 
     def __make_get_reply(self, action, args, get_args, verbose, ex_host, **kwargs):
         req = self.__url_manager(
-            action, args=args, gets=get_args, verbose=verbose, ex_host=ex_host, **kwargs)
+            action,
+            args=args,
+            gets=get_args,
+            verbose=verbose,
+            ex_host=ex_host,
+            **kwargs)
         self.__reply = self.__net_manager.get(req)
-        self.__connect_reply(verbose, **kwargs)
+        self.__connect_reply()
         return req
 
     def __make_post_reply(self, action, args, get_args, verbose, post_data, **kwargs):
@@ -57,21 +76,15 @@ class NetworkImpl(qt_core.QObject):
         req.setHeader(qt_network.QNetworkRequest.ContentTypeHeader,
                       "application/vnd.api+json")
         self.__reply = self.__net_manager.post(req, post_data)
-        self.__connect_reply(verbose, **kwargs)
+        self.__connect_reply()
         return req
 
-    def __connect_reply(self, verbose: bool, **kwargs):
-        self.__reply.downloadProgress.connect(self.__reply_down_progress)
+    def __connect_reply(self) -> None:
         self.__reply.readyRead.connect(self.__reply_read)
         self.__reply.finished.connect(self.__reply_finished)
         self.__reply.sslErrors.connect(self.__on_ssl_errors)
 
-    def _push_cmd(self, cmd: net_cmd.AbstractNetworkCommand, first: bool = False) -> None:
-        "for tests only"
-        #assert config.DEBUG_MODE
-        self.__push_cmd(cmd, first)
-
-    def __push_cmd(self, cmd: net_cmd.AbstractNetworkCommand, first: bool = False) -> None:
+    def push_cmd(self, cmd: net_cmd.AbstractNetworkCommand, first: bool = False) -> None:
         if first or cmd.high_priority:
             self.__cmd_queue.insert(0, cmd)
         else:
@@ -101,9 +114,9 @@ class NetworkImpl(qt_core.QObject):
         run_first = run_first or cmd.high_priority
         if self.__in_progress or cmd.level > self.__level_loaded:
             log.debug(f"{cmd}; {cmd.level} > {self.__level_loaded}")
-            self.__push_cmd(cmd, run_first)
+            self.push_cmd(cmd, run_first)
         elif not from_queue and not run_first and self.__cmd_queue:
-            self.__push_cmd(cmd)
+            self.push_cmd(cmd)
             return self.__run_next_cmd()
         else:
             if not cmd.silenced:
@@ -113,22 +126,43 @@ class NetworkImpl(qt_core.QObject):
             # when we statrt to get history then go out from starting mode
             self.__in_progress = True
             # the most frequent case
-            if cmd.protocol == net_cmd.HTTPProtocol.GET:
-                return self.__make_get_reply(cmd.get_action(), cmd.args,
-                                             cmd.args_get, cmd.verbose, cmd.get_host(), **cmd.request_dict)
-            if cmd.protocol == net_cmd.HTTPProtocol.POST:
-                return self.__make_post_reply(cmd.get_action(), cmd.args, cmd.args_get,
-                                              cmd.verbose, cmd.post_data, **cmd.request_dict)
-            log.fatal(f"Unsupported HTTP protocol: {cmd.protocol}")
+            if cmd.method == net_cmd.HttpMethod.GET:
+                return self.__make_get_reply(
+                    cmd.get_action(),
+                    cmd.args,
+                    cmd.args_get,
+                    cmd.verbose,
+                    cmd.get_host(),
+                    **cmd.request_dict)
+            if cmd.method == net_cmd.HttpMethod.POST:
+                return self.__make_post_reply(
+                    cmd.get_action(),
+                    cmd.args,
+                    cmd.args_get,
+                    cmd.verbose,
+                    cmd.post_data,
+                    **cmd.request_dict)
+            log.fatal(f"Unsupported HTTP method: {cmd.method}")
+            return None
 
-    def __reply_finished(self):
+    def __reply_read(self) -> None:
+        if self.__cmd is None:
+            log.warning(self.__reply.readAll())
+            return
+
+        self._setResponseStatusCode()
+        if not self.__cmd.onResponseData(self.__reply.readAll()):
+            self.__reply.abort()
+
+    def __reply_finished(self) -> None:
         if self.__cmd is None:
             log.critical(
                 f"{self.__reply.error()}: {self.__reply.errorString()}")
-            qt_core.QCoreApplication.instance().exit()
+            os.abort()
             return
-        http_error = int(self.__reply.attribute(
-            qt_network.QNetworkRequest.HttpStatusCodeAttribute) or 501)
+
+        self._setResponseStatusCode()
+        http_error = self.__cmd.statusCode
         ok = http_error < 400 or http_error == 500 or http_error == 404
         if not ok:
             log.critical(
@@ -144,10 +178,7 @@ class NetworkImpl(qt_core.QObject):
         del self.__reply
         self.__in_progress = False
         if ok:
-            _next_cmd = self.__cmd.on_data_end(http_error)
-            # stick to queue order !
-            if _next_cmd:
-                self.__push_cmd(_next_cmd)
+            self.__cmd.onResponseFinished()
 
     def __run_next_cmd(self):
         while self.__cmd_queue:
@@ -163,16 +194,6 @@ class NetworkImpl(qt_core.QObject):
                 self.__run_next_cmd()
         if event.timerId() == self._fee_timer.timerId():
             self.retrieve_fee()
-
-    def __reply_down_progress(self, rcv, total):
-        # log.debug('%s from %s bytes received',rcv,total)
-        pass
-
-    def __reply_read(self):
-        if self.__cmd:
-            self.__cmd.on_data(self.__reply.readAll())
-        else:
-            log.warning(self.__reply.readAll())
 
     def __on_ssl_errors(self, errors):
         log.warn('next SSL errors ignored: %s', errors)
