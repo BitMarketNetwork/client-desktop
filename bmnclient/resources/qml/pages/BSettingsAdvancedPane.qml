@@ -11,9 +11,6 @@ BPane {
     property alias applicationFont: _fontDialog.font
     property alias hideToTray: _hideToTray.checked
 
-    property alias fiatValueSourceModel: _fiatValueSource.model
-    property alias currentFiatValueSourceIndex: _fiatValueSource.currentIndex
-
     property alias useChangeAddress: _useChangeAddress.checked
 
     signal backupWallet
@@ -51,8 +48,11 @@ BPane {
             text: qsTr("Fiat value source:")
         }
         BDialogInputComboBox {
-            id: _fiatValueSource
-            textRole: "name"
+            model: BBackend.settingsManager.fiatRateServiceList
+            currentIndex: BBackend.settingsManager.currentFiatRateServiceIndex
+            onCurrentIndexChanged: {
+                BBackend.settingsManager.currentFiatRateServiceIndex = currentIndex
+            }
         }
 
         BDialogPromtLabel {

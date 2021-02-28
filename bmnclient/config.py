@@ -33,6 +33,8 @@ class UserConfig:
     KEY_KEY_STORE_SEED = "key_store.seed"
     KEY_KEY_STORE_SEED_PHRASE = "key_store.seed_phrase"
 
+    KEY_SERVICES_FIAT_RATE = "services.fiat_rate"
+
     def __init__(
             self,
             file_path: PurePath = USER_CONFIG_FILE_PATH) -> None:

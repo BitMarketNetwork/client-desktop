@@ -1,19 +1,18 @@
 from __future__ import annotations
+
 import logging
 import math
-from typing import TYPE_CHECKING, Optional, List, Tuple
+from typing import List, Optional, TYPE_CHECKING, Tuple
 
 from PySide2.QtCore import \
     Property as QProperty, \
-    QMetaObject, \
     QObject, \
-    Qt, \
     Signal as QSignal, \
     Slot as QSlot
 
 from ...config import UserConfig
-from ...wallet import currency, rate_source
 from ...language import Language
+from ...wallet import currency
 
 if TYPE_CHECKING:
     from . import Application
@@ -24,20 +23,18 @@ log = logging.getLogger(__name__)
 class SettingsManager(QObject):
     DEFAULT_FONT_SIZE = 10
     newAddressChanged = QSignal()
-    rateSourceChanged = QSignal()
     currencyChanged = QSignal()
 
     def __init__(self, application: Application) -> None:
         super().__init__()
+
         self._use_new_address = True
         #
         self._currency_model = []
         self._currency_index = 0
         self._fill_currencies()
         #
-        self._rate_source_model = []
-        self._rate_source_index = 0
-        self._fill_rate_source()
+
 
         self._application = application
 
@@ -62,13 +59,25 @@ class SettingsManager(QObject):
             for name, _ in currencies
         ]
 
-    def _fill_rate_source(self):
-        self._rate_source_model = [
-            rate_source.RateSource(
-                self,
-                name=name,
-            ) for name, _ in rate_source.SOURCE_OPTIONS.items()
-        ]
+    ############################################################################
+    # FiatRateService
+    ############################################################################
+
+    fiatRateServiceChanged = QSignal()
+
+    @QProperty(list, constant=True)
+    def fiatRateServiceList(self) -> list:
+        return [s.fullName for s in self._application.fiatRateServiceList]
+
+    @QProperty(int, notify=fiatRateServiceChanged)
+    def currentFiatRateServiceIndex(self) -> int:
+        return self._application.fiatRateServiceList.currentIndex
+
+    @currentFiatRateServiceIndex.setter
+    def _setCurrentFiatRateServiceIndex(self, index: int) -> None:
+        if index != self._application.fiatRateServiceList.currentIndex:
+            self._application.fiatRateServiceList.setCurrentIndex(index)
+            self.fiatRateServiceChanged.emit()
 
     ############################################################################
     # Language
@@ -277,32 +286,6 @@ class SettingsManager(QObject):
         except OverflowError as oe:
             log.error(f"Overflow {amount}")
             raise OverflowError(f"{oe} for {res}") from oe
-
-    @QProperty("QVariantList", constant=True)
-    def rateSourceModel(self) -> "QVariantList":
-        return self._rate_source_model
-
-    @QProperty(int, notify=rateSourceChanged)
-    def rateSourceIndex(self) -> int:
-        return self._rate_source_index
-
-    @rateSourceIndex.setter
-    def _set_rate_source_index(self, index: int) -> None:
-        if index == self._rate_source_index:
-            return
-        self._rate_source_index = index
-        self.rateSourceChanged.emit()
-        self._rate_source_model[index].activate()
-        QMetaObject.invokeMethod(
-            self._application.networkThread,
-            "retrieve_rates",
-            Qt.QueuedConnection,
-        )
-
-    @QProperty(rate_source.RateSource, notify=rateSourceChanged)
-    def rateSource(self) -> rate_source.RateSource:
-        if self._rate_source_index < len(self._rate_source_model):
-            return self._rate_source_model[self._rate_source_index]
 
     @QProperty(bool, notify=newAddressChanged)
     def newAddressFroLeftover(self) -> bool:

@@ -21,6 +21,7 @@ from .config import UserConfig
 from .key_store import KeyStore
 from .language import Language
 from .logger import Logger
+from .network.services.fiat_rate import FiatRateServiceList
 from .server.thread import ServerThread
 from .signal_handler import SignalHandler
 from .version import Product
@@ -128,6 +129,7 @@ class CoreApplication(QObject):
         self._server_thread = ServerThread()
 
         self._coin_list = []
+        self._fiat_rate_service_list = FiatRateServiceList(self)
 
     def _initCoinList(
             self,
@@ -197,6 +199,10 @@ class CoreApplication(QObject):
     @property
     def coinList(self) -> CoinList:
         return self._coin_list
+
+    @property
+    def fiatRateServiceList(self) -> FiatRateServiceList:
+        return self._fiat_rate_service_list
 
     def findCoin(self, short_name: str) -> Optional[AbstractCoin]:
         for coin in self._coin_list:

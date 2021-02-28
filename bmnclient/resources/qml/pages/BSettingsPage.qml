@@ -33,12 +33,6 @@ BApplicationPage {
             BBackend.settingsManager.hideToTray = hideToTray
         }
 
-        fiatValueSourceModel: BBackend.settingsManager.rateSourceModel
-        currentFiatValueSourceIndex: BBackend.settingsManager.rateSourceIndex
-        onCurrentFiatValueSourceIndexChanged: {
-            BBackend.settingsManager.rateSourceIndex = currentFiatValueSourceIndex
-        }
-
         useChangeAddress: BBackend.settingsManager.newAddressFroLeftover
         onUseChangeAddressChanged: {
             BBackend.settingsManager.newAddressFroLeftover = useChangeAddress

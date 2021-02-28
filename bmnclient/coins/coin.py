@@ -96,7 +96,10 @@ class AbstractCoin:
 
     def fromFiatAmount(self, value: int) -> Optional[int]:
         value *= self.currency.decimalDivisor
-        value = math.ceil(value / self._fiat_rate.value)
+        if self._fiat_rate.value:
+            value = math.ceil(value / self._fiat_rate.value)
+        else:
+            value = 0
         return value if self.currency.isValidValue(value) else None
 
     @property
