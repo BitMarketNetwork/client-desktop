@@ -64,11 +64,8 @@ class UserConfig:
             except JSONDecodeError as e:
                 self._logger.warning(
                     "Failed to parse configuration file \"%s\". "
-                    "Offset %i:%i: %s",
-                    self._file_path,
-                    e.lineno,
-                    e.pos,
-                    e.msg)
+                    + Logger.jsonDecodeErrorToString(e),
+                    self._file_path)
             self._config = dict()
             self._updateVersion()
         return False

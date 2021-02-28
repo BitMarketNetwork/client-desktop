@@ -1,4 +1,6 @@
 # JOK++
+from __future__ import annotations
+
 import logging
 import os
 import sys
@@ -6,12 +8,16 @@ import time
 import traceback
 from pathlib import PurePath
 from threading import Lock
-from typing import Optional, Type
+from typing import Optional, TYPE_CHECKING, Type
 
 from PySide2 import QtCore
 
 from .platform import Platform
 from .version import Product
+
+if TYPE_CHECKING:
+    from json import JSONDecodeError
+
 
 _qt_logger: Optional[logging.Logger] = None
 _configure_lock = Lock()
@@ -119,6 +125,12 @@ class Logger:
     @classmethod
     def osErrorToString(cls, e: OSError) -> str:
         return "Error {:d}: {:s}".format(e.errno, e.strerror)
+
+    @classmethod
+    def jsonDecodeErrorToString(cls, e: JSONDecodeError) -> str:
+        return \
+            "JSON error at offset {:d}:{:d}: {:s}"\
+            .format(e.lineno, e.pos, e.msg)
 
     @classmethod
     def getClassLogger(
