@@ -22,6 +22,8 @@ class UrlComposer:
         return res
 
     def get_request(self, action, args, gets=[], verbose=False, ex_host=None, **kwargs):
+        if action is None:
+            action = ""
         if ex_host:
             uri = ex_host + action
             if gets:

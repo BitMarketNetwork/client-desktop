@@ -130,15 +130,15 @@ class NetworkImpl(qt_core.QObject):
                 return self.__make_get_reply(
                     cmd.get_action(),
                     cmd.args,
-                    cmd.args_get,
+                    cmd.createRequestData(),  # TODO if None
                     cmd.verbose,
-                    cmd.get_host(),
+                    cmd.url,
                     **cmd.request_dict)
             if cmd.method == net_cmd.HttpMethod.POST:
                 return self.__make_post_reply(
                     cmd.get_action(),
                     cmd.args,
-                    cmd.args_get,
+                    cmd.createRequestData(),   # TODO if None
                     cmd.verbose,
                     cmd.post_data,
                     **cmd.request_dict)

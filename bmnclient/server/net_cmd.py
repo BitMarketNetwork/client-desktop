@@ -1,21 +1,19 @@
-
 import abc
-from enum import Enum, auto
 import io
 import json
 import logging
-import traceback
 import sys
-from typing import Callable, List, Tuple, Iterable, Optional
-from ..coins.currency import UsdFiatCurrency, FiatRate
-from ..logger import Logger
+import traceback
+from enum import Enum, auto
+from typing import Iterable, List, Optional, Tuple
 
 import PySide2.QtCore as qt_core
 import PySide2.QtNetwork as qt_network
 
-from .. import loading_level
-from ..wallet import address, coins, hd, key, mtx_impl, mutable_tx
 from . import server_error
+from .. import loading_level
+from ..logger import Logger
+from ..wallet import address, coins, hd, key, mutable_tx
 from ..wallet.tx import Transaction, TxError
 
 log = logging.getLogger(__name__)
@@ -41,7 +39,12 @@ class HttpMethod(Enum):
 
 
 class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
+    _BASE_URL = None
     _METHOD = HttpMethod.GET
+
+    @property
+    def url(self) -> str:
+        return self._BASE_URL
 
     @property
     def method(self) -> HttpMethod:
@@ -58,6 +61,9 @@ class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
         else:
             AttributeError("status is already set.")
 
+    def createRequestData(self) -> Optional[dict]:
+        return {}
+
     def onResponseData(self, data: bytes) -> bool:
         raise NotImplementedError
 
@@ -70,7 +76,6 @@ class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
     verbose = False
     # low verbosity
     silenced = False
-    host = None
     level = loading_level.LoadingLevel.NONE
     _high_priority = False
     _low_priority = False
@@ -99,7 +104,7 @@ class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
 
     @property
     def ext(self) -> bool:
-        return self.host is not None
+        return self._BASE_URL is not None
 
     @property
     def high_priority(self) -> bool:
@@ -126,19 +131,12 @@ class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
     def server_action(self) -> str:
         return self._server_action or self.action
 
-    def get_host(self) -> str:
-        return self.host
-
     def get_action(self) -> str:
         return self.action
 
     @property
     def args(self) -> List[str]:
         return []
-
-    @property
-    def args_get(self) -> dict:
-        return {}
 
     @property
     def post_data(self) -> bytes:
@@ -183,6 +181,9 @@ class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
         if timeframe > 1e9:
             log.warn('Server answer has taken more than 1s !!!')
 
+    def process_attr(self, table):
+        pass
+
     def output(self, key=None, value=None):
         """
         abstraction layer around dispalying data to user
@@ -226,7 +227,6 @@ class JsonStreamMixin:
         self._json = io.BytesIO()
 
     def onResponseData(self, data) -> bool:
-        super().onResponseData(data)
         self._json.write(data)
         return True
 
@@ -235,8 +235,9 @@ class JsonStreamMixin:
             next_ = self.process_answer(self._json.getvalue())
             # important !!! ( for debugging for a while)
             self._json = io.BytesIO()
-            from ..ui.gui import CoreApplication
-            CoreApplication.instance().networkThread.network.push_cmd(next_)
+            if next_:
+                from ..ui.gui import CoreApplication
+                CoreApplication.instance().networkThread.network.push_cmd(next_)
         except server_error.BaseNetError as se:
             HEAD_LEN = 1024
             log.error(f"Processing answer error: {se}. HTTP CODE: TODO")
@@ -568,8 +569,6 @@ class AddressHistoryCommand(AddressInfoCommand):
         )
 
     def onResponseData(self, data) -> bool:
-        # too much prints
-        # super().onResponseData(data)
         self._json.write(data)
         return True
 
@@ -582,8 +581,7 @@ class AddressHistoryCommand(AddressInfoCommand):
     def tx_count(self):
         return self.__tx_count
 
-    @ property
-    def args_get(self):
+    def createRequestData(self) -> Optional[dict]:
         get = {}
         if self.__first_offset is not None and self.__first_offset != 'None':
             get.update({
@@ -847,8 +845,7 @@ class AddressUnspentCommand(AddressInfoCommand):
     def args(self):
         return [self._address.coin.name, self._address.name, self._server_action]
 
-    @ property
-    def args_get(self):
+    def createRequestData(self) -> Optional[dict]:
         get = {}
         if self.__first_offset is not None:
             get.update({
@@ -942,55 +939,8 @@ class ExtHostCommand(JsonStreamMixin, BaseNetworkCommand):
         self.process_attr(body)
 
 
-class GetCoinRatesCommand(ExtHostCommand):
-    """
-    To retrieve coin rates
-    https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd
-    """
-    DEF_ACTION = "price"
-    DEF_HOST = "https://api.coingecko.com/api/v3/simple/"
-    CURRENCY = "usd"
-    verbose = False
-    unique = True
-
-    def __init__(self, parent=None, ):
-        super().__init__(parent)
-        from ..ui.gui import Application
-        self._source = Application.instance().settingsManager.rateSource
-
-    @property
-    def args_get(self):
-        from ..application import CoreApplication
-        self._coins = CoreApplication.instance().coinList
-        if self._source:
-            return self._source.get_arguments(self._coins, self.CURRENCY)
-        coins_ = ",".join([c.basename for c in self._coins])
-        return {
-            "ids": coins_,
-            "vs_currencies": self.CURRENCY,
-        }
-
-    def get_host(self):
-        if self._source:
-            return self._source.api_url
-        return self.DEF_HOST
-
-    def get_action(self):
-        if self._source:
-            return self._source.action
-        return self.DEF_ACTION
-
-    def process_attr(self, table):
-        if self._source:
-            self._source.process_result(self._coins, self.CURRENCY, table)
-        else:
-            for coin in self._coins:
-                coin.fiatRate = FiatRate(int(table[coin.basename][self.CURRENCY] * 100), UsdFiatCurrency)
-
-
 class GetRecommendFeeCommand(ExtHostCommand):
-    "https://bitcoinfees.earn.com/api"
-    host = "https://bitcoinfees.earn.com/api/v1/fees/"
+    _BASE_URL = "https://bitcoinfees.earn.com/api/v1/fees/"
     action = "recommended"
     unique = True
 

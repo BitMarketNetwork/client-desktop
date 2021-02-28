@@ -12,11 +12,16 @@ if TYPE_CHECKING:
 class AbstractCurrency:
     _DECIMAL_SIZE = (0, 0)
     _VALUE_BITS = 63  # int64
+    _NAME = "YYY"
     _UNIT = "YYY"
     __string_template: str = None
 
     def __init__(self) -> None:
         raise TypeError
+
+    @classproperty
+    def name(cls) -> str: # noqa
+        return cls._NAME
 
     @classproperty
     def unit(cls) -> str: # noqa
@@ -156,6 +161,7 @@ class FiatCurrency(AbstractCurrency):
 
 
 class UsdFiatCurrency(FiatCurrency):
+    _NAME = "US Dollar"
     _UNIT = "USD"
 
 

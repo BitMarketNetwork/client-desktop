@@ -2,7 +2,7 @@
 import json
 import logging
 from datetime import datetime
-from typing import Union
+from typing import Union, Optional, List
 
 from .. import loading_level
 from . import net_cmd
@@ -92,8 +92,7 @@ class UndoTransactionCommand(net_cmd.BaseNetworkCommand):
     def args(self):
         return [self._coin.name, "undo"]
 
-    @property
-    def args_get(self):
+    def createRequestData(self) -> Optional[dict]:
         return {
             "coin": self._count,
         }
