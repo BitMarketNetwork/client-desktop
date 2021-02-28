@@ -129,7 +129,7 @@ class CoinGeckoFiatRateService(FiatRateService):
     def _getFiatRate(self, coin_name: str, data: dict) -> Optional[int]:
         try:
             value = data[coin_name][self._currency_name]
-            return int(value * 100)
+            return int(value * self._currency.decimalDivisor)
         except (KeyError, TypeError):
             return None
 

@@ -74,6 +74,11 @@ class CoinRemoteStateModel(AbstractStateModel):
 
 
 class CoinAmountModel(AmountModel):
+    def refresh(self) -> None:
+        super().refresh()
+        for address in self._coin.addressList:
+            address.model.amount.refresh()
+
     def _getValue(self) -> Optional[int]:
         return self._coin.amount
 

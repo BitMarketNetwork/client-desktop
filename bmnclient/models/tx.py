@@ -69,6 +69,13 @@ class TxStateModel(AbstractTxStateModel):
 
 
 class TxAmountModel(AbstractTxAmountModel):
+    def refresh(self) -> None:
+        super().refresh()
+        for address in self._tx.inputList:
+            address.model.amount.refresh()
+        for address in self._tx.outputList:
+            address.model.amount.refresh()
+
     def _getValue(self) -> Optional[int]:
         return self._tx.balance
 
