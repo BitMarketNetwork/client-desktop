@@ -34,6 +34,7 @@ class UserConfig:
     KEY_KEY_STORE_SEED_PHRASE = "key_store.seed_phrase"
 
     KEY_SERVICES_FIAT_RATE = "services.fiat_rate"
+    KEY_SERVICES_FIAT_CURRENCY = "services.fiat_currency"
 
     def __init__(
             self,

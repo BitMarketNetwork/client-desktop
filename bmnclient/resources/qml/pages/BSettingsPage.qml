@@ -9,13 +9,7 @@ BApplicationPage {
     list.currentIndex: 0
     stack.currentIndex: 1
 
-    BSettingsGeneralPane {
-        fiatUnityModel: BBackend.settingsManager.currencyModel
-        currentFiatUnitIndex: BBackend.settingsManager.currencyIndex
-        onCurrentFiatUnitIndexChanged: {
-            BBackend.settingsManager.currencyIndex = currentFiatUnitIndex
-        }
-    }
+    BSettingsGeneralPane {}
 
     BSettingsCoinsPane {}
 

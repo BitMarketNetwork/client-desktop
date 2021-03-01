@@ -16,6 +16,7 @@ from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 
 from . import resources
+from .coins.currency import FiatCurrencyList
 from .coins.list import CoinList
 from .config import UserConfig
 from .key_store import KeyStore
@@ -129,6 +130,7 @@ class CoreApplication(QObject):
         self._server_thread = ServerThread()
 
         self._coin_list = []
+        self._fiat_currency_list = FiatCurrencyList(self)
         self._fiat_rate_service_list = FiatRateServiceList(self)
 
     def _initCoinList(
@@ -199,6 +201,10 @@ class CoreApplication(QObject):
     @property
     def coinList(self) -> CoinList:
         return self._coin_list
+
+    @property
+    def fiatCurrencyList(self) -> FiatCurrencyList:
+        return self._fiat_currency_list
 
     @property
     def fiatRateServiceList(self) -> FiatRateServiceList:

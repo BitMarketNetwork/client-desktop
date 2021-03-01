@@ -5,9 +5,6 @@ BPane {
     property string title: qsTr("General")
     property string iconPath: _applicationManager.imagePath("icon-cog.svg")
 
-    property alias fiatUnityModel: _fiatUnit.model
-    property alias currentFiatUnitIndex: _fiatUnit.currentIndex
-
     contentItem: BDialogScrollableLayout {
         BDialogPromtLabel {
             text: qsTr("Application language:")
@@ -40,16 +37,6 @@ BPane {
                 BBackend.settingsManager.currentThemeName = model[index]['name']
                 currentIndex = _applicationStyle.currentThemeIndex
             }
-        }
-
-        BDialogSeparator {}
-
-        BDialogPromtLabel {
-            text: qsTr("Fiat currency:")
-        }
-        BDialogInputComboBox {
-            id: _fiatUnit
-            textRole: "name"
         }
     }
 }

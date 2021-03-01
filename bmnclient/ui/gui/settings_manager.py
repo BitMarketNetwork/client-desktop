@@ -23,41 +23,19 @@ log = logging.getLogger(__name__)
 class SettingsManager(QObject):
     DEFAULT_FONT_SIZE = 10
     newAddressChanged = QSignal()
-    currencyChanged = QSignal()
+    fiatCurrencyChanged = QSignal()
 
     def __init__(self, application: Application) -> None:
         super().__init__()
-
-        self._use_new_address = True
-        #
-        self._currency_model = []
-        self._currency_index = 0
-        self._fill_currencies()
-        #
-
-
         self._application = application
 
+        self._use_new_address = True
         self._language_list: Optional[List[str]] = None
         self._current_language_name: Optional[str] = None
         self._current_theme_name: Optional[str] = None
         self._hide_to_tray: Optional[bool] = None
         self._font: Optional[Tuple] = None
         self._default_font = self._application.defaultFont
-
-    def _fill_currencies(self):
-        currencies = [
-            (self.tr("US dollar"), "USD"),
-            (self.tr("Euro"), "EUR"),
-            (self.tr("Russian ruble"), "RUB"),
-        ]
-        self._currency_model = [
-            currency.Currency(
-                self,
-                name=name,
-            )
-            for name, _ in currencies
-        ]
 
     ############################################################################
     # FiatRateService
@@ -78,6 +56,27 @@ class SettingsManager(QObject):
         if index != self._application.fiatRateServiceList.currentIndex:
             self._application.fiatRateServiceList.setCurrentIndex(index)
             self.fiatRateServiceChanged.emit()
+
+    ############################################################################
+    # FiatCurrency
+    ############################################################################
+
+    @QProperty(list, constant=True)
+    def fiatCurrencyList(self) -> list:
+        return [
+            "{} ({})".format(s.name, s.unit)
+            for s in self._application.fiatCurrencyList
+        ]
+
+    @QProperty(int, notify=fiatCurrencyChanged)
+    def currentFiatCurrencyIndex(self) -> int:
+        return self._application.fiatCurrencyList.currentIndex
+
+    @currentFiatCurrencyIndex.setter
+    def _setCurrentFiatCurrencyIndex(self, index: int):
+        if index != self._application.fiatCurrencyList.currentIndex:
+            self._application.fiatCurrencyList.setCurrentIndex(index)
+            self.fiatCurrencyChanged.emit()
 
     ############################################################################
     # Language
@@ -247,26 +246,6 @@ class SettingsManager(QObject):
     ############################################################################
     # TODO
     ############################################################################
-
-    @QProperty("QVariantList", constant=True)
-    def currencyModel(self):
-        return self._currency_model
-
-    @QProperty(int, notify=currencyChanged)
-    def currencyIndex(self) -> int:
-        return self._currency_index
-
-    @currencyIndex.setter
-    def _set_currency(self, index: int):
-        if index == self._currency_index:
-            return
-        self._currency_index = index
-        self.currencyChanged.emit()
-
-    @QProperty(currency.Currency, notify=currencyChanged)
-    def currency(self) -> currency.Currency:
-        if self._currency_index < len(self._currency_model):
-            return self._currency_model[self._currency_index]
 
     @QSlot(float, result=str)
     def coinBalance(self, amount: float) -> str:

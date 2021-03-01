@@ -45,7 +45,7 @@ BPane {
         BDialogSeparator {}
 
         BDialogPromtLabel {
-            text: qsTr("Fiat value source:")
+            text: qsTr("Fiat rate service:")
         }
         BDialogInputComboBox {
             model: BBackend.settingsManager.fiatRateServiceList
@@ -56,6 +56,20 @@ BPane {
         }
 
         BDialogPromtLabel {
+            text: qsTr("Fiat currency:")
+        }
+        BDialogInputComboBox {
+            model: BBackend.settingsManager.fiatCurrencyList
+            currentIndex: BBackend.settingsManager.currentFiatCurrencyIndex
+            onCurrentIndexChanged: {
+                BBackend.settingsManager.currentFiatCurrencyIndex = currentIndex
+            }
+        }
+
+        BDialogSeparator {}
+
+        BDialogPromtLabel {
+
             text: qsTr("Always send change to a new address:")
         }
         BDialogInputSwitch {
