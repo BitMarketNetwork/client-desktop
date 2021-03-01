@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from io import BytesIO
 from json import JSONDecodeError
-from typing import Final, Iterator, List, Optional, TYPE_CHECKING, Type
+from typing import Final, List, Optional, TYPE_CHECKING, Type
 
 from PySide2.QtCore import QObject
 
@@ -13,6 +13,7 @@ from ...config import UserConfig
 from ...logger import Logger
 from ...server.net_cmd import BaseNetworkCommand
 from ...utils.meta import classproperty
+from ...utils.static_list import UserStaticList
 
 if TYPE_CHECKING:
     from ...application import CoreApplication
@@ -160,60 +161,19 @@ class CoinGeckoFiatRateService(FiatRateService):
             return None
 
 
-class FiatRateServiceList:
+class FiatRateServiceList(UserStaticList):
+    ItemType = Type[FiatRateService]
+
     def __init__(self, application: CoreApplication) -> None:
-        self._logger = Logger.getClassLogger(__name__, self.__class__)
-        self._application = application
-
-        self._list = [
-            NoneFiatRateService,
-            CoinGeckoFiatRateService
-        ]
-        self._current_index = 1  # default
-
-        short_name = self._application.userConfig.get(
-            UserConfig.KEY_SERVICES_FIAT_RATE)
-        if short_name:
-            for i in range(len(self._list)):
-                if self._list[i].shortName == short_name:
-                    self._current_index = i
-                    break
+        super().__init__(
+            application.userConfig,
+            UserConfig.KEY_SERVICES_FIAT_RATE,
+            [
+                NoneFiatRateService,
+                CoinGeckoFiatRateService,
+            ],
+            default_index=1,
+            item_property="shortName")
         self._logger.debug(
-            "Current fiat tate service is \"%s\".",
+            "Current fiat rate service is \"%s\".",
             self._list[self._current_index].fullName)
-
-    def __iter__(self) -> Iterator[Type[FiatRateService]]:
-        return iter(self._list)
-
-    def __len__(self) -> int:
-        return len(self._list)
-
-    def __getitem__(self, short_name: str) -> Optional[Type[FiatRateService]]:
-        for service in self._list:
-            if service.shortName == short_name:
-                return service
-        return None
-
-    @property
-    def currentIndex(self) -> int:
-        return self._current_index
-
-    def setCurrentIndex(self, index: int) -> bool:
-        if index < 0 or index >= len(self._list):
-            return False
-        with self._application.userConfig.lock:
-            self._current_index = index
-            return self._application.userConfig.set(
-                UserConfig.KEY_SERVICES_FIAT_RATE,
-                self._list[index].shortName)
-
-    @property
-    def current(self) -> Type[FiatRateService]:
-        return self._list[self._current_index]
-
-    def setCurrent(self, short_name: str) -> bool:
-        with self._application.userConfig.lock:
-            for i in range(len(self._list)):
-                if self._list[i].shortName == short_name:
-                    return self.setCurrentIndex(i)
-        return False

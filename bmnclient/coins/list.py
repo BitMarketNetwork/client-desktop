@@ -1,34 +1,25 @@
 # JOK++
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Callable, Iterator, Optional, Union
+from typing import Callable, Optional
 
+from .coin import AbstractCoin
+from ..utils.static_list import StaticList
 from ..wallet import coins
 
 
-class CoinList(Sequence):
+class CoinList(StaticList):
+    ItemType = AbstractCoin
+
     def __init__(
             self,
             *,
             model_factory: Optional[Callable[[object], object]] = None) -> None:
-        self._list = (
-            coins.Bitcoin(model_factory=model_factory),
-            coins.BitcoinTest(model_factory=model_factory),
-            coins.Litecoin(model_factory=model_factory)
+        super().__init__(
+            (
+                coins.Bitcoin(model_factory=model_factory),
+                coins.BitcoinTest(model_factory=model_factory),
+                coins.Litecoin(model_factory=model_factory)
+            ),
+            item_property="shortName"
         )
-
-    def __iter__(self) -> Iterator[coins.CoinType]:
-        return iter(self._list)
-
-    def __len__(self) -> int:
-        return len(self._list)
-
-    def __getitem__(self, name: Union[str, int]) -> Optional[coins.CoinType]:
-        if isinstance(name, str):
-            for coin in self._list:
-                if coin.name == name:
-                    return coin
-        elif 0 <= name <= len(self._list):
-            return self._list[name]
-        return None
