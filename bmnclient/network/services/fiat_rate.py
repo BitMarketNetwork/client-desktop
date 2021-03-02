@@ -8,7 +8,11 @@ from typing import Final, List, Optional, TYPE_CHECKING, Type
 
 from PySide2.QtCore import QObject
 
-from ...coins.currency import FiatCurrency, FiatRate, UsdFiatCurrency
+from ...coins.currency import \
+    EuroFiatCurrency, \
+    FiatCurrency, \
+    FiatRate, \
+    UsdFiatCurrency
 from ...config import UserConfig
 from ...logger import Logger
 from ...server.net_cmd import BaseNetworkCommand
@@ -29,7 +33,8 @@ class FiatRateService(BaseNetworkCommand):
         "ltc": "litecoin"
     }
     _CURRENCY_MAP = {  # local: service
-        UsdFiatCurrency: "usd"
+        UsdFiatCurrency: "usd",
+        EuroFiatCurrency: "eur"
     }
 
     def __init__(
@@ -64,13 +69,17 @@ class FiatRateService(BaseNetworkCommand):
         return True
 
     def onResponseFinished(self) -> None:
-        result = self._buffer.getvalue()
-        self._buffer.close()
-        self._logger.debug(result.decode(encoding="utf-8"))
-
-        if self.url is None:
+        if self.statusCode != 200 or self.url is None:
+            if self.url is not None:
+                self._logger.warning(
+                    "Invalid response from \"{}\" Service."
+                    .format(self._FULL_NAME))
             result = {}
         else:
+            result = self._buffer.getvalue()
+            self._buffer.close()
+            self._logger.debug(result.decode(encoding="utf-8"))
+
             try:
                 result = json.loads(result)
             except JSONDecodeError as e:
@@ -85,9 +94,10 @@ class FiatRateService(BaseNetworkCommand):
                 fiat_rate = self._getFiatRate(name, result)
                 if fiat_rate is None:
                     fiat_rate = 0
-                    self._logger.warning(
-                        "Failed to parse fiat rate for \"{}\"."
-                        .format(coin.fullName))
+                    if self.url is not None:
+                        self._logger.warning(
+                            "Failed to parse fiat rate for \"{}\"."
+                            .format(coin.fullName))
                 coin.fiatRate = FiatRate(fiat_rate, self._currency)
 
     def _createCoinNameList(self) -> List[str]:
@@ -150,7 +160,7 @@ class CoinGeckoFiatRateService(FiatRateService):
     def _createRequestData(self) -> Optional[dict]:
         return {
             "ids": ",".join(self._coin_name_list),
-            "vs_currencies": self._currency_name,
+            "vs_currencies": self._currency_name
         }
 
     def _getFiatRate(self, coin_name: str, data: dict) -> Optional[int]:

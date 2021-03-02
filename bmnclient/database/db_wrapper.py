@@ -78,7 +78,7 @@ class DbWrapper:
         offset = self.__impl(coin.offset)
         unverified_offset = self.__impl(coin.unverified_offset)
         unverified_signature = self.__impl(coin.unverified_signature)
-        rate = self.__impl(coin.fiatRate.value)
+        rate = 0  # TODO self.__impl(coin.fiatRate.value)
         visible = self.__impl(coin.visible)
         try:
             query = f"""
@@ -159,7 +159,7 @@ class DbWrapper:
                 self.__impl(coin.offset),
                 self.__impl(coin.unverified_offset),
                 self.__impl(coin.unverified_signature),
-                self.__impl(coin.fiatRate.value),
+                self.__impl(0),
                 coin.rowid,
             ))) as c:
                 pass
@@ -530,7 +530,7 @@ class DbWrapper:
                 coin.verified_height = vheight
                 coin.unverified_offset = uoffset
                 coin.unverified_signature = usig
-                coin.fiatRate = FiatRate(rate, UsdFiatCurrency)
+                # TODO coin.fiatRate = FiatRate(rate, UsdFiatCurrency)
                 # let height will be the last
                 coin.height = height
             else:

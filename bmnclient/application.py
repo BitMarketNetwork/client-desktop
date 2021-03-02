@@ -6,17 +6,19 @@ from pathlib import PurePath
 from typing import Callable, Optional, TYPE_CHECKING, Type, Union
 
 from PySide2.QtCore import \
+    QBasicTimer, \
     QCoreApplication, \
     QLocale, \
     QMetaObject, \
     QObject, \
+    QTimerEvent, \
     Qt, \
     Slot as QSlot
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 
 from . import resources
-from .coins.currency import FiatCurrencyList
+from .coins.currency import FiatCurrencyList, FiatRate
 from .coins.list import CoinList
 from .config import UserConfig
 from .key_store import KeyStore
@@ -25,7 +27,7 @@ from .logger import Logger
 from .network.services.fiat_rate import FiatRateServiceList
 from .server.thread import ServerThread
 from .signal_handler import SignalHandler
-from .version import Product
+from .version import Product, Timer
 from .wallet.thread import WalletThread
 
 if TYPE_CHECKING:
@@ -132,11 +134,15 @@ class CoreApplication(QObject):
         self._coin_list = []
         self._fiat_currency_list = FiatCurrencyList(self)
         self._fiat_rate_service_list = FiatRateServiceList(self)
+        self._fiat_currency_timer = QBasicTimer()
 
     def _initCoinList(
             self,
             model_factory: Optional[Callable[[object], object]] = None) -> None:
         self._coin_list = CoinList(model_factory=model_factory)
+
+        for coin in self._coin_list:
+            coin.fiatRate = FiatRate(0, self._fiat_currency_list.current)
 
         # TODO
         for coin in self._coin_list:
@@ -159,6 +165,7 @@ class CoreApplication(QObject):
         self._exit_code = self._qt_application.exec_()
         assert self._on_exit_called
 
+        # noinspection PySimplifyBooleanCheck
         if self._exit_code == 0:
             self._logger.info(
                 "%s terminated successfully.",
@@ -210,6 +217,18 @@ class CoreApplication(QObject):
     def fiatRateServiceList(self) -> FiatRateServiceList:
         return self._fiat_rate_service_list
 
+    def downloadCurrentCurrencyData(self) -> None:
+        self._fiat_currency_timer.stop()
+        self.networkThread.network._run_cmd(
+            self._fiat_rate_service_list.current(
+                self._coin_list,
+                self._fiat_currency_list.current),
+            False,
+            True,
+            lambda _: self._fiat_currency_timer.start(
+                Timer.FIAT_CURRENCY_DOWNLOAD,
+                self))
+
     def findCoin(self, short_name: str) -> Optional[AbstractCoin]:
         for coin in self._coin_list:
             if coin.shortName == short_name:
@@ -224,6 +243,10 @@ class CoreApplication(QObject):
     def icon(self) -> QIcon:
         return self._icon
 
+    def timerEvent(self, event: QTimerEvent) -> None:
+        if event.timerId() == self._fiat_currency_timer.timerId():
+            self.downloadCurrentCurrencyData()
+
     @QSlot()
     def _onRunPrivate(self) -> None:
         self._onRun()
@@ -231,6 +254,7 @@ class CoreApplication(QObject):
     def _onRun(self) -> None:
         self._wallet_thread.run()
         self._server_thread.run()
+        self.downloadCurrentCurrencyData()
 
     def __onAboutToQuit(self) -> None:
         self._logger.debug("Shutting down...");

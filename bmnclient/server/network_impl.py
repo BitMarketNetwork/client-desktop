@@ -1,14 +1,16 @@
 import logging
-
 import os
+from typing import Callable, Optional
+
 import PySide2.QtCore as qt_core
 import PySide2.QtNetwork as qt_network
 from PySide2.QtNetwork import QNetworkRequest
 
-from .. import loading_level
-from ..wallet import address, fee_manager, tx
 from . import debug_cmd, net_cmd, progress_view, url_composer
+from .. import loading_level
 from ..application import CoreApplication
+from ..wallet import fee_manager
+
 log = logging.getLogger(__name__)
 
 
@@ -19,7 +21,7 @@ class NetworkImpl(qt_core.QObject):
         http_status = self.__reply.attribute(
             QNetworkRequest.HttpStatusCodeAttribute)
         if not http_status:
-            os.abort()
+            http_status = 0
         self.__cmd.statusCode = int(http_status)
         return True
 
@@ -80,9 +82,13 @@ class NetworkImpl(qt_core.QObject):
         return req
 
     def __connect_reply(self) -> None:
+        self.__reply.errorOccurred.connect(self.__errorOccurred)
         self.__reply.readyRead.connect(self.__reply_read)
         self.__reply.finished.connect(self.__reply_finished)
         self.__reply.sslErrors.connect(self.__on_ssl_errors)
+
+    def __errorOccurred(self, code):
+        pass
 
     def push_cmd(self, cmd: net_cmd.AbstractNetworkCommand, first: bool = False) -> None:
         if first or cmd.high_priority:
@@ -91,14 +97,12 @@ class NetworkImpl(qt_core.QObject):
             if cmd.unique and any(isinstance(c, type(cmd)) for c in self.__cmd_queue):
                 log.warning(f"unique cmd: {cmd} already present")
                 return
-            ##
+
             if not cmd.low_priority:
                 for i, icmd in enumerate(reversed(self.__cmd_queue)):
-                    # tested!!
                     if not icmd.low_priority:
                         if i:
-                            self.__cmd_queue.insert(
-                                len(self.__cmd_queue) - i, cmd)
+                            self.__cmd_queue.insert(len(self.__cmd_queue) - i, cmd)
                         else:
                             self.__cmd_queue += [cmd]
                         return
@@ -120,7 +124,7 @@ class NetworkImpl(qt_core.QObject):
             return self.__run_next_cmd()
         else:
             if not cmd.silenced:
-                log.debug(f"cmd to run:{cmd}")
+                log.debug(f"cmd to run: {cmd}")
             cmd.connect_()
             self.__cmd = cmd
             # when we statrt to get history then go out from starting mode

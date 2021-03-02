@@ -165,6 +165,11 @@ class FiatCurrency(AbstractCurrency):
     _DECIMAL_SIZE = (2, 2)
 
 
+class NoneFiatCurrency(FiatCurrency):
+    _NAME: Final = QObject().tr("-- None --")
+    _UNIT: Final = "N/A"
+
+
 class UsdFiatCurrency(FiatCurrency):
     _NAME: Final = QObject().tr("US Dollar")
     _UNIT: Final = "USD"

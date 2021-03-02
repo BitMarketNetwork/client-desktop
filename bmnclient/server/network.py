@@ -33,7 +33,6 @@ class Network(network_impl.NetworkImpl):
             self.level_loaded, qt_core.Qt.QueuedConnection)
 
         self._run_cmd(net_cmd.CheckServerVersionCommand(self))
-        self._run_cmd(net_cmd.GetCoinRatesCommand(self))
 
     def server_sysinfo(self):
         self._run_cmd(net_cmd.ServerSysInfoCommand(self))
@@ -50,9 +49,7 @@ class Network(network_impl.NetworkImpl):
     @qt_core.Slot()
     def poll_coins(self):
         self._run_cmd(net_cmd.CheckServerVersionCommand(self))
-        self._run_cmd(net_cmd.UpdateCoinsInfoCommand(
-            True, self), run_first=True)
-        self._run_cmd(net_cmd.GetCoinRatesCommand(self))
+        self._run_cmd(net_cmd.UpdateCoinsInfoCommand(True, self), run_first=True)
 
     @qt_core.Slot()
     def retrieve_fee(self):
@@ -66,10 +63,6 @@ class Network(network_impl.NetworkImpl):
         reply = getattr(self, '_reply', None)
         if reply:
             reply.abort()
-
-    @qt_core.Slot()
-    def retrieve_rates(self):
-        self._run_cmd(net_cmd.GetCoinRatesCommand(self))
 
     def retrieve_coin_history(self, coin: coins.CoinType):
         for wad in coin.wallets:

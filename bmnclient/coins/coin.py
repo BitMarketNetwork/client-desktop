@@ -8,7 +8,7 @@ from .address import AbstractAddress
 from .currency import \
     AbstractCurrency, \
     FiatRate, \
-    UsdFiatCurrency
+    NoneFiatCurrency
 from ..utils.meta import classproperty
 
 
@@ -40,7 +40,7 @@ class AbstractCoin:
             self,
             *,
             model_factory: Optional[Callable[[object], object]] = None) -> None:
-        self._fiat_rate = FiatRate(0, UsdFiatCurrency)
+        self._fiat_rate = FiatRate(0, NoneFiatCurrency)
         self._amount = 0
         self._address_list = []
 

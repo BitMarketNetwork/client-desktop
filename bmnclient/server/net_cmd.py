@@ -695,10 +695,6 @@ class AbstractMultyMempoolCommand(JsonStreamMixin, BaseNetworkCommand):
         return [self._coin.name, self._server_action]
 
     @ property
-    def skip(self) -> bool:
-        return not self._wallet_list
-
-    @ property
     def args_post(self) -> Tuple[str, dict]:
         table = {
             "address_list": [addr.name for addr in self._wallet_list],

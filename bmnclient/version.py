@@ -1,5 +1,6 @@
 # JOK++
 # Only standard imports, used by Makefile.
+from enum import IntEnum
 from pathlib import Path
 from typing import Final
 
@@ -26,3 +27,7 @@ class ProductPaths:
     ICON_WINDOWS_FILE_PATH: Final = RESOURCES_PATH / "images" / "icon-logo.ico"
     ICON_DARWIN_FILE_PATH: Final = RESOURCES_PATH / "images" / "icon-logo.icns"
     ICON_LINUX_FILE_PATH: Final = RESOURCES_PATH / "images" / "icon-logo.svg"
+
+
+class Timer(IntEnum):
+    FIAT_CURRENCY_DOWNLOAD = 60 * 1000
