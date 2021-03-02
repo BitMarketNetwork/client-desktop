@@ -6,7 +6,7 @@ import PySide2.QtCore as qt_core
 import PySide2.QtNetwork as qt_network
 from PySide2.QtNetwork import QNetworkRequest
 
-from . import debug_cmd, net_cmd, progress_view, url_composer
+from . import debug_cmd, net_cmd, url_composer
 from .. import loading_level
 from ..application import CoreApplication
 from ..wallet import fee_manager
@@ -25,20 +25,13 @@ class NetworkImpl(qt_core.QObject):
         self.__cmd.statusCode = int(http_status)
         return True
 
-
-
-    API_VERSION = 1
-    CMD_DELAY = 1000
-    REPLY_TIMEOUT = 5000
-
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
         # self.__net_manager = qt_network.QNetworkAccessManager(self)
         self.__net_manager = CoreApplication.instance()._qml_network_factory.create(self)
         ##
-        self.__url_manager = url_composer.UrlComposer(self.API_VERSION)
-        self.__progress = progress_view.ProgressView()
+        self.__url_manager = url_composer.UrlComposer(1)
         self.__cmd = None
         self.__cmd_queue = []
         self.__in_progress = False
@@ -56,7 +49,7 @@ class NetworkImpl(qt_core.QObject):
         self.start()
 
     def start(self):
-        self._cmd_timer.start(self.CMD_DELAY, self)
+        self._cmd_timer.start(1000, self)
 
     def __make_get_reply(self, action, args, get_args, verbose, ex_host, **kwargs):
         req = self.__url_manager(
@@ -210,7 +203,7 @@ class NetworkImpl(qt_core.QObject):
             self.retrieve_fee()
 
     def __on_ssl_errors(self, errors):
-        log.warn('next SSL errors ignored: %s', errors)
+        log.warning('next SSL errors ignored: %s', errors)
         self.__reply.ignoreSslErrors(errors)
 
     def look_for_hd_addresses(self, coin: "CoinType"):
@@ -232,9 +225,3 @@ class NetworkImpl(qt_core.QObject):
 
     def level_loaded(self, level: int):
         self.__level_loaded = level
-
-    @property
-    def _queue(self) -> list:
-        "access only for tests"
-        #assert config.DEBUG_MODE
-        return self.__cmd_queue

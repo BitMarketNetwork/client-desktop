@@ -94,13 +94,8 @@ class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         assert not cls._low_priority or not cls._high_priority
-        # no logging
-        if True: # e_logger.SILENCE_VERBOSITY:
-            cls.verbose = False
-            cls.silent = True
-        elif cls.verbose:
-            cls.silent = False
-            print(f"#### verbose network command: {cls.__name__}")
+        cls.verbose = False
+        cls.silent = True
 
     @property
     def ext(self) -> bool:
