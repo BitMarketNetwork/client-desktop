@@ -110,14 +110,22 @@ class NetworkImpl(qt_core.QObject):
                     self.__cmd_queue.insert(0, cmd)
                     return
             self.__cmd_queue += [cmd]
-        # log.critical(f"==> {self.__cmd_queue}")
 
-    def _run_cmd(self, cmd: net_cmd.AbstractNetworkCommand, from_queue: bool = False, run_first: bool = False):
+    def _run_cmd(
+            self,
+            cmd: net_cmd.AbstractNetworkCommand,
+            from_queue: bool = False,
+            run_first: bool = False,
+            complete_callback: Optional[Callable[[net_cmd.AbstractNetworkCommand], None]] = None):
         if cmd.skip:
             return
+
+        # TODO tmp
+        if complete_callback:
+            cmd.complete_callback = complete_callback
+
         run_first = run_first or cmd.high_priority
         if self.__in_progress or cmd.level > self.__level_loaded:
-            log.debug(f"{cmd}; {cmd.level} > {self.__level_loaded}")
             self.push_cmd(cmd, run_first)
         elif not from_queue and not run_first and self.__cmd_queue:
             self.push_cmd(cmd)
@@ -171,7 +179,7 @@ class NetworkImpl(qt_core.QObject):
         if not ok:
             log.critical(
                 f"HTTP reply error: {self.__reply.errorString()} CODE:{http_error}")
-        # we shouldn't rely on external servers when detect online status
+
         if not self.__cmd.ext:
             from ..application import CoreApplication
             if ok:
@@ -181,8 +189,10 @@ class NetworkImpl(qt_core.QObject):
                     http_error, self.__reply.errorString())
         del self.__reply
         self.__in_progress = False
-        if ok:
-            self.__cmd.onResponseFinished()
+
+        self.__cmd.onResponseFinished()
+        if hasattr(self.__cmd, "complete_callback"):
+            self.__cmd.complete_callback(self.__cmd)
 
     def __run_next_cmd(self):
         while self.__cmd_queue:

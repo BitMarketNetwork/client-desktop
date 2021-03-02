@@ -231,6 +231,9 @@ class JsonStreamMixin:
         return True
 
     def onResponseFinished(self) -> None:
+        http_error = self.statusCode
+        if not (http_error < 400 or http_error == 500 or http_error == 404):
+            return
         try:
             next_ = self.process_answer(self._json.getvalue())
             # important !!! ( for debugging for a while)
