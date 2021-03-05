@@ -208,9 +208,6 @@ class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
     def __str__(self):
         return self.__class__.__name__
 
-    def drop(self):
-        pass
-
     @property
     def skip(self) -> bool:
         return False
@@ -314,7 +311,6 @@ class UpdateCoinsInfoCommand(CoinInfoCommand):
     silenced = True
     unique = True
     level = loading_level.LoadingLevel.NONE
-    verbose_filter = "ltc"
 
     def __init__(self, poll: bool, parent=None):
         """
@@ -324,27 +320,14 @@ class UpdateCoinsInfoCommand(CoinInfoCommand):
         self._poll = poll
 
     def process_attr(self, table: dict):
-        """
-        it is expected to be called frequently
-        """
         # log.warning(f"UPDATE COINS RESULT: {table}")
         for coin_name, data in table.items():
-            verbose = self.verbose and coin_name == self.verbose_filter
-            if verbose:
-                log.warning(f"{coin_name} => {data}")
             from ..application import CoreApplication
             coin = CoreApplication.instance().coinList[coin_name]
             # don't swear here. we've sworn already
-            if coin is not None and coin.parse_coin(data, self._poll, verbose=verbose):
-                """
-                important scope here
-                """
-                if verbose:
-                    log.debug(f"remote {coin} changed . poll: {self._poll}")
+            if coin is not None and coin.parse_coin(data, self._poll):
                 from ..application import CoreApplication
                 CoreApplication.instance().databaseThread.saveCoin.emit(coin)
-            elif verbose:
-                log.debug(f"{coin} hasn't changed")
 
     def __str__(self):
         return super().__str__() + f"[poll={self._poll}]"

@@ -194,7 +194,7 @@ class BackendContext(QObject):
 
     @QProperty(bool, constant=True)
     def isDebugMode(self) -> bool:
-        return CommandLine.isDebugMode()
+        return self._application.isDebugMode()
 
     @QProperty(DebugManager, constant=True)
     def debugManager(self) -> DebugManager:

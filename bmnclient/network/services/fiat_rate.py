@@ -152,6 +152,19 @@ class NoneFiatRateService(FiatRateService):
         return 0
 
 
+class RandomFiatRateService(FiatRateService):
+    _SHORT_NAME: Final = "random"
+    _FULL_NAME: Final = "-- random value --"
+    _BASE_URL: Final = None
+
+    def _createRequestData(self) -> Optional[dict]:
+        return {}
+
+    def _getFiatRate(self, coin_name: str, data: dict) -> Optional[int]:
+        from random import randrange
+        return randrange(0, 1000000) * 10
+
+
 class CoinGeckoFiatRateService(FiatRateService):
     _SHORT_NAME: Final = "coingecko"
     _FULL_NAME: Final = "CoinGecko"
@@ -175,13 +188,18 @@ class FiatRateServiceList(UserStaticList):
     ItemType = Type[FiatRateService]
 
     def __init__(self, application: CoreApplication) -> None:
+        service_list = (
+            NoneFiatRateService,
+            CoinGeckoFiatRateService,
+        )
+
+        if application.isDebugMode:
+            service_list = (RandomFiatRateService, ) + service_list
+
         super().__init__(
             application.userConfig,
             UserConfig.KEY_SERVICES_FIAT_RATE,
-            [
-                NoneFiatRateService,
-                CoinGeckoFiatRateService,
-            ],
+            service_list,
             default_index=1,
             item_property="shortName")
         self._logger.debug(

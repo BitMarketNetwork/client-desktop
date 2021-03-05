@@ -187,10 +187,10 @@ class FiatCurrencyList(UserStaticList):
         super().__init__(
             application.userConfig,
             UserConfig.KEY_SERVICES_FIAT_CURRENCY,
-            [
+            (
                 UsdFiatCurrency,
                 EuroFiatCurrency
-            ],
+            ),
             default_index=0,
             item_property="unit")
         self._logger.debug(

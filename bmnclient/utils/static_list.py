@@ -14,7 +14,7 @@ class StaticList:
 
     def __init__(
             self,
-            source_list: Union[list, dict, tuple],
+            source_list: Union[list, tuple],
             *,
             item_property: str) -> None:
         self._list = source_list
@@ -43,7 +43,7 @@ class UserStaticList(StaticList):
             self,
             user_config: UserConfig,
             user_config_key: str,
-            source_list: list,
+            source_list: Union[list, tuple],
             *,
             default_index: int,
             item_property: str) -> None:

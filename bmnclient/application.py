@@ -184,6 +184,10 @@ class CoreApplication(QObject):
         return cls._instance
 
     @property
+    def isDebugMode(self) -> bool:
+        return CommandLine.isDebugMode
+
+    @property
     def exitCode(self) -> int:
         return self._exit_code
 
@@ -226,7 +230,7 @@ class CoreApplication(QObject):
             False,
             True,
             lambda _: self._fiat_currency_timer.start(
-                Timer.FIAT_CURRENCY_DOWNLOAD,
+                10 * 1000 if self.isDebugMode else Timer.FIAT_CURRENCY_DOWNLOAD,
                 self))
 
     def findCoin(self, short_name: str) -> Optional[AbstractCoin]:
