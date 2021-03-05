@@ -46,7 +46,6 @@ class CoinType(db_entry.DbEntry):
         self._remote = {}  # TODO
 
         self._set_object_name(self.name)
-        self.__height = None
         self.__offset = None
         #
         self.__verified_height = None
@@ -193,8 +192,8 @@ class CoinType(db_entry.DbEntry):
             self.__unverified_hash = unverified_hash
             self.__unverified_offset = unverified_offset
             self.__offset = offset
-            if verbose and self.__height != height:
-                log.warning(f"height changed for {self} to {height}")
+            if self.height != height:
+                log.debug(f"height changed for {self} to {height}")
             self.height = height
 
         if status != self.__status:
@@ -257,14 +256,6 @@ class CoinType(db_entry.DbEntry):
             addr.clear()
         self._address_list.clear()
         self.refreshAmount()  # TODO
-
-    def _set_height(self, hei: int):
-        if hei != self.__height:
-            self.__height = hei
-            self.heightChanged.emit()  # why no ???
-
-    def _get_height(self) -> int:
-        return self.__height
 
     @property
     def offset(self) -> Optional[str]:
@@ -339,8 +330,6 @@ class CoinType(db_entry.DbEntry):
 
     status = qt_core.Property(
         int, _get_status, _set_status, notify=statusChanged)
-    height = qt_core.Property(
-        int, _get_height, _set_height, notify=heightChanged)
 
 
 class Bitcoin(CoinType, coin_bitcoin.Bitcoin):

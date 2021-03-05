@@ -16,6 +16,11 @@ class DebugManager(QObject):
         super().__init__()
         self._application = application
 
+    @QSlot(int)
+    def increaseHeight(self, value: int) -> None:
+        for coin in self._application.coinList:
+            coin.height += value
+
     @QSlot()
     def poll(self) -> None:
         self._application.networkThread.poll_coins()

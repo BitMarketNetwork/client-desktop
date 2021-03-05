@@ -5,6 +5,23 @@ BMenu {
     title: "Debug"
 
     BMenu {
+        title: "Coins"
+        BMenuItem {
+            text: "Increase height"
+            onTriggered: {
+                BBackend.debugManager.increaseHeight(1)
+            }
+        }
+        BMenuItem {
+            text: "Decrease height"
+            onTriggered: {
+                BBackend.debugManager.increaseHeight(-1)
+            }
+        }
+    }
+
+
+    BMenu {
         title: "UI tests"
         BMenuItem {
             text: "OS notification test"
