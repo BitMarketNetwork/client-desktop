@@ -193,9 +193,6 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
             raise StopIteration(
                 f"Too few arguments for address {self}") from si
 
-    def match(self, pref: str) -> bool:
-        return self.__name.lower().startswith(pref.lower())
-
     def is_receiver(self, tx: Transaction) -> bool:
         return any(self.name == o.address for o in tx.output_iter)
 
@@ -439,7 +436,7 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
     @qt_core.Slot()
     def save(self):
         from ..application import CoreApplication
-        CoreApplication.instance().databaseThread.save_wallet(self)
+        CoreApplication.instance().databaseThread.save_address(self)
 
     def __len__(self):
         return len(self._tx_list)

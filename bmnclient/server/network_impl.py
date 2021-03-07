@@ -213,7 +213,7 @@ class NetworkImpl(qt_core.QObject):
         self._run_cmd(net_cmd.AddressMempoolCommand(address, self))
 
     def retreive_mempool_coin(self, coin: "CoinType"):
-        self._run_cmd(net_cmd.AddressMultyMempoolCommand(coin.wallets, self))
+        self._run_cmd(net_cmd.AddressMultyMempoolCommand(coin.addressList, self))
 
     def retreive_mempool(self):
         from ..application import CoreApplication

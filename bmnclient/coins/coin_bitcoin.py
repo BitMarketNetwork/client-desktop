@@ -150,6 +150,7 @@ class BitcoinTestAddress(BitcoinAddress):
 class BitcoinTest(Bitcoin):
     _SHORT_NAME = "btctest"
     _FULL_NAME = "Bitcoin Testnet"
+    _IS_TEST_NET = True
 
     class _Address(BitcoinTestAddress):
         pass

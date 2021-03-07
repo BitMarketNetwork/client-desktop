@@ -13,22 +13,29 @@ from ..utils.meta import classproperty
 
 
 class CoinModelInterface:
+    def afterSetHeight(self) -> None:
+        raise NotImplementedError
+
+    def afterSetStatus(self) -> None:
+        raise NotImplementedError
+
+    def afterSetFiatRate(self) -> None:
+        raise NotImplementedError
+
+    def afterRefreshAmount(self) -> None:
+        raise NotImplementedError
+
     def beforeAppendAddress(self, address: AbstractAddress) -> None:
         raise NotImplementedError
 
     def afterAppendAddress(self, address: AbstractAddress) -> None:
         raise NotImplementedError
 
-    def afterRefreshAmount(self) -> None:
-        raise NotImplementedError
-
-    def afterSetFiatRate(self) -> None:
-        raise NotImplementedError
-
 
 class AbstractCoin:
     _SHORT_NAME = ""
     _FULL_NAME = ""
+    _IS_TEST_NET = False
 
     class _Currency(AbstractCurrency):
         pass
@@ -40,6 +47,15 @@ class AbstractCoin:
             self,
             *,
             model_factory: Optional[Callable[[object], object]] = None) -> None:
+        self._offset = ""
+        self._unverified_offset = ""
+        self._unverified_hash = ""
+
+        self._height = 0
+        self._verified_height = 0
+
+        self._status = 0
+
         self._fiat_rate = FiatRate(0, NoneFiatCurrency)
         self._amount = 0
         self._address_list = []
@@ -65,17 +81,86 @@ class AbstractCoin:
         return cls._Address
 
     @classproperty
-    def shortName(cls) -> str: # noqa
+    def shortName(cls) -> str:  # noqa
         return cls._SHORT_NAME
 
     @classproperty
-    def fullName(cls) -> str: # noqa
+    def fullName(cls) -> str:  # noqa
         return cls._FULL_NAME
 
     @classproperty
-    def iconPath(cls) -> str: # noqa
+    def isTestNet(cls) -> bool:  # noqa
+        return cls._IS_TEST_NET
+
+    @classproperty
+    def iconPath(cls) -> str:  # noqa
         # relative to "resources/images"
         return "coins/" + cls._SHORT_NAME + ".svg"
+
+    @property
+    def offset(self) -> str:
+        return self._offset
+
+    @offset.setter
+    def offset(self, value: str) -> None:
+        if self._offset != value:
+            self._update_wallets(self._offset)
+            self._offset = value
+
+    @property
+    def unverifiedOffset(self) -> str:
+        return self._unverified_offset
+
+    @unverifiedOffset.setter
+    def unverifiedOffset(self, value: str) -> None:
+        if self._unverified_offset != value:
+            # self._update_wallets(self._offset)
+            self._unverified_offset = value
+
+    @property
+    def unverifiedHash(self) -> str:
+        return self._unverified_hash
+
+    @unverifiedHash.setter
+    def unverifiedHash(self, value: str) -> None:
+        if self._unverified_hash != value:
+            if not self._unverified_hash:
+                self._update_wallets()
+            else:
+                self._update_wallets(
+                    self._unverified_offset,
+                    self._verified_height)
+            self._unverified_hash = value
+
+    @property
+    def height(self) -> int:
+        return self._height
+
+    @height.setter
+    def height(self, value: int) -> None:
+        if self._height != value:
+            self._height = value
+            if self._model:
+                self._model.afterSetHeight()
+
+    @property
+    def verifiedHeight(self) -> int:
+        return self._verified_height
+
+    @verifiedHeight.setter
+    def verifiedHeight(self, value: int) -> None:
+        self._verified_height = value
+
+    @property
+    def status(self) -> int:
+        return self._status
+
+    @status.setter
+    def status(self, value: int) -> None:
+        if self._status != value:
+            self._status = value
+            if self._model:
+                self._model.afterSetStatus()
 
     @property
     def fiatRate(self) -> FiatRate:

@@ -65,7 +65,7 @@ class Network(network_impl.NetworkImpl):
             reply.abort()
 
     def retrieve_coin_history(self, coin: coins.CoinType):
-        for wad in coin.wallets:
+        for address in coin.addressList:
             # # update tx
             # update balance
-            self._run_cmd(net_cmd.UpdateAddressInfoCommand(wad, self))
+            self._run_cmd(net_cmd.UpdateAddressInfoCommand(address, self))

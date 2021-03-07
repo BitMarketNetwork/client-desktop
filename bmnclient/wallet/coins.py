@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 import logging
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, Optional, Union
 
 import PySide2.QtCore as qt_core
 
@@ -34,7 +34,6 @@ class CoinType(db_entry.DbEntry):
     statusChanged = qt_core.Signal()
     heightChanged = qt_core.Signal()
     visibleChanged = qt_core.Signal()
-    invalidServer = qt_core.Signal()
 
     @meta.classproperty
     def all(cls) -> Iterable:  # pylint: disable=E0213
@@ -51,8 +50,6 @@ class CoinType(db_entry.DbEntry):
         self.__verified_height = None
         self.__unverified_offset = None
         self.__unverified_hash = None
-        #
-        self.__status = None
 
         self.__hd_node = None
         self.__visible = True
@@ -160,87 +157,12 @@ class CoinType(db_entry.DbEntry):
         if isinstance(key, str):
             return next((w for w in self._address_list if w.name == key), None)
 
-    def __update_wallets(self, from_=Optional[int], remove_txs_from: Optional[int] = None, verbose: bool = False):
+    def _update_wallets(self, from_=Optional[int], remove_txs_from: Optional[int] = None, verbose: bool = False):
         "from old to new one !!!"
         for w in self._address_list:
             w.update_tx_list(from_, remove_txs_from, verbose)
         # it must be called when height changed
         # CoreApplication.instance().networkThread.retrieveCoinHistory.emit(coin)
-
-    def parse_coin(self, data: dict, poll: bool, **kwargs) -> bool:
-        """
-        poll - regular polling (not at start)
-
-        next cases here:
-        - return true to update coin in db
-        - emit height changed to update tx list
-        - change coin status
-        - mark server as invalid
-        """
-
-        verbose = kwargs.get("verbose", False)
-        changed = False
-        verified_height = int(data["verified_height"])
-        unverified_hash = data["unverified_hash"]
-        unverified_offset = data["unverified_offset"]
-        height = int(data["height"])
-        offset = data["offset"]
-        status = int(data["status"])
-
-        def update_local_data():
-            self.__verified_height = verified_height
-            self.__unverified_hash = unverified_hash
-            self.__unverified_offset = unverified_offset
-            self.__offset = offset
-            if self.height != height:
-                log.debug(f"height changed for {self} to {height}")
-            self.height = height
-
-        if status != self.__status:
-            self.__status = status
-            self.statusChanged.emit()
-            if status == 0:
-                return True
-
-        # wrong signature => there's no point to see more, total update
-        if self.__unverified_hash is None:
-            if verbose:
-                log.warning(f"NO LOCAL COIN HASH => {self}")
-
-            self.__update_wallets(verbose=verbose)
-            update_local_data()
-
-            return True
-
-        # don't clear what to do exactly
-        if self.__verified_height and self.__verified_height > verified_height:
-            log.error(
-                f"server verified height is more than local one. Server is invalid")
-            self.invalidServer.emit()
-            return False
-
-        #
-        if verbose:
-            log.warning(f"data {data} uoff:{unverified_offset}")
-
-        if unverified_hash != self.__unverified_hash:
-            if verbose:
-                log.warning(
-                    f"Need to delete local tx data from {self.__verified_height} for {self}. update from {self.__unverified_offset}")
-            self.__update_wallets(self.__unverified_offset,
-                                  self.__verified_height, verbose=verbose)
-            update_local_data()
-            return True
-
-        if offset != self.__offset:
-            if verbose:
-                log.info(
-                    f"Coin offset changed to {offset} for {self}. update from {self.__offset}")
-            self.__update_wallets(self.__offset, verbose=verbose)
-            update_local_data()
-            return True
-
-        return False
 
     def remove_wallet(self, wallet: address.CAddress):
         index = self._address_list.index(wallet)
@@ -293,14 +215,6 @@ class CoinType(db_entry.DbEntry):
     def active(self) -> bool:
         return self.__status == 1
 
-    def _set_status(self, status: int):
-        if status != self.__status:
-            self.statusChanged.emit()
-            self.__status = status
-
-    def _get_status(self) -> int:
-        return self.__status
-
     @property
     def basename(self) -> str:
         if self._test:
@@ -327,9 +241,6 @@ class CoinType(db_entry.DbEntry):
             self.__visible = ex
             self.visibleChanged.emit()
             self._state_model.refresh()
-
-    status = qt_core.Property(
-        int, _get_status, _set_status, notify=statusChanged)
 
 
 class Bitcoin(CoinType, coin_bitcoin.Bitcoin):

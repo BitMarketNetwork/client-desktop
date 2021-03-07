@@ -68,7 +68,7 @@ class WalletThread(qt_core.QThread):
         # to save offsetts
         self.saveAddress.emit(address, None)
 
-    def save_wallet(self, wallet: CAddress, delay_ms: int = None):
+    def save_address(self, wallet: CAddress, delay_ms: int = None):
         self.saveAddress.emit(wallet, delay_ms)
 
     def delete_wallet(self, wallet):

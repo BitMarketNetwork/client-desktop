@@ -109,7 +109,7 @@ class TestWorkflow(unittest.TestCase):
         self.assertEqual(0, len(coin))
         self.db._add_coin(coin, True)
         self.assertEqual(1, len(coin))
-        _addr = coin.wallets[0]
+        _addr = coin.addressList[0]
         self.assertIsInstance(addr.first_offset, str)
         self.assertIsInstance(addr.last_offset, str)
         self.assertIsInstance(_addr.first_offset, str)

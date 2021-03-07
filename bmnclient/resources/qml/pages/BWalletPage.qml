@@ -66,7 +66,7 @@ BApplicationPage {
 
     // TODO
     /*function editAddress(coin, addressIndex) {
-        var address = BBackend.coinManager.coin.wallets[addressIndex]
+        var address = BBackend.coinManager.coin.addressList[addressIndex]
         let mPage = pushPage("ExportAddressPage.qml", {
                                  "wif": address.to_wif,
                                  "pub": address.public_key,

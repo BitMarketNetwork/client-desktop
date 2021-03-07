@@ -55,8 +55,8 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
         from ..application import CoreApplication
         for coin in CoreApplication.instance().coinList:
             self._add_coin(coin, False)
-            for wal in coin.wallets:
-                self._add_or_save_wallet(wal)
+            for address in coin.addressList:
+                self._add_or_save_wallet(address)
 
     @qt_core.Slot()
     def save_coins_settings(self):
@@ -67,7 +67,7 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
             self._update_coin(coin)
 
     @qt_core.Slot(address.CAddress)
-    def save_wallet(self, wallet):
+    def save_address(self, wallet):
         self._add_or_save_wallet(wallet, None)
 
     @qt_core.Slot(address.CAddress)
