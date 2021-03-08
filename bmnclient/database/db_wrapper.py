@@ -74,10 +74,10 @@ class DbWrapper:
         """
         name = self.__impl(coin.name)
         height = self.__impl(coin.height)
-        verified_height = self.__impl(coin.verified_height)
+        verified_height = self.__impl(coin.verifiedHeight)
         offset = self.__impl(coin.offset)
-        unverified_offset = self.__impl(coin.unverified_offset)
-        unverified_signature = self.__impl(coin.unverified_signature)
+        unverified_offset = self.__impl(coin.unverifiedOffset)
+        unverified_hash = self.__impl(coin.unverifiedHash)
         rate = 0  # TODO self.__impl(coin.fiatRate.value)
         visible = self.__impl(coin.visible)
         try:
@@ -90,7 +90,7 @@ class DbWrapper:
                 {self.verified_height_column},
                 {self.offset_column},
                 {self.unverified_offset_column},
-                {self.unverified_signature_column},
+                {self.unverified_hash_column},
                 {self.rate_usd_column}
                 )
                 VALUES  {nmark(8)}
@@ -102,7 +102,7 @@ class DbWrapper:
                 verified_height,
                 offset,
                 unverified_offset,
-                unverified_signature,
+                unverified_hash,
                 rate,
             ))
         except sql.IntegrityError as ie:
@@ -147,7 +147,7 @@ class DbWrapper:
                 {self.verified_height_column} = ?,
                 {self.offset_column} = ?,
                 {self.unverified_offset_column} = ?,
-                {self.unverified_signature_column} = ?,
+                {self.unverified_hash_column} = ?,
                 {self.rate_usd_column} = ?
                 WHERE id = ?;
             """
@@ -155,10 +155,10 @@ class DbWrapper:
             with closing(self.__exec(query, (
                 self.__impl(coin.visible),
                 self.__impl(coin.height),
-                self.__impl(coin.verified_height),
+                self.__impl(coin.verifiedHeight),
                 self.__impl(coin.offset),
-                self.__impl(coin.unverified_offset),
-                self.__impl(coin.unverified_signature),
+                self.__impl(coin.unverifiedOffset),
+                self.__impl(coin.unverifiedHash),
                 self.__impl(0),
                 coin.rowid,
             ))) as c:
@@ -500,7 +500,7 @@ class DbWrapper:
                 {self.verified_height_column},
                 {self.offset_column},
                 {self.unverified_offset_column},
-                {self.unverified_signature_column},
+                {self.unverified_hash_column},
                 {self.rate_usd_column}
                 FROM {self.coins_table};
         """
@@ -527,9 +527,9 @@ class DbWrapper:
                 coin.rowid = rowid
                 coin.visible = visible
                 coin.offset = offset
-                coin.verified_height = vheight
-                coin.unverified_offset = uoffset
-                coin.unverified_signature = usig
+                coin.verifiedHeight = vheight
+                coin.unverifiedOffset = uoffset
+                coin.unverifiedHash = usig
                 # TODO coin.fiatRate = FiatRate(rate, UsdFiatCurrency)
                 # let height will be the last
                 coin.height = height

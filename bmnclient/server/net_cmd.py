@@ -6,6 +6,7 @@ import sys
 import traceback
 from enum import Enum, auto
 from typing import Iterable, List, Optional, Tuple
+from ..network.server_parser import ServerCoinParser
 
 import PySide2.QtCore as qt_core
 import PySide2.QtNetwork as qt_network
@@ -292,45 +293,23 @@ class CheckServerVersionCommand(ServerSysInfoCommand):
             gui_api.uiManager.fill_coin_info_model(table["coins"])
 
 
-class CoinInfoCommand(JsonStreamMixin, BaseNetworkCommand):
+class UpdateCoinsInfoCommand(JsonStreamMixin, BaseNetworkCommand):
     action = "coins"
     level = loading_level.LoadingLevel.NONE
-
-    def __init__(self, parent):
-        super().__init__(parent=parent)
-
-    def process_attr(self, table):
-        for coin, data in table.items():
-            self.output("Coin", coin)
-            self.output("Active", data["status"])
-            self.output("Offset", data["offset"])
-            self.output("Height", data["height"])
-
-
-class UpdateCoinsInfoCommand(CoinInfoCommand):
     silenced = True
     unique = True
-    level = loading_level.LoadingLevel.NONE
 
     def __init__(self, poll: bool, parent=None):
-        """
-        poll is down on start and then is up on next calls
-        """
         super().__init__(parent=parent)
         self._poll = poll
 
     def process_attr(self, table: dict):
-        # log.warning(f"UPDATE COINS RESULT: {table}")
-        for coin_name, data in table.items():
-            from ..application import CoreApplication
-            coin = CoreApplication.instance().coinList[coin_name]
-            # don't swear here. we've sworn already
-            if coin is not None and coin.parse_coin(data, self._poll):
-                from ..application import CoreApplication
+        log.debug(f"UPDATE COINS RESULT: {table}")
+        from ..application import CoreApplication
+        for coin in CoreApplication.instance().coinList:
+            response = table.get(coin.shortName)
+            if response and ServerCoinParser.parse(response, coin):
                 CoreApplication.instance().databaseThread.saveCoin.emit(coin)
-
-    def __str__(self):
-        return super().__str__() + f"[poll={self._poll}]"
 
 
 class AddressInfoCommand(JsonStreamMixin, BaseNetworkCommand):
@@ -461,7 +440,7 @@ class UpdateAddressInfoCommand(AddressInfoCommand):
             self._address.balance = balance
             self._address.txCount = txCount
             from ..application import CoreApplication
-            CoreApplication.instance().databaseThread.save_wallet(self._address)
+            CoreApplication.instance().databaseThread.save_address(self._address)
             diff = txCount - self._address.realTxCount
             if diff > 0 and not self._address.is_going_update:
                 log.debug("Need to download more %s tx for %s",
@@ -525,7 +504,7 @@ class AddressHistoryCommand(AddressInfoCommand):
         self.__process_transactions(table["tx_list"])
         #  - we have to save new wallet offsets ?? .. cause app can be closed before next net calls
         from ..application import CoreApplication
-        CoreApplication.instance().databaseThread.save_wallet(self._address, 500)
+        CoreApplication.instance().databaseThread.save_address(self._address, 500)
         ###
         qt_core.QCoreApplication.processEvents()
         # self._address.isUpdating = False

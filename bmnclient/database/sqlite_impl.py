@@ -33,7 +33,7 @@ class SqLite:
         * coins
             - id , name, visible, height , \
                 offset, \
-                unverified_offset, unverified_signature, verified_height \
+                unverified_offset, unverified_hash, verified_height \
                 rate_usd
         * wallets
             # we keep both offsets otherwise we loose old tansactions in case user breaks servert tx chain
@@ -63,7 +63,7 @@ class SqLite:
         "tx_count",
         "offset",
         "unverified_offset",
-        "unverified_signature",
+        "unverified_hash",
         "verified_height",
         "first_offset",
         "last_offset",
@@ -165,7 +165,7 @@ class SqLite:
             {self.verified_height_column}        {integer},
             {self.offset_column}        TEXT,
             {self.unverified_offset_column}        TEXT,
-            {self.unverified_signature_column}        TEXT,
+            {self.unverified_hash_column}        TEXT,
             {self.rate_usd_column}      {real}
             );
         CREATE TABLE IF NOT EXISTS {self.wallets_table}
@@ -238,7 +238,7 @@ class SqLite:
                 return self.__make_title(attr[:-6])
         else:
             raise AttributeError(attr)
-        raise AttributeError(f"Bad table or column:{attr}.")
+        raise AttributeError(f"Bad table or column: {attr}.")
 
     def __call__(self, data: Any, strong: bool = False, key: str = None):
         """
