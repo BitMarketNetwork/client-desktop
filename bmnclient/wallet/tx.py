@@ -29,7 +29,6 @@ class Transaction(db_entry.DbEntry, AbstractTx):
         AbstractTx.__init__(self, address=address)
 
         self.__coin_base = False
-        self.__height = 0
         self.__local = False
 
     @classmethod
@@ -39,20 +38,12 @@ class Transaction(db_entry.DbEntry, AbstractTx):
         return res
 
     def from_args(self, arg_iter: iter):
-        """
-                id,
-                {self.name_column},
-                {self.height_column},
-                {self.time_column},
-                {self.amount_column},
-                {self.fee_column},
-        """
         try:
             self._rowid = next(arg_iter)
             self.__name = next(arg_iter)
             self._set_object_name(self.__name)
             assert isinstance(self.__name, str)
-            self.__height = next(arg_iter)
+            self._height = next(arg_iter)
             self.__time = next(arg_iter)
             self.__balance = next(arg_iter)
             self.__fee = next(arg_iter)
@@ -176,13 +167,6 @@ class Transaction(db_entry.DbEntry, AbstractTx):
     def __hash__(self):
         return hash(self.__name)
 
-    def __str__(self):
-        return self.__name
-
-    def __repr__(self):
-        return f"{self.__name} height:{self.__height} amount:{self.__balance} fee:{self.__fee} time:{self.__time} \
-            in.count:{len(self.inputs)} out.count: {len(self.outputs)}"
-
     def user_view(self, sett) -> str:
         # return self.tr(f"Transaction '%s' from %s. Amount: %s") % (self.__name, self.timeHuman, self.__balance)
         return self.tr(f"Transaction of %s. Amount: %s %s") % (self.timeHuman,
@@ -249,7 +233,7 @@ class Transaction(db_entry.DbEntry, AbstractTx):
             return 0
         if self.__coin_base:
             return 3
-        cc = self.confirmCount
+        cc = self.confirmations
         if cc >= self.READY_CONFIRM_COUNT:
             return 3
         if cc == 0:

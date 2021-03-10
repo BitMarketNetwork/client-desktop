@@ -11,6 +11,9 @@ class AbstractTxIo(AbstractAddress):
 
 
 class TxModelInterface:
+    def afterSetHeight(self) -> None:
+        raise NotImplementedError
+
     def beforeAppendInput(self, tx_input: AbstractTxIo) -> None:
         raise NotImplementedError
 
@@ -30,6 +33,7 @@ class AbstractTx:
 
     def __init__(self, *, address: AbstractAddress) -> None:
         self._address = address
+        self._height = -1
         self._input_list = []
         self._output_list = []
 
@@ -43,6 +47,23 @@ class AbstractTx:
     @property
     def model(self) -> Optional[TxModelInterface]:
         return self._model
+
+    @property
+    def height(self) -> int:
+        return self._height
+
+    @height.setter
+    def height(self, value: int) -> None:
+        if self._height != value:
+            self._height = value
+            if self._model:
+                self._model.afterSetHeight()
+
+    @property
+    def confirmations(self) -> int:
+        if 0 <= self._height <= self._address.coin.height:
+            return self._address.coin.height - self._height + 1
+        return 0
 
     @property
     def inputList(self) -> List[_TxIo]:

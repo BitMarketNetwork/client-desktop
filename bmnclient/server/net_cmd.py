@@ -772,14 +772,13 @@ class MempoolMonitorCommand(AbstractMultyMempoolCommand):
             if w is not None:
                 tx_ = Transaction(w)
                 tx_.parse(name, body)
-                tx_.height = w.coin.height + 1
                 try:
                     w.appendTx(tx_)
                     from ..ui.gui import Application
                     Application.instance().uiManager.process_incoming_tx(tx_)
                 except TxError as txe:
                     if self.verbose:
-                        log.warn(f"{txe}")
+                        log.warning(f"{txe}")
 
 
 class AddressUnspentCommand(AddressInfoCommand):
@@ -861,9 +860,9 @@ class BroadcastTxCommand(JsonStreamMixin, BaseNetworkCommand):
         tx_id = table["tx"]
         if tx_id != self._mtx.tx_id:
             log.error(
-                f"server gives TXID:{tx_id} but sent TXID:{self._mtx.tx_id}")
-        elif self.verbose:
-            log.debug("Broadcasted TX hash is fine!")
+                f"server gives TXID: {tx_id} but sent TXID: {self._mtx.tx_id}")
+        else:
+            log.debug("Broadcast TX hash is fine!")
         self._mtx.send_callback(True)
 
     @ property

@@ -161,9 +161,10 @@ class AbstractListSortedModel(QSortFilterProxyModel, ListModelHelper):
             self,
             application: Application,
             source_model: AbstractListModel,
-            sort_role: int) -> None:
+            sort_role: int,
+            sort_order=Qt.AscendingOrder) -> None:
         super().__init__()
         ListModelHelper.__init__(self, application)
         self.setSourceModel(source_model)
         self.setSortRole(sort_role)
-        self.sort(0, Qt.AscendingOrder)
+        self.sort(0, sort_order)

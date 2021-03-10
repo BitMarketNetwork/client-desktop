@@ -57,15 +57,17 @@ class TxStateModel(AbstractTxStateModel):
 
     @QProperty(str, notify=__stateChanged)
     def heightHuman(self) -> str:
+        if self._tx.height < 0:
+            return "-"
         return self.locale.integerToString(self._tx.height)
 
     @QProperty(int, notify=__stateChanged)
     def confirmations(self) -> int:
-        return self._tx.confirmCount
+        return self._tx.confirmations
 
     @QProperty(str, notify=__stateChanged)
     def confirmationsHuman(self) -> str:
-        return self.locale.integerToString(self._tx.confirmCount)
+        return self.locale.integerToString(self._tx.confirmations)
 
 
 class TxAmountModel(AbstractTxAmountModel):

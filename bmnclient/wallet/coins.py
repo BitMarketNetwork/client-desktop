@@ -14,11 +14,6 @@ from ..coins import coin_litecoin
 log = logging.getLogger(__name__)
 
 
-
-def network_tag(net: coin_network.CoinNetworkBase) -> str:
-    return next(c.name for c in CoinType.all if c.network == net)  # pylint: disable=E1133
-
-
 class CoinType(db_entry.DbEntry):
     rateChanged = qt_core.Signal()  # TODO
 
