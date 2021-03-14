@@ -8,7 +8,9 @@ from typing import Final, Optional, TYPE_CHECKING
 from PySide2.QtCore import \
     Property as QProperty, \
     QDateTime, \
+    QModelIndex, \
     QObject, \
+    Qt, \
     Signal as QSignal
 
 from . import AbstractModel, AbstractStateModel

@@ -15,10 +15,7 @@ log = logging.getLogger(__name__)
 
 
 class CoinType(db_entry.DbEntry):
-    rateChanged = qt_core.Signal()  # TODO
-
     name: str = None
-    _test: bool = False
 
     # [[https://github.com/satoshilabs/slips/blob/master/slip-0044.md|SLIP-0044 : Registered coin types for BIP-0044]]
     _hd_index: int = None
@@ -62,9 +59,6 @@ class CoinType(db_entry.DbEntry):
         return next(k for k in itertools.count(1) if k not in idxs)
 
     def make_address(self, type_: key.AddressType = key.AddressType.P2WPKH, label: str = "", message: str = "") -> address.CAddress:
-        """
-        create NEW active address ( with keys)
-        """
         if self.__hd_node is None:
             raise address.AddressError(f"There's no private key in {self}")
         hd_index = 1
@@ -92,21 +86,12 @@ class CoinType(db_entry.DbEntry):
         adr.label = label
         self.addAddress.emit(adr)
         from ..application import CoreApplication
-        CoreApplication.instance().databaseThread.save_wallet(adr)
+        CoreApplication.instance().databaseThread.save_address(adr)
         return adr
-
-    @classmethod
-    def match(cls, name: str) -> bool:
-        "Match coin by string input"
-        name_ = name.strip().casefold()
-        return name_ in [
-            cls.name.casefold(),
-            cls.fullName.casefold(),
-        ]
 
     def make_hd_node(self, parent_node):
         self.__hd_node = parent_node.make_child_prv(
-            self.TEST_HD_INDEX if self._test else self._hd_index, True, self.network)
+            self.TEST_HD_INDEX if self.isTestNet else self._hd_index, True, self.network)
 
     @property
     def hd_node(self) -> hd.HDNode:
@@ -152,7 +137,11 @@ class CoinType(db_entry.DbEntry):
         if isinstance(key, str):
             return next((w for w in self._address_list if w.name == key), None)
 
-    def _update_wallets(self, from_=Optional[int], remove_txs_from: Optional[int] = None, verbose: bool = False):
+    def _update_wallets(
+            self,
+            from_=Optional[int],
+            remove_txs_from: Optional[int] = None,
+            verbose: bool = False):
         "from old to new one !!!"
         for w in self._address_list:
             w.update_tx_list(from_, remove_txs_from, verbose)
@@ -251,7 +240,6 @@ class Bitcoin(CoinType, coin_bitcoin.Bitcoin):
 class BitcoinTest(Bitcoin, coin_bitcoin.BitcoinTest):
     name = "btctest"
     network = coin_network.BitcoinTestNetwork
-    _test = True
 
 
 

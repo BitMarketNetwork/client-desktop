@@ -1,4 +1,5 @@
-import abc
+from __future__ import annotations
+
 import io
 import json
 import logging
@@ -6,14 +7,15 @@ import sys
 import traceback
 from enum import Enum, auto
 from typing import Iterable, List, Optional, Tuple
-from ..network.server_parser import ServerCoinParser
 
 import PySide2.QtCore as qt_core
 import PySide2.QtNetwork as qt_network
+from PySide2.QtCore import QObject
 
 from . import server_error
 from .. import loading_level
 from ..logger import Logger
+from ..network.server_parser import ServerCoinParser
 from ..wallet import address, coins, hd, key, mutable_tx
 from ..wallet.tx import Transaction, TxError
 
@@ -25,21 +27,12 @@ log = logging.getLogger(__name__)
 SILENCE_CHECKS = True
 
 
-class AbstractNetworkCommand(qt_core.QObject):
-    def __init__(self, parent):
-        super().__init__(parent=parent)
-
-
-class FinalMeta(type(qt_core.QObject), type(abc.ABCMeta)):
-    pass
-
-
 class HttpMethod(Enum):
     GET = auto()
     POST = auto()
 
 
-class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
+class BaseNetworkCommand(QObject):
     _BASE_URL = None
     _METHOD = HttpMethod.GET
 
@@ -82,7 +75,7 @@ class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
     _low_priority = False
     unique = False
 
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent=None, **kwargs) -> None:
         super().__init__(parent=parent)
         self._logger = Logger.getClassLogger(__name__, self.__class__)
         self.__status_code: Optional[int] = None
@@ -148,7 +141,7 @@ class BaseNetworkCommand(AbstractNetworkCommand, metaclass=FinalMeta):
     def args_post(self) -> Tuple[str, dict]:
         return "", {}
 
-    def process_answer(self, data) -> AbstractNetworkCommand:
+    def process_answer(self, data) -> BaseNetworkCommand:
         if not data:
             raise server_error.EmptyReplyError()
         if not isinstance(data, dict):
@@ -532,12 +525,12 @@ class AddressHistoryCommand(AddressInfoCommand):
         self._json.write(data)
         return True
 
-    @ property
+    @property
     def args(self):
         self._address.isUpdating = True
         return [self._address.coin.name, self._address.name, self._server_action]
 
-    @ property
+    @property
     def tx_count(self):
         return self.__tx_count
 
@@ -576,7 +569,7 @@ class AddressHistoryCommand(AddressInfoCommand):
             from ..application import CoreApplication
             CoreApplication.instance().databaseThread.save_tx_list(self._address, tx_list)
 
-    @ property
+    @property
     def skip(self) -> bool:
         return self._address.deleted
 
@@ -597,7 +590,7 @@ class AddressMempoolCommand(AddressInfoCommand):
         super().__init__(wallet, parent=parent)
         self._counter = counter
 
-    @ property
+    @property
     def args(self):
         return [self._address.coin.name, self._address.name, self._server_action]
 
@@ -646,15 +639,15 @@ class AbstractMultyMempoolCommand(JsonStreamMixin, BaseNetworkCommand):
         self._wallet_list = list(wallet_list)
         self._hash = hash_
 
-    @ property
+    @property
     def skip(self) -> bool:
         return not self._wallet_list
 
-    @ property
+    @property
     def args(self):
         return [self._coin.name, self._server_action]
 
-    @ property
+    @property
     def args_post(self) -> Tuple[str, dict]:
         table = {
             "address_list": [addr.name for addr in self._wallet_list],
@@ -740,7 +733,7 @@ class AddressMultyMempoolCommand(AbstractMultyMempoolCommand):
             self.__send_again()
         super().onResponseFinished()
 
-    @ property
+    @property
     def counter(self) -> int:
         return self.__counter
 
@@ -796,7 +789,7 @@ class AddressUnspentCommand(AddressInfoCommand):
         self._unspent = unspent or []
         self._calls = calls
 
-    @ property
+    @property
     def args(self):
         return [self._address.coin.name, self._address.name, self._server_action]
 
@@ -852,7 +845,7 @@ class BroadcastTxCommand(JsonStreamMixin, BaseNetworkCommand):
         super().__init__(parent)
         self._mtx = mtx
 
-    @ property
+    @property
     def args(self):
         return [self._mtx.coin.name, "tx"]
 
@@ -865,7 +858,7 @@ class BroadcastTxCommand(JsonStreamMixin, BaseNetworkCommand):
             log.debug("Broadcast TX hash is fine!")
         self._mtx.send_callback(True)
 
-    @ property
+    @property
     def args_post(self):
         return ("tx_broadcast", {
             "data": str(self._mtx),

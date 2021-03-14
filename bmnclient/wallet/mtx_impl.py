@@ -727,6 +727,7 @@ def construct_outputs(outputs):
 
         # Blockchain storage
         else:
+            from .constants import OP_RETURN
             script_pubkey = (OP_RETURN +
                              len(dest).to_bytes(1, byteorder='little') +
                              dest)

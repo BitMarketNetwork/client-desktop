@@ -83,7 +83,7 @@ class NetworkImpl(qt_core.QObject):
     def __errorOccurred(self, code):
         pass
 
-    def push_cmd(self, cmd: net_cmd.AbstractNetworkCommand, first: bool = False) -> None:
+    def push_cmd(self, cmd: net_cmd.BaseNetworkCommand, first: bool = False) -> None:
         if first or cmd.high_priority:
             self.__cmd_queue.insert(0, cmd)
         else:
@@ -106,10 +106,10 @@ class NetworkImpl(qt_core.QObject):
 
     def _run_cmd(
             self,
-            cmd: net_cmd.AbstractNetworkCommand,
+            cmd: net_cmd.BaseNetworkCommand,
             from_queue: bool = False,
             run_first: bool = False,
-            complete_callback: Optional[Callable[[net_cmd.AbstractNetworkCommand], None]] = None):
+            complete_callback: Optional[Callable[[net_cmd.BaseNetworkCommand], None]] = None):
         if cmd.skip:
             return
 
