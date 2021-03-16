@@ -161,7 +161,7 @@ class BaseNetworkCommand(QObject):
             return self.process_attr(data['attributes'])
         except KeyError as ke:
             raise server_error.ContentError(ke) from ke
-        "When reply aborted"
+        # when reply aborted
         pass
 
     def process_meta(self, meta):
@@ -195,12 +195,6 @@ class BaseNetworkCommand(QObject):
     def handle_error(self, error):
         # self.output(self.tr("Server error"), error.get('detail'))
         log.critical(f"Server error: {error.get('detail')}")
-
-    def connect_(self):
-        pass
-
-    def __str__(self):
-        return self.__class__.__name__
 
     @property
     def skip(self) -> bool:
@@ -297,12 +291,15 @@ class UpdateCoinsInfoCommand(JsonStreamMixin, BaseNetworkCommand):
         self._poll = poll
 
     def process_attr(self, table: dict):
-        log.debug(f"UPDATE COINS RESULT: {table}")
         from ..application import CoreApplication
         for coin in CoreApplication.instance().coinList:
             response = table.get(coin.shortName)
+            state_hash = coin.stateHash
             if response and ServerCoinParser.parse(response, coin):
-                CoreApplication.instance().databaseThread.saveCoin.emit(coin)
+                if coin.stateHash != state_hash:
+                    CoreApplication.instance().databaseThread.saveCoin.emit(coin)
+                    for a in coin.addressList:
+                        self._run_cmd(UpdateAddressInfoCommand(a, self.parent()))
 
 
 class AddressInfoCommand(JsonStreamMixin, BaseNetworkCommand):

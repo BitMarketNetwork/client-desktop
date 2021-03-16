@@ -22,7 +22,6 @@ class Transaction(db_entry.DbEntry, AbstractTx):
     statusChanged = qt_core.Signal()
     # constant fields can be changed while reprocessing
     infoChanged = qt_core.Signal()
-    heightChanged = qt_core.Signal()
 
     def __init__(self, address: CAddress):
         super().__init__()
@@ -102,10 +101,6 @@ class Transaction(db_entry.DbEntry, AbstractTx):
     @wallet.setter
     def wallet(self, wall: CAddress):
         self._address = wall
-        if wall:
-            self._address.heightChanged.connect(
-                self.heightChanged, qt_core.Qt.QueuedConnection)
-        # self.setParent(wall)
 
     @property
     def coin_base(self) -> int:

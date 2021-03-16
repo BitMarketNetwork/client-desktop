@@ -145,8 +145,6 @@ class CoinType(db_entry.DbEntry):
         "from old to new one !!!"
         for w in self._address_list:
             w.update_tx_list(from_, remove_txs_from, verbose)
-        # it must be called when height changed
-        # CoreApplication.instance().networkThread.retrieveCoinHistory.emit(coin)
 
     def remove_wallet(self, wallet: address.CAddress):
         index = self._address_list.index(wallet)

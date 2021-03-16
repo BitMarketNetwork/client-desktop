@@ -38,7 +38,6 @@ class IncomingTransferCommand(net_cmd.AddressHistoryCommand, DummyCommandBase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.connect_()
 
     def run(self):
         """

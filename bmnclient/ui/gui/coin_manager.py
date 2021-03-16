@@ -27,12 +27,6 @@ class CoinManager(QObject):
         self._application = application
         self.__current_coin_idx = -1
         self._coin_list_model = CoinListModel(self._application, self._application.coinList)
-        self._application.networkThread.heightChanged.connect(self.coin_height_changed)
-
-    def coin_height_changed(self, coin: 'coins.CoinType') -> None:
-        # log.critical(f"COIN HEIGHT CHANGED for {coin} => current {self.coin}")
-        if coin == self.coin:
-            self.__tx_model.update_confirm_count()
 
     @QProperty(qt_core.QObject, constant=True)
     def coinListModel(self) -> qt_core.QObject:

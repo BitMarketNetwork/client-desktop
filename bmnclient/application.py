@@ -140,22 +140,8 @@ class CoreApplication(QObject):
             self,
             model_factory: Optional[Callable[[object], object]] = None) -> None:
         self._coin_list = CoinList(model_factory=model_factory)
-
         for coin in self._coin_list:
             coin.fiatRate = FiatRate(0, self._fiat_currency_list.current)
-
-        # TODO
-        for coin in self._coin_list:
-            self._server_thread.heightChanged.connect(
-                partial(
-                    lambda c: self._server_thread.retrieveCoinHistory.emit(c),
-                    coin),
-                Qt.UniqueConnection)
-            self._server_thread.heightChanged.connect(
-                partial(
-                    lambda c: self._wallet_thread.heightChanged.emit(c),
-                    coin),
-                Qt.UniqueConnection)
 
     def run(self) -> int:
         # noinspection PyTypeChecker

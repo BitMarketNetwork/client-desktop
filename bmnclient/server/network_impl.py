@@ -126,7 +126,6 @@ class NetworkImpl(qt_core.QObject):
         else:
             if not cmd.silenced:
                 log.debug(f"cmd to run: {cmd}")
-            cmd.connect_()
             self.__cmd = cmd
             # when we statrt to get history then go out from starting mode
             self.__in_progress = True

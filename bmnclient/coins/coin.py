@@ -47,6 +47,8 @@ class AbstractCoin:
             self,
             *,
             model_factory: Optional[Callable[[object], object]] = None) -> None:
+        self.__state_hash = 0
+
         self._offset = ""
         self._unverified_offset = ""
         self._unverified_hash = ""
@@ -62,6 +64,15 @@ class AbstractCoin:
 
         self._model_factory = model_factory
         self._model: Optional[CoinModelInterface] = self.model_factory(self)
+
+    def _updateState(self) -> int:
+        old_value = self.__state_hash
+        self.__state_hash = (old_value + 1) & ((1 << 64) - 1)
+        return old_value
+
+    @property
+    def stateHash(self) -> int:
+        return self.__state_hash
 
     def model_factory(self, owner: object) -> Optional[object]:
         if self._model_factory:
@@ -106,6 +117,7 @@ class AbstractCoin:
         if self._offset != value:
             self._update_wallets(self._offset)
             self._offset = value
+            self._updateState()
 
     @property
     def unverifiedOffset(self) -> str:
@@ -116,6 +128,7 @@ class AbstractCoin:
         if self._unverified_offset != value:
             # self._update_wallets(self._offset)
             self._unverified_offset = value
+            self._updateState()
 
     @property
     def unverifiedHash(self) -> str:
@@ -131,6 +144,7 @@ class AbstractCoin:
                     self._unverified_offset,
                     self._verified_height)
             self._unverified_hash = value
+            self._updateState()
 
     @property
     def height(self) -> int:
@@ -140,6 +154,7 @@ class AbstractCoin:
     def height(self, value: int) -> None:
         if self._height != value:
             self._height = value
+            self._updateState()
             if self._model:
                 self._model.afterSetHeight()
 
@@ -149,7 +164,9 @@ class AbstractCoin:
 
     @verifiedHeight.setter
     def verifiedHeight(self, value: int) -> None:
-        self._verified_height = value
+        if self._verified_height != value:
+            self._verified_height = value
+            self._updateState()
 
     @property
     def status(self) -> int:
@@ -159,6 +176,7 @@ class AbstractCoin:
     def status(self, value: int) -> None:
         if self._status != value:
             self._status = value
+            # self._updateState()
             if self._model:
                 self._model.afterSetStatus()
 

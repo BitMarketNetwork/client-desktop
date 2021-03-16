@@ -12,11 +12,9 @@ class ServerThread(qt_core.QThread):
     unspentsOfWallet = qt_core.Signal(CAddress, arguments=["wallet"])
     updateAddress = qt_core.Signal(CAddress, arguments=["wallet"])
     undoTx = qt_core.Signal(CoinType, int)
-    retrieveCoinHistory = qt_core.Signal(CoinType, arguments=["coin"])
     broadcastMtx = qt_core.Signal(mutable_tx.MutableTransaction, arguments=["mtx"])
     netError = qt_core.Signal(int, str, arguments=["code,error"])
     updateTxStatus = qt_core.Signal(tx.Transaction)
-    heightChanged = qt_core.Signal(CoinType, arguments=["coin"])
 
     def __init__(self):
         super().__init__()

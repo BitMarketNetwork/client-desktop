@@ -15,8 +15,6 @@ class Network(network_impl.NetworkImpl):
         # connect
         parent.updateAddress.connect(
             self.update_address, qt_core.Qt.QueuedConnection)
-        parent.retrieveCoinHistory.connect(
-            self.retrieve_coin_history, qt_core.Qt.QueuedConnection)
         parent.unspentsOfWallet.connect(
             self.wallet_utxo_list, qt_core.Qt.QueuedConnection)
         parent.mempoolCoin.connect(
@@ -63,9 +61,3 @@ class Network(network_impl.NetworkImpl):
         reply = getattr(self, '_reply', None)
         if reply:
             reply.abort()
-
-    def retrieve_coin_history(self, coin: coins.CoinType):
-        for address in coin.addressList:
-            # # update tx
-            # update balance
-            self._run_cmd(net_cmd.UpdateAddressInfoCommand(address, self))

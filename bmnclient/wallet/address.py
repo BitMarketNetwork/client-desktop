@@ -37,7 +37,6 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
     labelChanged = qt_core.Signal()
     lastOffsetChanged = qt_core.Signal()
     useAsSourceChanged = qt_core.Signal()
-    heightChanged = qt_core.Signal()
     txCountChanged = qt_core.Signal()
 
     def __init__(self, name: str, coin: CoinType, *, created: bool = False):
@@ -49,7 +48,6 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
 
         self._set_object_name(name)
         self._coin = coin
-        self._coin.heightChanged.connect(self.heightChanged)
 
         self.__name = name
         self.__label = ""
