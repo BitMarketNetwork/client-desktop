@@ -299,7 +299,7 @@ class UpdateCoinsInfoCommand(JsonStreamMixin, BaseNetworkCommand):
                 if coin.stateHash != state_hash:
                     CoreApplication.instance().databaseThread.saveCoin.emit(coin)
                     for a in coin.addressList:
-                        self._run_cmd(UpdateAddressInfoCommand(a, self.parent()))
+                        self.parent()._run_cmd(UpdateAddressInfoCommand(a, self.parent()))
 
 
 class AddressInfoCommand(JsonStreamMixin, BaseNetworkCommand):
@@ -439,8 +439,6 @@ class UpdateAddressInfoCommand(AddressInfoCommand):
 
 
 class AddressHistoryCommand(AddressInfoCommand):
-    """
-    """
     action = "coins"
     _server_action = "history"
     level = loading_level.LoadingLevel.TRANSACTIONS

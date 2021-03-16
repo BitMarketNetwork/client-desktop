@@ -12,7 +12,6 @@ class Network(network_impl.NetworkImpl):
     def __init__(self, parent):
         from ..ui.gui import Application
         super().__init__()
-        # connect
         parent.updateAddress.connect(
             self.update_address, qt_core.Qt.QueuedConnection)
         parent.unspentsOfWallet.connect(

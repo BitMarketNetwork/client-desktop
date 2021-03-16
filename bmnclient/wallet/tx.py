@@ -30,12 +30,6 @@ class Transaction(db_entry.DbEntry, AbstractTx):
         self.__coin_base = False
         self.__local = False
 
-    @classmethod
-    def make_dummy(cls, wallet: Optional[CAddress]) -> Transaction:
-        res = cls(wallet)
-        res.__local = True
-        return res
-
     def from_args(self, arg_iter: iter):
         try:
             self._rowid = next(arg_iter)

@@ -252,19 +252,6 @@ class Mtx:
     def __hash__(self):
         return hash(self.to_hex())
 
-    def to_tx(self) -> Transaction:
-        from .tx import Transaction
-        tx_: Transaction = Transaction.make_dummy(None)
-        tx_.name = self.id
-        tx_.fee = self.fee
-        tx_.time = datetime.now().timestamp()
-        tx_.balance = sum(out.amount_int for out in self.TxOut)
-        tx_.height = None
-        tx_.add_inputs(((i.amount_int, i.address
-        .name) for i in self.TxIn), True)
-        tx_.add_inputs(((i.amount_int, i.address) for i in self.TxOut), False)
-        return tx_
-
     def legacy_repr(self):
         inp = util.int_to_varint(len(self.TxIn)) + \
             b''.join(map(bytes, self.TxIn))
