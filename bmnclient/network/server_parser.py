@@ -1,7 +1,7 @@
 # JOK++
 from __future__ import annotations
 
-from typing import Any, Optional, TYPE_CHECKING, Type
+from typing import Any, List, Optional, TYPE_CHECKING, Type
 
 from ..logger import Logger
 from ..utils.meta import classproperty
@@ -65,72 +65,61 @@ class ServerCoinParser(AbstractServerParser):
 
 class ServerTxParser(AbstractServerParser):
     @classmethod
-    def parseList(cls, response: dict, address: AbstractAddress) -> bool:
+    def parseList(
+            cls,
+            response: dict,
+            address: AbstractAddress) -> Optional[List[AbstractTx]]:
         if not isinstance(response, dict):
             cls._logger.error(
                 "Invalid transaction list response for address \"{}\"."
                 .format(address.name))
-            return False
+            return None
 
+        result = []
         for (name, value) in response.items():
-            if not ServerTxParser.parse(name, value, address):
-                return False
-        return True
+            tx = cls.parse(name, value, address)
+            if tx is None:
+                return None
+            result.append(tx)
+        return result
 
     @classmethod
-    def parse(cls, name: str, response: dict, address: AbstractAddress) -> bool:
+    def parse(
+            cls,
+            name: str,
+            response: dict,
+            address: AbstractAddress) -> Optional[AbstractTx]:
+        data = {}
         try:
-            # TODO validate name
-            height = cls._parse(response, "height", int)
-            time = cls._parse(response, "time", int)
-            amount = cls._parse(response, "amount", int)
-            fee = cls._parse(response, "fee", int)
-            coinbase = cls._parse(response, "coinbase", int) != 0
-
-            input_list = []
-            for item in response["input"]:
-                input_list.append(cls._parseIo(item, address))
-            output_list = []
-            for item in response["output"]:
-                output_list.append(cls._parseIo(item, address))
+            data["name"] = name  # TODO validate name
+            data["height"] = cls._parse(response, "height", int)
+            data["time"] = cls._parse(response, "time", int)
+            data["amount"] = cls._parse(response, "amount", int)
+            data["fee"] = cls._parse(response, "fee", int)
+            data["coinbase"] = cls._parse(response, "coinbase", int) != 0
+            data["input_list"] = [cls._parseIo(v) for v in response["input"]]
+            data["output_list"] = [cls._parseIo(v) for v in response["output"]]
         except ParseError as e:
             cls._logger.error(
                 "Failed to parse transaction for address \"{}\": {}"
                 .format(address.name, str(e)))
-            return False
+            return None
 
-        # TODO
         from ..wallet.tx import Transaction
-        tx = Transaction(
-            address,
-            name,
-            amount,
-            fee,
-            coinbase,
-            input_list,
-            output_list)
-        tx.height = height
-        tx.time = time
+        tx = Transaction.deserialize(address, **data)
         address.appendTx(tx)
-        return True
+        return tx
 
     @classmethod
-    def _parseIo(
-            cls,
-            item: dict,
-            address: AbstractAddress) -> Optional[AbstractTx.TxIo]:
+    def _parseIo(cls, item: dict) -> dict:
+        data = {}
         try:
-            output_type = cls._parse(item, "output_type", str)
-            address_type = cls._parse(item, "type", str)
-            address_name = cls._parse(item, "address", str)
-            address_amount = cls._parse(item, "amount", int)
+            data["output_type"] = cls._parse(item, "output_type", str)
+            data["type"] = cls._parse(item, "type", str)
+            data["address"] = cls._parse(item, "address", str)
+            data["amount"] = cls._parse(item, "amount", int)
         except ParseError as e:
             raise ParseError(
                 "Failed to parse transaction IO: {}"
                 .format(str(e)))
-
-        # TODO
-        from ..wallet.address import CAddress
-        io = CAddress(address_name, address.coin)
-        io.amount = address_amount
-        return io
+        return data
