@@ -20,34 +20,6 @@ class DummyCursor:
 
 
 class SqLite:
-    """
-    To encrypt sqlite we use hashing for names and aes for data
-    but consider using native convertors
-    * sqlite3.register_converter(typename, callable)
-    * sqlite3.register_adapter(type, callable)
-    """
-    """
-    TABLES:
-        * meta
-            - id , key , value
-        * coins
-            - id , name, visible, height , \
-                offset, \
-                unverified_offset, unverified_hash, verified_height \
-                rate_usd
-        * wallets
-            # we keep both offsets otherwise we loose old tansactions in case user breaks servert tx chain
-            - id , address, coin_id , label , message , created , type, amount , tx_count , \
-                first_offset, last_offset, \
-                key
-        * transactions
-            # status - detectable field
-            - id , name , wallet_id , height , time , amount , fee , coinbase
-        * inputs (outputs also here )
-            - id , address , tx_id , amount , type ( 0 - input , 1 - output ), output_type
-    """
-
-    # i still need it.. it's hard to distinguish encoded columns
     COLUMN_NAMES = [
         "key",
         "value",
@@ -73,11 +45,10 @@ class SqLite:
         "time",
         "amount",
         "fee",
-        "wallet_id",
+        "address_id",
         "tx_id",
         "type",
         "output_type",
-        "rate_usd",
         "coinbase",
     ]
     TABLE_NAMES = [
@@ -85,7 +56,7 @@ class SqLite:
         "coins",
         "private_keys",
         "coins",
-        "wallets",
+        "addresses",
         "transactions",
         "inputs",
     ]
@@ -150,7 +121,6 @@ class SqLite:
 
     def create_tables(self) -> None:
         integer = "TEXT" if cipher.Cipher.ENCRYPT else "INTEGER"
-        real = "TEXT" if cipher.Cipher.ENCRYPT else "REAL"
         query = f"""
         CREATE TABLE IF NOT EXISTS {self.meta_table}
             (id INTEGER PRIMARY KEY,
@@ -165,10 +135,9 @@ class SqLite:
             {self.verified_height_column}        {integer},
             {self.offset_column}        TEXT,
             {self.unverified_offset_column}        TEXT,
-            {self.unverified_hash_column}        TEXT,
-            {self.rate_usd_column}      {real}
+            {self.unverified_hash_column}        TEXT
             );
-        CREATE TABLE IF NOT EXISTS {self.wallets_table}
+        CREATE TABLE IF NOT EXISTS {self.addresses_table}
             (id INTEGER PRIMARY KEY,
             {self.address_column}   TEXT NOT NULL,
             {self.coin_id_column}   {integer} NOT NULL,
@@ -187,14 +156,14 @@ class SqLite:
         CREATE TABLE IF NOT EXISTS {self.transactions_table}
             (id INTEGER PRIMARY KEY,
             {self.name_column}   TEXT NOT NULL,
-            {self.wallet_id_column} {integer} NOT NULL,
+            {self.address_id_column} {integer} NOT NULL,
             {self.height_column} {integer} NOT NULL,
             {self.time_column}   {integer} NOT NULL,
             {self.amount_column} {integer} NOT NULL,
             {self.fee_column}    {integer} NOT NULL,
             {self.coinbase_column}    {integer} NOT NULL,
-            FOREIGN KEY ({self.wallet_id_column}) REFERENCES {self.wallets_table} (id) ON DELETE CASCADE,
-            UNIQUE({self.name_column}, {self.wallet_id_column})
+            FOREIGN KEY ({self.address_id_column}) REFERENCES {self.addresses_table} (id) ON DELETE CASCADE,
+            UNIQUE({self.name_column}, {self.address_id_column})
             );
         CREATE TABLE IF NOT EXISTS {self.inputs_table} (id INTEGER PRIMARY KEY,
             {self.address_column}   TEXT NOT NULL,

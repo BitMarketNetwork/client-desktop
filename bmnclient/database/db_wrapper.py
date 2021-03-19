@@ -1,27 +1,24 @@
 import logging
-from typing import Optional, List
 import sqlite3 as sql
 import sys
-from pathlib import Path
 from contextlib import closing
-from ..server import net_cmd
-import bmnclient.config
+from pathlib import Path
+from typing import List
 
 import PySide2.QtCore as qt_core
 
-from ..wallet import address, coins
-from ..wallet.tx import Transaction
+import bmnclient.config
 from . import sqlite_impl
+from ..server import net_cmd
+from ..wallet import coins
+from ..wallet.address import CAddress
+from ..wallet.tx import Transaction
 
 log = logging.getLogger(__name__)
 
 
 def nmark(number: int) -> str:
     return f"({','.join('?'*number)})"
-
-
-class DatabaseError(Exception):
-    pass
 
 
 class DbWrapper:
@@ -68,38 +65,34 @@ class DbWrapper:
 
         try:
             query = f"""
-            INSERT OR IGNORE INTO {self.coins_table}
-                (
-                {self.name_column},
-                {self.visible_column},
-                {self.height_column},
-                {self.verified_height_column},
-                {self.offset_column},
-                {self.unverified_offset_column},
-                {self.unverified_hash_column},
-                {self.rate_usd_column}
-                )
-                VALUES  {nmark(8)}
+            INSERT OR IGNORE INTO {self.coins_table} (
+                    {self.name_column},
+                    {self.visible_column},
+                    {self.height_column},
+                    {self.verified_height_column},
+                    {self.offset_column},
+                    {self.unverified_offset_column},
+                    {self.unverified_hash_column})
+                VALUES  {nmark(7)}
             """
-            cur = self.__impl.exec(query, (
+            cursor = self.__impl.exec(query, (
                 table["short_name"],
                 self.__impl(1),  # TODO
                 table["height"],
                 table["verified_height"],
                 table["offset"],
                 table["unverified_offset"],
-                table["unverified_hash"],
-                self.__impl(0),  # TODO
+                table["unverified_hash"]
             ))
         except sql.IntegrityError as ie:
             log.error("DB integrity: %s (%s)", ie, coin)
+            return
 
-        if coin.rowId is None and cur.lastrowid:
-            coin.rowId = cur.lastrowid
-            cur.close()
-            query = f"""
-                SELECT {self.visible_column} FROM {self.coins_table} WHERE id == ?;
-            """
+        if coin.rowId is None and cursor.lastrowid:
+            coin.rowId = cursor.lastrowid
+            cursor.close()
+
+            query = f"SELECT {self.visible_column} FROM {self.coins_table} WHERE id == ?"
             with closing(self.__exec(query, (coin.rowId,))) as c:
                 res = c.fetchone()
                 coin.visible = res[0]
@@ -111,7 +104,6 @@ class DbWrapper:
                 res = c.fetchone()
                 coin.rowId = res[0]
                 coin.visible = res[1]
-                log.debug(f"coin exists:{coin} : {res}")
 
         if read_addresses:
             self._read_address_list(coin)
@@ -119,7 +111,7 @@ class DbWrapper:
 
     def _update_coin(self, coin: coins.CoinType) -> None:
         if not coin.rowId:
-            log.warning("NO COIN ROW")
+            log.error("No coin row")
             return
 
         table = coin.serialize()
@@ -134,8 +126,7 @@ class DbWrapper:
                 {self.verified_height_column} = ?,
                 {self.offset_column} = ?,
                 {self.unverified_offset_column} = ?,
-                {self.unverified_hash_column} = ?,
-                {self.rate_usd_column} = ?
+                {self.unverified_hash_column} = ?
                 WHERE id = ?;
             """
 
@@ -146,9 +137,8 @@ class DbWrapper:
                 table["offset"],
                 table["unverified_offset"],
                 table["unverified_hash"],
-                self.__impl(0),
-                coin.rowId,
-            ))) as c:
+                coin.rowId
+            ))):
                 pass
         except sql.IntegrityError as ie:
             log.error("DB integrity: %s (%s)", ie, coin)
