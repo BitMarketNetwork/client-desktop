@@ -78,7 +78,7 @@ class AddressAmountModel(AbstractAddressAmountModel):
             tx.model.feeAmount.refresh()
 
     def _getValue(self) -> Optional[int]:
-        return self._address.balance
+        return self._address.amount
 
 
 class AddressModel(AddressModelInterface, AbstractModel):

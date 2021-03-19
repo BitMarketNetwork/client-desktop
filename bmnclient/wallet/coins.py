@@ -6,7 +6,7 @@ from typing import Iterable, Optional, Union
 
 import PySide2.QtCore as qt_core
 
-from . import address, coin_network, db_entry, hd, key
+from . import address, coin_network, hd, key
 from .. import meta
 from ..coins import coin_bitcoin
 from ..coins import coin_litecoin
@@ -14,7 +14,7 @@ from ..coins import coin_litecoin
 log = logging.getLogger(__name__)
 
 
-class CoinType(db_entry.DbEntry):
+class CoinType(qt_core.QObject):
     name: str = None
 
     # [[https://github.com/satoshilabs/slips/blob/master/slip-0044.md|SLIP-0044 : Registered coin types for BIP-0044]]
@@ -75,7 +75,7 @@ class CoinType(db_entry.DbEntry):
         # log.debug(
         #     f"New wallet {wallet}  created from HD: {new_hd.chain_path} net:{self.network}")
         from ..application import CoreApplication
-        CoreApplication.instance().databaseThread.save_wallet(wallet)
+        CoreApplication.instance().databaseThread.save_address(wallet)
         self.addAddress.emit(wallet)
         return wallet
 

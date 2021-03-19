@@ -9,7 +9,9 @@ from .currency import \
     AbstractCurrency, \
     FiatRate, \
     NoneFiatCurrency
+from .tx import AbstractTx
 from ..utils.meta import classproperty
+from ..utils.serialize import Serializable, serializable_property
 
 
 class CoinModelInterface:
@@ -32,7 +34,7 @@ class CoinModelInterface:
         raise NotImplementedError
 
 
-class AbstractCoin:
+class AbstractCoin(Serializable):
     _SHORT_NAME = ""
     _FULL_NAME = ""
     _IS_TEST_NET = False
@@ -43,10 +45,15 @@ class AbstractCoin:
     class _Address(AbstractAddress):
         pass
 
+    class Tx(AbstractTx):
+        pass
+
     def __init__(
             self,
             *,
             model_factory: Optional[Callable[[object], object]] = None) -> None:
+        super().__init__()
+
         self.__state_hash = 0
 
         self._offset = ""
@@ -91,7 +98,7 @@ class AbstractCoin:
     def address(cls) -> Type[_Address]:  # noqa
         return cls._Address
 
-    @classproperty
+    @serializable_property
     def shortName(cls) -> str:  # noqa
         return cls._SHORT_NAME
 
@@ -108,7 +115,7 @@ class AbstractCoin:
         # relative to "resources/images"
         return "coins/" + cls._SHORT_NAME + ".svg"
 
-    @property
+    @serializable_property
     def offset(self) -> str:
         return self._offset
 
@@ -119,7 +126,7 @@ class AbstractCoin:
             self._offset = value
             self._updateState()
 
-    @property
+    @serializable_property
     def unverifiedOffset(self) -> str:
         return self._unverified_offset
 
@@ -130,7 +137,7 @@ class AbstractCoin:
             self._unverified_offset = value
             self._updateState()
 
-    @property
+    @serializable_property
     def unverifiedHash(self) -> str:
         return self._unverified_hash
 
@@ -146,7 +153,7 @@ class AbstractCoin:
             self._unverified_hash = value
             self._updateState()
 
-    @property
+    @serializable_property
     def height(self) -> int:
         return self._height
 
@@ -158,7 +165,7 @@ class AbstractCoin:
             if self._model:
                 self._model.afterSetHeight()
 
-    @property
+    @serializable_property
     def verifiedHeight(self) -> int:
         return self._verified_height
 
@@ -210,7 +217,7 @@ class AbstractCoin:
         return self._amount
 
     def refreshAmount(self) -> None:
-        a = sum(a.balance for a in self._address_list if not a.readOnly)
+        a = sum(a.amount for a in self._address_list if not a.readOnly)
         self._amount = a
         if self._model:
             self._model.afterRefreshAmount()

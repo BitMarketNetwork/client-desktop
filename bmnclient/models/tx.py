@@ -81,7 +81,7 @@ class TxAmountModel(AbstractTxAmountModel):
             address.model.amount.refresh()
 
     def _getValue(self) -> Optional[int]:
-        return self._tx.balance
+        return self._tx.amount
 
 
 class TxFeeAmountModel(AbstractTxAmountModel):

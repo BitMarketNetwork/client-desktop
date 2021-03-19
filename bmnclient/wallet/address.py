@@ -11,6 +11,7 @@ from ..coins.address import AbstractAddress
 if TYPE_CHECKING:
     from .tx import Transaction
     from .coins import CoinType
+    from ..coins.coin import AbstractCoin
 
 log = logging.getLogger(__name__)
 
@@ -32,22 +33,19 @@ class AddressError(Exception):
     pass
 
 
-class CAddress(db_entry.DbEntry, AbstractAddress):
+class CAddress(db_entry.Serializable, AbstractAddress):
     balanceChanged = qt_core.Signal()
     labelChanged = qt_core.Signal()
     lastOffsetChanged = qt_core.Signal()
     useAsSourceChanged = qt_core.Signal()
     txCountChanged = qt_core.Signal()
 
-    def __init__(self, name: str, coin: CoinType, *, created: bool = False):
+    def __init__(self, name: str, coin: AbstractCoin, *, created: bool = False):
         assert name
         assert coin is not None
 
         super().__init__()
         AbstractAddress.__init__(self, b'', coin=coin)
-
-        self._set_object_name(name)
-        self._coin = coin
 
         self.__name = name
         self.__label = ""
@@ -97,10 +95,6 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
         return res
 
     @property
-    def coin(self) -> "coins.CoinType":
-        return self._coin
-
-    @property
     def deleted(self) -> bool:
         return self.__deleted
 
@@ -132,12 +126,12 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
         def summ(u):
             u.address = self
             return int(u.amount)
-        balance = sum(map(summ, self.__unspents))
-        if balance != self._amount:
+        amount = sum(map(summ, self.__unspents))
+        if amount != self._amount:
             log.debug(
-                f"Balance of {self} updated from {self._amount} to {balance}. Processed: {len(self.__unspents)} utxo")
+                f"Balance of {self} updated from {self._amount} to {amount}. Processed: {len(self.__unspents)} utxo")
             # strict !!! remember notifiers
-            self.balance = balance
+            self.amount = amount
 
     @property
     def wants_update_unspents(self) -> bool:
@@ -164,7 +158,7 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
             #
             {self.created_column},
             {self.type_column},
-            {self.balance_column},
+            {self.amount_column},
             #
             {self.tx_count_column},
             {self.first_offset_column},
@@ -302,9 +296,6 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
         return ""
 
     def import_key(self, txt: str):
-        """
-        TODO:
-        """
         if txt:
             try:
                 self.__key = hd.HDNode.from_extended_key(txt, self)
@@ -366,10 +357,6 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
     def set_old(self):
         self.__just_created = False
 
-    @qt_core.Property("qint64", notify=balanceChanged)
-    def balance(self) -> int:
-        return self._amount
-
     @qt_core.Property(bool, notify=balanceChanged)
     def canSend(self) -> bool:
         return not self.readOnly and self._amount > 0
@@ -423,7 +410,7 @@ class CAddress(db_entry.DbEntry, AbstractAddress):
 
     # @qt_core.Property('QVariantList', constant=True)
     @property
-    def tx_list(self) -> List[db_entry.DbEntry]:
+    def tx_list(self) -> List[db_entry.Serializable]:
         return list(self._tx_list)
 
     @qt_core.Property(bool, constant=True)

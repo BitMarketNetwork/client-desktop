@@ -28,7 +28,7 @@ class TxModelInterface:
 
 
 class AbstractTx:
-    class _TxIo(AbstractTxIo):
+    class TxIo(AbstractTxIo):
         pass
 
     def __init__(self, *, address: AbstractAddress) -> None:
@@ -70,10 +70,10 @@ class AbstractTx:
         return self._input_list
 
     @property
-    def outputList(self) -> List[_TxIo]:
+    def outputList(self) -> List[TxIo]:
         return self._output_list
 
-    def appendInput(self, tx_input: _TxIo) -> bool:
+    def appendInput(self, tx_input: TxIo) -> bool:
         if self._model:
             self._model.beforeAppendInput(tx_input)
         self._input_list.append(tx_input)
@@ -82,7 +82,7 @@ class AbstractTx:
 
         return True
 
-    def appendOutput(self, tx_output: _TxIo) -> bool:
+    def appendOutput(self, tx_output: TxIo) -> bool:
         if self._model:
             self._model.beforeAppendOutput(tx_output)
         self._output_list.append(tx_output)

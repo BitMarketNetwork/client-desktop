@@ -15,7 +15,7 @@ from PySide2.QtCore import QObject
 from . import server_error
 from .. import loading_level
 from ..logger import Logger
-from ..network.server_parser import ServerCoinParser
+from ..network.server_parser import ServerCoinParser, ServerTxParser
 from ..wallet import address, coins, hd, key, mutable_tx
 from ..wallet.tx import Transaction, TxError
 
@@ -423,11 +423,11 @@ class UpdateAddressInfoCommand(AddressInfoCommand):
         type_ = table["type"]
         txCount = table["number_of_transactions"]
         balance = table["balance"]
-        if balance != self._address.balance or \
+        if balance != self._address.amount or \
                 txCount != self._address.txCount or \
                 type_ != self._address.type:
             self._address.type = type_
-            self._address.balance = balance
+            self._address.amount = balance
             self._address.txCount = txCount
             from ..application import CoreApplication
             CoreApplication.instance().databaseThread.save_address(self._address)

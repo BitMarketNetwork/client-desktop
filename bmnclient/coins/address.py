@@ -27,12 +27,12 @@ class AbstractAddress:
             self._coin.model_factory(self)
 
     @property
-    def coin(self) -> AbstractCoin:
-        return self._coin
-
-    @property
     def model(self) -> Optional[AddressModelInterface]:
         return self._model
+
+    @property
+    def coin(self) -> AbstractCoin:
+        return self._coin
 
     @classmethod
     def decode(

@@ -37,12 +37,12 @@ class SqLite:
                 rate_usd
         * wallets
             # we keep both offsets otherwise we loose old tansactions in case user breaks servert tx chain
-            - id , address, coin_id , label , message , created , type, balance , tx_count , \
+            - id , address, coin_id , label , message , created , type, amount , tx_count , \
                 first_offset, last_offset, \
                 key
         * transactions
             # status - detectable field
-            - id , name , wallet_id , height , time , amount , fee , coin_base
+            - id , name , wallet_id , height , time , amount , fee , coinbase
         * inputs (outputs also here )
             - id , address , tx_id , amount , type ( 0 - input , 1 - output ), output_type
     """
@@ -59,7 +59,7 @@ class SqLite:
         "created",
         "coin_id",
         "type",
-        "balance",
+        "amount",
         "tx_count",
         "offset",
         "unverified_offset",
@@ -78,7 +78,7 @@ class SqLite:
         "type",
         "output_type",
         "rate_usd",
-        "coin_base",
+        "coinbase",
     ]
     TABLE_NAMES = [
         "meta",
@@ -176,7 +176,7 @@ class SqLite:
             {self.message_column}     TEXT,
             {self.created_column}     {integer} NOT NULL,
             {self.type_column}      {integer} NOT NULL,
-            {self.balance_column}   {integer},
+            {self.amount_column}   {integer},
             {self.tx_count_column}  {integer},
             {self.first_offset_column}      TEXT,
             {self.last_offset_column}       TEXT,
@@ -192,7 +192,7 @@ class SqLite:
             {self.time_column}   {integer} NOT NULL,
             {self.amount_column} {integer} NOT NULL,
             {self.fee_column}    {integer} NOT NULL,
-            {self.coin_base_column}    {integer} NOT NULL,
+            {self.coinbase_column}    {integer} NOT NULL,
             FOREIGN KEY ({self.wallet_id_column}) REFERENCES {self.wallets_table} (id) ON DELETE CASCADE,
             UNIQUE({self.name_column}, {self.wallet_id_column})
             );

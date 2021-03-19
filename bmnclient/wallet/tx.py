@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-import datetime
 import logging
-from typing import Iterable, List, Optional
+from typing import TYPE_CHECKING
 
 import PySide2.QtCore as qt_core
 
 from . import db_entry
 from .address import CAddress
 from ..coins.tx import AbstractTx
+
+if TYPE_CHECKING:
+    from ..coins.address import AbstractAddress
 
 log = logging.getLogger(__name__)
 
