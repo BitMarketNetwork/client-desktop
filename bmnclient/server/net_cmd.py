@@ -17,7 +17,6 @@ from .. import loading_level
 from ..logger import Logger
 from ..network.server_parser import ServerCoinParser, ServerTxParser
 from ..wallet import address, coins, hd, key, mutable_tx
-from ..wallet.tx import Transaction, TxError
 
 log = logging.getLogger(__name__)
 
@@ -66,10 +65,7 @@ class BaseNetworkCommand(QObject):
 
     action = None
     _server_action = None
-    # high verbosity
     verbose = False
-    # low verbosity
-    silenced = False
     level = loading_level.LoadingLevel.NONE
     _high_priority = False
     _low_priority = False
@@ -168,7 +164,7 @@ class BaseNetworkCommand(QObject):
         timeframe = int(meta['timeframe'])
         assert timeframe > 0
         if timeframe > 1e9:
-            log.warn('Server answer has taken more than 1s !!!')
+            log.warning('Server answer has taken more than 1s !!!')
 
     def process_attr(self, table):
         pass
@@ -228,42 +224,12 @@ class JsonStreamMixin:
                 f"full answer(first {HEAD_LEN} symbols): {self._json.getvalue()[:HEAD_LEN]}")
             log.error(traceback.format_exc(limit=5, chain=True))
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self._json.__sizeof__()
 
 
-class ServerSysInfoCommand(JsonStreamMixin, BaseNetworkCommand):
-    """
-    To retrieve full server description
-    """
+class CheckServerVersionCommand(JsonStreamMixin, BaseNetworkCommand):
     action = 'sysinfo'
-    level = loading_level.LoadingLevel.NONE
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def get_status(self, value):
-        if value == 1:
-            return self.tr("Active")
-        return self.tr("Not working")
-
-    def process_attr(self, table):
-        self.output(self.tr("Server name"), table["name"])
-        self.output(self.tr("Server version"), table["version"][0])
-        self.output(self.tr("Coins:"))
-        for coin, data in table["coins"].items():
-            self.output(self.tr("Coin name"), coin)
-            self.output(self.tr("Daemon version"), data["version"][0])
-            self.output(self.tr("Height"), data["height"])
-            self.output(self.tr("Status"), self.get_status(data["status"]))
-
-
-class CheckServerVersionCommand(ServerSysInfoCommand):
-    """
-    To ensure the server version match client revision.
-
-    For now we just compare it with version from DB
-    """
     verbose = False
     level = loading_level.LoadingLevel.NONE
 
@@ -283,7 +249,6 @@ class CheckServerVersionCommand(ServerSysInfoCommand):
 class UpdateCoinsInfoCommand(JsonStreamMixin, BaseNetworkCommand):
     action = "coins"
     level = loading_level.LoadingLevel.NONE
-    silenced = True
     unique = True
 
     def __init__(self, poll: bool, parent=None):
@@ -315,16 +280,6 @@ class AddressInfoCommand(JsonStreamMixin, BaseNetworkCommand):
     def args(self):
         return [self._address.coin.name, self._address.name]
 
-    def process_attr(self, table):
-        self.output(self.tr("Coin type"), table["type"])
-        self.output(self.tr("Address"), table["address"])
-        self.output(self.tr("Transaction count"),
-                    table["number_of_transactions"])
-        self.output(self.tr("Balance"), table["balance"])
-
-    def __str__(self):
-        return f"{self.__class__.__name__}: {self._address.name}"
-
 
 class LookForHDAddresses(AddressInfoCommand):
     """
@@ -335,7 +290,6 @@ class LookForHDAddresses(AddressInfoCommand):
     level = loading_level.LoadingLevel.ADDRESSES
     verbose = False
     _low_priority = True
-    silenced = True
 
     def __init__(self, coin: coins.CoinType, parent, hd_index=0, empty_count: int = 0, segwit: bool = True, hd_: hd.HDNode = None):
         super().__init__(None, parent=parent)
@@ -377,7 +331,7 @@ class LookForHDAddresses(AddressInfoCommand):
         else:
             self._empty_count = 0
             # TODO: we can provide some information to new address
-            wallet = address.CAddress(self._address, self._coin)
+            wallet = address.CAddress(self._coin, name=self._address)
             wallet.create()
             self._coin.appendAddress(wallet)
             wallet.set_prv_key(self._hd)
@@ -405,7 +359,6 @@ class UpdateAddressInfoCommand(AddressInfoCommand):
     action = "coins"
     _server_action = "address"
     verbose = False
-    silenced = True
     level = loading_level.LoadingLevel.TRANSACTIONS
 
     def __init__(self, wallet: address.CAddress, parent = None, **kwargs):
@@ -570,56 +523,6 @@ class AddressHistoryCommand(AddressInfoCommand):
 
     def __str__(self):
         return f"<{super().__str__()}> [wallet={self._address} foff:{self.__first_offset}]"
-
-
-class AddressMempoolCommand(AddressInfoCommand):
-    verbose = False
-    _server_action = "unconfirmed"
-    MAX_TIMES = 6
-    WAIT_CHUNK = 100
-    WAIT_TIMEOUT = 3000
-    level = loading_level.LoadingLevel.ADDRESSES
-    _high_priority = True
-
-    def __init__(self, wallet: address.CAddress, parent, counter=0):
-        super().__init__(wallet, parent=parent)
-        self._counter = counter
-
-    @property
-    def args(self):
-        return [self._address.coin.name, self._address.name, self._server_action]
-
-    def process_attr(self, table):
-        # TODO: process hash
-
-        txs = table["tx_list"]
-        # if no TX here - then wait and check again
-        if not txs:
-            if self._counter > self.MAX_TIMES:
-                log.warning("mempool is empty !!!")
-                return
-            # sleep for a bit
-            to = self.WAIT_TIMEOUT
-            while to >= 0:
-                to -= self.WAIT_CHUNK
-                qt_core.QThread.currentThread().msleep(self.WAIT_CHUNK)
-                qt_core.QCoreApplication.processEvents()
-            return AddressMempoolCommand(self._address, self, counter=self._counter + 1)
-        self.__process_transactions(txs)
-
-    def __process_transactions(self, txs: dict):
-        for name, body in txs.items():
-            # tx = coins.Transaction(self._address) WRONG THREAD!
-            tx_ = Transaction(self._address)
-            tx_.parse(name, body)
-            try:
-                self._address.appendTx(tx_)
-                from ..ui.gui import Application
-                Application.instance().uiManager.process_incoming_tx(tx_)
-                Application.instance().databaseThread.saveTx.emit(tx_)
-            except TxError as txe:
-                if self.verbose:
-                    log.warn(f"{txe}")
 
 
 class AbstractMultyMempoolCommand(JsonStreamMixin, BaseNetworkCommand):

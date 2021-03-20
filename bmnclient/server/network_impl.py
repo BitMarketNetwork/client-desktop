@@ -124,8 +124,7 @@ class NetworkImpl(qt_core.QObject):
             self.push_cmd(cmd)
             return self.__run_next_cmd()
         else:
-            if not cmd.silenced:
-                log.debug(f"cmd to run: {cmd}")
+            log.debug(f"cmd to run: {cmd}")
             self.__cmd = cmd
             # when we statrt to get history then go out from starting mode
             self.__in_progress = True
@@ -207,9 +206,6 @@ class NetworkImpl(qt_core.QObject):
 
     def look_for_hd_addresses(self, coin: "CoinType"):
         self._run_cmd(net_cmd.LookForHDAddresses(coin, self))
-
-    def retreive_mempool(self, address: "CAddress"):
-        self._run_cmd(net_cmd.AddressMempoolCommand(address, self))
 
     def retreive_mempool_coin(self, coin: "CoinType"):
         self._run_cmd(net_cmd.AddressMultyMempoolCommand(coin.addressList, self))

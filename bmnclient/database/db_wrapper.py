@@ -63,7 +63,8 @@ class DbWrapper:
     def _add_coin(self, coin: coins.CoinType, read_addresses=False) -> None:
         table = coin.serialize()
         for (key, value) in table.items():
-            table[key] = self.__impl(value)
+            if not isinstance(table[key], list):
+                table[key] = self.__impl(value)
 
         try:
             query = f"""
@@ -118,7 +119,8 @@ class DbWrapper:
 
         table = coin.serialize()
         for (key, value) in table.items():
-            table[key] = self.__impl(value)
+            if not isinstance(table[key], list):
+                table[key] = self.__impl(value)
 
         try:
             query = f"""
@@ -266,7 +268,8 @@ class DbWrapper:
 
         table = wallet.serialize()
         for (key, value) in table.items():
-            table[key] = self.__impl(value)
+            if not isinstance(table[key], list):
+                table[key] = self.__impl(value)
 
         if wallet.rowId is None:
             query = f"""
@@ -361,7 +364,8 @@ class DbWrapper:
     def _write_transaction(self, tx: AbstractTx) -> None:
         table = tx.serialize()
         for (key, value) in table.items():
-            table[key] = self.__impl(value)
+            if not isinstance(table[key], list):
+                table[key] = self.__impl(value)
 
         try:
             query = f"""
@@ -406,7 +410,8 @@ class DbWrapper:
     def _write_input(self, tx: AbstractTx, inp, out) -> None:
         table = inp.serialize()
         for (key, value) in table.items():
-            table[key] = self.__impl(value)
+            if not isinstance(table[key], list):
+                table[key] = self.__impl(value)
 
         try:
             query = f"""
@@ -520,7 +525,7 @@ class DbWrapper:
 
     def _read_all_tx(
             self,
-            address_list: List[CAddress]) -> List[AbstractTx]:
+            address_list: List[CAddress]) -> None:
         if not address_list:
             return []
 
@@ -539,12 +544,11 @@ class DbWrapper:
         with closing(self.__exec(query)) as c:
             fetch = c.fetchall()
         if not fetch:
-            return []
+            return
 
         # prepare
         address_map = {address.rowId: address for address in address_list}
         add_cur = None
-        txs = []
         for values in fetch:
             if not add_cur or add_cur.rowId != values[0]:
                 add_cur = address_map.get(int(values[0]))
@@ -567,8 +571,6 @@ class DbWrapper:
             tx = AbstractTx.deserialize(add_cur, **value)
             tx.rowId = _rowid
             add_cur.appendTx(tx)
-            txs.append(tx)
-        return txs
 
     def _read_all_tx_io(self) -> Tuple[dict, dict]:
         query = f"""SELECT

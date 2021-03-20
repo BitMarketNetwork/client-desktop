@@ -31,9 +31,6 @@ class Network(network_impl.NetworkImpl):
 
         self._run_cmd(net_cmd.CheckServerVersionCommand(self))
 
-    def server_sysinfo(self):
-        self._run_cmd(net_cmd.ServerSysInfoCommand(self))
-
     def wallet_utxo_list(self, wallet):
         self._run_cmd(net_cmd.AddressUnspentCommand(wallet, parent=self))
 

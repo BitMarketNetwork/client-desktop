@@ -13,7 +13,6 @@ log = logging.getLogger(__name__)
 class Database(db_wrapper.DbWrapper, qt_core.QObject):
     def __init__(self, parent):
         self._parent = parent
-        from ..ui.gui import Application
         super().__init__()
         log.info(f"SQLITE version {sql.sqlite_version}")
         parent.applyPassword.connect(
@@ -72,15 +71,14 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
     def erase_wallet(self, wallet):
         self._erase_wallet(wallet)
 
-    # @qt_core.Slot()
-    def load_everything(self, coins=None):
-        if coins is None:
-            from ..application import CoreApplication
-            coins = CoreApplication.instance().coinList
+    def load_everything(self) -> None:
+        from ..application import CoreApplication
+        coins = CoreApplication.instance().coinList
+
         self._read_all_coins(coins)
         adds = self._read_all_addresses(coins)
         self._parent.db_level_loaded(loading_level.LoadingLevel.ADDRESSES)
-        txs = self._read_all_tx(adds)
+        self._read_all_tx(adds)
         self._parent.db_level_loaded(loading_level.LoadingLevel.TRANSACTIONS)
         self._parent.db_level_loaded(loading_level.LoadingLevel.INPUTS)
 
