@@ -23,13 +23,11 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
         self._parent.saveCoin.connect(
             self._update_coin, qt_core.Qt.QueuedConnection)
         self._parent.saveAddress.connect(
-            self._add_or_save_wallet, qt_core.Qt.QueuedConnection)
+            self._add_or_save_address, qt_core.Qt.QueuedConnection)
         self._parent.eraseWallet.connect(
             self.erase_wallet, qt_core.Qt.QueuedConnection)
         self._parent.saveTx.connect(
             self._write_transaction, qt_core.Qt.QueuedConnection)
-        self._parent.saveTxList.connect(
-            self._write_transactions, qt_core.Qt.QueuedConnection)
         self._parent.removeTxList.connect(
             self._remove_tx_list, qt_core.Qt.QueuedConnection)
         self._parent.clearAddressTx.connect(
@@ -56,7 +54,7 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
         for coin in CoreApplication.instance().coinList:
             self._add_coin(coin, False)
             for address in coin.addressList:
-                self._add_or_save_wallet(address)
+                self._add_or_save_address(address)
 
     @qt_core.Slot()
     def save_coins_settings(self):
@@ -68,7 +66,7 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
 
     @qt_core.Slot(address.CAddress)
     def save_address(self, wallet):
-        self._add_or_save_wallet(wallet, None)
+        self._add_or_save_address(wallet, None)
 
     @qt_core.Slot(address.CAddress)
     def erase_wallet(self, wallet):
@@ -84,11 +82,10 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
         self._parent.db_level_loaded(loading_level.LoadingLevel.ADDRESSES)
         txs = self._read_all_tx(adds)
         self._parent.db_level_loaded(loading_level.LoadingLevel.TRANSACTIONS)
-        inputs = self._read_all_inputs(txs)
         self._parent.db_level_loaded(loading_level.LoadingLevel.INPUTS)
 
     def timerEvent(self, event: qt_core.QTimerEvent):
         if event.timerId() == self._save_address_timer.timerId():
-            self._add_or_save_wallet_impl(self._save_address_timer.wallet)
+            self._add_or_save_address_impl(self._save_address_timer.wallet)
             self._save_address_timer.stop()
             self._save_address_timer.wallet = None

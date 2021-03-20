@@ -1,8 +1,8 @@
-import threading
 import PySide2.QtCore as qt_core
 from ..wallet.coins import CoinType
 from ..wallet.address import CAddress
-from ..wallet import mutable_tx, tx
+from ..wallet import mutable_tx
+from ..coins.tx import AbstractTx
 
 
 class ServerThread(qt_core.QThread):
@@ -14,7 +14,7 @@ class ServerThread(qt_core.QThread):
     undoTx = qt_core.Signal(CoinType, int)
     broadcastMtx = qt_core.Signal(mutable_tx.MutableTransaction, arguments=["mtx"])
     netError = qt_core.Signal(int, str, arguments=["code,error"])
-    updateTxStatus = qt_core.Signal(tx.Transaction)
+    updateTxStatus = qt_core.Signal(AbstractTx)
 
     def __init__(self):
         super().__init__()

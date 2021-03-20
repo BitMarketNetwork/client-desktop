@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, TYPE_CHECKING, Tuple
 
 from .address import AbstractAddress
 from ..utils.serialize import Serializable, serializable_property
+
+if TYPE_CHECKING:
+    from .coin import AbstractCoin
 
 
 class TxStatus(Enum):
@@ -17,14 +20,14 @@ class TxStatus(Enum):
 class AbstractTxIo(AbstractAddress):
     def __init__(
             self,
-            tx: AbstractTx,
+            coin: AbstractCoin,
             *,
             output_type: str,
             address_type: str,
             address_name: str,
             amount: int) -> None:
         super().__init__(
-            tx.address.coin,
+            coin,
             name=address_name,
             amount=amount)
 

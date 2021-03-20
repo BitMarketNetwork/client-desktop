@@ -5,16 +5,16 @@ import sqlite3 as sql
 import sys
 from contextlib import closing
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 import PySide2.QtCore as qt_core
 
 import bmnclient.config
 from . import sqlite_impl
+from ..coins.tx import AbstractTx
 from ..server import net_cmd
 from ..wallet import coins
 from ..wallet.address import CAddress
-from ..wallet.tx import Transaction
 
 log = logging.getLogger(__name__)
 
@@ -160,12 +160,12 @@ class DbWrapper:
             {self.first_offset_column},
             {self.last_offset_column},
             {self.key_column}
-        FROM {self.wallets_table} WHERE {self.coin_id_column} == ?;
+        FROM {self.addresses_table} WHERE {self.coin_id_column} == ?;
         """
         with closing(self.__exec(query, (coin.rowId,))) as c:
             fetch = c.fetchall()
         for values in fetch:
-            wallet = address.CAddress(values[0], c)
+            wallet = CAddress(values[0], c)
             wallet.create()
             wallet.from_args(iter(values[1:]))
             c.appendAddress(wallet)
@@ -174,7 +174,7 @@ class DbWrapper:
             ##
             # self.update_wallet.emit(wallet)
 
-    def _read_tx_list(self, wallet: address.CAddress) -> None:
+    def _read_tx_list(self, wallet: CAddress) -> None:
         query = f"""
             SELECT
                 id,
@@ -184,18 +184,18 @@ class DbWrapper:
                 {self.amount_column},
                 {self.fee_column},
                 {self.status_column}
-            FROM {self.transactions_table} WHERE {self.wallet_id_column} == ?;
+            FROM {self.transactions_table} WHERE {self.address_id_column} == ?;
         """
         with closing(self.__exec(query, (wallet.rowId,))) as c:
             fetch = c.fetchall()
         for values in fetch:
             qt_core.QCoreApplication.processEvents()
-            tx = Transaction(wallet)
+            tx = AbstractTx(wallet)
             tx.from_args(iter(values))
             self._read_input_list(tx)
             wallet.appendTx(tx)
 
-    def _read_input_list(self, tx: Transaction) -> None:
+    def _read_input_list(self, tx: AbstractTx) -> None:
         """
         and outputs too of course
         """
@@ -214,24 +214,15 @@ class DbWrapper:
             tx.make_input(iter(values))
         qt_core.QCoreApplication.processEvents()
 
-    def _read_tx_count(self, wallet: address.CAddress) -> None:
-        query = f"""
-        SELECT Count(*) FROM {self.transactions_table}
-        WHERE {self.wallet_id_column} == ?;
-        """
-        with closing(self._exec_(query, (wallet.rowId,))) as c:
-            fetch = c.fetchone()
-        return fetch[0]
-
-    def _clear_tx(self, address: address.CAddress) -> None:
+    def _clear_tx(self, address: CAddress) -> None:
         query = f"""
         DELETE FROM {self.transactions_table}
-        WHERE {self.wallet_id_column} == ?;
+        WHERE {self.address_id_column} == ?;
         """
         with closing(self.__exec(query, (address.rowId,))):
             pass
 
-    def _remove_tx(self, tx: Transaction) -> None:
+    def _remove_tx(self, tx: AbstractTx) -> None:
         if tx.rowId is None:
             query = f"""
             DELETE FROM {self.transactions_table}
@@ -247,7 +238,7 @@ class DbWrapper:
             with closing(self.__exec(query, (self.__impl(tx.rowId),))):
                 pass
 
-    def _remove_tx_list(self, tx_list: List[Transaction]) -> None:
+    def _remove_tx_list(self, tx_list: List[AbstractTx]) -> None:
         # TODO: optimize
         # may be row ids?
         # tx_hashes = f"({','.join(map(lambda t: self.__impl(t.name),tx_list))})"
@@ -261,20 +252,25 @@ class DbWrapper:
         for tx in tx_list:
             self._remove_tx(tx)
 
-    def _add_or_save_wallet(self, wallet: address.CAddress, timeout: int = None) -> None:
+    def _add_or_save_address(self, wallet: CAddress, timeout: int = None) -> None:
         if not timeout:
-            self._add_or_save_wallet_impl(wallet)
+            self._add_or_save_address_impl(wallet)
         else:
             if self._save_address_timer.wallet and self._save_address_timer.wallet is not wallet:
-                self._add_or_save_wallet_impl(self._save_address_timer.wallet)
+                self._add_or_save_address_impl(self._save_address_timer.wallet)
             self._save_address_timer.wallet = wallet
             self._save_address_timer.start(timeout, self)
 
-    def _add_or_save_wallet_impl(self, wallet: address.CAddress) -> None:
+    def _add_or_save_address_impl(self, wallet: CAddress) -> None:
         assert wallet.coin.rowId
+
+        table = wallet.serialize()
+        for (key, value) in table.items():
+            table[key] = self.__impl(value)
+
         if wallet.rowId is None:
             query = f"""
-            INSERT  INTO {self.wallets_table}
+            INSERT  INTO {self.addresses_table}
                 (
                     {self.address_column},
                     {self.coin_id_column},
@@ -295,12 +291,12 @@ class DbWrapper:
                 with closing(self.__exec(query, (
                     self.__impl(wallet.name),
                     wallet.coin.rowId,  # don't encrypt!
-                    self.__impl(wallet.label, True, "wallet label"),
-                    self.__impl(wallet.message, True, "wallet message"),
-                    self.__impl(wallet.created_db_repr),
+                    table["label"],
+                    table["comment"],
+                    self.__impl(0),
                     # they're  empty at first place but later not !
                     self.__impl(wallet.type),
-                    self.__impl(wallet.amount),
+                    table["amount"],
                     self.__impl(wallet.txCount),
                     self.__impl(wallet.first_offset),
                     self.__impl(wallet.last_offset),
@@ -311,7 +307,7 @@ class DbWrapper:
 
             except sql.IntegrityError as ie:
                 log.warning(f"Can't add wallet:'{wallet}' => '{ie}'")
-                # it can happen if user adds existing address
+                # it can happen if user address_list existing address
                 # sys.exit(1)
             """
             we don't put some fields in update scope cause we don't expect them being changed
@@ -320,7 +316,7 @@ class DbWrapper:
             if net_cmd.AddressHistoryCommand.verbose:
                 log.debug("saving wallet info %r" % wallet)
             query = f"""
-            UPDATE  {self.wallets_table} SET
+            UPDATE  {self.addresses_table} SET
                 {self.label_column} = ?,
                 {self.type_column} = ?,
                 {self.amount_column} = ?,
@@ -347,10 +343,10 @@ class DbWrapper:
             except sql.InterfaceError as ie:
                 log.error(f"DB integrity: {ie}  for {wallet}")
 
-    def _erase_wallet(self, wallet: address.CAddress) -> None:
+    def _erase_wallet(self, wallet: CAddress) -> None:
         assert wallet.rowId
         query = f"""
-            DELETE FROM {self.wallets_table}
+            DELETE FROM {self.addresses_table}
             WHERE id == ?
         """
         with closing(self.__exec(query, (wallet.rowId,))):
@@ -362,12 +358,16 @@ class DbWrapper:
         self.open_db()
         self._init_actions()
 
-    def _write_transaction(self, tx: Transaction) -> None:
+    def _write_transaction(self, tx: AbstractTx) -> None:
+        table = tx.serialize()
+        for (key, value) in table.items():
+            table[key] = self.__impl(value)
+
         try:
             query = f"""
             INSERT  INTO {self.transactions_table}
                 ({self.name_column},
-                {self.wallet_id_column},
+                {self.address_id_column},
                 {self.height_column},
                 {self.time_column},
                 {self.amount_column},
@@ -375,25 +375,23 @@ class DbWrapper:
                 {self.coinbase_column}
                 ) VALUES  {nmark(7)}
             """
-            assert tx.wallet.rowId is not None
-            with closing(self.__exec(query,
-                                     (
-                                         self.__impl(tx.name),
-                                         tx.wallet.rowId,
-                                         self.__impl(tx.height),
-                                         self.__impl(tx.time),
-                                         self.__impl(tx.amount),
-                                         self.__impl(tx.fee),
-                                         self.__impl(tx.coinbase),
-                                     ))) as c:
+            assert tx.address.rowId is not None
+            with closing(self.__exec(query, (
+                    table["name"],
+                    tx.address.rowId,
+                    table["height"],
+                    table["time"],
+                    table["amount"],
+                    table["fee"],
+                    table["coinbase"],
+            ))) as c:
                 tx.rowId = c.lastrowid
-            # make it in try block ( we don't need inputs withot tx )
-            # inputs
-            for inp in tx.inputs:
-                self._write_input(tx, inp, False)
-            for out in tx.outputs:
-                self._write_input(tx, out, True)
 
+            # TODO read from table
+            for item in tx.inputList:
+                self._write_input(tx, item, False)
+            for item in tx.outputList:
+                self._write_input(tx, item, True)
         except sql.IntegrityError as ie:
             # TODO: adjust query instead
             if str(ie).find('UNIQUE') < 0:
@@ -405,65 +403,28 @@ class DbWrapper:
         except AssertionError:
             sys.exit(1)
 
-    def _write_transactions(self, address, tx_list: list) -> None:
-        # log.warning(f"{address} {tx_list}")
-        assert address.rowId is not None
-        for tx in tx_list:
-            try:
-                query = f"""
-                INSERT  INTO {self.transactions_table}
-                    ({self.name_column},
-                    {self.wallet_id_column},
-                    {self.height_column},
-                    {self.time_column},
-                    {self.amount_column},
-                    {self.fee_column},
-                    {self.coinbase_column}
-                    ) VALUES  {nmark(7)}
-                """
-                with closing(self.__exec(query,
-                                         (
-                                             self.__impl(tx.name),
-                                             address.rowId,
-                                             self.__impl(tx.height),
-                                             self.__impl(tx.time),
-                                             self.__impl(tx.amount),
-                                             self.__impl(tx.fee),
-                                             self.__impl(tx.coinbase),
-                                         ))) as c:
-                    tx.rowId = c.lastrowid
-                # make it in try block ( we don't need inputs withot tx )
-                # inputs
-                for inp in tx.inputs:
-                    self._write_input(tx, inp, False)
-                for out in tx.outputs:
-                    self._write_input(tx, out, True)
+    def _write_input(self, tx: AbstractTx, inp, out) -> None:
+        table = inp.serialize()
+        for (key, value) in table.items():
+            table[key] = self.__impl(value)
 
-            except sql.IntegrityError as ie:
-                if str(ie).find('UNIQUE') < 0:
-                    log.fatal("TX exists: %s (%s)", tx, ie)
-                    sys.exit(1)
-                else:
-                    log.debug(f"Can't save TX:{ie}")
-                    pass
-            except AssertionError:
-                sys.exit(1)
-
-    def _write_input(self, tx: Transaction, inp, out) -> None:
         try:
             query = f"""
-            INSERT INTO {self.inputs_table}
-                ({self.address_column},{self.tx_id_column},{self.amount_column},{self.type_column},{self.output_type_column})
-                VALUES  {nmark(5)}
+            INSERT INTO {self.inputs_table} (
+                    {self.address_column},
+                    {self.tx_id_column},
+                    {self.amount_column},
+                    {self.type_column},
+                    {self.output_type_column})
+                VALUES {nmark(5)}
             """
-            with closing(self.__exec(query,
-                                     (
-                                         self.__impl(inp.name),
-                                         tx.rowId,
-                                         self.__impl(inp.amount),
-                                         self.__impl(out),
-                                         self.__impl(''),
-                                     ))):
+            with closing(self.__exec(query, (
+                table["name"],
+                tx.rowId,
+                table["amount"],
+                self.__impl(out),
+                self.__impl(''),  # TODO
+            ))):
                 pass
         except sql.IntegrityError as ie:
             log.error("Input exists: %s (%s)", inp, ie)
@@ -479,8 +440,7 @@ class DbWrapper:
                 {self.verified_height_column},
                 {self.offset_column},
                 {self.unverified_offset_column},
-                {self.unverified_hash_column},
-                {self.rate_usd_column}
+                {self.unverified_hash_column}
                 FROM {self.coins_table};
         """
         with closing(self.__exec(query)) as c:
@@ -497,8 +457,7 @@ class DbWrapper:
             vheight,
             offset,
             uoffset,
-            usig,
-            rate,
+            usig
         ) in fetch:
             coin: coins.CoinType = next(
                 (coin for coin in coins_ if coin.name == name), None)
@@ -513,9 +472,9 @@ class DbWrapper:
                 # let height will be the last
                 coin.height = height
             else:
-                log.warn(f"saved coin {name} isn't found ")
+                log.warning(f"saved coin {name} isn't found ")
 
-    def _read_all_addresses(self, coins: coins.CoinType) -> address.CAddress:
+    def _read_all_addresses(self, coins: coins.CoinType) -> CAddress:
         assert coins
         """
         we call this version on start
@@ -534,14 +493,14 @@ class DbWrapper:
             {self.first_offset_column},
             {self.last_offset_column},
             {self.key_column}
-        FROM {self.wallets_table}
+        FROM {self.addresses_table}
         """
         with closing(self.__exec(query,)) as c:
             fetch = c.fetchall()
         # prepare coins
         coin_map = {coin.rowId: coin for coin in coins}
         coin_cur = coins[0]
-        adds = []
+        address_list = []
         for values in fetch:
             # some sort of caching
             if coin_cur.rowId != values[0]:
@@ -550,24 +509,25 @@ class DbWrapper:
                     log.critical(
                         f"No coin with row id:{values[0]} in {coin_map.keys()}")
                     continue
-            addr = address.CAddress(values[1], coin_cur)
+            addr = CAddress(coin_cur, name=values[1])
             addr.create()
             addr.from_args(iter(values[2:]))
             coin_cur.appendAddress(addr)
-            adds.append(addr)
+            address_list.append(addr)
         for coin in coin_map.values():
             coin.refreshAmount()
-        return adds
+        return address_list
 
-    def _read_all_tx(self, adds: List[address.CAddress]) -> List[Transaction]:
-        """
-        we call this version on start
-        """
-        if not adds:
+    def _read_all_tx(
+            self,
+            address_list: List[CAddress]) -> List[AbstractTx]:
+        if not address_list:
             return []
-        query = f"""
-            SELECT
-                {self.wallet_id_column},
+
+        tx_input, tx_output = self._read_all_tx_io()
+
+        query = f"""SELECT
+                {self.address_id_column},
                 id,
                 {self.name_column},
                 {self.height_column},
@@ -575,35 +535,42 @@ class DbWrapper:
                 {self.amount_column},
                 {self.fee_column},
                 {self.coinbase_column}
-            FROM {self.transactions_table};
-        """
-        with closing(self.__exec(query, )) as c:
+            FROM {self.transactions_table}"""
+        with closing(self.__exec(query)) as c:
             fetch = c.fetchall()
         if not fetch:
             return []
+
         # prepare
-        add_map = {add.rowId: add for add in adds}
-        for add in adds:
-            add.__txs = []
+        address_map = {address.rowId: address for address in address_list}
         add_cur = None
         txs = []
         for values in fetch:
-            # some sort of caching
             if not add_cur or add_cur.rowId != values[0]:
-                add_cur = add_map.get(int(values[0]))
+                add_cur = address_map.get(int(values[0]))
                 if add_cur is None:
                     log.critical(f"No address with row id:{values[0]}")
                     break
-            tx = Transaction(add_cur)
-            tx.from_args(iter(values[1:]))
+            arg_iter = iter(values[1:])
+            _rowid = next(arg_iter)
+            value = {
+                "name": next(arg_iter),
+                "height": next(arg_iter),
+                "time": next(arg_iter),
+                "amount": next(arg_iter),
+                "fee": next(arg_iter),
+                "coinbase": next(arg_iter),
+                "input_list": tx_input.get(_rowid, []),
+                "output_list": tx_output.get(_rowid, [])
+            }
+
+            tx = AbstractTx.deserialize(add_cur, **value)
+            tx.rowId = _rowid
+            add_cur.appendTx(tx)
             txs.append(tx)
-            add_cur.__txs.append(tx)
-        for add in add_map.values():
-            for tx in add.__txs:
-                add.appendTx(tx)
         return txs
 
-    def _read_all_tx_io(self) -> dict:
+    def _read_all_tx_io(self) -> Tuple[dict, dict]:
         query = f"""SELECT
             {self.tx_id_column},
             {self.type_column},
@@ -614,21 +581,28 @@ class DbWrapper:
         with closing(self.__exec(query)) as c:
             fetch = c.fetchall()
         if not fetch:
-            return {}
+            return {}, {}
 
-        result = {}
+        result_input = {}
+        result_output = {}
         for values in fetch:
-            tx_row_id = values[0]
-            if tx_row_id not in result:
-                result[tx_row_id] = []
-            result[tx_row_id].append({
-                "type": values[1],  # TODO
+            value = {
                 "output_type": values[4],
                 "address_type": "",  # TODO
                 "address_name": values[2],
                 "amount": values[3]
-            })
-        return result
+            }
+            tx_row_id = values[0]
+            if values[1]:
+                if tx_row_id not in result_output:
+                    result_output[tx_row_id] = []
+                result_output[tx_row_id].append(value)
+            else:
+                if tx_row_id not in result_input:
+                    result_input[tx_row_id] = []
+                result_input[tx_row_id].append(value)
+
+        return result_input, result_output
 
     def __getattr__(self, attr: str) -> str:
         if attr.endswith("_column") or attr.endswith("_table"):
