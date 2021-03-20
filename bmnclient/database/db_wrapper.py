@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import sqlite3 as sql
 import sys
@@ -601,44 +603,32 @@ class DbWrapper:
                 add.appendTx(tx)
         return txs
 
-    def _read_all_inputs(self, txs):
-        """
-        we call this version on start
-        """
-        if not txs:
-            return []
-        # we don't need rowID here !!!
-        query = f"""
-            SELECT
-                {self.tx_id_column},
-                {self.type_column},
-                {self.address_column},
-                {self.amount_column},
-                {self.output_type_column}
-            FROM {self.inputs_table};
-        """
-        with closing(self.__exec(query, )) as c:
+    def _read_all_tx_io(self) -> dict:
+        query = f"""SELECT
+            {self.tx_id_column},
+            {self.type_column},
+            {self.address_column},
+            {self.amount_column},
+            {self.output_type_column}
+            FROM {self.inputs_table}"""
+        with closing(self.__exec(query)) as c:
             fetch = c.fetchall()
         if not fetch:
-            return []
-        # prepare
-        tx_map = {tx.rowId: tx for tx in txs}
-        for tx in txs:
-            tx.__ins = []
-        tx_cur = None
-        ins = []
+            return {}
+
+        result = {}
         for values in fetch:
-            # some sort of caching
-            if tx_cur is None or tx_cur.rowId != values[0]:
-                tx_cur = tx_map.get(int(values[0]))
-                if tx_cur is None:
-                    log.critical(f"No tx with row id:{values[0]}")
-                    break
-            ins.append(
-                tx_cur.make_input(iter(values[1:]))
-            )
-        qt_core.QCoreApplication.processEvents()
-        return ins
+            tx_row_id = values[0]
+            if tx_row_id not in result:
+                result[tx_row_id] = []
+            result[tx_row_id].append({
+                "type": values[1],  # TODO
+                "output_type": values[4],
+                "address_type": "",  # TODO
+                "address_name": values[2],
+                "amount": values[3]
+            })
+        return result
 
     def __getattr__(self, attr: str) -> str:
         if attr.endswith("_column") or attr.endswith("_table"):

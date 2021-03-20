@@ -22,9 +22,6 @@ class CoinType(qt_core.QObject):
     network: coin_network.CoinNetworkBase = None
     # testnet ID is the same for all coins
     TEST_HD_INDEX = 1
-    #
-    statusChanged = qt_core.Signal()
-    heightChanged = qt_core.Signal()
     visibleChanged = qt_core.Signal()
 
     @meta.classproperty
@@ -33,16 +30,7 @@ class CoinType(qt_core.QObject):
 
     def __init__(self):
         super().__init__()
-
         self._remote = {}  # TODO
-
-        self._set_object_name(self.name)
-        self.__offset = None
-        #
-        self.__verified_height = None
-        self.__unverified_offset = None
-        self.__unverified_hash = None
-
         self.__hd_node = None
         self.__visible = True
 
@@ -161,61 +149,9 @@ class CoinType(qt_core.QObject):
         self._address_list.clear()
         self.refreshAmount()  # TODO
 
-    @property
-    def offset(self) -> Optional[str]:
-        return self.__offset
-
-    @offset.setter
-    def offset(self, val):
-        self.__offset = val
-
-    @property
-    def unverified_offset(self) -> Optional[str]:
-        return self.__unverified_offset
-
-    @unverified_offset.setter
-    def unverified_offset(self, val):
-        self.__unverified_offset = val
-
-    @property
-    def unverified_signature(self) -> Optional[str]:
-        return self.__unverified_hash
-
-    @unverified_signature.setter
-    def unverified_signature(self, val):
-        self.__unverified_hash = val
-
-    @property
-    def verified_height(self) -> Optional[int]:
-        return self.__verified_height
-
-    @verified_height.setter
-    def verified_height(self, val):
-        self.__verified_height = val
-
-    @property
-    def active(self) -> bool:
-        return self.__status == 1
-
-    @property
-    def basename(self) -> str:
-        if self._test:
-            # TODO: use super instead
-            return self.fullName.partition(' ')[0].lower()
-        return self.fullName.lower()
-
-    # qml bindings
     @qt_core.Property(bool, notify=visibleChanged)
     def visible(self) -> bool:
         return self.__visible
-
-    @qt_core.Property(bool, constant=True)
-    def test(self) -> bool:
-        return self._test
-
-    @qt_core.Property("QVariantList", constant=True)
-    def wallets(self) -> List[address.CAddress]:
-        return self._address_list
 
     @visible.setter
     def _set_visible(self, ex: bool):

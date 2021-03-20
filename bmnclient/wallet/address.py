@@ -1,17 +1,17 @@
 from __future__ import annotations
+
 import logging
 from datetime import datetime
-from typing import List, Optional, Union, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING, Union
 
 import PySide2.QtCore as qt_core
 
-from . import db_entry, hd, key, mtx_impl
+from . import hd, key, mtx_impl
 from ..coins.address import AbstractAddress
 
 if TYPE_CHECKING:
-    from .tx import Transaction
-    from .coins import CoinType
     from ..coins.coin import AbstractCoin
+    from ..coins.tx import AbstractTx
 
 log = logging.getLogger(__name__)
 
@@ -33,25 +33,23 @@ class AddressError(Exception):
     pass
 
 
-class CAddress(db_entry.Serializable, AbstractAddress):
+class CAddress(AbstractAddress):
     balanceChanged = qt_core.Signal()
     labelChanged = qt_core.Signal()
     lastOffsetChanged = qt_core.Signal()
     useAsSourceChanged = qt_core.Signal()
     txCountChanged = qt_core.Signal()
 
-    def __init__(self, name: str, coin: AbstractCoin, *, created: bool = False):
-        assert name
+    def __init__(
+            self,
+            coin: AbstractCoin,
+            **kwargs):
+        if kwargs["name"] is None:
+            kwargs["name"] = "null"
         assert coin is not None
 
-        super().__init__()
-        AbstractAddress.__init__(self, b'', coin=coin)
+        super().__init__(coin, **kwargs)
 
-        self.__name = name
-        self.__label = ""
-        # user reminder
-        self.__message = None
-        # timestamp
         self.__created = None
         self.__first_offset = None
         self.__last_offset = None
@@ -66,7 +64,7 @@ class CAddress(db_entry.Serializable, AbstractAddress):
         # to stop network stuff
         self.__deleted = False
         #
-        self.__just_created = created
+        self.__just_created = kwargs.get("created", False)
         #
         self.__key = None
         # from server!!
@@ -151,21 +149,6 @@ class CAddress(db_entry.Serializable, AbstractAddress):
         self.unspents = [u for u in map(mapper, unspents) if u]
 
     def from_args(self, arg_iter: iter):
-        """
-            id,
-            {self.label_column},
-            {self.message_column},
-            #
-            {self.created_column},
-            {self.type_column},
-            {self.amount_column},
-            #
-            {self.tx_count_column},
-            {self.first_offset_column},
-            {self.last_offset_column}
-            #
-            key
-        """
         try:
             self._rowid = next(arg_iter)
             self.__label = next(arg_iter)
@@ -185,7 +168,7 @@ class CAddress(db_entry.Serializable, AbstractAddress):
             raise StopIteration(
                 f"Too few arguments for address {self}") from si
 
-    def is_receiver(self, tx: Transaction) -> bool:
+    def is_receiver(self, tx: AbstractTx) -> bool:
         return any(self.name == o.address for o in tx.output_iter)
 
     def _get_first_offset(self) -> int:
@@ -245,14 +228,8 @@ class CAddress(db_entry.Serializable, AbstractAddress):
         self.__tx_count = txc
         self.txCountChanged.emit()
 
-    def __str__(self) -> str:
-        return f"<{self._coin.name}:{self.__name} <{self.__label}> [T:{self.__type}] [key:{self.__key}]>"
-
     def __bool__(self) -> bool:
         return self is not None
-
-    def __repr__(self) -> str:
-        return f"""<{self._coin.name if self._coin is not None else 'none'}:{self.__name} <{self.__label}>[row:{self._rowid}; foff:{self.__first_offset};loff:{self.__last_offset}]{self._amount}>"""
 
     def __hash__(self):
         return hash(self.__name)
@@ -426,7 +403,7 @@ class CAddress(db_entry.Serializable, AbstractAddress):
     def __len__(self):
         return len(self._tx_list)
 
-    def __getitem__(self, val: int) -> Transaction:
+    def __getitem__(self, val: int) -> AbstractTx:
         return self._tx_list[val]
 
     first_offset = property(_get_first_offset, _set_first_offset)
