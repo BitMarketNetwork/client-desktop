@@ -27,13 +27,14 @@ class BitcoinAddress(AbstractAddress):
 
     def __init__(
             self,
-            type_: Type,
-            version, data,
+            coin: Bitcoin,
             *,
-            coin: Bitcoin) -> None:
-        super().__init__(data, coin=coin)
-        self._type = type_
-        self._version = version
+            address_type: Type,
+            address_version: int,
+            **kwargs) -> None:
+        super().__init__(coin, **kwargs)
+        self._type = address_type
+        self._version = address_version
 
     @property
     def type(self) -> Type:
@@ -46,73 +47,80 @@ class BitcoinAddress(AbstractAddress):
     @classmethod
     def decode(
             cls,
-            source: str,
-            *,
-            coin: Bitcoin) -> Optional[BitcoinAddress]:
-        if len(source) <= len(cls._HRP) + 1:
+            coin: Bitcoin,
+            **kwargs) -> Optional[BitcoinAddress]:
+        name = kwargs.get("name")
+        if not name or len(name) <= len(cls._HRP) + 1:
             return None
 
-        if source[0] in cls._PUBKEY_HASH_PREFIX_LIST:
-            return cls._decode(cls.Type.PUBKEY_HASH, source, coin)
-        if source[0] in cls._SCRIPT_HASH_PREFIX_LIST:
-            return cls._decode(cls.Type.SCRIPT_HASH, source, coin)
+        if name[0] in cls._PUBKEY_HASH_PREFIX_LIST:
+            return cls._decode(coin, cls.Type.PUBKEY_HASH, **kwargs)
+        if name[0] in cls._SCRIPT_HASH_PREFIX_LIST:
+            return cls._decode(coin, cls.Type.SCRIPT_HASH, **kwargs)
 
-        if source[len(cls._HRP)] != Bech32.SEPARATOR:
+        if name[len(cls._HRP)] != Bech32.SEPARATOR:
             return None
 
-        if len(source) == len(cls._HRP) + 1 + 39:
-            return cls._decode(cls.Type.WITNESS_V0_KEY_HASH, source, coin)
-        if len(source) == len(cls._HRP) + 1 + 59:
-            return cls._decode(cls.Type.WITNESS_V0_SCRIPT_HASH, source, coin)
+        if len(name) == len(cls._HRP) + 1 + 39:
+            return cls._decode(coin, cls.Type.WITNESS_V0_KEY_HASH, **kwargs)
+        if len(name) == len(cls._HRP) + 1 + 59:
+            return cls._decode(coin, cls.Type.WITNESS_V0_SCRIPT_HASH, **kwargs)
 
-        return cls._decode(cls.Type.WITNESS_UNKNOWN, source, coin)
+        return cls._decode(coin, cls.Type.WITNESS_UNKNOWN, **kwargs)
 
     @classmethod
     def _decode(
             cls,
-            type_: Type,
-            source: str,
-            coin: Bitcoin) -> Optional[BitcoinAddress]:
-        if not type_.value:
+            coin: Bitcoin,
+            address_type: Type,
+            **kwargs) -> Optional[BitcoinAddress]:
+        if not address_type.value:
             return None
+        name = kwargs["name"]
 
-        if type_ in (
+        if address_type in (
                 cls.Type.PUBKEY_HASH,
                 cls.Type.SCRIPT_HASH
         ):
-            data = Base58.decode(source, True)
-            if not data or data[0] != type_.value[0]:
+            data = Base58.decode(name, True)
+            if not data or data[0] != address_type.value[0]:
                 return None
-            version = type_.value[0]
+            address_version = address_type.value[0]
             data = data[1:]
-        elif type_ in (
+        elif address_type in (
                 cls.Type.WITNESS_V0_KEY_HASH,
                 cls.Type.WITNESS_V0_SCRIPT_HASH
         ):
-            hrp, version, data = Bech32.decode(source)
-            if hrp != cls._HRP or version != type_.value[0]:
+            name = name.lower()
+            hrp, address_version, data = Bech32.decode(name)
+            if hrp != cls._HRP or address_version != address_type.value[0]:
                 return None
-        elif type_ == cls.Type.WITNESS_UNKNOWN:
-            hrp, version, data = Bech32.decode(source)
+        elif address_type == cls.Type.WITNESS_UNKNOWN:
+            name = name.lower()
+            hrp, address_version, data = Bech32.decode(name)
             if hrp != cls._HRP:
                 return None
             for t in (
                     cls.Type.WITNESS_V0_KEY_HASH,
                     cls.Type.WITNESS_V0_SCRIPT_HASH
             ):
-                if version == t.value[0]:
+                if address_version == t.value[0]:
                     return None
         else:
             return None
 
-        if type_.value[1] > 0:
-            if type_.value[1] != len(data):
+        if address_type.value[1] > 0:
+            if address_type.value[1] != len(data):
                 return None
-        elif type_.value[1] < 0:
-            if len(data) <= 0 or len(data) > abs(type_.value[1]):
+        elif address_type.value[1] < 0:
+            if len(data) <= 0 or len(data) > abs(address_type.value[1]):
                 return None
 
-        return cls(type_, version, data, coin=coin)
+        kwargs["address_type"] = address_type
+        kwargs["address_version"] = address_version
+        kwargs["name"] = name
+        kwargs["data"] = data
+        return cls(coin, **kwargs)
 
 
 class Bitcoin(AbstractCoin):

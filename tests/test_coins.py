@@ -121,7 +121,7 @@ class TestCoins(unittest.TestCase):
             address_cls,
             address_list) -> None:
         for (address, type_, version, data) in address_list:
-            a = address_cls.decode(address, coin=coin)
+            a = address_cls.decode(coin, name=address)
             if type_ is None:
                 self.assertIsNone(a)
             else:

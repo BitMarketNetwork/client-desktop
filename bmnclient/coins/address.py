@@ -33,6 +33,7 @@ class AbstractAddress(Serializable):
             coin: AbstractCoin,
             *,
             name: str,
+            data: bytes = b"",
             amount: int = 0,
             label: str = "",
             comment: str = "") -> None:
@@ -40,7 +41,7 @@ class AbstractAddress(Serializable):
 
         self._coin = coin
         self._name = name
-        self._data = b""  # TODO
+        self._data = data
         self._amount = amount
         self._label = label
         self._comment = comment
@@ -64,9 +65,8 @@ class AbstractAddress(Serializable):
     @classmethod
     def decode(
             cls,
-            source: str,
-            *,
-            coin: AbstractCoin) -> Optional[AbstractAddress]:
+            coin: AbstractCoin,
+            **kwargs) -> Optional[AbstractAddress]:
         return None
 
     @property

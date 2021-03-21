@@ -222,8 +222,8 @@ class AbstractCoin(Serializable):
         if self._model:
             self._model.afterRefreshAmount()
 
-    def decodeAddress(self, source: str) -> Optional[_Address]:
-        return self._Address.decode(source, coin=self)
+    def decodeAddress(self, **kwargs) -> Optional[_Address]:
+        return self._Address.decode(self, **kwargs)
 
     @property
     def addressList(self) -> List[_Address]:

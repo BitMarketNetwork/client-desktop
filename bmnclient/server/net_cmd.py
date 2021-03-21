@@ -548,7 +548,7 @@ class AbstractMultyMempoolCommand(JsonStreamMixin, BaseNetworkCommand):
     @property
     def args_post(self) -> Tuple[str, dict]:
         table = {
-            "address_list": [addr.name for addr in self._wallet_list],
+            "address_list": [a.name for a in self._wallet_list],
         }
         if self._hash:
             table["last_hash"] = self._hash
@@ -556,9 +556,6 @@ class AbstractMultyMempoolCommand(JsonStreamMixin, BaseNetworkCommand):
 
 
 class AddressMultyMempoolCommand(AbstractMultyMempoolCommand):
-    """
-    command to monitor mempool for detecting new just made tx
-    """
     verbose = False
     MAX_TIMES = 5
     WAIT_CHUNK = 100
