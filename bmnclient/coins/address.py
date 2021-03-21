@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import List, Optional, TYPE_CHECKING
 
-from ..utils.serialize import Serializable, serializable_property
+from ..utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
     from .coin import AbstractCoin
@@ -58,7 +58,8 @@ class AbstractAddress(Serializable):
     def coin(self) -> AbstractCoin:
         return self._coin
 
-    @serializable_property
+    @serializable
+    @property
     def name(self) -> str:
         return self._name
 
@@ -73,7 +74,8 @@ class AbstractAddress(Serializable):
     def data(self) -> bytes:
         return self._data
 
-    @serializable_property
+    @serializable
+    @property
     def amount(self) -> int:
         return self._amount
 
@@ -84,7 +86,8 @@ class AbstractAddress(Serializable):
             if self._model:
                 self._model.afterSetAmount()
 
-    @serializable_property
+    @serializable
+    @property
     def label(self) -> str:
         return self._label
 
@@ -95,7 +98,8 @@ class AbstractAddress(Serializable):
             if self._model:
                 self._model.afterSetLabel()
 
-    @serializable_property
+    @serializable
+    @property
     def comment(self) -> str:
         return self._comment
 

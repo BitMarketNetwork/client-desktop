@@ -7,9 +7,10 @@ from .meta import classproperty
 from .string import toSnakeCase
 
 
-# noinspection PyPep8Naming
-class serializable_property(property):
-    pass
+def serializable(func) -> Any:
+    assert isinstance(func, property)
+    getattr(func, "fget").__serializable = True
+    return func
 
 
 class Serializable:
@@ -31,7 +32,12 @@ class Serializable:
         if cls.__map is None:
             cls.__map = {}
             for name in dir(cls):
-                if isinstance(getattr(cls, name), serializable_property):
+                v = getattr(cls, name)
+                if (
+                        isinstance(v, property) and
+                        hasattr(v.fget, "__serializable") and
+                        getattr(v.fget, "__serializable")
+                ):
                     cls.__map[toSnakeCase(name)] = name
         return cls.__map
 

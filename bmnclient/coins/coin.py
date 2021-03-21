@@ -11,7 +11,7 @@ from .currency import \
     NoneFiatCurrency
 from .tx import AbstractTx
 from ..utils.meta import classproperty
-from ..utils.serialize import Serializable, serializable_property
+from ..utils.serialize import Serializable, serializable
 
 
 class CoinModelInterface:
@@ -98,7 +98,8 @@ class AbstractCoin(Serializable):
     def address(cls) -> Type[_Address]:  # noqa
         return cls._Address
 
-    @serializable_property
+    @serializable
+    @property
     def shortName(cls) -> str:  # noqa
         return cls._SHORT_NAME
 
@@ -115,7 +116,8 @@ class AbstractCoin(Serializable):
         # relative to "resources/images"
         return "coins/" + cls._SHORT_NAME + ".svg"
 
-    @serializable_property
+    @serializable
+    @property
     def offset(self) -> str:
         return self._offset
 
@@ -126,7 +128,8 @@ class AbstractCoin(Serializable):
             self._offset = value
             self._updateState()
 
-    @serializable_property
+    @serializable
+    @property
     def unverifiedOffset(self) -> str:
         return self._unverified_offset
 
@@ -137,7 +140,8 @@ class AbstractCoin(Serializable):
             self._unverified_offset = value
             self._updateState()
 
-    @serializable_property
+    @serializable
+    @property
     def unverifiedHash(self) -> str:
         return self._unverified_hash
 
@@ -153,7 +157,8 @@ class AbstractCoin(Serializable):
             self._unverified_hash = value
             self._updateState()
 
-    @serializable_property
+    @serializable
+    @property
     def height(self) -> int:
         return self._height
 
@@ -165,7 +170,8 @@ class AbstractCoin(Serializable):
             if self._model:
                 self._model.afterSetHeight()
 
-    @serializable_property
+    @serializable
+    @property
     def verifiedHeight(self) -> int:
         return self._verified_height
 

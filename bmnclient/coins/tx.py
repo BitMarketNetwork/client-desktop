@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any, List, Optional, TYPE_CHECKING, Tuple
 
 from .address import AbstractAddress
-from ..utils.serialize import Serializable, serializable_property
+from ..utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
     from .coin import AbstractCoin
@@ -97,11 +97,13 @@ class AbstractTx(Serializable):
     def address(self) -> AbstractAddress:
         return self._address
 
-    @serializable_property
+    @serializable
+    @property
     def name(self) -> str:
         return self._name
 
-    @serializable_property
+    @serializable
+    @property
     def height(self) -> int:
         return self._height
 
@@ -128,7 +130,8 @@ class AbstractTx(Serializable):
             return TxStatus.CONFIRMED
         return TxStatus.COMPLETE
 
-    @serializable_property
+    @serializable
+    @property
     def time(self) -> int:
         return self._time
 
@@ -139,22 +142,27 @@ class AbstractTx(Serializable):
             if self._model:
                 self._model.afterSetTime()
 
-    @serializable_property
+    @serializable
+    @property
     def amount(self) -> int:
         return self._amount
 
-    @serializable_property
+    @serializable
+    @property
     def fee(self) -> int:
         return self._fee
 
-    @serializable_property
+    @serializable
+    @property
     def coinbase(self) -> bool:
         return self._coinbase
 
-    @serializable_property
+    @serializable
+    @property
     def inputList(self) -> List[TxIo]:
         return self._input_list
 
-    @serializable_property
+    @serializable
+    @property
     def outputList(self) -> List[TxIo]:
         return self._output_list
