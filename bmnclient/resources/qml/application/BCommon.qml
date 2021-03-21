@@ -81,9 +81,8 @@ QtObject {
     }
 
     readonly property variant txStatusMap: [
-        [ qsTr("Pending"),     Material.Pink       ],
-        [ qsTr("Unconfirmed"), Material.DeepOrange ],
-        [ qsTr("Confirmed"),   Material.Indigo     ],
-        [ qsTr("Complete") ,   Material.Green      ]
+        [ qsTr("Pending"),   Material.Pink   ],
+        [ qsTr("Confirmed"), Material.Yellow ],
+        [ qsTr("Complete") , Material.Green  ]
     ]
 }

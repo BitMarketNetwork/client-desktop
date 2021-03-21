@@ -45,7 +45,7 @@ class TxStateModel(AbstractTxStateModel):
 
     @QProperty(int, notify=__stateChanged)
     def status(self) -> int:
-        return self._tx.status
+        return self._tx.status.value
 
     @QProperty(str, notify=__stateChanged)
     def timeHuman(self) -> str:
