@@ -128,6 +128,15 @@ class AddressModel(AddressModelInterface, AbstractModel):
             self._application,
             self._tx_list_model)
 
+    def afterSetAmount(self) -> None:
+        self._amount_model.refresh()
+
+    def afterSetLabel(self) -> None:
+        self._state_model.refresh()
+
+    def afterSetComment(self) -> None:
+        self._state_model.refresh()
+
     def beforeAppendTx(self, tx: AbstractTx) -> None:
         self._tx_list_model.lock(self._tx_list_model.lockInsertRows())
 

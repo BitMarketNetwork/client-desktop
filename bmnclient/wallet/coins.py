@@ -166,7 +166,7 @@ class Bitcoin(CoinType, coin_bitcoin.Bitcoin):
     network = coin_network.BitcoinMainNetwork
     _hd_index = 0
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__()
         coin_bitcoin.Bitcoin.__init__(self, **kwargs)
 
@@ -176,12 +176,11 @@ class BitcoinTest(Bitcoin, coin_bitcoin.BitcoinTest):
     network = coin_network.BitcoinTestNetwork
 
 
-
 class Litecoin(CoinType, coin_litecoin.Litecoin):
     name = "ltc"
     network = coin_network.LitecoinMainNetwork
     _hd_index = 2
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__()
         coin_litecoin.Litecoin.__init__(self, **kwargs)

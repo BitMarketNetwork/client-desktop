@@ -44,15 +44,18 @@ class SystemTrayIcon(QObject):
         self._tray_icon.setContextMenu(self._menu)
 
     def _fillMenu(self) -> None:
+        # noinspection PyTypeChecker
         self._show_action = self._menu.addAction(
             self.tr("Show"),
             self.showMainWindow.emit)
+        # noinspection PyTypeChecker
         self._hide_action = self._menu.addAction(
             self.tr("Hide"),
             self.hideMainWindow.emit)
 
         self._menu.addSeparator()
 
+        # noinspection PyTypeChecker
         self._menu.addAction(
             self.tr("Quit"),
             self.exit.emit)
@@ -90,5 +93,6 @@ class SystemTrayIcon(QObject):
         self._tray_icon.showMessage(
             QCoreApplication.instance().applicationName(),  # TODO
             message,
-            icon_map[icon],
+            # TODO this icon replace tray icon icon_map[icon],
+            QSystemTrayIcon.MessageIcon.NoIcon,
             timeout)

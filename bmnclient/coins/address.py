@@ -40,7 +40,7 @@ class AbstractAddress(Serializable):
         super().__init__()
 
         self._coin = coin
-        self._name = name
+        self._name = name.strip()
         self._data = data
         self._amount = amount
         self._label = label
@@ -111,19 +111,22 @@ class AbstractAddress(Serializable):
                 self._model.afterSetComment()
 
     @property
+    def readOnly(self) -> bool:
+        return True  # TODO
+
+    @property
     def txList(self) -> List[AbstractTx]:
         return self._tx_list
 
-    def findTxByName(self, name: str) -> Optional[AbstractTx]:
-        name = name.strip().casefold()  # TODO tmp, old wrapper
-        for tx in self._tx_list:
-            if name == tx.name.casefold():
-                return tx
-        return None
-
     def appendTx(self, tx: AbstractTx) -> bool:
-        # TODO tmp, old wrapper
-        if self.findTxByName(tx.name) is not None:  # noqa
+        for etx in self._tx_list:
+            if tx.name != etx.name:
+                continue
+            if etx.height == -1:
+                etx.height = tx.height
+                etx.time = tx.time
+                # TODO compare/replace input/output list
+                return True
             return False
 
         if self._model:
@@ -131,5 +134,4 @@ class AbstractAddress(Serializable):
         self._tx_list.append(tx)
         if self._model:
             self._model.afterAppendTx(tx)
-
         return True
