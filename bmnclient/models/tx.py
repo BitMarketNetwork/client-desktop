@@ -140,17 +140,11 @@ class TxModel(TxModelInterface, AbstractModel):
     def outputList(self) -> TxIoListModel:
         return self._output_list_model
 
-    def beforeAppendInput(self, tx_input: AbstractTxIo) -> None:
-        self._input_list_model.lock(self._input_list_model.lockInsertRows())
+    def afterSetHeight(self) -> None:
+        self._state_model.refresh()
 
-    def afterAppendInput(self, tx_input: AbstractTxIo) -> None:
-        self._input_list_model.unlock()
-
-    def beforeAppendOutput(self, tx_output: AbstractTxIo) -> None:
-        self._output_list_model.lock(self._output_list_model.lockInsertRows())
-
-    def afterAppendOutput(self, tx_output: AbstractTxIo) -> None:
-        self._output_list_model.unlock()
+    def afterSetTime(self) -> None:
+        self._state_model.refresh()
 
 
 class TxIoListModel(AddressListModel):

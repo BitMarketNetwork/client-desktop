@@ -59,7 +59,7 @@ class AbstractTx(Serializable):
         super().__init__()
 
         self._address = address
-        self._name = name
+        self._name = name.strip().lower()
 
         self._height = height
         self._time = time
@@ -135,7 +135,6 @@ class AbstractTx(Serializable):
     @time.setter
     def time(self, value: int) -> None:
         if self._time != value:
-            assert self._time == -1
             self._time = value
             if self._model:
                 self._model.afterSetTime()
