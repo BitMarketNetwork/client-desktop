@@ -1,17 +1,13 @@
 # JOK++
 from __future__ import annotations
 
-from typing import Any, List, Optional, TYPE_CHECKING, Type
-
-from ..logger import Logger
-from ..utils.meta import classproperty
+from enum import Flag, auto
+from typing import Any, List, Optional, Type
 
 from ..coins.address import AbstractAddress
 from ..coins.coin import AbstractCoin
 from ..coins.tx import AbstractTx
-
-if TYPE_CHECKING:
-    import logging
+from ..logger import Logger
 
 
 class ParseError(LookupError):
@@ -19,37 +15,42 @@ class ParseError(LookupError):
 
 
 class AbstractServerParser:
-    __logger = None
+    class ParseFlag(Flag):
+        NONE = auto()
 
-    @classproperty
-    def _logger(cls) -> logging.Logger:  # noqa
-        if not cls.__logger:
-            cls.__logger = Logger.getClassLogger(__name__, cls)  # noqa
-        return cls.__logger
+    def __init__(self, flags=ParseFlag.NONE) -> None:
+        self._logger = Logger.getClassLogger(__name__, self.__class__)
+        self._flags = flags
 
     @classmethod
-    def _parse(cls, item: dict, key_name: str, value_type: Type) -> Any:
+    def _parse(
+            cls,
+            item: dict,
+            key_name: str,
+            value_type: Type,
+            default_value: Any = None) -> Any:
         try:
             value = value_type(item[key_name])
         except KeyError:
-            raise ParseError("Key \"{}\" not found.".format(key_name))
+            if default_value is None:
+                raise ParseError("Key \"{}\" not found.".format(key_name))
+            value = default_value
         except (TypeError, ValueError):
             raise ParseError("Invalid value for key \"{}\".".format(key_name))
         return value
 
 
 class ServerCoinParser(AbstractServerParser):
-    @classmethod
-    def parse(cls, response: dict, coin: AbstractCoin) -> bool:
+    def parse(self, response: dict, coin: AbstractCoin) -> bool:
         try:
-            offset = cls._parse(response, "offset", str)
-            unverified_offset = cls._parse(response, "unverified_offset", str)
-            unverified_hash = cls._parse(response, "unverified_hash", str)
-            height = cls._parse(response, "height", int)
-            verified_height = cls._parse(response, "verified_height", int)
-            status = cls._parse(response, "status", int)
+            offset = self._parse(response, "offset", str)
+            unverified_offset = self._parse(response, "unverified_offset", str)
+            unverified_hash = self._parse(response, "unverified_hash", str)
+            height = self._parse(response, "height", int)
+            verified_height = self._parse(response, "verified_height", int)
+            status = self._parse(response, "status", int)
         except ParseError as e:
-            cls._logger.error(
+            self._logger.error(
                 "Failed to parse coin \"{}\": {}"
                 .format(coin.fullName, str(e)))
             return False
@@ -65,44 +66,53 @@ class ServerCoinParser(AbstractServerParser):
 
 
 class ServerTxParser(AbstractServerParser):
-    @classmethod
+    class ParseFlag(Flag):
+        NONE = auto()
+        MEMPOOL = auto()
+
+    def __init__(self, flags=ParseFlag.NONE) -> None:
+        super().__init__(flags=flags)
+
     def parseList(
-            cls,
+            self,
             response: dict,
             address: AbstractAddress) -> Optional[List[AbstractTx]]:
         if not isinstance(response, dict):
-            cls._logger.error(
+            self._logger.error(
                 "Invalid transaction list response for address \"{}\"."
                 .format(address.name))
             return None
 
         result = []
         for (name, value) in response.items():
-            tx = cls.parse(name, value, address)
+            tx = self.parse(name, value, address)
             if tx is None:
                 return None
             result.append(tx)
         return result
 
-    @classmethod
     def parse(
-            cls,
+            self,
             name: str,
             response: dict,
             address: AbstractAddress) -> Optional[AbstractTx]:
         try:
             data = {
                 "name": name,  # TODO validate name
-                "height": cls._parse(response, "height", int),
-                "time": cls._parse(response, "time", int),
-                "amount": cls._parse(response, "amount", int),
-                "fee": cls._parse(response, "fee", int),
-                "coinbase": cls._parse(response, "coinbase", int) != 0,
-                "input_list": [cls._parseIo(v) for v in response["input"]],
-                "output_list": [cls._parseIo(v) for v in response["output"]]
+                "height": self._parse(
+                    response,
+                    "height",
+                    int,
+                    -1 if self._flags & self.ParseFlag.MEMPOOL else None),
+                "time": self._parse(response, "time", int),
+                "amount": self._parse(response, "amount", int),
+                "fee": self._parse(response, "fee", int),
+                "coinbase": self._parse(response, "coinbase", int) != 0,
+                "input_list": [self._parseIo(v) for v in response["input"]],
+                "output_list": [self._parseIo(v) for v in response["output"]]
             }
         except ParseError as e:
-            cls._logger.error(
+            self._logger.error(
                 "Failed to parse transaction for address \"{}\": {}"
                 .format(address.name, str(e)))
             return None

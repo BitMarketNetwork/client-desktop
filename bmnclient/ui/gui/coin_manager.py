@@ -95,7 +95,7 @@ class CoinManager(QObject):
     @qt_core.Slot(str, str, result=bool)
     def isValidAddress(self, coin_short_name: str, address_name: str) -> bool:
         coin = self._application.findCoin(coin_short_name)
-        if coin is None or coin.address.decode(address_name) is None:
+        if coin is None or coin.decodeAddress(name=address_name) is None:
             return False
         return True
 

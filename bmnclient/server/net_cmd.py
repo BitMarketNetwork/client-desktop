@@ -260,7 +260,7 @@ class UpdateCoinsInfoCommand(JsonStreamMixin, BaseNetworkCommand):
         for coin in CoreApplication.instance().coinList:
             response = table.get(coin.shortName)
             state_hash = coin.stateHash
-            if response and ServerCoinParser.parse(response, coin):
+            if response and ServerCoinParser().parse(response, coin):
                 if coin.stateHash != state_hash:
                     CoreApplication.instance().databaseThread.saveCoin.emit(coin)
                     for a in coin.addressList:
@@ -585,7 +585,6 @@ class AddressMultyMempoolCommand(AbstractMultyMempoolCommand):
             self.__process_transaction(name, body)
 
     def __process_transaction(self, name: str, body: dict) -> None:
-        # remember!! address not in tx -> in inputs && outputs!!
         for inp in body["input"] + body["output"]:
             w = self._coin[inp["address"]]
             if w is not None:
