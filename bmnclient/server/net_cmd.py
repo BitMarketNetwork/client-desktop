@@ -139,7 +139,8 @@ class BaseNetworkCommand(QObject):
 
     def process_answer(self, data) -> BaseNetworkCommand:
         if not data:
-            raise server_error.EmptyReplyError()
+            # raise server_error.EmptyReplyError()
+            return
         if not isinstance(data, dict):
             try:
                 body = json.loads(data)
@@ -265,6 +266,7 @@ class UpdateCoinsInfoCommand(JsonStreamMixin, BaseNetworkCommand):
                     CoreApplication.instance().databaseThread.saveCoin.emit(coin)
                     for a in coin.addressList:
                         self.parent()._run_cmd(UpdateAddressInfoCommand(a, self.parent()))
+                        self.parent()._run_cmd(AddressHistoryCommand(a, parent=self.parent(), high_priority=True))
 
 
 class AddressInfoCommand(JsonStreamMixin, BaseNetworkCommand):
@@ -381,7 +383,7 @@ class UpdateAddressInfoCommand(AddressInfoCommand):
                 type_ != self._address.type:
             self._address.type = type_
             self._address.amount = balance
-            self._address.txCount = txCount
+            #self._address.txCount = txCount
             from ..application import CoreApplication
             CoreApplication.instance().databaseThread.save_address(self._address)
             diff = txCount - self._address.realTxCount
@@ -502,20 +504,19 @@ class AddressHistoryCommand(AddressInfoCommand):
         return get
 
     def __process_transactions(self, txs: dict):
-        tx_list = [Transaction(self._address).parse(*a) for a in txs.items()]
-        # strict order !!
+        tx_list = ServerTxParser().parseList(txs, self._address)
+        if tx_list:
+            from ..application import CoreApplication
+            db = CoreApplication.instance().databaseThread.database
+            for tx in tx_list:
+                db._write_transaction(tx)
 
         # raw count
         self.__tx_count += len(tx_list)
         for tx in tx_list:
-            if self._address.appendTx(tx) and self.__forth and self.__first_offset == 'best':
+            if self.__forth and self.__first_offset == 'best':
                 from ..ui.gui import Application
                 Application.instance().uiManager.process_incoming_tx(tx)
-
-        # lsit updated !!
-        if tx_list:
-            from ..application import CoreApplication
-            CoreApplication.instance().databaseThread.save_tx_list(self._address, tx_list)
 
     @property
     def skip(self) -> bool:
@@ -588,31 +589,23 @@ class AddressMultyMempoolCommand(AbstractMultyMempoolCommand):
         for inp in body["input"] + body["output"]:
             w = self._coin[inp["address"]]
             if w is not None:
-                tx_ = Transaction(w)
-                tx_.parse(name, body)
-                tx_.height = w.coin.height + 1
-                try:
-                    w.appendTx(tx_)
+                tx = ServerTxParser(ServerTxParser.ParseFlag.MEMPOOL).parse(
+                    name,
+                    body,
+                    w)
+                if tx:
                     from ..ui.gui import Application
-                    Application.instance().uiManager.process_incoming_tx(tx_)
-                except TxError as txe:
-                    # everythig's good !!!
-                    from ..application import CoreApplication
-                    CoreApplication.instance().databaseThread.saveTx.emit(tx_)
-                    CoreApplication.instance().networkThread.updateTxStatus.emit(tx_)
-                    if self.verbose:
-                        log.warn(f"{txe}")
-                return True
+                    Application.instance().uiManager.process_incoming_tx(tx)
 
     def __send_again(self):
         if self.verbose:
             log.debug(f"sleep and check mempool again; {self.__counter}")
         if self.__counter <= self.MAX_TIMES:
-            to = self.WAIT_TIMEOUT
-            while to >= 0:
-                to -= self.WAIT_CHUNK
-                qt_core.QThread.currentThread().msleep(self.WAIT_CHUNK)
-                qt_core.QCoreApplication.processEvents()
+            #to = self.WAIT_TIMEOUT
+            #while to >= 0:
+            #    to -= self.WAIT_CHUNK
+            #    qt_core.QThread.currentThread().msleep(self.WAIT_CHUNK)
+            #    qt_core.QCoreApplication.processEvents()
 
             cmd = AddressMultyMempoolCommand(
                 self._wallet_list,
@@ -657,15 +650,13 @@ class MempoolMonitorCommand(AbstractMultyMempoolCommand):
         for inp in body["input"] + body["output"]:
             w = self._coin[inp["address"]]
             if w is not None:
-                tx_ = Transaction(w)
-                tx_.parse(name, body)
-                try:
-                    w.appendTx(tx_)
+                tx = ServerTxParser(ServerTxParser.ParseFlag.MEMPOOL).parse(
+                    name,
+                    body,
+                    w)
+                if tx:
                     from ..ui.gui import Application
-                    Application.instance().uiManager.process_incoming_tx(tx_)
-                except TxError as txe:
-                    if self.verbose:
-                        log.warning(f"{txe}")
+                    Application.instance().uiManager.process_incoming_tx(tx)
 
 
 class AddressUnspentCommand(AddressInfoCommand):
@@ -770,7 +761,9 @@ class BroadcastTxCommand(JsonStreamMixin, BaseNetworkCommand):
 class ExtHostCommand(JsonStreamMixin, BaseNetworkCommand):
     def process_answer(self, data):
         if not data:
-            raise server_error.EmptyReplyError()
+            #raise server_error.EmptyReplyError()
+            return
+
         if not isinstance(data, dict):
             try:
                 body = json.loads(data)

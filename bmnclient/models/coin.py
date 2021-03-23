@@ -78,6 +78,8 @@ class CoinAmountModel(AmountModel):
         super().refresh()
         for address in self._coin.addressList:
             address.model.amount.refresh()
+        # TODO tmp
+        self._coin.model.txController.model.amount.refresh()
 
     def _getValue(self) -> Optional[int]:
         return self._coin.amount
@@ -162,6 +164,18 @@ class CoinModel(CoinModelInterface, AbstractModel):
     def txController(self) -> TxController:
         return self._tx_controller
 
+    def afterSetHeight(self) -> None:
+        self._state_model.refresh()
+
+    def afterSetStatus(self) -> None:
+        pass
+
+    def afterSetFiatRate(self) -> None:
+        self._amount_model.refresh()
+
+    def afterRefreshAmount(self) -> None:
+        self._amount_model.refresh()
+
     def beforeAppendAddress(self, address: AbstractAddress) -> None:
         self._address_list_model.lock(self._address_list_model.lockInsertRows())
 
@@ -171,11 +185,9 @@ class CoinModel(CoinModelInterface, AbstractModel):
         self._tx_list_model.addSourceModel(address.model.txList)
         self._application.networkThread.update_wallet(address)  # TODO
 
-    def afterRefreshAmount(self) -> None:
-        self._amount_model.refresh()
-
-    def afterSetFiatRate(self) -> None:
-        self._amount_model.refresh()
+        # TODO tmp
+        self._application.networkThread.unspent_list(address)
+        self._tx_controller.recalcSources()
 
 
 class CoinListModel(AbstractListModel):

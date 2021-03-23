@@ -36,7 +36,6 @@ class AddressError(Exception):
 class CAddress(AbstractAddress):
     balanceChanged = qt_core.Signal()
     labelChanged = qt_core.Signal()
-    lastOffsetChanged = qt_core.Signal()
     useAsSourceChanged = qt_core.Signal()
     txCountChanged = qt_core.Signal()
 
@@ -64,8 +63,6 @@ class CAddress(AbstractAddress):
         # to stop network stuff
         self.__deleted = False
         #
-        self.__just_created = kwargs.get("created", False)
-        #
         self.__key = None
         # from server!!
         self.__tx_count = 0
@@ -85,10 +82,9 @@ class CAddress(AbstractAddress):
     @classmethod
     def make_from_hd(cls, hd__key: hd.HDNode, coin, type_: key.AddressType,
                      witver=0) -> "CAddress":
-        res = cls(hd__key.to_address(type_, witver), coin, created=True)
+        res = cls(coin, name=hd__key.to_address(type_, witver))
         res.create()
         res.__key = hd__key
-        res._state_model.refresh()
         res.type = type_
         return res
 
@@ -150,9 +146,9 @@ class CAddress(AbstractAddress):
 
     def from_args(self, arg_iter: iter):
         try:
-            self._rowid = next(arg_iter)
-            self.__label = next(arg_iter)
-            self.__message = next(arg_iter)
+            self.rowId = next(arg_iter)
+            self.label = next(arg_iter)
+            self.comment = next(arg_iter)
             #
             self.__created = datetime.fromtimestamp(next(arg_iter))
             self.__type = next(arg_iter)
@@ -189,8 +185,10 @@ class CAddress(AbstractAddress):
             if to_remove:
                 from ..application import CoreApplication
                 CoreApplication.instance().databaseThread.removeTxList.emit(to_remove)
-                with self._tx_list_model.lockRemoveRows(0, len(to_remove)):
-                    self._tx_list.remove(0, len(to_remove))
+                with self.model.txList.lockRemoveRows(0, len(to_remove)):
+                    # TODO
+                    #self._tx_list.remove(0, len(to_remove))
+                    pass
                 self.txCount -= len(to_remove)
                 if verbose:
                     log.debug(
@@ -207,7 +205,6 @@ class CAddress(AbstractAddress):
         if isinstance(bh, str):
             if not self.__last_offset or offset_less(bh, self.__last_offset):
                 self.__last_offset = bh
-                self.lastOffsetChanged.emit()
                 return
         else:
             raise TypeError(type(bh))
@@ -217,7 +214,7 @@ class CAddress(AbstractAddress):
     def realTxCount(self) -> int:
         return len(self._tx_list)
 
-    @qt_core.Property(int, notify=txCountChanged)
+    @property
     def txCount(self) -> int:
         return self.__tx_count + self.__local__tx_count
 
@@ -232,12 +229,12 @@ class CAddress(AbstractAddress):
         return self is not None
 
     def __hash__(self):
-        return hash(self.__name)
+        return hash(self._name)
 
     def __eq__(self, other: "CAddress") -> bool:
         if other is None or not isinstance(other, CAddress):
             return False
-        return self.__name == other.name and \
+        return self._name == other.name and \
             self.__type == other.type and \
             self.__last_offset == other.last_offset and \
             self.__first_offset == other.first_offset and \
@@ -281,25 +278,25 @@ class CAddress(AbstractAddress):
                 self.__key = key.PrivateKey.from_wif(txt)
             # log.debug(f"new key created for {self} => {self.__key}")
             adrr = self.__key.to_address(self.__type)
-            if self.__name != adrr:
+            if self._name != adrr:
                 log.critical(f"ex key: {txt} type: {self.__type}")
                 raise AddressError(
-                    f"HD generation failed: wrong result address: {adrr} != {self.__name} for {self}")
+                    f"HD generation failed: wrong result address: {adrr} != {self._name} for {self}")
 
     # qml bindings
-    @qt_core.Property(bool)
+    @property
     def isUpdating(self) -> bool:
         self.__deleted = False
         return self.__updating_history
 
     @isUpdating.setter
-    def _set_updating(self, val: bool) -> None:
+    def isUpdating(self, val: bool) -> None:
         if val:
             self.__going_to_update = True
         if val == self.__updating_history:
             return
         self.__updating_history = bool(val)
-        self._state_model.refresh()
+        ##self._state_model.refresh()
 
     @property
     def is_going_update(self) -> bool:
@@ -309,73 +306,27 @@ class CAddress(AbstractAddress):
     def is_going_update(self, val: bool) -> None:
         self.__going_to_update = val
 
-    @qt_core.Property(bool, notify=useAsSourceChanged)
+    @property
     def useAsSource(self) -> bool:
         return self.__use_as_source
 
-    @qt_core.Property(str, constant=True)
-    def name(self) -> str:
-        return self.__name
-
-    @qt_core.Property(str, constant=True)
+    @property
     def public_key(self) -> str:
         if self.private_key:
             return self.private_key.public__key.to_hex
 
-    @qt_core.Property(str, constant=True)
+    @property
     def to_wif(self) -> str:
         if self.private_key:
             return self.private_key.to_wif
 
     @property
-    def empty_balance(self) -> bool:
-        return not self.__just_created and self._amount == 0
-
-    def set_old(self):
-        self.__just_created = False
-
-    @qt_core.Property(bool, notify=balanceChanged)
     def canSend(self) -> bool:
         return not self.readOnly and self._amount > 0
-
-    @balance.setter
-    def _set_balance(self, bl: str):
-        if bl == self._amount:
-            return
-        self._amount = bl
-        self.balanceChanged.emit()
-        self._amount_model.refresh()
-        if self._coin is not None:
-            self._coin.refreshAmount()
-
-    @qt_core.Property(str, notify=labelChanged)
-    def label(self) -> str:
-        return self.__label or ""
-
-    @label.setter
-    def _set_label(self, lbl: str):
-        if lbl == self.__label:
-            return
-        self.__label = lbl
-        self.labelChanged.emit()
-
-    @qt_core.Property(str, constant=True)
-    def message(self) -> str:
-        return self.__message
-
-    @qt_core.Property(str, constant=True)
-    def created_str(self) -> str:
-        return self.__created.strftime("%x %X")
 
     @property
     def created(self) -> datetime:
         return self.__created
-
-    @property
-    def created_db_repr(self) -> int:
-        if self.__created:
-            return int(self.__created.timestamp())
-        return 0
 
     @useAsSource.setter
     def _set_use_as_source(self, on: bool):
@@ -387,15 +338,14 @@ class CAddress(AbstractAddress):
 
     # @qt_core.Property('QVariantList', constant=True)
     @property
-    def tx_list(self) -> List[db_entry.Serializable]:
+    def tx_list(self) -> List:
         return list(self._tx_list)
 
-    @qt_core.Property(bool, constant=True)
+    @property
     def readOnly(self) -> bool:
         return self.__key is None or \
             isinstance(self.__key, key.PublicKey)
 
-    @qt_core.Slot()
     def save(self):
         from ..application import CoreApplication
         CoreApplication.instance().databaseThread.save_address(self)

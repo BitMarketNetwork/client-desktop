@@ -60,19 +60,18 @@ class CoinType(qt_core.QObject):
         assert wallet.hd_index == hd_index
         wallet.label = label
         wallet._message = message
-        # log.debug(
-        #     f"New wallet {wallet}  created from HD: {new_hd.chain_path} net:{self.network}")
+        self.appendAddress(wallet)
         from ..application import CoreApplication
         CoreApplication.instance().databaseThread.save_address(wallet)
-        self.addAddress.emit(wallet)
         return wallet
 
     def add_watch_address(self, name: str, label: str = "") -> address.CAddress:
-        # self(name)
-        adr = address.CAddress(name, self, created=True)
+        adr = address.CAddress(
+            self,
+            name=name,
+            label=label)
         adr.create()
-        adr.label = label
-        self.addAddress.emit(adr)
+        self.appendAddress(adr)
         from ..application import CoreApplication
         CoreApplication.instance().databaseThread.save_address(adr)
         return adr
@@ -96,7 +95,7 @@ class CoinType(qt_core.QObject):
 
     def empty(self, skip_zero: bool) -> bool:
         if skip_zero:
-            return next((w for w in self._address_list if not w.empty_balance), None) is None
+            return next((w for w in self._address_list if self._amount != 0), None) is None
         return not self
 
     def __iter__(self) -> "CoinType":

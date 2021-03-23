@@ -30,12 +30,6 @@ class ContentError(BaseNetError):
         super().__init__(f"Content error: {msg}")
 
 
-class EmptyReplyError(BaseNetError):
-
-    def __init__(self):
-        super().__init__("Empty reply")
-
-
 class ServerError(BaseNetError):
 
     def __init__(self, message):

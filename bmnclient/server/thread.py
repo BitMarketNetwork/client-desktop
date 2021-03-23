@@ -14,7 +14,6 @@ class ServerThread(qt_core.QThread):
     undoTx = qt_core.Signal(CoinType, int)
     broadcastMtx = qt_core.Signal(mutable_tx.MutableTransaction, arguments=["mtx"])
     netError = qt_core.Signal(int, str, arguments=["code,error"])
-    updateTxStatus = qt_core.Signal(AbstractTx)
 
     def __init__(self):
         super().__init__()

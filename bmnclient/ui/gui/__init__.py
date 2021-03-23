@@ -61,11 +61,6 @@ class Application(CoreApplication):
 
         self._initializeQml()
 
-        # TODO kill
-        self.networkThread.updateTxStatus.connect(
-                self._coin_manager.update_tx,
-                Qt.QueuedConnection)
-
     def _initializeQml(self) -> None:
         QQuickStyle.setStyle(QML_STYLE)
         log.debug("QML Base URL: %s", bmnclient.resources.QML_URL)

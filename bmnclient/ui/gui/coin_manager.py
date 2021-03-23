@@ -47,32 +47,9 @@ class CoinManager(QObject):
             return
         assert idx < len(self._application.coinList)
         self.__current_coin_idx = idx
-        self.update_tx_model()
         self.addressIndexChanged.emit()
-        self.update_tx_model()
         # self.addressIndexChanged.emit()
         self.coinIndexChanged.emit()
-
-    @QProperty(str, constant=True)
-    def currency(self) -> str:
-        return "USD"  # TODO
-
-    @QProperty(qt_core.QObject, constant=True)
-    def txModel(self) -> qt_core.QObject:
-        return self.__tx_model
-
-    def update_tx_model(self):
-        self.__tx_model.address = self.address
-
-    @qt_core.Slot()
-    def getCoinUnspentList(self):
-        if self.coin:
-            # TODO: we shouldn't get unspents from read only addresses
-            for addr in self.coin.addressList:  # pylint: disable=not-an-iterable
-                if not addr.readOnly and addr.balance > 0:
-                    self._application.networkThread.unspent_list(addr)
-        else:
-            log.warn("No current coin")
 
     @qt_core.Slot()
     def getAddressUnspentList(self):
@@ -112,29 +89,6 @@ class CoinManager(QObject):
             log.error(f"No coin selected {coin_index}!")
 
     @qt_core.Slot(int)
-    def clearTransactions(self, address_index: int):
-        log.debug(f"clearing tx list of adress: {address_index}")
-        if self.coin is None or address_index < 0:
-            log.critical(
-                f"invalid coin idecies: coin:{self.__current_coin_idx} address:{address_index}")
-            return
-        addrss = self.coin(address_index)
-        self.__tx_model.clear(addrss)
-        self._application.databaseThread.clear_transactions(addrss)
-        self.__tx_model.clear_complete(addrss)
-
-    @qt_core.Slot(int)
-    def removeAddress(self, address_index: int):
-        if self.coin is None or address_index < 0:
-            log.critical(
-                f"invalid coin idecies: coin:{self.__current_coin_idx} address:{address_index}")
-            return
-        log.debug(f"removing adress: {address_index}")
-        self._application.databaseThread.delete_wallet(
-            self.coin[address_index])  # pylint: disable=unsubscriptable-object
-        self.__tx_model.clear(self.coin[address_index])
-
-    @qt_core.Slot(int)
     def exportTransactions(self, address_index: int):
         if self.coin is None or address_index < 0:
             log.critical(
@@ -154,29 +108,3 @@ class CoinManager(QObject):
             return
         self._application.networkThread.updateAddress.emit(
             self.coin[address_index])  # pylint: disable=unsubscriptable-object
-
-    def update_tx(self, tx_: 'tx.Transaction') -> None:
-        if self.address == tx_.wallet:
-            # TODO: !!! use tx
-            self.__tx_model.update_confirm_count(3)
-
-    def render_cell(self, coin):
-        for c in self._application.coinList:
-            if c is coin:
-                self.renderCell.emit(c)
-                return
-
-    @qt_core.Slot(int)
-    def increaseBalance(self, address_idx: int) -> int:
-        add = self.coin(address_idx)
-        add.balance += 1000000
-
-    @qt_core.Slot(int)
-    def reduceBalance(self, address_idx: int) -> int:
-        add = self.coin(address_idx)
-        add.balance *= 0.5
-
-    @qt_core.Slot(int)
-    def clearBalance(self, address_idx: int) -> int:
-        add = self.coin(address_idx)
-        add.balance = 0
