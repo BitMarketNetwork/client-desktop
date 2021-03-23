@@ -25,7 +25,7 @@ from ..coins.tx import TxModelInterface
 
 if TYPE_CHECKING:
     from ..ui.gui import Application
-    from ..coins.tx import AbstractTx, AbstractTxIo
+    from ..coins.tx import AbstractTx
 
 
 class AbstractTxStateModel(AbstractStateModel):
@@ -46,6 +46,10 @@ class TxStateModel(AbstractTxStateModel):
     @QProperty(int, notify=__stateChanged)
     def status(self) -> int:
         return self._tx.status.value
+
+    @QProperty(int, notify=__stateChanged)
+    def time(self) -> int:
+        return self._tx.time
 
     @QProperty(str, notify=__stateChanged)
     def timeHuman(self) -> str:
@@ -153,7 +157,8 @@ class TxIoListModel(AddressListModel):
 
 class TxListModel(AbstractListModel):
     class Role(RoleEnum):
-        HASH: Final = auto()
+        INSTANCE: Final = auto()
+        NAME: Final = auto()
         AMOUNT: Final = auto()
         FEE_AMOUNT: Final = auto()
         STATE: Final = auto()
@@ -161,8 +166,11 @@ class TxListModel(AbstractListModel):
         OUTPUT_LIST: Final = auto()
 
     ROLE_MAP: Final = {
-        Role.HASH: (
-            b"hash",
+        Role.INSTANCE: (
+            b"_instance",
+            lambda t: t),
+        Role.NAME: (
+            b"name",
             lambda t: t.model.name),
         Role.AMOUNT: (
             b"amount",
@@ -185,6 +193,42 @@ class TxListModel(AbstractListModel):
 class TxListConcatenateModel(AbstractConcatenateModel):
     ROLE_MAP: Final = TxListModel.ROLE_MAP
 
+    def __init__(self, application: Application) -> None:
+        super().__init__(application)
+        self._unique_map = {}
+        self.rowsInserted.connect(self._onRowsInserted)
+        self.rowsRemoved.connect(self._onRowsRemoved)
+
+    def isVisibleRow(self, row_index: int, parent: QModelIndex) -> bool:
+        index = self.index(row_index, 0, parent)
+        value = self.data(index, TxListModel.Role.INSTANCE)
+        return self._unique_map.get(value) == row_index
+
+    def _onRowsInserted(
+            self,
+            parent: QModelIndex,
+            first_index: int,
+            last_index: int) -> None:
+        for i in range(first_index, last_index + 1):
+            index = self.index(i, 0, parent)
+            value = self.data(index, TxListModel.Role.INSTANCE)
+            self._unique_map.setdefault(value, i)
+
+    def _onRowsRemoved(
+            self,
+            parent: QModelIndex,
+            first_index: int,
+            last_index: int) -> None:
+        for i in range(first_index, last_index + 1):
+            index = self.index(i, 0, parent)
+            value = self.data(index, TxListModel.Role.INSTANCE)
+            if self._unique_map.get(value) == i:
+                self._unique_map = {}
+                row_count = self.rowCount()
+                if row_count > 0:
+                    self._onRowsInserted(parent, 0, row_count - 1)
+                break
+
 
 class TxListSortedModel(AbstractListSortedModel):
     def __init__(
@@ -194,4 +238,43 @@ class TxListSortedModel(AbstractListSortedModel):
         super().__init__(
             application,
             source_model,
-            TxListModel.Role.HASH)
+            TxListModel.Role.NAME,
+            Qt.DescendingOrder)
+
+    def filterAcceptsRow(
+            self,
+            source_row: int,
+            source_parent: QModelIndex) -> bool:
+        source_model = self.sourceModel()
+        if isinstance(source_model, TxListConcatenateModel):
+            return source_model.isVisibleRow(source_row, source_parent)
+        return True
+
+    def lessThan(
+            self,
+            source_left: QModelIndex,
+            source_right: QModelIndex) -> bool:
+        source_model = self.sourceModel()
+
+        a = source_model.data(source_left, TxListModel.Role.STATE)
+        b = source_model.data(source_right, TxListModel.Role.STATE)
+
+        if a.height == -1 and b.height != -1:
+            return False
+        if a.height != -1 and b.height == -1:
+            return True
+        if a.height < b.height:
+            return True
+        if a.height > b.height:
+            return False
+
+        # TODO sort by server order
+
+        if a.time < b.time:
+            return True
+        if a.time > b.time:
+            return False
+
+        a = source_model.data(source_left, TxListModel.Role.NAME)
+        b = source_model.data(source_right, TxListModel.Role.NAME)
+        return a < b

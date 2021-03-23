@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from enum import Flag, auto
-from typing import Any, List, Optional, Type
+from typing import Any, Final, List, Optional, Type
 
 from ..coins.address import AbstractAddress
 from ..coins.coin import AbstractCoin
@@ -16,7 +16,7 @@ class ParseError(LookupError):
 
 class AbstractServerParser:
     class ParseFlag(Flag):
-        NONE = auto()
+        NONE: Final = auto()
 
     def __init__(self, flags=ParseFlag.NONE) -> None:
         self._logger = Logger.getClassLogger(__name__, self.__class__)
@@ -67,8 +67,8 @@ class ServerCoinParser(AbstractServerParser):
 
 class ServerTxParser(AbstractServerParser):
     class ParseFlag(Flag):
-        NONE = auto()
-        MEMPOOL = auto()
+        NONE: Final = auto()
+        MEMPOOL: Final = auto()
 
     def __init__(self, flags=ParseFlag.NONE) -> None:
         super().__init__(flags=flags)

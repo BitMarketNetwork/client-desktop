@@ -45,7 +45,7 @@ class AbstractAddress(Serializable):
         self._amount = amount
         self._label = label
         self._comment = comment
-        self._tx_list = []  # TODO enable enable deserialize
+        self._tx_list = []  # TODO enable deserialize
 
         self._model: Optional[AddressModelInterface] = \
             self._coin.model_factory(self)

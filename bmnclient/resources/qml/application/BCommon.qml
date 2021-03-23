@@ -65,7 +65,7 @@ QtObject {
     }
 
     readonly property QtObject txItemTemplate: QtObject {
-        readonly property string hash: "0000000000000000000000000000000000000000000000000000000000000000"
+        readonly property string name: "0000000000000000000000000000000000000000000000000000000000000000"
         readonly property QtObject amount: _base.amountTemplate
         readonly property QtObject feeAmount: _base.amountTemplate
         readonly property QtObject state: QtObject {

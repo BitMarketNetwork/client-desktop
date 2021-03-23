@@ -10,7 +10,7 @@ BItemDelegate {
     property BMenu contextMenu
     property real smallFontPointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
 
-    text: tx.hash
+    text: tx.name
 
     contentItem: BColumnLayout {
         BRowLayout {
@@ -113,7 +113,7 @@ BItemDelegate {
     }
 
     onDoubleClicked: {
-        BBackend.uiManager.copyToClipboard(tx.hash)
+        BBackend.uiManager.copyToClipboard(tx.name)
     }
 
     // TODO right click
