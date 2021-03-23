@@ -1,17 +1,18 @@
 from __future__ import annotations
-import logging
-from typing import TYPE_CHECKING, Union, List, Type
-from datetime import datetime
-from PySide2.QtCore import \
-    QObject, \
-    Signal as QSignal, \
-    Slot as QSlot, \
-    Property as QProperty, \
-    QTimer
 
-from ...ui.gui.system_tray import SystemTrayIcon, MessageIcon
+import logging
+from datetime import datetime
+from typing import TYPE_CHECKING, Type
+
+from PySide2.QtCore import \
+    Property as QProperty, \
+    QObject, QTimer, \
+    Signal as QSignal, \
+    Slot as QSlot
+
 from . import dialogs
 from ...models.tx import TxModel
+from ...ui.gui.system_tray import MessageIcon, SystemTrayIcon
 
 if TYPE_CHECKING:
     from . import Application
@@ -73,10 +74,7 @@ class UIManager(QObject):
         getattr(dialog, signal)()
 
     def process_incoming_tx(self, tx: AbstractTx) -> None:
-        if (
-                tx.time == self._launch_time.timestamp() or
-                tx.name in self.__notified_tx_list
-        ):
+        if tx.name in self.__notified_tx_list:
             return
         self.__notified_tx_list.append(tx.name)
 

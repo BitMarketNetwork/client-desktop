@@ -1,12 +1,10 @@
-
-import logging
-import itertools
-import functools
 import collections
-from typing import Optional, List, Tuple, DefaultDict
+import functools
+import itertools
+import logging
+from typing import DefaultDict, List, Optional, Tuple
 
-
-from . import coin_network, key, mtx_impl
+from . import key, mtx_impl
 from .coins import CoinType
 
 log = logging.getLogger(__name__)
@@ -22,31 +20,23 @@ class NewTxerror(Exception):
     pass
 
 
-class WrongReceiver(NewTxerror):
-    pass
-
-
 class MutableTransaction:
     MAX_SPB_FEE = 200
     MIN_SPB_FEE = 1
     MAX_TX_SIZE = 1024
 
-    def __init__(self, address: 'address.CAddress', fee_man: "feeManager", parent=None):
-        log.debug(f"New MTX:{address}")
-        assert address is not None
+    def __init__(self, coin: CoinType, fee_man: "feeManager", parent=None):
         # we need to emit bx result
+        self._coin = coin
         self.__parent = parent
         # it s serialized MTX!!!s
         self.__raw__mtx = None
         self.__mtx = None
-        self.__address = address
         self.__receiver = ""
         self.__amount = None
         self.new_address_for_change = True
         self.__leftover_address = None
         self.__substract_fee = False
-        # dummy pending result handmade tx .. keep it for debug
-        self.__tx = None
 
         # ALL source address ( may be filtered by user )
         self.__selected_sources: List['address.CAdress'] = []
@@ -59,7 +49,6 @@ class MutableTransaction:
         self._spb = self.__fee_man.max_spb
         # setter !
         self.__amount = 0
-        self.use_coin_balance = address.is_root
         self.recalc_sources()
         self.set_max()
 
@@ -67,17 +56,14 @@ class MutableTransaction:
         if auto:
             for add in self.__sources:
                 add.useAsSource = True
-        if self.__use_coin_balance:
-            self.__sources = [
-                add for add in self.__address.coin if add.balance > 0]
-        else:
-            self.__sources = [self.__address]
+        self.__sources = [add for add in self._coin.addressList if add.amount > 0]
+
         log.warning(f"{self.__sources }")
-        # addr for addr in self.__address.coin.wallets if not addr.readOnly]
+        # addr for addr in self.__address.coin.addressList if not addr.readOnly]
         self.__selected_sources: List['address.CAddress'] = self.__sources if auto else [
             add for add in self.__sources if add.useAsSource]
         self.__source_amount = sum(
-            add.balance for add in self.__selected_sources)
+            add.amount for add in self.__selected_sources)
         self.filter_sources()
         log.debug(
             f"source addresses:{len(self.__selected_sources)} ({self.__source_amount}) selected inputs {len(self.__filtered_inputs)} ({self.__filtered_amount}). Change is {self.change}")
@@ -189,11 +175,9 @@ class MutableTransaction:
         # process leftover
         if self.change > 0:
             if self.new_address_for_change:
-                self.__leftover_address = self.__address.coin.make_address()
-            elif self.__address.is_root:
-                self.__leftover_address = self.__address()
+                self.__leftover_address = self._coin.make_address()
             else:
-                self.__leftover_address = self.__address
+                self.__leftover_address = self._coin.make_address()
 
             outputs.append(
                 (self.__leftover_address.name, self.change)
@@ -210,7 +194,7 @@ class MutableTransaction:
         )
         log.debug(f"TX fee: {self.__mtx.fee}")
         if self.__mtx.fee != self.fee:
-            self.cancel()
+            #self.cancel()
             log.error(
                 f"Fee failure. Should be {self.fee} but has {self.__mtx.fee}")
             raise NewTxerror("Critical error. Fee mismatch")
@@ -220,53 +204,18 @@ class MutableTransaction:
         self.__raw__mtx = self.__mtx.to_hex()
         log.info(f"final TX to send: {self.__mtx}")
 
-    def cancel(self):
-        if self.__leftover_address:
-            self.__leftover_address.coin.remove_wallet(self.__leftover_address)
-            self.__leftover_address = None
-
     def send(self):
         from ..application import CoreApplication
         CoreApplication.instance().networkThread.broadcastMtx.emit(self)
 
     def send_callback(self, ok: bool, error: Optional[str] = None):
-        # not GUI thread !!!
         log.debug(f"send result:{ok} error:{error}")
         if ok:
-            if self.__parent:
-                self.__parent.sent.emit()
-            """
-            # add locally and check mempool
-            - tx to each sender
-            - tx to receiver
-            - tx to the change address
-            # remember about duplicates
-            """
-            address_set = set(inp.address for inp in self.__filtered_inputs)
-            if not self.__address.is_root:
-                address_set.add(self.__address)
-            receiver = self.__address.coin[self.__receiver]
-            if receiver is not None:
-                address_set.add(receiver)
-            if self.__leftover_address is not None:
-                address_set.add(self.__leftover_address)
-
-            #
-            tx_ = self.__mtx.to_tx()
-            tx_.height = None
-            for w in address_set:
-                w.appendTx(tx_)
             from ..application import CoreApplication
-            CoreApplication.instance().networkThread.mempoolCoin.emit(self.__address.coin)
-            # to debug
-            self.__tx = tx_
+            CoreApplication.instance().networkThread.mempoolCoin.emit(self._coin)
         else:
             if self.__parent:
                 self.__parent.fail.emit(str(error))
-
-    @property
-    def ui_tx(self):
-        return self.__tx
 
     @ property
     def tx_size(self):
@@ -295,10 +244,10 @@ class MutableTransaction:
 
     @ property
     def receiver_valid(self) -> bool:
-        return self.coin.address.decode(self.__receiver) is not None
+        return self.coin.decodeAddress(name=self.__receiver) is not None
 
     def setReceiverAddressName(self, name: str):
-        if self.coin.address.decode(name) is None:
+        if self.coin.decodeAddress(name=name) is None:
             self.__receiver = ""
             return False
         self.__receiver = name
@@ -313,27 +262,16 @@ class MutableTransaction:
         return self.__filtered_amount
 
     @ property
-    def use_coin_balance(self) -> bool:
-        return self.__use_coin_balance
-
-    @ use_coin_balance.setter
-    def use_coin_balance(self, value: bool) -> None:
-        self.__use_coin_balance = value
-        self.recalc_sources()
-
-    @ property
-    def address(self) -> "CAddress":
-        return self.__address
-
-    @ property
     def leftover_address(self):
         if self.__leftover_address:
             return self.__leftover_address.name
         return ""
 
-    def set_max(self):
-        self.amount = max(self.__source_amount -
-                          (0 if self.__substract_fee else self.fee), 0)
+    def get_max_amount(self) -> int:
+        return max(self.__source_amount - (0 if self.__substract_fee else self.fee), 0)
+
+    def set_max(self) -> None:
+        self.amount = self.get_max_amount()
 
     @ property
     def amount(self):
@@ -351,8 +289,8 @@ class MutableTransaction:
         # res = int(self.__filtered_amount - self.__amount - (0 if self.__substract_fee else self.fee))
         # log.info(f"source:{self.__filtered_amount} am:{self.__amount} \
         #     fee:{self.fee} substract: {self.subtract_fee}: change:{res}")
-        return int(self.__filtered_amount - self.__amount -
-                   (0 if self.__substract_fee else self.fee))
+
+        return int(self.__filtered_amount - self.__amount - (0 if self.__substract_fee else self.fee))
 
     @ property
     def tx_id(self):
@@ -381,7 +319,7 @@ class MutableTransaction:
 
     @ property
     def coin(self):
-        return self.__address.coin
+        return self._coin
 
     @ property
     def subtract_fee(self) -> bool:
@@ -401,8 +339,6 @@ class MutableTransaction:
 
     @ spb.setter
     def spb(self, value):
-        if value == -1:
-            value = self.__fee_man.max_spb
         log.debug(f"SPB: {value}")
         self._spb = value
         self.filter_sources()

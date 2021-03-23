@@ -717,6 +717,7 @@ class AddressUnspentCommand(AddressInfoCommand):
             log.debug(
                 f"UNSPENT COUNT: {len(self._unspent)} from {self._calls} calls")
         self._address.process_unspents(self._unspent)
+        self._address.coin.model._tx_controller.recalcSources()  # TODO
 
 
 class BroadcastTxCommand(JsonStreamMixin, BaseNetworkCommand):

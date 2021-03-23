@@ -184,10 +184,7 @@ class CoinModel(CoinModelInterface, AbstractModel):
         # noinspection PyUnresolvedReferences
         self._tx_list_model.addSourceModel(address.model.txList)
         self._application.networkThread.update_wallet(address)  # TODO
-
-        # TODO tmp
-        self._application.networkThread.unspent_list(address)
-        self._tx_controller.recalcSources()
+        self._application.networkThread.unspent_list(address)  # TODO
 
 
 class CoinListModel(AbstractListModel):

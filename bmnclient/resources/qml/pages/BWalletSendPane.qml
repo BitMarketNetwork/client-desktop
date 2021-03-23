@@ -107,7 +107,8 @@ BPane {
             amount: _base.coin.txController.changeAmount
         }
 
-        BDialogPromtLabel {
+        // TODO temporary disabled
+        /*BDialogPromtLabel {
             text: qsTr("Send change to new address:")
         }
         BDialogInputSwitch {
@@ -127,7 +128,7 @@ BPane {
             onClicked: {
                 _inputListDialog.open()
             }
-        }
+        }*/
 
         BDialogInputButtonBox {
             BButton {
