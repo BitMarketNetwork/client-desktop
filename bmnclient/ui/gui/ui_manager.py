@@ -11,9 +11,11 @@ from PySide2.QtCore import \
 
 from ...ui.gui.system_tray import SystemTrayIcon, MessageIcon
 from . import dialogs
+from ...models.tx import TxModel
 
 if TYPE_CHECKING:
     from . import Application
+    from ...coins.tx import AbstractTx
 
 
 log = logging.getLogger(__name__)
@@ -36,7 +38,7 @@ class UIManager(QObject):
         self.__status_message = ""
         self.__visible = False
         #
-        self.__notified_tx_list = set()
+        self.__notified_tx_list = []
         #
         self.__tray = SystemTrayIcon(self)
         self.__tray.exit.connect(self._application.setExitEvent)
@@ -45,7 +47,6 @@ class UIManager(QObject):
         self.__tray.show()
         self.__notify_hidden = True
         self._launch_time = datetime.utcnow()
-
 
     @QSlot()
     def onMainComponentCompleted(self) -> None:
@@ -71,27 +72,34 @@ class UIManager(QObject):
         dialog = getattr(dialogs, name)(self._application.backendContext)
         getattr(dialog, signal)()
 
-    ############################################################################
+    def process_incoming_tx(self, tx: AbstractTx) -> None:
+        if (
+                tx.time == self._launch_time.timestamp() or
+                tx.name in self.__notified_tx_list
+        ):
+            return
+        self.__notified_tx_list.append(tx.name)
 
-    def process_incoming_tx(self, tx: Union['tx.Transaction', List['tx.Transaction']]):
-        if isinstance(tx, list):
-            for tx_ in tx:
-                self.process_incoming_tx(tx_)
-        else:
-            # if: tx time more than launch time
-            # and if: tx not already notified
-            # don't detect direction !!!
-            if tx.time >= self._launch_time.timestamp() and \
-                    tx not in self.__notified_tx_list and \
-                    True:
-                self.__notified_tx_list.add(tx)
-                log.info(f"NOTIFY ABOUT: {tx}")
-                self.__tray.showMessage(
-                    f"New transaction: {tx.user_view(self._application.settingsManager)}",
-                    MessageIcon.INFORMATION,
-                )
+        tx_model = tx.model
+        if not isinstance(tx_model, TxModel):
+            return
 
-    def fill_coin_info_model(self, coin_map):
+        # noinspection PyTypeChecker
+        message = self.tr(
+            "New transaction\n"
+            "Coin: {coin_name}\n"
+            "ID: {tx_name}\n"
+            "Amount: {amount} {unit} / {fiat_amount} {fiat_unit}")
+        message = message.format(
+            coin_name=tx.address.coin.fullName,
+            tx_name=tx_model.name,
+            amount=tx_model.amount.valueHuman,
+            unit=tx_model.amount.unit,
+            fiat_amount=tx_model.amount.fiatValueHuman,
+            fiat_unit=tx_model.amount.fiatUnit)
+        self.__tray.showMessage(message, MessageIcon.INFORMATION)
+
+    def fill_coin_info_model(self, coin_map) -> None:
         for name, data in coin_map.items():
             remote = {}
             try:
