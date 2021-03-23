@@ -1,6 +1,14 @@
 # BitMarket Network Client Change Log
 
-## 0.11 (xx.01.2021)
+## 0.12 (24.03.2021)
+
+* QML: Addresses and History tabs with counter
+* temporary application was changed to single-thread mode
+* full support for EUR and USD currencies
+* large code optimization
+
+
+## 0.11 (22.01.2021)
 
 * new encryption format for private data (seed, phrase, databases). Not
   compatible with a previous version.
