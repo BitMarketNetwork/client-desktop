@@ -1,12 +1,17 @@
 # JOK++
+from __future__ import annotations
+
 import os
-from typing import Optional, Final
+from typing import Optional, TYPE_CHECKING
 
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 
 from .cipher import MessageCipher
 from .digest import Blake2bDigest
 from ..version import Product
+
+if TYPE_CHECKING:
+    from typing import Final
 
 
 class KeyDerivationFunction:

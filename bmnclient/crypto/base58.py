@@ -1,12 +1,17 @@
 # JOK++
-from typing import Optional, Final
+from __future__ import annotations
+
+from typing import Optional, TYPE_CHECKING
 
 from .digest import Sha256Digest
+
+if TYPE_CHECKING:
+    from typing import Final
 
 
 class Base58:
     CHAR_LIST: Final = \
-        "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+        "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"  # noqa
     CHAR_LIST_MAP: Final = {c: i for i, c in enumerate(CHAR_LIST)}
     BASE: Final = len(CHAR_LIST)
     CHECKSUM_SIZE: Final = 4

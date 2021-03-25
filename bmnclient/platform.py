@@ -1,11 +1,16 @@
 # JOK++
+from __future__ import annotations
+
 import os
 import sys
-from enum import Enum, auto
+from enum import auto, Enum
 from pathlib import Path, PurePath
-from typing import Final
+from typing import TYPE_CHECKING
 
 from .version import Product
+
+if TYPE_CHECKING:
+    from typing import Final
 
 
 class Platform:

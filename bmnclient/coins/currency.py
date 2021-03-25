@@ -1,7 +1,7 @@
 # JOK++
 from __future__ import annotations
 
-from typing import Final, Optional, TYPE_CHECKING, Type
+from typing import Optional, Type, TYPE_CHECKING
 
 from PySide2.QtCore import QObject
 
@@ -12,6 +12,7 @@ from ..utils.static_list import UserStaticList
 if TYPE_CHECKING:
     from ..application import CoreApplication
     from ..language import Locale
+    from typing import Final
 
 
 class AbstractCurrency:

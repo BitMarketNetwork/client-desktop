@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import ABCMeta
 from enum import auto
-from typing import Final, Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -24,6 +24,7 @@ from .list import \
 from ..coins.tx import TxModelInterface
 
 if TYPE_CHECKING:
+    from typing import Final
     from ..ui.gui import Application
     from ..coins.tx import AbstractTx
 

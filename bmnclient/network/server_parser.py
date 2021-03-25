@@ -1,13 +1,16 @@
 # JOK++
 from __future__ import annotations
 
-from enum import Flag, auto
-from typing import Any, Final, List, Optional, Type
+from enum import auto, Flag
+from typing import Any, List, Optional, Type, TYPE_CHECKING
 
 from ..coins.address import AbstractAddress
 from ..coins.coin import AbstractCoin
 from ..coins.tx import AbstractTx
 from ..logger import Logger
+
+if TYPE_CHECKING:
+    from typing import Final
 
 
 class ParseError(LookupError):

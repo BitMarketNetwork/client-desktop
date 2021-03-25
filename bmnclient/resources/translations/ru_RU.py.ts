@@ -3,23 +3,20 @@
 <context>
     <name>@default</name>
     <message>
-        <location filename="fiat_rate.py" line="146"/>
+        <location filename="fiat_rate.py" line="147"/>
         <source>-- None --</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="currency.py" line="175"/>
+        <location filename="currency.py" line="176"/>
         <source>US Dollar</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="currency.py" line="180"/>
+        <location filename="currency.py" line="181"/>
         <source>Euro</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>AddressInfoCommand</name>
 </context>
 <context>
     <name>CoinManager</name>
@@ -41,12 +38,6 @@
         <source>Seed phrase not found.</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>ServerSysInfoCommand</name>
-</context>
-<context>
-    <name>SettingsManager</name>
 </context>
 <context>
     <name>SystemTrayIcon</name>

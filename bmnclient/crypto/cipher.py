@@ -1,11 +1,16 @@
 # JOK++
+from __future__ import annotations
+
 import os
-from typing import Optional, Final
+from typing import Optional, TYPE_CHECKING
 
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers import aead
 
 from ..version import Product
+
+if TYPE_CHECKING:
+    from typing import Final
 
 
 class AeadCipher:

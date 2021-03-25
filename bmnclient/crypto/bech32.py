@@ -1,9 +1,14 @@
 # JOK++
-from typing import Optional, Tuple, Union, Final
+from __future__ import annotations
+
+from typing import Optional, Tuple, TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    from typing import Final
 
 
 class Bech32:
-    CHAR_LIST: Final = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
+    CHAR_LIST: Final = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"  # noqa
     CHECKSUM_SIZE: Final = 6
     MAX_SIZE: Final = 90
     SEPARATOR: Final = "1"

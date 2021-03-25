@@ -3,9 +3,12 @@ from __future__ import annotations
 
 import hashlib
 from abc import ABCMeta, abstractmethod
-from typing import Final, Optional
+from typing import Optional, TYPE_CHECKING
 
-from cryptography.hazmat.primitives.hashes import Hash, BLAKE2b, SHA256
+from cryptography.hazmat.primitives.hashes import BLAKE2b, Hash, SHA256
+
+if TYPE_CHECKING:
+    from typing import Final
 
 
 class Digest(metaclass=ABCMeta):

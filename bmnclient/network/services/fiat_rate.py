@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from io import BytesIO
 from json import JSONDecodeError
-from typing import Final, List, Optional, TYPE_CHECKING, Type
+from typing import List, Optional, Type, TYPE_CHECKING
 
 from PySide2.QtCore import QObject
 
@@ -20,6 +20,7 @@ from ...utils.meta import classproperty
 from ...utils.static_list import UserStaticList
 
 if TYPE_CHECKING:
+    from typing import Final
     from ...application import CoreApplication
     from ...coins.list import CoinList
 

@@ -1,8 +1,13 @@
 # JOK++
 # Only standard imports, used by Makefile.
+from __future__ import annotations
+
 from enum import IntEnum
 from pathlib import Path
-from typing import Final
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Final
 
 
 class Product:
@@ -15,7 +20,7 @@ class Product:
     VERSION_STRING: Final = ".".join(map(str, VERSION))
     ENCODING: Final = "utf-8"
     STRING_SEPARATOR: Final = ":"
-    PYTHON_MINIMAL_VERSION: Final = (3, 8, 0)
+    PYTHON_MINIMAL_VERSION: Final = (3, 7, 0)
 
 
 class ProductPaths:

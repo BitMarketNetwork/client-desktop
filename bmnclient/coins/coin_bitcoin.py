@@ -2,13 +2,16 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Final, Optional
+from typing import Optional, TYPE_CHECKING
 
 from .address import AbstractAddress
 from .coin import AbstractCoin
 from ..crypto.base58 import Base58
 from ..crypto.bech32 import Bech32
 from ..crypto.digest import Ripemd160Digest, Sha256Digest
+
+if TYPE_CHECKING:
+    from typing import Final
 
 
 class BitcoinAddress(AbstractAddress):

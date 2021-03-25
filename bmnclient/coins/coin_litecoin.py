@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Final
+from typing import TYPE_CHECKING
 
 from .coin_bitcoin import Bitcoin, BitcoinAddress
+
+if TYPE_CHECKING:
+    from typing import Final
 
 
 class LitecoinAddress(BitcoinAddress):
