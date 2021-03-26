@@ -112,7 +112,7 @@ print(mtime.strftime("%y%m%d_%H%M%S"))\
 endef
 
 export BMN_PACKAGE_NAME = bmnclient
-export BMN_UPLOAD_DIR = bmn-upload:public
+export BMN_UPLOAD_DIR = bmn-upload:public/$(PLATFORM)
 
 $(info Loading version from ${BMN_PACKAGE_NAME} package...)
 export BMN_MAINTAINER := $(or $(strip \
