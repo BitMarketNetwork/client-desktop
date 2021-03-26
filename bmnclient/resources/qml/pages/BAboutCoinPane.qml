@@ -8,7 +8,6 @@ BPane {
     property string iconPath: _applicationManager.imagePath(coin.iconPath)
 
     contentItem: BDialogScrollableLayout {
-        BLayout.maximumWidth: -1
         BLogoImage {
             BLayout.columnSpan: parent.columns
             BLayout.minimumWidth: implicitWidth
