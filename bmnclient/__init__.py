@@ -24,7 +24,7 @@ if sys.version_info[:3] < Product.PYTHON_MINIMAL_VERSION:
 def main(argv: List[str]) -> int:
     try:
         CommandLine.parse(argv)
-        Logger.configure(CommandLine.logFilePath())
+        Logger.configure(CommandLine.logFilePath)
         exit_code = Application(argv).run()
     except SystemExit as e:
         exit_code = e.args[0]

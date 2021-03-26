@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from argparse import ArgumentParser, Namespace
-from functools import partial
 from pathlib import PurePath
-from typing import Callable, Optional, TYPE_CHECKING, Type, Union
+from typing import Callable, Optional, Type, TYPE_CHECKING, Union
 
 from PySide2.QtCore import \
     QBasicTimer, \
@@ -11,8 +10,8 @@ from PySide2.QtCore import \
     QLocale, \
     QMetaObject, \
     QObject, \
-    QTimerEvent, \
     Qt, \
+    QTimerEvent, \
     Slot as QSlot
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
@@ -27,11 +26,12 @@ from .logger import Logger
 from .network.services.fiat_rate import FiatRateServiceList
 from .server.thread import ServerThread
 from .signal_handler import SignalHandler
+from .utils.meta import classproperty
 from .version import Product, Timer
 from .wallet.thread import WalletThread
 
 if TYPE_CHECKING:
-    from .coins import AbstractCoin
+    from .coins.coin import AbstractCoin
 
 
 class CommandLine:
@@ -55,14 +55,14 @@ class CommandLine:
             action='store_true')
         cls._arguments = parser.parse_args(argv[1:])
 
-    @classmethod
-    def logFilePath(cls) -> Optional[PurePath]:
+    @classproperty
+    def logFilePath(cls) -> Optional[PurePath]:  # noqa
         if cls._arguments.logfile:
             return PurePath(cls._arguments.logfile)
         return None
 
-    @classmethod
-    def isDebugMode(cls) -> bool:
+    @classproperty
+    def isDebugMode(cls) -> bool:  # noqa
         return cls._arguments.debug_mode
 
 
