@@ -38,7 +38,7 @@ class ReceiveManager(QObject):
     @qt_core.Property(str, notify=addressChanged)
     def message(self) -> str:
         if self._address:
-            return self._address.message
+            return self._address.comment
         return ""
 
     @qt_core.Slot(bool, str, str)

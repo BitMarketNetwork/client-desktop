@@ -189,7 +189,7 @@ class CAddress(AbstractAddress):
                     # TODO
                     #self._tx_list.remove(0, len(to_remove))
                     pass
-                self.txCount -= len(to_remove)
+                #self.txCount -= len(to_remove)
                 if verbose:
                     log.debug(
                         f"{len(to_remove)} tx were removed and {len(self._tx_list)} left in {self} ")
