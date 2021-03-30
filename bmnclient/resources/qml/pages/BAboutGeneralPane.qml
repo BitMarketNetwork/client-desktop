@@ -55,7 +55,7 @@ BPane {
 
             font.bold: true
             // TODO year from compile time
-            text: qsTr("Copyright © 2020 %1.\nAll rights reserved.").arg(Qt.application.organization)
+            text: qsTr("Copyright © 2020-2021 %1.\nAll rights reserved.").arg(Qt.application.organization)
             horizontalAlignment: BLabel.AlignHCenter
         }
     }
