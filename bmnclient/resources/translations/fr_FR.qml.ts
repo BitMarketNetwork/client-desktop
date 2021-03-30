@@ -4,27 +4,27 @@
 <context>
     <name>BAboutCoinPane</name>
     <message>
-        <location filename="../qml/pages/BAboutCoinPane.qml" line="30"/>
+        <location filename="../qml/pages/BAboutCoinPane.qml" line="29"/>
         <source>Full name:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BAboutCoinPane.qml" line="38"/>
+        <location filename="../qml/pages/BAboutCoinPane.qml" line="37"/>
         <source>Short name:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BAboutCoinPane.qml" line="46"/>
+        <location filename="../qml/pages/BAboutCoinPane.qml" line="45"/>
         <source>Daemon status:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BAboutCoinPane.qml" line="55"/>
+        <location filename="../qml/pages/BAboutCoinPane.qml" line="54"/>
         <source>Daemon version:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BAboutCoinPane.qml" line="63"/>
+        <location filename="../qml/pages/BAboutCoinPane.qml" line="62"/>
         <source>Daemon height:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -53,7 +53,7 @@
     </message>
     <message>
         <location filename="../qml/pages/BAboutGeneralPane.qml" line="58"/>
-        <source>Copyright © 2020 %1.
+        <source>Copyright © 2020-2021 %1.
 All rights reserved.</source>
         <translation type="unfinished"></translation>
     </message>
