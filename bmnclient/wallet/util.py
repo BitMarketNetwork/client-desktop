@@ -25,11 +25,6 @@ def get_bytes(data: Union[str, bytes]) -> bytes:
     return data
 
 
-def ensure_string_or_bytes(data: Union[str, bytes]):
-    if not isinstance(data, (str, bytes, bytearray)):
-        raise TypeError(f"{type(data)} is not string or bytes")
-
-
 def int_to_varint(val: int) -> bytes:
     if val < 253:
         return val.to_bytes(1, 'little')
