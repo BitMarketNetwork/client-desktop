@@ -12,7 +12,6 @@ from PySide2.QtCore import \
 
 from ...config import UserConfig
 from ...language import Language
-from ...wallet import currency
 
 if TYPE_CHECKING:
     from . import Application
