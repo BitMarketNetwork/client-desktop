@@ -4,7 +4,6 @@ from typing import Any
 import threading
 import sys
 import sqlite3 as sql
-from .. import meta
 from . import cipher
 
 log = logging.getLogger(__name__)
@@ -191,11 +190,10 @@ class SqLite:
         if cipher.Cipher.ENCRYPT:
             if not self.__proxy:
                 return "-"
-            return meta.setdefaultattr(
-                self,
-                name + "_title_",
-                f"_{self.__proxy.make_hash(name)}",
-            )
+            name2 = name + "_title_"
+            if not hasattr(self, name2):
+                setattr(self, name2, f"_{self.__proxy.make_hash(name)}")
+            return getattr(self, name2)
         return name
 
     def __getattr__(self, attr: str) -> str:

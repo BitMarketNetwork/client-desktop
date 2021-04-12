@@ -7,7 +7,7 @@ from typing import Iterable, Optional, Union
 import PySide2.QtCore as qt_core
 
 from . import address, coin_network, hd, key
-from .. import meta
+from ..utils.meta import classproperty
 from ..coins import coin_bitcoin
 from ..coins import coin_litecoin
 
@@ -24,7 +24,7 @@ class CoinType(qt_core.QObject):
     TEST_HD_INDEX = 1
     visibleChanged = qt_core.Signal()
 
-    @meta.classproperty
+    @classproperty
     def all(cls) -> Iterable:  # pylint: disable=E0213
         return (val for _, val in globals().items() if isinstance(val, type) and issubclass(val, cls) and val is not cls)
 

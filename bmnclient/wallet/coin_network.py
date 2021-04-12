@@ -1,7 +1,6 @@
-import logging
 from typing import List, Optional, Tuple
 
-from .. import meta
+from ..utils.meta import classproperty
 
 
 class CoinNetworkBase:
@@ -12,11 +11,11 @@ class CoinNetworkBase:
     def __str__(self):
         return self.__class__.__name__
 
-    @meta.classproperty
+    @classproperty
     def all(cls) -> List["CoinNetworkBase"]:  # pylint: disable=no-self-argument
         return (val for _, val in globals().items() if isinstance(val, type) and issubclass(val, cls) and val is not cls)
 
-    @meta.classproperty
+    @classproperty
     def bech32_hrps(cls) -> List[str]:  # pylint: disable=no-self-argument
         return [me.BECH32_HRP for me in cls.all]
 
