@@ -33,13 +33,6 @@ class NetworkImpl(qt_core.QObject):
         self.__cmd = None
         self.__cmd_queue = []
         self.__in_progress = False
-        log.info("SSL info: support:%s\tbuild:%s(%s)\tversion:%s(%s)",
-                 qt_network.QSslSocket.supportsSsl(),
-                 qt_network.QSslSocket.sslLibraryBuildVersionString(),
-                 qt_network.QSslSocket.sslLibraryBuildVersionNumber(),
-                 qt_network.QSslSocket.sslLibraryVersionString(),
-                 qt_network.QSslSocket.sslLibraryVersionNumber()
-                 )
         self._cmd_timer = qt_core.QBasicTimer()
         self._fee_timer = qt_core.QBasicTimer()
         self._fee_timer.start(fee_manager.UPDATE_FEE_TIMEOUT, self)

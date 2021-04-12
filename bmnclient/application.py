@@ -116,6 +116,7 @@ class CoreApplication(QObject):
             self.__onAboutToQuit,
             Qt.DirectConnection)
 
+        import os
         # SignalHandler
         self._signal_handler = SignalHandler(self)
         self._signal_handler.SIGINT.connect(

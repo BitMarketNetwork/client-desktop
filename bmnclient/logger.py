@@ -108,18 +108,22 @@ class Logger:
             _is_configured = True
 
     @classmethod
-    def fatalException(cls) -> None:
+    def fatalException(cls, logger: Optional[Logger] = None) -> None:
         cls.configure()
         message = (
                 "FATAL EXCEPTION:\n"
                 + traceback.format_exc(limit=5, chain=True))
-        logging.getLogger().critical(message)
+        if not logger:
+            logger = logging.getLogger()
+        logger.critical("%s", message)
         os.abort()
 
     @classmethod
-    def fatal(cls, message: str) -> None:
+    def fatal(cls, message: str, logger: Optional[Logger] = None) -> None:
         cls.configure()
-        logging.getLogger().critical("FATAL ERROR: " + message)
+        if not logger:
+            logger = logging.getLogger()
+        logger.critical("FATAL ERROR: %s", message)
         os.abort()
 
     @classmethod

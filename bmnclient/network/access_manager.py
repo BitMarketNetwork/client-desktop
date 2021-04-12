@@ -13,7 +13,8 @@ from PySide2.QtNetwork import \
     QNetworkProxy, \
     QNetworkReply, \
     QNetworkRequest, \
-    QSslError
+    QSslError, \
+    QSslSocket
 
 from . import hostPortToString
 from ..logger import Logger
@@ -86,6 +87,16 @@ class NetworkAccessManager(QNetworkAccessManager):
             __name__,
             self.__class__,
             self._name)
+
+        self._logger.debug(
+            "TLS information:"
+            "\n\tSupports: %s"
+            "\n\tVersion:  %s (0x%08x)",
+            "YES" if QSslSocket.supportsSsl() else "NO",
+            QSslSocket.sslLibraryVersionString(),
+            QSslSocket.sslLibraryVersionNumber())
+        if not QSslSocket.supportsSsl():
+            Logger.fatal("Platform doesn't support TLS.", self._logger)
 
         self._cache = NullNetworkCache()
         self._cookie_jar = NullNetworkCookieJar()
