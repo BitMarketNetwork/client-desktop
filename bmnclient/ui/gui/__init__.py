@@ -6,10 +6,9 @@ from PySide2.QtCore import \
     Property as QProperty, \
     QObject, \
     QUrl, \
-    Qt, \
     Slot as QSlot
 from PySide2.QtGui import QFont
-from PySide2.QtQml import QQmlApplicationEngine, qmlRegisterType
+from PySide2.QtQml import QQmlApplicationEngine, QQmlNetworkAccessManagerFactory
 from PySide2.QtQuickControls2 import QQuickStyle
 from PySide2.QtWidgets import QApplication
 
@@ -24,12 +23,12 @@ from .coin_manager import CoinManager, CoinManager
 from .receive_manager import ReceiveManager, ReceiveManager
 from .settings_manager import SettingsManager, SettingsManager
 from .ui_manager import UIManager, UIManager
-from ...application import CommandLine, CoreApplication
+from ...application import CoreApplication
 from ...debug_manager import DebugManager
 from ...key_store import KeyStore
 from ...language import Language
 from ...models.factory import modelFactory
-from ...server.network_factory import NetworkFactory
+from ...network.access_manager import NetworkAccessManager
 from ...wallet.fee_manager import FeeManager
 
 log = logging.getLogger(__name__)
@@ -40,6 +39,10 @@ QML_CONTEXT_NAME = "BBackend"
 
 
 class Application(CoreApplication):
+    class QmlNetworkAccessManagerFactory(QQmlNetworkAccessManagerFactory):
+        def create(self, parent: QObject) -> NetworkAccessManager:
+            return NetworkAccessManager("QML", parent)
+
     def __init__(self, argv) -> None:
         super().__init__(QApplication, argv)
         self._fee_manager = FeeManager(self)
@@ -65,13 +68,14 @@ class Application(CoreApplication):
         QQuickStyle.setStyle(QML_STYLE)
         log.debug("QML Base URL: %s", bmnclient.resources.QML_URL)
 
-        self._qml_network_factory = NetworkFactory(self)
-
+        self._qml_network_access_manager_factory = \
+            self.QmlNetworkAccessManagerFactory()
         self._qml_engine = QQmlApplicationEngine(self)
+
         # TODO self._engine.offlineStoragePath
         self._qml_engine.setBaseUrl(bmnclient.resources.QML_URL)
         self._qml_engine.setNetworkAccessManagerFactory(
-            self._qml_network_factory)
+            self._qml_network_access_manager_factory)
         # TODO replace with self._engine.warnings
         self._qml_engine.setOutputWarningsToStandardError(True)
 

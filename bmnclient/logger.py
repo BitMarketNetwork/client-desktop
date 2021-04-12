@@ -123,8 +123,12 @@ class Logger:
         os.abort()
 
     @classmethod
+    def errorToString(cls, error: int, message: str) -> str:
+        return "Error {:d}: {:s}".format(error, message)
+
+    @classmethod
     def osErrorToString(cls, e: OSError) -> str:
-        return "Error {:d}: {:s}".format(e.errno, e.strerror)
+        cls.errorToString(e.errno, e.strerror)
 
     @classmethod
     def jsonDecodeErrorToString(cls, e: JSONDecodeError) -> str:

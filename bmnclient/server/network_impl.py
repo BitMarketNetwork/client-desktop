@@ -8,7 +8,7 @@ from PySide2.QtNetwork import QNetworkRequest
 
 from . import debug_cmd, net_cmd, url_composer
 from .. import loading_level
-from ..application import CoreApplication
+from ..network.access_manager import NetworkAccessManager
 from ..wallet import fee_manager
 
 log = logging.getLogger(__name__)
@@ -25,12 +25,10 @@ class NetworkImpl(qt_core.QObject):
         self.__cmd.statusCode = int(http_status)
         return True
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent=parent)
 
-        # self.__net_manager = qt_network.QNetworkAccessManager(self)
-        self.__net_manager = CoreApplication.instance()._qml_network_factory.create(self)
-        ##
+        self.__net_manager = NetworkAccessManager("Server")
         self.__url_manager = url_composer.UrlComposer(1)
         self.__cmd = None
         self.__cmd_queue = []

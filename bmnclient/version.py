@@ -35,4 +35,5 @@ class ProductPaths:
 
 
 class Timer(IntEnum):
-    FIAT_CURRENCY_DOWNLOAD = 60 * 1000
+    NETWORK_READ_TIMEOUT: Final = 30 * 1000
+    FIAT_CURRENCY_DOWNLOAD: Final = 60 * 1000
