@@ -1,20 +1,16 @@
 from __future__ import annotations
 
-import io
 import json
 import logging
 import sys
-import traceback
-from enum import Enum, auto
 from typing import Iterable, List, Optional, Tuple
 
 import PySide2.QtCore as qt_core
 import PySide2.QtNetwork as qt_network
-from PySide2.QtCore import QObject
 
 from . import server_error
 from .. import loading_level
-from ..logger import Logger
+from ..network.query import HttpQuery
 from ..network.server_parser import ServerCoinParser, ServerTxParser
 from ..wallet import address, coins, hd, key, mutable_tx
 
@@ -26,43 +22,7 @@ log = logging.getLogger(__name__)
 SILENCE_CHECKS = True
 
 
-class HttpMethod(Enum):
-    GET = auto()
-    POST = auto()
-
-
-class BaseNetworkCommand(QObject):
-    _BASE_URL = None
-    _METHOD = HttpMethod.GET
-
-    @property
-    def url(self) -> str:
-        return self._BASE_URL
-
-    @property
-    def method(self) -> HttpMethod:
-        return self._METHOD
-
-    @property
-    def statusCode(self) -> Optional[int]:
-        return self.__status_code
-
-    @statusCode.setter
-    def statusCode(self, value: int):
-        if self.__status_code is None:
-            self.__status_code = value
-        else:
-            AttributeError("status is already set.")
-
-    def createRequestData(self) -> Optional[dict]:
-        return {}
-
-    def onResponseData(self, data: bytes) -> bool:
-        raise NotImplementedError
-
-    def onResponseFinished(self) -> None:
-        raise NotImplementedError
-
+class AbstractQuery(HttpQuery):
     action = None
     _server_action = None
     verbose = False
@@ -72,10 +32,7 @@ class BaseNetworkCommand(QObject):
     unique = False
 
     def __init__(self, parent=None, **kwargs) -> None:
-        super().__init__(parent=parent)
-        self._logger = Logger.getClassLogger(__name__, self.__class__)
-        self.__status_code: Optional[int] = None
-
+        super().__init__()
         self.__high_priority = kwargs.pop("high_priority", False)
         self.__low_priority = kwargs.pop("low_priority", False)
         self.level = kwargs.pop("level", loading_level.LoadingLevel.NONE)

@@ -1,21 +1,18 @@
 # JOK++
 from __future__ import annotations
 
-import json
 from io import BytesIO
-from json import JSONDecodeError
 from typing import List, Optional, Type, TYPE_CHECKING
 
 from PySide2.QtCore import QObject
 
+from ..query import HttpJsonQuery
 from ...coins.currency import \
     EuroFiatCurrency, \
     FiatCurrency, \
     FiatRate, \
     UsdFiatCurrency
 from ...config import UserConfig
-from ...logger import Logger
-from ...server.net_cmd import BaseNetworkCommand
 from ...utils.meta import classproperty
 from ...utils.static_list import UserStaticList
 
@@ -25,7 +22,7 @@ if TYPE_CHECKING:
     from ...coins.list import CoinList
 
 
-class FiatRateService(BaseNetworkCommand):
+class FiatRateService(HttpJsonQuery):
     _SHORT_NAME = ""
     _FULL_NAME = ""
     _COIN_MAP: Final = {  # local: service
@@ -42,7 +39,7 @@ class FiatRateService(BaseNetworkCommand):
             self,
             coin_list: CoinList,
             currency: Type[FiatCurrency] = UsdFiatCurrency) -> None:
-        super().__init__(None)
+        super().__init__()
         self._buffer = BytesIO()
 
         self._coin_list = coin_list
@@ -64,35 +61,18 @@ class FiatRateService(BaseNetworkCommand):
             return None
         return self._createRequestData()
 
-    def onResponseData(self, data: bytes) -> bool:
-        # TODO download limit
-        self._buffer.write(data)
-        return True
-
-    def onResponseFinished(self) -> None:
-        if self.statusCode != 200 or self.url is None:
+    def processResponse(self, response: Optional[dict]) -> None:
+        if response is None or self.statusCode != 200 or self.url is None:
             if self.url is not None:
                 self._logger.warning(
                     "Invalid response from \"{}\" Service."
                     .format(self._FULL_NAME))
-            result = {}
-        else:
-            result = self._buffer.getvalue()
-            self._buffer.close()
-            self._logger.debug(result.decode(encoding="utf-8"))
-
-            try:
-                result = json.loads(result)
-            except JSONDecodeError as e:
-                self._logger.warning(
-                    "Failed to read response. "
-                    + Logger.jsonDecodeErrorToString(e))
-                return
+            response = {}
 
         for coin in self._coin_list:
             name = self._COIN_MAP.get(coin.shortName)
             if name:
-                fiat_rate = self._getFiatRate(name, result)
+                fiat_rate = self._getFiatRate(name, response)
                 if fiat_rate is None:
                     fiat_rate = 0
                     if self.url is not None:
