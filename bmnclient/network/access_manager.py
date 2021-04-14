@@ -13,6 +13,8 @@ from PySide2.QtNetwork import \
     QNetworkProxy, \
     QNetworkReply, \
     QNetworkRequest, \
+    QSsl, \
+    QSslConfiguration, \
     QSslError, \
     QSslSocket
 
@@ -88,19 +90,11 @@ class NetworkAccessManager(QNetworkAccessManager):
             self.__class__,
             self._name)
 
-        self._logger.debug(
-            "TLS information:"
-            "\n\tSupports: %s"
-            "\n\tVersion:  %s (0x%08x)",
-            "YES" if QSslSocket.supportsSsl() else "NO",
-            QSslSocket.sslLibraryVersionString(),
-            QSslSocket.sslLibraryVersionNumber())
-        if not QSslSocket.supportsSsl():
-            Logger.fatal("Platform doesn't support TLS.", self._logger)
-
         self._cache = NullNetworkCache()
         self._cookie_jar = NullNetworkCookieJar()
         self._proxy = QNetworkProxy(QNetworkProxy.NoProxy)
+        self._tls_config = self._createTlsConfiguration()
+        self._http2_config = None  # TODO QHttp2Configuration not supported
 
         self.setAutoDeleteReplies(False)
         self.enableStrictTransportSecurityStore(False)
@@ -109,7 +103,7 @@ class NetworkAccessManager(QNetworkAccessManager):
         self.setProxy(self._proxy)
         self.setRedirectPolicy(QNetworkRequest.ManualRedirectPolicy)
         self.setStrictTransportSecurityEnabled(False)  # TODO
-        self.setTransferTimeout(Timer.NETWORK_READ_TIMEOUT)
+        self.setTransferTimeout(Timer.NETWORK_TRANSFER_TIMEOUT)
 
         self.authenticationRequired.connect(
             self._onAuthenticationRequired)
@@ -129,6 +123,31 @@ class NetworkAccessManager(QNetworkAccessManager):
             self._logger.debug(
                 "\"%s\" network access manager ws created.",
                 self._name)
+
+    def _createTlsConfiguration(self) -> QSslConfiguration:
+        self._logger.debug(
+            "TLS information:"
+            "\n\tSupports: %s"
+            "\n\tVersion:  %s (0x%08x)",
+            "YES" if QSslSocket.supportsSsl() else "NO",
+            QSslSocket.sslLibraryVersionString(),
+            QSslSocket.sslLibraryVersionNumber())
+        if not QSslSocket.supportsSsl():
+            Logger.fatal("Platform doesn't support TLS.", self._logger)
+
+        tls = QSslConfiguration()
+        tls.setOcspStaplingEnabled(True)
+        tls.setPeerVerifyDepth(0)  # whole certificate chain should be checked
+        tls.setPeerVerifyMode(QSslSocket.VerifyPeer)
+        tls.setProtocol(QSsl.TlsV1_2OrLater)
+        tls.setSslOption(QSsl.SslOptionDisableEmptyFragments, True)
+        tls.setSslOption(QSsl.SslOptionDisableSessionTickets, False)
+        tls.setSslOption(QSsl.SslOptionDisableCompression, True)
+        tls.setSslOption(QSsl.SslOptionDisableServerNameIndication, False)
+        tls.setSslOption(QSsl.SslOptionDisableLegacyRenegotiation, True)
+        tls.setSslOption(QSsl.SslOptionDisableSessionSharing, False)
+        tls.setSslOption(QSsl.SslOptionDisableSessionPersistence, True)
+        return tls
 
     def _onAuthenticationRequired(
             self,
