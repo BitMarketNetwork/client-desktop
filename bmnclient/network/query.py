@@ -3,12 +3,14 @@ import json
 from enum import auto, Enum
 from io import BytesIO
 from json import JSONDecodeError
-from typing import Optional
+from typing import Dict, List, Optional, Union
 
-from PySide2.QtCore import QObject
+from PySide2.QtCore import QObject, QUrl
+from PySide2.QtNetwork import QNetworkReply, QNetworkRequest, QSslError
 
+from .utils import encodeUrlString
 from ..logger import Logger
-from ..version import Product
+from ..version import Product, Timer
 
 
 class AbstractQuery(QObject):  # TODO kill QObject?
@@ -24,20 +26,81 @@ class HttpQuery(AbstractQuery):
         GET = auto()
         POST = auto()
 
-    _BASE_URL = None
-    _METHOD = Method.GET
+    _DEFAULT_BASE_URL: Optional[str] = None
+    _DEFAULT_METHOD = Method.GET
+    _DEFAULT_CONTENT_TYPE = ""
+
+    _REQUEST_ATTRIBUTE_LIST = (
+        (
+            QNetworkRequest.CacheLoadControlAttribute,
+            QNetworkRequest.AlwaysNetwork
+        ), (
+            QNetworkRequest.CacheSaveControlAttribute,
+            False
+        ), (
+            QNetworkRequest.DoNotBufferUploadDataAttribute,
+            True
+        ), (
+            QNetworkRequest.HttpPipeliningAllowedAttribute,
+            False
+        ), (
+            QNetworkRequest.CookieLoadControlAttribute,
+            QNetworkRequest.Manual
+        ), (
+            QNetworkRequest.CookieSaveControlAttribute,
+            QNetworkRequest.Manual
+        ), (
+            QNetworkRequest.AuthenticationReuseAttribute,
+            QNetworkRequest.Manual
+        ), (
+            QNetworkRequest.BackgroundRequestAttribute,
+            False
+        ), (
+            QNetworkRequest.Http2AllowedAttribute,
+            True
+        ), (
+            QNetworkRequest.EmitAllUploadProgressSignalsAttribute,
+            False
+        ), (
+            QNetworkRequest.FollowRedirectsAttribute,
+            False
+        ), (
+            QNetworkRequest.RedirectPolicyAttribute,
+            QNetworkRequest.ManualRedirectPolicy
+        ), (
+            QNetworkRequest.Http2DirectAttribute,
+            False
+        ), (
+            QNetworkRequest.AutoDeleteReplyOnFinishAttribute,
+            False  # TODO
+        )
+    )
 
     def __init__(self) -> None:
         super().__init__()
         self._status_code: Optional[int] = None
+        self._request: Optional[QNetworkRequest] = None
+        self._response: Optional[QNetworkReply] = None
 
     @property
     def url(self) -> str:
-        return self._BASE_URL
+        return self._DEFAULT_BASE_URL
+
+    @property
+    def arguments(self) -> Dict[str, Union[int, str]]:
+        return {}
+
+    @property
+    def content(self) -> bytes:
+        return b""
+
+    @property
+    def contentType(self) -> str:
+        return self._DEFAULT_CONTENT_TYPE
 
     @property
     def method(self) -> Method:
-        return self._METHOD
+        return self._DEFAULT_METHOD
 
     @property
     def statusCode(self) -> Optional[int]:
@@ -78,7 +141,7 @@ class HttpJsonQuery(HttpQuery):
         if response:
             error_message = None
             try:
-                response = "1" + response.decode(encoding=self._ENCODING)
+                response = response.decode(encoding=self._ENCODING)
                 self._logger.debug("Response: %s", response)
                 response = json.loads(response)
             except UnicodeError as e:

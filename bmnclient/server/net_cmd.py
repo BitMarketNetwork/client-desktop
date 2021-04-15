@@ -46,7 +46,7 @@ class AbstractQuery(HttpQuery):
 
     @property
     def ext(self) -> bool:
-        return self._BASE_URL is not None
+        return self._DEFAULT_BASE_URL is not None
 
     @property
     def high_priority(self) -> bool:
@@ -126,21 +126,6 @@ class AbstractQuery(HttpQuery):
 
     def process_attr(self, table):
         pass
-
-    def output(self, key=None, value=None):
-        """
-        abstraction layer around dispalying data to user
-        if no value - then use key as a title
-        if no key - EOF
-        """
-        if value is None:
-            if key is None:
-                sys.stdout.write("\n")
-                sys.stdout.flush()
-            else:
-                print(f"{key}")
-        else:
-            print(f"{key}:\t{value}")
 
     def handle_errors(self, errors):
         for error in errors:

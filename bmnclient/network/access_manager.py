@@ -18,7 +18,7 @@ from PySide2.QtNetwork import \
     QSslError, \
     QSslSocket
 
-from . import hostPortToString
+from .utils import hostPortToString
 from ..logger import Logger
 from ..version import Timer
 
