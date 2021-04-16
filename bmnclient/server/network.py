@@ -1,37 +1,23 @@
 import logging
-import os
 from typing import Callable, Optional
 
 import PySide2.QtCore as qt_core
-import PySide2.QtNetwork as qt_network
-from PySide2.QtNetwork import QNetworkRequest
 
 from bmnclient.wallet import address, mutable_tx
-from . import debug_cmd, net_cmd, url_composer
+from . import debug_cmd, net_cmd
 from .. import loading_level
-from ..network.access_manager import NetworkAccessManager
+from ..network.query import AbstractQuery
+from ..network.query_manager import NetworkQueryManager
 from ..wallet import fee_manager
 
 log = logging.getLogger(__name__)
 
 
-class Network(qt_core.QObject):
-    def _setResponseStatusCode(self) -> bool:
-        if self.__cmd.statusCode is not None:
-            return False
-        http_status = self.__reply.attribute(
-            QNetworkRequest.HttpStatusCodeAttribute)
-        if not http_status:
-            http_status = 0
-        self.__cmd.statusCode = int(http_status)
-        return True
-
+class Network(NetworkQueryManager):
     def __init__(self, parent) -> None:
-        super().__init__()
+        super().__init__("Default")
         from ..ui.gui import Application
 
-        self.__net_manager = NetworkAccessManager("Server")
-        self.__url_manager = url_composer.UrlComposer(1)
         self.__cmd = None
         self.__cmd_queue = []
         self.__in_progress = False

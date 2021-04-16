@@ -1,9 +1,11 @@
 # JOK++
+from __future__ import annotations
+
 import json
 from enum import auto, Enum
 from io import BytesIO
 from json import JSONDecodeError
-from typing import Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union
 
 from PySide2.QtCore import QObject, QUrl
 from PySide2.QtNetwork import QNetworkReply, QNetworkRequest, QSslError
@@ -14,6 +16,8 @@ from ..version import Product, Timer
 
 
 class AbstractQuery(QObject):  # TODO kill QObject?
+    FinishedCallback = Callable[[object], None]
+
     class Method(Enum):
         GET = auto()
         POST = auto()
@@ -75,6 +79,7 @@ class AbstractQuery(QObject):  # TODO kill QObject?
         self._status_code: Optional[int] = None
         self._response: Optional[QNetworkReply] = None
         self._is_success = False
+        self._finished_callback_list: List[AbstractQuery.FinishedCallback] = []
 
     @property
     def url(self) -> str:
@@ -104,6 +109,15 @@ class AbstractQuery(QObject):  # TODO kill QObject?
     def isSuccess(self) -> bool:
         return self._is_success
 
+    def putFinishedCallback(
+            self,
+            callback: AbstractQuery.FinishedCallback) -> None:
+        self._finished_callback_list.append(callback)
+
+    def _callFinishedCallbackList(self) -> None:
+        for c in self._finished_callback_list:
+            c(self)
+
     @property
     def isDummyRequest(self) -> bool:
         return self.url is None
@@ -113,6 +127,7 @@ class AbstractQuery(QObject):  # TODO kill QObject?
         self.__setStatusCode(200)
         self._is_success = True
         self._onResponseFinished()
+        self._callFinishedCallbackList()
 
     def createRequest(self) -> Optional[QNetworkRequest]:
         # prepare full url
@@ -208,6 +223,7 @@ class AbstractQuery(QObject):  # TODO kill QObject?
         self._onResponseFinished()
         # self._response.deleteLater()
         self._response = None
+        self._callFinishedCallbackList()
 
     def __onResponseError(self, code: QNetworkReply.NetworkError) -> None:
         if code in (
