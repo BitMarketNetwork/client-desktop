@@ -21,7 +21,7 @@ class AbstractQuery(QObject):  # TODO kill QObject?
         self._logger = Logger.getClassLogger(__name__, self.__class__)
 
 
-class HttpQuery(AbstractQuery):
+class AbstractHttpQuery(AbstractQuery):
     class Method(Enum):
         GET = auto()
         POST = auto()
@@ -79,7 +79,6 @@ class HttpQuery(AbstractQuery):
     def __init__(self) -> None:
         super().__init__()
         self._status_code: Optional[int] = None
-        self._request: Optional[QNetworkRequest] = None
         self._response: Optional[QNetworkReply] = None
         self._is_success = False
 
@@ -110,6 +109,16 @@ class HttpQuery(AbstractQuery):
     @property
     def isSuccess(self) -> bool:
         return self._is_success
+
+    @property
+    def isDummyRequest(self) -> bool:
+        return self.url is None
+
+    def runDummyRequest(self) -> None:
+        assert self.isDummyRequest and self._response is None
+        self.__setStatusCode(200)
+        self._is_success = True
+        self._onResponseFinished()
 
     def createRequest(self) -> Optional[QNetworkRequest]:
         # prepare full url
@@ -171,15 +180,17 @@ class HttpQuery(AbstractQuery):
         self._is_success = False
         self._response = response
 
-    def __setStatusCode(self) -> None:
-        if self._status_code is None:
+    def __setStatusCode(self, status_code: Optional[int] = None) -> None:
+        if self._status_code is not None:
+            return
+        if status_code is None:
             status_code = self._response.attribute(
                 QNetworkRequest.HttpStatusCodeAttribute)
-            if status_code:
-                self._status_code = int(status_code)
-            else:
-                self._status_code = 0
-            self._logger.debug("HTTP status code: %i", self._status_code)
+        if status_code:
+            self._status_code = int(status_code)
+        else:
+            self._status_code = 0
+        self._logger.debug("HTTP status code: %i", self._status_code)
 
     def __onResponseRead(self) -> None:
         self.__setStatusCode()
@@ -240,7 +251,7 @@ class HttpQuery(AbstractQuery):
         raise NotImplementedError
 
 
-class HttpJsonQuery(HttpQuery):
+class AbstractHttpJsonQuery(AbstractHttpQuery):
     _DEFAULT_CONTENT_TYPE = "application/json"
 
     def __init__(self) -> None:
@@ -261,7 +272,7 @@ class HttpJsonQuery(HttpQuery):
 
     @property
     def jsonContent(self) -> Optional[dict]:
-        raise NotImplementedError
+        return None
 
     def _onResponseData(self, data) -> bool:
         # TODO limit downloaded size

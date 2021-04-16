@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 from io import BytesIO
-from typing import List, Optional, Type, TYPE_CHECKING
+from typing import Dict, List, Optional, Type, TYPE_CHECKING, Union
 
 from PySide2.QtCore import QObject
 
-from ..query import HttpJsonQuery
+from ..query import AbstractHttpJsonQuery
 from ...coins.currency import \
     EuroFiatCurrency, \
     FiatCurrency, \
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from ...coins.list import CoinList
 
 
-class FiatRateService(HttpJsonQuery):
+class AbstractFiatRateService(AbstractHttpJsonQuery):
     _SHORT_NAME = ""
     _FULL_NAME = ""
     _COIN_MAP: Final = {  # local: service
@@ -56,14 +56,14 @@ class FiatRateService(HttpJsonQuery):
     def fullName(cls) -> str:  # noqa
         return cls._FULL_NAME
 
-    def createRequestData(self) -> Optional[dict]:
-        if not self._coin_name_list or not self._currency_name:
-            return None
-        return self._createRequestData()
-
-    def processResponse(self, response: Optional[dict]) -> None:
-        if response is None or self.statusCode != 200 or self.url is None:
-            if self.url is not None:
+    def _processResponse(self, response: Optional[dict]) -> bool:
+        if (
+                not self.isSuccess
+                or response is None
+                or self.statusCode != 200
+                or self.isDummyRequest
+        ):
+            if not self.isDummyRequest:
                 self._logger.warning(
                     "Invalid response from \"{}\" Service."
                     .format(self._FULL_NAME))
@@ -80,6 +80,7 @@ class FiatRateService(HttpJsonQuery):
                             "Failed to parse fiat rate for \"{}\"."
                             .format(coin.fullName))
                 coin.fiatRate = FiatRate(fiat_rate, self._currency)
+        return True
 
     def _createCoinNameList(self) -> List[str]:
         result = []
@@ -114,44 +115,36 @@ class FiatRateService(HttpJsonQuery):
 
         return result
 
-    def _createRequestData(self) -> Optional[dict]:
-        raise NotImplementedError
-
     def _getFiatRate(self, coin_name: str, data: dict) -> Optional[int]:
         raise NotImplementedError
 
 
-class NoneFiatRateService(FiatRateService):
+class NoneFiatRateService(AbstractFiatRateService):
     _SHORT_NAME: Final = "none"
     _FULL_NAME: Final = QObject().tr("-- None --")
-    _BASE_URL: Final = None
-
-    def _createRequestData(self) -> Optional[dict]:
-        return {}
+    _DEFAULT_BASE_URL: Final = None
 
     def _getFiatRate(self, coin_name: str, data: dict) -> Optional[int]:
         return 0
 
 
-class RandomFiatRateService(FiatRateService):
+class RandomFiatRateService(AbstractFiatRateService):
     _SHORT_NAME: Final = "random"
     _FULL_NAME: Final = "-- random value --"
-    _BASE_URL: Final = None
-
-    def _createRequestData(self) -> Optional[dict]:
-        return {}
+    _DEFAULT_BASE_URL: Final = None
 
     def _getFiatRate(self, coin_name: str, data: dict) -> Optional[int]:
         from random import randrange
         return randrange(0, 1000000) * 10
 
 
-class CoinGeckoFiatRateService(FiatRateService):
+class CoinGeckoFiatRateService(AbstractFiatRateService):
     _SHORT_NAME: Final = "coingecko"
     _FULL_NAME: Final = "CoinGecko"
-    _BASE_URL: Final = "https://api.coingecko.com/api/v3/simple/price"
+    _DEFAULT_BASE_URL: Final = "https://api.coingecko.com/api/v3/simple/price"
 
-    def _createRequestData(self) -> Optional[dict]:
+    @property
+    def arguments(self) -> Dict[str, Union[int, str]]:
         return {
             "ids": ",".join(self._coin_name_list),
             "vs_currencies": self._currency_name
@@ -166,7 +159,7 @@ class CoinGeckoFiatRateService(FiatRateService):
 
 
 class FiatRateServiceList(UserStaticList):
-    ItemType = Type[FiatRateService]
+    ItemType = Type[AbstractFiatRateService]
 
     def __init__(self, application: CoreApplication) -> None:
         service_list = (

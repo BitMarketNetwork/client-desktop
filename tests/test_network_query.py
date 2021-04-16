@@ -6,7 +6,7 @@ from PySide2.QtCore import QCoreApplication, QEventLoop
 from PySide2.QtNetwork import QNetworkReply, QNetworkRequest
 
 from bmnclient.network.access_manager import NetworkAccessManager
-from bmnclient.network.query import HttpJsonQuery, HttpQuery
+from bmnclient.network.query import AbstractHttpJsonQuery, AbstractHttpQuery
 from tests import getLogger
 
 _logger = getLogger(__name__)
@@ -24,11 +24,11 @@ class HttpQueryHelper:
         self.response_finished_called = False
 
 
-class DefaultHttpGetQuery(HttpQuery, HttpQueryHelper):
+class DefaultHttpGetQuery(AbstractHttpQuery, HttpQueryHelper):
     _DEFAULT_BASE_URL = "https://bitmarket.network/"
 
     def __init__(self) -> None:
-        HttpQuery.__init__(self)
+        AbstractHttpQuery.__init__(self)
         HttpQueryHelper.__init__(self)
 
     @property
@@ -62,7 +62,7 @@ class DefaultHttpGetQuery(HttpQuery, HttpQueryHelper):
 
 
 class DefaultHttpPostQuery(DefaultHttpGetQuery):
-    _DEFAULT_METHOD = HttpQuery.Method.POST
+    _DEFAULT_METHOD = AbstractHttpQuery.Method.POST
     _DEFAULT_BASE_URL = "https://bitmarket.network/_not_found_"
 
 
@@ -70,12 +70,27 @@ class BadTlsHttpQuery(DefaultHttpGetQuery):
     _DEFAULT_BASE_URL = "https://expired.badssl.com/"
 
 
-class DummyHttpJsonGetQuery(HttpJsonQuery, HttpQueryHelper):
+class DummyHttpRequest(AbstractHttpQuery, HttpQueryHelper):
+    _DEFAULT_BASE_URL = None
+
+    def __init__(self) -> None:
+        AbstractHttpQuery.__init__(self)
+        HttpQueryHelper.__init__(self)
+
+    def _onResponseData(self, data: bytes) -> bool:
+        self.response_data_called = True
+        return self.response_data_result
+
+    def _onResponseFinished(self) -> None:
+        self.response_finished_called = True
+
+
+class DefaultHttpJsonGetQuery(AbstractHttpJsonQuery, HttpQueryHelper):
     _DEFAULT_BASE_URL = "https://d1.bitmarket.network:30110/v1/sysinfo"
     _DEFAULT_CONTENT_TYPE = "application/vnd.api+json"
 
     def __init__(self) -> None:
-        HttpJsonQuery.__init__(self)
+        AbstractHttpJsonQuery.__init__(self)
         HttpQueryHelper.__init__(self)
 
     @property
@@ -88,20 +103,20 @@ class DummyHttpJsonGetQuery(HttpJsonQuery, HttpQueryHelper):
         return True
 
 
-class DummyHttpJsonPostQuery(DummyHttpJsonGetQuery):
-    _DEFAULT_METHOD = HttpQuery.Method.POST
+class DefaultHttpJsonPostQuery(DefaultHttpJsonGetQuery):
+    _DEFAULT_METHOD = AbstractHttpQuery.Method.POST
 
 
 class TestNetworkQuery(unittest.TestCase):
     application = QCoreApplication(["unittest"])
 
-    def _run_request(self, query: HttpQuery,) -> None:
+    def _run_request(self, query: AbstractHttpQuery,) -> None:
         manager = NetworkAccessManager()
 
         request = query.createRequest()
-        if query.method == HttpQuery.Method.GET:
+        if query.method == AbstractHttpQuery.Method.GET:
             response = manager.get(request)
-        elif query.method == HttpQuery.Method.POST:
+        elif query.method == AbstractHttpQuery.Method.POST:
             # noinspection PyTypeChecker
             response = manager.post(request, query.content)
         else:
@@ -118,6 +133,7 @@ class TestNetworkQuery(unittest.TestCase):
         self.assertEqual(q.url, "https://bitmarket.network/")
         self.assertEqual(q.arguments, {})
         self.assertEqual(q.statusCode, None)
+        self.assertFalse(q.isDummyRequest)
 
         # empty argument list
         request = q.createRequest()
@@ -164,6 +180,7 @@ class TestNetworkQuery(unittest.TestCase):
         self.assertFalse(q.isSuccess)
         self._run_request(q)
         self.assertTrue(q.isSuccess)
+        self.assertEqual(q.statusCode, 200)
         self.assertTrue(q.response_data_called)
         self.assertTrue(q.response_finished_called)
 
@@ -196,8 +213,17 @@ class TestNetworkQuery(unittest.TestCase):
         self.assertFalse(q.response_data_called)
         self.assertTrue(q.response_finished_called)
 
+    def test_dummy_http_query_run(self) -> None:
+        q = DummyHttpRequest()
+        self.assertTrue(q.isDummyRequest)
+        self.assertFalse(q.isSuccess)
+        q.runDummyRequest()
+        self.assertTrue(q.isSuccess)
+        self.assertFalse(q.response_data_called)
+        self.assertTrue(q.response_finished_called)
+
     def test_http_json_query(self) -> None:
-        q = DummyHttpJsonGetQuery()
+        q = DefaultHttpJsonGetQuery()
         request = q.createRequest()
         header = request.header(QNetworkRequest.ContentTypeHeader)
         self.assertGreater(len(q.contentType), len("application/"))
@@ -209,14 +235,14 @@ class TestNetworkQuery(unittest.TestCase):
 
     def test_http_json_query_run(self) -> None:
         # normal GET
-        q = DummyHttpJsonGetQuery()
+        q = DefaultHttpJsonGetQuery()
         self.assertFalse(q.isSuccess)
         self._run_request(q)
         self.assertTrue(q.isSuccess)
         self.assertIsInstance(q.response_data, dict)
 
         # normal POST
-        q = DummyHttpJsonPostQuery()
+        q = DefaultHttpJsonPostQuery()
         self.assertFalse(q.isSuccess)
         self._run_request(q)
         self.assertFalse(q.isSuccess)

@@ -6,6 +6,7 @@ from typing import Union, Optional, List
 
 from .. import loading_level
 from . import net_cmd
+from ..network.query import AbstractHttpQuery
 
 log = logging.getLogger(__name__)
 
@@ -77,8 +78,8 @@ class IncomingTransferCommand(net_cmd.AddressHistoryCommand, DummyCommandBase):
         return None
 
 
-class UndoTransactionCommand(net_cmd.BaseNetworkCommand):
-    _METHOD = net_cmd.HttpMethod.POST
+class UndoTransactionCommand(net_cmd.AbstractQuery):
+    _DEFAULT_METHOD = AbstractHttpQuery.Method.POST
     action = "coins"
     level = loading_level.LoadingLevel.NONE
 
