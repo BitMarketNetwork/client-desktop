@@ -14,18 +14,11 @@ from ..version import Product, Timer
 
 
 class AbstractQuery(QObject):  # TODO kill QObject?
-    _ENCODING = Product.ENCODING
-
-    def __init__(self) -> None:
-        super().__init__()
-        self._logger = Logger.getClassLogger(__name__, self.__class__)
-
-
-class AbstractHttpQuery(AbstractQuery):
     class Method(Enum):
         GET = auto()
         POST = auto()
 
+    _ENCODING = Product.ENCODING
     _DEFAULT_BASE_URL: Optional[str] = None
     _DEFAULT_METHOD = Method.GET
     _DEFAULT_CONTENT_TYPE = ""
@@ -78,6 +71,7 @@ class AbstractHttpQuery(AbstractQuery):
 
     def __init__(self) -> None:
         super().__init__()
+        self._logger = Logger.getClassLogger(__name__, self.__class__)
         self._status_code: Optional[int] = None
         self._response: Optional[QNetworkReply] = None
         self._is_success = False
@@ -156,8 +150,6 @@ class AbstractHttpQuery(AbstractQuery):
         requests = QNetworkRequest(url)
         for (a, v) in self._REQUEST_ATTRIBUTE_LIST:
             requests.setAttribute(a, v)
-        # TODO requests.setHttp2Configuration()
-        # TODO requests.setSslConfiguration()
         requests.setMaximumRedirectsAllowed(0)
         requests.setTransferTimeout(Timer.NETWORK_TRANSFER_TIMEOUT)
 
@@ -251,7 +243,7 @@ class AbstractHttpQuery(AbstractQuery):
         raise NotImplementedError
 
 
-class AbstractHttpJsonQuery(AbstractHttpQuery):
+class AbstractJsonQuery(AbstractQuery):
     _DEFAULT_CONTENT_TYPE = "application/json"
 
     def __init__(self) -> None:
