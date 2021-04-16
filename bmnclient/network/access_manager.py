@@ -96,7 +96,7 @@ class NetworkAccessManager(QNetworkAccessManager):
         self._tls_config = self._createTlsConfiguration()
         self._http2_config = None  # TODO QHttp2Configuration not supported
 
-        self.setAutoDeleteReplies(False)
+        self.setAutoDeleteReplies(True)
         self.enableStrictTransportSecurityStore(False)
         self.setCache(self._cache)
         self.setCookieJar(self._cookie_jar)

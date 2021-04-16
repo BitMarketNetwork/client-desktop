@@ -72,7 +72,7 @@ class HttpQuery(AbstractQuery):
             False
         ), (
             QNetworkRequest.AutoDeleteReplyOnFinishAttribute,
-            False  # TODO
+            True
         )
     )
 
@@ -81,6 +81,7 @@ class HttpQuery(AbstractQuery):
         self._status_code: Optional[int] = None
         self._request: Optional[QNetworkRequest] = None
         self._response: Optional[QNetworkReply] = None
+        self._is_success = False
 
     @property
     def url(self) -> str:
@@ -106,35 +107,169 @@ class HttpQuery(AbstractQuery):
     def statusCode(self) -> Optional[int]:
         return self._status_code
 
-    @statusCode.setter
-    def statusCode(self, value: int):
+    @property
+    def isSuccess(self) -> bool:
+        return self._is_success
+
+    def createRequest(self) -> Optional[QNetworkRequest]:
+        # prepare full url
+        url_string = self.url
+        url_query = ""
+        for (k, v) in self.arguments.items():
+            bad_argument = False
+            if not isinstance(k, str) or not isinstance(v, (str, int)):
+                bad_argument = True
+            else:
+                k = encodeUrlString(str(k))
+                v = encodeUrlString(str(v))
+                if k is None or v is None:
+                    bad_argument = True
+            if bad_argument:
+                self._logger.error(
+                    "Cannot create request for URL \"%s\", "
+                    + "invalid query arguments.",
+                    url_string)
+                return None
+            if url_query:
+                url_query += "&"
+            url_query += k + "=" + v
+        if url_query:
+            url_string += "?" + url_query
+
+        url = QUrl(url_string, QUrl.StrictMode)
+        if not url.isValid():
+            self._logger.error(
+                "Cannot create request, invalid URL \"%s\".",
+                url_string)
+            return None
+
+        # configure QNetworkRequest
+        requests = QNetworkRequest(url)
+        for (a, v) in self._REQUEST_ATTRIBUTE_LIST:
+            requests.setAttribute(a, v)
+        # TODO requests.setHttp2Configuration()
+        # TODO requests.setSslConfiguration()
+        requests.setMaximumRedirectsAllowed(0)
+        requests.setTransferTimeout(Timer.NETWORK_TRANSFER_TIMEOUT)
+
+        # set content type
+        content_type = self.contentType
+        if content_type:
+            requests.setHeader(
+                QNetworkRequest.ContentTypeHeader,
+                content_type)
+
+        return requests
+
+    def setResponse(self, response: QNetworkReply) -> None:
+        assert self._response is None
+        response.readyRead.connect(self.__onResponseRead)
+        response.finished.connect(self.__onResponseFinished)
+        response.errorOccurred.connect(self.__onResponseError)
+        response.sslErrors.connect(self.__onResponseTlsError)
+        response.redirected.connect(self.__onResponseRedirected)
+        self._is_success = False
+        self._response = response
+
+    def __setStatusCode(self) -> None:
         if self._status_code is None:
-            self._status_code = value
+            status_code = self._response.attribute(
+                QNetworkRequest.HttpStatusCodeAttribute)
+            if status_code:
+                self._status_code = int(status_code)
+            else:
+                self._status_code = 0
+            self._logger.debug("HTTP status code: %i", self._status_code)
+
+    def __onResponseRead(self) -> None:
+        self.__setStatusCode()
+        if not self._onResponseData(self._response.readAll()):
+            self._response.abort()
+
+    def __onResponseFinished(self) -> None:
+        self.__setStatusCode()
+        while self._response.bytesAvailable():
+            self.__onResponseRead()
+
+        if (
+                self._status_code is not None
+                and self._status_code > 0
+                and self._response is not None
+                and self._response.error() == QNetworkReply.NoError
+                and self._response.isFinished()
+        ):
+            self._is_success = True
         else:
-            raise AttributeError("status is already set.")
+            self._is_success = False
 
-    def createRequestData(self) -> Optional[dict]:
-        return {}
+        self._onResponseFinished()
+        # self._response.deleteLater()
+        self._response = None
 
-    def onResponseData(self, data: bytes) -> bool:
+    def __onResponseError(self, code: QNetworkReply.NetworkError) -> None:
+        if code in (
+            QNetworkReply.ContentAccessDenied,
+            QNetworkReply.ContentNotFoundError,
+        ):
+            return
+
+        self._logger.error(
+            "Failed to read response, connection error: %s",
+            Logger.errorToString(
+                int(code),  # noqa
+                self._response.errorString()))
+
+    def __onResponseRedirected(self, url: QUrl) -> None:
+        Logger.fatal(
+            "Redirect to \"{}\" detected, but redirects was disabled."
+            .format(url.toString()),
+            self._logger)
+
+    def __onResponseTlsError(
+            self,
+            error_list: List[QSslError]) -> None:
+        for e in error_list:
+            self._logger.error(
+                "Failed to read response, TLS error: %s",
+                Logger.errorToString(int(e.error()), e.errorString()))
+
+    def _onResponseData(self, data: bytes) -> bool:
         raise NotImplementedError
 
-    def onResponseFinished(self) -> None:
+    def _onResponseFinished(self) -> None:
         raise NotImplementedError
 
 
 class HttpJsonQuery(HttpQuery):
+    _DEFAULT_CONTENT_TYPE = "application/json"
+
     def __init__(self) -> None:
         super().__init__()
         self._json_buffer = BytesIO()
 
-    def onResponseData(self, data) -> bool:
+    @property
+    def content(self) -> bytes:
+        value = self.jsonContent
+        if value:
+            try:
+                return json.dumps(value).encode(encoding=self._ENCODING)
+            except UnicodeError as e:
+                self._logger.error(
+                    "Failed to encode JSON request: %s",
+                    str(e))
+        return b""
+
+    @property
+    def jsonContent(self) -> Optional[dict]:
+        raise NotImplementedError
+
+    def _onResponseData(self, data) -> bool:
         # TODO limit downloaded size
         # TODO stream mode
         self._json_buffer.write(data)
         return True
 
-    def onResponseFinished(self) -> None:
+    def _onResponseFinished(self) -> None:
         response = self._json_buffer.getvalue()
         self._json_buffer.close()
 
@@ -155,7 +290,7 @@ class HttpJsonQuery(HttpQuery):
 
         if not isinstance(response, dict):
             response = None
-        self.processResponse(response)
+        self._processResponse(response)
 
-    def processResponse(self, response: Optional[dict]) -> None:
+    def _processResponse(self, response: Optional[dict]) -> bool:
         raise NotImplementedError
