@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import json
 import logging
-import sys
 from typing import Iterable, List, Optional, Tuple
 
 import PySide2.QtCore as qt_core
-import PySide2.QtNetwork as qt_network
 
 from . import server_error
 from .. import loading_level
@@ -232,8 +230,6 @@ class LookForHDAddresses(AddressInfoCommand):
     """
     MAX_EMPTY_NUMBER = 6
     level = loading_level.LoadingLevel.ADDRESSES
-    verbose = False
-    _low_priority = True
 
     def __init__(self, coin: coins.CoinType, parent, hd_index=0, empty_count: int = 0, segwit: bool = True, hd_: hd.HDNode = None):
         super().__init__(None, parent=parent)
@@ -246,8 +242,7 @@ class LookForHDAddresses(AddressInfoCommand):
             self._address: str = self._hd.to_address(
                 key.AddressType.P2WPKH if segwit else key.AddressType.P2PKH)
             while self._address in self._coin.addressList:
-                if self.verbose:
-                    log.warning(f"address exists :{self._address}")
+                log.warning(f"address exists :{self._address}")
                 self._empty_count = 0
                 if self._segwit:
                     self._segwit = False
@@ -302,11 +297,10 @@ class UpdateAddressInfoCommand(AddressInfoCommand):
     """
     action = "coins"
     _server_action = "address"
-    verbose = False
     level = loading_level.LoadingLevel.TRANSACTIONS
 
-    def __init__(self, wallet: address.CAddress, parent = None, **kwargs):
-        super().__init__(wallet, parent=parent, high_priority=True, **kwargs)
+    def __init__(self, wallet: address.CAddress, parent=None, **kwargs):
+        super().__init__(wallet, parent=parent, **kwargs)
 
     @property
     def args(self):
@@ -314,8 +308,7 @@ class UpdateAddressInfoCommand(AddressInfoCommand):
 
     def process_attr(self, table):
         assert self._address.name == table["address"]
-        if self.verbose:
-            log.warning(table)
+        log.warning(table)
         # type important!! do not remove
         type_ = table["type"]
         txCount = table["number_of_transactions"]
@@ -332,7 +325,7 @@ class UpdateAddressInfoCommand(AddressInfoCommand):
             if diff > 0 and not self._address.is_going_update:
                 log.debug("Need to download more %s tx for %s",
                           diff, self._address)
-                return AddressHistoryCommand(self._address, parent=self,  high_priority=True)
+                return AddressHistoryCommand(self._address, parent=self)
 
 
 class AddressHistoryCommand(AddressInfoCommand):
@@ -340,7 +333,6 @@ class AddressHistoryCommand(AddressInfoCommand):
     _server_action = "history"
     level = loading_level.LoadingLevel.TRANSACTIONS
 
-    verbose = False
     __prev_wallet = None
     DEFAULT_LIMIT = 50
 
@@ -370,15 +362,13 @@ class AddressHistoryCommand(AddressInfoCommand):
             self.__last_offset = 'base'
         self.__limit = limit
         self.__tx_count = tx_count
-        if self.verbose:
-            log.debug(
-                f"request: FORTH:{self.__forth} first off:{self.__first_offset} last off:{self.__last_offset}")
+        log.debug(
+            f"request: FORTH:{self.__forth} first off:{self.__first_offset} last off:{self.__last_offset}")
 
     def process_attr(self, table):
         assert table.get("address") == self._address.name
-        if self.verbose:
-            log.debug(
-                f"answer: first off:{table['first_offset']} last off:{table['last_offset']}")
+        log.debug(
+            f"answer: first off:{table['first_offset']} last off:{table['last_offset']}")
         last_offset = table["last_offset"]
         # beware getter!
         self._address.last_offset = last_offset
@@ -441,8 +431,7 @@ class AddressHistoryCommand(AddressInfoCommand):
             get.update({
                 "last_offset": self.__last_offset,
             })
-        if self.verbose:
-            log.info(f"get history opts: {get}  me:{id(self)}")
+        log.info(f"get history opts: {get}  me:{id(self)}")
         return get
 
     def __process_transactions(self, txs: dict):
@@ -499,11 +488,9 @@ class AbstractMultyMempoolCommand(JsonStreamMixin, BaseNetworkCommand):
 
 
 class AddressMultyMempoolCommand(AbstractMultyMempoolCommand):
-    verbose = False
     MAX_TIMES = 5
     WAIT_CHUNK = 100
     WAIT_TIMEOUT = 3000
-    _high_priority = True
 
     def __init__(self, wallet_list: List[address.CAddress], parent, counter=0, hash_=None):
         super().__init__(wallet_list=wallet_list, parent=parent, hash_=hash_)
@@ -511,8 +498,7 @@ class AddressMultyMempoolCommand(AbstractMultyMempoolCommand):
         self._coin = wallet_list[0].coin
 
     def process_attr(self, table):
-        if self.verbose:
-            log.warning(table)
+        log.warning(table)
 
         txs = table["tx_list"]
         self._hash = table["hash"]
@@ -523,8 +509,7 @@ class AddressMultyMempoolCommand(AbstractMultyMempoolCommand):
 
     def __process_transactions(self, txs: dict):
         for name, body in txs.items():
-            if self.verbose:
-                log.debug(body)
+            log.debug(body)
             self.__process_transaction(name, body)
 
     def __process_transaction(self, name: str, body: dict) -> None:
@@ -540,8 +525,7 @@ class AddressMultyMempoolCommand(AbstractMultyMempoolCommand):
                     Application.instance().uiManager.process_incoming_tx(tx)
 
     def __send_again(self):
-        if self.verbose:
-            log.debug(f"sleep and check mempool again; {self.__counter}")
+        log.debug(f"sleep and check mempool again; {self.__counter}")
         if self.__counter <= self.MAX_TIMES:
             #to = self.WAIT_TIMEOUT
             #while to >= 0:
@@ -568,8 +552,6 @@ class AddressMultyMempoolCommand(AbstractMultyMempoolCommand):
 
 
 class MempoolMonitorCommand(AbstractMultyMempoolCommand):
-    verbose = True
-
     def __init__(self, coin: coins.CoinType, parent, hash_=None):
         super().__init__(wallet_list=iter(coin.addressList), parent=parent, hash_=hash_)
         self._coin = coin
@@ -579,13 +561,10 @@ class MempoolMonitorCommand(AbstractMultyMempoolCommand):
             super().onResponseFinished()
 
     def process_attr(self, table):
-        if self.verbose:
-            log.warning(table)
-
+        log.warning(table)
         self._hash = table["hash"]
         for name, body in table["tx_list"].items():
-            if self.verbose:
-                log.debug(body)
+            log.debug(body)
             self.__process_transaction(name, body)
 
     def __process_transaction(self, name: str, body: dict) -> None:
@@ -605,8 +584,6 @@ class AddressUnspentCommand(AddressInfoCommand):
     action = "coins"
     _server_action = "unspent"
     level = loading_level.LoadingLevel.NONE
-    _high_priority = True
-    verbose = False
 
     def __init__(self, wallet: address.CAddress, first_offset=None,
                  last_offset=None, unspent=None, calls: int = 0, parent=None):
@@ -635,12 +612,10 @@ class AddressUnspentCommand(AddressInfoCommand):
     def process_attr(self, table):
         assert table.get("address") == self._address.name
         last_offset = table["last_offset"]
-        if self.verbose:
-            log.debug("TX IN ANSWER %d ,%s", len(table["tx_list"]), self)
+        log.debug("TX IN ANSWER %d ,%s", len(table["tx_list"]), self)
         self._unspent += table["tx_list"]
         if last_offset is not None:
-            if self.verbose:
-                log.debug(f"Next history request for {self._address}")
+            log.debug(f"Next history request for {self._address}")
             return self.clone(last_offset)
         else:
             self.__process_transactions()
@@ -655,9 +630,8 @@ class AddressUnspentCommand(AddressInfoCommand):
 
     def __process_transactions(self):
         # map it to separate logic layers
-        if self.verbose:
-            log.debug(
-                f"UNSPENT COUNT: {len(self._unspent)} from {self._calls} calls")
+        log.debug(
+            f"UNSPENT COUNT: {len(self._unspent)} from {self._calls} calls")
         self._address.process_unspents(self._unspent)
         self._address.coin.model._tx_controller.recalcSources()  # TODO
 
@@ -665,9 +639,7 @@ class AddressUnspentCommand(AddressInfoCommand):
 class BroadcastTxCommand(JsonStreamMixin, BaseNetworkCommand):
     _METHOD = HttpMethod.POST
     action = "coins"
-    verbose = False
     level = loading_level.LoadingLevel.NONE
-    _high_priority = True
 
     def __init__(self, mtx: mutable_tx.MutableTransaction, parent):
         super().__init__(parent)

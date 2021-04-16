@@ -316,8 +316,7 @@ class DbWrapper:
             we don't put some fields in update scope cause we don't expect them being changed
             """
         else:
-            if net_cmd.AddressHistoryCommand.verbose:
-                log.debug("saving wallet info %r" % wallet)
+            log.debug("saving wallet info %r" % wallet)
             query = f"""
             UPDATE  {self.addresses_table} SET
                 {self.label_column} = ?,

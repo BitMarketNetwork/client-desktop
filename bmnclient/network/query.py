@@ -119,6 +119,10 @@ class AbstractQuery(QObject):  # TODO kill QObject?
             c(self)
 
     @property
+    def skip(self) -> bool:
+        return False
+
+    @property
     def isDummyRequest(self) -> bool:
         return self.url is None
 

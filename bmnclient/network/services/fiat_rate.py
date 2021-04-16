@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Type, TYPE_CHECKING, Union
 
 from PySide2.QtCore import QObject
 
-from ..query import AbstractHttpJsonQuery
+from ..query import AbstractJsonQuery
 from ...coins.currency import \
     EuroFiatCurrency, \
     FiatCurrency, \
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from ...coins.list import CoinList
 
 
-class AbstractFiatRateService(AbstractHttpJsonQuery):
+class AbstractFiatRateService(AbstractJsonQuery):
     _SHORT_NAME = ""
     _FULL_NAME = ""
     _COIN_MAP: Final = {  # local: service

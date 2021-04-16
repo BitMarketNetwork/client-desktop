@@ -37,7 +37,7 @@ class SettingsManager(QObject):
         self._default_font = self._application.defaultFont
 
     ############################################################################
-    # FiatRateService
+    # AbstractFiatRateService
     ############################################################################
 
     fiatRateServiceChanged = QSignal()

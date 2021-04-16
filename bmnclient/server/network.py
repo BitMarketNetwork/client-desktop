@@ -1,5 +1,4 @@
 import logging
-from typing import Callable, Optional
 
 import PySide2.QtCore as qt_core
 
