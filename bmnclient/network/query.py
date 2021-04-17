@@ -15,7 +15,7 @@ from ..logger import Logger
 from ..version import Product, Timer
 
 
-class AbstractQuery(QObject):  # TODO kill QObject?
+class AbstractQuery:
     FinishedCallback = Callable[[object], None]
 
     class Method(Enum):
@@ -80,6 +80,9 @@ class AbstractQuery(QObject):  # TODO kill QObject?
         self._response: Optional[QNetworkReply] = None
         self._is_success = False
         self._finished_callback_list: List[AbstractQuery.FinishedCallback] = []
+
+    def __str__(self) -> str:
+        return self.__class__.__name__
 
     @property
     def url(self) -> str:
@@ -183,13 +186,13 @@ class AbstractQuery(QObject):  # TODO kill QObject?
 
     def setResponse(self, response: QNetworkReply) -> None:
         assert self._response is None
+        self._is_success = False
+        self._response = response
         response.readyRead.connect(self.__onResponseRead)
         response.finished.connect(self.__onResponseFinished)
         response.errorOccurred.connect(self.__onResponseError)
         response.sslErrors.connect(self.__onResponseTlsError)
         response.redirected.connect(self.__onResponseRedirected)
-        self._is_success = False
-        self._response = response
 
     def __setStatusCode(self, status_code: Optional[int] = None) -> None:
         if self._status_code is not None:
