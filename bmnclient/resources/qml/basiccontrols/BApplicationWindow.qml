@@ -24,6 +24,6 @@ ApplicationWindow {
     font: Qt.font(BBackend.settingsManager.font)
 
     onSceneGraphError: {
-        console.error("QML rendering error ${error}: ${message}") // TODO
+        console.error("QML rendering error %1: %2".arg(error).arg(message))
     }
 }

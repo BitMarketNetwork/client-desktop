@@ -24,7 +24,7 @@ from .key_store import KeyStore
 from .language import Language
 from .logger import Logger
 from .network.services.fiat_rate import FiatRateServiceList
-from .server.thread import ServerThread
+from .network.query_manager import NetworkQueryManager
 from .signal_handler import SignalHandler
 from .utils.meta import classproperty
 from .version import Product, Timer
@@ -130,7 +130,7 @@ class CoreApplication(QObject):
             Qt.QueuedConnection)
 
         self._wallet_thread = WalletThread()
-        self._server_thread = ServerThread()
+        self._network_query_manager = NetworkQueryManager("Default")
 
         self._coin_list = []
         self._fiat_currency_list = FiatCurrencyList(self)
@@ -191,10 +191,9 @@ class CoreApplication(QObject):
     def databaseThread(self) -> WalletThread:
         return self._wallet_thread
 
-    # TODO
     @property
-    def networkThread(self) -> ServerThread:
-        return self._server_thread
+    def networkQueryManager(self) -> NetworkQueryManager:
+        return self._network_query_manager
 
     @property
     def coinList(self) -> CoinList:
@@ -208,17 +207,24 @@ class CoreApplication(QObject):
     def fiatRateServiceList(self) -> FiatRateServiceList:
         return self._fiat_rate_service_list
 
-    def downloadCurrentCurrencyData(self) -> None:
+    def updateCurrentFiatCurrency(self) -> None:
         self._fiat_currency_timer.stop()
-        self.networkThread.network._run_cmd(
-            self._fiat_rate_service_list.current(
-                self._coin_list,
-                self._fiat_currency_list.current),
-            False,
-            True,
-            lambda _: self._fiat_currency_timer.start(
-                10 * 1000 if self.isDebugMode else Timer.FIAT_CURRENCY_DOWNLOAD,
-                self))
+
+        if self.isDebugMode:
+            delay = 10 * 1000
+        else:
+            delay = Timer.FIAT_CURRENCY_UPDATE_DELAY
+
+        service = self._fiat_rate_service_list.current(
+            self._coin_list,
+            self._fiat_currency_list.current
+        )
+        service.putFinishedCallback(
+            lambda _: self._fiat_currency_timer.start(delay, self))
+        self._network_query_manager.put(
+            service,
+            unique=True,
+            high_priority=True)
 
     def findCoin(self, short_name: str) -> Optional[AbstractCoin]:
         for coin in self._coin_list:
@@ -236,7 +242,7 @@ class CoreApplication(QObject):
 
     def timerEvent(self, event: QTimerEvent) -> None:
         if event.timerId() == self._fiat_currency_timer.timerId():
-            self.downloadCurrentCurrencyData()
+            self.updateCurrentFiatCurrency()
 
     @QSlot()
     def _onRunPrivate(self) -> None:
@@ -244,8 +250,7 @@ class CoreApplication(QObject):
 
     def _onRun(self) -> None:
         self._wallet_thread.run()
-        self._server_thread.run()
-        self.downloadCurrentCurrencyData()
+        self.updateCurrentFiatCurrency()
 
     def __onAboutToQuit(self) -> None:
         self._logger.debug("Shutting down...");

@@ -124,6 +124,15 @@ class NetworkAccessManager(QNetworkAccessManager):
                 "\"%s\" network access manager ws created.",
                 self._name)
 
+    @property
+    def tlsConfiguration(self) -> QSslConfiguration:
+        return self._tls_config
+
+    @property
+    def http2Configuration(self) -> None:
+        raise NotImplementedError
+        # return self._http2_config
+
     def _createTlsConfiguration(self) -> QSslConfiguration:
         self._logger.debug(
             "TLS information:"

@@ -55,7 +55,7 @@ class SettingsManager(QObject):
         if index != self._application.fiatRateServiceList.currentIndex:
             self._application.fiatRateServiceList.setCurrentIndex(index)
             self.fiatRateServiceChanged.emit()
-            self._application.downloadCurrentCurrencyData()
+            self._application.updateCurrentFiatCurrency()
 
     ############################################################################
     # FiatCurrency
@@ -77,7 +77,7 @@ class SettingsManager(QObject):
         if index != self._application.fiatCurrencyList.currentIndex:
             self._application.fiatCurrencyList.setCurrentIndex(index)
             self.fiatCurrencyChanged.emit()
-            self._application.downloadCurrentCurrencyData()
+            self._application.updateCurrentFiatCurrency()
 
     ############################################################################
     # Language
