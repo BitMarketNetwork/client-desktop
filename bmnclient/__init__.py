@@ -9,8 +9,8 @@ from .version import Product
 
 if sys.version_info[:3] < Product.PYTHON_MINIMAL_VERSION:
     raise RuntimeError(
-        "{} requires Python version {}.{}.{} or above. "
-        "Current Python version is {}.{}.{}."
+        "{} requires Python version {}.{}.{} or above, "
+        "current Python version is {}.{}.{}"
         .format(
             Product.NAME,
             Product.PYTHON_MINIMAL_VERSION[0],

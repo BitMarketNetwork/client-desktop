@@ -145,7 +145,7 @@ class NetworkAccessManager(QNetworkAccessManager):
             Logger.fatal("Platform doesn't support TLS.", self._logger)
 
         tls = QSslConfiguration()
-        tls.setOcspStaplingEnabled(True)
+        tls.setOcspStaplingEnabled(False)
         tls.setPeerVerifyDepth(0)  # whole certificate chain should be checked
         tls.setPeerVerifyMode(QSslSocket.VerifyPeer)
         tls.setProtocol(QSsl.TlsV1_2OrLater)

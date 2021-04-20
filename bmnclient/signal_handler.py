@@ -34,7 +34,7 @@ class SignalHandler(QObject):
         )
     else:
         raise RuntimeError(
-            "Unsupported platform \"{}\".".format(Platform.TYPE))
+            "unsupported platform \"{}\"".format(Platform.TYPE))
 
     def __init__(self, parent: Optional[QObject] = None) -> None:
         super().__init__(parent=parent)

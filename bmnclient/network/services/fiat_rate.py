@@ -56,7 +56,7 @@ class AbstractFiatRateService(AbstractJsonQuery):
     def fullName(cls) -> str:  # noqa
         return cls._FULL_NAME
 
-    def _processResponse(self, response: Optional[dict]) -> bool:
+    def _processResponse(self, response: Optional[dict]) -> None:
         if (
                 not self.isSuccess
                 or response is None
@@ -80,7 +80,6 @@ class AbstractFiatRateService(AbstractJsonQuery):
                             "Failed to parse fiat rate for \"{}\"."
                             .format(coin.fullName))
                 coin.fiatRate = FiatRate(fiat_rate, self._currency)
-        return True
 
     def _createCoinNameList(self) -> List[str]:
         result = []

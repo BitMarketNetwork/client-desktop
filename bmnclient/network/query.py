@@ -318,5 +318,5 @@ class AbstractJsonQuery(AbstractQuery):
             response = None
         self._processResponse(response)
 
-    def _processResponse(self, response: Optional[dict]) -> bool:
+    def _processResponse(self, response: Optional[dict]) -> None:
         raise NotImplementedError

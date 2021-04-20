@@ -28,7 +28,7 @@ class Platform:
         TYPE: Final = Type.LINUX
     else:
         TYPE: Final = Type.UNKNOWN
-        raise RuntimeError("Unsupported platform \"{}\".".format(sys.platform))
+        raise RuntimeError("unsupported platform \"{}\"".format(sys.platform))
 
     @classmethod
     def isWindows(cls) -> bool:
@@ -47,14 +47,14 @@ def _userConfigPath(user_home_path: PurePath) -> PurePath:
     if Platform.isWindows():
         v = os.environ.get("APPDATA")
         if not v:
-            raise RuntimeError("Can't determine APPDATA directory.")
+            raise RuntimeError("can't determine APPDATA directory")
         return PurePath(v)
     elif Platform.isDarwin():
         return user_home_path / "Library" / "Application Support"
     elif Platform.isLinux():
         return user_home_path / ".config"
     else:
-        raise RuntimeError("Can't determine user directories.")
+        raise RuntimeError("can't determine user directories")
 
 
 def _userApplicationConfigPath(user_config_path: PurePath) -> PurePath:
@@ -65,7 +65,7 @@ def _userApplicationConfigPath(user_config_path: PurePath) -> PurePath:
     elif Platform.isLinux():
         return user_config_path / Product.SHORT_NAME.lower()
     else:
-        raise RuntimeError("Can't determine user directories.")
+        raise RuntimeError("can't determine user directories")
 
 
 class PlatformPaths:

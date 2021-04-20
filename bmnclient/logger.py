@@ -43,6 +43,14 @@ def _qtMessageHandler(message_type, context, message) -> None:
         _qt_logger.error(message)
 
 
+class FileHandler(logging.FileHandler):
+    pass
+
+
+class StreamHandler(logging.StreamHandler):
+    pass
+
+
 class Formatter(logging.Formatter):
     def __init__(self) -> None:
         super().__init__(
@@ -71,12 +79,12 @@ class Logger:
                 return
 
             if file_path:
-                handler = logging.FileHandler(
+                handler = FileHandler(
                     str(file_path),
                     mode="at",
                     encoding=Product.ENCODING)
             else:
-                handler = logging.StreamHandler(stream=sys.stderr)
+                handler = StreamHandler(stream=sys.stderr)
             handler.setFormatter(Formatter())
 
             logging.addLevelName(logging.DEBUG, "dd")
@@ -128,7 +136,7 @@ class Logger:
 
     @classmethod
     def errorToString(cls, error: int, message: str) -> str:
-        return "Error {:d}: {:s}".format(error, message)
+        return "error {:d}: {:s}".format(error, message)
 
     @classmethod
     def osErrorToString(cls, e: OSError) -> str:

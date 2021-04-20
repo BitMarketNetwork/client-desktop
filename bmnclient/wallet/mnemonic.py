@@ -30,7 +30,7 @@ class Mnemonic:
             self._word_list = [word.strip() for word in file.readlines()]
         if len(self._word_list) != self.WORD_COUNT:
             raise RuntimeError(
-                "Wordlist should contain {} words, but it contains {} words."
+                "wordlist should contain {} words, but it contains {} words"
                 .format(self.WORD_COUNT, len(self._word_list)))
 
     @property
@@ -40,8 +40,8 @@ class Mnemonic:
     def getPhrase(self, data: bytes) -> str:
         if len(data) not in self.DATA_LENGTH_LIST:
             raise ValueError(
-                "Data length should be one of the following: {}, "
-                "but data length {}."
+                "data length should be one of the following: {}, "
+                "but data length {}"
                 .format(self.DATA_LENGTH_LIST, len(data)))
         h = Sha256Digest()
         h.update(data)

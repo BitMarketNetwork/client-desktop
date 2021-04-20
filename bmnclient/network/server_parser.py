@@ -36,10 +36,10 @@ class AbstractServerParser:
             value = value_type(item[key_name])
         except KeyError:
             if default_value is None:
-                raise ParseError("Key \"{}\" not found.".format(key_name))
+                raise ParseError("key \"{}\" not found".format(key_name))
             value = default_value
         except (TypeError, ValueError):
-            raise ParseError("Invalid value for key \"{}\".".format(key_name))
+            raise ParseError("invalid value for key \"{}\"".format(key_name))
         return value
 
 
@@ -135,5 +135,5 @@ class ServerTxParser(AbstractServerParser):
             }
         except ParseError as e:
             raise ParseError(
-                "Failed to parse transaction IO: {}"
+                "failed to parse transaction IO: {}"
                 .format(str(e)))
