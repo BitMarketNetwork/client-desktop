@@ -79,14 +79,16 @@ class CheckServerVersionApiQuery(ServerApiQuery):
         if self.statusCode != 200 or data_type != self._ACTION:
             return
 
-        server_name = str(value["name"])
-        server_version_string = str(value["version"][0])
-        server_version = int(value["version"][1])
+        server_data = {
+            "server_name": str(value["name"]),
+            "server_version_string": str(value["version"][0]),
+            "server_version": int(value["version"][1])
+        }
         self._logger.info(
             "Server version: %s %s (0x%08x).",
-            server_name,
-            server_version_string,
-            server_version)
+            server_data["server_name"],
+            server_data["server_version_string"],
+            server_data["server_version"])
 
         if "coins" in value:
             server_coin_list = value["coins"]
@@ -94,29 +96,29 @@ class CheckServerVersionApiQuery(ServerApiQuery):
             for coin in CoreApplication.instance().coinList:
                 self._updateCoinRemoteState(
                     coin,
+                    server_data,
                     server_coin_list.get(coin.shortName, {}))
 
+    @classmethod
     def _updateCoinRemoteState(
-            self,
+            cls,
             coin: AbstractCoin,
-            data: dict) -> None:
-        remote_data = {}
+            server_data: dict,
+            server_coin_data: dict) -> None:
+        server_data = server_data.copy()
         try:
-            remote_data["version_string"] = str(data["version"][0])
-            remote_data["version"] = int(data["version"][1])
+            server_data["version_string"] = str(server_coin_data["version"][0])
+            server_data["version"] = int(server_coin_data["version"][1])
         except (LookupError, TypeError, ValueError):
-            remote_data["version_string"] = "unknown"
-            remote_data["version"] = -1
+            server_data["version_string"] = "unknown"
+            server_data["version"] = -1
         try:
-            remote_data["height"] = int(data["height"])
+            server_data["height"] = int(server_coin_data["height"])
         except (LookupError, TypeError, ValueError):
-            remote_data["height"] = -1
+            server_data["height"] = -1
         try:
-            remote_data["status"] = int(data["status"])
+            server_data["status"] = int(server_coin_data["status"])
         except (LookupError, TypeError, ValueError):
-            remote_data["status"] = -1
+            server_data["status"] = -1
 
-        # TODO
-        coin._remote = remote_data
-        coin.model.remoteState.refresh()
-        #    gui_api.uiManager.serverVersion = versions[1]
+        coin.serverData = server_data

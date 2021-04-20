@@ -33,6 +33,9 @@ class CoinModelInterface:
     def afterAppendAddress(self, address: AbstractAddress) -> None:
         raise NotImplementedError
 
+    def afterSetServerData(self) -> None:
+        raise NotImplementedError
+
 
 class AbstractCoin(Serializable):
     _SHORT_NAME = ""
@@ -68,6 +71,7 @@ class AbstractCoin(Serializable):
         self._fiat_rate = FiatRate(0, NoneFiatCurrency)
         self._amount = 0
         self._address_list = []
+        self._server_data = {}
 
         self._model_factory = model_factory
         self._model: Optional[CoinModelInterface] = self.model_factory(self)
@@ -255,3 +259,13 @@ class AbstractCoin(Serializable):
 
         self.refreshAmount()
         return True
+
+    @property
+    def serverData(self) -> dict:
+        return self._server_data
+
+    @serverData.setter
+    def serverData(self, data: dict) -> None:
+        self._server_data = data
+        if self._model:
+            self.model.afterSetServerData()

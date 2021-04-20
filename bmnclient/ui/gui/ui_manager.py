@@ -97,29 +97,6 @@ class UIManager(QObject):
             fiat_unit=tx_model.amount.fiatUnit)
         self.__tray.showMessage(message, MessageIcon.INFORMATION)
 
-    def fill_coin_info_model(self, coin_map) -> None:
-        for name, data in coin_map.items():
-            remote = {}
-            try:
-                remote["version_string"] = str(data["version"][0])
-                remote["version"] = int(data["version"][1])
-            except (LookupError, TypeError, ValueError):
-                remote["version_string"] = "unknown"
-                remote["version"] = -1
-            try:
-                remote["height"] = int(data["height"])
-            except (LookupError, TypeError, ValueError):
-                remote["height"] = -1
-            try:
-                remote["status"] = int(data["status"])
-            except (LookupError, TypeError, ValueError):
-                remote["status"] = -1
-
-            coin = self._application.findCoin(name)
-            if coin is not None:
-                coin._remote = remote
-                coin.model.remoteState.refresh()
-
     @QProperty(bool, notify=statusChanged)
     def online(self):
         return self.__online

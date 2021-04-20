@@ -43,7 +43,7 @@ class CoinStateModel(AbstractStateModel):
         self._coin.visible = value
 
 
-class CoinRemoteStateModel(AbstractStateModel):
+class CoinServerDataModel(AbstractStateModel):
     __stateChanged = QSignal()
 
     @QProperty(str, notify=__stateChanged)
@@ -101,10 +101,10 @@ class CoinModel(CoinModelInterface, AbstractModel):
             self._coin)
         self.connectModelRefresh(self._state_model)
 
-        self._remote_state_model = CoinRemoteStateModel(
+        self._server_data_model = CoinServerDataModel(
             self._application,
             self._coin)
-        self.connectModelRefresh(self._remote_state_model)
+        self.connectModelRefresh(self._server_data_model)
 
         self._address_list_model = AddressListModel(
             self._application,
@@ -186,6 +186,9 @@ class CoinModel(CoinModelInterface, AbstractModel):
         self._tx_list_model.addSourceModel(address.model.txList)
         self._application.networkThread.update_wallet(address)  # TODO
         self._application.networkThread.unspent_list(address)  # TODO
+
+    def afterSetServerData(self) -> None:
+        self._server_data_model.refresh()
 
 
 class CoinListModel(AbstractListModel):
