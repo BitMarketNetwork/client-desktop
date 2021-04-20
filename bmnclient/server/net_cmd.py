@@ -92,102 +92,10 @@ class AbstractQuery(HttpQuery):
     def args_post(self) -> Tuple[str, dict]:
         return "", {}
 
-    def process_answer(self, data) -> BaseNetworkCommand:
-        if not data:
-            # raise server_error.EmptyReplyError()
-            return
-        if not isinstance(data, dict):
-            try:
-                body = json.loads(data)
-            except Exception as ex:
-                raise server_error.JsonError(ex)
-        else:
-            body = data
-        try:
-            if 'errors' in body:
-                return self.handle_errors(body.get('errors'))
-            data = body['data']
-            if not SILENCE_CHECKS and data['type'] != self.server_action:
-                raise server_error.WrongActionError()
-            self.process_meta(body['meta'])
-            return self.process_attr(data['attributes'])
-        except KeyError as ke:
-            raise server_error.ContentError(ke) from ke
-        # when reply aborted
-        pass
-
-    def process_meta(self, meta):
-        timeframe = int(meta['timeframe'])
-        assert timeframe > 0
-        if timeframe > 1e9:
-            log.warning('Server answer has taken more than 1s !!!')
-
     def process_attr(self, table):
         pass
 
-    def handle_errors(self, errors):
-        for error in errors:
-            self.handle_error(error)
-
-    def handle_error(self, error):
-        # self.output(self.tr("Server error"), error.get('detail'))
-        log.critical(f"Server error: {error.get('detail')}")
-
-    @property
-    def skip(self) -> bool:
-        return False
-
-
-class JsonStreamMixin:
-    def __init__(self, parent, **kwargs):
-        super().__init__(parent, **kwargs)
-        self._json = io.BytesIO()
-
-    def onResponseData(self, data) -> bool:
-        self._json.write(data)
-        return True
-
-    def onResponseFinished(self) -> None:
-        http_error = self.statusCode
-        if not (http_error < 400 or http_error == 500 or http_error == 404):
-            return
-        try:
-            next_ = self.process_answer(self._json.getvalue())
-            # important !!! ( for debugging for a while)
-            self._json = io.BytesIO()
-            if next_:
-                from ..ui.gui import CoreApplication
-                CoreApplication.instance().networkThread.network.push_cmd(next_)
-        except server_error.BaseNetError as se:
-            HEAD_LEN = 1024
-            log.error(f"Processing answer error: {se}. HTTP CODE: TODO")
-            log.error(
-                f"full answer(first {HEAD_LEN} symbols): {self._json.getvalue()[:HEAD_LEN]}")
-            log.error(traceback.format_exc(limit=5, chain=True))
-
-    def __len__(self) -> int:
-        return self._json.__sizeof__()
-
-
-class CheckServerVersionCommand(JsonStreamMixin, BaseNetworkCommand):
-    action = 'sysinfo'
-    verbose = False
-    level = loading_level.LoadingLevel.NONE
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-    def process_attr(self, table):
-        versions = table["version"][::-1]
-        log.debug(f"server version {versions[0]} / {versions[1]}")
-        from ..ui.gui import Application
-        gui_api = Application.instance()
-        if gui_api:
-            gui_api.uiManager.serverVersion = versions[1]
-            gui_api.uiManager.fill_coin_info_model(table["coins"])
-
-
-class UpdateCoinsInfoCommand(JsonStreamMixin, BaseNetworkCommand):
+class UpdateCoinsInfoCommand(AbstractQuery):
     action = "coins"
     level = loading_level.LoadingLevel.NONE
     unique = True
