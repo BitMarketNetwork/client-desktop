@@ -1,10 +1,31 @@
-# JOK++
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Type, Union
 
 from .meta import classproperty
 from .string import toSnakeCase
+
+
+class ParseError(LookupError):
+    pass
+
+
+def parseItemKey(
+        item: Union[dict, list],
+        key_name: Union[str, int],
+        value_type: Type,
+        default_value: Any = None) -> Any:
+    try:
+        value = value_type(item[key_name])
+    except (KeyError, IndexError):
+        if default_value is None:
+            raise ParseError(
+                "key \"{}\" not found".format(str(key_name)))
+        value = default_value
+    except (TypeError, ValueError):
+        raise ParseError(
+            "invalid value for key \"{}\"".format(str(key_name)))
+    return value
 
 
 def serializable(func) -> Any:
@@ -56,7 +77,7 @@ class Serializable:
             return [self._serialize(v) for v in value]
 
         raise TypeError(
-            "Cannot serialize value of type \"{}\"."
+            "cannot serialize value of type \"{}\"."
             .format(str(type(value))))
 
     @classmethod
@@ -72,5 +93,5 @@ class Serializable:
             return [cls._deserialize(args, key, v) for v in value]
 
         raise TypeError(
-            "Cannot deserialize value of type \"{}\"."
+            "cannot deserialize value of type \"{}\"."
             .format(str(type(value))))

@@ -2,8 +2,9 @@
 from typing import Any, Optional
 
 from ..query import AbstractJsonQuery
-from ...logger import Logger
 from ...coins.coin import AbstractCoin
+from ...logger import Logger
+from ...utils.serialize import ParseError, parseItemKey
 
 
 class AbstractServerApiQuery(AbstractJsonQuery):
@@ -17,15 +18,17 @@ class AbstractServerApiQuery(AbstractJsonQuery):
 
     def __processErrorList(self, error_list: list) -> None:
         if not error_list:
-            raise LookupError("empty error list")
+            raise ParseError("empty error list")
         for error in error_list:
-            self._processError(int(error["code"]), error["detail"])
+            self._processError(
+                parseItemKey(error, "code", int),
+                parseItemKey(error, "detail", str))
 
     def __processData(self, data: dict) -> None:
-        data_id = str(data["id"])
-        data_type = str(data["type"])
-        data_attributes = data.get("attributes", None)
-        self._processData(data_id,  data_type, data_attributes)
+        data_id = parseItemKey(data, "id", str)
+        data_type = parseItemKey(data, "type", str)
+        data_attributes = parseItemKey(data, "attributes", dict, {})
+        self._processData(data_id, data_type, data_attributes)
 
     def _processResponse(self, response: Optional[dict]) -> None:
         try:
@@ -41,19 +44,14 @@ class AbstractServerApiQuery(AbstractJsonQuery):
             elif "data" in response:
                 self.__processData(response["data"])
             else:
-                raise LookupError("empty response")
-        except KeyError as e:
-            self._logger.error(
-                "Invalid server response: key %s not found.",
-                str(e).replace("'", "\""))
-        except (LookupError, TypeError, ValueError) as e:
-            self._logger.error("Invalid server response: %s.", str(e))
+                raise ParseError("empty response")
 
-        meta = response.get("meta", {})
-        if "timeframe" in meta:
-            if int(meta["timeframe"]) > 1e9:
+            meta = parseItemKey(response, "meta", dict, {})
+            if parseItemKey(meta, "timeframe", int, 0) > 1e9:
                 self._logger.warning(
-                    "Server answer has taken more than 1s.")
+                    "Server response has taken more than 1 second.")
+        except ParseError as e:
+            self._logger.error("Invalid server response: %s.", str(e))
 
     def _processError(self, error: int, message: str) -> None:
         self._logger.error(
@@ -79,11 +77,12 @@ class ServerVersionApiQuery(AbstractServerApiQuery):
         if self.statusCode != 200 or data_type is None:
             return
 
+        server_version = parseItemKey(value, "version", list)
         server_data = {
             "server_url": self._DEFAULT_BASE_URL,
-            "server_name": str(value["name"]),
-            "server_version_string": str(value["version"][0]),
-            "server_version": int(value["version"][1])
+            "server_name": parseItemKey(value, "name", str),
+            "server_version_string": parseItemKey(server_version, 0, str),
+            "server_version": parseItemKey(server_version, 1, int)
         }
         self._logger.info(
             "Server version: %s %s (0x%08x).",
@@ -106,23 +105,14 @@ class ServerVersionApiQuery(AbstractServerApiQuery):
             coin: AbstractCoin,
             server_data: dict,
             server_coin_data: dict) -> None:
-        server_data = server_data.copy()
-        try:
-            server_data["version_string"] = str(server_coin_data["version"][0])
-            server_data["version"] = int(server_coin_data["version"][1])
-        except (LookupError, TypeError, ValueError):
-            server_data["version_string"] = "unknown"
-            server_data["version"] = -1
-        try:
-            server_data["height"] = int(server_coin_data["height"])
-        except (LookupError, TypeError, ValueError):
-            server_data["height"] = -1
-        try:
-            server_data["status"] = int(server_coin_data["status"])
-        except (LookupError, TypeError, ValueError):
-            server_data["status"] = -1
-
-        coin.serverData = server_data
+        coin_version = parseItemKey(server_coin_data, "version", list, [])
+        coin.serverData = {
+            **server_data,
+            "version_string": parseItemKey(coin_version, 0, str, "unknown"),
+            "version": parseItemKey(coin_version, 1, int, -1),
+            "height": parseItemKey(server_coin_data, "height", int, -1),
+            "status": parseItemKey(server_coin_data, "status", int, -1),
+        }
 
 
 class CoinsInfoApiQuery(AbstractServerApiQuery):
