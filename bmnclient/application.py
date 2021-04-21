@@ -23,13 +23,16 @@ from .config import UserConfig
 from .key_store import KeyStore
 from .language import Language
 from .logger import Logger
-from .network.services.fiat_rate import FiatRateServiceList
+from .network.api_v1.query import \
+    AbstractServerApiQuery, \
+    CoinsInfoApiQuery, \
+    ServerVersionApiQuery
 from .network.query_manager import NetworkQueryManager
+from .network.services.fiat_rate import FiatRateServiceList
 from .signal_handler import SignalHandler
 from .utils.meta import classproperty
 from .version import Product, Timer
 from .wallet.thread import WalletThread
-from .network.api_v1.query import ServerVersionApiQuery
 
 if TYPE_CHECKING:
     from .coins.coin import AbstractCoin
@@ -68,6 +71,22 @@ class CommandLine:
 
 
 class CoreApplication(QObject):
+    _TIMER_INFO_LIST = (
+        (
+            Timer.UPDATE_FIAT_CURRENCY_DELAY,
+            lambda self, timer_id:
+                self._onTimerUpdateCurrentFiatCurrency(timer_id)
+        ), (
+            Timer.UPDATE_SERVER_VERSION_DELAY,
+            lambda self, timer_id:
+                self._onTimerUpdateServerVersion(timer_id)
+        ), (
+            Timer.UPDATE_COINS_INFO_DELAY,
+            lambda self, timer_id:
+                self._onTimerUpdateCoinsInfo(timer_id)
+        ),
+    )
+
     _instance: CoreApplication = None
 
     def __init__(
@@ -117,7 +136,6 @@ class CoreApplication(QObject):
             self.__onAboutToQuit,
             Qt.DirectConnection)
 
-        import os
         # SignalHandler
         self._signal_handler = SignalHandler(self)
         self._signal_handler.SIGINT.connect(
@@ -137,8 +155,7 @@ class CoreApplication(QObject):
         self._fiat_currency_list = FiatCurrencyList(self)
         self._fiat_rate_service_list = FiatRateServiceList(self)
 
-        self._fiat_currency_timer = QBasicTimer()
-        self._server_version_timer = QBasicTimer()
+        self._timer_list = [QBasicTimer() for _ in self._TIMER_INFO_LIST]
 
     def _initCoinList(
             self,
@@ -210,35 +227,6 @@ class CoreApplication(QObject):
     def fiatRateServiceList(self) -> FiatRateServiceList:
         return self._fiat_rate_service_list
 
-    def updateCurrentFiatCurrency(self) -> None:
-        self._fiat_currency_timer.stop()
-
-        if self.isDebugMode:
-            delay = 10 * 1000
-        else:
-            delay = Timer.UPDATE_FIAT_CURRENCY_DELAY
-
-        service = self._fiat_rate_service_list.current(
-            self._coin_list,
-            self._fiat_currency_list.current
-        )
-        service.putFinishedCallback(
-            lambda _: self._fiat_currency_timer.start(delay, self))
-        self._network_query_manager.put(
-            service,
-            unique=True,
-            high_priority=True)
-
-    def updateServerVersion(self) -> None:
-        self._server_version_timer.stop()
-        query = ServerVersionApiQuery()
-        query.putFinishedCallback(
-            lambda _: self._server_version_timer.start(
-                Timer.UPDATE_SERVER_VERSION_DELAY,
-                self)
-        )
-        self._network_query_manager.put(query, unique=True)
-
     def findCoin(self, short_name: str) -> Optional[AbstractCoin]:
         for coin in self._coin_list:
             if coin.shortName == short_name:
@@ -254,10 +242,33 @@ class CoreApplication(QObject):
         return self._icon
 
     def timerEvent(self, event: QTimerEvent) -> None:
-        if event.timerId() == self._fiat_currency_timer.timerId():
-            self.updateCurrentFiatCurrency()
-        elif event.timerId() == self._server_version_timer.timerId():
-            self.updateServerVersion()
+        for (timer_id, value) in enumerate(self._TIMER_INFO_LIST):
+            if event.timerId() == self._timer_list[timer_id].timerId():
+                value[1](self, timer_id)
+                break
+
+    def _onTimerUpdateCurrentFiatCurrency(self, timer_id: int) -> None:
+        service = self._fiat_rate_service_list.current(
+            self._coin_list,
+            self._fiat_currency_list.current
+        )
+        self._putRepeatedApiQuery(
+            service,
+            timer_id,
+            unique=True,
+            high_priority=True)
+
+    def _onTimerUpdateServerVersion(self, timer_id: int) -> None:
+        self._putRepeatedApiQuery(
+            ServerVersionApiQuery(),
+            timer_id,
+            unique=True)
+
+    def _onTimerUpdateCoinsInfo(self, timer_id: int) -> None:
+        self._putRepeatedApiQuery(
+            CoinsInfoApiQuery(),
+            timer_id,
+            unique=True)
 
     @QSlot()
     def _onRunPrivate(self) -> None:
@@ -265,8 +276,8 @@ class CoreApplication(QObject):
 
     def _onRun(self) -> None:
         self._wallet_thread.run()
-        self.updateServerVersion()
-        self.updateCurrentFiatCurrency()
+        for (timer_id, value) in enumerate(self._TIMER_INFO_LIST):
+            value[1](self, timer_id)
 
     def __onAboutToQuit(self) -> None:
         self._logger.debug("Shutting down...");
@@ -293,3 +304,16 @@ class CoreApplication(QObject):
 
         self._on_exit_called = True
         self._signal_handler.close()
+
+    def _putRepeatedApiQuery(
+            self,
+            query: AbstractServerApiQuery,
+            timer_id: int,
+            **kwargs) -> None:
+        self._timer_list[timer_id].stop()
+        query.putFinishedCallback(
+            lambda _: self._timer_list[timer_id].start(
+                self._TIMER_INFO_LIST[timer_id][0],
+                self))
+        self._network_query_manager.put(query, **kwargs)
+

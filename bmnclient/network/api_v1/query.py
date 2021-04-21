@@ -6,7 +6,7 @@ from ...logger import Logger
 from ...coins.coin import AbstractCoin
 
 
-class ServerApiQuery(AbstractJsonQuery):
+class AbstractServerApiQuery(AbstractJsonQuery):
     _DEFAULT_CONTENT_TYPE = "application/vnd.api+json"
     _DEFAULT_BASE_URL = "https://d1.bitmarket.network:30110/v1/"  # TODO dynamic
     _ACTION = ""
@@ -68,7 +68,7 @@ class ServerApiQuery(AbstractJsonQuery):
         raise NotImplementedError
 
 
-class ServerVersionApiQuery(ServerApiQuery):
+class ServerVersionApiQuery(AbstractServerApiQuery):
     _ACTION = "sysinfo"
 
     def _processData(
@@ -76,7 +76,7 @@ class ServerVersionApiQuery(ServerApiQuery):
             data_id: Optional[str],
             data_type: Optional[str],
             value: Any) -> None:
-        if self.statusCode != 200 or data_type != self._ACTION:
+        if self.statusCode != 200 or data_type is None:
             return
 
         server_data = {
@@ -123,3 +123,15 @@ class ServerVersionApiQuery(ServerApiQuery):
             server_data["status"] = -1
 
         coin.serverData = server_data
+
+
+class CoinsInfoApiQuery(AbstractServerApiQuery):
+    _ACTION = "coins"
+
+    def _processData(
+            self,
+            data_id: Optional[str],
+            data_type: Optional[str],
+            value: Any) -> None:
+        if self.statusCode != 200 or data_type is None:
+            return

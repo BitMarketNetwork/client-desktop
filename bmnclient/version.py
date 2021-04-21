@@ -2,7 +2,6 @@
 # Only standard imports, used by Makefile.
 from __future__ import annotations
 
-from enum import IntEnum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -34,7 +33,8 @@ class ProductPaths:
     ICON_LINUX_FILE_PATH: Final = RESOURCES_PATH / "images" / "icon-logo.svg"
 
 
-class Timer(IntEnum):
+class Timer:
     NETWORK_TRANSFER_TIMEOUT: Final = 30 * 1000
     UPDATE_FIAT_CURRENCY_DELAY: Final = 60 * 1000
-    UPDATE_SERVER_VERSION_DELAY: Final = 30 * 1000
+    UPDATE_SERVER_VERSION_DELAY: Final = 60 * 1000
+    UPDATE_COINS_INFO_DELAY: Final = 20 * 1000

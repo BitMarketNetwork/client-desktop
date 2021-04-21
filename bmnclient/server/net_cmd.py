@@ -95,29 +95,8 @@ class AbstractQuery(HttpQuery):
     def process_attr(self, table):
         pass
 
-class UpdateCoinsInfoCommand(AbstractQuery):
-    action = "coins"
-    level = loading_level.LoadingLevel.NONE
-    unique = True
 
-    def __init__(self, poll: bool, parent=None):
-        super().__init__(parent=parent)
-        self._poll = poll
-
-    def process_attr(self, table: dict):
-        from ..application import CoreApplication
-        for coin in CoreApplication.instance().coinList:
-            response = table.get(coin.shortName)
-            state_hash = coin.stateHash
-            if response and ServerCoinParser().parse(response, coin):
-                if coin.stateHash != state_hash:
-                    CoreApplication.instance().databaseThread.saveCoin.emit(coin)
-                    for a in coin.addressList:
-                        self.parent()._run_cmd(UpdateAddressInfoCommand(a, self.parent()))
-                        self.parent()._run_cmd(AddressHistoryCommand(a, parent=self.parent(), high_priority=True))
-
-
-class AddressInfoCommand(JsonStreamMixin, BaseNetworkCommand):
+class AddressInfoCommand(AbstractQuery):
     action = "coins"
     _server_action = "address"
     level = loading_level.LoadingLevel.ADDRESSES
