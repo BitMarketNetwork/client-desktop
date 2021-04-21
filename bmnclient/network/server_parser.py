@@ -13,8 +13,6 @@ if TYPE_CHECKING:
     from typing import Final
 
 
-class ParseError(LookupError):
-    pass
 
 
 class AbstractServerParser:
@@ -25,22 +23,6 @@ class AbstractServerParser:
         self._logger = Logger.getClassLogger(__name__, self.__class__)
         self._flags = flags
 
-    @classmethod
-    def _parse(
-            cls,
-            item: dict,
-            key_name: str,
-            value_type: Type,
-            default_value: Any = None) -> Any:
-        try:
-            value = value_type(item[key_name])
-        except KeyError:
-            if default_value is None:
-                raise ParseError("key \"{}\" not found".format(key_name))
-            value = default_value
-        except (TypeError, ValueError):
-            raise ParseError("invalid value for key \"{}\"".format(key_name))
-        return value
 
 
 class ServerCoinParser(AbstractServerParser):

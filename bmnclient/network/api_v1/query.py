@@ -99,20 +99,25 @@ class ServerVersionApiQuery(AbstractServerApiQuery):
                     server_data,
                     server_coin_list.get(coin.shortName, {}))
 
-    @classmethod
     def _updateCoinRemoteState(
-            cls,
+            self,
             coin: AbstractCoin,
             server_data: dict,
             server_coin_data: dict) -> None:
-        coin_version = parseItemKey(server_coin_data, "version", list, [])
-        coin.serverData = {
-            **server_data,
-            "version_string": parseItemKey(coin_version, 0, str, "unknown"),
-            "version": parseItemKey(coin_version, 1, int, -1),
-            "height": parseItemKey(server_coin_data, "height", int, -1),
-            "status": parseItemKey(server_coin_data, "status", int, -1),
-        }
+        try:
+            coin_version = parseItemKey(server_coin_data, "version", list)
+            coin.serverData = {
+                **server_data,
+                "version_string": parseItemKey(coin_version, 0, str),
+                "version": parseItemKey(coin_version, 1, int),
+                "height": parseItemKey(server_coin_data, "height", int),
+                "status": parseItemKey(server_coin_data, "status", int),
+            }
+        except ParseError as e:
+            coin.serverData = server_data
+            self._logger.error(
+                "Failed to parse coin info \"{}\": {}"
+                .format(coin.fullName, str(e)))
 
 
 class CoinsInfoApiQuery(AbstractServerApiQuery):

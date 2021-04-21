@@ -78,7 +78,15 @@ BPane {
                 text: qsTr("Daemon status:")
             }
             BInfoValue {
-                text: _base.coin.serverData.status > 0 ? "Online" : "Offline"
+                text: {
+                    if (_base.coin.serverData.status < 0) {
+                        return "Unknown"
+                    }
+                    if (_base.coin.serverData.status > 0) {
+                        return "Online"
+                    }
+                    return "Offline"
+                }
                 color: Material.color(_base.coin.serverData.status > 0 ? Material.Green : Material.Red)
             }
             BInfoSeparator {}
