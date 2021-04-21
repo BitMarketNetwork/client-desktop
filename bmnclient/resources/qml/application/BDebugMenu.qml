@@ -59,20 +59,6 @@ BMenu {
     BMenu {
         title: "Network"
         BMenuItem {
-            text: "Poll"
-            onTriggered: {
-                // TODO cannot test, not found ui visual updates
-                debugManager.poll()
-            }
-        }
-        BMenuItem {
-            text: "Stop polling"
-            onTriggered: {
-                // TODO cannot test, not found ui visual updates
-                debugManager.stopPolling()
-            }
-        }
-        BMenuItem {
             text: "Update fees"
             onTriggered: {
                 // TODO cannot test, not found ui visual updates

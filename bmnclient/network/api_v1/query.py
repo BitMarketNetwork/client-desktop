@@ -66,7 +66,7 @@ class AbstractServerApiQuery(AbstractJsonQuery):
         raise NotImplementedError
 
 
-class ServerVersionApiQuery(AbstractServerApiQuery):
+class ServerInfoApiQuery(AbstractServerApiQuery):
     _ACTION = "sysinfo"
 
     def _processData(
@@ -130,3 +130,50 @@ class CoinsInfoApiQuery(AbstractServerApiQuery):
             value: Any) -> None:
         if self.statusCode != 200 or data_type is None:
             return
+
+        from ...application import CoreApplication
+        for coin in CoreApplication.instance().coinList:
+            coin_info = value.get(coin.shortName)
+            if not coin_info:
+                self._logger.warning("TODO")
+                continue
+
+            state_hash = coin.stateHash
+            try:
+                offset = parseItemKey(
+                    coin_info,
+                    "offset",
+                    str)
+                unverified_offset = parseItemKey(
+                    coin_info,
+                    "unverified_offset",
+                    str)
+                unverified_hash = parseItemKey(
+                    coin_info,
+                    "unverified_hash",
+                    str)
+                height = parseItemKey(
+                    coin_info,
+                    "height",
+                    int)
+                verified_height = parseItemKey(
+                    coin_info,
+                    "verified_height",
+                    int)
+                status = parseItemKey(
+                    coin_info,
+                    "status",
+                    int)
+            except ParseError as e:
+                self._logger.error(
+                    "Failed to parse coin \"{}\": {}"
+                    .format(coin.fullName, str(e)))
+                continue
+
+            # TODO legacy order
+            coin.status = status
+            coin.unverifiedHash = unverified_hash
+            coin.unverifiedOffset = unverified_offset
+            coin.offset = offset
+            coin.verifiedHeight = verified_height
+            coin.height = height

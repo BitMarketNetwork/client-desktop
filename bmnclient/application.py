@@ -26,7 +26,7 @@ from .logger import Logger
 from .network.api_v1.query import \
     AbstractServerApiQuery, \
     CoinsInfoApiQuery, \
-    ServerVersionApiQuery
+    ServerInfoApiQuery
 from .network.query_manager import NetworkQueryManager
 from .network.services.fiat_rate import FiatRateServiceList
 from .signal_handler import SignalHandler
@@ -77,9 +77,9 @@ class CoreApplication(QObject):
             lambda self, timer_id:
                 self._onTimerUpdateCurrentFiatCurrency(timer_id)
         ), (
-            Timer.UPDATE_SERVER_VERSION_DELAY,
+            Timer.UPDATE_SERVER_INFO_DELAY,
             lambda self, timer_id:
-                self._onTimerUpdateServerVersion(timer_id)
+                self._onTimerUpdateServerInfo(timer_id)
         ), (
             Timer.UPDATE_COINS_INFO_DELAY,
             lambda self, timer_id:
@@ -258,9 +258,9 @@ class CoreApplication(QObject):
             unique=True,
             high_priority=True)
 
-    def _onTimerUpdateServerVersion(self, timer_id: int) -> None:
+    def _onTimerUpdateServerInfo(self, timer_id: int) -> None:
         self._putRepeatedApiQuery(
-            ServerVersionApiQuery(),
+            ServerInfoApiQuery(),
             timer_id,
             unique=True)
 

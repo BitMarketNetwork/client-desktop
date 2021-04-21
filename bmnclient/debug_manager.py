@@ -22,14 +22,6 @@ class DebugManager(QObject):
             coin.height += value
 
     @QSlot()
-    def poll(self) -> None:
-        self._application.networkThread.poll_coins()
-
-    @QSlot()
-    def stopPolling(self) -> None:
-        self._application.networkThread.stop_poll()
-
-    @QSlot()
     def retrieveFee(self) -> None:
         self._application.networkThread.retrieve_fee()
 

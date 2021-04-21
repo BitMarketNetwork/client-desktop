@@ -19,42 +19,23 @@ class ServerThread(qt_core.QThread):
         super().__init__()
         self.finished.connect(self.deleteLater)
         self._network = None
-        self._poll_timer = None
         self._mempool_timer = None
 
     def run(self):
         from .network import Network
-        self._poll_timer = qt_core.QBasicTimer()
         self._mempool_timer = qt_core.QBasicTimer()
         self._network = Network(self)
 
     def timerEvent(self, event: qt_core.QTimerEvent):
-        if event.timerId() == self._poll_timer.timerId():
-            self.poll_coins()
-            if self._poll_timer.short:
-                #log.debug("increase polling timeout")
-                self._poll_timer.short = False
-                self._poll_timer.start(30 * 1000, self)
-        elif event.timerId() == self._mempool_timer.timerId():
+        if event.timerId() == self._mempool_timer.timerId():
             self.mempoolEveryCoin.emit()
 
     def startTimers(self):
-        self._poll_timer.short = True
-        self._poll_timer.start(5 * 1000, self)
         self._mempool_timer.start(10 * 1000, self)
 
     @property
     def network(self):
         return self._network
-
-    def poll_coins(self):
-        qt_core.QMetaObject.invokeMethod(
-            self._network,
-            "poll_coins",
-            qt_core.Qt.QueuedConnection)
-
-    def stop_poll(self):
-        self._poll_timer.stop()
 
     def retrieve_fee(self):
         qt_core.QMetaObject.invokeMethod(

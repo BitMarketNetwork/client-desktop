@@ -24,32 +24,6 @@ class AbstractServerParser:
         self._flags = flags
 
 
-
-class ServerCoinParser(AbstractServerParser):
-    def parse(self, response: dict, coin: AbstractCoin) -> bool:
-        try:
-            offset = self._parse(response, "offset", str)
-            unverified_offset = self._parse(response, "unverified_offset", str)
-            unverified_hash = self._parse(response, "unverified_hash", str)
-            height = self._parse(response, "height", int)
-            verified_height = self._parse(response, "verified_height", int)
-            status = self._parse(response, "status", int)
-        except ParseError as e:
-            self._logger.error(
-                "Failed to parse coin \"{}\": {}"
-                .format(coin.fullName, str(e)))
-            return False
-
-        # TODO legacy order
-        coin.status = status
-        coin.unverifiedHash = unverified_hash
-        coin.unverifiedOffset = unverified_offset
-        coin.offset = offset
-        coin.verifiedHeight = verified_height
-        coin.height = height
-        return True
-
-
 class ServerTxParser(AbstractServerParser):
     class ParseFlag(Flag):
         NONE: Final = auto()
