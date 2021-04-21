@@ -27,7 +27,6 @@ class UIManager(QObject):
     visibleChanged = QSignal()
     statusMessageChanged = QSignal()
     outputInfo = QSignal(name="outputInfo", arguments=["key", "value"])
-    serverVersionChanged = QSignal()
     hide = QSignal()
     show = QSignal()
 
@@ -35,7 +34,6 @@ class UIManager(QObject):
         super().__init__()
         self._application = application
         self.__online = True
-        self.__server_version = None
         self.__status_message = ""
         self.__visible = False
         #
@@ -135,17 +133,6 @@ class UIManager(QObject):
     def _reset_status(self):
         self.__status_message = ""
         self.statusMessageChanged.emit()
-
-    @QProperty(str, notify=serverVersionChanged)
-    def serverVersion(self):
-        return self.__server_version
-
-    @serverVersion.setter
-    def _set_server_version(self, vers):
-        if vers == self.__server_version:
-            return
-        self.__server_version = vers
-        self.serverVersionChanged.emit()
 
     @QProperty(str, constant=True)
     def title(self) -> str:

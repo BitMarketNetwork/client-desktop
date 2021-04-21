@@ -47,31 +47,54 @@ class CoinServerDataModel(AbstractStateModel):
     __stateChanged = QSignal()
 
     @QProperty(str, notify=__stateChanged)
-    def versionHuman(self) -> str:
-        # noinspection PyProtectedMember
-        return self._coin._remote.get("version_string", "-")  # TODO
+    def serverUrl(self) -> str:
+        return self._coin.serverData.get("server_url", "-")
+
+    @QProperty(str, notify=__stateChanged)
+    def serverName(self) -> str:
+        return self._coin.serverData.get("server_name", "-")
+
+    @QProperty(int, notify=__stateChanged)
+    def serverVersion(self) -> int:
+        return self._coin.serverData.get("server_version", -1)
+
+    @QProperty(str, notify=__stateChanged)
+    def serverVersionHex(self) -> str:
+        version = self.serverVersion
+        # noinspection PyTypeChecker
+        return "0x{:08x}".format(0 if version < 0 else version)
+
+    @QProperty(str, notify=__stateChanged)
+    def serverVersionHuman(self) -> str:
+        return self._coin.serverData.get("server_version_string", "-")
 
     @QProperty(int, notify=__stateChanged)
     def version(self) -> int:
-        # noinspection PyProtectedMember
-        return self._coin._remote.get("version", -1)  # TODO
+        return self._coin.serverData.get("version", -1)
+
+    @QProperty(str, notify=__stateChanged)
+    def versionHex(self) -> str:
+        version = self.version
+        # noinspection PyTypeChecker
+        return "0x{:08x}".format(0 if version < 0 else version)
+
+    @QProperty(str, notify=__stateChanged)
+    def versionHuman(self) -> str:
+        return self._coin.serverData.get("version_string", "-")
 
     @QProperty(int, notify=__stateChanged)
     def status(self) -> int:
-        # noinspection PyProtectedMember
-        return self._coin._remote.get("status", -1)  # TODO
+        return self._coin.serverData.get("status", -1)
 
     @QProperty(int, notify=__stateChanged)
     def height(self) -> int:
-        # noinspection PyProtectedMember
-        return self._coin._remote.get("height", -1)  # TODO
+        return self._coin.serverData.get("height", -1)
 
     @QProperty(str, notify=__stateChanged)
     def heightHuman(self) -> str:
         height = self.height
-        if height < 0:
-            return "-"
-        return self.locale.integerToString(height)
+        # noinspection PyTypeChecker
+        return "-" if height < 0 else self.locale.integerToString(height)
 
 
 class CoinAmountModel(AmountModel):
@@ -137,8 +160,8 @@ class CoinModel(CoinModelInterface, AbstractModel):
         return self._state_model
 
     @QProperty(QObject, constant=True)
-    def remoteState(self) -> CoinRemoteStateModel:
-        return self._remote_state_model
+    def serverData(self) -> CoinServerDataModel:
+        return self._server_data_model
 
     @QProperty(QObject, constant=True)
     def addressList(self) -> AddressListModel:
@@ -198,7 +221,7 @@ class CoinListModel(AbstractListModel):
         ICON_PATH: Final = auto()
         AMOUNT: Final = auto()
         STATE: Final = auto()
-        REMOTE_STATE: Final = auto()
+        SERVER_DATA: Final = auto()
         ADDRESS_LIST: Final = auto()
         TX_LIST: Final = auto()
         TX_CONTROLLER: Final = auto()
@@ -219,9 +242,9 @@ class CoinListModel(AbstractListModel):
         Role.STATE: (
             b"state",
             lambda c: c.model.state),
-        Role.REMOTE_STATE: (
-            b"remoteState",
-            lambda c: c.model.remoteState),
+        Role.SERVER_DATA: (
+            b"serverData",
+            lambda c: c.model.serverData),
         Role.ADDRESS_LIST: (
             b"addressList",
             lambda c: c.model.addressListSorted()),

@@ -36,4 +36,5 @@ class ProductPaths:
 
 class Timer(IntEnum):
     NETWORK_TRANSFER_TIMEOUT: Final = 30 * 1000
-    FIAT_CURRENCY_UPDATE_DELAY: Final = 60 * 1000
+    UPDATE_FIAT_CURRENCY_DELAY: Final = 60 * 1000
+    UPDATE_SERVER_VERSION_DELAY: Final = 30 * 1000

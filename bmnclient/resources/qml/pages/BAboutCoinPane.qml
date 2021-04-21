@@ -41,12 +41,45 @@ BPane {
             }
             BInfoSeparator {}
 
+            BInfoSeparator {
+                transparent: true
+            }
+
             BInfoLabel {
+                text: qsTr("Server URL:")
+            }
+            BInfoValue {
+                text: _base.coin.serverData.serverUrl
+            }
+            BInfoSeparator {}
+
+            BInfoLabel {
+                text: qsTr("Server name:")
+            }
+            BInfoValue {
+                text: _base.coin.serverData.serverName
+            }
+            BInfoSeparator {}
+
+            BInfoLabel {
+                text: qsTr("Server version:")
+            }
+            BInfoValue {
+                text: "%1 (%2)".arg(_base.coin.serverData.serverVersionHuman).arg(_base.coin.serverData.serverVersionHex)
+            }
+            BInfoSeparator {}
+
+            BInfoSeparator {
+                transparent: true
+            }
+
+            BInfoLabel {
+
                 text: qsTr("Daemon status:")
             }
             BInfoValue {
-                text: _base.coin.remoteState.status > 0 ? "Online" : "Offline"
-                color: Material.color(_base.coin.remoteState.status > 0 ? Material.Green : Material.Red)
+                text: _base.coin.serverData.status > 0 ? "Online" : "Offline"
+                color: Material.color(_base.coin.serverData.status > 0 ? Material.Green : Material.Red)
             }
             BInfoSeparator {}
 
@@ -54,7 +87,7 @@ BPane {
                 text: qsTr("Daemon version:")
             }
             BInfoValue {
-                text: "\"%1\" (%2)".arg(_base.coin.remoteState.versionHuman).arg(_base.coin.remoteState.version)
+                text: "%1 (%2)".arg(_base.coin.serverData.versionHuman).arg(_base.coin.serverData.versionHex)
             }
             BInfoSeparator {}
 
@@ -62,7 +95,7 @@ BPane {
                 text: qsTr("Daemon height:")
             }
             BInfoValue {
-                text: _base.coin.remoteState.heightHuman
+                text: _base.coin.serverData.heightHuman
             }
             BInfoSeparator {}
         }

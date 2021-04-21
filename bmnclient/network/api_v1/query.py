@@ -68,7 +68,7 @@ class ServerApiQuery(AbstractJsonQuery):
         raise NotImplementedError
 
 
-class CheckServerVersionApiQuery(ServerApiQuery):
+class ServerVersionApiQuery(ServerApiQuery):
     _ACTION = "sysinfo"
 
     def _processData(
@@ -80,6 +80,7 @@ class CheckServerVersionApiQuery(ServerApiQuery):
             return
 
         server_data = {
+            "server_url": self._DEFAULT_BASE_URL,
             "server_name": str(value["name"]),
             "server_version_string": str(value["version"][0]),
             "server_version": int(value["version"][1])

@@ -29,6 +29,7 @@ from .signal_handler import SignalHandler
 from .utils.meta import classproperty
 from .version import Product, Timer
 from .wallet.thread import WalletThread
+from .network.api_v1.query import ServerVersionApiQuery
 
 if TYPE_CHECKING:
     from .coins.coin import AbstractCoin
@@ -135,7 +136,9 @@ class CoreApplication(QObject):
         self._coin_list = []
         self._fiat_currency_list = FiatCurrencyList(self)
         self._fiat_rate_service_list = FiatRateServiceList(self)
+
         self._fiat_currency_timer = QBasicTimer()
+        self._server_version_timer = QBasicTimer()
 
     def _initCoinList(
             self,
@@ -213,7 +216,7 @@ class CoreApplication(QObject):
         if self.isDebugMode:
             delay = 10 * 1000
         else:
-            delay = Timer.FIAT_CURRENCY_UPDATE_DELAY
+            delay = Timer.UPDATE_FIAT_CURRENCY_DELAY
 
         service = self._fiat_rate_service_list.current(
             self._coin_list,
@@ -225,6 +228,16 @@ class CoreApplication(QObject):
             service,
             unique=True,
             high_priority=True)
+
+    def updateServerVersion(self) -> None:
+        self._server_version_timer.stop()
+        query = ServerVersionApiQuery()
+        query.putFinishedCallback(
+            lambda _: self._server_version_timer.start(
+                Timer.UPDATE_SERVER_VERSION_DELAY,
+                self)
+        )
+        self._network_query_manager.put(query, unique=True)
 
     def findCoin(self, short_name: str) -> Optional[AbstractCoin]:
         for coin in self._coin_list:
@@ -243,6 +256,8 @@ class CoreApplication(QObject):
     def timerEvent(self, event: QTimerEvent) -> None:
         if event.timerId() == self._fiat_currency_timer.timerId():
             self.updateCurrentFiatCurrency()
+        elif event.timerId() == self._server_version_timer.timerId():
+            self.updateServerVersion()
 
     @QSlot()
     def _onRunPrivate(self) -> None:
@@ -250,6 +265,7 @@ class CoreApplication(QObject):
 
     def _onRun(self) -> None:
         self._wallet_thread.run()
+        self.updateServerVersion()
         self.updateCurrentFiatCurrency()
 
     def __onAboutToQuit(self) -> None:

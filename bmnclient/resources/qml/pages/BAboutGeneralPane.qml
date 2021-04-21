@@ -37,14 +37,6 @@ BPane {
                 text: Qt.application.version
             }
             BInfoSeparator {}
-
-            BInfoLabel { // TODO move to other pane
-                text: qsTr("Server version:")
-            }
-            BInfoValue {
-                text: BBackend.uiManager.serverVersion ? BBackend.uiManager.serverVersion : "-"
-            }
-            BInfoSeparator {}
         }
 
         BDialogSpacer {}

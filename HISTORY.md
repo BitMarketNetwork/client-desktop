@@ -1,5 +1,8 @@
 # BitMarket Network Client Change Log
 
+## 0.12.1 (xx.0x.2021)
+* UI: Added server info to coin info page
+
 ## 0.12 (24.03.2021)
 
 * QML: Addresses and History tabs with counter
