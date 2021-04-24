@@ -8,7 +8,6 @@ from ..coins.tx import AbstractTx
 class ServerThread(qt_core.QThread):
     mempoolEveryCoin = qt_core.Signal()
     mempoolCoin = qt_core.Signal(CoinType, arguments=["coin"])
-    lookForHDChain = qt_core.Signal(CoinType, arguments=["coin"])
     unspentsOfWallet = qt_core.Signal(CAddress, arguments=["wallet"])
     updateAddress = qt_core.Signal(CAddress, arguments=["wallet"])
     undoTx = qt_core.Signal(CoinType, int)
@@ -42,12 +41,6 @@ class ServerThread(qt_core.QThread):
             self._network,
             "retrieve_fee",
             qt_core.Qt.QueuedConnection,)
-
-    def look_for_HD(self):
-        from ..ui.gui import Application
-        for coin in Application.instance().coinList:
-            #log.debug(f"Looking for HD chain: {coin}")
-            self.lookForHDChain.emit(coin)
 
     def unspent_list(self, address):
         if address.wants_update_unspents:

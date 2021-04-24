@@ -1,7 +1,9 @@
 # JOK++
 from typing import Any, Optional
+from urllib.parse import urljoin
 
 from ..query import AbstractJsonQuery
+from ...coins.address import AbstractAddress
 from ...coins.coin import AbstractCoin
 from ...logger import Logger
 from ...utils.serialize import ParseError, parseItemKey
@@ -14,7 +16,7 @@ class AbstractServerApiQuery(AbstractJsonQuery):
 
     @property
     def url(self) -> str:
-        return super().url + self._ACTION
+        return urljoin(super().url, self._ACTION)
 
     def __processErrorList(self, error_list: list) -> None:
         if not error_list:

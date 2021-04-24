@@ -5,13 +5,11 @@ from pathlib import PurePath
 from typing import Callable, Optional, Type, TYPE_CHECKING, Union
 
 from PySide2.QtCore import \
-    QBasicTimer, \
     QCoreApplication, \
     QLocale, \
     QMetaObject, \
     QObject, \
     Qt, \
-    QTimerEvent, \
     Slot as QSlot
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
@@ -23,16 +21,13 @@ from .config import UserConfig
 from .key_store import KeyStore
 from .language import Language
 from .logger import Logger
-from .network.api_v1.query import \
-    AbstractServerApiQuery, \
-    CoinsInfoApiQuery, \
-    ServerInfoApiQuery
 from .network.query_manager import NetworkQueryManager
 from .network.services.fiat_rate import FiatRateServiceList
 from .signal_handler import SignalHandler
 from .utils.meta import classproperty
-from .version import Product, Timer
+from .version import Product
 from .wallet.thread import WalletThread
+from .network.query_scheduler import NetworkQueryScheduler
 
 if TYPE_CHECKING:
     from .coins.coin import AbstractCoin
@@ -71,21 +66,6 @@ class CommandLine:
 
 
 class CoreApplication(QObject):
-    _TIMER_INFO_LIST = (
-        (
-            Timer.UPDATE_FIAT_CURRENCY_DELAY,
-            lambda self, timer_id:
-                self._onTimerUpdateCurrentFiatCurrency(timer_id)
-        ), (
-            Timer.UPDATE_SERVER_INFO_DELAY,
-            lambda self, timer_id:
-                self._onTimerUpdateServerInfo(timer_id)
-        ), (
-            Timer.UPDATE_COINS_INFO_DELAY,
-            lambda self, timer_id:
-                self._onTimerUpdateCoinsInfo(timer_id)
-        ),
-    )
 
     _instance: CoreApplication = None
 
@@ -149,13 +129,15 @@ class CoreApplication(QObject):
             Qt.QueuedConnection)
 
         self._wallet_thread = WalletThread()
-        self._network_query_manager = NetworkQueryManager("Default")
 
         self._coin_list = []
         self._fiat_currency_list = FiatCurrencyList(self)
         self._fiat_rate_service_list = FiatRateServiceList(self)
 
-        self._timer_list = [QBasicTimer() for _ in self._TIMER_INFO_LIST]
+        self._network_query_manager = NetworkQueryManager(self, "Default")
+        self._network_query_scheduler = NetworkQueryScheduler(
+            self,
+            self._network_query_manager)
 
     def _initCoinList(
             self,
@@ -241,43 +223,13 @@ class CoreApplication(QObject):
     def icon(self) -> QIcon:
         return self._icon
 
-    def timerEvent(self, event: QTimerEvent) -> None:
-        for (timer_id, value) in enumerate(self._TIMER_INFO_LIST):
-            if event.timerId() == self._timer_list[timer_id].timerId():
-                value[1](self, timer_id)
-                break
-
-    def _onTimerUpdateCurrentFiatCurrency(self, timer_id: int) -> None:
-        service = self._fiat_rate_service_list.current(
-            self._coin_list,
-            self._fiat_currency_list.current
-        )
-        self._putRepeatedApiQuery(
-            service,
-            timer_id,
-            unique=True,
-            high_priority=True)
-
-    def _onTimerUpdateServerInfo(self, timer_id: int) -> None:
-        self._putRepeatedApiQuery(
-            ServerInfoApiQuery(),
-            timer_id,
-            unique=True)
-
-    def _onTimerUpdateCoinsInfo(self, timer_id: int) -> None:
-        self._putRepeatedApiQuery(
-            CoinsInfoApiQuery(),
-            timer_id,
-            unique=True)
-
     @QSlot()
     def _onRunPrivate(self) -> None:
         self._onRun()
 
     def _onRun(self) -> None:
         self._wallet_thread.run()
-        for (timer_id, value) in enumerate(self._TIMER_INFO_LIST):
-            value[1](self, timer_id)
+        self._network_query_scheduler.start()
 
     def __onAboutToQuit(self) -> None:
         self._logger.debug("Shutting down...");
@@ -304,16 +256,4 @@ class CoreApplication(QObject):
 
         self._on_exit_called = True
         self._signal_handler.close()
-
-    def _putRepeatedApiQuery(
-            self,
-            query: AbstractServerApiQuery,
-            timer_id: int,
-            **kwargs) -> None:
-        self._timer_list[timer_id].stop()
-        query.putFinishedCallback(
-            lambda _: self._timer_list[timer_id].start(
-                self._TIMER_INFO_LIST[timer_id][0],
-                self))
-        self._network_query_manager.put(query, **kwargs)
 
