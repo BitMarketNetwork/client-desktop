@@ -17,7 +17,7 @@ from .crypto.kdf import SecretStore
 from .crypto.password import PasswordStrength
 from .logger import Logger
 from .version import Product
-from .wallet import hd
+from .wallet.hd import HDNode
 from .wallet.mnemonic import Mnemonic
 
 
@@ -237,16 +237,14 @@ class KeyStore(QObject):
         if not seed:
             return False
 
+        root_path = HDNode.make_master(seed)
+        purpose_path = root_path.make_child_prv(44, True)  # BIP-0044
+
         # TODO
-        master_hd = hd.HDNode.make_master(seed)
-        _44_node = master_hd.make_child_prv(44, True)
-        from .application import CoreApplication
-        if CoreApplication.instance():
-            for coin in CoreApplication.instance().coinList:
-                coin.make_hd_node(_44_node)
-                self._logger.debug(f"Make HD prv for {coin}")
-            from .ui.gui import Application
-            Application.instance().networkThread.look_for_HD()
+        from .ui.gui import Application
+        for coin in Application.instance().coinList:
+            coin.makeHdPath(purpose_path)
+        Application.instance().networkQueryScheduler.getNextHdAddress()
         return True
 
     ############################################################################

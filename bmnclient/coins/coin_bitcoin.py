@@ -129,6 +129,7 @@ class BitcoinAddress(AbstractAddress):
 class Bitcoin(AbstractCoin):
     _SHORT_NAME = "btc"
     _FULL_NAME = "Bitcoin"
+    _BIP0044_COIN_TYPE = 0
 
     class _Currency(AbstractCoin._Currency):
         _DECIMAL_SIZE = (0, 8)
@@ -162,6 +163,7 @@ class BitcoinTest(Bitcoin):
     _SHORT_NAME = "btctest"
     _FULL_NAME = "Bitcoin Testnet"
     _IS_TEST_NET = True
+    _BIP0044_COIN_TYPE = 1
 
     class _Address(BitcoinTestAddress):
         pass

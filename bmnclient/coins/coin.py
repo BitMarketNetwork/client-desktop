@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import math
-from typing import Callable, List, Optional
+from typing import TYPE_CHECKING
 
 from .address import AbstractAddress
 from .currency import \
@@ -12,6 +12,10 @@ from .currency import \
 from .tx import AbstractTx
 from ..utils.meta import classproperty
 from ..utils.serialize import Serializable, serializable
+
+if TYPE_CHECKING:
+    from typing import Callable, List, Optional
+    from ..wallet.hd import HDNode
 
 
 class CoinModelInterface:
@@ -41,6 +45,8 @@ class AbstractCoin(Serializable):
     _SHORT_NAME = ""
     _FULL_NAME = ""
     _IS_TEST_NET = False
+    # https://github.com/satoshilabs/slips/blob/master/slip-0044.md
+    _BIP0044_COIN_TYPE = -1
 
     class _Currency(AbstractCurrency):
         pass
@@ -70,6 +76,9 @@ class AbstractCoin(Serializable):
 
         self._fiat_rate = FiatRate(0, NoneFiatCurrency)
         self._amount = 0
+
+        self._hd_path: Optional[HDNode] = None
+
         self._address_list = []
         self._server_data = {}
 
@@ -231,6 +240,31 @@ class AbstractCoin(Serializable):
         self._amount = a
         if self._model:
             self._model.afterRefreshAmount()
+
+    def makeHdPath(self, purpose_path: HDNode) -> None:
+        assert self._hd_path is None
+        self._hd_path = purpose_path.make_child_prv(
+            self._BIP0044_COIN_TYPE,
+            True,
+            self.network)
+
+    @property
+    def hdPath(self) -> Optional[HDNode]:
+        return self._hd_path
+
+    def hdAddressPath(
+            self,
+            account: int,
+            change: bool,
+            index: int) -> Optional[HDNode]:
+        if self._hd_path is None:
+            return None
+        # FIXME broken path?
+        address_path = self._hd_path.make_child_prv(
+            index,
+            False,
+            self.network)
+        return address_path
 
     def decodeAddress(self, **kwargs) -> Optional[_Address]:
         return self._Address.decode(self, **kwargs)

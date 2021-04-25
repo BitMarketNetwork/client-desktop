@@ -33,6 +33,7 @@ class LitecoinAddress(BitcoinAddress):
 class Litecoin(Bitcoin):
     _SHORT_NAME = "ltc"
     _FULL_NAME = "Litecoin"
+    _BIP0044_COIN_TYPE = 2
 
     class _Currency(Bitcoin._Currency):
         _UNIT = "LTC"

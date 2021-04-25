@@ -33,7 +33,7 @@ class TestAdvanced(unittest.TestCase):
     def test_free_coin_index(self):
         coin = coins.Bitcoin(None)
         dummy = hd.HDNode.make_master(os.urandom(64))
-        coin.make_hd_node(dummy)
+        coin.makeHdPath(dummy)
         self.assertEqual(coin._next_hd_index(), 1)
         coin.make_address()
         self.assertEqual(coin._next_hd_index(), 2)
@@ -84,7 +84,7 @@ class TestAdvanced(unittest.TestCase):
                 self.assertIsNotNone(master)
                 h44 = master.make_child_prv(44, True)
                 cache_entry["44"] = h44.to_hex
-                coin.make_hd_node(h44)
+                coin.makeHdPath(h44)
                 # hm
                 wif = coin.hd_node.to_wif
                 check = key_mod.PrivateKey.from_wif(wif)

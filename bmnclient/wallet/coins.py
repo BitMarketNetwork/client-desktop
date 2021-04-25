@@ -17,11 +17,7 @@ log = logging.getLogger(__name__)
 class CoinType(qt_core.QObject):
     name: str = None
 
-    # [[https://github.com/satoshilabs/slips/blob/master/slip-0044.md|SLIP-0044 : Registered coin types for BIP-0044]]
-    _hd_index: int = None
     network: coin_network.CoinNetworkBase = None
-    # testnet ID is the same for all coins
-    TEST_HD_INDEX = 1
     visibleChanged = qt_core.Signal()
 
     @classproperty
@@ -31,28 +27,19 @@ class CoinType(qt_core.QObject):
     def __init__(self):
         super().__init__()
         self._remote = {}  # TODO
-        self.__hd_node = None
         self.__visible = True
-
-    def hd_address(self, hd_index: int) -> str:
-        if self.__hd_node is None:
-            raise address.AddressError(f"There's no private key in {self}")
-        return self.__hd_node.make_child_prv(
-            hd_index,
-            False,
-            self.network)
 
     def _next_hd_index(self):
         idxs = [a.hd_index for a in self._address_list]
         return next(k for k in itertools.count(1) if k not in idxs)
 
     def make_address(self, type_: key.AddressType = key.AddressType.P2WPKH, label: str = "", message: str = "") -> address.CAddress:
-        if self.__hd_node is None:
+        if self._hd_path is None:
             raise address.AddressError(f"There's no private key in {self}")
         hd_index = 1
         while any(w.hd_index == hd_index for w in self._address_list):
             hd_index += 1
-        new_hd = self.__hd_node.make_child_prv(
+        new_hd = self._hd_path.make_child_prv(
             self._next_hd_index(),
             False,
             self.network)
@@ -75,14 +62,6 @@ class CoinType(qt_core.QObject):
         from ..application import CoreApplication
         CoreApplication.instance().databaseThread.save_address(adr)
         return adr
-
-    def make_hd_node(self, parent_node):
-        self.__hd_node = parent_node.make_child_prv(
-            self.TEST_HD_INDEX if self.isTestNet else self._hd_index, True, self.network)
-
-    @property
-    def hd_node(self) -> hd.HDNode:
-        return self.__hd_node
 
     @property
     def private_key(self) -> key.PrivateKey:
@@ -163,7 +142,6 @@ class CoinType(qt_core.QObject):
 class Bitcoin(CoinType, coin_bitcoin.Bitcoin):
     name = "btc"
     network = coin_network.BitcoinMainNetwork
-    _hd_index = 0
 
     def __init__(self, **kwargs) -> None:
         super().__init__()
@@ -178,7 +156,6 @@ class BitcoinTest(Bitcoin, coin_bitcoin.BitcoinTest):
 class Litecoin(CoinType, coin_litecoin.Litecoin):
     name = "ltc"
     network = coin_network.LitecoinMainNetwork
-    _hd_index = 2
 
     def __init__(self, **kwargs) -> None:
         super().__init__()

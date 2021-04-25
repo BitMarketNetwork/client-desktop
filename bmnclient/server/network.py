@@ -5,7 +5,6 @@ import PySide2.QtCore as qt_core
 from bmnclient.wallet import address, mutable_tx
 from . import debug_cmd, net_cmd
 from .. import loading_level
-from ..network.query import AbstractQuery
 from ..network.query_manager import NetworkQueryManager
 from ..wallet import fee_manager
 
@@ -36,14 +35,10 @@ class Network(NetworkQueryManager):
             self.retreive_mempool, qt_core.Qt.QueuedConnection)
         parent.broadcastMtx.connect(
             self.broadcast_tx, qt_core.Qt.QueuedConnection)
-        parent.lookForHDChain.connect(
-            self.look_for_hd_addresses, qt_core.Qt.QueuedConnection)
         parent.undoTx.connect(
             self.undo_tx, qt_core.Qt.QueuedConnection)
         Application.instance().databaseThread.dbLoaded.connect(
             self.level_loaded, qt_core.Qt.QueuedConnection)
-
-        self._run_cmd(net_cmd.CheckServerVersionCommand(self))
 
     def start(self):
         self._cmd_timer.start(1000, self)
@@ -197,13 +192,6 @@ class Network(NetworkQueryManager):
         if event.timerId() == self._fee_timer.timerId():
             self.retrieve_fee()
 
-    def __on_ssl_errors(self, errors):
-        log.warning('next SSL errors ignored: %s', errors)
-        self.__reply.ignoreSslErrors(errors)
-
-    def look_for_hd_addresses(self, coin: "CoinType"):
-        self._run_cmd(net_cmd.LookForHDAddresses(coin, self))
-
     def retreive_mempool_coin(self, coin: "CoinType"):
         self._run_cmd(net_cmd.AddressMultyMempoolCommand(coin.addressList, self))
 
@@ -225,12 +213,7 @@ class Network(NetworkQueryManager):
         self._run_cmd(net_cmd.BroadcastTxCommand(mtx, parent=self))
 
     def update_address(self, wallet: address.CAddress):
-        self._run_cmd(net_cmd.UpdateAddressInfoCommand(wallet, self))
-
-    @qt_core.Slot()
-    def poll_coins(self):
-        self._run_cmd(net_cmd.CheckServerVersionCommand(self))
-        self._run_cmd(net_cmd.UpdateCoinsInfoCommand(True, self), run_first=True)
+        self._run_cmd(net_cmd.AddressInfoApiQuery(wallet, self))
 
     @qt_core.Slot()
     def retrieve_fee(self):

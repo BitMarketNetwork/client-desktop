@@ -95,7 +95,7 @@ class TestWorkflow(unittest.TestCase):
         seed = os.urandom(32)
         master_hd = hd.HDNode.make_master(
             seed, coin_network.BitcoinTestNetwork)
-        coin.make_hd_node(master_hd)
+        coin.makeHdPath(master_hd)
         self.db._add_coin(coin, True)
         self.assertEqual(0, len(coin))
         addr = coin.make_address(key.AddressType.P2PKH)

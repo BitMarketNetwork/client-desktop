@@ -273,7 +273,7 @@ class CAddress(AbstractAddress):
         if txt:
             try:
                 self.__key = hd.HDNode.from_extended_key(txt, self)
-                assert self._coin.hd_node is None or self.__key.p_fingerprint == self._coin.hd_node.fingerprint
+                assert self._coin.hdPath is None or self.__key.p_fingerprint == self._coin.hdPath.fingerprint
             except hd.HDError:
                 self.__key = key.PrivateKey.from_wif(txt)
             # log.debug(f"new key created for {self} => {self.__key}")
