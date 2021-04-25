@@ -1,26 +1,29 @@
-# JOK++
-import logging
-from typing import List, Optional
+# JOK+++
+from __future__ import annotations
 
-from PySide2.QtCore import QIODevice, QObject, QUrl
+import logging
+from typing import TYPE_CHECKING
+
 from PySide2.QtNetwork import \
     QAbstractNetworkCache, \
-    QAuthenticator, \
     QNetworkAccessManager, \
     QNetworkCacheMetaData, \
-    QNetworkCookie, \
     QNetworkCookieJar, \
     QNetworkProxy, \
     QNetworkReply, \
     QNetworkRequest, \
     QSsl, \
     QSslConfiguration, \
-    QSslError, \
     QSslSocket
 
 from .utils import hostPortToString
 from ..logger import Logger
 from ..version import Timer
+
+if TYPE_CHECKING:
+    from typing import Final, List, Optional
+    from PySide2.QtCore import QIODevice, QObject, QUrl
+    from PySide2.QtNetwork import QAuthenticator, QNetworkCookie, QSslError
 
 
 class AbstractNetworkCache(QAbstractNetworkCache):
@@ -78,6 +81,14 @@ class NullNetworkCookieJar(AbstractNetworkCookieJar):
 
 
 class NetworkAccessManager(QNetworkAccessManager):
+    OPERATION_MAP: Final = {
+        QNetworkAccessManager.HeadOperation: "HEAD",
+        QNetworkAccessManager.GetOperation: "GET",
+        QNetworkAccessManager.PutOperation: "PUT",
+        QNetworkAccessManager.PostOperation: "POST",
+        QNetworkAccessManager.DeleteOperation: "DELETE",
+    }
+
     def __init__(
             self,
             name: Optional[str] = None,
@@ -106,13 +117,15 @@ class NetworkAccessManager(QNetworkAccessManager):
         self.setTransferTimeout(Timer.NETWORK_TRANSFER_TIMEOUT)
 
         self.authenticationRequired.connect(
-            self._onAuthenticationRequired)
+            self.__onAuthenticationRequired)
         self.proxyAuthenticationRequired.connect(
-            self._onProxyAuthenticationRequired)
+            self.__onProxyAuthenticationRequired)
         self.encrypted.connect(
-            self._onEncrypted)
+            self.__onEncrypted)
+        self.finished.connect(
+            self.__onFinished)
         self.sslErrors.connect(
-            self._onSslErrors)
+            self.__onTlsErrors)
 
         if parent:
             self._logger.debug(
@@ -121,7 +134,7 @@ class NetworkAccessManager(QNetworkAccessManager):
                 parent.objectName())
         else:
             self._logger.debug(
-                "\"%s\" network access manager ws created.",
+                "\"%s\" network access manager was created.",
                 self._name)
 
     @property
@@ -158,7 +171,18 @@ class NetworkAccessManager(QNetworkAccessManager):
         tls.setSslOption(QSsl.SslOptionDisableSessionPersistence, True)
         return tls
 
-    def _onAuthenticationRequired(
+    def createRequest(
+            self,
+            op: QNetworkAccessManager.Operation,
+            request: QNetworkRequest,
+            outgoing_data: Optional[QIODevice] = None) -> QNetworkReply:
+        self._logger.debug(
+            "New request: %s %s",
+            self.OPERATION_MAP.get(op, "UNKNOWN"),
+            request.url().toString())
+        return super().createRequest(op, request, outgoing_data)
+
+    def __onAuthenticationRequired(
             self,
             reply: QNetworkReply,
             authenticator: QAuthenticator) -> None:
@@ -167,7 +191,7 @@ class NetworkAccessManager(QNetworkAccessManager):
             self._loggerReplyPrefix(reply),
             reply.url().toString())
 
-    def _onProxyAuthenticationRequired(
+    def __onProxyAuthenticationRequired(
             self,
             proxy: QNetworkProxy,
             authenticator: QAuthenticator) -> None:
@@ -175,26 +199,48 @@ class NetworkAccessManager(QNetworkAccessManager):
             "Authentication required for proxy %s.",
             hostPortToString(proxy.hostName(), proxy.port()))
 
-    def _onEncrypted(self, reply: QNetworkReply) -> None:
+    def __onEncrypted(self, reply: QNetworkReply) -> None:
         if self._logger.isEnabledFor(logging.DEBUG):
             tls_config = reply.sslConfiguration()
             self._logger.debug(
-                "%sNew TLS session, cipher \"%s\".",
+                "%s New TLS session, cipher: %s",
                 self._loggerReplyPrefix(reply),
                 tls_config.sessionCipher().name())
 
-    def _onSslErrors(
+    def __onFinished(self, reply: QNetworkReply) -> None:
+        status_code = reply.error()
+        if status_code != QNetworkReply.NoError:
+            if status_code not in (
+                    QNetworkReply.ContentAccessDenied,
+                    QNetworkReply.ContentNotFoundError,
+            ):
+                self._logger.warning(
+                    "%s Connection error: %s",
+                    self._loggerReplyPrefix(reply),
+                    Logger.errorToString(
+                        int(status_code),
+                        reply.errorString()))
+
+        if self._logger.isEnabledFor(logging.DEBUG):
+            status_code = reply.attribute(
+                QNetworkRequest.HttpStatusCodeAttribute)
+            status_code = int(status_code) if status_code else -1
+            self._logger.debug(
+                "%s HTTP status code: %i",
+                self._loggerReplyPrefix(reply),
+                status_code)
+
+    def __onTlsErrors(
             self,
             reply: QNetworkReply,
             error_list: List[QSslError]) -> None:
         for e in error_list:
             self._logger.error(
-                "%s%s",
+                "%s %s",
                 self._loggerReplyPrefix(reply),
                 Logger.errorToString(int(e.error()), e.errorString()))
 
-    @classmethod
-    def _loggerReplyPrefix(cls, reply: QNetworkReply) -> str:
-        return \
-            hostPortToString(reply.url().host(), reply.url().port(443)) \
-            + ": "
+    def _loggerReplyPrefix(self, reply: QNetworkReply) -> str:
+        return "[{} {}]".format(
+            self.OPERATION_MAP.get(reply.operation(), "UNKNOWN"),
+            reply.url().toString())

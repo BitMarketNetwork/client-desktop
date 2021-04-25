@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from urllib.parse import urljoin
 
 from ..query import AbstractJsonQuery
+from ..utils import urlJoin
 from ...logger import Logger
 from ...utils.serialize import ParseError, parseItemKey
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 class AbstractServerApiQuery(AbstractJsonQuery):
     _DEFAULT_CONTENT_TYPE = "application/vnd.api+json"
-    _DEFAULT_BASE_URL = "https://d1.bitmarket.network:30110/v1/"  # TODO dynamic
+    _DEFAULT_BASE_URL = "https://d1.bitmarket.network:30110/v1"  # TODO dynamic
     _ACTION = ""
 
     def __init__(self, application: CoreApplication):
@@ -26,7 +26,7 @@ class AbstractServerApiQuery(AbstractJsonQuery):
 
     @property
     def url(self) -> str:
-        return urljoin(super().url, self._ACTION)
+        return urlJoin(super().url, self._ACTION)
 
     def __processErrorList(self, error_list: list) -> None:
         if not error_list:

@@ -15,3 +15,12 @@ def encodeUrlString(source: str) -> Optional[str]:
             errors="strict")
     except UnicodeError:
         return None
+
+
+def urlJoin(base: str, *args: str) -> str:
+    result = base.rstrip("/")
+    for item in args:
+        item = item.strip("/")
+        if item:
+            result += "/" + item
+    return result

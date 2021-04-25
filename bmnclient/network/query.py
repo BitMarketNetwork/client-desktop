@@ -54,7 +54,7 @@ class AbstractQuery:
             False
         ), (
             QNetworkRequest.Http2AllowedAttribute,
-            True
+            False  # TODO QNetworkRequest.encrypted not called
         ), (
             QNetworkRequest.EmitAllUploadProgressSignalsAttribute,
             False
@@ -190,8 +190,6 @@ class AbstractQuery:
         self._response = response
         response.readyRead.connect(self.__onResponseRead)
         response.finished.connect(self.__onResponseFinished)
-        response.errorOccurred.connect(self.__onResponseError)
-        response.sslErrors.connect(self.__onResponseTlsError)
         response.redirected.connect(self.__onResponseRedirected)
 
     def __setStatusCode(self, status_code: Optional[int] = None) -> None:
@@ -200,11 +198,8 @@ class AbstractQuery:
         if status_code is None:
             status_code = self._response.attribute(
                 QNetworkRequest.HttpStatusCodeAttribute)
-        if status_code:
-            self._status_code = int(status_code)
-        else:
-            self._status_code = 0
-        self._logger.debug("HTTP status code: %i", self._status_code)
+        self._status_code = int(status_code) if status_code else -1
+        self._logger.debug("Status code: %i", self._status_code)
 
     def __onResponseRead(self) -> None:
         self.__setStatusCode()
@@ -232,32 +227,11 @@ class AbstractQuery:
         self._response = None
         self._callFinishedCallbackList()
 
-    def __onResponseError(self, code: QNetworkReply.NetworkError) -> None:
-        if code in (
-            QNetworkReply.ContentAccessDenied,
-            QNetworkReply.ContentNotFoundError,
-        ):
-            return
-
-        self._logger.error(
-            "Failed to read response, connection error: %s",
-            Logger.errorToString(
-                int(code),  # noqa
-                self._response.errorString()))
-
     def __onResponseRedirected(self, url: QUrl) -> None:
         Logger.fatal(
             "Redirect to \"{}\" detected, but redirects was disabled."
             .format(url.toString()),
             self._logger)
-
-    def __onResponseTlsError(
-            self,
-            error_list: List[QSslError]) -> None:
-        for e in error_list:
-            self._logger.error(
-                "Failed to read response, TLS error: %s",
-                Logger.errorToString(int(e.error()), e.errorString()))
 
     def _onResponseData(self, data: bytes) -> bool:
         raise NotImplementedError
