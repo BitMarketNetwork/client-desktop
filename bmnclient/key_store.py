@@ -10,6 +10,7 @@ from PySide2.QtCore import \
     QObject, \
     Slot as QSlot
 
+from .coins.mnemonic import Mnemonic
 from .config import UserConfig
 from .crypto.cipher import AeadCipher, MessageCipher
 from .crypto.digest import Digest, Sha256Digest
@@ -18,7 +19,6 @@ from .crypto.password import PasswordStrength
 from .logger import Logger
 from .version import Product
 from .wallet.hd import HDNode
-from .wallet.mnemonic import Mnemonic
 
 
 class KeyIndex(Enum):
@@ -242,9 +242,10 @@ class KeyStore(QObject):
 
         # TODO
         from .ui.gui import Application
-        for coin in Application.instance().coinList:
-            coin.makeHdPath(purpose_path)
-        Application.instance().networkQueryScheduler.getNextHdAddress()
+        if Application.instance():
+            for coin in Application.instance().coinList:
+                coin.makeHdPath(purpose_path)
+            Application.instance().networkQueryScheduler.getNextHdAddress()
         return True
 
     ############################################################################

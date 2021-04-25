@@ -5,10 +5,10 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
+from bmnclient.coins.mnemonic import Mnemonic
 from bmnclient.config import UserConfig
 from bmnclient.key_store import KeyIndex, KeyStore
 from bmnclient.version import Product
-from bmnclient.wallet.mnemonic import Mnemonic
 from tests import getLogger
 
 _logger = getLogger(__name__)

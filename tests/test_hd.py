@@ -1,10 +1,11 @@
-
-import unittest
-import os
 import logging
+import os
 import random
-from bmnclient.wallet import key as key_mod, hd, mnemonic, coin_network
+import unittest
+
 import key_store
+from bmnclient.coins import mnemonic
+from bmnclient.wallet import coin_network, hd, key as key_mod
 
 log = logging.getLogger(__name__)
 MNEMO_PASSWORD = "hardcoded mnemo password"

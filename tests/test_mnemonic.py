@@ -4,9 +4,9 @@ import os
 import random
 import unittest
 
-from bmnclient.wallet.mnemonic import Mnemonic
+from bmnclient.coins.mnemonic import Mnemonic
 from bmnclient.wallet.hd import HDNode
-from tests import TEST_DATA_PATH, getLogger
+from tests import getLogger, TEST_DATA_PATH
 
 _logger = getLogger(__name__)
 
