@@ -134,7 +134,7 @@ class CoreApplication(QObject):
         self._fiat_currency_list = FiatCurrencyList(self)
         self._fiat_rate_service_list = FiatRateServiceList(self)
 
-        self._network_query_manager = NetworkQueryManager(self, "Default")
+        self._network_query_manager = NetworkQueryManager("Default")
         self._network_query_scheduler = NetworkQueryScheduler(
             self,
             self._network_query_manager)
@@ -196,6 +196,10 @@ class CoreApplication(QObject):
     @property
     def networkQueryManager(self) -> NetworkQueryManager:
         return self._network_query_manager
+
+    @property
+    def networkQueryScheduler(self) -> NetworkQueryScheduler:
+        return self._network_query_scheduler
 
     @property
     def coinList(self) -> CoinList:

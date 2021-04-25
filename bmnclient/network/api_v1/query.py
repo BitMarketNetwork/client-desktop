@@ -1,18 +1,28 @@
-# JOK++
-from typing import Any, Optional
+# JOK+++
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from urllib.parse import urljoin
 
 from ..query import AbstractJsonQuery
-from ...coins.address import AbstractAddress
-from ...coins.coin import AbstractCoin
 from ...logger import Logger
 from ...utils.serialize import ParseError, parseItemKey
+
+if TYPE_CHECKING:
+    from typing import Any, Optional
+    from ...application import CoreApplication
+    from ...coins.address import AbstractAddress
+    from ...coins.coin import AbstractCoin
 
 
 class AbstractServerApiQuery(AbstractJsonQuery):
     _DEFAULT_CONTENT_TYPE = "application/vnd.api+json"
     _DEFAULT_BASE_URL = "https://d1.bitmarket.network:30110/v1/"  # TODO dynamic
     _ACTION = ""
+
+    def __init__(self, application: CoreApplication):
+        super().__init__()
+        self._application = application
 
     @property
     def url(self) -> str:
@@ -94,8 +104,7 @@ class ServerInfoApiQuery(AbstractServerApiQuery):
 
         if "coins" in value:
             server_coin_list = value["coins"]
-            from ...application import CoreApplication
-            for coin in CoreApplication.instance().coinList:
+            for coin in self._application.coinList:
                 self._updateCoinRemoteState(
                     coin,
                     server_data,
@@ -133,8 +142,7 @@ class CoinsInfoApiQuery(AbstractServerApiQuery):
         if self.statusCode != 200 or data_type is None:
             return
 
-        from ...application import CoreApplication
-        for coin in CoreApplication.instance().coinList:
+        for coin in self._application.coinList:
             coin_info = value.get(coin.shortName)
             if not coin_info:
                 self._logger.warning("TODO")

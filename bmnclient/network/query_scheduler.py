@@ -1,20 +1,20 @@
-# JOK++
+# JOK+++
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
     QBasicTimer, \
-    QObject, \
-    QTimerEvent
+    QObject
 
 from .api_v1.query import \
-    AbstractServerApiQuery, \
     CoinsInfoApiQuery, \
     ServerInfoApiQuery
 from ..version import Timer
 
 if TYPE_CHECKING:
+    from PySide2.QtCore import QTimerEvent
+    from .api_v1.query import AbstractServerApiQuery
     from .query_manager import NetworkQueryManager
     from ..application import CoreApplication
 
