@@ -35,6 +35,7 @@ class Mnemonic:
             self._language)
         self._file_path = self.SOURCE_PATH / (self._language + ".txt")
 
+        error_message = None
         try:
             self._logger.debug("Reading words from \"%s\"...", self._file_path)
             with open(  # TODO global cache
@@ -48,14 +49,13 @@ class Mnemonic:
                     "wordlist should contain {} words, but it contains {} words"
                     .format(self.WORD_COUNT, len(self._word_list)))
         except OSError as e:
-            Logger.fatal(
-                "Failed to read file \"{}\". {}"
-                .format(self._file_path, Logger.osErrorToString(e)),
-                self._logger)
+            error_message = Logger.osErrorToString(e)
         except ValueError as e:
+            error_message = Logger.exceptionToString(e)
+        if error_message is not None:
             Logger.fatal(
                 "Failed to read file \"{}\". {}"
-                .format(self._file_path, Logger.exceptionToString(e)),
+                .format(self._file_path, error_message),
                 self._logger)
 
     @property

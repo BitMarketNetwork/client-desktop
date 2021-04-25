@@ -136,11 +136,15 @@ class Logger:
 
     @classmethod
     def errorToString(cls, error: int, message: str) -> str:
-        return "error {:d}: {:s}".format(error, message)
+        return "Error {:d}: {:s}".format(error, message)
 
     @classmethod
     def osErrorToString(cls, e: OSError) -> str:
-        cls.errorToString(e.errno, e.strerror)
+        return cls.errorToString(e.errno, e.strerror)
+
+    @classmethod
+    def exceptionToString(cls, e: Exception):
+        return "Error: " + str(e)
 
     @classmethod
     def jsonDecodeErrorToString(cls, e: JSONDecodeError) -> str:

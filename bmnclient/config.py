@@ -1,14 +1,19 @@
-# JOK+
+# JOK+++
+from __future__ import annotations
+
 import json
 import os
 from json.decoder import JSONDecodeError
-from pathlib import PurePath
 from threading import RLock
-from typing import Any, Type
+from typing import TYPE_CHECKING
 
 from .logger import Logger
 from .platform import PlatformPaths
 from .version import Product
+
+if TYPE_CHECKING:
+    from typing import Any, Final, Type
+    from pathlib import PurePath
 
 # TODO move to platform
 USER_CONFIG_FILE_PATH = \
@@ -21,20 +26,20 @@ USER_DATABASE_FILE_PATH = \
 
 
 class UserConfig:
-    KEY_VERSION = "version"
+    KEY_VERSION: Final = "version"
 
-    KEY_UI_LANGUAGE = "ui.language"
-    KEY_UI_THEME = "ui.theme"
-    KEY_UI_HIDE_TO_TRAY = "ui.hide_to_tray"
-    KEY_UI_FONT_FAMILY = "ui.font.family"
-    KEY_UI_FONT_SIZE = "ui.font.size"
+    KEY_UI_LANGUAGE: Final = "ui.language"
+    KEY_UI_THEME: Final = "ui.theme"
+    KEY_UI_HIDE_TO_TRAY: Final = "ui.hide_to_tray"
+    KEY_UI_FONT_FAMILY: Final = "ui.font.family"
+    KEY_UI_FONT_SIZE: Final = "ui.font.size"
 
-    KEY_KEY_STORE_VALUE = "key_store.value"
-    KEY_KEY_STORE_SEED = "key_store.seed"
-    KEY_KEY_STORE_SEED_PHRASE = "key_store.seed_phrase"
+    KEY_KEY_STORE_VALUE: Final = "key_store.value"
+    KEY_KEY_STORE_SEED: Final = "key_store.seed"
+    KEY_KEY_STORE_SEED_PHRASE: Final = "key_store.seed_phrase"
 
-    KEY_SERVICES_FIAT_RATE = "services.fiat_rate"
-    KEY_SERVICES_FIAT_CURRENCY = "services.fiat_currency"
+    KEY_SERVICES_FIAT_RATE: Final = "services.fiat_rate"
+    KEY_SERVICES_FIAT_CURRENCY: Final = "services.fiat_currency"
 
     def __init__(
             self,
@@ -55,20 +60,21 @@ class UserConfig:
                         self._file_path,
                         mode="rt",
                         encoding=Product.ENCODING,
-                        errors="replace") as file:
+                        errors="strict") as file:
                     self._config = json.load(file)
                 self._updateVersion()
                 return True
             except OSError as e:
-                self._logger.warning(
-                    "Failed to read configuration file \"%s\". %s",
-                    self._file_path,
-                    Logger.osErrorToString(e))
+                error_message = Logger.osErrorToString(e)
             except JSONDecodeError as e:
-                self._logger.warning(
-                    "Failed to parse configuration file \"%s\". "
-                    + Logger.jsonDecodeErrorToString(e),
-                    self._file_path)
+                error_message = Logger.jsonDecodeErrorToString(e)
+            except ValueError as e:
+                error_message = Logger.exceptionToString(e)
+
+            self._logger.warning(
+                "Failed to read file \"%s\". %s",
+                self._file_path,
+                str(error_message))
             self._config = dict()
             self._updateVersion()
         return False
@@ -81,7 +87,7 @@ class UserConfig:
                         self._file_path,
                         mode="w+t",
                         encoding=Product.ENCODING,
-                        errors="replace") as file:
+                        errors="strict") as file:
                     json.dump(
                         self._config,
                         file,
@@ -91,10 +97,13 @@ class UserConfig:
                     file.flush()
                 return True
             except OSError as e:
-                self._logger.warning(
-                    "Failed to write configuration file \"%s\". %s",
-                    self._file_path,
-                    Logger.osErrorToString(e))
+                error_message = Logger.osErrorToString(e)
+            except ValueError as e:
+                error_message = Logger.exceptionToString(e)
+            self._logger.warning(
+                "Failed to write file \"%s\". %s",
+                self._file_path,
+                str(error_message))
         return False
 
     def get(
