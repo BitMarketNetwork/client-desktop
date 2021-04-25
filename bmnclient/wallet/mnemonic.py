@@ -1,37 +1,62 @@
-# JOK+
+# JOK+++
+from __future__ import annotations
+
 import unicodedata
-from typing import Optional, List, Union, Iterable
+from typing import TYPE_CHECKING
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from ..crypto.digest import Sha256Digest
+from ..logger import Logger
 from ..version import ProductPaths
+
+if TYPE_CHECKING:
+    from typing import Final, Optional, List, Union, Iterable
 
 
 # Adapted from:
 # https://github.com/trezor/python-mnemonic/blob/faa9c607d9a4b4fb1e2b2bc79a341a60181e3381/mnemonic/mnemonic.py
 class Mnemonic:
-    ENCODING = "utf-8"
-    WORD_COUNT = 2048
-    SOURCE_PATH = ProductPaths.RESOURCES_PATH / "wordlist"
-    PBKDF2_ROUNDS = 2048
+    ENCODING: Final = "utf-8"
+    WORD_COUNT: Final = 2048
+    SOURCE_PATH: Final = ProductPaths.RESOURCES_PATH / "wordlist"
+    PBKDF2_ROUNDS: Final = 2048
 
-    DATA_LENGTH_LIST = (16, 20, 24, 28, 32)
-    DEFAULT_DATA_LENGTH = 24
-    PHRASE_WORD_COUNT_LIST = (12, 15, 18, 21, 24)
+    DATA_LENGTH_LIST: Final = (16, 20, 24, 28, 32)
+    DEFAULT_DATA_LENGTH: Final = 24
+    PHRASE_WORD_COUNT_LIST: Final = (12, 15, 18, 21, 24)
 
     def __init__(self, language: str = None) -> None:
         self._language = language.lower() if language else "english"
-        with open(  # TODO global cache
-                self.SOURCE_PATH / (self._language + ".txt"),
-                mode="rt",
-                encoding=self.ENCODING) as file:
-            self._word_list = [word.strip() for word in file.readlines()]
-        if len(self._word_list) != self.WORD_COUNT:
-            raise RuntimeError(
-                "wordlist should contain {} words, but it contains {} words"
-                .format(self.WORD_COUNT, len(self._word_list)))
+        self._logger = Logger.getClassLogger(
+            __name__,
+            self.__class__,
+            self._language)
+        self._file_path = self.SOURCE_PATH / (self._language + ".txt")
+
+        try:
+            self._logger.debug("Reading words from \"%s\"...", self._file_path)
+            with open(  # TODO global cache
+                    self._file_path,
+                    mode="rt",
+                    encoding=self.ENCODING,
+                    errors="strict") as file:
+                self._word_list = [word.strip() for word in file.readlines()]
+            if len(self._word_list) != self.WORD_COUNT:
+                raise ValueError(
+                    "wordlist should contain {} words, but it contains {} words"
+                    .format(self.WORD_COUNT, len(self._word_list)))
+        except OSError as e:
+            Logger.fatal(
+                "Failed to read file \"{}\". {}"
+                .format(self._file_path, Logger.osErrorToString(e)),
+                self._logger)
+        except ValueError as e:
+            Logger.fatal(
+                "Failed to read file \"{}\". {}"
+                .format(self._file_path, Logger.exceptionToString(e)),
+                self._logger)
 
     @property
     def language(self) -> str:
@@ -39,10 +64,12 @@ class Mnemonic:
 
     def getPhrase(self, data: bytes) -> str:
         if len(data) not in self.DATA_LENGTH_LIST:
-            raise ValueError(
-                "data length should be one of the following: {}, "
-                "but data length {}"
-                .format(self.DATA_LENGTH_LIST, len(data)))
+            Logger.fatal(
+                "Data length should be one of the following: {}, but data "
+                "length {}."
+                .format(self.DATA_LENGTH_LIST, len(data)),
+                self._logger)
+
         h = Sha256Digest()
         h.update(data)
         h = h.final().hex()
