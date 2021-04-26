@@ -1,8 +1,7 @@
-# JOK++
+# JOK+++
 from __future__ import annotations
 
-from enum import Enum
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from .address import AbstractAddress
 from .coin import AbstractCoin
@@ -11,7 +10,7 @@ from ..crypto.bech32 import Bech32
 from ..crypto.digest import Ripemd160Digest, Sha256Digest
 
 if TYPE_CHECKING:
-    from typing import Final
+    from typing import Final, Optional
 
 
 class BitcoinAddress(AbstractAddress):
@@ -19,7 +18,7 @@ class BitcoinAddress(AbstractAddress):
     _SCRIPT_HASH_PREFIX_LIST = ("3",)
     _HRP = "bc"
 
-    class Type(Enum):
+    class Type(AbstractAddress.Type):
         # Optional[Tuple(version, excepted_size, friendly_name)]
         UNKNOWN: Final = (0xff, 0, "unknown")
         PUBKEY_HASH: Final = (0x00, Ripemd160Digest.SIZE, "p2pkh")
@@ -27,25 +26,6 @@ class BitcoinAddress(AbstractAddress):
         WITNESS_V0_KEY_HASH: Final = (0x00, Ripemd160Digest.SIZE, "p2wpkh")
         WITNESS_V0_SCRIPT_HASH: Final = (0x00, Sha256Digest.SIZE, "p2wsh")
         WITNESS_UNKNOWN: Final = (0x00, -40, "witness_unknown")
-
-    def __init__(
-            self,
-            coin: Bitcoin,
-            *,
-            address_type: Type,
-            address_version: int,
-            **kwargs) -> None:
-        super().__init__(coin, **kwargs)
-        self._type = address_type
-        self._version = address_version
-
-    @property
-    def type(self) -> Type:
-        return self._type
-
-    @property
-    def version(self) -> int:
-        return self._version
 
     @classmethod
     def decode(
@@ -144,9 +124,9 @@ class BitcoinTestAddress(BitcoinAddress):
     _SCRIPT_HASH_PREFIX_LIST = ("2",)
     _HRP = "tb"
 
-    class Type(Enum):
+    class Type(AbstractAddress.Type):
         UNKNOWN: Final = \
-            BitcoinAddress.Type.UNKNOWN
+            BitcoinAddress.Type.UNKNOWN.value
         PUBKEY_HASH: Final = \
             (0x6f, ) + BitcoinAddress.Type.PUBKEY_HASH.value[1:]
         SCRIPT_HASH: Final = \

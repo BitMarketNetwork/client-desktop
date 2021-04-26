@@ -1,11 +1,13 @@
-# JOK++
+# JOK+++
 from __future__ import annotations
 
-from typing import List, Optional, TYPE_CHECKING
+from enum import Enum
+from typing import TYPE_CHECKING
 
 from ..utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
+    from typing import List, Optional
     from .coin import AbstractCoin
     from .tx import AbstractTx
 
@@ -28,11 +30,16 @@ class AddressModelInterface:
 
 
 class AbstractAddress(Serializable):
+    class Type(Enum):
+        pass
+
     def __init__(
             self,
             coin: AbstractCoin,
             *,
-            name: str,
+            address_name: str,
+            address_type: Optional[Type],
+            address_version: int,
             data: bytes = b"",
             amount: int = 0,
             label: str = "",
@@ -40,7 +47,9 @@ class AbstractAddress(Serializable):
         super().__init__()
 
         self._coin = coin
-        self._name = name.strip()
+        self._name = address_name.strip()
+        self._type = address_type
+        self._version = address_version
         self._data = data
         self._amount = amount
         self._label = label
@@ -62,6 +71,14 @@ class AbstractAddress(Serializable):
     @property
     def name(self) -> str:
         return self._name
+
+    @property
+    def type(self) -> Optional[Type]:
+        return self._type
+
+    @property
+    def version(self) -> int:
+        return self._version
 
     @classmethod
     def decode(

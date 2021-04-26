@@ -1,9 +1,9 @@
-# JOK++
+# JOK+++
 from __future__ import annotations
 
-from enum import Enum
 from typing import TYPE_CHECKING
 
+from .address import AbstractAddress
 from .coin_bitcoin import Bitcoin, BitcoinAddress
 
 if TYPE_CHECKING:
@@ -15,7 +15,7 @@ class LitecoinAddress(BitcoinAddress):
     _SCRIPT_HASH_PREFIX_LIST = ("M",)
     _HRP = "ltc"
 
-    class Type(Enum):
+    class Type(AbstractAddress.Type):
         UNKNOWN: Final = \
             BitcoinAddress.Type.UNKNOWN.value
         PUBKEY_HASH: Final = \
