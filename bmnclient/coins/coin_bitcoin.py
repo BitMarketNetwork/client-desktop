@@ -19,7 +19,6 @@ class BitcoinAddress(AbstractAddress):
     _HRP = "bc"
 
     class Type(AbstractAddress.Type):
-        # Optional[Tuple(version, excepted_size, friendly_name)]
         UNKNOWN: Final = (0xff, 0, "unknown")
         PUBKEY_HASH: Final = (0x00, Ripemd160Digest.SIZE, "p2pkh")
         SCRIPT_HASH: Final = (0x05, Ripemd160Digest.SIZE, "p2sh")

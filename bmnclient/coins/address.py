@@ -31,15 +31,15 @@ class AddressModelInterface:
 
 class AbstractAddress(Serializable):
     class Type(Enum):
+        # Tuple(version, excepted_size, friendly_name)
         pass
 
     def __init__(
             self,
             coin: AbstractCoin,
             *,
-            address_name: str,
-            address_type: Optional[Type],
-            address_version: int,
+            name: str,
+            type_: Optional[Type],
             data: bytes = b"",
             amount: int = 0,
             label: str = "",
@@ -47,9 +47,8 @@ class AbstractAddress(Serializable):
         super().__init__()
 
         self._coin = coin
-        self._name = address_name.strip()
-        self._type = address_type
-        self._version = address_version
+        self._name = name.strip()
+        self._type = type_
         self._data = data
         self._amount = amount
         self._label = label
@@ -75,10 +74,6 @@ class AbstractAddress(Serializable):
     @property
     def type(self) -> Optional[Type]:
         return self._type
-
-    @property
-    def version(self) -> int:
-        return self._version
 
     @classmethod
     def decode(
