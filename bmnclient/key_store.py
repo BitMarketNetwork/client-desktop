@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import json
 import os
 from enum import Enum
 from json.decoder import JSONDecodeError
 from threading import RLock
-from typing import List, Optional, Tuple
+from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -20,15 +22,23 @@ from .logger import Logger
 from .version import Product
 from .wallet.hd import HDNode
 
+if TYPE_CHECKING:
+    from typing import Final, List, Optional, Tuple
+    from .application import CoreApplication
+
 
 class KeyIndex(Enum):
-    WALLET_DATABASE = 0
-    SEED = 1
+    WALLET_DATABASE: Final = 0
+    SEED: Final = 1
 
 
 class KeyStore(QObject):
-    def __init__(self, user_config: UserConfig) -> None:
+    def __init__(
+            self,
+            application: Optional[CoreApplication],
+            user_config: UserConfig) -> None:
         super().__init__()
+        self._application = application
         self._user_config = user_config
         self._logger = Logger.getClassLogger(__name__, self.__class__)
         self._lock = RLock()
@@ -71,7 +81,9 @@ class KeyStore(QObject):
                 self._getKey(key_index),
                 self._getNonce(key_index))
 
-    def deriveMessageCipher(self, key_index: KeyIndex) -> Optional[AeadCipher]:
+    def deriveMessageCipher(
+            self,
+            key_index: KeyIndex) -> Optional[MessageCipher]:
         with self._lock:
             assert self._getKey(key_index)
             return MessageCipher(self._getKey(key_index))
@@ -248,12 +260,11 @@ class KeyStore(QObject):
         root_path = HDNode.make_master(seed)
         purpose_path = root_path.make_child_prv(44, True)  # BIP-0044
 
-        # TODO
-        from .ui.gui import Application
-        if Application.instance():
-            for coin in Application.instance().coinList:
+        if self._application is not None:
+            for coin in self._application.coinList:
                 coin.makeHdPath(purpose_path)
-            Application.instance().networkQueryScheduler.getNextHdAddress()
+                self._application.networkQueryScheduler.updateHdAddressList(
+                    coin)
         return True
 
     ############################################################################
@@ -285,10 +296,8 @@ class KeyStore(QObject):
                 return False
             self._has_seed = self._loadSeed()
 
-        from .application import CoreApplication
-        if CoreApplication.instance():
-            CoreApplication.instance().databaseThread.applyPassword.emit()
-            CoreApplication.instance().networkThread.startTimers()
+        if self._application is not None:
+            self._application.databaseThread.applyPassword.emit()
         return True
 
     # noinspection PyTypeChecker
@@ -306,9 +315,8 @@ class KeyStore(QObject):
         with self._lock:
             self._reset(hard=True)
 
-        from .application import CoreApplication
-        if CoreApplication.instance():
-            CoreApplication.instance().databaseThread.reset_db()  # TODO
+        if self._application is not None:
+            self._application.databaseThread.reset_db()  # TODO
         return True
 
     @QProperty(bool, constant=True)

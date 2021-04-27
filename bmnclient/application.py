@@ -87,7 +87,7 @@ class CoreApplication(QObject):
         self._user_config = UserConfig()
         self._user_config.load()
 
-        self._key_store = KeyStore(self._user_config)
+        self._key_store = KeyStore(self, self._user_config)
 
         # Prepare QCoreApplication
         QLocale.setDefault(QLocale.c())

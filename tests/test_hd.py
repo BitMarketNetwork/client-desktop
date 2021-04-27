@@ -2,6 +2,7 @@ import logging
 import os
 import random
 import unittest
+from unittest import TestCase
 
 from bmnclient.coins import mnemonic
 from bmnclient.coins.hd import HdAddressIterator
@@ -10,7 +11,7 @@ from bmnclient.wallet.coins import Bitcoin
 from bmnclient.wallet.hd import HDNode
 
 
-class TestHdAddressIterator(unittest.TestCase):
+class TestHdAddressIterator(TestCase):
     def setUp(self) -> None:
         root_path = HDNode.make_master(random.randbytes(64))
         self._purpose_path = root_path.make_child_prv(44, True)
@@ -57,7 +58,7 @@ log = logging.getLogger(__name__)
 MNEMO_PASSWORD = "hardcoded mnemo password"
 
 @unittest.skip
-class TestBase(unittest.TestCase):
+class TestBase(TestCase):
 
     def test_btc(self):
         seed = mnemonic.Mnemonic.phraseToSeed(
@@ -74,7 +75,7 @@ class TestBase(unittest.TestCase):
             log.warning(f"{i}: {addr} hdpath:{hdk.chain_path}")
 
 
-class TestAdvanced(unittest.TestCase):
+class TestAdvanced(TestCase):
 
     def test_free_coin_index(self):
         coin = coins.Bitcoin(None)
