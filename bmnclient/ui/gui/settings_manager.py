@@ -54,8 +54,9 @@ class SettingsManager(QObject):
     def _setCurrentFiatRateServiceIndex(self, index: int) -> None:
         if index != self._application.fiatRateServiceList.currentIndex:
             self._application.fiatRateServiceList.setCurrentIndex(index)
+            # noinspection PyUnresolvedReferences
             self.fiatRateServiceChanged.emit()
-            self._application.updateCurrentFiatCurrency()
+            self._application.networkQueryScheduler.updateCurrentFiatCurrency()
 
     ############################################################################
     # FiatCurrency
@@ -76,8 +77,9 @@ class SettingsManager(QObject):
     def _setCurrentFiatCurrencyIndex(self, index: int):
         if index != self._application.fiatCurrencyList.currentIndex:
             self._application.fiatCurrencyList.setCurrentIndex(index)
+            # noinspection PyUnresolvedReferences
             self.fiatCurrencyChanged.emit()
-            self._application.updateCurrentFiatCurrency()
+            self._application.networkQueryScheduler.updateCurrentFiatCurrency()
 
     ############################################################################
     # Language

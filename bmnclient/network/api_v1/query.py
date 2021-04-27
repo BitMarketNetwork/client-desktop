@@ -220,8 +220,8 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery):
             application: CoreApplication,
             coin: AbstractCoin,
             *,
-            finished_callback: Optional[
-                Callable[[HdAddressIteratorApiQuery], None]] = None,
+            finished_callback: Callable[
+                [HdAddressIteratorApiQuery], None] = None,
             _hd_iterator: Optional[HdAddressIterator] = None,
             _current_address: Optional[CAddress] = None) -> None:
         if _hd_iterator is None:
@@ -231,6 +231,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery):
         super().__init__(application, _current_address)
         self._hd_iterator = _hd_iterator
         self._finished_callback = finished_callback
+        self._next_query: Optional[HdAddressIteratorApiQuery] = None
 
     def _processData(
             self,
@@ -254,14 +255,18 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery):
             self._logger.debug(
                 "HD iteration was finished for coin \"%s\".",
                 self._address.coin.fullName)
-            if self._finished_callback is not None:
-                self._finished_callback(self)
             return
 
-        next_query = HdAddressIteratorApiQuery(
+        self._next_query = HdAddressIteratorApiQuery(
             self._application,
             self._address.coin,
             finished_callback=self._finished_callback,
             _hd_iterator=self._hd_iterator,
             _current_address=next_address)
-        self._application.networkQueryManager.put(next_query)
+
+    def _onResponseFinished(self) -> None:
+        super()._onResponseFinished()
+        if self._next_query is None:
+            self._finished_callback(self)
+        else:
+            self._application.networkQueryManager.put(self._next_query)
