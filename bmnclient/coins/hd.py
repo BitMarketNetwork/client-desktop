@@ -29,6 +29,9 @@ class HdAddressIterator(Iterator):
         return self
 
     def __next__(self) -> CAddress:
+        if self._coin.hdPath is None:
+            raise StopIteration
+
         while True:
             startup_type_index = self._type_index
             for type_index, address_type in enumerate(self._coin.address.Type):
@@ -65,13 +68,15 @@ class HdAddressIterator(Iterator):
             address_type: AbstractAddress.Type) -> List[CAddress]:
         return self._empty_address_list.setdefault(address_type, [])
 
-    def flushEmptyAddressList(self, address_type: AbstractAddress.Type) -> None:
-        empty_list = self._emptyAddressList(address_type)
+    def appendAddressToCoin(self, address: CAddress) -> None:
+        assert address.coin is self._coin
+        empty_list = self._emptyAddressList(address.addressType)
         for empty_address in empty_list:
             self._coin.appendAddress(empty_address)
         empty_list.clear()
+        self._coin.appendAddress(address)
 
-    def appendEmptyAddress(self, address: CAddress) -> None:
+    def appendAddressToEmptyList(self, address: CAddress) -> None:
         empty_list = self._emptyAddressList(address.addressType)
         empty_list.append(address)
 

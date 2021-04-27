@@ -1,18 +1,19 @@
-# JOK+++
+# JOK++
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from ..query import AbstractJsonQuery
 from ..utils import urlJoin
+from ...coins.hd import HdAddressIterator
 from ...logger import Logger
 from ...utils.serialize import ParseError, parseItemKey
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any, Callable, Optional
     from ...application import CoreApplication
-    from ...coins.address import AbstractAddress
     from ...coins.coin import AbstractCoin
+    from ...wallet.address import CAddress
 
 
 class AbstractServerApiQuery(AbstractJsonQuery):
@@ -187,3 +188,80 @@ class CoinsInfoApiQuery(AbstractServerApiQuery):
             coin.offset = offset
             coin.verifiedHeight = verified_height
             coin.height = height
+class AddressInfoApiQuery(AbstractServerApiQuery):
+    _ACTION = "coins"
+
+    def __init__(
+            self,
+            application: CoreApplication,
+            address: CAddress) -> None:
+        super().__init__(application)
+        self._address = address
+
+    @property
+    def url(self) -> str:
+        return urlJoin(
+            super().url,
+            self._address.coin.shortName,
+            self._address.name)
+
+    def _processData(
+            self,
+            data_id: Optional[str],
+            data_type: Optional[str],
+            value: Any) -> None:
+        if self.statusCode != 200 or data_type is None:
+            return
+        print(value)
+
+class HdAddressIteratorApiQuery(AddressInfoApiQuery):
+    def __init__(
+            self,
+            application: CoreApplication,
+            coin: AbstractCoin,
+            *,
+            finished_callback: Optional[
+                Callable[[HdAddressIteratorApiQuery], None]] = None,
+            _hd_iterator: Optional[HdAddressIterator] = None,
+            _current_address: Optional[CAddress] = None) -> None:
+        if _hd_iterator is None:
+            _hd_iterator = HdAddressIterator(coin)
+        if _current_address is None:
+            _current_address = next(_hd_iterator)
+        super().__init__(application, _current_address)
+        self._hd_iterator = _hd_iterator
+        self._finished_callback = finished_callback
+
+    def _processData(
+            self,
+            data_id: Optional[str],
+            data_type: Optional[str],
+            value: Any) -> None:
+        if self.statusCode != 200 or data_type is None:
+            return
+
+        self._address.amount = parseItemKey(value, "balance", int)
+        tx_count = parseItemKey(value, "number_of_transactions", int)
+
+        if tx_count == 0 and self._address.amount == 0:
+            self._hd_iterator.appendAddressToEmptyList(self._address)
+        else:
+            self._hd_iterator.appendAddressToCoin(self._address)
+
+        try:
+            next_address = next(self._hd_iterator)
+        except StopIteration:
+            self._logger.debug(
+                "HD iteration was finished for coin \"%s\".",
+                self._address.coin.fullName)
+            if self._finished_callback is not None:
+                self._finished_callback(self)
+            return
+
+        next_query = HdAddressIteratorApiQuery(
+            self._application,
+            self._address.coin,
+            finished_callback=self._finished_callback,
+            _hd_iterator=self._hd_iterator,
+            _current_address=next_address)
+        self._application.networkQueryManager.put(next_query)

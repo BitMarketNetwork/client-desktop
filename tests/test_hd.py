@@ -12,7 +12,7 @@ from bmnclient.wallet.hd import HDNode
 
 class TestHdAddressIterator(unittest.TestCase):
     def setUp(self) -> None:
-        root_path = HDNode.make_master(b"1" * 64)
+        root_path = HDNode.make_master(random.randbytes(64))
         self._purpose_path = root_path.make_child_prv(44, True)
 
     def test(self) -> None:
@@ -28,14 +28,14 @@ class TestHdAddressIterator(unittest.TestCase):
             append = 0
 
             for address in it:
-                if random.randint(0, 3) == 1:
+                if random.randint(0, 2) == 1:
                     flush += 1
-                    it.appendEmptyAddress(address)
+                    it.appendAddressToEmptyList(address)
                     # noinspection PyProtectedMember
                     self.assertGreater(len(it._empty_address_list), 0)
                 else:
                     append += 1
-                    it.flushEmptyAddressList(address.addressType)
+                    it.appendAddressToCoin(address)
                     # noinspection PyProtectedMember
                     self.assertEqual(
                         len(it._empty_address_list[address.addressType]),
