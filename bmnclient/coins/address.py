@@ -72,7 +72,7 @@ class AbstractAddress(Serializable):
         return self._name
 
     @property
-    def type(self) -> Optional[Type]:
+    def addressType(self) -> Optional[Type]:  # TODO rename to type()
         return self._type
 
     @classmethod
