@@ -3,13 +3,58 @@ import os
 import random
 import unittest
 
-import key_store
 from bmnclient.coins import mnemonic
+from bmnclient.coins.hd import HdAddressIterator
 from bmnclient.wallet import coin_network, hd, key as key_mod
+from bmnclient.wallet.coins import Bitcoin
+from bmnclient.wallet.hd import HDNode
+
+
+class TestHdAddressIterator(unittest.TestCase):
+    def setUp(self) -> None:
+        root_path = HDNode.make_master(b"1" * 64)
+        self._purpose_path = root_path.make_child_prv(44, True)
+
+    def test(self) -> None:
+        coin = Bitcoin()
+        coin.makeHdPath(self._purpose_path)
+
+        flush = 0
+        append = 0
+        it = None
+        while flush < 1 or append < 0:
+            it = HdAddressIterator(coin)
+            flush = 0
+            append = 0
+
+            for address in it:
+                if random.randint(0, 3) == 1:
+                    flush += 1
+                    it.appendEmptyAddress(address)
+                    # noinspection PyProtectedMember
+                    self.assertGreater(len(it._empty_address_list), 0)
+                else:
+                    append += 1
+                    it.flushEmptyAddressList(address.addressType)
+                    # noinspection PyProtectedMember
+                    self.assertEqual(
+                        len(it._empty_address_list[address.addressType]),
+                        0)
+            self.assertRaises(StopIteration, next, it)
+
+        self.assertIsNotNone(it)
+        # noinspection PyProtectedMember
+        self.assertEqual(len(it._empty_address_list), 2)
+        self.assertGreater(len(coin.addressList), 0)
+
+        # noinspection PyProtectedMember
+        for (address_type, address_list) in it._empty_address_list.items():
+            # noinspection PyProtectedMember
+            self.assertEqual(len(address_list), it._EMPTY_ADDRESS_LIMIT)
+
 
 log = logging.getLogger(__name__)
 MNEMO_PASSWORD = "hardcoded mnemo password"
-
 
 @unittest.skip
 class TestBase(unittest.TestCase):
