@@ -23,7 +23,6 @@ class CAddress(AbstractAddress):
     balanceChanged = qt_core.Signal()
     labelChanged = qt_core.Signal()
     useAsSourceChanged = qt_core.Signal()
-    txCountChanged = qt_core.Signal()
 
     def __init__(
             self,
@@ -36,14 +35,10 @@ class CAddress(AbstractAddress):
         super().__init__(coin, **kwargs)
 
         self.__created = None
-        self.__first_offset = None
-        self.__last_offset = None
         self.__type = key.AddressType.P2PKH
         # use as source in current tx
         self.__use_as_source = True
         self.__unspents_time = qt_core.QTime()
-        # for back
-        self.__going_to_update = False
         # for ui .. this is always ON when goint_to_update ON but conversely
         self.__updating_history = False
         # to stop network stuff
@@ -52,8 +47,6 @@ class CAddress(AbstractAddress):
         self.__key = None
         # from server!!
         self.__tx_count = 0
-        self.__local__tx_count = 0
-        #
         self.__valid = True
         # this map can be updated before each transaction
         self.__unspents = []
@@ -142,8 +135,8 @@ class CAddress(AbstractAddress):
             #
             self.__tx_count = next(arg_iter)
             # use setters !!
-            self.first_offset = next(arg_iter)
-            self.last_offset = next(arg_iter)
+            self.historyFirstOffset = next(arg_iter)
+            self.historyLastOffset = next(arg_iter)
             #
             self.import_key(next(arg_iter))
         except StopIteration as si:
@@ -153,14 +146,8 @@ class CAddress(AbstractAddress):
     def is_receiver(self, tx: AbstractTx) -> bool:
         return any(self.name == o.address for o in tx.output_iter)
 
-    def _get_first_offset(self) -> int:
-        return self.__first_offset
-
-    def _set_first_offset(self, bh: int):
-        self.__first_offset = str(bh)
-
     def update_tx_list(self, first_offset: Optional[int], clear_tx_from: Optional[int], verbose: bool):
-        self.__first_offset = first_offset
+        self._history_first_offset = first_offset
         if clear_tx_from is not None:
             to_remove = []
             for k in self._tx_list:
@@ -180,36 +167,9 @@ class CAddress(AbstractAddress):
                     log.debug(
                         f"{len(to_remove)} tx were removed and {len(self._tx_list)} left in {self} ")
 
-    def _get_last_offset(self) -> str:
-        return self.__last_offset
-
-    def _set_last_offset(self, bh):
-        if not bh or 'None' == bh:
-            return
-        if bh == self.__last_offset:
-            return
-        if isinstance(bh, str):
-            if not self.__last_offset or offset_less(bh, self.__last_offset):
-                self.__last_offset = bh
-                return
-        else:
-            raise TypeError(type(bh))
-        log.warning("Offsset skipped")
-
     @property
     def realTxCount(self) -> int:
         return len(self._tx_list)
-
-    @property
-    def txCount(self) -> int:
-        return self.__tx_count + self.__local__tx_count
-
-    @txCount.setter
-    def _set_tx_count(self, txc: int):
-        if txc == self.__tx_count:
-            return
-        self.__tx_count = txc
-        self.txCountChanged.emit()
 
     def __bool__(self) -> bool:
         return self is not None
@@ -222,8 +182,8 @@ class CAddress(AbstractAddress):
             return False
         return self._name == other.name and \
             self.__type == other.type and \
-            self.__last_offset == other.last_offset and \
-            self.__first_offset == other.first_offset and \
+            self._history_last_offset == other._history_last_offset and \
+            self._history_first_offset == other._history_first_offset and \
             True
 
     def _get_valid(self) -> bool:
@@ -234,8 +194,8 @@ class CAddress(AbstractAddress):
 
     def clear(self):
         self._tx_list.clear()
-        self.__first_offset = None
-        self.__last_offset = None
+        self._history_first_offset = None
+        self._history_last_offset = None
         self.__tx_count = 0
         self.__deleted = True
 
@@ -277,20 +237,10 @@ class CAddress(AbstractAddress):
 
     @isUpdating.setter
     def isUpdating(self, val: bool) -> None:
-        if val:
-            self.__going_to_update = True
         if val == self.__updating_history:
             return
         self.__updating_history = bool(val)
         ##self._state_model.refresh()
-
-    @property
-    def is_going_update(self) -> bool:
-        return self.__going_to_update
-
-    @is_going_update.setter
-    def is_going_update(self, val: bool) -> None:
-        self.__going_to_update = val
 
     @property
     def useAsSource(self) -> bool:
@@ -342,6 +292,4 @@ class CAddress(AbstractAddress):
     def __getitem__(self, val: int) -> AbstractTx:
         return self._tx_list[val]
 
-    first_offset = property(_get_first_offset, _set_first_offset)
-    last_offset = property(_get_last_offset, _set_last_offset)
     valid = property(_get_valid, _set_valid)

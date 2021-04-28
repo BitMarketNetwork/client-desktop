@@ -21,10 +21,6 @@ class DebugManager(QObject):
         for coin in self._application.coinList:
             coin.height += value
 
-    @QSlot()
-    def retrieveFee(self) -> None:
-        self._application.networkThread.retrieve_fee()
-
     @QSlot(int)
     def kill(self, sig: int):
         os.kill(os.getpid(), sig)

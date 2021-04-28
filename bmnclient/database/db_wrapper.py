@@ -301,8 +301,8 @@ class DbWrapper:
                     self.__impl(wallet.type),
                     table["amount"],
                     self.__impl(wallet.txCount),
-                    self.__impl(wallet.first_offset),
-                    self.__impl(wallet.last_offset),
+                    self.__impl(wallet.historyFirstOffset),
+                    self.__impl(wallet.historyLastOffset),
                     self.__impl(wallet.export_key(), True, "wallet key"),
                 ))) as c:
                     wallet.rowId = c.lastrowid
@@ -335,8 +335,8 @@ class DbWrapper:
                     self.__impl(wallet.type),
                     self.__impl(wallet.amount),
                     self.__impl(wallet.txCount),
-                    self.__impl(wallet.first_offset),
-                    self.__impl(wallet.last_offset),
+                    self.__impl(wallet.historyFirstOffset),
+                    self.__impl(wallet.historyLastOffset),
                     wallet.rowId
                 ))):
                     pass

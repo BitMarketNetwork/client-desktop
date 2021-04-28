@@ -58,13 +58,6 @@ BMenu {
     }
     BMenu {
         title: "Network"
-        BMenuItem {
-            text: "Update fees"
-            onTriggered: {
-                // TODO cannot test, not found ui visual updates
-                debugManager.retrieveFee()
-            }
-        }
         BMenu {
             title: "Undo transactions"
             enabled: BBackend.coinManager.coinIndex >= 0

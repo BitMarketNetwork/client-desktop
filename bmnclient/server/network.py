@@ -218,12 +218,3 @@ class Network(NetworkQueryManager):
     @qt_core.Slot()
     def retrieve_fee(self):
         self._run_cmd(net_cmd.GetRecommendFeeCommand(parent=self))
-
-    @qt_core.Slot()
-    def abort(self):
-        log.debug("aborting server")
-        self._cmd_timer.stop()
-        self._fee_timer.stop()
-        reply = getattr(self, '_reply', None)
-        if reply:
-            reply.abort()

@@ -4,68 +4,28 @@ import json
 import logging
 from typing import Iterable, List, Optional, Tuple
 
-import PySide2.QtCore as qt_core
-
 from . import server_error
 from .. import loading_level
-from ..network.query import HttpQuery
-from ..network.server_parser import ServerCoinParser, ServerTxParser
-from ..wallet import address, coins, hd, key, mutable_tx
+from ..network.api_v1.query import AbstractServerApiQuery
+from ..wallet import address, coins, mutable_tx
 
 log = logging.getLogger(__name__)
 
-####################
-# temporary flag due to server errors
-####################
-SILENCE_CHECKS = True
 
-
-class AbstractQuery(HttpQuery):
+class AbstractQuery(AbstractServerApiQuery):
     action = None
     _server_action = None
-    verbose = False
     level = loading_level.LoadingLevel.NONE
-    _high_priority = False
-    _low_priority = False
     unique = False
 
     def __init__(self, parent=None, **kwargs) -> None:
         super().__init__()
-        self.__high_priority = kwargs.pop("high_priority", False)
-        self.__low_priority = kwargs.pop("low_priority", False)
         self.level = kwargs.pop("level", loading_level.LoadingLevel.NONE)
         assert not kwargs
-
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        assert not cls._low_priority or not cls._high_priority
-        cls.verbose = False
-        cls.silent = True
 
     @property
     def ext(self) -> bool:
         return self._DEFAULT_BASE_URL is not None
-
-    @property
-    def high_priority(self) -> bool:
-        return self._high_priority or self.__high_priority
-
-    @property
-    def low_priority(self) -> bool:
-        return self._low_priority or self.__low_priority
-
-    @property
-    def request_dict(self) -> dict:
-        # request properties => just sugar
-        if self.high_priority:
-            return {
-                "priority": qt_network.QNetworkRequest.HighPriority,
-            }
-        elif self.low_priority:
-            return {
-                "priority": qt_network.QNetworkRequest.LowPriority,
-            }
-        return {}
 
     @property
     def server_action(self) -> str:
@@ -403,7 +363,7 @@ class AddressMultyMempoolCommand(AbstractMultyMempoolCommand):
         for inp in body["input"] + body["output"]:
             w = self._coin[inp["address"]]
             if w is not None:
-                tx = ServerTxParser(ServerTxParser.ParseFlag.MEMPOOL).parse(
+                tx = TxParser(TxParser.ParseFlag.MEMPOOL).parse(
                     name,
                     body,
                     w)
@@ -458,7 +418,7 @@ class MempoolMonitorCommand(AbstractMultyMempoolCommand):
         for inp in body["input"] + body["output"]:
             w = self._coin[inp["address"]]
             if w is not None:
-                tx = ServerTxParser(ServerTxParser.ParseFlag.MEMPOOL).parse(
+                tx = TxParser(TxParser.ParseFlag.MEMPOOL).parse(
                     name,
                     body,
                     w)
@@ -475,8 +435,8 @@ class AddressUnspentCommand(AddressInfoCommand):
     def __init__(self, wallet: address.CAddress, first_offset=None,
                  last_offset=None, unspent=None, calls: int = 0, parent=None):
         super().__init__(wallet, parent)
-        self.__first_offset = first_offset
-        self.__last_offset = last_offset
+        self._first_offset = first_offset
+        self._last_offset = last_offset
         self._unspent = unspent or []
         self._calls = calls
 
@@ -486,13 +446,13 @@ class AddressUnspentCommand(AddressInfoCommand):
 
     def createRequestData(self) -> Optional[dict]:
         get = {}
-        if self.__first_offset is not None:
+        if self._first_offset is not None:
             get.update({
-                "first_offset": self.__first_offset,
+                "first_offset": self._first_offset,
             })
-        if self.__last_offset is not None:
+        if self._last_offset is not None:
             get.update({
-                "last_offset": self.__last_offset,
+                "last_offset": self._last_offset,
             })
         return get
 
@@ -523,8 +483,8 @@ class AddressUnspentCommand(AddressInfoCommand):
         self._address.coin.model._tx_controller.recalcSources()  # TODO
 
 
-class BroadcastTxCommand(JsonStreamMixin, BaseNetworkCommand):
-    _METHOD = HttpMethod.POST
+class BroadcastTxCommand(AbstractQuery):
+    _DEFAULT_METHOD = AbstractQuery.Method.POST
     action = "coins"
     level = loading_level.LoadingLevel.NONE
 

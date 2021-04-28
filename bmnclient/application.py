@@ -243,21 +243,6 @@ class CoreApplication(QObject):
 
     def _onExit(self) -> None:
         assert not self._on_exit_called
-
-        # TODO
-        QMetaObject.invokeMethod(
-            self._server_thread.network,
-            "abort",
-            Qt.QueuedConnection)
-        QMetaObject.invokeMethod(
-            self._wallet_thread.database,
-            "abort",
-            Qt.QueuedConnection)
-        for thread in (self._server_thread, self._wallet_thread):
-            # TODO logger
-            thread.exit()
-            thread.wait()
-
         self._on_exit_called = True
         self._signal_handler.close()
 

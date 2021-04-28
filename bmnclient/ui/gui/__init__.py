@@ -50,7 +50,6 @@ class Application(CoreApplication):
 
         # TODO kill
         self._coin_manager = None
-        self.networkThread.netError.connect(self._on_network_error)
 
         self._settings_manager = SettingsManager(self)
         self._ui_manager = UIManager(self)
@@ -175,14 +174,6 @@ class Application(CoreApplication):
 
         self._qml_engine.setUiLanguage(language.name)
         self._qml_engine.retranslate()
-
-    # TODO
-    @QSlot(int, str)
-    def _on_network_error(self, code, error):
-        self._ui_manager.online = 0 == code
-        self._ui_manager.statusMessage = error
-        if code:
-            log.error(f"Network error: {error} code: {code}")
 
 
 class BackendContext(QObject):

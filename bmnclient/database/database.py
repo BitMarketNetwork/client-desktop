@@ -38,11 +38,6 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
         self.load_everything()
 
     @qt_core.Slot()
-    def abort(self):
-        log.warning("aborting db")
-        self._save_address_timer.stop()
-
-    @qt_core.Slot()
     def close(self):
         self.close_db()
 
