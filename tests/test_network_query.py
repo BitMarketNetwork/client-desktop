@@ -28,7 +28,7 @@ class DefaultGetQuery(AbstractQuery, QueryHelper):
     _DEFAULT_BASE_URL = "https://bitmarket.network/"
 
     def __init__(self) -> None:
-        AbstractQuery.__init__(self)
+        AbstractQuery.__init__(self, name_suffix=None)
         QueryHelper.__init__(self)
 
     @property
@@ -74,7 +74,7 @@ class DummyQuery(AbstractQuery, QueryHelper):
     _DEFAULT_BASE_URL = None
 
     def __init__(self) -> None:
-        AbstractQuery.__init__(self)
+        AbstractQuery.__init__(self, name_suffix=None)
         QueryHelper.__init__(self)
 
     def _onResponseData(self, data: bytes) -> bool:

@@ -73,16 +73,20 @@ class AbstractQuery:
         )
     )
 
-    def __init__(self) -> None:
+    def __init__(self, *, name_suffix: Optional[str]) -> None:
         super().__init__()
-        self._logger = Logger.getClassLogger(__name__, self.__class__)
+        self.__name_suffix = name_suffix
+        self._logger = Logger.getClassLogger(
+            __name__,
+            self.__class__,
+            self.__name_suffix)
         self._status_code: Optional[int] = None
         self._response: Optional[QNetworkReply] = None
         self._is_success = False
         self._finished_callback_list: List[AbstractQuery.FinishedCallback] = []
 
     def __str__(self) -> str:
-        return self.__class__.__name__
+        return self.__class__.__name__ + Logger.nameSuffix(self.__name_suffix)
 
     @property
     def url(self) -> str:
@@ -243,8 +247,8 @@ class AbstractQuery:
 class AbstractJsonQuery(AbstractQuery):
     _DEFAULT_CONTENT_TYPE = "application/json"
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, *, name_suffix: Optional[str]) -> None:
+        super().__init__(name_suffix=name_suffix)
         self._json_buffer = BytesIO()
 
     @property

@@ -21,8 +21,12 @@ class AbstractServerApiQuery(AbstractJsonQuery):
     _DEFAULT_BASE_URL = "https://d1.bitmarket.network:30110/v1"  # TODO dynamic
     _ACTION = ""
 
-    def __init__(self, application: CoreApplication):
-        super().__init__()
+    def __init__(
+            self,
+            application: CoreApplication,
+            *,
+            name_suffix: Optional[str]) -> None:
+        super().__init__(name_suffix=name_suffix)
         self._application = application
 
     @property
@@ -82,6 +86,9 @@ class AbstractServerApiQuery(AbstractJsonQuery):
 class ServerInfoApiQuery(AbstractServerApiQuery):
     _ACTION = "sysinfo"
 
+    def __init__(self, application: CoreApplication) -> None:
+        super().__init__(application, name_suffix=None)
+
     def _processData(
             self,
             data_id: Optional[str],
@@ -134,6 +141,9 @@ class ServerInfoApiQuery(AbstractServerApiQuery):
 
 class CoinsInfoApiQuery(AbstractServerApiQuery):
     _ACTION = "coins"
+
+    def __init__(self, application: CoreApplication) -> None:
+        super().__init__(application, name_suffix=None)
 
     def _processData(
             self,
@@ -195,7 +205,9 @@ class AddressInfoApiQuery(AbstractServerApiQuery):
             self,
             application: CoreApplication,
             address: CAddress) -> None:
-        super().__init__(application)
+        super().__init__(
+            application,
+            name_suffix="{}:{}".format(address.coin.shortName, address.name))
         self._address = address
 
     @property
@@ -209,8 +221,8 @@ class AddressInfoApiQuery(AbstractServerApiQuery):
             self,
             data_id: Optional[str],
             data_type: Optional[str],
-            value: Any) -> None:
-        if self.statusCode != 200 or data_type is None:
+            value: Optional[dict]) -> None:
+        if self.statusCode != 200 or value is None:
             return
         print(value)
 
@@ -237,8 +249,8 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery):
             self,
             data_id: Optional[str],
             data_type: Optional[str],
-            value: Any) -> None:
-        if self.statusCode != 200 or data_type is None:
+            value: Optional[dict]) -> None:
+        if self.statusCode != 200 or value is None:
             return
 
         self._address.amount = parseItemKey(value, "balance", int)
