@@ -1,9 +1,9 @@
-# JOK++
+# JOK+++
 from __future__ import annotations
 
 from enum import IntEnum
 from functools import lru_cache
-from typing import Any, List, Sequence, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -16,6 +16,7 @@ from PySide2.QtCore import \
     Signal as QSignal
 
 if TYPE_CHECKING:
+    from typing import Any, List, Optional, Sequence
     from ..ui.gui import Application
 
 
@@ -108,7 +109,13 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
         super().__init__()
         ListModelHelper.__init__(self, application)
         self._source_list = source_list
+        self._data_list: List[dict] = [{}] * len(self._source_list)
         self.__lock = None
+
+    def _getRoleValue(self, index: QModelIndex, role) -> Optional[dict]:
+        if not 0 <= index.row() < self.rowCount() or not index.isValid():
+            return None
+        return self.ROLE_MAP.get(role, None)
 
     @lru_cache()
     def roleNames(self) -> dict:
@@ -120,9 +127,52 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
         return len(self._source_list)
 
     def data(self, index: QModelIndex, role=Qt.DisplayRole) -> Any:
-        if not 0 <= index.row() < self.rowCount() or not index.isValid():
+        role_value = self._getRoleValue(index, role)
+        if role_value is None:
             return None
-        return self.ROLE_MAP[role][1](self._source_list[index.row()])
+        if isinstance(role_value[1], str):
+            return self._data_list[index.row()].get(role_value[1], None)
+        else:
+            return role_value[1](self._source_list[index.row()])
+
+    def setData(self, index: QModelIndex, value: Any, role=Qt.EditRole) -> bool:
+        role_value = self._getRoleValue(index, role)
+        if role_value is None or not isinstance(role_value[1], str):
+            return False
+        self._data_list[index.row()][role_value[1]] = value
+        self.dataChanged.emit(index, index, [role])
+        return True
+
+    def beginInsertRows(
+            self,
+            parent: QModelIndex,
+            first_index: int,
+            last_index: int) -> None:
+        super().beginInsertRows(parent, first_index, last_index)
+        for i in range(first_index, last_index + 1):
+            self._data_list.insert(i, {})
+
+    def beginMoveRows(
+            self,
+            source_parent: QModelIndex,
+            source_first_index: int,
+            source_last_index: int,
+            destination_parent: QModelIndex,
+            destination_child_index: int) -> bool:
+        return False
+
+    def beginRemoveRows(
+            self,
+            parent: QModelIndex,
+            first_index: int,
+            last_index: int) -> None:
+        super().beginRemoveRows(parent, first_index, last_index)
+        while range(first_index, last_index + 1):
+            self._data_list.pop(first_index)
+
+    def endResetModel(self) -> None:
+        self._data_list = [{}] * len(self._source_list)
+        super().endResetModel()
 
     def lockInsertRows(self, first_index=-1, count=1) -> LockInsertRows:
         return self.LockInsertRows(self, first_index, count)
