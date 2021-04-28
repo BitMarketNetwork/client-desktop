@@ -29,29 +29,30 @@ class TestHdAddressIterator(TestCase):
             append = 0
 
             for address in it:
-                if random.randint(0, 2) == 1:
+                if random.randint(0, 2) != 1:
                     flush += 1
-                    it.appendAddressToEmptyList(address)
+                    it.markLastAddress(True)
                     # noinspection PyProtectedMember
-                    self.assertGreater(len(it._empty_address_list), 0)
+                    self.assertGreater(
+                        it._empty_address_counter[address.addressType],
+                        0)
                 else:
                     append += 1
-                    it.appendAddressToCoin(address)
+                    it.markLastAddress(False)
                     # noinspection PyProtectedMember
                     self.assertEqual(
-                        len(it._empty_address_list[address.addressType]),
+                        it._empty_address_counter[address.addressType],
                         0)
             self.assertRaises(StopIteration, next, it)
 
         self.assertIsNotNone(it)
         # noinspection PyProtectedMember
-        self.assertEqual(len(it._empty_address_list), 2)
-        self.assertGreater(len(coin.addressList), 0)
+        self.assertEqual(len(it._empty_address_counter), 2)
 
         # noinspection PyProtectedMember
-        for (address_type, address_list) in it._empty_address_list.items():
+        for count in it._empty_address_counter.values():
             # noinspection PyProtectedMember
-            self.assertEqual(len(address_list), it._EMPTY_ADDRESS_LIMIT)
+            self.assertGreater(count, it._EMPTY_ADDRESS_LIMIT)
 
 
 log = logging.getLogger(__name__)
