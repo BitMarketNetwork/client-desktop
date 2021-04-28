@@ -15,20 +15,6 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-
-def offset_less(left: str, right: str) -> bool:
-    if not left:
-        return True
-    l = left.partition('.')
-    r = right.partition('.')
-    # equality matters
-    if int(l[0]) <= int(r[0]):
-        return True
-    if l[0] == r[0]:
-        return int(l[2]) < int(r[2])
-    return False
-
-
 class AddressError(Exception):
     pass
 

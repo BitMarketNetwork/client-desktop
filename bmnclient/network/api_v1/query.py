@@ -3,14 +3,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .parser import ParseError, TxParser
 from ..query import AbstractJsonQuery
 from ..utils import urlJoin
 from ...coins.hd import HdAddressIterator
 from ...logger import Logger
-from ...utils.serialize import ParseError, parseItemKey
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional
+    from typing import Callable, Dict, Optional, Union
     from ...application import CoreApplication
     from ...coins.coin import AbstractCoin
     from ...wallet.address import CAddress
