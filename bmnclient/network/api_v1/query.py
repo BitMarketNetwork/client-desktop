@@ -79,7 +79,7 @@ class AbstractServerApiQuery(AbstractJsonQuery):
         raise NotImplementedError
 
 
-class ServerInfoApiQuery(AbstractServerApiQuery):
+class SysinfoApiQuery(AbstractServerApiQuery):
     _ACTION = "sysinfo"
 
     def __init__(self, application: CoreApplication) -> None:

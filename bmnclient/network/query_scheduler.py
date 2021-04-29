@@ -11,7 +11,7 @@ from PySide2.QtCore import \
 from .api_v1.query import \
     CoinsInfoApiQuery, \
     HdAddressIteratorApiQuery, \
-    ServerInfoApiQuery
+    SysinfoApiQuery
 from ..version import Timer
 
 if TYPE_CHECKING:
@@ -50,7 +50,7 @@ class NetworkQueryScheduler:
             "updateCurrentFiatCurrency",
             Timer.UPDATE_FIAT_CURRENCY_DELAY
         ), (
-            "updateServerInfo",
+            "updateSysinfo",
             Timer.UPDATE_SERVER_INFO_DELAY
         ), (
             "updateCoinsInfo",
@@ -119,10 +119,10 @@ class NetworkQueryScheduler:
             unique=True,
             high_priority=True)
 
-    def updateServerInfo(self) -> None:
+    def updateSysinfo(self) -> None:
         self._putRepeatedApiQuery(
-            ServerInfoApiQuery(self._application),
-            ("updateServerInfo", "global"),
+            SysinfoApiQuery(self._application),
+            ("updateSysinfo", "global"),
             unique=True)
 
     def updateCoinsInfo(self) -> None:
