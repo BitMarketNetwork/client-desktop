@@ -60,7 +60,7 @@ class AbstractParser:
                 "invalid value for key \"{}\"".format(str(key_name)))
 
 
-class ErrorParser(AbstractParser):
+class ResponseErrorParser(AbstractParser):
     def parse(
             self,
             response: dict,
@@ -74,7 +74,7 @@ class ErrorParser(AbstractParser):
                 self.parseKey(error, "detail", str))
 
 
-class DataParser(AbstractParser):
+class ResponseDataParser(AbstractParser):
     def parse(
             self,
             response: dict,
@@ -86,7 +86,7 @@ class DataParser(AbstractParser):
         callback(data_id, data_type, data_attributes)
 
 
-class MetaParser(AbstractParser):
+class ResponseMetaParser(AbstractParser):
     SLOW_TIMEFRAME: Final = 1e9
 
     def __init__(self) -> None:

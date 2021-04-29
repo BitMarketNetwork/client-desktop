@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 
 from .parser import \
     AbstractParser, \
-    DataParser, \
-    ErrorParser, \
-    MetaParser, \
     ParseError, \
+    ResponseDataParser, \
+    ResponseErrorParser, \
+    ResponseMetaParser, \
     TxParser
 from ..query import AbstractJsonQuery
 from ..utils import urlJoin
@@ -46,9 +46,9 @@ class AbstractServerApiQuery(AbstractJsonQuery):
                 self._processData(None, None, None)
                 return
 
-            meta = MetaParser()
+            meta = ResponseMetaParser()
             meta.parse(response)
-            if meta.timeframe > MetaParser.SLOW_TIMEFRAME:
+            if meta.timeframe > ResponseMetaParser.SLOW_TIMEFRAME:
                 self._logger.warning(
                     "Server response has taken more than %i seconds.",
                     meta.timeframeSeconds)
@@ -57,9 +57,9 @@ class AbstractServerApiQuery(AbstractJsonQuery):
             # The members data and errors MUST NOT coexist in the same
             # document.
             if "errors" in response:
-                ErrorParser().parse(response, self._processError)
+                ResponseErrorParser().parse(response, self._processError)
             elif "data" in response:
-                DataParser().parse(response, self._processData)
+                ResponseDataParser().parse(response, self._processData)
             else:
                 raise ParseError("empty response")
         except ParseError as e:
@@ -88,8 +88,8 @@ class ServerInfoApiQuery(AbstractServerApiQuery):
             self,
             data_id: Optional[str],
             data_type: Optional[str],
-            value: Any) -> None:
-        if self.statusCode != 200 or data_type is None:
+            value: Optional[dict]) -> None:
+        if self.statusCode != 200 or value is None:
             return
 
         server_version = parseItemKey(value, "version", list)
