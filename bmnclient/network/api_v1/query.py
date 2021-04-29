@@ -30,7 +30,7 @@ class AbstractServerApiQuery(AbstractJsonQuery):
         self._application = application
 
     @property
-    def url(self) -> str:
+    def url(self) -> Optional[str]:
         return urlJoin(super().url, self._ACTION)
 
     def __processErrorList(self, error_list: list) -> None:
@@ -149,8 +149,8 @@ class CoinsInfoApiQuery(AbstractServerApiQuery):
             self,
             data_id: Optional[str],
             data_type: Optional[str],
-            value: Any) -> None:
-        if self.statusCode != 200 or data_type is None:
+            value: Optional[dict]) -> None:
+        if self.statusCode != 200 or value is None:
             return
 
         for coin in self._application.coinList:
@@ -211,7 +211,7 @@ class AddressInfoApiQuery(AbstractServerApiQuery):
         self._address = address
 
     @property
-    def url(self) -> str:
+    def url(self) -> Optional[str]:
         return urlJoin(
             super().url,
             self._address.coin.shortName,
@@ -269,7 +269,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery):
                 self._address.coin.fullName)
             return
 
-        self._next_query = HdAddressIteratorApiQuery(
+        self._next_query = self.__class__(
             self._application,
             self._address.coin,
             finished_callback=self._finished_callback,

@@ -153,12 +153,19 @@ class Logger:
             .format(e.lineno, e.pos, e.msg)
 
     @classmethod
+    def nameSuffix(cls, suffix: Optional[str]) -> str:
+        if suffix:
+            return "[" + suffix + "]"
+        else:
+            return ""
+
+    @classmethod
     def getClassLogger(
             cls,
             module_name: str,
             owner_cls: Type,
             suffix: Optional[str] = None) -> logging.Logger:
-        name = ".".join((module_name, owner_cls.__name__))
-        if suffix is not None:
-            name += "[" + suffix + "]"
+        name = \
+            ".".join((module_name, owner_cls.__name__)) \
+            + cls.nameSuffix(suffix)
         return logging.getLogger(name)

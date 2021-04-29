@@ -89,7 +89,7 @@ class AbstractQuery:
         return self.__class__.__name__ + Logger.nameSuffix(self.__name_suffix)
 
     @property
-    def url(self) -> str:
+    def url(self) -> Optional[str]:
         return self._DEFAULT_BASE_URL
 
     @property
@@ -143,6 +143,12 @@ class AbstractQuery:
     def createRequest(self) -> Optional[QNetworkRequest]:
         # prepare full url
         url_string = self.url
+        if not url_string:
+            self._logger.error(
+                "Cannot create request, empty URL.",
+                url_string)
+            return None
+
         url_query = ""
         for (k, v) in self.arguments.items():
             bad_argument = False
