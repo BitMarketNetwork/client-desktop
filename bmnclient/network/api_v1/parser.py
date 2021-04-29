@@ -61,7 +61,7 @@ class AbstractParser:
 
 
 class ResponseErrorParser(AbstractParser):
-    def parse(
+    def __call__(
             self,
             response: dict,
             callback: Callable[[int, str], None]) -> None:
@@ -75,7 +75,7 @@ class ResponseErrorParser(AbstractParser):
 
 
 class ResponseDataParser(AbstractParser):
-    def parse(
+    def __call__(
             self,
             response: dict,
             callback: Callable[[str, str, dict], None]) -> None:
@@ -101,7 +101,7 @@ class ResponseMetaParser(AbstractParser):
     def timeframeSeconds(self) -> int:
         return int(self._timeframe // 1e9)
 
-    def parse(self, response: dict) -> None:
+    def __call__(self, response: dict) -> None:
         meta = self.parseKey(response, "meta", dict, {})
         self._timeframe = self.parseKey(meta, "timeframe", int, 0)
 
@@ -120,7 +120,7 @@ class SysinfoParser(AbstractParser):
     def serverCoinList(self) -> dict:
         return self._server_coin_list
 
-    def parse(self, value: dict, server_url: str) -> None:
+    def __call__(self, value: dict, server_url: str) -> None:
         server_version = self.parseKey(value, "version", list)
         self._server_data = {
             "server_url": server_url,
@@ -183,7 +183,7 @@ class CoinsInfoParser(AbstractParser):
     def status(self) -> int:
         return self._status
 
-    def parse(self, value: dict, coin_name: str) -> bool:
+    def __call__(self, value: dict, coin_name: str) -> bool:
         coin_info = self.parseKey(value, coin_name, dict, {})
         if not coin_info:
             return False

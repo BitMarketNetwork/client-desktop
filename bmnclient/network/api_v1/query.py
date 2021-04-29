@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from .parser import \
     AbstractParser, \
+    AddressInfoParser, \
     CoinsInfoParser, \
     ParseError, \
     ResponseDataParser, \
@@ -49,7 +50,7 @@ class AbstractServerApiQuery(AbstractJsonQuery):
                 return
 
             meta = ResponseMetaParser()
-            meta.parse(response)
+            meta(response)
             if meta.timeframe > ResponseMetaParser.SLOW_TIMEFRAME:
                 self._logger.warning(
                     "Server response has taken more than %i seconds.",
@@ -59,9 +60,9 @@ class AbstractServerApiQuery(AbstractJsonQuery):
             # The members data and errors MUST NOT coexist in the same
             # document.
             if "errors" in response:
-                ResponseErrorParser().parse(response, self._processError)
+                ResponseErrorParser()(response, self._processError)
             elif "data" in response:
-                ResponseDataParser().parse(response, self._processData)
+                ResponseDataParser()(response, self._processData)
             else:
                 raise ParseError("empty response")
         except ParseError as e:
@@ -95,13 +96,13 @@ class SysinfoApiQuery(AbstractServerApiQuery):
             return
 
         parser = SysinfoParser()
-        parser.parse(value, self._DEFAULT_BASE_URL)
+        parser(value, self._DEFAULT_BASE_URL)
 
         self._logger.info(
             "Server version: %s %s (0x%08x).",
-            parser.serverData["server_name"],
-            parser.serverData["server_version_string"],
-            parser.serverData["server_version"])
+            parser.serverData.get("server_name", "UNKNOWN"),
+            parser.serverData.get("server_version_string", "UNKNOWN"),
+            parser.serverData.get("server_version", 0xffffffff))
 
         for coin in self._application.coinList:
             coin.serverData = {
@@ -127,7 +128,7 @@ class CoinsInfoApiQuery(AbstractServerApiQuery):
         for coin in self._application.coinList:
             state_hash = coin.stateHash
             parser = CoinsInfoParser()
-            if not parser.parse(value, coin.shortName):
+            if not parser(value, coin.shortName):
                 self._logger.warning(
                     "Coin \"%s\" not found in server response.",
                     coin.shortName)
