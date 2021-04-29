@@ -101,11 +101,52 @@ class ResponseMetaParser(AbstractParser):
     def timeframeSeconds(self) -> int:
         return int(self._timeframe // 1e9)
 
-    def parse(
-            self,
-            response: dict) -> None:
+    def parse(self, response: dict) -> None:
         meta = self.parseKey(response, "meta", dict, {})
         self._timeframe = self.parseKey(meta, "timeframe", int, 0)
+
+
+class SysinfoParser(AbstractParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self._server_data = {}
+        self._server_coin_list = {}
+
+    @property
+    def serverData(self) -> dict:
+        return self._server_data
+
+    @property
+    def serverCoinList(self) -> dict:
+        return self._server_coin_list
+
+    def parse(self, value: dict, server_url: str) -> None:
+        server_version = self.parseKey(value, "version", list)
+        self._server_data = {
+            "server_url": server_url,
+            "server_name": self.parseKey(value, "name", str),
+            "server_version_string": self.parseKey(server_version, 0, str),
+            "server_version": self.parseKey(server_version, 1, int)
+        }
+
+        self._server_coin_list.clear()
+        server_coin_list = self.parseKey(value, "coins", dict)
+        for (coin_name, coin_value) in server_coin_list.items():
+            try:
+                self._server_coin_list[coin_name] = self._parseCoin(coin_value)
+            except ParseError as e:
+                raise ParseError(
+                    "failed to parse coin \"{}\": {}"
+                    .format(coin_name, str(e)))
+
+    def _parseCoin(self, value: dict) -> dict:
+        coin_version = self.parseKey(value, "version", list)
+        return {
+            "version_string": self.parseKey(coin_version, 0, str),
+            "version": self.parseKey(coin_version, 1, int),
+            "height": self.parseKey(value, "height", int),
+            "status": self.parseKey(value, "status", int),
+        }
 
 
 class TxParser(AbstractParser):

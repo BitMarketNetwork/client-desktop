@@ -9,6 +9,7 @@ from .parser import \
     ResponseDataParser, \
     ResponseErrorParser, \
     ResponseMetaParser, \
+    SysinfoParser, \
     TxParser
 from ..query import AbstractJsonQuery
 from ..utils import urlJoin
@@ -92,46 +93,20 @@ class ServerInfoApiQuery(AbstractServerApiQuery):
         if self.statusCode != 200 or value is None:
             return
 
-        server_version = parseItemKey(value, "version", list)
-        server_data = {
-            "server_url": self._DEFAULT_BASE_URL,
-            "server_name": parseItemKey(value, "name", str),
-            "server_version_string": parseItemKey(server_version, 0, str),
-            "server_version": parseItemKey(server_version, 1, int)
-        }
+        parser = SysinfoParser()
+        parser.parse(value, self._DEFAULT_BASE_URL)
+
         self._logger.info(
             "Server version: %s %s (0x%08x).",
-            server_data["server_name"],
-            server_data["server_version_string"],
-            server_data["server_version"])
+            parser.serverData["server_name"],
+            parser.serverData["server_version_string"],
+            parser.serverData["server_version"])
 
-        if "coins" in value:
-            server_coin_list = value["coins"]
-            for coin in self._application.coinList:
-                self._updateCoinRemoteState(
-                    coin,
-                    server_data,
-                    server_coin_list.get(coin.shortName, {}))
-
-    def _updateCoinRemoteState(
-            self,
-            coin: AbstractCoin,
-            server_data: dict,
-            server_coin_data: dict) -> None:
-        try:
-            coin_version = parseItemKey(server_coin_data, "version", list)
+        for coin in self._application.coinList:
             coin.serverData = {
-                **server_data,
-                "version_string": parseItemKey(coin_version, 0, str),
-                "version": parseItemKey(coin_version, 1, int),
-                "height": parseItemKey(server_coin_data, "height", int),
-                "status": parseItemKey(server_coin_data, "status", int),
+                **parser.serverData,
+                **parser.serverCoinList.get(coin.shortName, {})
             }
-        except ParseError as e:
-            coin.serverData = server_data
-            self._logger.error(
-                "Failed to parse coin info \"{}\": {}"
-                .format(coin.fullName, str(e)))
 
 
 class CoinsInfoApiQuery(AbstractServerApiQuery):
