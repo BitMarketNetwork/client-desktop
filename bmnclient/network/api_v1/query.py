@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .parser import ParseError, TxParser
+from .parser import AbstractParser, ParseError, TxParser
 from ..query import AbstractJsonQuery
 from ..utils import urlJoin
 from ...coins.hd import HdAddressIterator

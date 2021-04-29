@@ -65,12 +65,6 @@ class TxParser(AbstractParser):
             self,
             response: dict,
             address: AbstractAddress) -> Optional[List[AbstractTx]]:
-        if not isinstance(response, dict):
-            self._logger.error(
-                "Invalid transaction list response for address \"{}\"."
-                .format(address.name))
-            return None
-
         result = []
         for (name, value) in response.items():
             tx = self.parse(name, value, address)
@@ -85,19 +79,32 @@ class TxParser(AbstractParser):
             response: dict,
             address: AbstractAddress) -> Optional[AbstractTx]:
         try:
+            if self._flags & self.ParseFlag.MEMPOOL:
+                self.parseKey(response, "height", type(None), allow_none=True)
+                height = -1
+            else:
+                height = self.parseKey(response, "height", int)
+
             data = {
-                "name": name,  # TODO validate name
-                "height": self.parseKey(
-                    response,
-                    "height",
-                    int,
-                    -1 if self._flags & self.ParseFlag.MEMPOOL else None),
+                "name": name,
+                "height": height,
                 "time": self.parseKey(response, "time", int),
                 "amount": self.parseKey(response, "amount", int),
                 "fee": self.parseKey(response, "fee", int),
                 "coinbase": self.parseKey(response, "coinbase", int) != 0,
-                "input_list": [self._parseIo(v) for v in response["input"]],
-                "output_list": [self._parseIo(v) for v in response["output"]]
+
+                "input_list": [
+                    self._parseIo(v) for v in self.parseKey(
+                        response,
+                        "input",
+                        list)
+                ],
+                "output_list": [
+                    self._parseIo(v) for v in self.parseKey(
+                        response,
+                        "output",
+                        list)
+                ]
             }
         except ParseError as e:
             self._logger.error(
@@ -105,15 +112,13 @@ class TxParser(AbstractParser):
                 .format(address.name, Logger.exceptionToString(e)))
             return None
 
-        tx = AbstractTx.deserialize(address, **data)
-        address.appendTx(tx)
-        return tx
+        return AbstractTx.deserialize(address, **data)
 
     @classmethod
     def _parseIo(cls, item: dict) -> dict:
         return {
             "output_type": cls.parseKey(item, "output_type", str),
-            "address_type": cls.parseKey(item, "type", str),
-            "address_name": cls.parseKey(item, "address", str),
+            "address_type": cls.parseKey(item, "type", str, allow_none=True),
+            "address_name": cls.parseKey(item, "address", str, allow_none=True),
             "amount": cls.parseKey(item, "amount", int)
         }
