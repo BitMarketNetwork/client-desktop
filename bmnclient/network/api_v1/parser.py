@@ -4,11 +4,10 @@ from __future__ import annotations
 from enum import auto, Flag
 from typing import TYPE_CHECKING
 
-from ...coins.tx import AbstractTx
-
 if TYPE_CHECKING:
     from typing import Any, Callable, Final, List, Optional, Type, Union
     from ...coins.address import AbstractAddress
+    from ...coins.tx import AbstractTx
 
 
 class ParseError(LookupError):
@@ -60,30 +59,30 @@ class AbstractParser:
                 "invalid value for key \"{}\"".format(str(key_name)))
 
 
-class ResponseErrorParser(AbstractParser):
+class ResponseParser(AbstractParser):
     def __call__(
             self,
             response: dict,
-            callback: Callable[[int, str], None]) -> None:
-        error_list = self.parseKey(response, "errors", list)
-        if not error_list:
-            raise ParseError("empty error list")
-        for error in error_list:
-            callback(
-                self.parseKey(error, "code", int, allow_convert=True),
-                self.parseKey(error, "detail", str))
-
-
-class ResponseDataParser(AbstractParser):
-    def __call__(
-            self,
-            response: dict,
-            callback: Callable[[str, str, dict], None]) -> None:
-        data = self.parseKey(response, "data", dict)
-        data_id = self.parseKey(data, "id", str)
-        data_type = self.parseKey(data, "type", str)
-        data_attributes = self.parseKey(data, "attributes", dict, {})
-        callback(data_id, data_type, data_attributes)
+            callback: Callable[[str, str, dict], None],
+            error_callback: Callable[[int, str], None]) -> None:
+        # The members data and errors MUST NOT coexist in the same
+        # document.
+        if "errors" in response:
+            error_list = self.parseKey(response, "errors", list)
+            if not error_list:
+                raise ParseError("empty error list")
+            for error in error_list:
+                error_callback(
+                    self.parseKey(error, "code", int, allow_convert=True),
+                    self.parseKey(error, "detail", str))
+        elif "data" in response:
+            data = self.parseKey(response, "data", dict)
+            data_id = self.parseKey(data, "id", str)
+            data_type = self.parseKey(data, "type", str)
+            data_attributes = self.parseKey(data, "attributes", dict, {})
+            callback(data_id, data_type, data_attributes)
+        else:
+            raise ParseError("empty response")
 
 
 class ResponseMetaParser(AbstractParser):
@@ -92,6 +91,10 @@ class ResponseMetaParser(AbstractParser):
     def __init__(self) -> None:
         super().__init__()
         self._timeframe = 0
+
+    @property
+    def isSlowResponse(self) -> bool:
+        return self._timeframe > self.SLOW_TIMEFRAME
 
     @property
     def timeframe(self) -> int:
@@ -247,7 +250,7 @@ class AddressInfoParser(AbstractParser):
 
     def __call__(self, value: dict) -> None:
         self._type = self.parseKey(value, "type", str)
-        self._name = self.parseKey(value, "name", str)
+        self._name = self.parseKey(value, "address", str)
         self._tx_count = self.parseKey(value, "number_of_transactions", int)
         self._amount = self.parseKey(value, "balance", int)
 
