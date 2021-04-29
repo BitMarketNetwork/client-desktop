@@ -221,6 +221,37 @@ class CoinsInfoParser(AbstractParser):
         return True
 
 
+class AddressInfoParser(AbstractParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self._type = ""
+        self._name = ""
+        self._tx_count = 0
+        self._amount = 0
+
+    @property
+    def type(self) -> str:
+        return self._type
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def txCount(self) -> int:
+        return self._tx_count
+
+    @property
+    def amount(self) -> int:
+        return self._amount
+
+    def __call__(self, value: dict) -> None:
+        self._type = self.parseKey(value, "type", str)
+        self._name = self.parseKey(value, "name", str)
+        self._tx_count = self.parseKey(value, "number_of_transactions", int)
+        self._amount = self.parseKey(value, "balance", int)
+
+
 class TxParser(AbstractParser):
     class ParseFlag(AbstractParser.ParseFlag):
         NONE: Final = auto()
