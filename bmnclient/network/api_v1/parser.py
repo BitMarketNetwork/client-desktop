@@ -75,6 +75,17 @@ class ErrorParser(AbstractParser):
                 self.parseKey(error, "detail", str))
 
 
+class DataParser(AbstractParser):
+    def parse(
+            self,
+            data: list,
+            callback: Callable[[str, str, dict], None]) -> None:
+        data_id = self.parseKey(data, "id", str)
+        data_type = self.parseKey(data, "type", str)
+        data_attributes = self.parseKey(data, "attributes", dict, {})
+        callback(data_id, data_type, data_attributes)
+
+
 class TxParser(AbstractParser):
     class ParseFlag(AbstractParser.ParseFlag):
         NONE: Final = auto()

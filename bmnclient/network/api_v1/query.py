@@ -3,7 +3,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .parser import AbstractParser, ParseError, TxParser
+from .parser import \
+    AbstractParser, \
+    DataParser, \
+    ErrorParser, \
+    ParseError, \
+    TxParser
 from ..query import AbstractJsonQuery
 from ..utils import urlJoin
 from ...coins.hd import HdAddressIterator
@@ -33,12 +38,6 @@ class AbstractServerApiQuery(AbstractJsonQuery):
     def url(self) -> Optional[str]:
         return urlJoin(super().url, self._ACTION)
 
-    def __processData(self, data: dict) -> None:
-        data_id = parseItemKey(data, "id", str)
-        data_type = parseItemKey(data, "type", str)
-        data_attributes = parseItemKey(data, "attributes", dict, {})
-        self._processData(data_id, data_type, data_attributes)
-
     def _processResponse(self, response: Optional[dict]) -> None:
         try:
             if response is None:
@@ -53,7 +52,9 @@ class AbstractServerApiQuery(AbstractJsonQuery):
                     AbstractParser.parseKey(response, "errors", list),
                     self._processError)
             elif "data" in response:
-                self.__processData(response["data"])
+                DataParser().parse(
+                    AbstractParser.parseKey(response, "data", dict),
+                    self._processData)
             else:
                 raise ParseError("empty response")
 
