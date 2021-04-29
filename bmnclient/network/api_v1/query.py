@@ -33,14 +33,6 @@ class AbstractServerApiQuery(AbstractJsonQuery):
     def url(self) -> Optional[str]:
         return urlJoin(super().url, self._ACTION)
 
-    def __processErrorList(self, error_list: list) -> None:
-        if not error_list:
-            raise ParseError("empty error list")
-        for error in error_list:
-            self._processError(
-                parseItemKey(error, "code", int),
-                parseItemKey(error, "detail", str))
-
     def __processData(self, data: dict) -> None:
         data_id = parseItemKey(data, "id", str)
         data_type = parseItemKey(data, "type", str)
@@ -57,7 +49,9 @@ class AbstractServerApiQuery(AbstractJsonQuery):
             # The members data and errors MUST NOT coexist in the same
             # document.
             if "errors" in response:
-                self.__processErrorList(response["errors"])
+                ErrorParser().parse(
+                    AbstractParser.parseKey(response, "errors", list),
+                    self._processError)
             elif "data" in response:
                 self.__processData(response["data"])
             else:

@@ -8,7 +8,7 @@ from ...coins.tx import AbstractTx
 from ...logger import Logger
 
 if TYPE_CHECKING:
-    from typing import Any, Final, List, Optional, Type, Union
+    from typing import Any, Callable, Final, List, Optional, Type, Union
     from ...coins.address import AbstractAddress
 
 
@@ -34,15 +34,24 @@ class AbstractParser:
             value_type: Type,
             default_value: Any = None,
             *,
-            allow_none=False) -> Any:
+            allow_none=False,
+            allow_convert=False) -> Any:
         try:
             value = item[key_name]
+
             if value is None:
-                if not allow_none:
-                    raise ValueError
-            elif not isinstance(value, value_type):
-                raise TypeError
-            return value
+                if allow_none:
+                    return None
+                if allow_convert:
+                    return 0
+                raise ValueError
+
+            if isinstance(value, value_type):
+                return value
+            if allow_convert:
+                return value_type(value)
+
+            raise TypeError
         except (KeyError, IndexError):
             if default_value is not None:
                 return default_value
@@ -51,6 +60,19 @@ class AbstractParser:
         except (TypeError, ValueError):
             raise ParseError(
                 "invalid value for key \"{}\"".format(str(key_name)))
+
+
+class ErrorParser(AbstractParser):
+    def parse(
+            self,
+            error_list: list,
+            callback: Callable[[int, str], None]) -> None:
+        if not error_list:
+            raise ParseError("empty error list")
+        for error in error_list:
+            callback(
+                self.parseKey(error, "code", int, allow_convert=True),
+                self.parseKey(error, "detail", str))
 
 
 class TxParser(AbstractParser):
