@@ -5,7 +5,6 @@ from enum import auto, Flag
 from typing import TYPE_CHECKING
 
 from ...coins.tx import AbstractTx
-from ...logger import Logger
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Final, List, Optional, Type, Union
@@ -23,7 +22,6 @@ class AbstractParser:
     def __init__(
             self,
             flags: Optional[AbstractParser.ParseFlag] = None) -> None:
-        self._logger = Logger.getClassLogger(__name__, self.__class__)
         self._flags = flags
 
     @classmethod
@@ -164,10 +162,9 @@ class TxParser(AbstractParser):
                 ]
             }
         except ParseError as e:
-            self._logger.error(
-                "Failed to parse transaction for address \"{}\": {}"
-                .format(address.name, Logger.exceptionToString(e)))
-            return None
+            raise ParseError(
+                "failed to parse transaction \"{}\": {}"
+                .format(name, str(e)))
 
         return AbstractTx.deserialize(address, **data)
 
