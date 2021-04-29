@@ -131,7 +131,7 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
         if role_value is None:
             return None
         if isinstance(role_value[1], str):
-            return self._data_list[index.row()].get(role_value[1], None)
+            return self._data_list[index.row()].get(role_value[1])
         else:
             return role_value[1](self._source_list[index.row()])
 
@@ -139,8 +139,12 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
         role_value = self._getRoleValue(index, role)
         if role_value is None or not isinstance(role_value[1], str):
             return False
-        self._data_list[index.row()][role_value[1]] = value
-        self.dataChanged.emit(index, index, [role])
+        data = self._data_list[index.row()]
+        data_name = role_value[1]
+        if data.setdefault(data_name) != value:
+            data[data_name] = value
+            if not data_name.startswith("_"):
+                self.dataChanged.emit(index, index, [role])
         return True
 
     def beginInsertRows(
@@ -215,6 +219,7 @@ class AbstractListSortedModel(QSortFilterProxyModel, ListModelHelper):
             sort_order=Qt.AscendingOrder) -> None:
         super().__init__()
         ListModelHelper.__init__(self, application)
+        # TODO self.setDynamicSortFilter(False)
         self.setSourceModel(source_model)
         self.setSortRole(sort_role)
         self.sort(0, sort_order)

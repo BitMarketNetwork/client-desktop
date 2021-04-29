@@ -1,9 +1,9 @@
-# JOK++
+# JOK+++
 from __future__ import annotations
 
 from abc import ABCMeta
 from enum import auto
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -24,9 +24,9 @@ from .list import \
 from ..coins.tx import TxModelInterface
 
 if TYPE_CHECKING:
-    from typing import Final
-    from ..ui.gui import Application
+    from typing import Final, Optional
     from ..coins.tx import AbstractTx
+    from ..ui.gui import Application
 
 
 class AbstractTxStateModel(AbstractStateModel):
@@ -158,7 +158,8 @@ class TxIoListModel(AddressListModel):
 
 class TxListModel(AbstractListModel):
     class Role(RoleEnum):
-        INSTANCE: Final = auto()
+        ID: Final = auto()
+        VISIBLE: Final = auto()  # for TxListConcatenateModel
         NAME: Final = auto()
         AMOUNT: Final = auto()
         FEE_AMOUNT: Final = auto()
@@ -167,9 +168,12 @@ class TxListModel(AbstractListModel):
         OUTPUT_LIST: Final = auto()
 
     ROLE_MAP: Final = {
-        Role.INSTANCE: (
-            b"_instance",
-            lambda t: t),
+        Role.ID: (
+            b"_id",
+            lambda t: t.name),
+        Role.VISIBLE: (
+            b"_visible",
+            "_visible"),
         Role.NAME: (
             b"name",
             lambda t: t.model.name),
@@ -194,41 +198,29 @@ class TxListModel(AbstractListModel):
 class TxListConcatenateModel(AbstractConcatenateModel):
     ROLE_MAP: Final = TxListModel.ROLE_MAP
 
-    def __init__(self, application: Application) -> None:
-        super().__init__(application)
-        self._unique_map = {}
-        self.rowsInserted.connect(self._onRowsInserted)
-        self.rowsRemoved.connect(self._onRowsRemoved)
-
     def isVisibleRow(self, row_index: int, parent: QModelIndex) -> bool:
         index = self.index(row_index, 0, parent)
-        value = self.data(index, TxListModel.Role.INSTANCE)
-        return self._unique_map.get(value) == row_index
+        if self.data(index, TxListModel.Role.VISIBLE):
+            return True
 
-    def _onRowsInserted(
-            self,
-            parent: QModelIndex,
-            first_index: int,
-            last_index: int) -> None:
-        for i in range(first_index, last_index + 1):
-            index = self.index(i, 0, parent)
-            value = self.data(index, TxListModel.Role.INSTANCE)
-            self._unique_map.setdefault(value, i)
+        id_ = self.data(index, TxListModel.Role.ID)
+        for current_row_index in range(self.rowCount()):
+            if current_row_index == row_index:
+                continue
+            current_index = self.index(current_row_index, 0, parent)
+            current_id = self.data(current_index, TxListModel.Role.ID)
+            if current_id == id_:
+                if self.data(current_index, TxListModel.Role.VISIBLE):
+                    return False
 
-    def _onRowsRemoved(
-            self,
-            parent: QModelIndex,
-            first_index: int,
-            last_index: int) -> None:
-        for i in range(first_index, last_index + 1):
-            index = self.index(i, 0, parent)
-            value = self.data(index, TxListModel.Role.INSTANCE)
-            if self._unique_map.get(value) == i:
-                self._unique_map = {}
-                row_count = self.rowCount()
-                if row_count > 0:
-                    self._onRowsInserted(parent, 0, row_count - 1)
-                break
+        # Note that you should not update the source model through the proxy
+        # model when dynamicSortFilter is true.
+        source_index = self.mapToSource(index)
+        source_index.model().setData(
+            source_index,
+            True,
+            TxListModel.Role.VISIBLE)
+        return True
 
 
 class TxListSortedModel(AbstractListSortedModel):
@@ -244,11 +236,11 @@ class TxListSortedModel(AbstractListSortedModel):
 
     def filterAcceptsRow(
             self,
-            source_row: int,
+            source_row_index: int,
             source_parent: QModelIndex) -> bool:
         source_model = self.sourceModel()
         if isinstance(source_model, TxListConcatenateModel):
-            return source_model.isVisibleRow(source_row, source_parent)
+            return source_model.isVisibleRow(source_row_index, source_parent)
         return True
 
     def lessThan(
