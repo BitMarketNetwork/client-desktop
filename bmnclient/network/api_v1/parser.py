@@ -65,8 +65,9 @@ class AbstractParser:
 class ErrorParser(AbstractParser):
     def parse(
             self,
-            error_list: list,
+            response: dict,
             callback: Callable[[int, str], None]) -> None:
+        error_list = self.parseKey(response, "errors", list)
         if not error_list:
             raise ParseError("empty error list")
         for error in error_list:
@@ -78,12 +79,35 @@ class ErrorParser(AbstractParser):
 class DataParser(AbstractParser):
     def parse(
             self,
-            data: list,
+            response: dict,
             callback: Callable[[str, str, dict], None]) -> None:
+        data = self.parseKey(response, "data", dict)
         data_id = self.parseKey(data, "id", str)
         data_type = self.parseKey(data, "type", str)
         data_attributes = self.parseKey(data, "attributes", dict, {})
         callback(data_id, data_type, data_attributes)
+
+
+class MetaParser(AbstractParser):
+    SLOW_TIMEFRAME: Final = 1e9
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._timeframe = 0
+
+    @property
+    def timeframe(self) -> int:
+        return self._timeframe
+
+    @property
+    def timeframeSeconds(self) -> int:
+        return int(self._timeframe // 1e9)
+
+    def parse(
+            self,
+            response: dict) -> None:
+        meta = self.parseKey(response, "meta", dict, {})
+        self._timeframe = self.parseKey(meta, "timeframe", int, 0)
 
 
 class TxParser(AbstractParser):

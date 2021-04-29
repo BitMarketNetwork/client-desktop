@@ -7,6 +7,7 @@ from .parser import \
     AbstractParser, \
     DataParser, \
     ErrorParser, \
+    MetaParser, \
     ParseError, \
     TxParser
 from ..query import AbstractJsonQuery
@@ -45,23 +46,22 @@ class AbstractServerApiQuery(AbstractJsonQuery):
                 self._processData(None, None, None)
                 return
 
+            meta = MetaParser()
+            meta.parse(response)
+            if meta.timeframe > MetaParser.SLOW_TIMEFRAME:
+                self._logger.warning(
+                    "Server response has taken more than %i seconds.",
+                    meta.timeframeSeconds)
+            del meta
+
             # The members data and errors MUST NOT coexist in the same
             # document.
             if "errors" in response:
-                ErrorParser().parse(
-                    AbstractParser.parseKey(response, "errors", list),
-                    self._processError)
+                ErrorParser().parse(response, self._processError)
             elif "data" in response:
-                DataParser().parse(
-                    AbstractParser.parseKey(response, "data", dict),
-                    self._processData)
+                DataParser().parse(response, self._processData)
             else:
                 raise ParseError("empty response")
-
-            meta = parseItemKey(response, "meta", dict, {})
-            if parseItemKey(meta, "timeframe", int, 0) > 1e9:
-                self._logger.warning(
-                    "Server response has taken more than 1 second.")
         except ParseError as e:
             self._logger.error("Invalid server response: %s.", str(e))
 
@@ -74,7 +74,7 @@ class AbstractServerApiQuery(AbstractJsonQuery):
             self,
             data_id: Optional[str],
             data_type: Optional[str],
-            value: Any) -> None:
+            value: Optional[dict]) -> None:
         raise NotImplementedError
 
 
