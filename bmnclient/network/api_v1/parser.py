@@ -149,6 +149,78 @@ class SysinfoParser(AbstractParser):
         }
 
 
+class CoinsInfoParser(AbstractParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self._offset = ""
+        self._unverified_offset = ""
+        self._unverified_hash = ""
+        self._height = -1
+        self._verified_height = -1
+        self._status = -1
+
+    @property
+    def offset(self) -> str:
+        return self._offset
+
+    @property
+    def unverifiedOffset(self) -> str:
+        return self._unverified_offset
+
+    @property
+    def unverifiedHash(self) -> str:
+        return self._unverified_hash
+
+    @property
+    def height(self) -> int:
+        return self._height
+
+    @property
+    def verifiedHeight(self) -> int:
+        return self._verified_height
+
+    @property
+    def status(self) -> int:
+        return self._status
+
+    def parse(self, value: dict, coin_name: str) -> bool:
+        coin_info = self.parseKey(value, coin_name, dict, {})
+        if not coin_info:
+            return False
+
+        try:
+            self._offset = self.parseKey(
+                coin_info,
+                "offset",
+                str)
+            self._unverified_offset = self.parseKey(
+                coin_info,
+                "unverified_offset",
+                str)
+            self._unverified_hash = self.parseKey(
+                coin_info,
+                "unverified_hash",
+                str)
+            self._height = self.parseKey(
+                coin_info,
+                "height",
+                int)
+            self._verified_height = self.parseKey(
+                coin_info,
+                "verified_height",
+                int)
+            self._status = self.parseKey(
+                coin_info,
+                "status",
+                int)
+        except ParseError as e:
+            raise ParseError(
+                "failed to parse coin \"{}\": {}"
+                .format(coin_name, str(e)))
+
+        return True
+
+
 class TxParser(AbstractParser):
     class ParseFlag(AbstractParser.ParseFlag):
         NONE: Final = auto()

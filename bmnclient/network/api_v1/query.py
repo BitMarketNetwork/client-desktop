@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from .parser import \
     AbstractParser, \
+    CoinsInfoParser, \
     ParseError, \
     ResponseDataParser, \
     ResponseErrorParser, \
@@ -124,50 +125,35 @@ class CoinsInfoApiQuery(AbstractServerApiQuery):
             return
 
         for coin in self._application.coinList:
-            coin_info = value.get(coin.shortName)
-            if not coin_info:
-                self._logger.warning("TODO")
-                continue
-
             state_hash = coin.stateHash
-            try:
-                offset = parseItemKey(
-                    coin_info,
-                    "offset",
-                    str)
-                unverified_offset = parseItemKey(
-                    coin_info,
-                    "unverified_offset",
-                    str)
-                unverified_hash = parseItemKey(
-                    coin_info,
-                    "unverified_hash",
-                    str)
-                height = parseItemKey(
-                    coin_info,
-                    "height",
-                    int)
-                verified_height = parseItemKey(
-                    coin_info,
-                    "verified_height",
-                    int)
-                status = parseItemKey(
-                    coin_info,
-                    "status",
-                    int)
-            except ParseError as e:
-                self._logger.error(
-                    "Failed to parse coin \"{}\": {}"
-                    .format(coin.fullName, str(e)))
+            parser = CoinsInfoParser()
+            if not parser.parse(value, coin.shortName):
+                self._logger.warning(
+                    "Coin \"%s\" not found in server response.",
+                    coin.shortName)
                 continue
 
             # TODO legacy order
-            coin.status = status
-            coin.unverifiedHash = unverified_hash
-            coin.unverifiedOffset = unverified_offset
-            coin.offset = offset
-            coin.verifiedHeight = verified_height
-            coin.height = height
+            coin.status = parser.status
+            coin.unverifiedHash = parser.unverifiedHash
+            coin.unverifiedOffset = parser.unverifiedOffset
+            coin.offset = parser.offset
+            coin.verifiedHeight = parser.verifiedHeight
+            coin.height = parser.height
+
+            if coin.stateHash == state_hash:
+                continue
+
+            self._logger.debug("Coin state was changed, updating addresses...")
+            # TODO
+            #    self._application.databaseThread.saveCoin.emit(coin)
+            #    for address in coin.addressList:
+            #        self._application.networkQueryManager.put(
+            #            AddressInfoApiQuery(self._application, address))
+            #            self.parent()._run_cmd(AddressInfoApiQuery(a, self.parent()))
+            #            self.parent()._run_cmd(AddressHistoryCommand(a, parent=self.parent()))
+
+
 class AddressInfoApiQuery(AbstractServerApiQuery):
     _ACTION = "coins"
 
