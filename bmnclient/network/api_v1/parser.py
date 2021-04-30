@@ -255,65 +255,111 @@ class AddressInfoParser(AbstractParser):
         self._amount = self.parseKey(value, "balance", int)
 
 
+class AddressHistoryParser(AbstractParser):
+    def __init__(self, address: AbstractAddress) -> None:
+        super().__init__()
+        self._address = address
+        self._address_type = ""
+        self._address_name = ""
+        self._first_offset = ""
+        self._last_offset: Optional[str] = None
+        self._tx_list: List[AbstractTx] = []
+
+    @property
+    def addressType(self) -> str:
+        return self._address_type
+
+    @property
+    def addressName(self) -> str:
+        return self._address_name
+
+    @property
+    def firstOffset(self) -> str:
+        return self._first_offset
+
+    @property
+    def lastOffset(self) -> Optional[str]:
+        return self._last_offset
+
+    @property
+    def txList(self) -> List[AbstractTx]:
+        return self._tx_list
+
+    def __call__(self, value: dict) -> None:
+        self._address_type = self.parseKey(
+            value,
+            "type",
+            str)
+        self._address_name = self.parseKey(
+            value,
+            "address",
+            str)
+        self._first_offset = self.parseKey(
+            value,
+            "first_offset",
+            str)
+        self._last_offset = self.parseKey(
+            value,
+            "last_offset",
+            str,
+            allow_none=True)
+
+        tx_list = self.parseKey(value, "tx_list", dict)
+        tx_parser = TxParser(self._address)
+        for (tx_name, tx_value) in tx_list.items():
+            try:
+                self._tx_list.append(tx_parser(tx_name, tx_value))
+            except ParseError as e:
+                raise ParseError(
+                    "failed to parse transaction \"{}\": {}"
+                    .format(tx_name, str(e)))
+
+
 class TxParser(AbstractParser):
     class ParseFlag(AbstractParser.ParseFlag):
         NONE: Final = auto()
         MEMPOOL: Final = auto()
 
-    def __init__(self, flags=ParseFlag.NONE) -> None:
-        super().__init__(flags=flags)
-
-    def parseList(
+    def __init__(
             self,
-            response: dict,
-            address: AbstractAddress) -> Optional[List[AbstractTx]]:
-        result = []
-        for (name, value) in response.items():
-            tx = self.parse(name, value, address)
-            if tx is None:
-                return None
-            result.append(tx)
-        return result
+            address: AbstractAddress,
+            flags=ParseFlag.NONE) -> None:
+        super().__init__(flags=flags)
+        self._address = address
 
-    def parse(
+    def __call__(
             self,
             name: str,
-            response: dict,
-            address: AbstractAddress) -> Optional[AbstractTx]:
-        try:
-            if self._flags & self.ParseFlag.MEMPOOL:
-                self.parseKey(response, "height", type(None), allow_none=True)
-                height = -1
-            else:
-                height = self.parseKey(response, "height", int)
+            value: dict) -> Optional[AbstractTx]:
+        if self._flags & self.ParseFlag.MEMPOOL:
+            self.parseKey(value, "height", type(None), allow_none=True)
+            height = -1
+        else:
+            height = self.parseKey(value, "height", int)
 
-            data = {
-                "name": name,
-                "height": height,
-                "time": self.parseKey(response, "time", int),
-                "amount": self.parseKey(response, "amount", int),
-                "fee": self.parseKey(response, "fee", int),
-                "coinbase": self.parseKey(response, "coinbase", int) != 0,
+        data = {
+            "name": name,
+            "height": height,
+            "time": self.parseKey(value, "time", int),
+            "amount": self.parseKey(value, "amount", int),
+            "fee": self.parseKey(value, "fee", int),
+            "coinbase": self.parseKey(value, "coinbase", int) != 0,
 
-                "input_list": [
-                    self._parseIo(v) for v in self.parseKey(
-                        response,
-                        "input",
-                        list)
-                ],
-                "output_list": [
-                    self._parseIo(v) for v in self.parseKey(
-                        response,
-                        "output",
-                        list)
-                ]
-            }
-        except ParseError as e:
-            raise ParseError(
-                "failed to parse transaction \"{}\": {}"
-                .format(name, str(e)))
+            "input_list": [
+                self._parseIo(v) for v in self.parseKey(
+                    value,
+                    "input",
+                    list)
+            ],
+            "output_list": [
+                self._parseIo(v) for v in self.parseKey(
+                    value,
+                    "output",
+                    list)
+            ]
+        }
 
-        return AbstractTx.deserialize(address, **data)
+        return self._address.coin.Tx.deserialize(self._address, **data)
 
     @classmethod
     def _parseIo(cls, item: dict) -> dict:

@@ -197,7 +197,7 @@ class AddressInfoApiQuery(AbstractApiQuery):
             application,
             *args,
             name_suffix=name_suffix or self.addressToNameSuffix(address),
-            *kwargs)
+            **kwargs)
         self._address = address
 
     @property
@@ -288,9 +288,73 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
             _hd_iterator=self._hd_iterator,
             _current_address=next_address)
 
-    def _onResponseFinished(self) -> None:
-        super()._onResponseFinished()
-        if self._next_query is None:
-            self._finished_callback(self)
-        else:
-            self._application.networkQueryManager.put(self._next_query)
+
+class TxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
+    def __init__(
+            self,
+            application: CoreApplication,
+            address: CAddress,
+            *,
+            finished_callback: Optional[
+                Callable[[HdAddressIteratorApiQuery], None]] = None,
+            first_offset: Optional[str] = None,
+            last_offset: Optional[str] = None) -> None:
+        super().__init__(
+            application,
+            address,
+            finished_callback=finished_callback)
+        self._first_offset = first_offset
+        self._last_offset = last_offset
+
+    @property
+    def url(self) -> Optional[str]:
+        return urlJoin(super().url, "history")
+
+    @property
+    def arguments(self) -> Dict[str, Union[int, str]]:
+        args = {
+            "first_offset": self._first_offset or "best",
+            "last_offset": self._last_offset or "base",
+        }
+        if self._application.isDebugMode:
+            args["limit"] = randint(0, 52)
+        return args
+
+    def _processData(
+            self,
+            data_id: Optional[str],
+            data_type: Optional[str],
+            value: Optional[dict]) -> None:
+        if self.statusCode != 200 or value is None:
+            return
+
+        parser = AddressHistoryParser(self._address)
+        parser(value)
+
+        for tx in parser.txList:
+            self._address.appendTx(tx)
+
+        #self._address.historyFirstOffset = first_offset
+        #self._address.historyLastOffset = last_offset
+
+
+        #self._cc += len(tx_list)
+        #if tx_list:
+        #    db = self._application.databaseThread.database
+        #    for tx in tx_list:
+        #        db._write_transaction(tx)
+
+        #for tx in tx_list:
+        #    if self._fresh and self._history_first_offset == 'best':
+        #        self._application.uiManager.process_incoming_tx(tx)
+
+        #self._application.databaseThread.save_address(self._address)
+
+        if parser.lastOffset is not None:
+            self._next_query = self.__class__(
+                self._application,
+                self._address,
+                first_offset=parser.lastOffset)
+
+        #elif self._fresh or last_offset is not None:
+        #    self._next_query = self.clone(forth=False)
