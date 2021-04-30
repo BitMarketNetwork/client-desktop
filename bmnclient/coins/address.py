@@ -9,7 +9,7 @@ from ..utils.serialize import Serializable, serializable
 if TYPE_CHECKING:
     from typing import List, Optional
     from .coin import AbstractCoin
-    from .tx import AbstractTx
+    from .tx import AbstractTx, AbstractUtxo
 
 
 class AddressModelInterface:
@@ -54,6 +54,7 @@ class AbstractAddress(Serializable):
         self._label = label
         self._comment = comment
         self._tx_list = []  # TODO enable deserialize
+        self._utxo_list: List[AbstractUtxo] = []
 
         self._model: Optional[AddressModelInterface] = \
             self._coin.model_factory(self)
@@ -147,3 +148,14 @@ class AbstractAddress(Serializable):
         if self._model:
             self._model.afterAppendTx(tx)
         return True
+
+    @property
+    def utxoList(self) -> List[AbstractUtxo]:
+        return self._utxo_list
+
+    @utxoList.setter
+    def utxoList(self, utxo_list: List[AbstractUtxo]) -> None:
+        self._utxo_list = utxo_list
+        utxo_amount = sum(map(lambda utxo: utxo.amount, self._utxo_list))
+        self.amount = utxo_amount
+        # TODO notify

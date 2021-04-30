@@ -38,7 +38,6 @@ class CAddress(AbstractAddress):
         self.__type = key.AddressType.P2PKH
         # use as source in current tx
         self.__use_as_source = True
-        self.__unspents_time = qt_core.QTime()
         # for ui .. this is always ON when goint_to_update ON but conversely
         self.__updating_history = False
         # to stop network stuff
@@ -48,8 +47,6 @@ class CAddress(AbstractAddress):
         # from server!!
         self.__tx_count = 0
         self.__valid = True
-        # this map can be updated before each transaction
-        self.__unspents = []
 
     def create(self):
         self.__created = datetime.now()
@@ -86,42 +83,6 @@ class CAddress(AbstractAddress):
             self.__type = val
         else:
             self.__type = key.AddressType.make(val)
-
-    @property
-    def unspents(self) -> List[mtx_impl.UTXO]:
-        return self.__unspents
-
-    @unspents.setter
-    def unspents(self, utxos: List[mtx_impl.UTXO]) -> None:
-        self.__unspents = utxos
-        self.__unspents_time.restart()
-
-        def summ(u):
-            u.address = self
-            return int(u.amount)
-        amount = sum(map(summ, self.__unspents))
-        if amount != self._amount:
-            log.debug(
-                f"Balance of {self} updated from {self._amount} to {amount}. Processed: {len(self.__unspents)} utxo")
-            # strict !!! remember notifiers
-            self.amount = amount
-
-    @property
-    def wants_update_unspents(self) -> bool:
-        return self.__unspents_time.isNull() or self.__unspents_time.elapsed() > 60000
-
-    def process_unspents(self, unspents: List[dict]) -> None:
-        def mapper(table):
-            ux = mtx_impl.UTXO.from_net(
-                amount=table["amount"],
-                txindex=table["index"],
-                txid=table["tx"],
-                type=key.AddressType(self.__type).lower,
-                address=self,
-            )
-            if ux.amount > 0:
-                return ux
-        self.unspents = [u for u in map(mapper, unspents) if u]
 
     def from_args(self, arg_iter: iter):
         try:
