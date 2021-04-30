@@ -17,7 +17,7 @@ from ..version import Timer
 if TYPE_CHECKING:
     from typing import Callable, Dict, Tuple
     from PySide2.QtCore import QTimerEvent
-    from .api_v1.query import AbstractServerApiQuery
+    from .api_v1.query import AbstractApiQuery
     from .query_manager import NetworkQueryManager
     from ..application import CoreApplication
     from ..coins.coin import AbstractCoin
@@ -96,7 +96,7 @@ class NetworkQueryScheduler:
 
     def _putRepeatedApiQuery(
             self,
-            query: AbstractServerApiQuery,
+            query: AbstractApiQuery,
             timer_name: Tuple[str, ...],
             **kwargs) -> None:
         timer = self._prepareTimer(timer_name)

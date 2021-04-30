@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from ...wallet.address import CAddress
 
 
-class AbstractServerApiQuery(AbstractJsonQuery):
+class AbstractApiQuery(AbstractJsonQuery):
     _DEFAULT_CONTENT_TYPE = "application/vnd.api+json"
     _DEFAULT_BASE_URL = "https://d1.bitmarket.network:30110/"  # TODO dynamic
     _VERSION = "v1"
@@ -33,10 +33,15 @@ class AbstractServerApiQuery(AbstractJsonQuery):
     def __init__(
             self,
             application: CoreApplication,
-            *,
-            name_suffix: Optional[str]) -> None:
+            *args,
+            name_suffix: Optional[str],
+            **kwargs) -> None:
         super().__init__(name_suffix=name_suffix)
         self._application = application
+
+    @classmethod
+    def addressToNameSuffix(cls, address: CAddress):
+        return "{}:{}".format(address.coin.shortName, address.name)
 
     @property
     def url(self) -> Optional[str]:
@@ -77,7 +82,35 @@ class AbstractServerApiQuery(AbstractJsonQuery):
         raise NotImplementedError
 
 
-class SysinfoApiQuery(AbstractServerApiQuery):
+class AbstractIteratorApiQuery(AbstractApiQuery):
+    def __init__(
+            self,
+            application: CoreApplication,
+            *args,
+            finished_callback: Optional[
+                Callable[[AbstractApiQuery], None]] = None,
+            **kwargs) -> None:
+        super().__init__(application, *args, **kwargs)
+        self._finished_callback = finished_callback
+        self._next_query: Optional[AbstractApiQuery] = None
+
+    def _processData(
+            self,
+            data_id: Optional[str],
+            data_type: Optional[str],
+            value: Optional[dict]) -> None:
+        raise NotImplementedError
+
+    def _onResponseFinished(self) -> None:
+        super()._onResponseFinished()
+        if self._next_query is None:
+            if self._finished_callback is not None:
+                self._finished_callback(self)
+        else:
+            self._application.networkQueryManager.put(self._next_query)
+
+
+class SysinfoApiQuery(AbstractApiQuery):
     _ACTION = "sysinfo"
 
     def __init__(self, application: CoreApplication) -> None:
@@ -107,7 +140,7 @@ class SysinfoApiQuery(AbstractServerApiQuery):
             }
 
 
-class CoinsInfoApiQuery(AbstractServerApiQuery):
+class CoinsInfoApiQuery(AbstractApiQuery):
     _ACTION = "coins"
 
     def __init__(self, application: CoreApplication) -> None:
@@ -150,16 +183,21 @@ class CoinsInfoApiQuery(AbstractServerApiQuery):
             #     AddressHistoryCommand()
 
 
-class AddressInfoApiQuery(AbstractServerApiQuery):
+class AddressInfoApiQuery(AbstractApiQuery):
     _ACTION = "coins"
 
     def __init__(
             self,
             application: CoreApplication,
-            address: CAddress) -> None:
+            address: CAddress,
+            *args,
+            name_suffix: Optional[str] = None,
+            **kwargs) -> None:
         super().__init__(
             application,
-            name_suffix="{}:{}".format(address.coin.shortName, address.name))
+            *args,
+            name_suffix=name_suffix or self.addressToNameSuffix(address),
+            *kwargs)
         self._address = address
 
     @property
@@ -176,26 +214,44 @@ class AddressInfoApiQuery(AbstractServerApiQuery):
             value: Optional[dict]) -> None:
         if self.statusCode != 200 or value is None:
             return
-        print(value)
 
-class HdAddressIteratorApiQuery(AddressInfoApiQuery):
+        parser = AddressInfoParser()
+        parser(value)
+        self._address.amount = parser.amount
+        self._address.txCount = parser.txCount
+
+        # TODO
+        # if balance != self._address.amount or \
+        #        txCount != self._address.txCount or \
+        #        type_ != self._address.type:
+        #    self._address.type = type_
+        #    databaseThread.save_address(self._address)
+        #    diff = txCount - self._address.realTxCount
+        #    if diff > 0 and not self._address.is_going_update:
+        #        log.debug("Need to download more %s tx for %s",
+        #                  diff, self._address)
+        #       AddressHistoryCommand(self._address, parent=self)
+
+
+class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
     def __init__(
             self,
             application: CoreApplication,
             coin: AbstractCoin,
             *,
-            finished_callback: Callable[
-                [HdAddressIteratorApiQuery], None] = None,
+            finished_callback: Optional[
+                Callable[[HdAddressIteratorApiQuery], None]] = None,
             _hd_iterator: Optional[HdAddressIterator] = None,
             _current_address: Optional[CAddress] = None) -> None:
         if _hd_iterator is None:
             _hd_iterator = HdAddressIterator(coin)
         if _current_address is None:
             _current_address = next(_hd_iterator)
-        super().__init__(application, _current_address)
+        super().__init__(
+            application,
+            _current_address,
+            finished_callback=finished_callback)
         self._hd_iterator = _hd_iterator
-        self._finished_callback = finished_callback
-        self._next_query: Optional[HdAddressIteratorApiQuery] = None
 
     def _processData(
             self,
