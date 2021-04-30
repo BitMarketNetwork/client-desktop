@@ -18,7 +18,7 @@ from ...coins.hd import HdAddressIterator
 from ...logger import Logger
 
 if TYPE_CHECKING:
-    from typing import Callable, Dict, Optional, Union
+    from typing import Callable, Dict, Final, Optional, Union
     from ...application import CoreApplication
     from ...coins.coin import AbstractCoin
     from ...wallet.address import CAddress
@@ -290,6 +290,9 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
 
 
 class TxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
+    _BEST_OFFSET_NAME: Final = "best"
+    _BASE_OFFSET_NAME: Final = "base"
+
     def __init__(
             self,
             application: CoreApplication,
@@ -313,8 +316,8 @@ class TxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
     @property
     def arguments(self) -> Dict[str, Union[int, str]]:
         args = {
-            "first_offset": self._first_offset or "best",
-            "last_offset": self._last_offset or "base",
+            "first_offset": self._first_offset or self._BEST_OFFSET_NAME,
+            "last_offset": self._last_offset or self._BASE_OFFSET_NAME,
         }
         if self._application.isDebugMode:
             args["limit"] = randint(0, 52)
@@ -333,28 +336,25 @@ class TxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
 
         for tx in parser.txList:
             self._address.appendTx(tx)
+            # TODO
+            # self._application.databaseThread.database._write_transaction(tx)
+            # self._application.uiManager.process_incoming_tx(tx)
 
-        #self._address.historyFirstOffset = first_offset
-        #self._address.historyLastOffset = last_offset
+        # if scan from "best", save real offset
+        if not self._first_offset:
+            self._address.historyFirstOffset = parser.firstOffset
 
+        if parser.lastOffset:
+            self._address.historyLastOffset = parser.lastOffset
+        else:
+            self._address.historyLastOffset = self._BASE_OFFSET_NAME
 
-        #self._cc += len(tx_list)
-        #if tx_list:
-        #    db = self._application.databaseThread.database
-        #    for tx in tx_list:
-        #        db._write_transaction(tx)
-
-        #for tx in tx_list:
-        #    if self._fresh and self._history_first_offset == 'best':
-        #        self._application.uiManager.process_incoming_tx(tx)
-
-        #self._application.databaseThread.save_address(self._address)
+        # TODO
+        # self._application.databaseThread.save_address(self._address)
 
         if parser.lastOffset is not None:
             self._next_query = self.__class__(
                 self._application,
                 self._address,
-                first_offset=parser.lastOffset)
-
-        #elif self._fresh or last_offset is not None:
-        #    self._next_query = self.clone(forth=False)
+                first_offset=parser.lastOffset,
+                last_offset=None)
