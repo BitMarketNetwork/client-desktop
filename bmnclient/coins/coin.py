@@ -113,7 +113,7 @@ class AbstractCoin(Serializable):
 
     @serializable
     @property
-    def shortName(cls) -> str:  # noqa
+    def shortName(cls) -> str:  # noqa  # TODO to name()
         return cls._SHORT_NAME
 
     @classproperty

@@ -35,12 +35,6 @@ BMenu {
     BMenu {
         title: "Wallet management"
         BMenuItem {
-            text: "UTXO list"
-            onTriggered: {
-                BBackend.coinManager.getAddressUnspentList()
-            }
-        }
-        BMenuItem {
             text: "Increment coin block height"
             enabled: BBackend.coinManager.coinIndex >= 0
             onTriggered: {

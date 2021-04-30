@@ -18,17 +18,12 @@ class Network(NetworkQueryManager):
 
         self.__cmd = None
         self.__cmd_queue = []
-        self.__in_progress = False
-        self._cmd_timer = qt_core.QBasicTimer()
         self._fee_timer = qt_core.QBasicTimer()
         self._fee_timer.start(fee_manager.UPDATE_FEE_TIMEOUT, self)
         self.__level_loaded = loading_level.LoadingLevel.NONE
-        self.start()
 
         parent.updateAddress.connect(
             self.update_address, qt_core.Qt.QueuedConnection)
-        parent.unspentsOfWallet.connect(
-            self.wallet_utxo_list, qt_core.Qt.QueuedConnection)
         parent.mempoolCoin.connect(
             self.retreive_mempool_coin, qt_core.Qt.QueuedConnection)
         parent.mempoolEveryCoin.connect(
@@ -40,43 +35,8 @@ class Network(NetworkQueryManager):
         Application.instance().databaseThread.dbLoaded.connect(
             self.level_loaded, qt_core.Qt.QueuedConnection)
 
-    def start(self):
-        self._cmd_timer.start(1000, self)
-
-    def __make_get_reply(self, action, args, get_args, verbose, ex_host, **kwargs):
-        req = self.__url_manager(
-            action,
-            args=args,
-            gets=get_args,
-            verbose=verbose,
-            ex_host=ex_host,
-            **kwargs)
-        self.__reply = self.__net_manager.get(req)
-        self.__connect_reply()
-        return req
-
-    def __make_post_reply(self, action, args, get_args, verbose, post_data, **kwargs):
-        req = self.__url_manager(
-            action, args=args, gets=get_args, verbose=verbose)
-        log.debug("posting  data: %r", post_data)
-        # req.setRawHeader(b"Content-type", b"application/vnd.api+json")
-        req.setHeader(qt_network.QNetworkRequest.ContentTypeHeader,
-                      "application/vnd.api+json")
-        self.__reply = self.__net_manager.post(req, post_data)
-        self.__connect_reply()
-        return req
-
-    def __connect_reply(self) -> None:
-        self.__reply.errorOccurred.connect(self.__errorOccurred)
-        self.__reply.readyRead.connect(self.__reply_read)
-        self.__reply.finished.connect(self.__reply_finished)
-        self.__reply.sslErrors.connect(self.__on_ssl_errors)
-
-    def __errorOccurred(self, code):
-        pass
-
-    def push_cmd(self, cmd: net_cmd.BaseNetworkCommand, first: bool = False) -> None:
-        if first or cmd.high_priority:
+    def push_cmd(self, cmd: net_cmd.AbstractQuery, first: bool = False) -> None:
+        if first:
             self.__cmd_queue.insert(0, cmd)
         else:
             if cmd.unique and any(isinstance(c, type(cmd)) for c in self.__cmd_queue):
@@ -205,9 +165,6 @@ class Network(NetworkQueryManager):
 
     def level_loaded(self, level: int):
         self.__level_loaded = level
-
-    def wallet_utxo_list(self, wallet):
-        self._run_cmd(net_cmd.AddressUnspentCommand(wallet, parent=self))
 
     def broadcast_tx(self, mtx: mutable_tx.MutableTransaction):
         self._run_cmd(net_cmd.BroadcastTxCommand(mtx, parent=self))

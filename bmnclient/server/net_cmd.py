@@ -56,20 +56,6 @@ class AbstractQuery(AbstractApiQuery):
         pass
 
 
-class AddressInfoCommand(AbstractQuery):
-    action = "coins"
-    _server_action = "address"
-    level = loading_level.LoadingLevel.ADDRESSES
-
-    def __init__(self, wallet: address.CAddress, parent=None, **kwargs):
-        super().__init__(parent=parent, **kwargs)
-        self._address = wallet
-
-    @property
-    def args(self):
-        return [self._address.coin.name, self._address.name]
-
-
 class AbstractMultyMempoolCommand(AbstractQuery):
     _DEFAULT_METHOD = AbstractQuery.Method.POST
 
@@ -191,62 +177,6 @@ class MempoolMonitorCommand(AbstractMultyMempoolCommand):
                 if tx:
                     from ..ui.gui import Application
                     Application.instance().uiManager.process_incoming_tx(tx)
-
-
-class AddressUnspentCommand(AddressInfoCommand):
-    action = "coins"
-    _server_action = "unspent"
-    level = loading_level.LoadingLevel.NONE
-
-    def __init__(self, wallet: address.CAddress, first_offset=None,
-                 last_offset=None, unspent=None, calls: int = 0, parent=None):
-        super().__init__(wallet, parent)
-        self._first_offset = first_offset
-        self._last_offset = last_offset
-        self._unspent = unspent or []
-        self._calls = calls
-
-    @property
-    def args(self):
-        return [self._address.coin.name, self._address.name, self._server_action]
-
-    def createRequestData(self) -> Optional[dict]:
-        get = {}
-        if self._first_offset is not None:
-            get.update({
-                "first_offset": self._first_offset,
-            })
-        if self._last_offset is not None:
-            get.update({
-                "last_offset": self._last_offset,
-            })
-        return get
-
-    def process_attr(self, table):
-        assert table.get("address") == self._address.name
-        last_offset = table["last_offset"]
-        log.debug("TX IN ANSWER %d ,%s", len(table["tx_list"]), self)
-        self._unspent += table["tx_list"]
-        if last_offset is not None:
-            log.debug(f"Next history request for {self._address}")
-            return self.clone(last_offset)
-        else:
-            self.__process_transactions()
-
-    def clone(self, first_offset):
-        return self.__class__(
-            wallet=self._address,
-            unspent=self._unspent,
-            first_offset=first_offset,
-            calls=self._calls + 1,
-        )
-
-    def __process_transactions(self):
-        # map it to separate logic layers
-        log.debug(
-            f"UNSPENT COUNT: {len(self._unspent)} from {self._calls} calls")
-        self._address.process_unspents(self._unspent)
-        self._address.coin.model._tx_controller.recalcSources()  # TODO
 
 
 class BroadcastTxCommand(AbstractQuery):

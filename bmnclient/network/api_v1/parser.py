@@ -255,7 +255,7 @@ class AddressInfoParser(AbstractParser):
         self._amount = self.parseKey(value, "balance", int)
 
 
-class AddressHistoryParser(AbstractParser):
+class AddressTxParser(AbstractParser):
     def __init__(self, address: AbstractAddress) -> None:
         super().__init__()
         self._address = address
@@ -303,10 +303,12 @@ class AddressHistoryParser(AbstractParser):
             "last_offset",
             str,
             allow_none=True)
+        self._parseTxList(value)
 
-        tx_list = self.parseKey(value, "tx_list", dict)
+    def _parseTxList(self, value: dict):
+        tx_value_list = self.parseKey(value, "tx_list", dict)
         tx_parser = TxParser(self._address)
-        for (tx_name, tx_value) in tx_list.items():
+        for (tx_name, tx_value) in tx_value_list.items():
             try:
                 self._tx_list.append(tx_parser(tx_name, tx_value))
             except ParseError as e:

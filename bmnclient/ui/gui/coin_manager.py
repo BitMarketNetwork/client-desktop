@@ -51,11 +51,6 @@ class CoinManager(QObject):
         # self.addressIndexChanged.emit()
         self.coinIndexChanged.emit()
 
-    @qt_core.Slot()
-    def getAddressUnspentList(self):
-        if self.address:
-            self._application.networkThread.unspent_list(self.address)
-
     @qt_core.Slot(int, str, bool)
     def makeAddress(self, coin_index: int, label: str, segwit: bool):
         if coin_index >= 0:

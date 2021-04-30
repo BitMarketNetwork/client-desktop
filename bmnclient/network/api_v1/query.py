@@ -5,12 +5,13 @@ from random import randint
 from typing import TYPE_CHECKING
 
 from .parser import \
-    AddressHistoryParser, \
     AddressInfoParser, \
+    AddressTxParser, \
+    AddressUnspentParser, \
     CoinsInfoParser, \
     ParseError, \
-    ResponseParser, \
     ResponseMetaParser, \
+    ResponseParser, \
     SysinfoParser
 from ..query import AbstractJsonQuery
 from ..utils import urlJoin
@@ -289,7 +290,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
             _current_address=next_address)
 
 
-class TxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
+class AddressTxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
     _BEST_OFFSET_NAME: Final = "best"
     _BASE_OFFSET_NAME: Final = "base"
 
@@ -331,7 +332,7 @@ class TxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
         if self.statusCode != 200 or value is None:
             return
 
-        parser = AddressHistoryParser(self._address)
+        parser = AddressTxParser(self._address)
         parser(value)
 
         for tx in parser.txList:
