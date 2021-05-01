@@ -19,7 +19,7 @@ from ...coins.hd import HdAddressIterator
 from ...logger import Logger
 
 if TYPE_CHECKING:
-    from typing import Callable, Dict, Final, Optional, Union
+    from typing import Any, Callable, Dict, Final, List, Optional, Tuple, Union
     from ...application import CoreApplication
     from ...coins.coin import AbstractCoin
     from ...wallet.address import CAddress
@@ -41,12 +41,30 @@ class AbstractApiQuery(AbstractJsonQuery):
         self._application = application
 
     @classmethod
+    def coinToNameSuffix(cls, coin: AbstractCoin):
+        return coin.shortName
+
+    @classmethod
     def addressToNameSuffix(cls, address: CAddress):
         return "{}:{}".format(address.coin.shortName, address.name)
 
     @property
     def url(self) -> Optional[str]:
         return urlJoin(super().url, self._VERSION, self._ACTION)
+
+    @property
+    def jsonContent(self) -> Optional[dict]:
+        assert self.method == self.Method.POST
+        (type_, data) = self._createData()
+        return {
+            "data": {
+                "type": type_,
+                "attributes": data,
+            }
+        }
+
+    def _createData(self) -> Tuple[str, Any]:
+        return "", None
 
     def _processResponse(self, response: Optional[dict]) -> None:
         try:

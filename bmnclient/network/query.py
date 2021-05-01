@@ -7,8 +7,8 @@ from io import BytesIO
 from json import JSONDecodeError
 from typing import Callable, Dict, List, Optional, Union
 
-from PySide2.QtCore import QObject, QUrl
-from PySide2.QtNetwork import QNetworkReply, QNetworkRequest, QSslError
+from PySide2.QtCore import QUrl
+from PySide2.QtNetwork import QNetworkReply, QNetworkRequest
 
 from .utils import encodeUrlString
 from ..logger import Logger
@@ -262,7 +262,9 @@ class AbstractJsonQuery(AbstractQuery):
         value = self.jsonContent
         if value:
             try:
-                return json.dumps(value).encode(encoding=self._ENCODING)
+                value = json.dumps(value)
+                self._logger.debug("JSON Request: %s", value)
+                return value.encode(encoding=self._ENCODING)
             except UnicodeError as e:
                 self._logger.error(
                     "Failed to encode JSON request: %s",

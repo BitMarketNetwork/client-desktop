@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import json
 import logging
-from typing import Iterable, List, Optional, Tuple
+from typing import Iterable, List, Tuple
 
 from . import server_error
 from .. import loading_level
@@ -12,81 +11,7 @@ from ..wallet import address, coins, mutable_tx
 log = logging.getLogger(__name__)
 
 
-class AbstractQuery(AbstractApiQuery):
-    action = None
-    _server_action = None
-    level = loading_level.LoadingLevel.NONE
-    unique = False
-
-    def __init__(self, parent=None, **kwargs) -> None:
-        super().__init__()
-        self.level = kwargs.pop("level", loading_level.LoadingLevel.NONE)
-        assert not kwargs
-
-    @property
-    def ext(self) -> bool:
-        return self._DEFAULT_BASE_URL is not None
-
-    @property
-    def server_action(self) -> str:
-        return self._server_action or self.action
-
-    def get_action(self) -> str:
-        return self.action
-
-    @property
-    def args(self) -> List[str]:
-        return []
-
-    @property
-    def post_data(self) -> bytes:
-        type_, body = self.args_post
-        return json.dumps({
-            "data": {
-                "type": type_,
-                "attributes": body,
-            }
-        }).encode()
-
-    @property
-    def args_post(self) -> Tuple[str, dict]:
-        return "", {}
-
-    def process_attr(self, table):
-        pass
-
-
-class AbstractMultyMempoolCommand(AbstractQuery):
-    _DEFAULT_METHOD = AbstractQuery.Method.POST
-
-    action = "coins"
-    _server_action = "unconfirmed"
-    level = loading_level.LoadingLevel.ADDRESSES
-
-    def __init__(self, wallet_list: Iterable[address.CAddress], parent, hash_=None):
-        super().__init__(parent=parent)
-        self._wallet_list = list(wallet_list)
-        self._hash = hash_
-
-    @property
-    def skip(self) -> bool:
-        return not self._wallet_list
-
-    @property
-    def args(self):
-        return [self._coin.name, self._server_action]
-
-    @property
-    def args_post(self) -> Tuple[str, dict]:
-        table = {
-            "address_list": [a.name for a in self._wallet_list],
-        }
-        if self._hash:
-            table["last_hash"] = self._hash
-        return self._server_action, table
-
-
-class AddressMultyMempoolCommand(AbstractMultyMempoolCommand):
+class AddressMultyMempoolCommand(AbstractApiQuery):
     MAX_TIMES = 5
     WAIT_CHUNK = 100
     WAIT_TIMEOUT = 3000
@@ -150,7 +75,7 @@ class AddressMultyMempoolCommand(AbstractMultyMempoolCommand):
         return self.__counter
 
 
-class MempoolMonitorCommand(AbstractMultyMempoolCommand):
+class MempoolMonitorCommand(AbstractApiQuery):
     def __init__(self, coin: coins.CoinType, parent, hash_=None):
         super().__init__(wallet_list=iter(coin.addressList), parent=parent, hash_=hash_)
         self._coin = coin
@@ -179,8 +104,8 @@ class MempoolMonitorCommand(AbstractMultyMempoolCommand):
                     Application.instance().uiManager.process_incoming_tx(tx)
 
 
-class BroadcastTxCommand(AbstractQuery):
-    _DEFAULT_METHOD = AbstractQuery.Method.POST
+class BroadcastTxCommand(AbstractApiQuery):
+    _DEFAULT_METHOD = AbstractApiQuery.Method.POST
     action = "coins"
     level = loading_level.LoadingLevel.NONE
 

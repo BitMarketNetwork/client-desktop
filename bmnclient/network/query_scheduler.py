@@ -9,6 +9,7 @@ from PySide2.QtCore import \
     QObject
 
 from .api_v1.query import \
+    CoinMempoolIteratorApiQuery, \
     CoinsInfoApiQuery, \
     HdAddressIteratorApiQuery, \
     SysinfoApiQuery
@@ -61,8 +62,11 @@ class NetworkQueryScheduler:
     _COIN_TIMER_LIST = (
         (
             "updateHdAddressList",
-            Timer.UPDATE_COINS_HD_ADDRESS_LIST_DELAY
-        ),
+            Timer.UPDATE_COIN_HD_ADDRESS_LIST_DELAY
+        ), (
+            "updateMempool",
+            Timer.UPDATE_COIN_MEMPOOL_DELAY
+        )
     )
 
     def __init__(
@@ -137,6 +141,17 @@ class NetworkQueryScheduler:
             timer.start()
         else:
             query = HdAddressIteratorApiQuery(
+                self._application,
+                coin,
+                finished_callback=timer.start)
+            self._manager.put(query)
+
+    def updateMempool(self, coin: AbstractCoin) -> None:
+        timer = self._prepareTimer(("updateMempool", coin.shortName))
+        if len(coin.addressList) <= 0:
+            timer.start()
+        else:
+            query = CoinMempoolIteratorApiQuery(
                 self._application,
                 coin,
                 finished_callback=timer.start)
