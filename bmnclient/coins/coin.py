@@ -12,6 +12,7 @@ from .currency import \
 from .tx import AbstractTx
 from ..utils.meta import classproperty
 from ..utils.serialize import Serializable, serializable
+from ..wallet.mtx_impl import UTXO
 
 if TYPE_CHECKING:
     from typing import Callable, List, Optional
@@ -55,6 +56,9 @@ class AbstractCoin(Serializable):
         pass
 
     class Tx(AbstractTx):
+        pass
+
+    class Utxo(UTXO):
         pass
 
     def __init__(

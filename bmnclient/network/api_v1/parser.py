@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Any, Callable, Final, List, Optional, Type, Union
     from ...coins.address import AbstractAddress
-    from ...coins.tx import AbstractTx
+    from ...coins.tx import AbstractTx, AbstractUtxo
 
 
 class ParseError(LookupError):
@@ -310,7 +310,8 @@ class AddressTxParser(AbstractParser):
         tx_parser = TxParser(self._address)
         for (tx_name, tx_value) in tx_value_list.items():
             try:
-                self._tx_list.append(tx_parser(tx_name, tx_value))
+                tx = tx_parser(tx_name, tx_value)
+                self._tx_list.append(tx)
             except ParseError as e:
                 raise ParseError(
                     "failed to parse transaction \"{}\": {}"

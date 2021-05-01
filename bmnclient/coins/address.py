@@ -157,5 +157,8 @@ class AbstractAddress(Serializable):
     def utxoList(self, utxo_list: List[AbstractUtxo]) -> None:
         self._utxo_list = utxo_list
         utxo_amount = sum(map(lambda utxo: utxo.amount, self._utxo_list))
+        if self.amount != utxo_amount:
+            # TODO test, notify
+            pass
         self.amount = utxo_amount
         # TODO notify

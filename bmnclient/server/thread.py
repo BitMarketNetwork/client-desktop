@@ -7,7 +7,6 @@ from ..wallet import mutable_tx
 class ServerThread(qt_core.QThread):
     mempoolEveryCoin = qt_core.Signal()
     mempoolCoin = qt_core.Signal(CoinType, arguments=["coin"])
-    unspentsOfWallet = qt_core.Signal(CAddress, arguments=["wallet"])
     updateAddress = qt_core.Signal(CAddress, arguments=["wallet"])
     undoTx = qt_core.Signal(CoinType, int)
     broadcastMtx = qt_core.Signal(mutable_tx.MutableTransaction, arguments=["mtx"])
@@ -39,7 +38,3 @@ class ServerThread(qt_core.QThread):
             self._network,
             "retrieve_fee",
             qt_core.Qt.QueuedConnection,)
-
-    def unspent_list(self, address):
-        if address.wants_update_unspents:
-            self.unspentsOfWallet.emit(address)

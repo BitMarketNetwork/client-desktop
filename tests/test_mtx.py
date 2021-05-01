@@ -795,8 +795,7 @@ class TestMakeMtxReal(unittest.TestCase):
                 txid=table['tx'],
                 txindex=table['index'],
                 script=table['script'],
-                type=type_,
-                confirmations=None,
+                type=type_
             )
         unspents = list(map(make_unspent, utxos))
         log.info(f"\ntargets: {outputs} ")
@@ -913,8 +912,7 @@ class TestMultiSourceReal(unittest.TestCase):
                 txid=table['tx'],
                 txindex=table['index'],
                 script=table['script'],
-                type=type_,
-                confirmations=None,
+                type=type_
             )
 
         def do_source(utxo, wif, addr) -> List[Tuple[mtx.UTXO, key.PrivateKey]]:

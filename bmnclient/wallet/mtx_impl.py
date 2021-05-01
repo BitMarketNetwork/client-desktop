@@ -3,14 +3,13 @@ https://en.bitcoin.it/wiki/Protocol_documentation
 """
 from __future__ import annotations
 
-from functools import lru_cache
 import itertools
 import logging
 import random
 import re
 from collections import namedtuple
 from typing import Union, List, Tuple, TYPE_CHECKING
-from datetime import datetime
+from ..coins.tx import AbstractUtxo
 
 from . import constants, util
 
@@ -49,52 +48,33 @@ UNSPENT_TYPES = {
 }
 
 
-class UTXO:
-    __slots__ = ('amount', 'confirmations', 'script', 'txid', 'txindex',
-                 'type', 'vsize', 'segwit', 'address')
+class UTXO(AbstractUtxo):
+    def __init__(
+            self,
+            address,
+            *,
+            script = None,
+            type='p2pkh',
+            vsize=None,
+            **kwargs) -> None:
+        super().__init__(address, **kwargs)
 
-    def __init__(self, amount, confirmations, script, txid, txindex,
-                 type='p2pkh', vsize=None, segwit=None, address=None):
-        self.amount = amount
-        self.confirmations = confirmations
         self.script = script
-        self.txid = txid
-        self.txindex = txindex
         self.type = type if type in UNSPENT_TYPES else 'unknown'
-        self.address = address
         assert 'unknown' != self.type
         self.vsize = vsize if vsize else UNSPENT_TYPES[self.type]['vsize']
         self.segwit = UNSPENT_TYPES[self.type]['segwit']
 
-    def to_dict(self):
-        return {attr: getattr(self, attr) for attr in UTXO.__slots__}
-
-    @classmethod
-    def from_dict(cls, d):
-        return cls(**{attr: d[attr] for attr in UTXO.__slots__})
-
-    @classmethod
-    def from_net(cls, **kwargs):
-        kwargs.update({
-            'confirmations': 0,
-            'script': None,
-        })
-        # log.warning(f"MAP UTX: {kwargs}")
-        return cls(**kwargs)
-
     def __hash__(self) -> int:
-        return hash((self.amount, self.address, self.script, self.txid, self.txindex))
+        return hash((self.amount, self.address, self.script, self.txName, self.index))
 
     def __eq__(self, other) -> bool:
         return (self.amount == other.amount and
                 self.address == other.address and
                 self.script == other.script and
-                self.txid == other.txid and
-                self.txindex == other.txindex and
+                self.txName == other.txName and
+                self.index == other.index and
                 self.segwit == other.segwit)
-
-    def __repr__(self):
-        return f"UTXO(address={self.address.name if self.address else '-'} amount={self.amount}, confirmations={self.confirmations}, script={self.script}, txid={self.txid}, txindex={self.txindex}, segwit={self.segwit})"
 
     def set_type(self, type, vsize=0):
         self.type = type if type in UNSPENT_TYPES else 'unknown'
@@ -268,14 +248,14 @@ class Mtx:
         return util.bytes_to_hex(bytes(self))
 
     @classmethod
-    def make(cls, unspents: List[UTXO], outputs: List[Tuple[str, int]]):
+    def make(cls, utxo_list: List[UTXO], outputs: List[Tuple[str, int]]):
         version = constants.VERSION_1
         lock_time = constants.LOCK_TIME
         outputs = construct_outputs(outputs)
 
         # Optimize for speed, not memory, by pre-computing values.
         inputs = []
-        for unspent in unspents:
+        for unspent in utxo_list:
             script_sig = b''  # empty scriptSig for new unsigned transaction.
             txid = util.hex_to_bytes(unspent.txid)[::-1]
             txindex = unspent.txindex.to_bytes(4, byteorder='little')
@@ -284,7 +264,7 @@ class Mtx:
             inputs.append(TxInput(script_sig, txid, txindex, amount=amount,
                                   segwit_input=unspent.segwit, address=unspent.address))
         out = cls(version, inputs, outputs, lock_time)
-        out.unspents = unspents
+        out.unspents = utxo_list
         return out
 
     @property
@@ -359,10 +339,10 @@ class Mtx:
 
         return cls(version, inputs, outputs, locktime)
 
-    def sign(self, private_key, *, unspents: list = None) -> str:
+    def sign(self, private_key, *, utxo_list: list = None) -> str:
         input_dict = {}
         try:
-            for unspent in (unspents or self.unspents):
+            for unspent in (utxo_list or self.unspents):
                 if not private_key.can_sign_unspent(unspent):
                     log.warning(f"key {private_key} can't sign {unspent}")
                     continue
@@ -520,12 +500,12 @@ def estimate_tx_fee(in_size, n_in, out_size, n_out, satoshis):
 
 
 def select_coins(target, fee, output_size, min_change, *, absolute_fee=False,
-                 consolidate=False, unspents):
+                 consolidate=False, utxo_list):
     BNB_TRIES = 1000000
     COST_OF_OVERHEAD = (8 + sum(output_size[:-1]) + 1) * fee
 
     def branch_and_bound(d, selected_coins, effective_value, target, fee,
-                         sorted_unspents):  # pragma: no cover
+                         sorted_utxo_list):  # pragma: no cover
 
         nonlocal COST_OF_OVERHEAD, BNB_TRIES
         BNB_TRIES -= 1
@@ -539,21 +519,21 @@ def select_coins(target, fee, output_size, min_change, *, absolute_fee=False,
             return selected_coins
         elif BNB_TRIES <= 0:
             return []
-        elif d >= len(sorted_unspents):
+        elif d >= len(sorted_utxo_list):
             return []
         else:
             binary_random = random.randint(0, 1)
             if binary_random:
                 effective_value_new = effective_value + \
-                    sorted_unspents[d].amount - fee * sorted_unspents[d].vsize
+                    sorted_utxo_list[d].amount - fee * sorted_utxo_list[d].vsize
 
                 with_this = branch_and_bound(
                     d + 1,
-                    selected_coins + [sorted_unspents[d]],
+                    selected_coins + [sorted_utxo_list[d]],
                     effective_value_new,
                     target,
                     fee,
-                    sorted_unspents
+                    sorted_utxo_list
                 )
 
                 if with_this != []:
@@ -565,7 +545,7 @@ def select_coins(target, fee, output_size, min_change, *, absolute_fee=False,
                         effective_value,
                         target,
                         fee,
-                        sorted_unspents
+                        sorted_utxo_list
                     )
 
                     return without_this
@@ -577,28 +557,28 @@ def select_coins(target, fee, output_size, min_change, *, absolute_fee=False,
                     effective_value,
                     target,
                     fee,
-                    sorted_unspents
+                    sorted_utxo_list
                 )
 
                 if without_this != []:
                     return without_this
                 else:
                     effective_value_new = effective_value + \
-                        sorted_unspents[d].amount - \
-                        fee * sorted_unspents[d].vsize
+                        sorted_utxo_list[d].amount - \
+                        fee * sorted_utxo_list[d].vsize
 
                     with_this = branch_and_bound(
                         d + 1,
-                        selected_coins + [sorted_unspents[d]],
+                        selected_coins + [sorted_utxo_list[d]],
                         effective_value_new,
                         target,
                         fee,
-                        sorted_unspents
+                        sorted_utxo_list
                     )
 
                     return with_this
 
-    sorted_unspents = sorted(unspents, key=lambda u: u.amount, reverse=True)
+    sorted_utxo_list = sorted(utxo_list, key=lambda u: u.amount, reverse=True)
     selected_coins = []
 
     if not consolidate:
@@ -608,16 +588,16 @@ def select_coins(target, fee, output_size, min_change, *, absolute_fee=False,
             effective_value=0,
             target=target,
             fee=fee,
-            sorted_unspents=sorted_unspents
+            sorted_utxo_list=sorted_utxo_list
         )
         remaining = 0
 
     if selected_coins == []:
-        unspents = unspents.copy()
+        utxo_list = utxo_list.copy()
         if not consolidate:
-            random.shuffle(unspents)
-        while unspents:
-            selected_coins.append(unspents.pop(0))
+            random.shuffle(utxo_list)
+        while utxo_list:
+            selected_coins.append(utxo_list.pop(0))
             estimated_fee = estimate_tx_fee(
                 sum(u.vsize for u in selected_coins),
                 len(selected_coins),
@@ -628,7 +608,7 @@ def select_coins(target, fee, output_size, min_change, *, absolute_fee=False,
             estimated_fee = fee if absolute_fee else estimated_fee
             remaining = sum(u.amount for u in selected_coins) - \
                 target - estimated_fee
-            if remaining >= min_change and (not consolidate or len(unspents) == 0):
+            if remaining >= min_change and (not consolidate or len(utxo_list) == 0):
                 break
         else:
             raise InsufficientFunds('Balance {} is less than {} (including '
@@ -643,7 +623,7 @@ def deserialize(data):
     return Mtx.parse(data)
 
 
-def sanitize_tx_data(unspents, outputs, fee, leftover, combine=True,
+def sanitize_tx_data(utxo_list, outputs, fee, leftover, combine=True,
                      message=None, compressed=True, absolute_fee=False,
                      min_change=0, version='main', message_is_hex=False):
     """
@@ -659,7 +639,7 @@ def sanitize_tx_data(unspents, outputs, fee, leftover, combine=True,
         outputs[i] = (dest, amount)
         # outputs[i] = (dest, rates.currency_to_satoshi_cached(amount, currency))
 
-    if not unspents:
+    if not utxo_list:
         raise ValueError('Transactions must have at least one unspent.')
 
     # Temporary storage so all outputs precede messages.
@@ -681,9 +661,9 @@ def sanitize_tx_data(unspents, outputs, fee, leftover, combine=True,
     output_size.append(len(util.address_to_scriptpubkey(leftover)) + 9)
     sum_outputs = sum(out[1] for out in outputs)
 
-    unspents[:], remaining = select_coins(
+    utxo_list[:], remaining = select_coins(
         sum_outputs, fee, output_size, min_change=min_change,
-        absolute_fee=absolute_fee, consolidate=combine, unspents=unspents
+        absolute_fee=absolute_fee, consolidate=combine, utxo_list=utxo_list
     )
 
     if remaining > 0:
@@ -697,7 +677,7 @@ def sanitize_tx_data(unspents, outputs, fee, leftover, combine=True,
 
     outputs.extend(messages)
 
-    return unspents, outputs
+    return utxo_list, outputs
 
 
 def construct_outputs(outputs):
@@ -734,9 +714,9 @@ def calc_txid(tx_hex):
     return Mtx.calc_id(tx_hex)
 
 
-def sign_tx(private_key, tx, *, unspents: list) -> str:
-    return tx.sign(private_key, unspents=unspents)
+def sign_tx(private_key, tx, *, utxo_list: list) -> str:
+    return tx.sign(private_key, utxo_list=utxo_list)
 
 
-def create_new_transaction(private_key, unspents, outputs) -> str:
-    return Mtx.make(unspents, outputs).sign(private_key, unspents=unspents)
+def create_new_transaction(private_key, utxo_list, outputs) -> str:
+    return Mtx.make(utxo_list, outputs).sign(private_key, utxo_list=utxo_list)

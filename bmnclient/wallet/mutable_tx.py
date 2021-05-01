@@ -144,20 +144,16 @@ class MutableTransaction:
                 f"Amount {self.__amount} more than balance {self.__filtered_amount}")
         # filter sources. some smart algo expected here
         # prepare
-        unspents = self.__filtered_inputs
-        unspent_sum = sum(u.amount for u in unspents)
+        utxo_list = self.__filtered_inputs
+        unspent_sum = sum(u.amount for u in utxo_list)
 
         def cl(t, i):
             t[i.address] += [i]
             return t
-        sources: DefaultDict['address.CAddress',
-                             List[mtx_impl.UTXO]] = functools.reduce(
-                                 cl,
-                                 unspents,
-            collections.defaultdict(list),
-        )
+        sources: DefaultDict['address.CAddress', List[mtx_impl.UTXO]] = \
+            functools.reduce(cl, utxo_list, collections.defaultdict(list),)
         log.debug(
-            f"unspents: {unspents} scr:{sources} sum: {unspent_sum} vs {self.__filtered_amount}")
+            f"unspents: {utxo_list} scr:{sources} sum: {unspent_sum} vs {self.__filtered_amount}")
         if not sources:
             raise NewTxerror(f"No unspent outputs found")
         # process fee
@@ -188,10 +184,7 @@ class MutableTransaction:
         log.debug(
             f"outputs: {outputs} change_wallet:{self.__leftover_address}")
 
-        self.__mtx = mtx_impl.Mtx.make(
-            unspents,
-            outputs,
-        )
+        self.__mtx = mtx_impl.Mtx.make(utxo_list, outputs)
         log.debug(f"TX fee: {self.__mtx.fee}")
         if self.__mtx.fee != self.fee:
             #self.cancel()
@@ -200,7 +193,7 @@ class MutableTransaction:
             raise NewTxerror("Critical error. Fee mismatch")
         for addr, utxo in sources.items():
             log.debug(f"INPUT: address:{addr.name} utxo:{len(utxo)}")
-            self.__mtx.sign(addr.private_key, unspents=utxo)
+            self.__mtx.sign(addr.private_key, utxo_list=utxo)
         self.__raw__mtx = self.__mtx.to_hex()
         log.info(f"final TX to send: {self.__mtx}")
 

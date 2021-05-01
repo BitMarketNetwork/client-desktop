@@ -9,6 +9,7 @@ from ..utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
     from .coin import AbstractCoin
+    from ..wallet.address import CAddress
 
 
 class TxStatus(Enum):
@@ -166,3 +167,44 @@ class AbstractTx(Serializable):
     @property
     def outputList(self) -> List[TxIo]:
         return self._output_list
+
+
+class AbstractUtxo(Serializable):
+    def __init__(
+            self,
+            address: CAddress,
+            *,
+            tx_name: str,
+            height: int,
+            index: int,
+            amount: int) -> None:
+        super().__init__()
+        self._address = address
+        self._tx_name = tx_name
+        self._height = height
+        self._index = index
+        self._amount = amount
+
+    @property
+    def address(self) -> CAddress:
+        return self._address
+
+    @serializable
+    @property
+    def txName(self) -> str:
+        return self._tx_name
+
+    @serializable
+    @property
+    def height(self) -> int:
+        return self._height
+
+    @serializable
+    @property
+    def index(self) -> int:
+        return self._index
+
+    @serializable
+    @property
+    def amount(self) -> int:
+        return self._amount
