@@ -186,6 +186,7 @@ class CoinsInfoApiQuery(AbstractApiQuery):
 
 class AddressInfoApiQuery(AbstractApiQuery):
     _ACTION = "coins"
+    _SUB_ACTION = ""
 
     def __init__(
             self,
@@ -206,7 +207,8 @@ class AddressInfoApiQuery(AbstractApiQuery):
         return urlJoin(
             super().url,
             self._address.coin.shortName,
-            self._address.name)
+            self._address.name,
+            self._SUB_ACTION)
 
     def _processData(
             self,
@@ -270,9 +272,14 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
             self._address.coin.appendAddress(self._address)
 
             # TODO tmp
-            self._application.networkQueryManager.put(TxIteratorApiQuery(
-                self._application,
-                self._address))
+            self._application.networkQueryManager.put(
+                AddressTxIteratorApiQuery(
+                    self._application,
+                    self._address))
+            self._application.networkQueryManager.put(
+                AddressUnspentIteratorApiQuery(
+                    self._application,
+                    self._address))
 
         try:
             next_address = next(self._hd_iterator)
@@ -291,6 +298,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
 
 
 class AddressTxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
+    _SUB_ACTION = "history"
     _BEST_OFFSET_NAME: Final = "best"
     _BASE_OFFSET_NAME: Final = "base"
 
@@ -309,10 +317,6 @@ class AddressTxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
             finished_callback=finished_callback)
         self._first_offset = first_offset
         self._last_offset = last_offset
-
-    @property
-    def url(self) -> Optional[str]:
-        return urlJoin(super().url, "history")
 
     @property
     def arguments(self) -> Dict[str, Union[int, str]]:
@@ -352,6 +356,29 @@ class AddressTxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
 
         # TODO
         # self._application.databaseThread.save_address(self._address)
+
+        if parser.lastOffset is not None:
+            self._next_query = self.__class__(
+                self._application,
+                self._address,
+                first_offset=parser.lastOffset,
+                last_offset=None)
+
+
+class AddressUnspentIteratorApiQuery(AddressTxIteratorApiQuery):
+    _SUB_ACTION = "unspent"
+
+    def _processData(
+            self,
+            data_id: Optional[str],
+            data_type: Optional[str],
+            value: Optional[dict]) -> None:
+        if self.statusCode != 200 or value is None:
+            return
+
+        parser = AddressUnspentParser(self._address)
+        parser(value)
+        self._address.utxoList = parser.txList
 
         if parser.lastOffset is not None:
             self._next_query = self.__class__(

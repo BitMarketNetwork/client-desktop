@@ -372,3 +372,38 @@ class TxParser(AbstractParser):
             "address_name": cls.parseKey(item, "address", str, allow_none=True),
             "amount": cls.parseKey(item, "amount", int)
         }
+
+
+class AddressUnspentParser(AddressTxParser):
+    def __init__(self, address: AbstractAddress) -> None:
+        super().__init__(address)
+        self._tx_list: List[AbstractUtxo] = []
+
+    @property
+    def txList(self) -> List[AbstractUtxo]:
+        return self._tx_list
+
+    def _parseTxList(self, value: dict):
+        tx_value_list = self.parseKey(value, "tx_list", list)
+        for (tx_index, tx_value) in enumerate(tx_value_list):
+            try:
+                height = self.parseKey(tx_value, "height", int, allow_none=True)
+                if height is None:  # TODO mempool (no server support)
+                    height = -1
+                data = {
+                    "tx_name": self.parseKey(tx_value, "tx", str),
+                    "height": height,
+                    "index": self.parseKey(tx_value, "index", int),
+                    "amount": self.parseKey(tx_value, "amount", int),
+                    "type": self._address_type  # TODO convert from string
+                }
+                if data["amount"] > 0:
+                    utxo = self._address.coin.Utxo.deserialize(
+                        self._address,
+                        **data)
+                    self._tx_list.append(utxo)
+            except ParseError as e:
+                raise ParseError(
+                    "failed to parse UTXO \"{}\": {}"
+                    .format(tx_index, str(e)))
+
