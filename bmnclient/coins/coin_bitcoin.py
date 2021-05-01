@@ -98,8 +98,7 @@ class BitcoinAddress(AbstractAddress):
             if len(data) <= 0 or len(data) > abs(address_type.value[1]):
                 return None
 
-        kwargs["address_type"] = address_type
-        kwargs["address_version"] = address_version
+        kwargs["type_"] = address_type
         kwargs["name"] = name
         kwargs["data"] = data
         return cls(coin, **kwargs)

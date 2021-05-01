@@ -1,5 +1,6 @@
-# JOK++
+# JOK+++
 import unittest
+from random import randint
 
 from bmnclient.coins.coin_bitcoin import \
     Bitcoin, \
@@ -126,8 +127,7 @@ class TestCoins(unittest.TestCase):
                 self.assertIsNone(a)
             else:
                 self.assertIsNotNone(a)
-                self.assertEqual(type_, a.type)
-                self.assertEqual(version, a.version)
+                self.assertEqual(type_, a.addressType)
                 self.assertEqual(data, a.data.hex())
 
     def test_address_decode(self) -> None:
@@ -256,3 +256,61 @@ class TestCoins(unittest.TestCase):
         self.assertEqual(
             "0",
             b.toString(-9223372036854775809))
+
+    def test_mempool_address_lists(self) -> None:
+        for limit in range(201):
+            coin = Bitcoin()
+            for i in range(limit):
+                address = coin._Address(
+                    coin,
+                    name="address_{:06d}".format(i),
+                    type_=None)
+                self.assertTrue(coin.appendAddress(address))
+
+            limit = randint(1, 10)
+
+            # create
+            mempool_list = coin.createMempoolAddressLists(limit)
+            count = 0
+            for v in mempool_list:
+                count += len(v["list"])
+                self.assertIsInstance(v["local_hash"], bytes)
+                self.assertIsNone(v["remote_hash"])
+                self.assertLessEqual(len(v["list"]), limit)
+            self.assertEqual(count, len(coin.addressList))
+
+            # noinspection PyProtectedMember
+            self.assertEqual(len(coin._mempool_cache), len(mempool_list))
+
+            # set result
+            for (i, v) in enumerate(mempool_list):
+                self.assertTrue(coin.setMempoolAddressListResult(
+                    v["local_hash"],
+                    "hash_{:06d}".format(i)))
+
+            # create again
+            mempool_list = coin.createMempoolAddressLists(limit)
+            for (i, v) in enumerate(mempool_list):
+                self.assertIsInstance(v["local_hash"], bytes)
+                self.assertIsInstance(v["remote_hash"], str)
+                self.assertEqual(v["remote_hash"], "hash_{:06d}".format(i))
+                self.assertLessEqual(len(v["list"]), limit)
+
+            # noinspection PyProtectedMember
+            self.assertEqual(len(coin._mempool_cache), len(mempool_list))
+
+            # check expired
+            # noinspection PyProtectedMember
+            for k, v in coin._mempool_cache.items():
+                pass
+
+            for i in range(randint(1, 20)):
+                address = coin._Address(
+                    coin,
+                    name="address_new_{:06d}".format(i),
+                    type_=None)
+                self.assertTrue(coin.appendAddress(address))
+
+                mempool_list = coin.createMempoolAddressLists(limit)
+                # noinspection PyProtectedMember
+                self.assertEqual(len(coin._mempool_cache), len(mempool_list))

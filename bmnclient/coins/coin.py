@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 from .address import AbstractAddress
 from .currency import \
@@ -10,12 +10,13 @@ from .currency import \
     FiatRate, \
     NoneFiatCurrency
 from .tx import AbstractTx
+from ..crypto.digest import Sha256Digest
 from ..utils.meta import classproperty
 from ..utils.serialize import Serializable, serializable
 from ..wallet.mtx_impl import UTXO
 
 if TYPE_CHECKING:
-    from typing import Callable, List, Optional
+    from typing import Any, Callable, Dict, List, Optional, Union
     from ..wallet.hd import HDNode
 
 
@@ -61,6 +62,10 @@ class AbstractCoin(Serializable):
     class Utxo(UTXO):
         pass
 
+    class MempoolCacheItem(TypedDict):
+        remote_hash: Optional[str]
+        access_count: int
+
     def __init__(
             self,
             *,
@@ -83,8 +88,10 @@ class AbstractCoin(Serializable):
 
         self._hd_path: Optional[HDNode] = None
 
-        self._address_list = []
-        self._server_data = {}
+        self._address_list: List[AbstractCoin._Address] = []
+        self._server_data: Dict[str, Union[int, str]] = {}
+        self._mempool_cache: Dict[bytes, AbstractCoin.MempoolCacheItem] = {}
+        self._mempool_cache_access_counter = 0
 
         self._model_factory = model_factory
         self._model: Optional[CoinModelInterface] = self.model_factory(self)
@@ -307,3 +314,63 @@ class AbstractCoin(Serializable):
         self._server_data = data
         if self._model:
             self.model.afterSetServerData()
+
+    def __createAddressListsForMempoolHelper(
+            self,
+            local_hash: Sha256Digest,
+            address_list: List[str]) -> Dict[str, Any]:
+        local_hash.update(b"\0")
+        local_hash = local_hash.final()
+        cache_value = self._mempool_cache.setdefault(
+            local_hash, {
+                "remote_hash": None,
+                "access_count": 0
+            })
+        cache_value["access_count"] = self._mempool_cache_access_counter
+        return {
+            "local_hash": local_hash,
+            "remote_hash": cache_value["remote_hash"],
+            "list": address_list
+        }
+
+    def createMempoolAddressLists(
+            self,
+            count_per_list: int) -> List[Dict[str, Any]]:
+        self._mempool_cache_access_counter += 1
+        result = []
+
+        address_list = []
+        local_hash = Sha256Digest()
+
+        for address in self.addressList:
+            address_list.append(address.name)
+            local_hash.update(address.name.encode("utf-8", "replace"))
+            local_hash.update(b"\0")
+
+            if len(address_list) >= count_per_list:
+                result.append(self.__createAddressListsForMempoolHelper(
+                    local_hash,
+                    address_list))
+                address_list = []
+                local_hash = Sha256Digest()
+
+        if len(address_list):
+            result.append(self.__createAddressListsForMempoolHelper(
+                local_hash,
+                address_list))
+
+        for key, cache_value in self._mempool_cache.copy().items():
+            if cache_value["access_count"] < self._mempool_cache_access_counter:
+                del self._mempool_cache[key]
+
+        return result
+
+    def setMempoolAddressListResult(
+            self,
+            local_hash: bytes,
+            remote_hash: str) -> bool:
+        cache_value = self._mempool_cache.get(local_hash)
+        if cache_value is not None:
+            cache_value["remote_hash"] = remote_hash
+            return True
+        return False
