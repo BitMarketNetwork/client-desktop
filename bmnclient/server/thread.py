@@ -5,8 +5,6 @@ from ..wallet import mutable_tx
 
 
 class ServerThread(qt_core.QThread):
-    mempoolEveryCoin = qt_core.Signal()
-    mempoolCoin = qt_core.Signal(CoinType, arguments=["coin"])
     updateAddress = qt_core.Signal(CAddress, arguments=["wallet"])
     undoTx = qt_core.Signal(CoinType, int)
     broadcastMtx = qt_core.Signal(mutable_tx.MutableTransaction, arguments=["mtx"])
@@ -14,20 +12,8 @@ class ServerThread(qt_core.QThread):
     def __init__(self):
         super().__init__()
         self.finished.connect(self.deleteLater)
-        self._network = None
-        self._mempool_timer = None
-
-    def run(self):
         from .network import Network
-        self._mempool_timer = qt_core.QBasicTimer()
         self._network = Network(self)
-
-    def timerEvent(self, event: qt_core.QTimerEvent):
-        if event.timerId() == self._mempool_timer.timerId():
-            self.mempoolEveryCoin.emit()
-
-    def startTimers(self):
-        self._mempool_timer.start(10 * 1000, self)
 
     @property
     def network(self):

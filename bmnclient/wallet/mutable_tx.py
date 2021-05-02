@@ -204,8 +204,8 @@ class MutableTransaction:
     def send_callback(self, ok: bool, error: Optional[str] = None):
         log.debug(f"send result:{ok} error:{error}")
         if ok:
-            from ..application import CoreApplication
-            CoreApplication.instance().networkThread.mempoolCoin.emit(self._coin)
+            pass
+            # AddressMultyMempoolCommand(coin.addressList, self))
         else:
             if self.__parent:
                 self.__parent.fail.emit(str(error))

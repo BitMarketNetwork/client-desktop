@@ -24,10 +24,6 @@ class Network(NetworkQueryManager):
 
         parent.updateAddress.connect(
             self.update_address, qt_core.Qt.QueuedConnection)
-        parent.mempoolCoin.connect(
-            self.retreive_mempool_coin, qt_core.Qt.QueuedConnection)
-        parent.mempoolEveryCoin.connect(
-            self.retreive_mempool, qt_core.Qt.QueuedConnection)
         parent.broadcastMtx.connect(
             self.broadcast_tx, qt_core.Qt.QueuedConnection)
         parent.undoTx.connect(
@@ -56,109 +52,19 @@ class Network(NetworkQueryManager):
                     return
             self.__cmd_queue += [cmd]
 
-    def _run_cmd(
-            self,
-            cmd: net_cmd.BaseNetworkCommand,
-            from_queue: bool = False,
-            run_first: bool = False,
-            complete_callback: Optional[Callable[[net_cmd.BaseNetworkCommand], None]] = None):
-        if cmd.skip:
-            return
-
-        # TODO tmp
-        if complete_callback:
-            cmd.complete_callback = complete_callback
-
-        run_first = run_first or cmd.high_priority
-        if self.__in_progress or cmd.level > self.__level_loaded:
-            self.push_cmd(cmd, run_first)
-        elif not from_queue and not run_first and self.__cmd_queue:
-            self.push_cmd(cmd)
-            return self.__run_next_cmd()
-        else:
-            log.debug(f"cmd to run: {cmd}")
-            self.__cmd = cmd
-            # when we statrt to get history then go out from starting mode
-            self.__in_progress = True
-            # the most frequent case
-            if cmd.method == net_cmd.HttpMethod.GET:
-                return self.__make_get_reply(
-                    cmd.get_action(),
-                    cmd.args,
-                    cmd.createRequestData(),  # TODO if None
-                    cmd.verbose,
-                    cmd.url,
-                    **cmd.request_dict)
-            if cmd.method == net_cmd.HttpMethod.POST:
-                return self.__make_post_reply(
-                    cmd.get_action(),
-                    cmd.args,
-                    cmd.createRequestData(),   # TODO if None
-                    cmd.verbose,
-                    cmd.post_data,
-                    **cmd.request_dict)
-            log.fatal(f"Unsupported HTTP method: {cmd.method}")
-            return None
-
-    def __reply_read(self) -> None:
-        if self.__cmd is None:
-            log.warning(self.__reply.readAll())
-            return
-
-        self._setResponseStatusCode()
-        if not self.__cmd.onResponseData(self.__reply.readAll()):
-            self.__reply.abort()
-
-    def __reply_finished(self) -> None:
-        if self.__cmd is None:
-            log.critical(
-                f"{self.__reply.error()}: {self.__reply.errorString()}")
-            os.abort()
-            return
-
-        self._setResponseStatusCode()
+    def _reply_finished(self) -> None:
         http_error = self.__cmd.statusCode
         ok = http_error < 400 or http_error == 500 or http_error == 404
         if not ok:
             log.critical(
-                f"HTTP reply error: {self.__reply.errorString()} CODE:{http_error}")
+                f"HTTP reply error: {self._reply.errorString()} CODE:{http_error}")
 
-        if not self.__cmd.ext:
-            from ..application import CoreApplication
-            if ok:
-                CoreApplication.instance().networkThread.netError.emit(0, "")
-            else:
-                CoreApplication.instance().networkThread.netError.emit(
-                    http_error, self.__reply.errorString())
-        del self.__reply
         self.__in_progress = False
-
         self.__cmd.onResponseFinished()
-        if hasattr(self.__cmd, "complete_callback"):
-            self.__cmd.complete_callback(self.__cmd)
-
-    def __run_next_cmd(self):
-        while self.__cmd_queue:
-            # log.debug(f"queue len : {len(self.__cmd_queue)}")
-            cmd = self.__cmd_queue.pop(0)
-            if not cmd.skip:
-                return self._run_cmd(cmd, from_queue=True)
 
     def timerEvent(self, event: qt_core.QTimerEvent):
-        if event.timerId() == self._cmd_timer.timerId():
-            if not self.__in_progress:
-                qt_core.QCoreApplication.processEvents()
-                self.__run_next_cmd()
         if event.timerId() == self._fee_timer.timerId():
             self.retrieve_fee()
-
-    def retreive_mempool_coin(self, coin: "CoinType"):
-        self._run_cmd(net_cmd.AddressMultyMempoolCommand(coin.addressList, self))
-
-    def retreive_mempool(self):
-        from ..application import CoreApplication
-        for c in CoreApplication.instance().coinList:
-            self._run_cmd(net_cmd.MempoolMonitorCommand(c, self))
 
     def undo_tx(self, coin: "CoinType", count: int) -> None:
         self._run_cmd(debug_cmd.UndoTransactionCommand(coin, count, self))
