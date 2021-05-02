@@ -25,8 +25,7 @@ class TxController(QObject):
         self._coin = coin
         self._tx = mutable_tx.MutableTransaction(
             self._coin,
-            self._application.feeManager,
-            self)
+            self._application.feeManager)
         self._model = TxBroadcastModel(self._application, self._tx)
 
     @QProperty(QObject, constant=True)

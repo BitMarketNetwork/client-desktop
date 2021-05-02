@@ -14,7 +14,6 @@ class WalletThread(qt_core.QThread):
     dropDb = qt_core.Signal()
     clearAddressTx = qt_core.Signal(CAddress, arguments=["address"])
     saveAddress = qt_core.Signal(CAddress, int, arguments=["wallet", "timeout"])
-    eraseWallet = qt_core.Signal(CAddress, arguments=["wallet"])
     saveTx = qt_core.Signal(AbstractTx, arguments=["tx"])
     resetDb = qt_core.Signal(bytes, arguments=["password"])
     removeTxList = qt_core.Signal(list)
@@ -65,7 +64,3 @@ class WalletThread(qt_core.QThread):
 
     def save_address(self, wallet: CAddress, delay_ms: int = None):
         self.saveAddress.emit(wallet, delay_ms)
-
-    def delete_wallet(self, wallet) -> None:
-        self.eraseWallet.emit(wallet)
-        wallet.coin.remove_wallet(wallet)

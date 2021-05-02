@@ -23,8 +23,6 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
             self._update_coin, qt_core.Qt.QueuedConnection)
         self._parent.saveAddress.connect(
             self._add_or_save_address, qt_core.Qt.QueuedConnection)
-        self._parent.eraseWallet.connect(
-            self.erase_wallet, qt_core.Qt.QueuedConnection)
         self._parent.saveTx.connect(
             self._write_transaction, qt_core.Qt.QueuedConnection)
         self._parent.removeTxList.connect(
@@ -61,10 +59,6 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
     @qt_core.Slot(address.CAddress)
     def save_address(self, wallet):
         self._add_or_save_address(wallet, None)
-
-    @qt_core.Slot(address.CAddress)
-    def erase_wallet(self, wallet):
-        self._erase_wallet(wallet)
 
     def load_everything(self) -> None:
         from ..application import CoreApplication

@@ -26,7 +26,6 @@ class CoinType(qt_core.QObject):
 
     def __init__(self):
         super().__init__()
-        self._remote = {}  # TODO
         self.__visible = True
 
     def _next_hd_index(self):
@@ -111,15 +110,6 @@ class CoinType(qt_core.QObject):
         "from old to new one !!!"
         for w in self._address_list:
             w.update_tx_list(from_, remove_txs_from, verbose)
-
-    def remove_wallet(self, wallet: address.CAddress):
-        index = self._address_list.index(wallet)
-        # self._address_list.remove(wallet)
-        self._tx_list_model.removeSourceModel(self._address_list[index].txListModel)
-        wallet.clear()
-        with self._address_list_model.lockRemoveRows(index):
-            del self._address_list[index]
-        self.refreshAmount()  # TODO
 
     def clear(self):
         for addr in self._address_list:

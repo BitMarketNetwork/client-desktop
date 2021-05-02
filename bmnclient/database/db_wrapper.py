@@ -344,17 +344,6 @@ class DbWrapper:
             except sql.InterfaceError as ie:
                 log.error(f"DB integrity: {ie}  for {wallet}")
 
-    def _erase_wallet(self, wallet: CAddress) -> None:
-        assert wallet.rowId
-        query = f"""
-            DELETE FROM {self.addresses_table}
-            WHERE id == ?
-        """
-        with closing(self.__exec(query, (wallet.rowId,))):
-            pass
-        self._clear_tx(wallet)
-        log.debug(f"Wallet {wallet} erased from DB")
-
     def _apply_password(self) -> None:
         self.open_db()
         self._init_actions()
