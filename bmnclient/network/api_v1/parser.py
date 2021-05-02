@@ -109,6 +109,55 @@ class ResponseMetaParser(AbstractParser):
         self._timeframe = self.parseKey(meta, "timeframe", int, 0)
 
 
+class TxParser(AbstractParser):
+    class ParseFlag(AbstractParser.ParseFlag):
+        NONE: Final = auto()
+        MEMPOOL: Final = auto()
+
+    def __init__(self, flags=ParseFlag.NONE) -> None:
+        super().__init__(flags=flags)
+
+    def __call__(
+            self,
+            name: str,
+            value: dict) -> Dict[str, Any]:
+        if self._flags & self.ParseFlag.MEMPOOL:
+            self.parseKey(value, "height", type(None), allow_none=True)
+            height = -1
+        else:
+            height = self.parseKey(value, "height", int)
+
+        return {
+            "name": name,
+            "height": height,
+            "time": self.parseKey(value, "time", int),
+            "amount": self.parseKey(value, "amount", int),
+            "fee": self.parseKey(value, "fee", int),
+            "coinbase": self.parseKey(value, "coinbase", int) != 0,
+
+            "input_list": [
+                self._parseIo(v) for v in self.parseKey(
+                    value,
+                    "input",
+                    list)
+            ],
+            "output_list": [
+                self._parseIo(v) for v in self.parseKey(
+                    value,
+                    "output",
+                    list)
+            ]
+        }
+
+    def _parseIo(self, item: dict) -> dict:
+        return {
+            "output_type": self.parseKey(item, "output_type", str),
+            "address_type": self.parseKey(item, "type", str, allow_none=True),
+            "address_name": self.parseKey(item, "address", str, allow_none=True),
+            "amount": self.parseKey(item, "amount", int)
+        }
+
+
 class SysinfoParser(AbstractParser):
     def __init__(self) -> None:
         super().__init__()
@@ -307,64 +356,17 @@ class AddressTxParser(AbstractParser):
 
     def _parseTxList(self, value: dict):
         tx_value_list = self.parseKey(value, "tx_list", dict)
-        tx_parser = TxParser(self._address)
+        tx_parser = TxParser()
         for (tx_name, tx_value) in tx_value_list.items():
             try:
-                tx = tx_parser(tx_name, tx_value)
+                tx = self._address.coin.Tx.deserialize(
+                    self._address,
+                    **tx_parser(tx_name, tx_value))
                 self._tx_list.append(tx)
             except ParseError as e:
                 raise ParseError(
                     "failed to parse transaction \"{}\": {}"
                     .format(tx_name, str(e)))
-
-
-class TxParser(AbstractParser):
-    class ParseFlag(AbstractParser.ParseFlag):
-        NONE: Final = auto()
-        MEMPOOL: Final = auto()
-
-    def __init__(self, flags=ParseFlag.NONE) -> None:
-        super().__init__(flags=flags)
-
-    def __call__(
-            self,
-            name: str,
-            value: dict) -> Dict[str, Any]:
-        if self._flags & self.ParseFlag.MEMPOOL:
-            self.parseKey(value, "height", type(None), allow_none=True)
-            height = -1
-        else:
-            height = self.parseKey(value, "height", int)
-
-        return {
-            "name": name,
-            "height": height,
-            "time": self.parseKey(value, "time", int),
-            "amount": self.parseKey(value, "amount", int),
-            "fee": self.parseKey(value, "fee", int),
-            "coinbase": self.parseKey(value, "coinbase", int) != 0,
-
-            "input_list": [
-                self._parseIo(v) for v in self.parseKey(
-                    value,
-                    "input",
-                    list)
-            ],
-            "output_list": [
-                self._parseIo(v) for v in self.parseKey(
-                    value,
-                    "output",
-                    list)
-            ]
-        }
-
-    def _parseIo(self, item: dict) -> dict:
-        return {
-            "output_type": self.parseKey(item, "output_type", str),
-            "address_type": self.parseKey(item, "type", str, allow_none=True),
-            "address_name": self.parseKey(item, "address", str, allow_none=True),
-            "amount": self.parseKey(item, "amount", int)
-        }
 
 
 class AddressUnspentParser(AddressTxParser):
