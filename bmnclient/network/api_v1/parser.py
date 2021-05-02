@@ -1,12 +1,14 @@
 # JOK+++
 from __future__ import annotations
 
+import itertools
 from enum import auto, Flag
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Final, List, Optional, Type, Union
+    from typing import Any, Callable, Dict, Final, List, Optional, Type, Union
     from ...coins.address import AbstractAddress
+    from ...coins.coin import AbstractCoin
     from ...coins.tx import AbstractTx, AbstractUtxo
 
 
@@ -115,14 +117,15 @@ class TxParser(AbstractParser):
         MEMPOOL: Final = auto()
 
     def __init__(self, flags=ParseFlag.NONE) -> None:
-        super().__init__(flags=flags)
+        super().__init__(flags)
 
     def __call__(
             self,
             name: str,
             value: dict) -> Dict[str, Any]:
         if self._flags & self.ParseFlag.MEMPOOL:
-            self.parseKey(value, "height", type(None), allow_none=True)
+            # TODO fix server
+            # self.parseKey(value, "height", type(None), allow_none=True)
             height = -1
         else:
             height = self.parseKey(value, "height", int)
@@ -402,3 +405,46 @@ class AddressUnspentParser(AddressTxParser):
                     "failed to parse UTXO \"{}\": {}"
                     .format(tx_index, str(e)))
 
+
+class CoinMempoolParser(AbstractParser):
+    def __init__(
+            self,
+            coin: AbstractCoin) -> None:
+        super().__init__()
+        self._coin = coin
+        self._hash = ""
+        self._tx_list: List[AbstractTx] = []
+
+    @property
+    def hash(self) -> str:
+        return self._hash
+
+    @property
+    def txList(self) -> List[AbstractTx]:
+        return self._tx_list
+
+    def __call__(self, value: dict) -> None:
+        self._hash = self.parseKey(value, "hash", str)
+
+        tx_value_list = self.parseKey(value, "tx_list", dict)
+        tx_parser = TxParser(TxParser.ParseFlag.MEMPOOL)
+        for (tx_name, tx_value) in tx_value_list.items():
+            try:
+                self._processTxData(tx_parser(tx_name, tx_value))
+            except ParseError as e:
+                raise ParseError(
+                    "failed to parse unconfirmed transaction \"{}\": {}"
+                    .format(tx_name, str(e)))
+
+    def _processTxData(self, tx_data: Dict[str, Any]) -> None:
+        tx_io_list = itertools.chain(
+            tx_data["input_list"],
+            tx_data["output_list"])
+
+        for tx_io in tx_io_list:
+            address_name = tx_io["address_name"]
+            if address_name is not None:
+                address = self._coin.findAddressByName(address_name)
+                if address is not None:
+                    tx = address.coin.Tx.deserialize(address, **tx_data)
+                    self._tx_list.append(tx)
