@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, List, Optional, TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 
 from .address import AbstractAddress
+from ..logger import Logger
 from ..utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
+    from typing import Any, List, Optional, Tuple
     from .coin import AbstractCoin
     from ..wallet.address import CAddress
 
@@ -208,3 +210,40 @@ class AbstractUtxo(Serializable):
     @property
     def amount(self) -> int:
         return self._amount
+
+
+class AbstractMutableTx:
+    def __init__(self, coin: AbstractCoin) -> None:
+        self._logger = Logger.getClassLogger(
+            __name__,
+            self.__class__,
+            coin.shortName)
+        self._coin = coin
+        self._source_list: List[AbstractAddress] = []
+        self._source_amount = 0
+
+    def refreshSourceList(self) -> None:
+        self._source_list.clear()
+        self._source_amount = 0
+
+        for address in self._coin.addressList:
+            if address.readOnly:
+                continue
+
+            append = False
+            for utxo in address.utxoList:
+                if utxo.amount > 0:
+                    append = True
+                    self._source_amount += utxo.amount
+
+            if append:
+                self._source_list.append(address)
+                self._logger.debug(
+                    "Address \"%s\" appended to source list.",
+                    address.name)
+
+        # TODO check,filter unique
+
+        self.filter_sources()
+
+

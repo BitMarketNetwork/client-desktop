@@ -1,13 +1,16 @@
+from __future__ import annotations
+
 import collections
 import functools
 import itertools
-import logging
-from typing import DefaultDict, List, Optional, Tuple
+from typing import TYPE_CHECKING
 
 from . import key, mtx_impl
-from .coins import CoinType
+from ..coins.tx import AbstractMutableTx
 
-log = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from typing import DefaultDict, List, Optional, Tuple
+    from ..coins.coin import AbstractCoin
 
 
 def perms(src: list, getter: callable):
@@ -20,15 +23,14 @@ class NewTxerror(Exception):
     pass
 
 
-class MutableTransaction:
+class MutableTransaction(AbstractMutableTx):
     MAX_SPB_FEE = 200
     MIN_SPB_FEE = 1
     MAX_TX_SIZE = 1024
 
-    def __init__(self, coin: CoinType, fee_man: "feeManager", parent=None):
-        # we need to emit bx result
-        self._coin = coin
-        self.__parent = parent
+    def __init__(self, coin: AbstractCoin, fee_man: "feeManager"):
+        super().__init__(coin)
+
         # it s serialized MTX!!!s
         self.__raw__mtx = None
         self.__mtx = None
@@ -38,8 +40,6 @@ class MutableTransaction:
         self.__leftover_address = None
         self.__substract_fee = False
 
-        # ALL source address ( may be filtered by user )
-        self.__selected_sources: List['address.CAdress'] = []
         # wrong way !!! need to select UNSPENTS not addresses
         self.__filtered_inputs: List[mtx_impl.TxInput] = []
         self.__filtered_amount = 0
@@ -49,28 +49,11 @@ class MutableTransaction:
         self._spb = self.__fee_man.max_spb
         # setter !
         self.__amount = 0
-        self.recalc_sources()
+        self.refreshSourceList()
         self.set_max()
-
-    def recalc_sources(self, auto: bool = False):
-        if auto:
-            for add in self.__sources:
-                add.useAsSource = True
-        self.__sources = [add for add in self._coin.addressList if add.amount > 0]
-
-        log.warning(f"{self.__sources }")
-        # addr for addr in self.__address.coin.addressList if not addr.readOnly]
-        self.__selected_sources: List['address.CAddress'] = self.__sources if auto else [
-            add for add in self.__sources if add.useAsSource]
-        self.__source_amount = sum(
-            add.amount for add in self.__selected_sources)
-        self.filter_sources()
-        log.debug(
-            f"source addresses:{len(self.__selected_sources)} ({self.__source_amount}) selected inputs {len(self.__filtered_inputs)} ({self.__filtered_amount}). Change is {self.change}")
 
     @classmethod
     def select_sources(cls, sources: list, target_amount: int, getter: callable) -> Tuple[list, int]:
-
         if not sources or target_amount <= 0:
             return [], 0
 
@@ -79,7 +62,7 @@ class MutableTransaction:
 
         # try simple cases
         summ = sum(map(getter, sources))
-        # log.warning(f"sum:{summ} t:{target_amount}")
+        # self._logger.warning(f"sum:{summ} t:{target_amount}")
         if summ < target_amount:
             return [], summ
         if summ == target_amount:
@@ -118,18 +101,13 @@ class MutableTransaction:
         return [], 0
 
     def filter_sources(self) -> None:
-        all_inputs = sum((a.unspents for a in self.__selected_sources), [])
+        all_inputs = sum((a.utxoList for a in self._source_list), [])
         target = self.__amount + (0 if self.__substract_fee else self.fee)
-        self.__filtered_inputs, self.__filtered_amount = self.select_sources(
-            all_inputs, target,
-            getter=lambda a: a.amount
-        )
-        # log.warning(
-        #     f"amount:{self.__amount} .  filter=>{[[u.amount for u in a.unspents] for a in self.__selected_sources]} target:{target} result:{self.__filtered_amount}")
 
-        # ensure uniqueness
-        # assert len(set(self.__filtered_inputs)) == len(
-        #     self.__filtered_inputs)
+        self.__filtered_inputs, self.__filtered_amount = self.select_sources(
+            all_inputs,
+            target,
+            getter=lambda a: a.amount)
 
     def prepare(self):
         if 0 == self.fee:
@@ -152,7 +130,7 @@ class MutableTransaction:
             return t
         sources: DefaultDict['address.CAddress', List[mtx_impl.UTXO]] = \
             functools.reduce(cl, utxo_list, collections.defaultdict(list),)
-        log.debug(
+        self._logger.debug(
             f"unspents: {utxo_list} scr:{sources} sum: {unspent_sum} vs {self.__filtered_amount}")
         if not sources:
             raise NewTxerror(f"No unspent outputs found")
@@ -166,7 +144,7 @@ class MutableTransaction:
                 (self.__receiver, int(self.__amount)),
             ]
 
-        log.debug(
+        self._logger.debug(
             f"amount:{self.__amount} fee:{self.fee} fact_change:{self.change}")
         # process leftover
         if self.change > 0:
@@ -181,28 +159,28 @@ class MutableTransaction:
         else:
             self.__leftover_address = None
 
-        log.debug(
+        self._logger.debug(
             f"outputs: {outputs} change_wallet:{self.__leftover_address}")
 
         self.__mtx = mtx_impl.Mtx.make(utxo_list, outputs)
-        log.debug(f"TX fee: {self.__mtx.fee}")
+        self._logger.debug(f"TX fee: {self.__mtx.fee}")
         if self.__mtx.fee != self.fee:
             #self.cancel()
-            log.error(
+            self._logger.error(
                 f"Fee failure. Should be {self.fee} but has {self.__mtx.fee}")
             raise NewTxerror("Critical error. Fee mismatch")
         for addr, utxo in sources.items():
-            log.debug(f"INPUT: address:{addr.name} utxo:{len(utxo)}")
+            self._logger.debug(f"INPUT: address:{addr.name} utxo:{len(utxo)}")
             self.__mtx.sign(addr.private_key, utxo_list=utxo)
         self.__raw__mtx = self.__mtx.to_hex()
-        log.info(f"final TX to send: {self.__mtx}")
+        self._logger.info(f"final TX to send: {self.__mtx}")
 
     def send(self):
         from ..application import CoreApplication
         CoreApplication.instance().networkThread.broadcastMtx.emit(self)
 
     def send_callback(self, ok: bool, error: Optional[str] = None):
-        log.debug(f"send result:{ok} error:{error}")
+        self._logger.debug(f"send result:{ok} error:{error}")
         if ok:
             pass
             # AddressMultyMempoolCommand(coin.addressList, self))
@@ -212,7 +190,7 @@ class MutableTransaction:
 
     @ property
     def tx_size(self):
-        if not self.__selected_sources:
+        if not self._source_list:
             return self.MAX_TX_SIZE
         return mtx_impl.estimate_tx_size(
             150,
@@ -248,7 +226,7 @@ class MutableTransaction:
 
     @ property
     def source_amount(self) -> int:
-        return self.__source_amount
+        return self._source_amount
 
     @ property
     def filtered_amount(self) -> int:
@@ -261,7 +239,7 @@ class MutableTransaction:
         return ""
 
     def get_max_amount(self) -> int:
-        return max(self.__source_amount - (0 if self.__substract_fee else self.fee), 0)
+        return max(self._source_amount - (0 if self.__substract_fee else self.fee), 0)
 
     def set_max(self) -> None:
         self.amount = self.get_max_amount()
@@ -274,13 +252,13 @@ class MutableTransaction:
     def amount(self, value: int) -> None:
         self.__amount = value
         self.filter_sources()
-        log.info(
-            f"amount: {value} available:{self.__source_amount} change:{self.change}")
+        self._logger.info(
+            f"amount: {value} available:{self._source_amount} change:{self.change}")
 
     @ property
     def change(self):
         # res = int(self.__filtered_amount - self.__amount - (0 if self.__substract_fee else self.fee))
-        # log.info(f"source:{self.__filtered_amount} am:{self.__amount} \
+        # self._logger.info(f"source:{self.__filtered_amount} am:{self.__amount} \
         #     fee:{self.fee} substract: {self.subtract_fee}: change:{res}")
 
         return int(self.__filtered_amount - self.__amount - (0 if self.__substract_fee else self.fee))
@@ -308,7 +286,7 @@ class MutableTransaction:
 
     @ property
     def sources(self):
-        return self.__sources
+        return self._source_list
 
     @ property
     def coin(self):
@@ -332,9 +310,6 @@ class MutableTransaction:
 
     @ spb.setter
     def spb(self, value):
-        log.debug(f"SPB: {value}")
+        self._logger.debug(f"SPB: {value}")
         self._spb = value
         self.filter_sources()
-
-    def __str__(self) -> str:
-        return self.__raw__mtx
