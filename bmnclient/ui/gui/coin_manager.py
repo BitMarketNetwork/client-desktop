@@ -97,9 +97,5 @@ class CoinManager(QObject):
 
     @qt_core.Slot(int)
     def updateAddress(self, address_index: int):
-        if self.coin is None or address_index < 0:
-            log.critical(
-                f"invalid coin idecies: coin:{self.__current_coin_idx} address:{address_index}")
-            return
-        self._application.networkThread.updateAddress.emit(
-            self.coin[address_index])  # pylint: disable=unsubscriptable-object
+        # self._run_cmd(net_cmd.AddressInfoApiQuery(wallet, self))
+        pass

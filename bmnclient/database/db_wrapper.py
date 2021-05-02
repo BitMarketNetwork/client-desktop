@@ -12,7 +12,6 @@ import PySide2.QtCore as qt_core
 import bmnclient.config
 from . import sqlite_impl
 from ..coins.tx import AbstractTx
-from ..server import net_cmd
 from ..wallet import coins
 from ..wallet.address import CAddress
 
