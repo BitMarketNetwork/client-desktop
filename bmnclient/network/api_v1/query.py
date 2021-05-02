@@ -29,7 +29,7 @@ class AbstractApiQuery(AbstractJsonQuery):
     _DEFAULT_CONTENT_TYPE = "application/vnd.api+json"
     _DEFAULT_BASE_URL = "https://d1.bitmarket.network:30110/"  # TODO dynamic
     _VERSION = "v1"
-    _ACTION = ""
+    _ACTION: Tuple[Union[str, Callable]] = ("", )
 
     def __init__(
             self,
@@ -50,7 +50,15 @@ class AbstractApiQuery(AbstractJsonQuery):
 
     @property
     def url(self) -> Optional[str]:
-        return urlJoin(super().url, self._VERSION, self._ACTION)
+        path_list = []
+        for v in self._ACTION:
+            if isinstance(v, str):
+                path_list.append(v)
+            elif callable(v):
+                path_list.append(v(self))
+            else:
+                assert ValueError
+        return urlJoin(super().url, self._VERSION, *path_list)
 
     @property
     def jsonContent(self) -> Optional[dict]:
@@ -130,7 +138,7 @@ class AbstractIteratorApiQuery(AbstractApiQuery):
 
 
 class SysinfoApiQuery(AbstractApiQuery):
-    _ACTION = "sysinfo"
+    _ACTION = ("sysinfo", )
 
     def __init__(self, application: CoreApplication) -> None:
         super().__init__(application, name_suffix=None)
@@ -160,7 +168,7 @@ class SysinfoApiQuery(AbstractApiQuery):
 
 
 class CoinsInfoApiQuery(AbstractApiQuery):
-    _ACTION = "coins"
+    _ACTION = ("coins", )
 
     def __init__(self, application: CoreApplication) -> None:
         super().__init__(application, name_suffix=None)
@@ -203,8 +211,10 @@ class CoinsInfoApiQuery(AbstractApiQuery):
 
 
 class AddressInfoApiQuery(AbstractApiQuery):
-    _ACTION = "coins"
-    _SUB_ACTION = ""
+    _ACTION = (
+        "coins",
+        lambda self: self._address.coin.shortName,
+        lambda self: self._address.name)
 
     def __init__(
             self,
@@ -219,14 +229,6 @@ class AddressInfoApiQuery(AbstractApiQuery):
             name_suffix=name_suffix or self.addressToNameSuffix(address),
             **kwargs)
         self._address = address
-
-    @property
-    def url(self) -> Optional[str]:
-        return urlJoin(
-            super().url,
-            self._address.coin.shortName,
-            self._address.name,
-            self._SUB_ACTION)
 
     def _processData(
             self,
@@ -316,7 +318,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
 
 
 class AddressTxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
-    _SUB_ACTION = "history"
+    _ACTION = AddressInfoApiQuery._ACTION + ("history", )
     _BEST_OFFSET_NAME: Final = "best"
     _BASE_OFFSET_NAME: Final = "base"
 
@@ -384,7 +386,7 @@ class AddressTxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
 
 
 class AddressUnspentIteratorApiQuery(AddressTxIteratorApiQuery):
-    _SUB_ACTION = "unspent"
+    _ACTION = AddressInfoApiQuery._ACTION + ("unspent", )
 
     def _processData(
             self,
@@ -404,3 +406,12 @@ class AddressUnspentIteratorApiQuery(AddressTxIteratorApiQuery):
                 self._address,
                 first_offset=parser.lastOffset,
                 last_offset=None)
+
+
+class CoinMempoolIteratorApiQuery(AbstractIteratorApiQuery):
+    _ACTION = (
+        "coins",
+        lambda self: self._coin.shortName,
+        "unconfirmed")
+    _DEFAULT_METHOD = AbstractApiQuery.Method.POST
+    ADDRESS_COUNT_PER_REQUEST: Final = 50  # TODO dynamic
