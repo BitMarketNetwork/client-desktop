@@ -39,7 +39,7 @@ class BroadcastTxCommand(AbstractApiQuery):
     def handle_error(self, error):
         log.error(error)
         err_code = error["code"]
-        if server_error.ServerErrorCode.broadcastError == int(err_code):
+        if int(err_code) == 2003:
             self._mtx.send_callback(False, str(error["detail"]))
         else:
             raise server_error.UnknownErrorCode(err_code)
