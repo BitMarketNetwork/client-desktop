@@ -1,4 +1,4 @@
-# JOK++
+# JOK+++
 from __future__ import annotations
 
 from random import randint
@@ -9,6 +9,7 @@ from .parser import \
     AddressTxParser, \
     AddressUnspentParser, \
     CoinsInfoParser, \
+    CoinMempoolParser, \
     ParseError, \
     ResponseMetaParser, \
     ResponseParser, \
@@ -415,3 +416,71 @@ class CoinMempoolIteratorApiQuery(AbstractIteratorApiQuery):
         "unconfirmed")
     _DEFAULT_METHOD = AbstractApiQuery.Method.POST
     ADDRESS_COUNT_PER_REQUEST: Final = 50  # TODO dynamic
+
+    def __init__(
+            self,
+            application: CoreApplication,
+            coin: AbstractCoin,
+            *,
+            finished_callback: Optional[Callable[
+                [CoinMempoolIteratorApiQuery], None]] = None,
+            _address_list: List[Dict[str, Any]] = None) -> None:
+        super().__init__(
+            application,
+            finished_callback=finished_callback,
+            name_suffix=self.coinToNameSuffix(coin))
+        self._coin = coin
+        self._local_hash = b""
+        if _address_list is None:
+            if self._application.isDebugMode:
+                self._address_list = self._coin.createMempoolAddressLists(
+                    randint(1, self.ADDRESS_COUNT_PER_REQUEST))
+            else:
+                self._address_list = self._coin.createMempoolAddressLists(
+                    self.ADDRESS_COUNT_PER_REQUEST)
+        else:
+            self._address_list = _address_list
+
+    @property
+    def skip(self) -> bool:
+        if not super().skip:
+            if len(self._address_list) > 0:
+                return False
+            self._logger.debug("Address list is empty.")
+        return True
+
+    def _createData(self) -> Tuple[str, Any]:
+        current_list = self._address_list.pop(0)
+        self._local_hash = current_list["local_hash"]
+        data = {
+            "address_list": current_list["list"]
+        }
+
+        if current_list["remote_hash"]:
+            data["last_hash"] = current_list["remote_hash"]
+
+        return "unconfirmed", data
+
+    def _processData(
+            self,
+            data_id: Optional[str],
+            data_type: Optional[str],
+            value: Optional[dict]) -> None:
+        if self.statusCode == 200 and value is not None:
+            parser = CoinMempoolParser(self._coin)
+            parser(value)
+
+            for tx in parser.txList:
+                tx.address.appendTx(tx)
+            self._coin.setMempoolAddressListResult(
+                self._local_hash,
+                parser.hash)
+        elif self.statusCode != 304:
+            return
+
+        if len(self._address_list) > 0:
+            self._next_query = self.__class__(
+                self._application,
+                self._coin,
+                finished_callback=self._finished_callback,
+                _address_list=self._address_list)
