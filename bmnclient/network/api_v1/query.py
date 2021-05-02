@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Dict, Final, List, Optional, Tuple, Union
     from ...application import CoreApplication
     from ...coins.coin import AbstractCoin
+    from ...coins.tx import AbstractUtxo
     from ...wallet.address import CAddress
 
 
@@ -389,6 +390,24 @@ class AddressTxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
 class AddressUnspentIteratorApiQuery(AddressTxIteratorApiQuery):
     _ACTION = AddressInfoApiQuery._ACTION + ("unspent", )
 
+    def __init__(
+            self,
+            application: CoreApplication,
+            address: CAddress,
+            *,
+            finished_callback: Optional[
+                Callable[[HdAddressIteratorApiQuery], None]] = None,
+            first_offset: Optional[str] = None,
+            last_offset: Optional[str] = None,
+            _utxo_list: Optional[List[AbstractUtxo]] = None) -> None:
+        super().__init__(
+            application,
+            address,
+            finished_callback=finished_callback,
+            first_offset=first_offset,
+            last_offset=last_offset)
+        self._utxo_list = _utxo_list or []
+
     def _processData(
             self,
             data_id: Optional[str],
@@ -399,14 +418,17 @@ class AddressUnspentIteratorApiQuery(AddressTxIteratorApiQuery):
 
         parser = AddressUnspentParser(self._address)
         parser(value)
-        self._address.utxoList = parser.txList
+        self._utxo_list.extend(parser.txList)
 
-        if parser.lastOffset is not None:
+        if parser.lastOffset is None:
+            self._address.utxoList = self._utxo_list
+        else:
             self._next_query = self.__class__(
                 self._application,
                 self._address,
                 first_offset=parser.lastOffset,
-                last_offset=None)
+                last_offset=None,
+                _utxo_list=self._utxo_list)
 
 
 class CoinMempoolIteratorApiQuery(AbstractIteratorApiQuery):
