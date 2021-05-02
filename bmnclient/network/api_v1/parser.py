@@ -323,24 +323,20 @@ class TxParser(AbstractParser):
         NONE: Final = auto()
         MEMPOOL: Final = auto()
 
-    def __init__(
-            self,
-            address: AbstractAddress,
-            flags=ParseFlag.NONE) -> None:
+    def __init__(self, flags=ParseFlag.NONE) -> None:
         super().__init__(flags=flags)
-        self._address = address
 
     def __call__(
             self,
             name: str,
-            value: dict) -> Optional[AbstractTx]:
+            value: dict) -> Dict[str, Any]:
         if self._flags & self.ParseFlag.MEMPOOL:
             self.parseKey(value, "height", type(None), allow_none=True)
             height = -1
         else:
             height = self.parseKey(value, "height", int)
 
-        data = {
+        return {
             "name": name,
             "height": height,
             "time": self.parseKey(value, "time", int),
@@ -362,15 +358,12 @@ class TxParser(AbstractParser):
             ]
         }
 
-        return self._address.coin.Tx.deserialize(self._address, **data)
-
-    @classmethod
-    def _parseIo(cls, item: dict) -> dict:
+    def _parseIo(self, item: dict) -> dict:
         return {
-            "output_type": cls.parseKey(item, "output_type", str),
-            "address_type": cls.parseKey(item, "type", str, allow_none=True),
-            "address_name": cls.parseKey(item, "address", str, allow_none=True),
-            "amount": cls.parseKey(item, "amount", int)
+            "output_type": self.parseKey(item, "output_type", str),
+            "address_type": self.parseKey(item, "type", str, allow_none=True),
+            "address_name": self.parseKey(item, "address", str, allow_none=True),
+            "amount": self.parseKey(item, "amount", int)
         }
 
 
