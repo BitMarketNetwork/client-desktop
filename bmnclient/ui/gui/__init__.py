@@ -17,7 +17,6 @@ from . import \
     coin_manager, \
     receive_manager, \
     settings_manager, \
-    tx_controller, \
     ui_manager
 from .coin_manager import CoinManager, CoinManager
 from .receive_manager import ReceiveManager, ReceiveManager

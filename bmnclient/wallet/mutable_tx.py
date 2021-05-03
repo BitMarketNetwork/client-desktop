@@ -6,7 +6,7 @@ import itertools
 from typing import TYPE_CHECKING
 
 from . import key, mtx_impl
-from ..coins.tx import AbstractMutableTx
+from ..coins.mutable_tx import AbstractMutableTx
 
 if TYPE_CHECKING:
     from typing import DefaultDict, List, Optional, Tuple

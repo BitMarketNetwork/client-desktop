@@ -12,6 +12,7 @@ from PySide2.QtCore import \
 from . import AbstractModel, AbstractStateModel, ValidStatus
 from .amount import AmountInputModel, AmountModel
 from .tx import TxIoListModel
+from ..coins.mutable_tx import MutableTxModelInterface
 
 if TYPE_CHECKING:
     from ..ui.gui import Application
@@ -190,7 +191,7 @@ class TxBroadcastInputListModel(TxIoListModel):
             self.__stateChanged.emit()
 
 
-class TxBroadcastModel(AbstractModel):
+class MutableTxModel(MutableTxModelInterface, AbstractModel):
     __stateChanged = QSignal()
 
     def __init__(

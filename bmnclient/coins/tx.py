@@ -5,7 +5,6 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 from .address import AbstractAddress
-from ..logger import Logger
 from ..utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:

@@ -1,4 +1,4 @@
-# JOK++
+# JOK+++
 from __future__ import annotations
 
 import math
@@ -14,6 +14,7 @@ from ..crypto.digest import Sha256Digest
 from ..utils.meta import classproperty
 from ..utils.serialize import Serializable, serializable
 from ..wallet.mtx_impl import UTXO
+from ..wallet.mutable_tx import MutableTransaction
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, List, Optional, Union
@@ -72,6 +73,7 @@ class AbstractCoin(Serializable):
             model_factory: Optional[Callable[[object], object]] = None) -> None:
         super().__init__()
 
+        self._model_factory = model_factory
         self.__state_hash = 0
 
         self._offset = ""
@@ -93,7 +95,11 @@ class AbstractCoin(Serializable):
         self._mempool_cache: Dict[bytes, AbstractCoin.MempoolCacheItem] = {}
         self._mempool_cache_access_counter = 0
 
-        self._model_factory = model_factory
+        from ..ui.gui import Application
+        self._mutable_tx = MutableTransaction(
+            self,
+            Application.instance().feeManager)
+
         self._model: Optional[CoinModelInterface] = self.model_factory(self)
 
     def _updateState(self) -> int:
@@ -374,3 +380,7 @@ class AbstractCoin(Serializable):
             cache_value["remote_hash"] = remote_hash
             return True
         return False
+
+    @property
+    def mutableTx(self) -> MutableTransaction:
+        return self._mutable_tx
