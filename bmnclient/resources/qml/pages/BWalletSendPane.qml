@@ -159,7 +159,7 @@ BPane {
         }
     }
 
-    BTxInputListDialog {
+    BTxSourceListDialog {
         id: _inputListDialog
         sourceList: _base.coin.mutableTx.sourceList
         onClosed: {
