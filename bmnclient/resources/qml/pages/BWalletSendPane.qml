@@ -12,7 +12,7 @@ BPane {
     contentItem: BDialogScrollableLayout {
         columns: 3
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("Coin:")
         }
         BDialogInputLabel {
@@ -22,7 +22,7 @@ BPane {
 
         BDialogSeparator {}
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("Pay to:")
         }
         BDialogInputTextField {
@@ -37,7 +37,7 @@ BPane {
 
         BDialogSeparator {}
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("Available amount:")
         }
         BAmountLabel {
@@ -47,7 +47,7 @@ BPane {
             amount: _base.coin.mutableTx.sourceAmount
         }
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("Amount:")
         }
         BAmountInput {
@@ -61,7 +61,7 @@ BPane {
 
         BDialogSeparator {}
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("Transaction fee:")
         }
         BAmountLabel {
@@ -71,7 +71,7 @@ BPane {
             amount: _base.coin.mutableTx.feeAmount
         }
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("per kilobyte:")
         }
         BAmountInput {
@@ -84,7 +84,7 @@ BPane {
             status: _base.coin.mutableTx.kibFeeAmount.validStatus
         }
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("Subtract fee from amount:")
         }
         BDialogInputSwitch {
@@ -97,7 +97,7 @@ BPane {
 
         BDialogSeparator {}
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("Change:")
         }
         BAmountLabel {
@@ -121,7 +121,7 @@ BPane {
 
         BDialogSeparator {}
 
-        BDialogPromtLabel {}
+        BDialogPromptLabel {}
         BDialogInputButton {
             BLayout.columnSpan: parent.columns - 1
             text: "Select inputs..."

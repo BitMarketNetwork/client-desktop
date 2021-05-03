@@ -19,7 +19,7 @@ BPane {
     signal revealSeedPhraseWallet
 
     contentItem: BDialogScrollableLayout {
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("Application font:")
         }
         BDialogInputButton {
@@ -35,7 +35,7 @@ BPane {
             }
         }
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("Hide to tray on closing:")
         }
         BDialogInputSwitch {
@@ -44,7 +44,7 @@ BPane {
 
         BDialogSeparator {}
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("Fiat rate service:")
         }
         BDialogInputComboBox {
@@ -55,7 +55,7 @@ BPane {
             }
         }
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("Fiat currency:")
         }
         BDialogInputComboBox {
@@ -68,7 +68,7 @@ BPane {
 
         BDialogSeparator {}
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
 
             text: qsTr("Always send change to a new address:")
         }

@@ -48,7 +48,7 @@ BDialogLayout {
         }
     }
 
-    property string addressPromtText: {
+    property string addressPromptText: {
         switch (_base.type) {
         case BAddressEditBox.Type.GenerateRecipient:
         case BAddressEditBox.Type.ViewRecipient:
@@ -70,9 +70,9 @@ BDialogLayout {
         }
     }
 
-    property string segwitPromtText: qsTr("Segwit:")
+    property string segwitPromptText: qsTr("Segwit:")
 
-    property string labelPromtText: qsTr("Label:")
+    property string labelPromptText: qsTr("Label:")
     property string labelPlaceholderText: {
         switch (_base.type) {
         case BAddressEditBox.Type.Generate:
@@ -86,7 +86,7 @@ BDialogLayout {
         }
     }
 
-    property string commentPromtText: qsTr("Comment:")
+    property string commentPromptText: qsTr("Comment:")
     property string commentPlaceholderText: {
         switch (_base.type) {
         case BAddressEditBox.Type.Generate:
@@ -122,7 +122,7 @@ BDialogLayout {
         visible: _description.visible
     }
 
-    BDialogPromtLabel {
+    BDialogPromptLabel {
         text: qsTr("Coin:")
     }
     BDialogInputLabel {
@@ -131,8 +131,8 @@ BDialogLayout {
 
     BDialogSeparator {}
 
-    BDialogPromtLabel {
-        text: _base.addressPromtText
+    BDialogPromptLabel {
+        text: _base.addressPromptText
     }
     BDialogInputTextField {
         id: _address
@@ -142,9 +142,9 @@ BDialogLayout {
     }
     // TODO validator "✔", "✘"
 
-    BDialogPromtLabel {
+    BDialogPromptLabel {
         visible: _base.type !== BAddressEditBox.Type.AddWatchOnly
-        text: _base.segwitPromtText
+        text: _base.segwitPromptText
     }
     BDialogInputSwitch {
         enabled: !_base.readOnly
@@ -155,8 +155,8 @@ BDialogLayout {
 
     BDialogSeparator {}
 
-    BDialogPromtLabel {
-        text: _base.labelPromtText
+    BDialogPromptLabel {
+        text: _base.labelPromptText
     }
     BDialogInputTextField {
         id: _label
@@ -164,8 +164,8 @@ BDialogLayout {
         placeholderText: _base.labelPlaceholderText
     }
 
-    BDialogPromtLabel {
-        text: _base.commentPromtText
+    BDialogPromptLabel {
+        text: _base.commentPromptText
     }
     BDialogInputTextArea {
         id: _comment

@@ -34,7 +34,7 @@ BDialog {
     }
     contentItem: BDialogLayout {
         // TODO advanced description
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: "Seed phrase:"
         }
         BDialogInputTextArea {

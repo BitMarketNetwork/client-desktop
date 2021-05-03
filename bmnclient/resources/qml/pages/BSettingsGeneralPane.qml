@@ -6,7 +6,7 @@ BPane {
     property string iconPath: _applicationManager.imagePath("icon-cog.svg")
 
     contentItem: BDialogScrollableLayout {
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("Application language:")
         }
         BDialogInputComboBox {
@@ -23,7 +23,7 @@ BPane {
             }
         }
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("Theme:")
         }
         BDialogInputComboBox {

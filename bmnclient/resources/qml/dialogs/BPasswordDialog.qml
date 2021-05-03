@@ -12,7 +12,7 @@ BDialog {
     contentItem: BDialogLayout {
         id: _layout
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("Password:")
         }
         BDialogInputTextField {
@@ -21,7 +21,7 @@ BDialog {
             placeholderText: qsTr("Enter your password")
         }
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("Show password:")
         }
         BDialogInputSwitch {

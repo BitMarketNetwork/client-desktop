@@ -12,7 +12,7 @@ BDialog {
     contentItem: BDialogLayout {
         columns: 3
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("New password:")
         }
         BDialogInputTextField {
@@ -31,7 +31,7 @@ BDialog {
             maxAdvancedTextLength: BPasswordStrength.getMaxStringLength()
         }
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("New password confirmation:")
         }
         BDialogInputTextField {
@@ -47,7 +47,7 @@ BDialog {
             maxAdvancedTextLength: _strength.maxAdvancedTextLength
         }
 
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             text: qsTr("Show password:")
         }
         BDialogInputSwitch {

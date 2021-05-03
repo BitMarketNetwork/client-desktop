@@ -59,7 +59,7 @@ QtObject {
     property real dividerSize: 1
 
     property int dialogDescriptionAlignment: Qt.AlignVCenter | Qt.AlignLeft
-    property int dialogPromtAlignment: Qt.AlignVCenter | Qt.AlignRight
+    property int dialogPromptAlignment: Qt.AlignVCenter | Qt.AlignRight
     property int dialogInputAlignment: Qt.AlignVCenter | Qt.AlignLeft
     property int dialogInputWidth: baseFontMetrics.averageCharacterWidth * 70
     property int dialogColumnSpacing: baseFontMetrics.averageCharacterWidth

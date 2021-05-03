@@ -7,13 +7,13 @@ BPane {
     property string iconPath: _applicationManager.imagePath("icon-coins.svg")
 
     contentItem: BDialogScrollableLayout {
-        BDialogPromtLabel {
+        BDialogPromptLabel {
             BLayout.columnSpan: parent.columns
             text: qsTr("Uncheck unnecessary coins:")
         }
         Repeater {
             model: BBackend.coinManager.coinListModel
-            delegate: BDialogPromtLabel {
+            delegate: BDialogPromptLabel {
                 BLayout.column: 0
                 BLayout.row: index + 1
                 text: model.fullName
