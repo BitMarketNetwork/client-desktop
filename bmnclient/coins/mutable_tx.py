@@ -25,6 +25,8 @@ class AbstractMutableTx:
         self._receiver_address: Optional[AbstractCoin._Address] = None
         self._source_list: List[AbstractAddress] = []
         self._source_amount = 0
+        self._amount = 0
+        self._subtract_fee = False
 
         self._model: Optional[MutableTxModelInterface] = \
             self._coin.model_factory(self)
@@ -73,3 +75,34 @@ class AbstractMutableTx:
         # TODO check,filter unique
 
         self.filter_sources()
+
+    @property
+    def sourceAmount(self) -> int:
+        return self._source_amount
+
+    @property
+    def amount(self) -> int:
+        return self._amount
+
+    @amount.setter
+    def amount(self, value: int) -> None:
+        if self._amount != value:
+            self._amount = value
+            self.filter_sources()
+
+            self._logger.debug(
+                "Amount: %i, available: %i, change %i",
+                value,
+                self._source_amount,
+                self.change)
+
+    @property
+    def maxAmount(self) -> int:
+        amount = self._source_amount - (0 if self._subtract_fee else self.fee)
+        return max(amount, 0)
+
+    @property
+    def isValidAmount(self) -> bool:
+        if 0 <= self._amount <= self.maxAmount and self.change >= 0:
+            return True
+        return False

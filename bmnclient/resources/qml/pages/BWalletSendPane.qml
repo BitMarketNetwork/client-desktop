@@ -53,10 +53,10 @@ BPane {
         BAmountInput {
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _base.coin.txController.amount
+            amount: _base.coin.mutableTx.amount
         }
         BDialogValidLabel {
-            status: _base.coin.txController.amount.validStatus
+            status: _base.coin.mutableTx.amount.validStatus
         }
 
         BDialogSeparator {}

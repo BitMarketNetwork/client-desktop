@@ -51,25 +51,24 @@ class MutableTxSourceAmountModel(AbstractTxAmountModel):
         return self._tx.sourceAmount
 
 
-class TxBroadcastAmountModel(AbstractTxAmountInputModel):
+class MutableTxAmountModel(AbstractTxAmountInputModel):
     def _getValue(self) -> Optional[int]:
-        return None if self._tx.amount < 0 else self._tx.amount  # TODO
+        amount = self._tx.amount
+        return None if amount < 0 else self._tx.amount
 
     def _setValue(self, value: Optional[int]) -> bool:
         if value is None or value < 0:
-            self._tx.amount = -1   # TODO
+            self._tx.amount = -1
             return False
         self._tx.amount = value
         return True
 
     def _getDefaultValue(self) -> Optional[int]:
-        v = self._tx.get_max_amount()
-        return None if v < 0 else v   # TODO
+        return self._tx.maxAmount
 
     def _getValidStatus(self) -> ValidStatus:
-        if self._tx.amount >= 0 and self._tx.change >= 0:   # TODO
-            if self._tx.amount <= self._tx.sourceAmount:
-                return ValidStatus.Accept
+        if self._tx.isValidAmount:
+            return ValidStatus.Accept
         return ValidStatus.Reject
 
 
@@ -209,7 +208,7 @@ class MutableTxModel(MutableTxModelInterface, AbstractModel):
             self._tx)
         self.connectModelRefresh(self._source_amount)
 
-        self._amount = TxBroadcastAmountModel(
+        self._amount = MutableTxAmountModel(
             self._application,
             self._tx)
         self.connectModelRefresh(self._amount)
@@ -247,7 +246,7 @@ class MutableTxModel(MutableTxModelInterface, AbstractModel):
         return self._source_amount
 
     @QProperty(QObject, constant=True)
-    def amount(self) -> TxBroadcastAmountModel:
+    def amount(self) -> MutableTxAmountModel:
         return self._amount
 
     @QProperty(QObject, constant=True)

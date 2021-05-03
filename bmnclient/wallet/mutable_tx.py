@@ -34,10 +34,8 @@ class MutableTransaction(AbstractMutableTx):
         # it s serialized MTX!!!s
         self.__raw__mtx = None
         self.__mtx = None
-        self.__amount = None
         self.new_address_for_change = True
         self.__leftover_address = None
-        self.__substract_fee = False
 
         # wrong way !!! need to select UNSPENTS not addresses
         self.__filtered_inputs: List[mtx_impl.TxInput] = []
@@ -47,9 +45,7 @@ class MutableTransaction(AbstractMutableTx):
         self.__fee_man = fee_man
         self._spb = self.__fee_man.max_spb
         # setter !
-        self.__amount = 0
         self.refreshSourceList()
-        self.set_max()
 
     @classmethod
     def select_sources(cls, sources: list, target_amount: int, getter: callable) -> Tuple[list, int]:
@@ -101,7 +97,7 @@ class MutableTransaction(AbstractMutableTx):
 
     def filter_sources(self) -> None:
         all_inputs = sum((a.utxoList for a in self._source_list), [])
-        target = self.__amount + (0 if self.__substract_fee else self.fee)
+        target = self._amount + (0 if self._subtract_fee else self.fee)
 
         self.__filtered_inputs, self.__filtered_amount = self.select_sources(
             all_inputs,
@@ -111,14 +107,14 @@ class MutableTransaction(AbstractMutableTx):
     def prepare(self):
         if 0 == self.fee:
             raise NewTxerror(f"No fee")
-        if self.__substract_fee and self.fee > self.__amount:
+        if self._subtract_fee and self.fee > self._amount:
             raise NewTxerror(
-                f"Fee {self.fee} more than amount {self.__amount}")
+                f"Fee {self.fee} more than amount {self._amount}")
         if not self.__filtered_inputs:
             raise NewTxerror(f"There are no source inputs selected")
-        if self.__amount > self.__filtered_amount:
+        if self._amount > self.__filtered_amount:
             raise NewTxerror(
-                f"Amount {self.__amount} more than balance {self.__filtered_amount}")
+                f"Amount {self._amount} more than balance {self.__filtered_amount}")
         # filter sources. some smart algo expected here
         # prepare
         utxo_list = self.__filtered_inputs
@@ -134,17 +130,17 @@ class MutableTransaction(AbstractMutableTx):
         if not sources:
             raise NewTxerror(f"No unspent outputs found")
         # process fee
-        if self.__substract_fee:
+        if self._subtract_fee:
             outputs = [
-                (self._receiver_address.name, int(self.__amount - self.fee))
+                (self._receiver_address.name, int(self._amount - self.fee))
             ]
         else:
             outputs = [
-                (self._receiver_address.name, int(self.__amount)),
+                (self._receiver_address.name, int(self._amount)),
             ]
 
         self._logger.debug(
-            f"amount:{self.__amount} fee:{self.fee} fact_change:{self.change}")
+            f"amount:{self._amount} fee:{self.fee} fact_change:{self.change}")
         # process leftover
         if self.change > 0:
             if self.new_address_for_change:
@@ -195,7 +191,7 @@ class MutableTransaction(AbstractMutableTx):
             150,
             max(1, len(self.__filtered_inputs)),
             70,
-            2 if self.__filtered_amount > self.__amount else 1,
+            2 if self.__filtered_amount > self._amount else 1,
         )
 
     def estimate_confirm_time(self) -> int:
@@ -218,30 +214,13 @@ class MutableTransaction(AbstractMutableTx):
             return self.__leftover_address.name
         return ""
 
-    def get_max_amount(self) -> int:
-        return max(self._source_amount - (0 if self.__substract_fee else self.fee), 0)
-
-    def set_max(self) -> None:
-        self.amount = self.get_max_amount()
-
-    @ property
-    def amount(self):
-        return int(self.__amount)
-
-    @ amount.setter
-    def amount(self, value: int) -> None:
-        self.__amount = value
-        self.filter_sources()
-        self._logger.info(
-            f"amount: {value} available:{self._source_amount} change:{self.change}")
-
     @ property
     def change(self):
-        # res = int(self.__filtered_amount - self.__amount - (0 if self.__substract_fee else self.fee))
-        # self._logger.info(f"source:{self.__filtered_amount} am:{self.__amount} \
+        # res = int(self.__filtered_amount - self._amount - (0 if self._subtract_fee else self.fee))
+        # self._logger.info(f"source:{self.__filtered_amount} am:{self._amount} \
         #     fee:{self.fee} substract: {self.subtract_fee}: change:{res}")
 
-        return int(self.__filtered_amount - self.__amount - (0 if self.__substract_fee else self.fee))
+        return int(self.__filtered_amount - self._amount - (0 if self._subtract_fee else self.fee))
 
     @ property
     def tx_id(self):
@@ -274,11 +253,11 @@ class MutableTransaction(AbstractMutableTx):
 
     @ property
     def subtract_fee(self) -> bool:
-        return self.__substract_fee
+        return self._subtract_fee
 
     @ subtract_fee.setter
     def subtract_fee(self, value: bool) -> None:
-        self.__substract_fee = value
+        self._subtract_fee = value
         self.filter_sources()
 
     def spb_default(self):
