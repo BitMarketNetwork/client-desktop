@@ -44,7 +44,7 @@ BPane {
             BLayout.columnSpan: parent.columns - 1
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _base.coin.txController.availableAmount
+            amount: _base.coin.mutableTx.sourceAmount
         }
 
         BDialogPromtLabel {

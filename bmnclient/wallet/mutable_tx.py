@@ -209,10 +209,6 @@ class MutableTransaction(AbstractMutableTx):
         return minutes
 
     @ property
-    def source_amount(self) -> int:
-        return self._source_amount
-
-    @ property
     def filtered_amount(self) -> int:
         return self.__filtered_amount
 

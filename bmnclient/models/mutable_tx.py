@@ -46,9 +46,9 @@ class AbstractTxAmountInputModel(AmountInputModel, metaclass=ABCMeta):
         self._tx = tx
 
 
-class TxBroadcastAvailableAmountModel(AbstractTxAmountModel):
+class MutableTxSourceAmountModel(AbstractTxAmountModel):
     def _getValue(self) -> Optional[int]:
-        return self._tx.source_amount
+        return self._tx.sourceAmount
 
 
 class TxBroadcastAmountModel(AbstractTxAmountInputModel):
@@ -68,7 +68,7 @@ class TxBroadcastAmountModel(AbstractTxAmountInputModel):
 
     def _getValidStatus(self) -> ValidStatus:
         if self._tx.amount >= 0 and self._tx.change >= 0:   # TODO
-            if self._tx.amount <= self._tx.source_amount:
+            if self._tx.amount <= self._tx.sourceAmount:
                 return ValidStatus.Accept
         return ValidStatus.Reject
 
@@ -135,7 +135,7 @@ class TxBroadcastChangeAmountModel(AbstractTxAmountModel):
         return self._tx.leftover_address
 
 
-class TxBroadcastReceiverModel(AbstractTxBroadcastStateModel):
+class MutableTxReceiverModel(AbstractTxBroadcastStateModel):
     __stateChanged = QSignal()
 
     def __init__(
@@ -204,10 +204,10 @@ class MutableTxModel(MutableTxModelInterface, AbstractModel):
         super().__init__(application)
         self._tx = tx
 
-        self._available_amount = TxBroadcastAvailableAmountModel(
+        self._source_amount = MutableTxSourceAmountModel(
             self._application,
             self._tx)
-        self.connectModelRefresh(self._available_amount)
+        self.connectModelRefresh(self._source_amount)
 
         self._amount = TxBroadcastAmountModel(
             self._application,
@@ -229,7 +229,7 @@ class MutableTxModel(MutableTxModelInterface, AbstractModel):
             self._tx)
         self.connectModelRefresh(self._change_amount)
 
-        self._receiver = TxBroadcastReceiverModel(
+        self._receiver = MutableTxReceiverModel(
             self._application,
             self._tx)
         self.connectModelRefresh(self._receiver)
@@ -243,8 +243,8 @@ class MutableTxModel(MutableTxModelInterface, AbstractModel):
         return self._tx.tx_id
 
     @QProperty(QObject, constant=True)
-    def availableAmount(self) -> TxBroadcastAvailableAmountModel:
-        return self._available_amount
+    def sourceAmount(self) -> MutableTxSourceAmountModel:
+        return self._source_amount
 
     @QProperty(QObject, constant=True)
     def amount(self) -> TxBroadcastAmountModel:
@@ -263,7 +263,7 @@ class MutableTxModel(MutableTxModelInterface, AbstractModel):
         return self._change_amount
 
     @QProperty(QObject, constant=True)
-    def receiver(self) -> TxBroadcastReceiverModel:
+    def receiver(self) -> MutableTxReceiverModel:
         return self._receiver
 
     @QProperty(QObject, constant=True)
