@@ -30,18 +30,12 @@ class MutableTransaction(AbstractMutableTx):
 
     def __init__(self, coin: AbstractCoin):
         super().__init__(coin)
-
-        # it s serialized MTX!!!s
         self.__raw__mtx = None
         self.__mtx = None
         self.new_address_for_change = True
         self.__leftover_address = None
-
-        # wrong way !!! need to select UNSPENTS not addresses
         self.__filtered_inputs: List[mtx_impl.TxInput] = []
         self.__filtered_amount = 0
-
-        # setter !
         self.refreshSourceList()
 
     @classmethod
@@ -94,7 +88,7 @@ class MutableTransaction(AbstractMutableTx):
 
     def filter_sources(self) -> None:
         all_inputs = sum((a.utxoList for a in self._source_list), [])
-        target = self._amount + (0 if self._subtract_fee else self.fee)
+        target = self._amount + (0 if self._subtract_fee else self.feeAmount)
 
         self.__filtered_inputs, self.__filtered_amount = self.select_sources(
             all_inputs,
@@ -102,11 +96,11 @@ class MutableTransaction(AbstractMutableTx):
             getter=lambda a: a.amount)
 
     def prepare(self):
-        if 0 == self.fee:
+        if self.feeAmount <= 0:
             raise NewTxerror(f"No fee")
-        if self._subtract_fee and self.fee > self._amount:
+        if self._subtract_fee and self.feeAmount > self._amount:
             raise NewTxerror(
-                f"Fee {self.fee} more than amount {self._amount}")
+                f"Fee {self.feeAmount} more than amount {self._amount}")
         if not self.__filtered_inputs:
             raise NewTxerror(f"There are no source inputs selected")
         if self._amount > self.__filtered_amount:
@@ -126,18 +120,18 @@ class MutableTransaction(AbstractMutableTx):
             f"unspents: {utxo_list} scr:{sources} sum: {unspent_sum} vs {self.__filtered_amount}")
         if not sources:
             raise NewTxerror(f"No unspent outputs found")
-        # process fee
+
         if self._subtract_fee:
-            outputs = [
-                (self._receiver_address.name, int(self._amount - self.fee))
-            ]
+            outputs = [(
+                self._receiver_address.name,
+                self._amount - self.feeAmount)]
         else:
-            outputs = [
-                (self._receiver_address.name, int(self._amount)),
-            ]
+            outputs = [(
+                self._receiver_address.name,
+                self._amount)]
 
         self._logger.debug(
-            f"amount:{self._amount} fee:{self.fee} fact_change:{self.change}")
+            f"amount:{self._amount} fee:{self.feeAmount} fact_change:{self.change}")
         # process leftover
         if self.change > 0:
             if self.new_address_for_change:
@@ -155,11 +149,11 @@ class MutableTransaction(AbstractMutableTx):
             f"outputs: {outputs} change_wallet:{self.__leftover_address}")
 
         self.__mtx = mtx_impl.Mtx.make(utxo_list, outputs)
-        self._logger.debug(f"TX fee: {self.__mtx.fee}")
-        if self.__mtx.fee != self.fee:
+        self._logger.debug(f"TX fee: {self.__mtx.feeAmount}")
+        if self.__mtx.feeAmount != self.feeAmount:
             #self.cancel()
             self._logger.error(
-                f"Fee failure. Should be {self.fee} but has {self.__mtx.fee}")
+                f"Fee failure. Should be {self.feeAmount} but has {self.__mtx.feeAmount}")
             raise NewTxerror("Critical error. Fee mismatch")
         for addr, utxo in sources.items():
             self._logger.debug(f"INPUT: address:{addr.name} utxo:{len(utxo)}")
@@ -192,13 +186,13 @@ class MutableTransaction(AbstractMutableTx):
         )
 
     def estimate_confirm_time(self) -> int:
-        spb = self._spb
+        spb = self._fee_amount_per_byte
         # https://bitcoinfees.net
         if key.AddressString.is_segwit(self._receiver_address.name):
             spb *= 0.6  # ??
         if spb < self.MIN_SPB_FEE:
             return -1
-        minutes = self.__fee_man.get_minutes(spb)
+        minutes = self._fee_manager.get_minutes(spb)
         return minutes
 
     @ property
@@ -213,32 +207,16 @@ class MutableTransaction(AbstractMutableTx):
 
     @ property
     def change(self):
-        # res = int(self.__filtered_amount - self._amount - (0 if self._subtract_fee else self.fee))
+        # res = int(self.__filtered_amount - self._amount - (0 if self._subtract_fee else self.feeAmount))
         # self._logger.info(f"source:{self.__filtered_amount} am:{self._amount} \
-        #     fee:{self.fee} substract: {self.subtract_fee}: change:{res}")
+        #     fee:{self.feeAmount} substract: {self.subtractFee}: change:{res}")
 
-        return int(self.__filtered_amount - self._amount - (0 if self._subtract_fee else self.fee))
+        return int(self.__filtered_amount - self._amount - (0 if self._subtract_fee else self.feeAmount))
 
     @ property
     def tx_id(self):
         if self.__mtx:
             return self.__mtx.id
-
-    # for tests
-    @ property
-    def mtx(self):
-        return self.__mtx
-
-    @ property
-    def fee(self) -> int:
-        return int(self._spb * self.tx_size)
-
-    def fee_default(self):
-        return int(self.__fee_man.max_spb * self.tx_size)
-
-    @fee.setter
-    def fee(self, value: int):
-        self._spb = value // self.tx_size
 
     @ property
     def sources(self):
@@ -247,25 +225,3 @@ class MutableTransaction(AbstractMutableTx):
     @ property
     def coin(self):
         return self._coin
-
-    @ property
-    def subtract_fee(self) -> bool:
-        return self._subtract_fee
-
-    @ subtract_fee.setter
-    def subtract_fee(self, value: bool) -> None:
-        self._subtract_fee = value
-        self.filter_sources()
-
-    def spb_default(self):
-        return self.__fee_man.max_spb
-
-    @ property
-    def spb(self) -> int:
-        return int(self._spb)
-
-    @ spb.setter
-    def spb(self, value):
-        self._logger.debug(f"SPB: {value}")
-        self._spb = value
-        self.filter_sources()

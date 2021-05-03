@@ -91,7 +91,7 @@ class TxAmountModel(AbstractTxAmountModel):
 
 class TxFeeAmountModel(AbstractTxAmountModel):
     def _getValue(self) -> Optional[int]:
-        return self._tx.fee
+        return self._tx.feeAmount
 
 
 class TxModel(TxModelInterface, AbstractModel):

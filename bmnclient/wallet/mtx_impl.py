@@ -8,14 +8,10 @@ import logging
 import random
 import re
 from collections import namedtuple
-from typing import Union, List, Tuple, TYPE_CHECKING
+from typing import Union, List, Tuple
 from ..coins.tx import AbstractUtxo
 
 from . import constants, util
-
-if TYPE_CHECKING:
-    from .tx import Transaction
-
 
 log = logging.getLogger(__name__)
 
@@ -276,7 +272,7 @@ class Mtx:
         return sum(out.amount_int for out in self.TxOut)
 
     @property
-    def fee(self):
+    def feeAmount(self) -> int:
         return self.in_amount - self.out_amount
 
     @classmethod
@@ -499,18 +495,18 @@ def estimate_tx_fee(in_size, n_in, out_size, n_out, satoshis):
     return estimate_tx_size(in_size, n_in, out_size, n_out) * satoshis
 
 
-def select_coins(target, fee, output_size, min_change, *, absolute_fee=False,
+def select_coins(target, fee_amount, output_size, min_change, *, absolute_fee=False,
                  consolidate=False, utxo_list):
     BNB_TRIES = 1000000
-    COST_OF_OVERHEAD = (8 + sum(output_size[:-1]) + 1) * fee
+    COST_OF_OVERHEAD = (8 + sum(output_size[:-1]) + 1) * fee_amount
 
-    def branch_and_bound(d, selected_coins, effective_value, target, fee,
+    def branch_and_bound(d, selected_coins, effective_value, target, fee_amount,
                          sorted_utxo_list):  # pragma: no cover
 
         nonlocal COST_OF_OVERHEAD, BNB_TRIES
         BNB_TRIES -= 1
-        COST_PER_INPUT = 148 * fee  # Just typical estimate values
-        COST_PER_OUTPUT = 34 * fee
+        COST_PER_INPUT = 148 * fee_amount  # Just typical estimate values
+        COST_PER_OUTPUT = 34 * fee_amount
         target_to_match = target + COST_OF_OVERHEAD
         match_range = COST_PER_INPUT + COST_PER_OUTPUT
         if effective_value > target_to_match + match_range:
@@ -525,14 +521,14 @@ def select_coins(target, fee, output_size, min_change, *, absolute_fee=False,
             binary_random = random.randint(0, 1)
             if binary_random:
                 effective_value_new = effective_value + \
-                    sorted_utxo_list[d].amount - fee * sorted_utxo_list[d].vsize
+                    sorted_utxo_list[d].amount - fee_amount * sorted_utxo_list[d].vsize
 
                 with_this = branch_and_bound(
                     d + 1,
                     selected_coins + [sorted_utxo_list[d]],
                     effective_value_new,
                     target,
-                    fee,
+                    fee_amount,
                     sorted_utxo_list
                 )
 
@@ -544,7 +540,7 @@ def select_coins(target, fee, output_size, min_change, *, absolute_fee=False,
                         selected_coins,
                         effective_value,
                         target,
-                        fee,
+                        fee_amount,
                         sorted_utxo_list
                     )
 
@@ -556,7 +552,7 @@ def select_coins(target, fee, output_size, min_change, *, absolute_fee=False,
                     selected_coins,
                     effective_value,
                     target,
-                    fee,
+                    fee_amount,
                     sorted_utxo_list
                 )
 
@@ -565,14 +561,14 @@ def select_coins(target, fee, output_size, min_change, *, absolute_fee=False,
                 else:
                     effective_value_new = effective_value + \
                         sorted_utxo_list[d].amount - \
-                        fee * sorted_utxo_list[d].vsize
+                        fee_amount * sorted_utxo_list[d].vsize
 
                     with_this = branch_and_bound(
                         d + 1,
                         selected_coins + [sorted_utxo_list[d]],
                         effective_value_new,
                         target,
-                        fee,
+                        fee_amount,
                         sorted_utxo_list
                     )
 
@@ -587,7 +583,7 @@ def select_coins(target, fee, output_size, min_change, *, absolute_fee=False,
             selected_coins=[],
             effective_value=0,
             target=target,
-            fee=fee,
+            fee_amount=fee_amount,
             sorted_utxo_list=sorted_utxo_list
         )
         remaining = 0
@@ -603,18 +599,19 @@ def select_coins(target, fee, output_size, min_change, *, absolute_fee=False,
                 len(selected_coins),
                 sum(output_size),
                 len(output_size),
-                fee
+                fee_amount
             )
-            estimated_fee = fee if absolute_fee else estimated_fee
+            estimated_fee = fee_amount if absolute_fee else estimated_fee
             remaining = sum(u.amount for u in selected_coins) - \
                 target - estimated_fee
             if remaining >= min_change and (not consolidate or len(utxo_list) == 0):
                 break
         else:
-            raise InsufficientFunds('Balance {} is less than {} (including '
-                                    'fee).'.format(sum(
-                                        u.amount for u in selected_coins),
-                                        target + min_change + estimated_fee))
+            raise InsufficientFunds(
+                'Balance {} is less than {} (including fee).'
+                .format(
+                    sum(u.amount for u in selected_coins),
+                    target + min_change + estimated_fee))
 
     return selected_coins, remaining
 
@@ -623,7 +620,7 @@ def deserialize(data):
     return Mtx.parse(data)
 
 
-def sanitize_tx_data(utxo_list, outputs, fee, leftover, combine=True,
+def sanitize_tx_data(utxo_list, outputs, fee_amount, leftover, combine=True,
                      message=None, compressed=True, absolute_fee=False,
                      min_change=0, version='main', message_is_hex=False):
     """
@@ -662,7 +659,7 @@ def sanitize_tx_data(utxo_list, outputs, fee, leftover, combine=True,
     sum_outputs = sum(out[1] for out in outputs)
 
     utxo_list[:], remaining = select_coins(
-        sum_outputs, fee, output_size, min_change=min_change,
+        sum_outputs, fee_amount, output_size, min_change=min_change,
         absolute_fee=absolute_fee, consolidate=combine, utxo_list=utxo_list
     )
 

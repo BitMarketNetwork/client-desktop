@@ -247,7 +247,7 @@ class TestSanitizeTxData(unittest.TestCase):
         outputs_original = [(BITCOIN_ADDRESS_TEST, 1000, 'satoshi')]
 
         unspents, outputs = mtx.sanitize_tx_data(
-            unspents_original, outputs_original, fee=5, leftover=RETURN_ADDRESS,
+            unspents_original, outputs_original, fee_amount=5, leftover=RETURN_ADDRESS,
             combine=True, message='hello', version='test'
         )
 
@@ -262,7 +262,7 @@ class TestSanitizeTxData(unittest.TestCase):
 
         with self.assertRaises(mtx.InsufficientFunds):
             mtx.sanitize_tx_data(
-                unspents_original, outputs_original, fee=1, leftover=RETURN_ADDRESS,
+                unspents_original, outputs_original, fee_amount=1, leftover=RETURN_ADDRESS,
                 combine=True, message=None
             )
 
@@ -272,7 +272,7 @@ class TestSanitizeTxData(unittest.TestCase):
         outputs_original = [(BITCOIN_ADDRESS_TEST, 2000, 'satoshi')]
 
         unspents, outputs = mtx.sanitize_tx_data(
-            unspents_original, outputs_original, fee=0, leftover=RETURN_ADDRESS,
+            unspents_original, outputs_original, fee_amount=0, leftover=RETURN_ADDRESS,
             combine=True, message=None, version='test'
         )
 
@@ -285,7 +285,7 @@ class TestSanitizeTxData(unittest.TestCase):
         outputs_original = [(BITCOIN_ADDRESS_TEST, 500, 'satoshi')]
 
         unspents, outputs = mtx.sanitize_tx_data(
-            unspents_original, outputs_original, fee=0, leftover=RETURN_ADDRESS,
+            unspents_original, outputs_original, fee_amount=0, leftover=RETURN_ADDRESS,
             combine=True, message=None, version='test'
         )
 
@@ -301,7 +301,7 @@ class TestSanitizeTxData(unittest.TestCase):
 
         with self.assertRaises(mtx.InsufficientFunds):
             mtx.sanitize_tx_data(
-                unspents_original, outputs_original, fee=50, leftover=RETURN_ADDRESS,
+                unspents_original, outputs_original, fee_amount=50, leftover=RETURN_ADDRESS,
                 combine=True, message=None, version='test'
             )
 
@@ -311,7 +311,7 @@ class TestSanitizeTxData(unittest.TestCase):
         outputs_original = [(BITCOIN_ADDRESS_TEST, 2000, 'satoshi')]
 
         unspents, outputs = mtx.sanitize_tx_data(
-            unspents_original, outputs_original, fee=0, leftover=RETURN_ADDRESS,
+            unspents_original, outputs_original, fee_amount=0, leftover=RETURN_ADDRESS,
             combine=False, message=None, version='test'
         )
 
@@ -330,12 +330,12 @@ class TestSanitizeTxData(unittest.TestCase):
         outputs_original = [(RETURN_ADDRESS, 1000, 'satoshi')]
 
         unspents, outputs = mtx.sanitize_tx_data(
-            unspents_original, outputs_original, fee=1, leftover=RETURN_ADDRESS,
+            unspents_original, outputs_original, fee_amount=1, leftover=RETURN_ADDRESS,
             combine=False, message=None, version='test'
         )
 
         unspents_single, outputs_single = mtx.sanitize_tx_data(
-            unspents_single, outputs_original, fee=1, leftover=RETURN_ADDRESS,
+            unspents_single, outputs_original, fee_amount=1, leftover=RETURN_ADDRESS,
             combine=False, message=None, version='test'
         )
 
@@ -354,7 +354,7 @@ class TestSanitizeTxData(unittest.TestCase):
 
         with self.assertRaises(mtx.InsufficientFunds):
             mtx.sanitize_tx_data(
-                unspents_original, outputs_original, fee=50, leftover=RETURN_ADDRESS,
+                unspents_original, outputs_original, fee_amount=50, leftover=RETURN_ADDRESS,
                 combine=False, message=None
             )
 
@@ -365,14 +365,14 @@ class TestSanitizeTxData(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             mtx.sanitize_tx_data(
-                unspents, outputs, fee=50, leftover=RETURN_ADDRESS,  # leftover is a testnet-address
+                unspents, outputs, fee_amount=50, leftover=RETURN_ADDRESS,  # leftover is a testnet-address
                 combine=False, message=None, version='main'
             )
 
         with self.assertRaises(ValueError):
             mtx.sanitize_tx_data(
                 # leftover is a mainnet-address
-                unspents, outputs, fee=50, leftover=BITCOIN_ADDRESS,
+                unspents, outputs, fee_amount=50, leftover=BITCOIN_ADDRESS,
                 combine=False, message=None, version='main'
             )
 
@@ -805,7 +805,7 @@ class TestMakeMtxReal(unittest.TestCase):
         mtx_ = mtx.Mtx.make(unspents, outputs)
         tx_ = mtx_.to_tx(None)
         log.warning("TX: %r" % tx_)
-        self.assertEqual(tx_.balance + tx_.fee, full_amount)
+        self.assertEqual(tx_.balance + tx_.feeAmount, full_amount)
         tx = mtx_.sign(prv, unspents=unspents)
 
         log.warning(f"RAW: {tx}")
@@ -946,7 +946,7 @@ class TestMultiSourceReal(unittest.TestCase):
         mtx_ = mtx.Mtx.make(unspents_shared, outputs)
         tx_ = mtx_.to_tx()
         log.warning("TX: %r" % tx_)
-        self.assertEqual(tx_.balance + tx_.fee, full_amount)
+        self.assertEqual(tx_.balance + tx_.feeAmount, full_amount)
         coin_tag = coins.network_tag(unspents_to_sign[0][0].network)
         for p, u in unspents_to_sign:
             mtx_.sign(p, unspents=u)

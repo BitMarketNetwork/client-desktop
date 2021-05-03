@@ -135,7 +135,7 @@ class TxParser(AbstractParser):
             "height": height,
             "time": self.parseKey(value, "time", int),
             "amount": self.parseKey(value, "amount", int),
-            "fee": self.parseKey(value, "fee", int),
+            "fee_amount": self.parseKey(value, "fee", int),
             "coinbase": self.parseKey(value, "coinbase", int) != 0,
 
             "input_list": [
