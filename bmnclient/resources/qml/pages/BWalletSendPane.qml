@@ -104,18 +104,18 @@ BPane {
             BLayout.columnSpan: parent.columns - 1
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _base.coin.txController.changeAmount
+            amount: _base.coin.mutableTx.changeAmount
         }
 
         // TODO temporary disabled
-        /*BDialogPromtLabel {
+        /*BDialogPromptLabel {
             text: qsTr("Send change to new address:")
         }
         BDialogInputSwitch {
             BLayout.columnSpan: parent.columns - 1
-            checked: _base.coin.txController.changeAmount.toNewAddress
+            checked: _base.coin.mutableTx.changeAmount.toNewAddress
             onCheckedChanged: {
-                _base.coin.txController.changeAmount.toNewAddress = checked
+                _base.coin.mutableTx.changeAmount.toNewAddress = checked
             }
         }
 

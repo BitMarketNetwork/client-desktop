@@ -110,25 +110,24 @@ class MutableTxKibFeeAmountModel(AbstractMutableTxAmountInputModel):
         return ValidStatus.Reject
 
 
-class TxBroadcastChangeAmountModel(AbstractMutableTxAmountModel):
+class MutableTxChangeAmountModel(AbstractMutableTxAmountModel):
     __stateChanged = QSignal()
 
     def _getValue(self) -> Optional[int]:
-        return self._tx.change
+        return self._tx.changeAmount
 
     @QProperty(bool, notify=__stateChanged)
     def toNewAddress(self) -> bool:
-        return self._tx.new_address_for_change
+        raise NotImplementedError
 
     @toNewAddress.setter
     def _setToNewAddress(self, value: bool) -> None:
-        if value != self._tx.new_address_for_change:
-            self._tx.new_address_for_change = value
-            self.refresh()
+        raise NotImplementedError
 
     @QProperty(str, notify=__stateChanged)
     def addressName(self) -> str:
-        return self._tx.leftover_address
+        address = self._tx.changeAddress
+        return "-" if address is None else address.name
 
 
 class MutableTxReceiverModel(AbstractMutableTxStateModel):
@@ -220,7 +219,7 @@ class MutableTxModel(MutableTxModelInterface, AbstractModel):
             self._tx)
         self.connectModelRefresh(self._kib_fee_amount)
 
-        self._change_amount = TxBroadcastChangeAmountModel(
+        self._change_amount = MutableTxChangeAmountModel(
             self._application,
             self._tx)
         self.connectModelRefresh(self._change_amount)
@@ -255,7 +254,7 @@ class MutableTxModel(MutableTxModelInterface, AbstractModel):
         return self._kib_fee_amount
 
     @QProperty(QObject, constant=True)
-    def changeAmount(self) -> TxBroadcastChangeAmountModel:
+    def changeAmount(self) -> MutableTxChangeAmountModel:
         return self._change_amount
 
     @QProperty(QObject, constant=True)

@@ -24,6 +24,7 @@ class AbstractMutableTx:
             coin.shortName)
         self._coin = coin
         self._receiver_address: Optional[AbstractCoin._Address] = None
+        self._change_address: Optional[AbstractCoin._Address] = None
         self._source_list: List[AbstractAddress] = []
         self._source_amount = 0
         self._amount = 0
@@ -31,6 +32,9 @@ class AbstractMutableTx:
         self._subtract_fee = False
         self._fee_manager = FeeManager()  # TODO
         self._fee_amount_per_byte = self._fee_manager.max_spb
+
+        self._selected_utxo_list: List[AbstractCoin.Utxo] = []
+        self._selected_utxo_amount = 0
 
         self._model: Optional[MutableTxModelInterface] = \
             self._coin.model_factory(self)
@@ -55,6 +59,10 @@ class AbstractMutableTx:
     @property
     def receiverAddress(self) -> Optional[AbstractCoin._Address]:
         return self._receiver_address
+
+    @property
+    def changeAddress(self) -> Optional[AbstractCoin._Address]:
+        return self._change_address
 
     def refreshSourceList(self) -> None:
         self._source_list.clear()
@@ -98,16 +106,18 @@ class AbstractMutableTx:
                 "Amount: %i, available: %i, change %i",
                 value,
                 self._source_amount,
-                self.change)
+                self.changeAmount)
 
     @property
     def maxAmount(self) -> int:
-        amount = self._source_amount - (0 if self._subtract_fee else self.feeAmount)
+        amount = self._source_amount
+        if not self._subtract_fee:
+            amount -= self.feeAmount
         return max(amount, 0)
 
     @property
     def isValidAmount(self) -> bool:
-        if 0 <= self._amount <= self.maxAmount and self.change >= 0:
+        if 0 <= self._amount <= self.maxAmount and self.changeAmount >= 0:
             return True
         return False
 
@@ -154,4 +164,11 @@ class AbstractMutableTx:
             return False
         if self._subtract_fee and fee_amount > self._amount:
             return False
-        return self.change >= 0
+        return self.changeAmount >= 0
+
+    @property
+    def changeAmount(self) -> int:
+        change_amount = self._selected_utxo_amount - self._amount
+        if not self._subtract_fee:
+            change_amount -= self.feeAmount
+        return change_amount

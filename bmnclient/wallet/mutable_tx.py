@@ -13,12 +13,6 @@ if TYPE_CHECKING:
     from ..coins.coin import AbstractCoin
 
 
-def perms(src: list, getter: callable):
-    for i in range(len(src)):
-        for pack in itertools.combinations(src, r=i + 1):
-            yield pack, sum(map(getter, pack))
-
-
 class NewTxerror(Exception):
     pass
 
@@ -32,45 +26,50 @@ class MutableTransaction(AbstractMutableTx):
         super().__init__(coin)
         self.__raw__mtx = None
         self.__mtx = None
-        self.new_address_for_change = True
-        self.__leftover_address = None
-        self.__filtered_inputs: List[mtx_impl.TxInput] = []
-        self.__filtered_amount = 0
         self.refreshSourceList()
 
     @classmethod
-    def select_sources(cls, sources: list, target_amount: int, getter: callable) -> Tuple[list, int]:
-        if not sources or target_amount <= 0:
+    def perms(cls, src: list, getter: callable):
+        for i in range(len(src)):
+            for pack in itertools.combinations(src, r=i + 1):
+                yield pack, sum(map(getter, pack))
+
+    @classmethod
+    def select_sources(
+            cls,
+            source_list: list,
+            target_amount: int,
+            getter: callable) -> Tuple[list, int]:
+        if not source_list or target_amount <= 0:
             return [], 0
 
         def src_len_select(src):
             return max(src, key=lambda s: len(s[0]))
 
         # try simple cases
-        summ = sum(map(getter, sources))
+        summ = sum(map(getter, source_list))
         # self._logger.warning(f"sum:{summ} t:{target_amount}")
         if summ < target_amount:
             return [], summ
         if summ == target_amount:
-            return sources, target_amount
+            return source_list, target_amount
 
         # try exact products
-        res = ((s, c)
-               for s, c in perms(sources, getter) if c == target_amount)
+        res = ((s, c) for s, c in cls.perms(source_list, getter) if c == target_amount)
         # there's no way to test generator
         try:
             return src_len_select(res)
         except ValueError:
             pass
 
-        res = [(s, c) for s, c in perms(sources, getter) if c > target_amount]
+        res = [(s, c) for s, c in cls.perms(source_list, getter) if c > target_amount]
         # two loops :-\
         if res:
             _, min_ = min(res, key=lambda r: r[1])
             return src_len_select(r for r in res if r[1] == min_)
 
         # # fallback to the silliest algo
-        sorted_list = sorted(sources, key=getter, reverse=True)
+        sorted_list = sorted(source_list, key=getter, reverse=True)
         result_list = []
         amount = 0
         prev = None
@@ -87,13 +86,11 @@ class MutableTransaction(AbstractMutableTx):
         return [], 0
 
     def filter_sources(self) -> None:
-        all_inputs = sum((a.utxoList for a in self._source_list), [])
-        target = self._amount + (0 if self._subtract_fee else self.feeAmount)
-
-        self.__filtered_inputs, self.__filtered_amount = self.select_sources(
-            all_inputs,
-            target,
-            getter=lambda a: a.amount)
+        self._selected_utxo_list, self._selected_utxo_amount = \
+            self.select_sources(
+                sum((a.utxoList for a in self._source_list), []),
+                self._amount + (0 if self._subtract_fee else self.feeAmount),
+                getter=lambda a: a.amount)
 
     def prepare(self):
         if self.feeAmount <= 0:
@@ -101,14 +98,14 @@ class MutableTransaction(AbstractMutableTx):
         if self._subtract_fee and self.feeAmount > self._amount:
             raise NewTxerror(
                 f"Fee {self.feeAmount} more than amount {self._amount}")
-        if not self.__filtered_inputs:
+        if not self._selected_utxo_list:
             raise NewTxerror(f"There are no source inputs selected")
-        if self._amount > self.__filtered_amount:
+        if self._amount > self._selected_utxo_amount:
             raise NewTxerror(
-                f"Amount {self._amount} more than balance {self.__filtered_amount}")
+                f"Amount {self._amount} more than balance {self._selected_utxo_amount}")
         # filter sources. some smart algo expected here
         # prepare
-        utxo_list = self.__filtered_inputs
+        utxo_list = self._selected_utxo_list
         unspent_sum = sum(u.amount for u in utxo_list)
 
         def cl(t, i):
@@ -117,7 +114,7 @@ class MutableTransaction(AbstractMutableTx):
         sources: DefaultDict['address.CAddress', List[mtx_impl.UTXO]] = \
             functools.reduce(cl, utxo_list, collections.defaultdict(list),)
         self._logger.debug(
-            f"unspents: {utxo_list} scr:{sources} sum: {unspent_sum} vs {self.__filtered_amount}")
+            f"unspents: {utxo_list} scr:{sources} sum: {unspent_sum} vs {self._selected_utxo_amount}")
         if not sources:
             raise NewTxerror(f"No unspent outputs found")
 
@@ -131,22 +128,18 @@ class MutableTransaction(AbstractMutableTx):
                 self._amount)]
 
         self._logger.debug(
-            f"amount:{self._amount} fee:{self.feeAmount} fact_change:{self.change}")
+            f"amount:{self._amount} fee:{self.feeAmount} fact_change:{self.changeAmount}")
         # process leftover
-        if self.change > 0:
-            if self.new_address_for_change:
-                self.__leftover_address = self._coin.make_address()
-            else:
-                self.__leftover_address = self._coin.make_address()
-
+        if self.changeAmount > 0:
+            self._change_address = self._coin.make_address()
             outputs.append(
-                (self.__leftover_address.name, self.change)
+                (self._change_address.name, self.changeAmount)
             )
         else:
-            self.__leftover_address = None
+            self._change_address = None
 
         self._logger.debug(
-            f"outputs: {outputs} change_wallet:{self.__leftover_address}")
+            f"outputs: {outputs} change_wallet:{self._change_address}")
 
         self.__mtx = mtx_impl.Mtx.make(utxo_list, outputs)
         self._logger.debug(f"TX fee: {self.__mtx.feeAmount}")
@@ -180,9 +173,9 @@ class MutableTransaction(AbstractMutableTx):
             return self.MAX_TX_SIZE
         return mtx_impl.estimate_tx_size(
             150,
-            max(1, len(self.__filtered_inputs)),
+            max(1, len(self._selected_utxo_list)),
             70,
-            2 if self.__filtered_amount > self._amount else 1,
+            2 if self._selected_utxo_amount > self._amount else 1,
         )
 
     def estimate_confirm_time(self) -> int:
@@ -194,24 +187,6 @@ class MutableTransaction(AbstractMutableTx):
             return -1
         minutes = self._fee_manager.get_minutes(spb)
         return minutes
-
-    @ property
-    def filtered_amount(self) -> int:
-        return self.__filtered_amount
-
-    @ property
-    def leftover_address(self):
-        if self.__leftover_address:
-            return self.__leftover_address.name
-        return ""
-
-    @ property
-    def change(self):
-        # res = int(self.__filtered_amount - self._amount - (0 if self._subtract_fee else self.feeAmount))
-        # self._logger.info(f"source:{self.__filtered_amount} am:{self._amount} \
-        #     fee:{self.feeAmount} substract: {self.subtractFee}: change:{res}")
-
-        return int(self.__filtered_amount - self._amount - (0 if self._subtract_fee else self.feeAmount))
 
     @ property
     def tx_id(self):
