@@ -146,3 +146,12 @@ class AbstractMutableTx:
     @feeAmount.setter
     def feeAmount(self, value: int):
         self.feeAmountPerByte = value // self.tx_size
+
+    @property
+    def isValidFeeAmount(self) -> bool:
+        fee_amount = self.feeAmount
+        if fee_amount < 0:
+            return False
+        if self._subtract_fee and fee_amount > self._amount:
+            return False
+        return self.change >= 0

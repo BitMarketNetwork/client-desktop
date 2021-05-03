@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from ..wallet.mutable_tx import MutableTransaction
 
 
-class AbstractTxBroadcastStateModel(AbstractStateModel):
+class AbstractMutableTxStateModel(AbstractStateModel):
     def __init__(
             self,
             application: Application,
@@ -28,7 +28,7 @@ class AbstractTxBroadcastStateModel(AbstractStateModel):
         self._tx = tx
 
 
-class AbstractTxAmountModel(AmountModel, metaclass=ABCMeta):
+class AbstractMutableTxAmountModel(AmountModel, metaclass=ABCMeta):
     def __init__(
             self,
             application: Application,
@@ -37,7 +37,7 @@ class AbstractTxAmountModel(AmountModel, metaclass=ABCMeta):
         self._tx = tx
 
 
-class AbstractTxAmountInputModel(AmountInputModel, metaclass=ABCMeta):
+class AbstractMutableTxAmountInputModel(AmountInputModel, metaclass=ABCMeta):
     def __init__(
             self,
             application: Application,
@@ -46,15 +46,15 @@ class AbstractTxAmountInputModel(AmountInputModel, metaclass=ABCMeta):
         self._tx = tx
 
 
-class MutableTxSourceAmountModel(AbstractTxAmountModel):
+class MutableTxSourceAmountModel(AbstractMutableTxAmountModel):
     def _getValue(self) -> Optional[int]:
         return self._tx.sourceAmount
 
 
-class MutableTxAmountModel(AbstractTxAmountInputModel):
+class MutableTxAmountModel(AbstractMutableTxAmountInputModel):
     def _getValue(self) -> Optional[int]:
         amount = self._tx.amount
-        return None if amount < 0 else self._tx.amount
+        return None if amount < 0 else amount
 
     def _setValue(self, value: Optional[int]) -> bool:
         if value is None or value < 0:
@@ -72,48 +72,45 @@ class MutableTxAmountModel(AbstractTxAmountInputModel):
         return ValidStatus.Reject
 
 
-class TxBroadcastFeeAmountModel(AbstractTxAmountModel):
+class MutableTxFeeAmountModel(AbstractMutableTxAmountModel):
     __stateChanged = QSignal()
 
     def _getValue(self) -> Optional[int]:
-        return None if self._tx.spb < 0 else self._tx.fee  # TODO
+        amount = self._tx.feeAmount
+        return None if amount < 0 else amount
 
     @QProperty(bool, notify=__stateChanged)
     def subtractFromAmount(self) -> bool:
-        return self._tx.subtract_fee
+        return self._tx.subtractFee
 
     @subtractFromAmount.setter
     def _setSubtractFromAmount(self, value: bool) -> None:
-        if value != self._tx.subtract_fee:
-            self._tx.subtract_fee = value
-            self.refresh()
+        self._tx.subtractFee = value
+        self.refresh()  # TODO kill
 
 
-class TxBroadcastKibFeeAmountModel(
-        AbstractTxAmountInputModel):
+class MutableTxKibFeeAmountModel(AbstractMutableTxAmountInputModel):
     def _getValue(self) -> Optional[int]:
-        return None if self._tx.spb < 0 else (self._tx.spb * 1024)  # TODO
+        amount = self._tx.feeAmountPerByte
+        return None if amount < 0 else (amount * 1024)
 
     def _setValue(self, value: Optional[int]) -> bool:
         if value is None or value < 0:
-            self._tx.spb = -1
+            self._tx.feeAmountPerByte = -1
             return False
-        self._tx.spb = value // 1024
+        self._tx.feeAmountPerByte = value // 1024
         return True
 
     def _getDefaultValue(self) -> Optional[int]:
-        v = self._tx.spb_default()
-        return None if v < 0 else (v * 1024)
+        return self._tx.feeAmountPerByteDefault * 1024
 
     def _getValidStatus(self) -> ValidStatus:
-        if self._tx.spb < 0:  # TODO
-            return ValidStatus.Reject
-        if self._tx.subtract_fee and self._tx.fee > self._tx.amount:  # TODO
-            return ValidStatus.Reject
-        return ValidStatus.Accept
+        if self._tx.isValidFeeAmount:
+            return ValidStatus.Accept
+        return ValidStatus.Reject
 
 
-class TxBroadcastChangeAmountModel(AbstractTxAmountModel):
+class TxBroadcastChangeAmountModel(AbstractMutableTxAmountModel):
     __stateChanged = QSignal()
 
     def _getValue(self) -> Optional[int]:
@@ -134,7 +131,7 @@ class TxBroadcastChangeAmountModel(AbstractTxAmountModel):
         return self._tx.leftover_address
 
 
-class MutableTxReceiverModel(AbstractTxBroadcastStateModel):
+class MutableTxReceiverModel(AbstractMutableTxStateModel):
     __stateChanged = QSignal()
 
     def __init__(
@@ -213,12 +210,12 @@ class MutableTxModel(MutableTxModelInterface, AbstractModel):
             self._tx)
         self.connectModelRefresh(self._amount)
 
-        self._fee_amount = TxBroadcastFeeAmountModel(
+        self._fee_amount = MutableTxFeeAmountModel(
             self._application,
             self._tx)
         self.connectModelRefresh(self._fee_amount)
 
-        self._kib_fee_amount = TxBroadcastKibFeeAmountModel(
+        self._kib_fee_amount = MutableTxKibFeeAmountModel(
             self._application,
             self._tx)
         self.connectModelRefresh(self._kib_fee_amount)
@@ -250,11 +247,11 @@ class MutableTxModel(MutableTxModelInterface, AbstractModel):
         return self._amount
 
     @QProperty(QObject, constant=True)
-    def feeAmount(self) -> TxBroadcastFeeAmountModel:
+    def feeAmount(self) -> MutableTxFeeAmountModel:
         return self._fee_amount
 
     @QProperty(QObject, constant=True)
-    def kibFeeAmount(self) -> TxBroadcastKibFeeAmountModel:
+    def kibFeeAmount(self) -> MutableTxKibFeeAmountModel:
         return self._kib_fee_amount
 
     @QProperty(QObject, constant=True)

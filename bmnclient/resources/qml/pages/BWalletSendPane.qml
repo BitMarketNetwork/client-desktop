@@ -68,7 +68,7 @@ BPane {
             BLayout.columnSpan: parent.columns - 1
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _base.coin.txController.feeAmount
+            amount: _base.coin.mutableTx.feeAmount
         }
 
         BDialogPromtLabel {
@@ -77,11 +77,11 @@ BPane {
         BAmountInput {
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _base.coin.txController.kibFeeAmount
+            amount: _base.coin.mutableTx.kibFeeAmount
             defaultButtonText: qsTr("Recommended")
         }
         BDialogValidLabel {
-            status: _base.coin.txController.kibFeeAmount.validStatus
+            status: _base.coin.mutableTx.kibFeeAmount.validStatus
         }
 
         BDialogPromtLabel {
@@ -89,9 +89,9 @@ BPane {
         }
         BDialogInputSwitch {
             BLayout.columnSpan: parent.columns - 1
-            checked: _base.coin.txController.feeAmount.subtractFromAmount
+            checked: _base.coin.mutableTx.feeAmount.subtractFromAmount
             onCheckedChanged: {
-                _base.coin.txController.feeAmount.subtractFromAmount = checked
+                _base.coin.mutableTx.feeAmount.subtractFromAmount = checked
             }
         }
 
