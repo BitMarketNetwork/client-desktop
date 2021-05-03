@@ -161,7 +161,8 @@ class MutableTxReceiverModel(AbstractMutableTxStateModel):
         return ValidStatus.Reject
 
 
-class TxBroadcastInputListModel(TxIoListModel):
+# TODO
+class MutableTxSourceListModel(TxIoListModel):
     __stateChanged = QSignal()
 
     def __init__(self, application: Application, source_list: Sequence) -> None:
@@ -229,7 +230,7 @@ class MutableTxModel(MutableTxModelInterface, AbstractModel):
             self._tx)
         self.connectModelRefresh(self._receiver)
 
-        self._input_list = TxBroadcastInputListModel(
+        self._source_list = MutableTxSourceListModel(
             self._application,
             self._tx.sources)
 
@@ -262,8 +263,8 @@ class MutableTxModel(MutableTxModelInterface, AbstractModel):
         return self._receiver
 
     @QProperty(QObject, constant=True)
-    def inputList(self) -> TxBroadcastInputListModel:
-        return self._input_list
+    def sourceList(self) -> MutableTxSourceListModel:
+        return self._source_list
 
     # noinspection PyTypeChecker
     @QSlot(result=bool)

@@ -161,7 +161,7 @@ BPane {
 
     BTxInputListDialog {
         id: _inputListDialog
-        inputList: _base.coin.txController.inputList
+        sourceList: _base.coin.mutableTx.sourceList
         onClosed: {
             _base.coin.txController.recalcSources()
         }

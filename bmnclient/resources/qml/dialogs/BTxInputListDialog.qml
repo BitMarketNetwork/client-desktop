@@ -6,7 +6,7 @@ import "../coincontrols"
 
 BDialog {
     id: _base
-    property var inputList // TxBroadcastInputListModel
+    property var sourceList // MutableTxSourceListModel
 
     title: qsTr("Transaction inputs")
     contentItem: BDialogLayout {
@@ -14,10 +14,10 @@ BDialog {
             id: _selectAll
             text: qsTr("Auto selection")
             onCheckedChanged: {
-                _base.inputList.useAllInputs = checked
+                _base.sourceList.useAllInputs = checked
             }
             Binding on checked {
-                value: _base.inputList.useAllInputs
+                value: _base.sourceList.useAllInputs
             }
         }
         BDialogSeparator {}
@@ -27,8 +27,8 @@ BDialog {
             BLayout.minimumHeight: 0
             BLayout.maximumHeight: implicitHeight
 
-            visibleItemCount: Math.min(10, _base.inputList.rowCount())
-            model: _base.inputList
+            visibleItemCount: Math.min(10, _base.sourceList.rowCount())
+            model: _base.sourceList
             delegate: BAddressItem {
                 address: model
                 checkable: true
