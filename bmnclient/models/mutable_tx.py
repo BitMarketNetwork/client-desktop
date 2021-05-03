@@ -147,7 +147,10 @@ class TxBroadcastReceiverModel(AbstractTxBroadcastStateModel):
 
     @QProperty(str, notify=__stateChanged)
     def addressName(self) -> str:
-        return self._tx.receiver
+        if self._tx.receiverAddress is not None:
+            return self._tx.receiverAddress.name
+        else:
+            return ""
 
     @addressName.setter
     def _setAddressName(self, value: str) -> None:
@@ -156,7 +159,7 @@ class TxBroadcastReceiverModel(AbstractTxBroadcastStateModel):
         self.refresh()
 
     def _getValidStatus(self) -> ValidStatus:
-        if self._tx.receiver_valid:
+        if self._tx.receiverAddress is not None:
             return ValidStatus.Accept
         elif self._first_use:
             return ValidStatus.Unset

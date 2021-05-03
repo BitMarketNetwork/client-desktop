@@ -28,11 +28,11 @@ BPane {
         BDialogInputTextField {
             text: ""
             onTextEdited: {
-                _base.coin.txController.receiver.addressName = text
+                _base.coin.mutableTx.receiver.addressName = text
             }
         }
         BDialogValidLabel {
-            status: _base.coin.txController.receiver.validStatus
+            status: _base.coin.mutableTx.receiver.validStatus
         }
 
         BDialogSeparator {}

@@ -22,6 +22,7 @@ class AbstractMutableTx:
             self.__class__,
             coin.shortName)
         self._coin = coin
+        self._receiver_address: Optional[AbstractCoin._Address] = None
         self._source_list: List[AbstractAddress] = []
         self._source_amount = 0
 
@@ -31,6 +32,23 @@ class AbstractMutableTx:
     @property
     def model(self) -> Optional[MutableTxModelInterface]:
         return self._model
+
+    def setReceiverAddressName(self, name: str) -> bool:
+        self._receiver_address = self._coin.decodeAddress(name=name)
+        if self._receiver_address is None:
+            self._logger.warning(
+                "Receiver address \"%s\" is invalid.",
+                name)
+            return False
+        else:
+            self._logger.debug(
+                "Receiver address: %s",
+                self._receiver_address.name)
+            return True
+
+    @property
+    def receiverAddress(self) -> Optional[AbstractCoin._Address]:
+        return self._receiver_address
 
     def refreshSourceList(self) -> None:
         self._source_list.clear()

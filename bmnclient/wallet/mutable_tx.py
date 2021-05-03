@@ -34,7 +34,6 @@ class MutableTransaction(AbstractMutableTx):
         # it s serialized MTX!!!s
         self.__raw__mtx = None
         self.__mtx = None
-        self.__receiver = ""
         self.__amount = None
         self.new_address_for_change = True
         self.__leftover_address = None
@@ -137,11 +136,11 @@ class MutableTransaction(AbstractMutableTx):
         # process fee
         if self.__substract_fee:
             outputs = [
-                (self.__receiver, int(self.__amount - self.fee))
+                (self._receiver_address.name, int(self.__amount - self.fee))
             ]
         else:
             outputs = [
-                (self.__receiver, int(self.__amount)),
+                (self._receiver_address.name, int(self.__amount)),
             ]
 
         self._logger.debug(
@@ -202,27 +201,12 @@ class MutableTransaction(AbstractMutableTx):
     def estimate_confirm_time(self) -> int:
         spb = self._spb
         # https://bitcoinfees.net
-        if key.AddressString.is_segwit(self.__receiver):
+        if key.AddressString.is_segwit(self._receiver_address.name):
             spb *= 0.6  # ??
         if spb < self.MIN_SPB_FEE:
             return -1
         minutes = self.__fee_man.get_minutes(spb)
         return minutes
-
-    @ property
-    def receiver(self) -> str:
-        return self.__receiver
-
-    @ property
-    def receiver_valid(self) -> bool:
-        return self.coin.decodeAddress(name=self.__receiver) is not None
-
-    def setReceiverAddressName(self, name: str):
-        if self.coin.decodeAddress(name=name) is None:
-            self.__receiver = ""
-            return False
-        self.__receiver = name
-        return True
 
     @ property
     def source_amount(self) -> int:
