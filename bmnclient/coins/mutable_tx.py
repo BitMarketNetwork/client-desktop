@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..logger import Logger
+from ..wallet.fee_manager import FeeManager
 
 if TYPE_CHECKING:
     from typing import List, Optional
@@ -26,7 +27,10 @@ class AbstractMutableTx:
         self._source_list: List[AbstractAddress] = []
         self._source_amount = 0
         self._amount = 0
+
         self._subtract_fee = False
+        self._fee_manager = FeeManager()  # TODO
+        self._spb = self._fee_manager.max_spb
 
         self._model: Optional[MutableTxModelInterface] = \
             self._coin.model_factory(self)

@@ -28,7 +28,7 @@ class MutableTransaction(AbstractMutableTx):
     MIN_SPB_FEE = 1
     MAX_TX_SIZE = 1024
 
-    def __init__(self, coin: AbstractCoin, fee_man: "feeManager"):
+    def __init__(self, coin: AbstractCoin):
         super().__init__(coin)
 
         # it s serialized MTX!!!s
@@ -41,9 +41,6 @@ class MutableTransaction(AbstractMutableTx):
         self.__filtered_inputs: List[mtx_impl.TxInput] = []
         self.__filtered_amount = 0
 
-        # strict order !!
-        self.__fee_man = fee_man
-        self._spb = self.__fee_man.max_spb
         # setter !
         self.refreshSourceList()
 

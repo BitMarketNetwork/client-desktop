@@ -94,11 +94,7 @@ class AbstractCoin(Serializable):
         self._server_data: Dict[str, Union[int, str]] = {}
         self._mempool_cache: Dict[bytes, AbstractCoin.MempoolCacheItem] = {}
         self._mempool_cache_access_counter = 0
-
-        from ..ui.gui import Application
-        self._mutable_tx = MutableTransaction(
-            self,
-            Application.instance().feeManager)
+        self._mutable_tx = MutableTransaction(self)
 
         self._model: Optional[CoinModelInterface] = self.model_factory(self)
 

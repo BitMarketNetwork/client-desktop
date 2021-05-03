@@ -28,7 +28,6 @@ from ...key_store import KeyStore
 from ...language import Language
 from ...models.factory import modelFactory
 from ...network.access_manager import NetworkAccessManager
-from ...wallet.fee_manager import FeeManager
 
 log = logging.getLogger(__name__)
 
@@ -44,7 +43,6 @@ class Application(CoreApplication):
 
     def __init__(self, argv) -> None:
         super().__init__(QApplication, argv)
-        self._fee_manager = FeeManager(self)
         self._initCoinList(lambda o: modelFactory(self, o))
 
         # TODO kill
@@ -111,10 +109,6 @@ class Application(CoreApplication):
     @property
     def receiveManager(self) -> ReceiveManager:
         return self._receive_manager
-
-    @property
-    def feeManager(self) -> FeeManager:
-        return self._fee_manager
 
     @property
     def debugManager(self) -> DebugManager:
