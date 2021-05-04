@@ -1,6 +1,9 @@
-# JOK+++
-import unittest
+# JOK4
+from __future__ import annotations
+
 from random import randint
+from typing import TYPE_CHECKING
+from unittest import TestCase
 
 from bmnclient.coins.coin_bitcoin import \
     Bitcoin, \
@@ -11,6 +14,11 @@ from bmnclient.coins.coin_litecoin import \
     Litecoin, \
     LitecoinAddress
 from bmnclient.language import Locale
+
+if TYPE_CHECKING:
+    from typing import Iterable, Type
+    from bmnclient.coins.abstract.coin import AbstractCoin
+
 
 BITCOIN_ADDRESS_LIST = (
     (
@@ -115,12 +123,13 @@ LITECOIN_ADDRESS_LIST = (
 )
 
 
-class TestCoins(unittest.TestCase):
+class TestCoins(TestCase):
     def _test_address_decode(
             self,
-            coin,
-            address_cls,
-            address_list) -> None:
+            coin: AbstractCoin,
+            address_cls: Type[AbstractCoin.Address],
+            address_list: Iterable[tuple]) -> None:
+        # noinspection PyUnusedLocal
         for (address, type_, version, data) in address_list:
             a = address_cls.decode(coin, name=address)
             if type_ is None:
@@ -145,7 +154,7 @@ class TestCoins(unittest.TestCase):
             LITECOIN_ADDRESS_LIST)
 
     def test_string_to_amount(self) -> None:
-        b = Bitcoin.currency
+        b = Bitcoin.Currency
         satoshi_value = 10 ** 8
 
         for v in ("", "-", "+", "-.", "+.", "."):
@@ -207,7 +216,7 @@ class TestCoins(unittest.TestCase):
             self.assertEqual(r, b.fromString(v))
 
     def test_string_to_amount_locale(self) -> None:
-        b = BitcoinTest.currency
+        b = BitcoinTest.Currency
         locale = Locale("en_US")
         for (r, v) in (
                 (0, "0"),
@@ -225,7 +234,7 @@ class TestCoins(unittest.TestCase):
             self.assertEqual(r, b.fromString(v, locale=locale))
 
     def test_amount_to_string(self) -> None:
-        b = Bitcoin.currency
+        b = Bitcoin.Currency
 
         self.assertEqual("0", b.toString(0))
         self.assertEqual("-1", b.toString(-1 * 10 ** 8))
@@ -261,7 +270,7 @@ class TestCoins(unittest.TestCase):
         for limit in range(201):
             coin = Bitcoin()
             for i in range(limit):
-                address = coin._Address(
+                address = coin.Address(
                     coin,
                     name="address_{:06d}".format(i),
                     type_=None)
@@ -300,12 +309,8 @@ class TestCoins(unittest.TestCase):
             self.assertEqual(len(coin._mempool_cache), len(mempool_list))
 
             # check expired
-            # noinspection PyProtectedMember
-            for k, v in coin._mempool_cache.items():
-                pass
-
             for i in range(randint(1, 20)):
-                address = coin._Address(
+                address = coin.Address(
                     coin,
                     name="address_new_{:06d}".format(i),
                     type_=None)

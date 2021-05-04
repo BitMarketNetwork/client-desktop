@@ -1,6 +1,8 @@
-# JOK++
-import unittest
-from typing import Dict, Optional, Union
+# JOK4
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+from unittest import TestCase
 
 from PySide2.QtCore import QCoreApplication, QEventLoop
 from PySide2.QtNetwork import QNetworkReply, QNetworkRequest
@@ -8,6 +10,9 @@ from PySide2.QtNetwork import QNetworkReply, QNetworkRequest
 from bmnclient.network.access_manager import NetworkAccessManager
 from bmnclient.network.query import AbstractJsonQuery, AbstractQuery
 from tests import getLogger
+
+if TYPE_CHECKING:
+    from typing import Dict, Optional, Union
 
 _logger = getLogger(__name__)
 
@@ -90,7 +95,7 @@ class DefaultJsonGetQuery(AbstractJsonQuery, QueryHelper):
     _DEFAULT_CONTENT_TYPE = "application/vnd.api+json"
 
     def __init__(self) -> None:
-        AbstractJsonQuery.__init__(self)
+        AbstractJsonQuery.__init__(self, name_suffix=None)
         QueryHelper.__init__(self)
 
     @property
@@ -106,7 +111,7 @@ class DefaultJsonPostQuery(DefaultJsonGetQuery):
     _DEFAULT_METHOD = AbstractQuery.Method.POST
 
 
-class TestNetworkQuery(unittest.TestCase):
+class TestNetworkQuery(TestCase):
     application = QCoreApplication(["unittest"])
 
     def _run_request(self, query: AbstractQuery,) -> None:

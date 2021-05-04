@@ -1,22 +1,15 @@
 
-import unittest
-from unittest import skip
-import random
 import json
-import hmac
 import logging
 import os
-import hashlib
-import PySide2.QtCore as qt_core
-from bmnclient.wallet import util
-from bmnclient.wallet import key_format
-from bmnclient.wallet import key
-from bmnclient.wallet import hd
-from bmnclient.wallet import coin_network
-from bmnclient.wallet import mtx_impl as mtx
-from bmnclient import gcd
-from tests.test_data import *
+import random
+import unittest
+
+from bmnclient.wallet import coin_network, hd, key, key_format, mtx_impl as \
+    mtx, \
+    util
 from tests import TEST_DATA_PATH
+from tests.test_data import *
 
 log = logging.getLogger(__name__)
 

@@ -1,8 +1,8 @@
-# JOK+
+# JOK4
 import json
 import os
 import random
-import unittest
+from unittest import TestCase
 
 from bmnclient.coins.mnemonic import Mnemonic
 from bmnclient.wallet.hd import HDNode
@@ -11,7 +11,7 @@ from tests import getLogger, TEST_DATA_PATH
 _logger = getLogger(__name__)
 
 
-class TestMnemonic(unittest.TestCase):
+class TestMnemonic(TestCase):
     def _test_seed(
             self,
             language: str,
@@ -71,5 +71,6 @@ class TestMnemonic(unittest.TestCase):
                 if i == 1:
                     _logger.debug("Random phrase {}: {}".format(i, phrase))
                 self.assertTrue(mnemonic.isValidPhrase(phrase))
+                # noinspection PyProtectedMember
                 self.assertFalse(mnemonic.isValidPhrase(
                     phrase + " " + random.choice(mnemonic._word_list)))

@@ -1,4 +1,4 @@
-# JOK+
+# JOK4
 import os
 import time
 from unittest import TestCase
@@ -6,8 +6,8 @@ from unittest import TestCase
 from bmnclient.crypto.cipher import MessageCipher
 from bmnclient.crypto.kdf import KeyDerivationFunction, SecretStore
 from bmnclient.crypto.password import PasswordStrength
-
 from tests import getLogger
+
 _logger = getLogger(__name__)
 
 
@@ -124,12 +124,12 @@ class TestPassword(TestCase):
                 "lower": False,
                 "numbers": False,
                 "special": True}),
-            ("słowo", {
+            ("słowo", {  # noqa
                 "upper": False,
                 "lower": True,
                 "numbers": False,
                 "special": False}),
-            ("SŁOWO", {
+            ("SŁOWO", { # noqa
                 "upper": True,
                 "lower": False,
                 "numbers": False,
@@ -144,7 +144,7 @@ class TestPassword(TestCase):
                 "lower": False,
                 "numbers": False,
                 "special": False}),
-            ("Реч@1", {
+            ("Реч@1", { # noqa
                 "upper": True,
                 "lower": True,
                 "numbers": True,
@@ -156,6 +156,7 @@ class TestPassword(TestCase):
                 "special": True}),
         )
         for v in password_list:
+            # noinspection PyProtectedMember
             s = PasswordStrength(v[0])._getCharGroups()
             self.assertEqual(s, v[1])
 

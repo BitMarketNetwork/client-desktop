@@ -1,14 +1,12 @@
-import unittest
 import logging
-from bmnclient.wallet import key as key_mod
-from bmnclient.wallet.key import AddressString
-from bmnclient.wallet import util  # pylint: disable=E0401,E0611
-from bmnclient.wallet import coin_network  # pylint: disable=E0401,E0611
+import unittest
+
+from bmnclient.wallet import coin_network, key as key_mod, util
+
 log = logging.getLogger(__name__)
 
 
 class TestPublicKey(unittest.TestCase):
-
     def _test_key(self, hex_, is_valid, is_fullyvalid, is_compressed):
         key = key_mod.PublicKey(util.hex_to_bytes(
             hex_), coin_network.BitcoinMainNetwork)
@@ -30,7 +28,6 @@ class TestPublicKey(unittest.TestCase):
 
 
 class Test_primitives(unittest.TestCase):
-
     def test_addr1(self):
         WIF = 'Kz6UJmQACJmLtaQj5A3JAge4kVTNQ8gbvXuwbmCj7bsaabudb3RD'
         HEX = "55c9bccb9ed68446d1b75273bbce89d7fe013a8acd1625514420fb2aca1a21c4"

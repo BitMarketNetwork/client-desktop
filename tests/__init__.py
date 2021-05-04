@@ -1,4 +1,4 @@
-# JOK++
+# JOK4
 import logging
 import sys
 import time
@@ -14,7 +14,7 @@ def getLogger(name: str) -> logging.Logger:
             def __init__(self) -> None:
                 super().__init__(
                     fmt='%(asctime)s (%(levelname)s) '
-                        '%(name)s[%(funcName)s:%(lineno)s]-%(threadName)s: '
+                        '%(name)s[%(funcName)s:%(lineno)s]-%(threadName)s: ' # noqa
                         '%(message)s',
                     datefmt=None)
 

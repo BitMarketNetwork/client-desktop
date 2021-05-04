@@ -1,12 +1,14 @@
-import unittest
 import logging
+from unittest import TestCase
+
 import PySide2.QtCore as qt_core
+
 from bmnclient.ui.gui import settings_manager
+
 log = logging.getLogger(__name__)
 
 
-class TestLanguage(unittest.TestCase):
-
+class TestLanguage(TestCase):
     def test_loading(self):
         app = qt_core.QCoreApplication()
         sett = settings_manager.SettingsManager(None)
