@@ -5,19 +5,17 @@ import math
 from typing import TYPE_CHECKING, TypedDict
 
 from .address import AbstractAddress
-from .currency import \
-    AbstractCurrency, \
-    FiatRate, \
-    NoneFiatCurrency
+from .currency import AbstractCurrency
 from .tx import AbstractTx
-from ..crypto.digest import Sha256Digest
-from ..utils.meta import classproperty
-from ..utils.serialize import Serializable, serializable
-from ..wallet.mutable_tx import MutableTransaction
+from ..currency import FiatRate, NoneFiatCurrency
+from ...crypto.digest import Sha256Digest
+from ...utils.meta import classproperty
+from ...utils.serialize import Serializable, serializable
+from ...wallet.mutable_tx import MutableTransaction
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, List, Optional, Union
-    from ..wallet.hd import HDNode
+    from ...wallet.hd import HDNode
 
 
 class AbstractCoinInterface:
@@ -33,10 +31,10 @@ class AbstractCoinInterface:
     def afterRefreshAmount(self) -> None:
         raise NotImplementedError
 
-    def beforeAppendAddress(self, address: AbstractCoin.Address) -> None:
+    def beforeAppendAddress(self, address: AbstractAddress) -> None:
         raise NotImplementedError
 
-    def afterAppendAddress(self, address: AbstractCoin.Address) -> None:
+    def afterAppendAddress(self, address: AbstractAddress) -> None:
         raise NotImplementedError
 
     def afterSetServerData(self) -> None:

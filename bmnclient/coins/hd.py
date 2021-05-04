@@ -9,7 +9,7 @@ from ..wallet.key import AddressType
 
 if TYPE_CHECKING:
     from typing import Dict, Optional
-    from .coin import AbstractCoin
+    from .abstract.coin import AbstractCoin
 
 
 class HdAddressIterator(Iterator):

@@ -8,8 +8,7 @@ from ..logger import Logger
 
 if TYPE_CHECKING:
     from typing import Dict, List, Optional
-    from .coin import AbstractCoin
-    from .tx import AbstractUtxo
+    from .abstract.coin import AbstractCoin
     from ..wallet.address import CAddress
     from ..wallet.mtx_impl import Mtx
 
@@ -238,7 +237,7 @@ class AbstractMutableTx:
             return False
 
         # TODO Dict[str, ...]?
-        source_list: Dict[CAddress, List[AbstractUtxo]] = {}
+        source_list: Dict[CAddress, List[AbstractCoin.Tx.Utxo]] = {}
         for utxo in self._selected_utxo_list:
             source_list.setdefault(utxo.address, []).append(utxo)
 

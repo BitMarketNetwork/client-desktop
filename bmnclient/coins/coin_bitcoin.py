@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .coin import AbstractCoin
+from .abstract.coin import AbstractCoin
 from ..crypto.base58 import Base58
 from ..crypto.bech32 import Bech32
 from ..crypto.digest import Ripemd160Digest, Sha256Digest

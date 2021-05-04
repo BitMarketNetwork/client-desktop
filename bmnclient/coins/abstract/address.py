@@ -4,7 +4,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from ..utils.serialize import Serializable, serializable
+from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
     from typing import List, Optional

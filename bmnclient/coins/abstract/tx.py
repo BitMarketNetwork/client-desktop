@@ -4,8 +4,8 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from ..utils.serialize import Serializable, serializable
-from ..wallet.mtx_impl import UTXO
+from ...utils.serialize import Serializable, serializable
+from ...wallet.mtx_impl import UTXO
 
 if TYPE_CHECKING:
     from typing import Any, List, Optional, Tuple
