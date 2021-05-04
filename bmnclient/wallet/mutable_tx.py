@@ -7,7 +7,7 @@ from . import key, mtx_impl
 from ..coins.mutable_tx import AbstractMutableTx
 
 if TYPE_CHECKING:
-    from typing import Optional, Tuple
+    from typing import Tuple
     from ..coins.coin import AbstractCoin
 
 
@@ -84,19 +84,6 @@ class MutableTransaction(AbstractMutableTx):
                 sum((a.utxoList for a in self._source_list), []),
                 self._amount + (0 if self._subtract_fee else self.feeAmount),
                 getter=lambda a: a.amount)
-
-    def send(self):
-        from ..application import CoreApplication
-        CoreApplication.instance().networkThread.broadcastMtx.emit(self)
-
-    def send_callback(self, ok: bool, error: Optional[str] = None):
-        self._logger.debug(f"send result:{ok} error:{error}")
-        if ok:
-            pass
-            # AddressMultyMempoolCommand(coin.addressList, self))
-        else:
-            if self.__parent:
-                self.__parent.fail.emit(str(error))
 
     @ property
     def tx_size(self):

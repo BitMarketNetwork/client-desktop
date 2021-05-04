@@ -192,12 +192,7 @@ class NoInputsToSignError(MtxError):
 
 
 class Mtx:
-    """
-    Mutable transaction
-    """
-    __slots__ = ('version', 'TxIn', 'TxOut', 'locktime', 'unspents', '__fee__')
-
-    def __init__(self, version, TxIn, TxOut, locktime):
+    def __init__(self, version, TxIn, TxOut, locktime) -> None:
         segwit_tx = any([i.segwit_input or i.witness for i in TxIn])
         self.version = version
         self.TxIn = TxIn

@@ -448,3 +448,17 @@ class CoinMempoolParser(AbstractParser):
                 if address is not None:
                     tx = address.coin.Tx.deserialize(address, **tx_data)
                     self._tx_list.append(tx)
+
+
+class BroadcastTxParser(AbstractParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self._txName = ""
+
+    @property
+    def txName(self) -> str:
+        return self._txName
+
+    def __call__(self, value: dict) -> None:
+        self._txName = self.parseKey(value, "tx", str)
+

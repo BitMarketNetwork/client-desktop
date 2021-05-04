@@ -8,8 +8,9 @@ from .parser import \
     AddressInfoParser, \
     AddressTxParser, \
     AddressUnspentParser, \
-    CoinsInfoParser, \
+    BroadcastTxParser, \
     CoinMempoolParser, \
+    CoinsInfoParser, \
     ParseError, \
     ResponseMetaParser, \
     ResponseParser, \
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
     from ...coins.coin import AbstractCoin
     from ...coins.tx import AbstractUtxo
     from ...wallet.address import CAddress
+    from ...wallet.mtx_impl import Mtx
 
 
 class AbstractApiQuery(AbstractJsonQuery):
@@ -506,3 +508,47 @@ class CoinMempoolIteratorApiQuery(AbstractIteratorApiQuery):
                 self._coin,
                 finished_callback=self._finished_callback,
                 _address_list=self._address_list)
+
+
+class TxBroadcastApiQuery(AbstractApiQuery):
+    _ACTION = (
+        "coins",
+        lambda self: self._tx.coin.shortName,
+        "tx"
+    )
+    _DEFAULT_METHOD = AbstractApiQuery.Method.POST
+
+    def __init__(
+            self,
+            application: CoreApplication,
+            tx: Mtx) -> None:
+        super().__init__(
+            application,
+            name_suffix=self.coinToNameSuffix(tx.coin))
+        self._tx = tx
+
+    def _createData(self) -> Tuple[str, Any]:
+        return "tx_broadcast", {
+            "data": self._tx.to_hex()
+        }
+
+    def _processData(
+            self,
+            data_id: Optional[str],
+            data_type: Optional[str],
+            value: Optional[dict]) -> None:
+        if self.statusCode != 200 or value is None:
+            return
+
+        parser = BroadcastTxParser()
+        parser(value)
+
+        # TODO
+        # if parser.txName != self._tx.name:
+        #     self._logger.warning(
+        #         "Server gives transaction: \'%s\", but was sent \"%s\".",
+        #         parser.txName,
+        #         self._tx.name)
+        self._logger.info(
+            "Transaction \"%s\" broadcasted successfully!",
+            parser.txName)

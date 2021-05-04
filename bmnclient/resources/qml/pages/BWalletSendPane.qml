@@ -151,7 +151,11 @@ BPane {
                                     "coin": _base.coin
                                 })
                     dialog.onAccepted.connect(function () {
-                        _base.coin.txController.broadcast() // TODO on error
+                        if (_base.coin.mutableTx.sign()) {
+                            _base.coin.mutableTx.broadcast() // TODO error?
+                        } else {
+                            // TODO error?
+                        }
                     })
                     dialog.open()
                 }

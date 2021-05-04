@@ -32,21 +32,29 @@ class CoinType(qt_core.QObject):
         idxs = [a.hd_index for a in self._address_list]
         return next(k for k in itertools.count(1) if k not in idxs)
 
-    def make_address(self, type_: key.AddressType = key.AddressType.P2WPKH, label: str = "", message: str = "") -> address.CAddress:
+    def make_address(
+            self,
+            type_: key.AddressType = key.AddressType.P2WPKH,
+            label: str = "",
+            message: str = "") -> address.CAddress:
         if self._hd_path is None:
             raise address.AddressError(f"There's no private key in {self}")
+
         hd_index = 1
         while any(w.hd_index == hd_index for w in self._address_list):
             hd_index += 1
+
         new_hd = self._hd_path.make_child_prv(
             self._next_hd_index(),
             False,
             self.network)
+
         wallet = address.CAddress.make_from_hd(new_hd, self, type_)
         assert wallet.hd_index == hd_index
         wallet.label = label
         wallet._message = message
         self.appendAddress(wallet)
+
         from ..application import CoreApplication
         CoreApplication.instance().databaseThread.save_address(wallet)
         return wallet
