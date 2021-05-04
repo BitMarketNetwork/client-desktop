@@ -30,7 +30,7 @@ from .wallet.thread import WalletThread
 from .network.query_scheduler import NetworkQueryScheduler
 
 if TYPE_CHECKING:
-    from .coins.coin import AbstractCoin
+    from .coins.abstract.coin import AbstractCoin
 
 
 class CommandLine:

@@ -18,35 +18,34 @@ if TYPE_CHECKING:
     from ...wallet.hd import HDNode
 
 
-class AbstractCoinInterface:
-    def afterSetHeight(self) -> None:
-        raise NotImplementedError
-
-    def afterSetStatus(self) -> None:
-        raise NotImplementedError
-
-    def afterSetFiatRate(self) -> None:
-        raise NotImplementedError
-
-    def afterRefreshAmount(self) -> None:
-        raise NotImplementedError
-
-    def beforeAppendAddress(self, address: AbstractAddress) -> None:
-        raise NotImplementedError
-
-    def afterAppendAddress(self, address: AbstractAddress) -> None:
-        raise NotImplementedError
-
-    def afterSetServerData(self) -> None:
-        raise NotImplementedError
-
-
 class AbstractCoin(Serializable):
     _SHORT_NAME = ""
     _FULL_NAME = ""
     _IS_TEST_NET = False
     # https://github.com/satoshilabs/slips/blob/master/slip-0044.md
     _BIP0044_COIN_TYPE = -1
+
+    class Interface:
+        def afterSetHeight(self) -> None:
+            raise NotImplementedError
+
+        def afterSetStatus(self) -> None:
+            raise NotImplementedError
+
+        def afterSetFiatRate(self) -> None:
+            raise NotImplementedError
+
+        def afterRefreshAmount(self) -> None:
+            raise NotImplementedError
+
+        def beforeAppendAddress(self, address: AbstractCoin.Address) -> None:
+            raise NotImplementedError
+
+        def afterAppendAddress(self, address: AbstractCoin.Address) -> None:
+            raise NotImplementedError
+
+        def afterSetServerData(self) -> None:
+            raise NotImplementedError
 
     class Currency(AbstractCurrency):
         pass
@@ -90,10 +89,10 @@ class AbstractCoin(Serializable):
         self._mempool_cache_access_counter = 0
         self._mutable_tx = MutableTransaction(self)
 
-        self._model: Optional[AbstractCoinInterface] = self.model_factory(self)
+        self._model: Optional[AbstractCoin.Interface] = self.model_factory(self)
 
     @property
-    def model(self) -> Optional[AbstractCoinInterface]:
+    def model(self) -> Optional[AbstractCoin.Interface]:
         return self._model
 
     def _updateState(self) -> int:

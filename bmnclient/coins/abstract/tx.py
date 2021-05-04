@@ -12,13 +12,7 @@ if TYPE_CHECKING:
     from .address import AbstractAddress
 
 
-class TxStatus(Enum):
-    PENDING = 0
-    CONFIRMED = 1
-    COMPLETE = 2
-
-
-class AbstractTxIo:
+class _AbstractTxIo:
     def __init__(self, address: AbstractAddress) -> None:
         self._address = address
 
@@ -27,7 +21,7 @@ class AbstractTxIo:
         return self._address
 
 
-class AbstractUtxo(Serializable):
+class _AbstractUtxo(Serializable):
     def __init__(
             self,
             address: AbstractAddress,
@@ -68,19 +62,23 @@ class AbstractUtxo(Serializable):
         return self._amount
 
 
-class AbstractTxInterface:
-    def afterSetHeight(self) -> None:
-        raise NotImplementedError
-
-    def afterSetTime(self) -> None:
-        raise NotImplementedError
-
-
 class AbstractTx(Serializable):
-    class TxIo(AbstractTxIo):
+    class Status(Enum):
+        PENDING = 0
+        CONFIRMED = 1
+        COMPLETE = 2
+
+    class Interface:
+        def afterSetHeight(self) -> None:
+            raise NotImplementedError
+
+        def afterSetTime(self) -> None:
+            raise NotImplementedError
+
+    class Io(_AbstractTxIo):
         pass
 
-    class Utxo(UTXO):  # TODO AbstractUtxo
+    class Utxo(UTXO):  # TODO _AbstractUtxo
         pass
 
     def __init__(
@@ -93,8 +91,8 @@ class AbstractTx(Serializable):
             amount: int,
             fee_amount: int,
             coinbase: bool,
-            input_list: List[TxIo],
-            output_list: List[TxIo]) -> None:
+            input_list: List[Io],
+            output_list: List[Io]) -> None:
         super().__init__()
 
         self._address = address
@@ -109,7 +107,7 @@ class AbstractTx(Serializable):
         self._input_list = input_list
         self._output_list = output_list
 
-        self._model: Optional[AbstractTxInterface] = \
+        self._model: Optional[AbstractTx.Interface] = \
             self._address.coin.model_factory(self)
 
     def __eq__(self, other: AbstractTx) -> bool:
@@ -123,11 +121,12 @@ class AbstractTx(Serializable):
     def _deserialize(cls, args: Tuple[Any], key: str, value: Any) -> Any:
         if isinstance(value, dict):
             if key in ("input_list", "output_list"):
-                return cls.TxIo(args[0].coin, **value)
+                # return cls.TxIo(args[0].coin, **value)
+                raise NotImplementedError
         return super()._deserialize(args, key, value)
 
     @property
-    def model(self) -> Optional[AbstractTxInterface]:
+    def model(self) -> Optional[AbstractTx.Interface]:
         return self._model
 
     @property
@@ -159,13 +158,13 @@ class AbstractTx(Serializable):
         return 0
 
     @property
-    def status(self) -> TxStatus:
+    def status(self) -> Status:
         c = self.confirmations
         if c <= 0:
-            return TxStatus.PENDING
+            return self.Status.PENDING
         if c <= 6:  # TODO const
-            return TxStatus.CONFIRMED
-        return TxStatus.COMPLETE
+            return self.Status.CONFIRMED
+        return self.Status.COMPLETE
 
     @serializable
     @property
@@ -196,11 +195,10 @@ class AbstractTx(Serializable):
 
     @serializable
     @property
-    def inputList(self) -> List[TxIo]:
+    def inputList(self) -> List[Io]:
         return self._input_list
 
     @serializable
     @property
-    def outputList(self) -> List[TxIo]:
+    def outputList(self) -> List[Io]:
         return self._output_list
-

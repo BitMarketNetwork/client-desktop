@@ -9,31 +9,30 @@ from ...utils.serialize import Serializable, serializable
 if TYPE_CHECKING:
     from typing import List, Optional
     from .coin import AbstractCoin
-    from .tx import AbstractTx, AbstractUtxo
-
-
-class AbstractAddressInterface:
-    def afterSetAmount(self) -> None:
-        raise NotImplementedError
-
-    def afterSetLabel(self) -> None:
-        raise NotImplementedError
-
-    def afterSetComment(self) -> None:
-        raise NotImplementedError
-
-    def afterSetTxCount(self) -> None:
-        raise NotImplementedError
-
-    def beforeAppendTx(self, tx: AbstractTx) -> None:
-        raise NotImplementedError
-
-    def afterAppendTx(self, tx: AbstractTx) -> None:
-        raise NotImplementedError
+    from .tx import AbstractTx
 
 
 class AbstractAddress(Serializable):
     _NULLDATA_NAME = "nulldata"
+
+    class Interface:
+        def afterSetAmount(self) -> None:
+            raise NotImplementedError
+
+        def afterSetLabel(self) -> None:
+            raise NotImplementedError
+
+        def afterSetComment(self) -> None:
+            raise NotImplementedError
+
+        def afterSetTxCount(self) -> None:
+            raise NotImplementedError
+
+        def beforeAppendTx(self, tx: AbstractTx) -> None:
+            raise NotImplementedError
+
+        def afterAppendTx(self, tx: AbstractTx) -> None:
+            raise NotImplementedError
 
     class Type(Enum):
         # Tuple(version, excepted_size, friendly_name)
@@ -60,16 +59,16 @@ class AbstractAddress(Serializable):
         self._comment = comment
         self._tx_count = 0  # not linked with self._tx_list
         self._tx_list: List[AbstractTx] = []  # TODO enable deserialize
-        self._utxo_list: List[AbstractUtxo] = []
+        self._utxo_list: List[AbstractTx.Utxo] = []
 
         self._history_first_offset = ""
         self._history_last_offset = ""
 
-        self._model: Optional[AbstractAddressInterface] = \
+        self._model: Optional[AbstractAddress.Interface] = \
             self._coin.model_factory(self)
 
     @property
-    def model(self) -> Optional[AbstractAddressInterface]:
+    def model(self) -> Optional[AbstractAddress.Interface]:
         return self._model
 
     @property
@@ -170,11 +169,11 @@ class AbstractAddress(Serializable):
         return True
 
     @property
-    def utxoList(self) -> List[AbstractUtxo]:
+    def utxoList(self) -> List[AbstractTx.Utxo]:
         return self._utxo_list
 
     @utxoList.setter
-    def utxoList(self, utxo_list: List[AbstractUtxo]) -> None:
+    def utxoList(self, utxo_list: List[AbstractTx.Utxo]) -> None:
         self._utxo_list = utxo_list
         utxo_amount = sum(map(lambda utxo: utxo.amount, self._utxo_list))
         if self._amount != utxo_amount:
