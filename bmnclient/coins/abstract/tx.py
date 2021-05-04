@@ -5,7 +5,6 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 from ...utils.serialize import Serializable, serializable
-from ...wallet.mtx_impl import UTXO
 
 if TYPE_CHECKING:
     from typing import Any, List, Optional, Tuple
@@ -78,7 +77,7 @@ class AbstractTx(Serializable):
     class Io(_AbstractTxIo):
         pass
 
-    class Utxo(UTXO):  # TODO _AbstractUtxo
+    class Utxo(_AbstractUtxo):
         pass
 
     def __init__(

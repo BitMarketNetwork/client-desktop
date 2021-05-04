@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, TypedDict
 
 from .address import AbstractAddress
 from .currency import AbstractCurrency
+from .mutable_tx import AbstractMutableTx
 from .tx import AbstractTx
 from ..currency import FiatRate, NoneFiatCurrency
 from ...crypto.digest import Sha256Digest
@@ -54,6 +55,9 @@ class AbstractCoin(Serializable):
         pass
 
     class Tx(AbstractTx):
+        pass
+
+    class MutableTx(AbstractMutableTx):
         pass
 
     class MempoolCacheItem(TypedDict):

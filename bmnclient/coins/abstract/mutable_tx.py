@@ -4,21 +4,20 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from ..logger import Logger
+from ...logger import Logger
 
 if TYPE_CHECKING:
     from typing import Dict, List, Optional
-    from .abstract.coin import AbstractCoin
-    from ..wallet.address import CAddress
-    from ..wallet.mtx_impl import Mtx
-
-
-class AbstractMutableTxInterface:
-    def onBroadcast(self, tx: Mtx) -> None:
-        raise NotImplementedError
+    from .coin import AbstractCoin
+    from ...wallet.address import CAddress
+    from ...wallet.mtx_impl import Mtx
 
 
 class AbstractMutableTx:
+    class Interface:
+        def onBroadcast(self, tx: Mtx) -> None:
+            raise NotImplementedError
+
     def __init__(self, coin: AbstractCoin) -> None:
         self._logger = Logger.getClassLogger(
             __name__,
@@ -32,21 +31,21 @@ class AbstractMutableTx:
         self._amount = 0
 
         self._subtract_fee = False
-        from ..wallet.fee_manager import FeeManager
+        from ...wallet.fee_manager import FeeManager
         self._fee_manager = FeeManager()  # TODO
         self._fee_amount_per_byte = self._fee_manager.max_spb
 
-        self._selected_utxo_list: List[AbstractCoin.Utxo] = []
+        self._selected_utxo_list: List[AbstractCoin.Tx.Utxo] = []
         self._selected_utxo_amount = 0
 
         self.__mtx = None  # TODO tmp
         self.__mtx_result: Optional[str] = None  # TODO tmp
 
-        self._model: Optional[AbstractMutableTxInterface] = \
+        self._model: Optional[AbstractMutableTx.Interface] = \
             self._coin.model_factory(self)
 
     @property
-    def model(self) -> Optional[AbstractMutableTxInterface]:
+    def model(self) -> Optional[AbstractMutableTx.Interface]:
         return self._model
 
     @property
@@ -221,7 +220,7 @@ class AbstractMutableTx:
             self._change_address = None
 
         # TODO extend self with Mtx for every coin
-        from ..wallet.mtx_impl import Mtx
+        from ...wallet.mtx_impl import Mtx
         self.__mtx = Mtx.make(self._selected_utxo_list, output_list)
         self.__mtx.coin = self._coin
         if self.__mtx.feeAmount != fee_amount:
