@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import collections
-import functools
 import itertools
 from typing import TYPE_CHECKING
 
@@ -9,12 +7,8 @@ from . import key, mtx_impl
 from ..coins.mutable_tx import AbstractMutableTx
 
 if TYPE_CHECKING:
-    from typing import DefaultDict, List, Optional, Tuple
+    from typing import Optional, Tuple
     from ..coins.coin import AbstractCoin
-
-
-class NewTxerror(Exception):
-    pass
 
 
 class MutableTransaction(AbstractMutableTx):
@@ -25,7 +19,6 @@ class MutableTransaction(AbstractMutableTx):
     def __init__(self, coin: AbstractCoin):
         super().__init__(coin)
         self.__raw__mtx = None
-        self.__mtx = None
         self.refreshSourceList()
 
     @classmethod
@@ -187,16 +180,3 @@ class MutableTransaction(AbstractMutableTx):
             return -1
         minutes = self._fee_manager.get_minutes(spb)
         return minutes
-
-    @ property
-    def tx_id(self):
-        if self.__mtx:
-            return self.__mtx.id
-
-    @ property
-    def sources(self):
-        return self._source_list
-
-    @ property
-    def coin(self):
-        return self._coin

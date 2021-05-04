@@ -230,9 +230,9 @@ class MutableTxModel(MutableTxModelInterface, AbstractModel):
             self._tx)
         self.connectModelRefresh(self._receiver)
 
-        self._source_list = MutableTxSourceListModel(
+        self._source_list = MutableTxSourceListModel(  # TODO
             self._application,
-            self._tx.sources)
+            [])
 
     @QProperty(str, notify=__stateChanged)
     def name(self) -> str:

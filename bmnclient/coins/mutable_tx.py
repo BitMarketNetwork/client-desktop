@@ -36,12 +36,18 @@ class AbstractMutableTx:
         self._selected_utxo_list: List[AbstractCoin.Utxo] = []
         self._selected_utxo_amount = 0
 
+        self.__mtx = None  # TODO tmp
+
         self._model: Optional[MutableTxModelInterface] = \
             self._coin.model_factory(self)
 
     @property
     def model(self) -> Optional[MutableTxModelInterface]:
         return self._model
+
+    @property
+    def coin(self) -> AbstractCoin:
+        return self._coin
 
     def setReceiverAddressName(self, name: str) -> bool:
         self._receiver_address = self._coin.decodeAddress(name=name)

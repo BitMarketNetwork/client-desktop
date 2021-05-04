@@ -192,7 +192,6 @@ def address_to_public_key_hash(address) -> str:
 
 
 def bytes_to_hex(data: bytes, upper: bool = False) -> str:
-    assert sys.version_info >= (3, 5)
     hexed = binascii.hexlify(data).decode()
     return hexed.upper() if upper else hexed
 

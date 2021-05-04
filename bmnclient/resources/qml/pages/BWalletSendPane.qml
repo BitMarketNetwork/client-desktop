@@ -134,7 +134,7 @@ BPane {
             BButton {
                 BDialogButtonBox.buttonRole: BDialogButtonBox.AcceptRole
                 text: qsTr("Prepare...")
-                enabled: _base.coin.txController.isValid
+                enabled: _base.coin.mutableTx.isValid
             }
             BButton {
                 BDialogButtonBox.buttonRole: BDialogButtonBox.ResetRole
@@ -144,7 +144,7 @@ BPane {
                 // TODO
             }
             onAccepted: {
-                if (_base.coin.txController.isValid && _base.coin.txController.prepare()) {
+                if (_base.coin.mutableTx.isValid && _base.coin.txController.prepare()) {
                     let dialog = _applicationManager.createDialog(
                                 "BTxApproveDialog", {
                                     "type": BTxApproveDialog.Type.Prepare,

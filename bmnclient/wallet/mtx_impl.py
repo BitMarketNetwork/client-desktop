@@ -253,8 +253,8 @@ class Mtx:
         inputs = []
         for unspent in utxo_list:
             script_sig = b''  # empty scriptSig for new unsigned transaction.
-            txid = util.hex_to_bytes(unspent.txid)[::-1]
-            txindex = unspent.txindex.to_bytes(4, byteorder='little')
+            txid = util.hex_to_bytes(unspent.txName)[::-1]
+            txindex = unspent.index.to_bytes(4, byteorder='little')
             amount = int(unspent.amount).to_bytes(8, byteorder='little')
             assert unspent.address
             inputs.append(TxInput(script_sig, txid, txindex, amount=amount,
