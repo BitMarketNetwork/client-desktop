@@ -80,7 +80,6 @@ class UTXO(AbstractUtxo):
 
 
 class TxEntity:
-
     def __init__(self, address: str):
         self._address = address
         self.amount = None
@@ -103,8 +102,16 @@ class TxInput(TxEntity):
     __slots__ = ('script_sig', 'script_sig_len', 'txid', 'txindex', 'witness',
                  'amount', 'sequence', 'segwit_input')
 
-    def __init__(self, script_sig, txid, txindex, witness=b'', amount=None,
-                 sequence=constants.SEQUENCE, segwit_input=False, address: str = None):
+    def __init__(
+            self,
+            script_sig,
+            txid,
+            txindex,
+            witness=b'',
+            amount=None,
+            sequence=constants.SEQUENCE,
+            segwit_input=False,
+            address: str = None):
         super().__init__(address)
 
         self.script_sig = script_sig
@@ -257,8 +264,14 @@ class Mtx:
             txindex = unspent.index.to_bytes(4, byteorder='little')
             amount = int(unspent.amount).to_bytes(8, byteorder='little')
             assert unspent.address
-            inputs.append(TxInput(script_sig, txid, txindex, amount=amount,
-                                  segwit_input=unspent.segwit, address=unspent.address))
+            inputs.append(
+                TxInput(
+                    script_sig,
+                    txid,
+                    txindex,
+                    amount=amount,
+                    segwit_input=unspent.segwit,
+                    address=unspent.address.name))
         out = cls(version, inputs, outputs, lock_time)
         out.unspents = utxo_list
         return out
@@ -342,15 +355,16 @@ class Mtx:
                 if not private_key.can_sign_unspent(unspent):
                     log.warning(f"key {private_key} can't sign {unspent}")
                     continue
-                tx_input = util.hex_to_bytes(unspent.txid)[::-1] + \
-                    unspent.txindex.to_bytes(4, byteorder='little')
-                input_dict[tx_input] = unspent.to_dict()
+                tx_input = \
+                    util.hex_to_bytes(unspent.txName)[::-1] \
+                    + unspent.index.to_bytes(4, byteorder='little')
+                input_dict[tx_input] = unspent.serialize()
+                input_dict[tx_input]["segwit"] = unspent.segwit  # TODO tmp
         except TypeError:
             raise TypeError('Please provide as unspents at least all inputs to '
                             'be signed with the function call in a list.')
         # Determine input indices to sign from input_dict (allows for transaction batching)
-        sign_inputs = [j for j, i in enumerate(
-            self.TxIn) if i.txid+i.txindex in input_dict]
+        sign_inputs = [j for j, i in enumerate(self.TxIn) if i.txid + i.txindex in input_dict]
 
         segwit_tx = Mtx.is_segwit(self)
         public_key = private_key.public_key
@@ -684,12 +698,12 @@ def construct_outputs(outputs):
         log.debug(f"dest:{dest} amount:{amount}")
 
         # P2PKH/P2SH/Bech32
-        if amount:
+        if True:
             script_pubkey = util.address_to_scriptpubkey(dest)
 
             amount = int(amount).to_bytes(8, byteorder='little')
 
-        # Blockchain storage
+        # TODO Blockchain storage
         else:
             from .constants import OP_RETURN
             script_pubkey = (OP_RETURN +

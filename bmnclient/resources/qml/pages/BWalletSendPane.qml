@@ -144,7 +144,7 @@ BPane {
                 // TODO
             }
             onAccepted: {
-                if (_base.coin.mutableTx.isValid && _base.coin.txController.prepare()) {
+                if (_base.coin.mutableTx.isValid && _base.coin.mutableTx.prepare()) {
                     let dialog = _applicationManager.createDialog(
                                 "BTxApproveDialog", {
                                     "type": BTxApproveDialog.Type.Prepare,
@@ -163,7 +163,7 @@ BPane {
         id: _inputListDialog
         sourceList: _base.coin.mutableTx.sourceList
         onClosed: {
-            _base.coin.txController.recalcSources()
+            // TODO _base.coin.mutableTx.recalcSources()
         }
     }
 }

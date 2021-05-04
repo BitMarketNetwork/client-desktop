@@ -236,7 +236,8 @@ class MutableTxModel(MutableTxModelInterface, AbstractModel):
 
     @QProperty(str, notify=__stateChanged)
     def name(self) -> str:
-        return self._tx.tx_id
+        name = self._tx.name
+        return "" if name is None else name
 
     @QProperty(QObject, constant=True)
     def sourceAmount(self) -> MutableTxSourceAmountModel:
@@ -269,13 +270,13 @@ class MutableTxModel(MutableTxModelInterface, AbstractModel):
     # noinspection PyTypeChecker
     @QSlot(result=bool)
     def prepare(self) -> bool:
-        self._tx.prepare()
-        return True
+        return self._tx.prepare()
 
     # noinspection PyTypeChecker
     @QSlot(result=bool)
-    def sign(self) -> bool:  # TODO ask password
-        pass
+    def sign(self) -> bool:
+        # TODO ask password
+        return self._tx.sign()
 
     # noinspection PyTypeChecker
     @QSlot(result=bool)

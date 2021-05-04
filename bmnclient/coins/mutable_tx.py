@@ -1,15 +1,18 @@
 # JOK+++
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from ..logger import Logger
 from ..wallet.fee_manager import FeeManager
 
 if TYPE_CHECKING:
-    from typing import List, Optional
+    from typing import Dict, List, Optional
     from .address import AbstractAddress
     from .coin import AbstractCoin
+    from .tx import AbstractUtxo
+    from ..wallet.address import CAddress
 
 
 class MutableTxModelInterface:
@@ -37,6 +40,7 @@ class AbstractMutableTx:
         self._selected_utxo_amount = 0
 
         self.__mtx = None  # TODO tmp
+        self.__mtx_result: Optional[str] = None  # TODO tmp
 
         self._model: Optional[MutableTxModelInterface] = \
             self._coin.model_factory(self)
@@ -48,6 +52,12 @@ class AbstractMutableTx:
     @property
     def coin(self) -> AbstractCoin:
         return self._coin
+
+    @property
+    def name(self) -> Optional[str]:
+        if self.__mtx is not None:
+            return self.__mtx.id
+        return None
 
     def setReceiverAddressName(self, name: str) -> bool:
         self._receiver_address = self._coin.decodeAddress(name=name)
@@ -178,3 +188,65 @@ class AbstractMutableTx:
         if not self._subtract_fee:
             change_amount -= self.feeAmount
         return change_amount
+
+    def prepare(self) -> bool:
+        if not self.isValidAmount:
+            self._logger.error("Invalid amount: %i", self._amount)
+            return False
+
+        if not self.isValidFeeAmount:
+            self._logger.error("Invalid fee amount: %i", self.feeAmount)
+            return False
+
+        if not self._selected_utxo_list:
+            self._logger.error("No source inputs selected.")
+            return False
+
+        fee_amount = self.feeAmount
+        change_amount = self.changeAmount
+        receiver_amount = self._amount
+        if self._subtract_fee:
+            receiver_amount -= fee_amount
+
+        output_list = [(self._receiver_address.name, receiver_amount)]
+
+        if change_amount > 0:
+            self._change_address = self._coin.make_address()
+            output_list.append((self._change_address.name, change_amount))
+        else:
+            self._change_address = None
+
+        # TODO extend self with Mtx for every coin
+        from ..wallet.mtx_impl import Mtx
+        self.__mtx = Mtx.make(self._selected_utxo_list, output_list)
+        if self.__mtx.feeAmount != fee_amount:
+            self._logger.error(
+                "Fee failure, should be %i but has %i.",
+                fee_amount,
+                self.__mtx.feeAmount)
+            return False
+        return True
+
+    def sign(self) -> bool:
+        if self.__mtx is None:
+            return False
+
+        # TODO Dict[str, ...]?
+        source_list: Dict[CAddress, List[AbstractUtxo]] = {}
+        for utxo in self._selected_utxo_list:
+            source_list.setdefault(utxo.address, []).append(utxo)
+
+        for address, utxo_list in source_list.items():
+            if self._logger.isEnabledFor(logging.DEBUG):
+                for utxo in utxo_list:
+                    self._logger.debug(
+                        "Input: %s, UTXO \"%s\":%i, amount %i.",
+                        address.name,
+                        utxo.txName,
+                        utxo.index,
+                        utxo.amount)
+            self.__mtx.sign(address.private_key, utxo_list=utxo_list)
+
+        self.__mtx_result = self.__mtx.to_hex()
+        self._logger.debug(f"Signed transaction: %s", self.__mtx_result)
+        return len(self.__mtx_result) > 0

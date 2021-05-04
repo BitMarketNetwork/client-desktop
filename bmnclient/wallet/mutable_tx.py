@@ -85,68 +85,6 @@ class MutableTransaction(AbstractMutableTx):
                 self._amount + (0 if self._subtract_fee else self.feeAmount),
                 getter=lambda a: a.amount)
 
-    def prepare(self):
-        if self.feeAmount <= 0:
-            raise NewTxerror(f"No fee")
-        if self._subtract_fee and self.feeAmount > self._amount:
-            raise NewTxerror(
-                f"Fee {self.feeAmount} more than amount {self._amount}")
-        if not self._selected_utxo_list:
-            raise NewTxerror(f"There are no source inputs selected")
-        if self._amount > self._selected_utxo_amount:
-            raise NewTxerror(
-                f"Amount {self._amount} more than balance {self._selected_utxo_amount}")
-        # filter sources. some smart algo expected here
-        # prepare
-        utxo_list = self._selected_utxo_list
-        unspent_sum = sum(u.amount for u in utxo_list)
-
-        def cl(t, i):
-            t[i.address] += [i]
-            return t
-        sources: DefaultDict['address.CAddress', List[mtx_impl.UTXO]] = \
-            functools.reduce(cl, utxo_list, collections.defaultdict(list),)
-        self._logger.debug(
-            f"unspents: {utxo_list} scr:{sources} sum: {unspent_sum} vs {self._selected_utxo_amount}")
-        if not sources:
-            raise NewTxerror(f"No unspent outputs found")
-
-        if self._subtract_fee:
-            outputs = [(
-                self._receiver_address.name,
-                self._amount - self.feeAmount)]
-        else:
-            outputs = [(
-                self._receiver_address.name,
-                self._amount)]
-
-        self._logger.debug(
-            f"amount:{self._amount} fee:{self.feeAmount} fact_change:{self.changeAmount}")
-        # process leftover
-        if self.changeAmount > 0:
-            self._change_address = self._coin.make_address()
-            outputs.append(
-                (self._change_address.name, self.changeAmount)
-            )
-        else:
-            self._change_address = None
-
-        self._logger.debug(
-            f"outputs: {outputs} change_wallet:{self._change_address}")
-
-        self.__mtx = mtx_impl.Mtx.make(utxo_list, outputs)
-        self._logger.debug(f"TX fee: {self.__mtx.feeAmount}")
-        if self.__mtx.feeAmount != self.feeAmount:
-            #self.cancel()
-            self._logger.error(
-                f"Fee failure. Should be {self.feeAmount} but has {self.__mtx.feeAmount}")
-            raise NewTxerror("Critical error. Fee mismatch")
-        for addr, utxo in sources.items():
-            self._logger.debug(f"INPUT: address:{addr.name} utxo:{len(utxo)}")
-            self.__mtx.sign(addr.private_key, utxo_list=utxo)
-        self.__raw__mtx = self.__mtx.to_hex()
-        self._logger.info(f"final TX to send: {self.__mtx}")
-
     def send(self):
         from ..application import CoreApplication
         CoreApplication.instance().networkThread.broadcastMtx.emit(self)
