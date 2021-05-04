@@ -236,11 +236,14 @@ class AbstractCoin(Serializable):
     def amount(self) -> int:
         return self._amount
 
-    def refreshAmount(self) -> None:
+    def refreshAmount(self) -> None:  # TODO vs refreshUnspent
         a = sum(a.amount for a in self._address_list if not a.readOnly)
         self._amount = a
         if self._model:
             self._model.afterRefreshAmount()
+
+    def refreshUnspent(self) -> None:
+        self._mutable_tx.refreshSourceList()
 
     def makeHdPath(self, purpose_path: HDNode) -> None:
         assert self._hd_path is None

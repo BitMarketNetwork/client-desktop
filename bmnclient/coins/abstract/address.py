@@ -53,7 +53,7 @@ class AbstractAddress(Serializable):
 
         self._coin = coin
         self._name = name or self._NULLDATA_NAME
-        self._type = type_
+        self._type = type_  # TODO check usage
         self._data = data
         self._amount = amount
         self._label = label
