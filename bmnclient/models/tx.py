@@ -1,7 +1,6 @@
-# JOK+++
+# JOK4
 from __future__ import annotations
 
-from abc import ABCMeta
 from enum import auto
 from typing import TYPE_CHECKING
 
@@ -14,31 +13,33 @@ from PySide2.QtCore import \
     Signal as QSignal
 
 from . import AbstractModel, AbstractStateModel
-from .address import AddressListModel
-from .amount import AmountModel
+from .amount import AbstractAmountModel
 from .list import \
     AbstractConcatenateModel, \
     AbstractListModel, \
     AbstractListSortedModel, \
     RoleEnum
-from ..coins.tx import TxModelInterface
+from ..coins.abstract.coin import AbstractCoin
+from ..network.interfaces import TxNetworkInterface
 
 if TYPE_CHECKING:
     from typing import Final, Optional
-    from ..coins.tx import AbstractTx
     from ..ui.gui import Application
 
 
 class AbstractTxStateModel(AbstractStateModel):
-    def __init__(self, application: Application, tx: AbstractTx) -> None:
+    def __init__(self, application: Application, tx: AbstractCoin.Tx) -> None:
         super().__init__(application, tx.address.coin)
         self._tx = tx
 
 
-class AbstractTxAmountModel(AmountModel, metaclass=ABCMeta):
-    def __init__(self, application: Application, tx: AbstractTx) -> None:
+class AbstractTxAmountModel(AbstractAmountModel):
+    def __init__(self, application: Application, tx: AbstractCoin.Tx) -> None:
         super().__init__(application, tx.address.coin)
         self._tx = tx
+
+    def _getValue(self) -> Optional[int]:
+        raise NotImplementedError
 
 
 class TxStateModel(AbstractTxStateModel):
@@ -80,10 +81,10 @@ class TxStateModel(AbstractTxStateModel):
 class TxAmountModel(AbstractTxAmountModel):
     def refresh(self) -> None:
         super().refresh()
-        for address in self._tx.inputList:
-            address.model.amount.refresh()
-        for address in self._tx.outputList:
-            address.model.amount.refresh()
+        for io in self._tx.inputList:
+            io.address.model.amount.refresh()
+        for io in self._tx.outputList:
+            io.address.model.amount.refresh()
 
     def _getValue(self) -> Optional[int]:
         return self._tx.amount
@@ -94,8 +95,19 @@ class TxFeeAmountModel(AbstractTxAmountModel):
         return self._tx.feeAmount
 
 
-class TxModel(TxModelInterface, AbstractModel):
-    def __init__(self, application: Application, tx: AbstractTx) -> None:
+class TxIoListModel(AbstractListModel):
+    class Role(RoleEnum):
+        ADDRESS: Final = auto()
+
+    ROLE_MAP: Final = {
+        Role.ADDRESS: (
+            b"address",
+            lambda io: io.address.model)
+    }
+
+
+class TxModel(TxNetworkInterface, AbstractModel):
+    def __init__(self, application: Application, tx: AbstractCoin.Tx) -> None:
         super().__init__(application)
         self._tx = tx
 
@@ -147,13 +159,11 @@ class TxModel(TxModelInterface, AbstractModel):
 
     def afterSetHeight(self) -> None:
         self._state_model.refresh()
+        super().afterSetHeight()
 
     def afterSetTime(self) -> None:
         self._state_model.refresh()
-
-
-class TxIoListModel(AddressListModel):
-    pass
+        super().afterSetTime()
 
 
 class TxListModel(AbstractListModel):

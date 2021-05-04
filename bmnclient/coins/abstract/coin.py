@@ -57,7 +57,7 @@ class AbstractCoin(Serializable):
     class Tx(AbstractTx):
         pass
 
-    class MutableTx(AbstractMutableTx):
+    class MutableTx(MutableTransaction):  # TODO AbstractMutableTx
         pass
 
     class MempoolCacheItem(TypedDict):
@@ -91,7 +91,7 @@ class AbstractCoin(Serializable):
         self._server_data: Dict[str, Union[int, str]] = {}
         self._mempool_cache: Dict[bytes, AbstractCoin.MempoolCacheItem] = {}
         self._mempool_cache_access_counter = 0
-        self._mutable_tx = MutableTransaction(self)
+        self._mutable_tx = self.MutableTx(self)
 
         self._model: Optional[AbstractCoin.Interface] = self.model_factory(self)
 

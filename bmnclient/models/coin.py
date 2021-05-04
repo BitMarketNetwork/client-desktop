@@ -1,4 +1,4 @@
-# JOK++
+# JOK4
 from __future__ import annotations
 
 from enum import auto
@@ -14,19 +14,18 @@ from . import AbstractModel, AbstractStateModel
 from .address import \
     AddressListModel, \
     AddressListSortedModel
-from .amount import AmountModel
+from .amount import AbstractAmountModel
 from .list import \
     AbstractListModel, \
     RoleEnum
 from .tx import \
     TxListConcatenateModel, \
     TxListSortedModel
-from ..coins.coin import CoinModelInterface
+from ..network.interfaces import CoinNetworkInterface
 
 if TYPE_CHECKING:
     from typing import Final, Optional
-    from ..coins.address import AbstractAddress
-    from ..coins.coin import AbstractCoin
+    from ..coins.abstract.coin import AbstractCoin
     from ..ui.gui import Application
 
 
@@ -96,19 +95,17 @@ class CoinServerDataModel(AbstractStateModel):
         return "-" if height < 0 else self.locale.integerToString(height)
 
 
-class CoinAmountModel(AmountModel):
+class CoinAmountModel(AbstractAmountModel):
     def refresh(self) -> None:
         super().refresh()
         for address in self._coin.addressList:
             address.model.amount.refresh()
-        # TODO tmp
-        self._coin.model.txController.model.amount.refresh()
 
     def _getValue(self) -> Optional[int]:
         return self._coin.amount
 
 
-class CoinModel(CoinModelInterface, AbstractModel):
+class CoinModel(CoinNetworkInterface, AbstractModel):
     def __init__(self, application: Application, coin: AbstractCoin) -> None:
         super().__init__(application)
         self._coin = coin
@@ -179,28 +176,32 @@ class CoinModel(CoinModelInterface, AbstractModel):
 
     def afterSetHeight(self) -> None:
         self._state_model.refresh()
+        super().afterSetHeight()
 
     def afterSetStatus(self) -> None:
-        pass
+        super().afterSetStatus()
 
     def afterSetFiatRate(self) -> None:
         self._amount_model.refresh()
+        super().afterSetFiatRate()
 
     def afterRefreshAmount(self) -> None:
         self._amount_model.refresh()
+        super().afterRefreshAmount()
 
-    def beforeAppendAddress(self, address: AbstractAddress) -> None:
+    def beforeAppendAddress(self, address: AbstractCoin.Address) -> None:
         self._address_list_model.lock(self._address_list_model.lockInsertRows())
+        super().beforeAppendAddress(address)
 
-    def afterAppendAddress(self, address: AbstractAddress) -> None:
+    def afterAppendAddress(self, address: AbstractCoin.Address) -> None:
         self._address_list_model.unlock()
         # noinspection PyUnresolvedReferences
         self._tx_list_model.addSourceModel(address.model.txList)
-        self._application.networkThread.update_wallet(address)  # TODO
-        self._application.networkThread.unspent_list(address)  # TODO
+        super().afterAppendAddress(address)
 
     def afterSetServerData(self) -> None:
         self._server_data_model.refresh()
+        super().afterSetServerData()
 
 
 class CoinListModel(AbstractListModel):

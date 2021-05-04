@@ -9,6 +9,7 @@ from ...utils.serialize import Serializable, serializable
 if TYPE_CHECKING:
     from typing import Any, List, Optional, Tuple
     from .address import AbstractAddress
+    from .coin import AbstractCoin
 
 
 class _AbstractTxIo:
@@ -77,7 +78,7 @@ class AbstractTx(Serializable):
     class Io(_AbstractTxIo):
         pass
 
-    class Utxo(_AbstractUtxo):
+    class Utxo(_AbstractUtxo):  # TODO _AbstractUtxo
         pass
 
     def __init__(
@@ -118,10 +119,25 @@ class AbstractTx(Serializable):
 
     @classmethod
     def _deserialize(cls, args: Tuple[Any], key: str, value: Any) -> Any:
-        if isinstance(value, dict):
-            if key in ("input_list", "output_list"):
-                # return cls.TxIo(args[0].coin, **value)
-                raise NotImplementedError
+        if isinstance(value, dict) and key in ("input_list", "output_list"):
+            coin: AbstractCoin = args[0].coin
+            address_type = value["address_type"]
+            address_name = value["address_name"]
+            amount = value["amount"]
+
+            if address_name is None or address_type is None:
+                address = coin.Address.createNullData(coin, amount=amount)
+            else:
+                address = coin.Address.decode(
+                    coin,
+                    name=address_name,
+                    amount=amount)
+                if address is None:
+                    address = coin.Address.createNullData(
+                        coin,
+                        name=address_name or "UNKNOWN",
+                        amount=amount)
+            return cls.Io(address)
         return super()._deserialize(args, key, value)
 
     @property

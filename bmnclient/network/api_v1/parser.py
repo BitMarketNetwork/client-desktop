@@ -1,4 +1,4 @@
-# JOK+++
+# JOK4
 from __future__ import annotations
 
 import itertools
@@ -7,9 +7,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, Final, List, Optional, Type, Union
-    from ...coins.address import AbstractAddress
-    from ...coins.coin import AbstractCoin
-    from ...coins.tx import AbstractTx, AbstractUtxo
+    from ...coins.abstract.coin import AbstractCoin
 
 
 class ParseError(LookupError):
@@ -33,8 +31,8 @@ class AbstractParser:
             value_type: Type,
             default_value: Any = None,
             *,
-            allow_none=False,
-            allow_convert=False) -> Any:
+            allow_none: bool = False,
+            allow_convert: bool = False) -> Any:
         try:
             value = item[key_name]
 
@@ -116,7 +114,7 @@ class TxParser(AbstractParser):
         NONE: Final = auto()
         MEMPOOL: Final = auto()
 
-    def __init__(self, flags=ParseFlag.NONE) -> None:
+    def __init__(self, flags: ParseFlag = ParseFlag.NONE) -> None:
         super().__init__(flags)
 
     def __call__(
@@ -154,10 +152,24 @@ class TxParser(AbstractParser):
 
     def _parseIo(self, item: dict) -> dict:
         return {
-            "output_type": self.parseKey(item, "output_type", str),
-            "address_type": self.parseKey(item, "type", str, allow_none=True),
-            "address_name": self.parseKey(item, "address", str, allow_none=True),
-            "amount": self.parseKey(item, "amount", int)
+            "output_type": self.parseKey(
+                item,
+                "output_type",
+                str),
+            "address_type": self.parseKey(
+                item,
+                "type",
+                str,
+                allow_none=True),
+            "address_name": self.parseKey(
+                item,
+                "address",
+                str,
+                allow_none=True),
+            "amount": self.parseKey(
+                item,
+                "amount",
+                int)
         }
 
 
@@ -308,14 +320,14 @@ class AddressInfoParser(AbstractParser):
 
 
 class AddressTxParser(AbstractParser):
-    def __init__(self, address: AbstractAddress) -> None:
+    def __init__(self, address: AbstractCoin.Address) -> None:
         super().__init__()
         self._address = address
         self._address_type = ""
         self._address_name = ""
         self._first_offset = ""
         self._last_offset: Optional[str] = None
-        self._tx_list: List[AbstractTx] = []
+        self._tx_list: List[AbstractCoin.Tx] = []
 
     @property
     def addressType(self) -> str:
@@ -334,7 +346,7 @@ class AddressTxParser(AbstractParser):
         return self._last_offset
 
     @property
-    def txList(self) -> List[AbstractTx]:
+    def txList(self) -> List[AbstractCoin.Tx]:
         return self._tx_list
 
     def __call__(self, value: dict) -> None:
@@ -372,13 +384,13 @@ class AddressTxParser(AbstractParser):
                     .format(tx_name, str(e)))
 
 
-class AddressUnspentParser(AddressTxParser):
-    def __init__(self, address: AbstractAddress) -> None:
+class AddressUtxoParser(AddressTxParser):
+    def __init__(self, address: AbstractCoin.Address) -> None:
         super().__init__(address)
-        self._tx_list: List[AbstractUtxo] = []
+        self._tx_list: List[AbstractCoin.Tx.Utxo] = []
 
     @property
-    def txList(self) -> List[AbstractUtxo]:
+    def txList(self) -> List[AbstractCoin.Tx.Utxo]:
         return self._tx_list
 
     def _parseTxList(self, value: dict):
@@ -389,14 +401,14 @@ class AddressUnspentParser(AddressTxParser):
                 if height is None:  # TODO mempool (no server support)
                     height = -1
                 data = {
-                    "tx_name": self.parseKey(tx_value, "tx", str),
+                    "name": self.parseKey(tx_value, "tx", str),
                     "height": height,
                     "index": self.parseKey(tx_value, "index", int),
                     "amount": self.parseKey(tx_value, "amount", int),
                     "type": self._address_type  # TODO convert from string
                 }
                 if data["amount"] > 0:
-                    utxo = self._address.coin.Utxo.deserialize(
+                    utxo = self._address.coin.Tx.Utxo.deserialize(
                         self._address,
                         **data)
                     self._tx_list.append(utxo)
@@ -413,14 +425,14 @@ class CoinMempoolParser(AbstractParser):
         super().__init__()
         self._coin = coin
         self._hash = ""
-        self._tx_list: List[AbstractTx] = []
+        self._tx_list: List[AbstractCoin.Tx] = []
 
     @property
     def hash(self) -> str:
         return self._hash
 
     @property
-    def txList(self) -> List[AbstractTx]:
+    def txList(self) -> List[AbstractCoin.Tx]:
         return self._tx_list
 
     def __call__(self, value: dict) -> None:

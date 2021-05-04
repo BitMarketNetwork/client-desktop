@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from .parser import \
     AddressInfoParser, \
     AddressTxParser, \
-    AddressUnspentParser, \
+    AddressUtxoParser, \
     BroadcastTxParser, \
     CoinMempoolParser, \
     CoinsInfoParser, \

@@ -1,4 +1,4 @@
-# JOK+++
+# JOK4
 from __future__ import annotations
 
 from enum import IntEnum
@@ -35,9 +35,9 @@ class ListModelHelper:
     def __init__(self, application: Application) -> None:
         self._application = application
         # noinspection PyUnresolvedReferences
-        self.rowsInserted.connect(lambda **_: self.__rowCountChanged.emit())
+        self.rowsInserted.connect(lambda *_: self.__rowCountChanged.emit())
         # noinspection PyUnresolvedReferences
-        self.rowsRemoved.connect(lambda **_: self.__rowCountChanged.emit())
+        self.rowsRemoved.connect(lambda *_: self.__rowCountChanged.emit())
 
     @QProperty(str, notify=__rowCountChanged)
     def rowCountHuman(self) -> str:
@@ -121,12 +121,15 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
     def roleNames(self) -> dict:
         return {k: QByteArray(v[0]) for (k, v) in self.ROLE_MAP.items()}
 
-    def rowCount(self, parent=QModelIndex()) -> int:
+    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
         if parent.isValid():
             return 0
         return len(self._source_list)
 
-    def data(self, index: QModelIndex, role=Qt.DisplayRole) -> Any:
+    def data(
+            self,
+            index: QModelIndex,
+            role: Qt.ItemDataRole = Qt.DisplayRole) -> Any:
         role_value = self._getRoleValue(index, role)
         if role_value is None:
             return None
@@ -135,7 +138,11 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
         else:
             return role_value[1](self._source_list[index.row()])
 
-    def setData(self, index: QModelIndex, value: Any, role=Qt.EditRole) -> bool:
+    def setData(
+            self,
+            index: QModelIndex,
+            value: Any,
+            role: Qt.ItemDataRole = Qt.EditRole) -> bool:
         role_value = self._getRoleValue(index, role)
         if role_value is None or not isinstance(role_value[1], str):
             return False
@@ -178,10 +185,16 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
         self._data_list = [{}] * len(self._source_list)
         super().endResetModel()
 
-    def lockInsertRows(self, first_index=-1, count=1) -> LockInsertRows:
+    def lockInsertRows(
+            self,
+            first_index: int = -1,
+            count: int = 1) -> LockInsertRows:
         return self.LockInsertRows(self, first_index, count)
 
-    def lockRemoveRows(self, first_index=0, count=-1) -> LockRemoveRows:
+    def lockRemoveRows(
+            self,
+            first_index: int = 0,
+            count: int = -1) -> LockRemoveRows:
         return self.LockRemoveRows(self, first_index, count)
 
     def lockReset(self) -> LockReset:
@@ -216,7 +229,7 @@ class AbstractListSortedModel(QSortFilterProxyModel, ListModelHelper):
             application: Application,
             source_model: AbstractListModel,
             sort_role: int,
-            sort_order=Qt.AscendingOrder) -> None:
+            sort_order: Qt.SortOrder = Qt.AscendingOrder) -> None:
         super().__init__()
         ListModelHelper.__init__(self, application)
         # TODO self.setDynamicSortFilter(False)

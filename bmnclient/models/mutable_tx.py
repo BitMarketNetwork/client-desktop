@@ -1,7 +1,7 @@
+# JOK4
 from __future__ import annotations
 
-from abc import ABCMeta
-from typing import Optional, Sequence, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -10,40 +10,53 @@ from PySide2.QtCore import \
     Slot as QSlot
 
 from . import AbstractModel, AbstractStateModel, ValidStatus
-from .amount import AmountInputModel, AmountModel
+from .amount import AbstractAmountInputModel, AbstractAmountModel
 from .tx import TxIoListModel
-from ..coins.mutable_tx import MutableTxModelInterface
+from ..network.interfaces import MutableTxNetworkInterface
 
 if TYPE_CHECKING:
+    from typing import Optional, Sequence
+    from ..coins.abstract.coin import AbstractCoin
     from ..ui.gui import Application
-    from ..wallet.mutable_tx import MutableTransaction
 
 
 class AbstractMutableTxStateModel(AbstractStateModel):
     def __init__(
             self,
             application: Application,
-            tx: MutableTransaction) -> None:
+            tx: AbstractCoin.MutableTx) -> None:
         super().__init__(application, tx.coin)
         self._tx = tx
 
 
-class AbstractMutableTxAmountModel(AmountModel, metaclass=ABCMeta):
+class AbstractMutableTxAmountModel(AbstractAmountModel):
     def __init__(
             self,
             application: Application,
-            tx: MutableTransaction) -> None:
+            tx: AbstractCoin.MutableTx) -> None:
         super().__init__(application, tx.coin)
         self._tx = tx
 
+    def _getValue(self) -> Optional[int]:
+        raise NotImplementedError
 
-class AbstractMutableTxAmountInputModel(AmountInputModel, metaclass=ABCMeta):
+
+class AbstractMutableTxAmountInputModel(AbstractAmountInputModel):
     def __init__(
             self,
             application: Application,
-            tx: MutableTransaction) -> None:
+            tx: AbstractCoin.MutableTx) -> None:
         super().__init__(application, tx.coin)
         self._tx = tx
+
+    def _getValue(self) -> Optional[int]:
+        raise NotImplementedError
+
+    def _setValue(self, value: Optional[int]) -> bool:
+        raise NotImplementedError
+
+    def _getDefaultValue(self) -> Optional[int]:
+        raise NotImplementedError
 
 
 class MutableTxSourceAmountModel(AbstractMutableTxAmountModel):
@@ -136,7 +149,7 @@ class MutableTxReceiverModel(AbstractMutableTxStateModel):
     def __init__(
             self,
             application: Application,
-            tx: MutableTransaction) -> None:
+            tx: AbstractCoin.MutableTx) -> None:
         super().__init__(application, tx)
         self._first_use = True
 
@@ -167,7 +180,9 @@ class MutableTxSourceListModel(TxIoListModel):
 
     def __init__(self, application: Application, source_list: Sequence) -> None:
         super().__init__(application, source_list)
+        # noinspection PyUnresolvedReferences
         self.rowsInserted.connect(lambda **_: self.__stateChanged.emit())
+        # noinspection PyUnresolvedReferences
         self.rowsRemoved.connect(lambda **_: self.__stateChanged.emit())
 
     @QProperty(bool, notify=__stateChanged)
@@ -187,16 +202,17 @@ class MutableTxSourceListModel(TxIoListModel):
                 state.useAsTransactionInput = value
                 changed = True
         if changed:
+            # noinspection PyUnresolvedReferences
             self.__stateChanged.emit()
 
 
-class MutableTxModel(MutableTxModelInterface, AbstractModel):
+class MutableTxModel(MutableTxNetworkInterface, AbstractModel):
     __stateChanged = QSignal()
 
     def __init__(
             self,
             application: Application,
-            tx: MutableTransaction) -> None:
+            tx: AbstractCoin.MutableTx) -> None:
         super().__init__(application)
         self._tx = tx
 
@@ -281,5 +297,4 @@ class MutableTxModel(MutableTxModelInterface, AbstractModel):
     # noinspection PyTypeChecker
     @QSlot(result=bool)
     def broadcast(self) -> bool:
-        self._tx.send()  # TODO result
-        return True
+        return self._tx.broadcast()

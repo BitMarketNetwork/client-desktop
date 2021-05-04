@@ -1,9 +1,8 @@
-# JOK++
+# JOK4
 from __future__ import annotations
 
-from abc import ABCMeta
 from enum import auto
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -12,18 +11,17 @@ from PySide2.QtCore import \
     Slot as QSlot
 
 from . import AbstractModel, AbstractStateModel
-from .amount import AmountModel
+from .amount import AbstractAmountModel
 from .list import \
     AbstractListModel, \
     AbstractListSortedModel, \
     RoleEnum
-from ..coins.address import AddressModelInterface
+from ..network.interfaces import AddressNetworkInterface
 
 if TYPE_CHECKING:
-    from typing import Final
+    from typing import Final, Optional
     from .tx import TxListModel, TxListSortedModel
-    from ..coins.address import AbstractAddress
-    from ..coins.tx import AbstractTx
+    from ..coins.abstract.coin import AbstractCoin
     from ..ui.gui import Application
 
 
@@ -31,18 +29,21 @@ class AbstractAddressStateModel(AbstractStateModel):
     def __init__(
             self,
             application: Application,
-            address: AbstractAddress) -> None:
+            address: AbstractCoin.Address) -> None:
         super().__init__(application, address.coin)
         self._address = address
 
 
-class AbstractAddressAmountModel(AmountModel, metaclass=ABCMeta):
+class AbstractAddressAmountModel(AbstractAmountModel):
     def __init__(
             self,
             application: Application,
-            address: AbstractAddress) -> None:
+            address: AbstractCoin.Address) -> None:
         super().__init__(application, address.coin)
         self._address = address
+
+    def _getValue(self) -> Optional[int]:
+        raise NotImplementedError
 
 
 class AddressStateModel(AbstractAddressStateModel):
@@ -75,18 +76,20 @@ class AddressAmountModel(AbstractAddressAmountModel):
     def refresh(self) -> None:
         super().refresh()
         for tx in self._address.txList:
+            # noinspection PyUnresolvedReferences
             tx.model.amount.refresh()
+            # noinspection PyUnresolvedReferences
             tx.model.feeAmount.refresh()
 
     def _getValue(self) -> Optional[int]:
         return self._address.amount
 
 
-class AddressModel(AddressModelInterface, AbstractModel):
+class AddressModel(AddressNetworkInterface, AbstractModel):
     def __init__(
             self,
             application: Application,
-            address: AbstractAddress) -> None:
+            address: AbstractCoin.Address) -> None:
         super().__init__(application)
         self._address = address
 
@@ -131,18 +134,26 @@ class AddressModel(AddressModelInterface, AbstractModel):
 
     def afterSetAmount(self) -> None:
         self._amount_model.refresh()
+        super().afterSetAmount()
 
     def afterSetLabel(self) -> None:
         self._state_model.refresh()
+        super().afterSetLabel()
 
     def afterSetComment(self) -> None:
         self._state_model.refresh()
+        super().afterSetComment()
 
-    def beforeAppendTx(self, tx: AbstractTx) -> None:
+    def afterSetTxCount(self) -> None:
+        super().afterSetTxCount()
+
+    def beforeAppendTx(self, tx: AbstractCoin.Tx) -> None:
         self._tx_list_model.lock(self._tx_list_model.lockInsertRows())
+        super().beforeAppendTx(tx)
 
-    def afterAppendTx(self, tx: AbstractTx) -> None:
+    def afterAppendTx(self, tx: AbstractCoin.Tx) -> None:
         self._tx_list_model.unlock()
+        super().afterAppendTx(tx)
 
 
 class AddressListModel(AbstractListModel):

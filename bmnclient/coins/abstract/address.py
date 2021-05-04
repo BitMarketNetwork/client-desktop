@@ -28,10 +28,10 @@ class AbstractAddress(Serializable):
         def afterSetTxCount(self) -> None:
             raise NotImplementedError
 
-        def beforeAppendTx(self, tx: AbstractTx) -> None:
+        def beforeAppendTx(self, tx: AbstractCoin.Tx) -> None:
             raise NotImplementedError
 
-        def afterAppendTx(self, tx: AbstractTx) -> None:
+        def afterAppendTx(self, tx: AbstractCoin.Tx) -> None:
             raise NotImplementedError
 
     class Type(Enum):
@@ -89,7 +89,11 @@ class AbstractAddress(Serializable):
             cls,
             coin: AbstractCoin,
             **kwargs) -> Optional[AbstractAddress]:
-        return None
+        raise NotImplementedError
+
+    @classmethod
+    def createNullData(cls, coin: AbstractCoin, **kwargs) -> AbstractAddress:
+        raise NotImplementedError
 
     @property
     def data(self) -> bytes:

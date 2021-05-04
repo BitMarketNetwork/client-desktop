@@ -1,9 +1,9 @@
-# JOK++
+# JOK4
 from __future__ import annotations
 
 from enum import IntEnum
 from threading import Lock
-from typing import Iterable, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -12,7 +12,8 @@ from PySide2.QtCore import \
     SignalInstance as QSignalInstance
 
 if TYPE_CHECKING:
-    from ..coins.coin import AbstractCoin
+    from typing import Iterable, Optional
+    from ..coins.abstract.coin import AbstractCoin
     from ..language import Locale
     from ..ui.gui import Application
 
@@ -37,6 +38,7 @@ class AbstractStateModel(QObject):
                 a = getattr(self, a)
                 if isinstance(a, QSignalInstance):
                     a.emit()
+        # noinspection PyUnresolvedReferences
         self.stateChanged.emit()
 
     @property
@@ -59,10 +61,10 @@ class AbstractStateModel(QObject):
 class AbstractModel(QObject):
     stateChanged = QSignal()
 
-    def __init__(self, application: Application) -> None:
+    def __init__(self, application: Application, *args, **kwargs) -> None:
         super().__init__()
-        self._refresh_lock = Lock()
         self._application = application
+        self._refresh_lock = Lock()
 
     def iterateStateModels(self) -> Iterable[AbstractStateModel]:
         for a in dir(self):

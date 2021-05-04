@@ -1,8 +1,7 @@
-# JOK++
+# JOK4
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
-from typing import Callable, Optional, TYPE_CHECKING, Type, Union
+from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -13,20 +12,15 @@ from PySide2.QtGui import QValidator
 from . import AbstractStateModel
 
 if TYPE_CHECKING:
-    from ..coins.coin import AbstractCoin
-    from ..coins.currency import AbstractCurrency
+    from typing import Callable, Optional, Type, Union
+    from ..coins.abstract.coin import AbstractCoin
+    from ..coins.abstract.currency import AbstractCurrency
     from ..ui.gui import Application
 
 
-class AmountModel(
-        AbstractStateModel,
-        metaclass=type(
-            'AmountModelMeta',
-            (ABCMeta, type(AbstractStateModel)),
-            {})):
+class AbstractAmountModel(AbstractStateModel):
     __stateChanged = QSignal()
 
-    @abstractmethod
     def _getValue(self) -> Optional[int]:
         raise NotImplementedError
 
@@ -43,31 +37,32 @@ class AmountModel(
 
     @QProperty(str, notify=__stateChanged)
     def valueHuman(self) -> str:
-        return self._toHumanValue(self.value, self._coin.currency)
+        # noinspection PyTypeChecker
+        return self._toHumanValue(self.value, self._coin.Currency)
 
     @QProperty(str, constant=True)
     def unit(self) -> str:
-        return self._coin.currency.unit
+        return self._coin.Currency.unit
 
     @QProperty(str, notify=__stateChanged)
     def fiatValueHuman(self) -> str:
         if self._coin.fiatRate.value <= 0:
             return "-"
 
-        return self._toHumanValue(
-            self._coin.toFiatAmount(self.value),
-            self._coin.fiatRate.currency)
+        # noinspection PyTypeChecker
+        fiat_amount = self._coin.toFiatAmount(self.value)
+        return self._toHumanValue(fiat_amount, self._coin.fiatRate.currency)
 
     @QProperty(str, notify=__stateChanged)
     def fiatUnit(self) -> str:
         return self._coin.fiatRate.currency.unit
 
 
-class AmountInputModel(AmountModel, metaclass=ABCMeta):
+class AbstractAmountInputModel(AbstractAmountModel):
     __stateChanged = QSignal()
 
-    class _Validator(QValidator):
-        def __init__(self, owner: AmountInputModel):
+    class _AbstractValidator(QValidator):
+        def __init__(self, owner: AbstractAmountInputModel):
             super().__init__()
             self._owner = owner
 
@@ -97,13 +92,16 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
                 return QValidator.State.Invalid
             return QValidator.State.Acceptable
 
-    class _ValueHumanValidator(_Validator):
+        def validate(self, value: str, _) -> QValidator.State:
+            raise NotImplementedError
+
+    class _ValueHumanValidator(_AbstractValidator):
         def validate(self, value: str, _) -> QValidator.State:
             return self._validateHelper(
                 value,
-                self._owner._coin.currency)
+                self._owner._coin.Currency)
 
-    class _FiatValueHumanValidator(_Validator):
+    class _FiatValueHumanValidator(_AbstractValidator):
         def validate(self, value: str, _) -> QValidator.State:
             return self._validateHelper(
                 value,
@@ -115,11 +113,12 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
         self._value_human_validator = self._ValueHumanValidator(self)
         self._fiat_value_human_validator = self._FiatValueHumanValidator(self)
 
-    @abstractmethod
+    def _getValue(self) -> Optional[int]:
+        raise NotImplementedError
+
     def _setValue(self, value: Optional[int]) -> bool:
         raise NotImplementedError
 
-    @abstractmethod
     def _getDefaultValue(self) -> Optional[int]:
         raise NotImplementedError
 
@@ -167,7 +166,7 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
 
     @QProperty(str, notify=__stateChanged)
     def valueHumanTemplate(self) -> str:
-        a = self._coin.currency.stringTemplate
+        a = self._coin.Currency.stringTemplate
         b = self._coin.fiatRate.currency.stringTemplate
         return a if len(a) > len(b) else b
 
@@ -176,7 +175,7 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
     def setValueHuman(self, value: str) -> bool:
         return self._setValueHelper(
             value,
-            self._coin.currency)
+            self._coin.Currency)
 
     # noinspection PyTypeChecker
     @QSlot(str, result=bool)
@@ -191,4 +190,4 @@ class AmountInputModel(AmountModel, metaclass=ABCMeta):
     def setDefaultValue(self) -> bool:
         return self._setValueHelper(
             self._getDefaultValue(),
-            self._coin.currency)
+            self._coin.Currency)
