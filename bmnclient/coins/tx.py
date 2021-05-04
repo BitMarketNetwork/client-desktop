@@ -1,16 +1,15 @@
-# JOK++
+# JOK4
 from __future__ import annotations
 
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from .address import AbstractAddress
 from ..utils.serialize import Serializable, serializable
+from ..wallet.mtx_impl import UTXO
 
 if TYPE_CHECKING:
     from typing import Any, List, Optional, Tuple
-    from .coin import AbstractCoin
-    from ..wallet.address import CAddress
+    from .address import AbstractAddress
 
 
 class TxStatus(Enum):
@@ -19,22 +18,57 @@ class TxStatus(Enum):
     COMPLETE = 2
 
 
-class AbstractTxIo(AbstractAddress):
+class AbstractTxIo:
+    def __init__(self, address: AbstractAddress) -> None:
+        self._address = address
+
+    @property
+    def address(self) -> AbstractAddress:
+        return self._address
+
+
+class AbstractUtxo(Serializable):
     def __init__(
             self,
-            coin: AbstractCoin,
+            address: AbstractAddress,
             *,
-            output_type: str,
-            address_type: str,
-            address_name: str,
+            name: str,
+            height: int,
+            index: int,
             amount: int) -> None:
-        super().__init__(
-            coin,
-            name=address_name,
-            amount=amount)
+        super().__init__()
+        self._address = address
+        self._name = name
+        self._height = height
+        self._index = index
+        self._amount = amount
+
+    @property
+    def address(self) -> AbstractAddress:
+        return self._address
+
+    @serializable
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @serializable
+    @property
+    def height(self) -> int:
+        return self._height
+
+    @serializable
+    @property
+    def index(self) -> int:
+        return self._index
+
+    @serializable
+    @property
+    def amount(self) -> int:
+        return self._amount
 
 
-class TxModelInterface:
+class AbstractTxInterface:
     def afterSetHeight(self) -> None:
         raise NotImplementedError
 
@@ -44,6 +78,9 @@ class TxModelInterface:
 
 class AbstractTx(Serializable):
     class TxIo(AbstractTxIo):
+        pass
+
+    class Utxo(UTXO):  # TODO AbstractUtxo
         pass
 
     def __init__(
@@ -72,14 +109,12 @@ class AbstractTx(Serializable):
         self._input_list = input_list
         self._output_list = output_list
 
-        self._model: Optional[TxModelInterface] = \
+        self._model: Optional[AbstractTxInterface] = \
             self._address.coin.model_factory(self)
 
-    def __eq__(self, other) -> bool:
-        if isinstance(other, AbstractTx):
-            # TODO compare self._input_list, self._output_list
-            return self._name == other._name
-        raise TypeError
+    def __eq__(self, other: AbstractTx) -> bool:
+        # TODO compare self._input_list, self._output_list
+        return self._name == other._name
 
     def __hash__(self) -> int:
         return hash(self._name)
@@ -92,7 +127,7 @@ class AbstractTx(Serializable):
         return super()._deserialize(args, key, value)
 
     @property
-    def model(self) -> Optional[TxModelInterface]:
+    def model(self) -> Optional[AbstractTxInterface]:
         return self._model
 
     @property
@@ -169,43 +204,3 @@ class AbstractTx(Serializable):
     def outputList(self) -> List[TxIo]:
         return self._output_list
 
-
-class AbstractUtxo(Serializable):
-    def __init__(
-            self,
-            address: CAddress,
-            *,
-            tx_name: str,
-            height: int,
-            index: int,
-            amount: int) -> None:
-        super().__init__()
-        self._address = address
-        self._tx_name = tx_name
-        self._height = height
-        self._index = index
-        self._amount = amount
-
-    @property
-    def address(self) -> CAddress:
-        return self._address
-
-    @serializable
-    @property
-    def txName(self) -> str:
-        return self._tx_name
-
-    @serializable
-    @property
-    def height(self) -> int:
-        return self._height
-
-    @serializable
-    @property
-    def index(self) -> int:
-        return self._index
-
-    @serializable
-    @property
-    def amount(self) -> int:
-        return self._amount

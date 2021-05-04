@@ -1,4 +1,4 @@
-# JOK+++
+# JOK4
 from __future__ import annotations
 
 from collections.abc import Iterator
@@ -9,22 +9,21 @@ from ..wallet.key import AddressType
 
 if TYPE_CHECKING:
     from typing import Dict, Optional
-    from .address import AbstractAddress
     from .coin import AbstractCoin
 
 
 class HdAddressIterator(Iterator):
     _EMPTY_ADDRESS_LIMIT = 6
 
-    def __init__(self, coin: AbstractCoin, hd_index=0) -> None:
+    def __init__(self, coin: AbstractCoin, hd_index: int = 0) -> None:
         self._coin = coin
         self._type_index = -1
         self._last_address: Optional[CAddress] = None
         self._hd_index = hd_index
         self._stop = False
 
-        self._empty_address_counter: Dict[AbstractAddress.Type, int] = {}
-        for address_type in self._coin.address.Type:
+        self._empty_address_counter: Dict[AbstractCoin.Address.Type, int] = {}
+        for address_type in self._coin.Address.Type:
             if self.isSupportedAddressType(address_type) is not None:
                 self._empty_address_counter[address_type] = 0
         assert len(self._empty_address_counter) > 0
@@ -37,7 +36,7 @@ class HdAddressIterator(Iterator):
             raise StopIteration
 
         while True:
-            for type_index, address_type in enumerate(self._coin.address.Type):
+            for type_index, address_type in enumerate(self._coin.Address.Type):
                 if type_index <= self._type_index:
                     continue
 
@@ -60,7 +59,7 @@ class HdAddressIterator(Iterator):
     @classmethod
     def isSupportedAddressType(
             cls,
-            address_type: AbstractAddress.Type) -> Optional[AddressType]:
+            address_type: AbstractCoin.Address.Type) -> Optional[AddressType]:
         # TODO return bool
         if address_type.value[1] > 0:
             if address_type.value[2] == "p2pkh":

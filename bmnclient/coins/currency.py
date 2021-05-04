@@ -1,7 +1,7 @@
-# JOK++
+# JOK4
 from __future__ import annotations
 
-from typing import Optional, Type, TYPE_CHECKING
+from typing import Type, TYPE_CHECKING
 
 from PySide2.QtCore import QObject
 
@@ -10,9 +10,9 @@ from ..utils.meta import classproperty
 from ..utils.static_list import UserStaticList
 
 if TYPE_CHECKING:
+    from typing import Final, Optional
     from ..application import CoreApplication
     from ..language import Locale
-    from typing import Final
 
 
 class AbstractCurrency:
@@ -20,10 +20,11 @@ class AbstractCurrency:
     _VALUE_BITS = 63  # int64
     _NAME = "YYY"
     _UNIT = "YYY"
-    __string_template: str = None
+    __string_template: Optional[str] = None
 
     def __init__(self) -> None:
-        raise TypeError
+        raise Exception(
+            "__init__ disabled for class {}".format(self.__class__.__name__))
 
     @classproperty
     def name(cls) -> str: # noqa
@@ -59,7 +60,7 @@ class AbstractCurrency:
             cls,
             source: str,
             *,
-            strict=True,
+            strict: bool = True,
             locale: Optional[Locale] = None) -> Optional[int]:
         if not source:
             return None

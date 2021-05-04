@@ -1,4 +1,4 @@
-# JOK+++
+# JOK4
 from __future__ import annotations
 
 import math
@@ -13,7 +13,6 @@ from .tx import AbstractTx
 from ..crypto.digest import Sha256Digest
 from ..utils.meta import classproperty
 from ..utils.serialize import Serializable, serializable
-from ..wallet.mtx_impl import UTXO
 from ..wallet.mutable_tx import MutableTransaction
 
 if TYPE_CHECKING:
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
     from ..wallet.hd import HDNode
 
 
-class CoinModelInterface:
+class AbstractCoinInterface:
     def afterSetHeight(self) -> None:
         raise NotImplementedError
 
@@ -34,10 +33,10 @@ class CoinModelInterface:
     def afterRefreshAmount(self) -> None:
         raise NotImplementedError
 
-    def beforeAppendAddress(self, address: AbstractAddress) -> None:
+    def beforeAppendAddress(self, address: AbstractCoin.Address) -> None:
         raise NotImplementedError
 
-    def afterAppendAddress(self, address: AbstractAddress) -> None:
+    def afterAppendAddress(self, address: AbstractCoin.Address) -> None:
         raise NotImplementedError
 
     def afterSetServerData(self) -> None:
@@ -51,16 +50,13 @@ class AbstractCoin(Serializable):
     # https://github.com/satoshilabs/slips/blob/master/slip-0044.md
     _BIP0044_COIN_TYPE = -1
 
-    class _Currency(AbstractCurrency):
+    class Currency(AbstractCurrency):
         pass
 
-    class _Address(AbstractAddress):
+    class Address(AbstractAddress):
         pass
 
     class Tx(AbstractTx):
-        pass
-
-    class Utxo(UTXO):
         pass
 
     class MempoolCacheItem(TypedDict):
@@ -90,13 +86,17 @@ class AbstractCoin(Serializable):
 
         self._hd_path: Optional[HDNode] = None
 
-        self._address_list: List[AbstractCoin._Address] = []
+        self._address_list: List[AbstractCoin.Address] = []
         self._server_data: Dict[str, Union[int, str]] = {}
         self._mempool_cache: Dict[bytes, AbstractCoin.MempoolCacheItem] = {}
         self._mempool_cache_access_counter = 0
         self._mutable_tx = MutableTransaction(self)
 
-        self._model: Optional[CoinModelInterface] = self.model_factory(self)
+        self._model: Optional[AbstractCoinInterface] = self.model_factory(self)
+
+    @property
+    def model(self) -> Optional[AbstractCoinInterface]:
+        return self._model
 
     def _updateState(self) -> int:
         old_value = self.__state_hash
@@ -111,18 +111,6 @@ class AbstractCoin(Serializable):
         if self._model_factory:
             return self._model_factory(owner)
         return None
-
-    @property
-    def model(self) -> Optional[CoinModelInterface]:
-        return self._model
-
-    @classproperty
-    def currency(cls) -> Type[_Currency]:  # noqa
-        return cls._Currency
-
-    @classproperty
-    def address(cls) -> Type[_Address]:  # noqa
-        return cls._Address
 
     @serializable
     @property
@@ -233,16 +221,16 @@ class AbstractCoin(Serializable):
         if value is None:
             value = self._amount
         value *= self._fiat_rate.value
-        value //= self.currency.decimalDivisor
+        value //= self.Currency.decimalDivisor
         return value if self._fiat_rate.currency.isValidValue(value) else None
 
     def fromFiatAmount(self, value: int) -> Optional[int]:
-        value *= self.currency.decimalDivisor
+        value *= self.Currency.decimalDivisor
         if self._fiat_rate.value:
             value = math.ceil(value / self._fiat_rate.value)
         else:
             value = 0
-        return value if self.currency.isValidValue(value) else None
+        return value if self.Currency.isValidValue(value) else None
 
     @property
     def amount(self) -> int:
@@ -268,32 +256,32 @@ class AbstractCoin(Serializable):
     def hdAddressPath(
             self,
             account: int,
-            change: bool,
+            is_change: bool,
             index: int) -> Optional[HDNode]:
         if self._hd_path is None:
             return None
-        # FIXME broken path?
+        # FIXME broken path!
         address_path = self._hd_path.make_child_prv(
             index,
             False,
             self.network)
         return address_path
 
-    def decodeAddress(self, **kwargs) -> Optional[_Address]:
-        return self._Address.decode(self, **kwargs)
+    def decodeAddress(self, **kwargs) -> Optional[Address]:
+        return self.Address.decode(self, **kwargs)
 
     @property
-    def addressList(self) -> List[_Address]:
+    def addressList(self) -> List[Address]:
         return self._address_list
 
-    def findAddressByName(self, name: str) -> Optional[_Address]:
+    def findAddressByName(self, name: str) -> Optional[Address]:
         name = name.strip().casefold()  # TODO tmp, old wrapper
         for address in self._address_list:
             if name == address.name.casefold():
                 return address
         return None
 
-    def appendAddress(self, address: _Address) -> bool:
+    def appendAddress(self, address: Address) -> bool:
         # TODO tmp, old wrapper
         if self.findAddressByName(address.name) is not None:  # noqa
             return False

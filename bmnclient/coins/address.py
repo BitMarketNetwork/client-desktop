@@ -1,4 +1,4 @@
-# JOK+++
+# JOK4
 from __future__ import annotations
 
 from enum import Enum
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from .tx import AbstractTx, AbstractUtxo
 
 
-class AddressModelInterface:
+class AbstractAddressInterface:
     def afterSetAmount(self) -> None:
         raise NotImplementedError
 
@@ -20,6 +20,9 @@ class AddressModelInterface:
         raise NotImplementedError
 
     def afterSetComment(self) -> None:
+        raise NotImplementedError
+
+    def afterSetTxCount(self) -> None:
         raise NotImplementedError
 
     def beforeAppendTx(self, tx: AbstractTx) -> None:
@@ -30,6 +33,8 @@ class AddressModelInterface:
 
 
 class AbstractAddress(Serializable):
+    _NULLDATA_NAME = "nulldata"
+
     class Type(Enum):
         # Tuple(version, excepted_size, friendly_name)
         pass
@@ -38,8 +43,8 @@ class AbstractAddress(Serializable):
             self,
             coin: AbstractCoin,
             *,
-            name: str,
-            type_: Optional[Type],
+            name: Optional[str],
+            type_: Type,
             data: bytes = b"",
             amount: int = 0,
             label: str = "",
@@ -47,20 +52,24 @@ class AbstractAddress(Serializable):
         super().__init__()
 
         self._coin = coin
-        self._name = name.strip()
+        self._name = name or self._NULLDATA_NAME
         self._type = type_
         self._data = data
         self._amount = amount
         self._label = label
         self._comment = comment
-        self._tx_list = []  # TODO enable deserialize
+        self._tx_count = 0  # not linked with self._tx_list
+        self._tx_list: List[AbstractTx] = []  # TODO enable deserialize
         self._utxo_list: List[AbstractUtxo] = []
 
-        self._model: Optional[AddressModelInterface] = \
+        self._history_first_offset = ""
+        self._history_last_offset = ""
+
+        self._model: Optional[AbstractAddressInterface] = \
             self._coin.model_factory(self)
 
     @property
-    def model(self) -> Optional[AddressModelInterface]:
+    def model(self) -> Optional[AbstractAddressInterface]:
         return self._model
 
     @property
@@ -128,6 +137,17 @@ class AbstractAddress(Serializable):
         return True  # TODO
 
     @property
+    def txCount(self) -> int:
+        return self._tx_count
+
+    @txCount.setter
+    def txCount(self, value: int) -> None:
+        if self._tx_count != value:
+            self._tx_count = value
+            if self._model:
+                self._model.afterSetTxCount()
+
+    @property
     def txList(self) -> List[AbstractTx]:
         return self._tx_list
 
@@ -157,8 +177,25 @@ class AbstractAddress(Serializable):
     def utxoList(self, utxo_list: List[AbstractUtxo]) -> None:
         self._utxo_list = utxo_list
         utxo_amount = sum(map(lambda utxo: utxo.amount, self._utxo_list))
-        if self.amount != utxo_amount:
+        if self._amount != utxo_amount:
             # TODO test, notify
-            pass
-        self.amount = utxo_amount
-        # TODO notify
+            self.amount = utxo_amount
+        self._coin.refreshUnspent()
+
+    @serializable
+    @property
+    def historyFirstOffset(self) -> str:
+        return self._history_first_offset
+
+    @historyFirstOffset.setter
+    def historyFirstOffset(self, value: str):
+        self._history_first_offset = value
+
+    @serializable
+    @property
+    def historyLastOffset(self) -> str:
+        return self._history_last_offset
+
+    @historyLastOffset.setter
+    def historyLastOffset(self, value: str):
+        self._history_last_offset = value

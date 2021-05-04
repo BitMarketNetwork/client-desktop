@@ -1,4 +1,4 @@
-# JOK+++
+# JOK4
 from __future__ import annotations
 
 import unicodedata
@@ -12,7 +12,7 @@ from ..logger import Logger
 from ..version import ProductPaths
 
 if TYPE_CHECKING:
-    from typing import Final, Optional, List, Union, Iterable
+    from typing import Final, Iterable, List, Optional, Union
 
 
 # Adapted from:
@@ -27,7 +27,7 @@ class Mnemonic:
     DEFAULT_DATA_LENGTH: Final = 24
     PHRASE_WORD_COUNT_LIST: Final = (12, 15, 18, 21, 24)
 
-    def __init__(self, language: str = None) -> None:
+    def __init__(self, language: Optional[str] = None) -> None:
         self._language = language.lower() if language else "english"
         self._logger = Logger.getClassLogger(
             __name__,

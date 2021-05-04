@@ -1,22 +1,22 @@
-# JOK+++
+# JOK4
 from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING
 
 from ..logger import Logger
-from ..wallet.fee_manager import FeeManager
 
 if TYPE_CHECKING:
     from typing import Dict, List, Optional
-    from .address import AbstractAddress
     from .coin import AbstractCoin
     from .tx import AbstractUtxo
     from ..wallet.address import CAddress
+    from ..wallet.mtx_impl import Mtx
 
 
-class MutableTxModelInterface:
-    pass
+class AbstractMutableTxInterface:
+    def onBroadcast(self, tx: Mtx) -> None:
+        raise NotImplementedError
 
 
 class AbstractMutableTx:
@@ -26,13 +26,14 @@ class AbstractMutableTx:
             self.__class__,
             coin.shortName)
         self._coin = coin
-        self._receiver_address: Optional[AbstractCoin._Address] = None
-        self._change_address: Optional[AbstractCoin._Address] = None
-        self._source_list: List[AbstractAddress] = []
+        self._receiver_address: Optional[AbstractCoin.Address] = None
+        self._change_address: Optional[AbstractCoin.Address] = None
+        self._source_list: List[AbstractCoin.Address] = []
         self._source_amount = 0
         self._amount = 0
 
         self._subtract_fee = False
+        from ..wallet.fee_manager import FeeManager
         self._fee_manager = FeeManager()  # TODO
         self._fee_amount_per_byte = self._fee_manager.max_spb
 
@@ -42,11 +43,11 @@ class AbstractMutableTx:
         self.__mtx = None  # TODO tmp
         self.__mtx_result: Optional[str] = None  # TODO tmp
 
-        self._model: Optional[MutableTxModelInterface] = \
+        self._model: Optional[AbstractMutableTxInterface] = \
             self._coin.model_factory(self)
 
     @property
-    def model(self) -> Optional[MutableTxModelInterface]:
+    def model(self) -> Optional[AbstractMutableTxInterface]:
         return self._model
 
     @property
@@ -73,11 +74,11 @@ class AbstractMutableTx:
             return True
 
     @property
-    def receiverAddress(self) -> Optional[AbstractCoin._Address]:
+    def receiverAddress(self) -> Optional[AbstractCoin.Address]:
         return self._receiver_address
 
     @property
-    def changeAddress(self) -> Optional[AbstractCoin._Address]:
+    def changeAddress(self) -> Optional[AbstractCoin.Address]:
         return self._change_address
 
     def refreshSourceList(self) -> None:
@@ -189,6 +190,10 @@ class AbstractMutableTx:
             change_amount -= self.feeAmount
         return change_amount
 
+    def clear(self) -> None:
+        # TODO
+        pass
+
     def prepare(self) -> bool:
         if not self.isValidAmount:
             self._logger.error("Invalid amount: %i", self._amount)
@@ -219,6 +224,7 @@ class AbstractMutableTx:
         # TODO extend self with Mtx for every coin
         from ..wallet.mtx_impl import Mtx
         self.__mtx = Mtx.make(self._selected_utxo_list, output_list)
+        self.__mtx.coin = self._coin
         if self.__mtx.feeAmount != fee_amount:
             self._logger.error(
                 "Fee failure, should be %i but has %i.",
@@ -242,11 +248,21 @@ class AbstractMutableTx:
                     self._logger.debug(
                         "Input: %s, UTXO \"%s\":%i, amount %i.",
                         address.name,
-                        utxo.txName,
+                        utxo.name,
                         utxo.index,
                         utxo.amount)
             self.__mtx.sign(address.private_key, utxo_list=utxo_list)
 
         self.__mtx_result = self.__mtx.to_hex()
+        if self.__mtx_result is None or len(self.__mtx_result) <= 0:
+            return False
         self._logger.debug(f"Signed transaction: %s", self.__mtx_result)
-        return len(self.__mtx_result) > 0
+        return True
+
+    def broadcast(self) -> bool:
+        if self.__mtx_result is None or len(self.__mtx_result) <= 0:
+            return False
+        mtx = self.__mtx
+        self.clear()
+        if self._model:
+            self._model.onBroadcast(mtx)

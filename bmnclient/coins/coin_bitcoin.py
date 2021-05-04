@@ -1,9 +1,8 @@
-# JOK+++
+# JOK4
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .address import AbstractAddress
 from .coin import AbstractCoin
 from ..crypto.base58 import Base58
 from ..crypto.bech32 import Bech32
@@ -13,12 +12,12 @@ if TYPE_CHECKING:
     from typing import Final, Optional
 
 
-class BitcoinAddress(AbstractAddress):
+class BitcoinAddress(AbstractCoin.Address):
     _PUBKEY_HASH_PREFIX_LIST = ("1",)
     _SCRIPT_HASH_PREFIX_LIST = ("3",)
     _HRP = "bc"
 
-    class Type(AbstractAddress.Type):
+    class Type(AbstractCoin.Address.Type):
         UNKNOWN: Final = (0xff, 0, "unknown")
         PUBKEY_HASH: Final = (0x00, Ripemd160Digest.SIZE, "p2pkh")
         SCRIPT_HASH: Final = (0x05, Ripemd160Digest.SIZE, "p2sh")
@@ -67,7 +66,7 @@ class BitcoinAddress(AbstractAddress):
             data = Base58.decode(name, True)
             if not data or data[0] != address_type.value[0]:
                 return None
-            address_version = address_type.value[0]
+            # address_version = address_type.value[0]
             data = data[1:]
         elif address_type in (
                 cls.Type.WITNESS_V0_KEY_HASH,
@@ -109,11 +108,11 @@ class Bitcoin(AbstractCoin):
     _FULL_NAME = "Bitcoin"
     _BIP0044_COIN_TYPE = 0
 
-    class _Currency(AbstractCoin._Currency):
+    class Currency(AbstractCoin.Currency):
         _DECIMAL_SIZE = (0, 8)
         _UNIT = "BTC"
 
-    class _Address(BitcoinAddress):
+    class Address(BitcoinAddress):
         pass
 
 
@@ -122,7 +121,7 @@ class BitcoinTestAddress(BitcoinAddress):
     _SCRIPT_HASH_PREFIX_LIST = ("2",)
     _HRP = "tb"
 
-    class Type(AbstractAddress.Type):
+    class Type(AbstractCoin.Address.Type):
         UNKNOWN: Final = \
             BitcoinAddress.Type.UNKNOWN.value
         PUBKEY_HASH: Final = \
@@ -143,5 +142,5 @@ class BitcoinTest(Bitcoin):
     _IS_TEST_NET = True
     _BIP0044_COIN_TYPE = 1
 
-    class _Address(BitcoinTestAddress):
+    class Address(BitcoinTestAddress):
         pass

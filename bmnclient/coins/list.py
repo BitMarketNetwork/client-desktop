@@ -1,11 +1,14 @@
-# JOK++
+# JOK4
 from __future__ import annotations
 
-from typing import Callable, Optional
+from typing import TYPE_CHECKING
 
 from .coin import AbstractCoin
 from ..utils.static_list import StaticList
 from ..wallet import coins
+
+if TYPE_CHECKING:
+    from typing import Callable, Optional
 
 
 class CoinList(StaticList):

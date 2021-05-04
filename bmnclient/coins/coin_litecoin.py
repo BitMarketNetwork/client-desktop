@@ -1,10 +1,9 @@
-# JOK+++
+# JOK4
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .address import AbstractAddress
-from .coin_bitcoin import Bitcoin, BitcoinAddress
+from .coin_bitcoin import AbstractCoin, Bitcoin, BitcoinAddress
 
 if TYPE_CHECKING:
     from typing import Final
@@ -15,7 +14,7 @@ class LitecoinAddress(BitcoinAddress):
     _SCRIPT_HASH_PREFIX_LIST = ("M",)
     _HRP = "ltc"
 
-    class Type(AbstractAddress.Type):
+    class Type(AbstractCoin.Address.Type):
         UNKNOWN: Final = \
             BitcoinAddress.Type.UNKNOWN.value
         PUBKEY_HASH: Final = \
@@ -35,8 +34,8 @@ class Litecoin(Bitcoin):
     _FULL_NAME = "Litecoin"
     _BIP0044_COIN_TYPE = 2
 
-    class _Currency(Bitcoin._Currency):
+    class Currency(Bitcoin.Currency):
         _UNIT = "LTC"
 
-    class _Address(LitecoinAddress):
+    class Address(LitecoinAddress):
         pass
