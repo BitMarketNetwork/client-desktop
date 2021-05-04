@@ -3,7 +3,7 @@ import PySide2.QtCore as qt_core
 
 from ..wallet.coins import CoinType
 from .address import CAddress
-from ..coins.tx import AbstractTx
+from ..coins.abstract.coin import AbstractCoin
 
 log = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ class WalletThread(qt_core.QThread):
     dropDb = qt_core.Signal()
     clearAddressTx = qt_core.Signal(CAddress, arguments=["address"])
     saveAddress = qt_core.Signal(CAddress, int, arguments=["wallet", "timeout"])
-    saveTx = qt_core.Signal(AbstractTx, arguments=["tx"])
+    saveTx = qt_core.Signal(AbstractCoin.Tx, arguments=["tx"])
     resetDb = qt_core.Signal(bytes, arguments=["password"])
     removeTxList = qt_core.Signal(list)
     saveCoin = qt_core.Signal(CoinType, arguments=["coin"])

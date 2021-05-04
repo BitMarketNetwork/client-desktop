@@ -1,4 +1,4 @@
-# JOK+++
+# JOK4
 from __future__ import annotations
 
 import functools
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from .api_v1.query import AbstractApiQuery
     from .query_manager import NetworkQueryManager
     from ..application import CoreApplication
-    from ..coins.coin import AbstractCoin
+    from ..coins.abstract.coin import AbstractCoin
 
 
 class NetworkQueryTimer(QObject):

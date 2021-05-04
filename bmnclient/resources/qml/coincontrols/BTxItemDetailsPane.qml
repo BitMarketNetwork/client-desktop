@@ -45,7 +45,7 @@ BPane {
                 visibleItemCount: _base.visibleAddressCount
                 model: _base.tx.inputList
                 delegate: BAddressItem {
-                    address: model
+                    address: model.address
                     // TODO contextMenu: _base.contextMenu
                 }
                 templateDelegate: BAddressItem {
@@ -58,7 +58,7 @@ BPane {
                 visibleItemCount: _base.visibleAddressCount
                 model: _base.tx.outputList
                 delegate: BAddressItem {
-                    address: model
+                    address: model.address
                     // TODO contextMenu: _base.contextMenu
                 }
                 templateDelegate: BAddressItem {

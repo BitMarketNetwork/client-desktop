@@ -16,7 +16,7 @@ from ...ui.gui.system_tray import MessageIcon, SystemTrayIcon
 
 if TYPE_CHECKING:
     from . import Application
-    from ...coins.tx import AbstractTx
+    from ...coins.abstract.coin import AbstractCoin
 
 
 log = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ class UIManager(QObject):
         dialog = getattr(dialogs, name)(self._application.backendContext)
         getattr(dialog, signal)()
 
-    def process_incoming_tx(self, tx: AbstractTx) -> None:
+    def process_incoming_tx(self, tx: AbstractCoin.Tx) -> None:
         if tx.name in self.__notified_tx_list:
             return
         self.__notified_tx_list.append(tx.name)

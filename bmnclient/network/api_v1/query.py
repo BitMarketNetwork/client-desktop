@@ -23,8 +23,7 @@ from ...logger import Logger
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, Final, List, Optional, Tuple, Union
     from ...application import CoreApplication
-    from ...coins.coin import AbstractCoin
-    from ...coins.tx import AbstractUtxo
+    from ...coins.abstract.coin import AbstractCoin
     from ...wallet.address import CAddress
     from ...wallet.mtx_impl import Mtx
 
@@ -389,7 +388,7 @@ class AddressTxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
                 last_offset=None)
 
 
-class AddressUnspentIteratorApiQuery(AddressTxIteratorApiQuery):
+class AddressUtxoIteratorApiQuery(AddressTxIteratorApiQuery):
     _ACTION = AddressInfoApiQuery._ACTION + ("unspent", )
 
     def __init__(
@@ -401,7 +400,7 @@ class AddressUnspentIteratorApiQuery(AddressTxIteratorApiQuery):
                 Callable[[HdAddressIteratorApiQuery], None]] = None,
             first_offset: Optional[str] = None,
             last_offset: Optional[str] = None,
-            _utxo_list: Optional[List[AbstractUtxo]] = None) -> None:
+            _utxo_list: Optional[List[AbstractCoin.Tx.Utxo]] = None) -> None:
         super().__init__(
             application,
             address,
@@ -418,7 +417,7 @@ class AddressUnspentIteratorApiQuery(AddressTxIteratorApiQuery):
         if self.statusCode != 200 or value is None:
             return
 
-        parser = AddressUnspentParser(self._address)
+        parser = AddressUtxoParser(self._address)
         parser(value)
         self._utxo_list.extend(parser.txList)
 

@@ -2,16 +2,13 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import List, Optional, TYPE_CHECKING, Union
+from typing import List, Optional, Union
 
 import PySide2.QtCore as qt_core
 
-from . import hd, key, mtx_impl
-from ..coins.address import AbstractAddress
+from . import hd, key
 
-if TYPE_CHECKING:
-    from ..coins.coin import AbstractCoin
-    from ..coins.tx import AbstractTx
+from ..coins.abstract.coin import AbstractCoin
 
 log = logging.getLogger(__name__)
 
@@ -19,7 +16,7 @@ class AddressError(Exception):
     pass
 
 
-class CAddress(AbstractAddress):
+class CAddress(AbstractCoin.Address):
     balanceChanged = qt_core.Signal()
     labelChanged = qt_core.Signal()
     useAsSourceChanged = qt_core.Signal()
@@ -104,7 +101,7 @@ class CAddress(AbstractAddress):
             raise StopIteration(
                 f"Too few arguments for address {self}") from si
 
-    def is_receiver(self, tx: AbstractTx) -> bool:
+    def is_receiver(self, tx: AbstractCoin.Tx) -> bool:
         return any(self.name == o.address for o in tx.output_iter)
 
     def update_tx_list(self, first_offset: Optional[int], clear_tx_from: Optional[int], verbose: bool):
