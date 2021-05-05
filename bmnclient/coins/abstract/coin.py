@@ -27,6 +27,10 @@ class AbstractCoin(Serializable):
     _BIP0044_COIN_TYPE = -1
 
     class Interface:
+        def __init__(self, *args, coin: AbstractCoin, **kwargs) -> None:
+            super().__init__(*args, **kwargs)
+            self._coin = coin
+
         def afterSetHeight(self) -> None:
             raise NotImplementedError
 

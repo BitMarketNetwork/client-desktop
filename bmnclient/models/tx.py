@@ -19,11 +19,11 @@ from .list import \
     AbstractListModel, \
     AbstractListSortedModel, \
     RoleEnum
-from ..coins.abstract.coin import AbstractCoin
-from ..network.interfaces import TxNetworkInterface
+from ..coin_interfaces import TxInterface
 
 if TYPE_CHECKING:
     from typing import Final, Optional
+    from ..coins.abstract.coin import AbstractCoin
     from ..ui.gui import Application
 
 
@@ -106,10 +106,12 @@ class TxIoListModel(AbstractListModel):
     }
 
 
-class TxModel(TxNetworkInterface, AbstractModel):
+class TxModel(TxInterface, AbstractModel):
     def __init__(self, application: Application, tx: AbstractCoin.Tx) -> None:
-        super().__init__(application)
-        self._tx = tx
+        super().__init__(
+            application,
+            query_scheduler=application.networkQueryScheduler,
+            tx=tx)
 
         self._amount_model = TxAmountModel(
             self._application,

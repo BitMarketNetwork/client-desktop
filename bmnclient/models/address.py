@@ -16,7 +16,7 @@ from .list import \
     AbstractListModel, \
     AbstractListSortedModel, \
     RoleEnum
-from ..network.interfaces import AddressNetworkInterface
+from ..coin_interfaces import AddressInterface
 
 if TYPE_CHECKING:
     from typing import Final, Optional
@@ -75,6 +75,7 @@ class AddressStateModel(AbstractAddressStateModel):
         #     self.refresh()
         pass
 
+
 class AddressAmountModel(AbstractAddressAmountModel):
     def refresh(self) -> None:
         super().refresh()
@@ -88,13 +89,15 @@ class AddressAmountModel(AbstractAddressAmountModel):
         return self._address.amount
 
 
-class AddressModel(AddressNetworkInterface, AbstractModel):
+class AddressModel(AddressInterface, AbstractModel):
     def __init__(
             self,
             application: Application,
             address: AbstractCoin.Address) -> None:
-        super().__init__(application)
-        self._address = address
+        super().__init__(
+            application,
+            query_scheduler=application.networkQueryScheduler,
+            address=address)
 
         self._amount_model = AddressAmountModel(
             self._application,

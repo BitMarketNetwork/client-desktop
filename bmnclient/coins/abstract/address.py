@@ -40,6 +40,14 @@ class AbstractAddress(Serializable):
     _NULLDATA_NAME = "nulldata"
 
     class Interface:
+        def __init__(
+                self,
+                *args,
+                address: AbstractCoin.Address,
+                **kwargs) -> None:
+            super().__init__(*args, **kwargs)
+            self._address = address
+
         def afterSetAmount(self) -> None:
             raise NotImplementedError
 

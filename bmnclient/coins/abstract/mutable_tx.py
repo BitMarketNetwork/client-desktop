@@ -14,6 +14,10 @@ if TYPE_CHECKING:
 
 class AbstractMutableTx:
     class Interface:
+        def __init__(self, *args, coin: AbstractCoin, **kwargs) -> None:
+            super().__init__(*args, **kwargs)
+            self._coin = coin
+
         def onBroadcast(self, tx: Mtx) -> None:
             raise NotImplementedError
 

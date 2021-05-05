@@ -21,7 +21,7 @@ from .list import \
 from .tx import \
     TxListConcatenateModel, \
     TxListSortedModel
-from ..network.interfaces import CoinNetworkInterface
+from ..coin_interfaces import CoinInterface
 
 if TYPE_CHECKING:
     from typing import Final, Optional
@@ -105,10 +105,12 @@ class CoinAmountModel(AbstractAmountModel):
         return self._coin.amount
 
 
-class CoinModel(CoinNetworkInterface, AbstractModel):
+class CoinModel(CoinInterface, AbstractModel):
     def __init__(self, application: Application, coin: AbstractCoin) -> None:
-        super().__init__(application)
-        self._coin = coin
+        super().__init__(
+            application,
+            query_scheduler=application.networkQueryScheduler,
+            coin=coin)
 
         self._amount_model = CoinAmountModel(
             self._application,

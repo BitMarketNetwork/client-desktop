@@ -121,6 +121,14 @@ class AbstractTx(Serializable):
         COMPLETE = 2
 
     class Interface:
+        def __init__(
+                self,
+                *args,
+                tx: AbstractCoin.Tx,
+                **kwargs) -> None:
+            super().__init__(*args, **kwargs)
+            self._tx = tx
+
         def afterSetHeight(self) -> None:
             raise NotImplementedError
 

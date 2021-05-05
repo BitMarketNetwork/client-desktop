@@ -12,7 +12,7 @@ from PySide2.QtCore import \
 from . import AbstractModel, AbstractStateModel, ValidStatus
 from .amount import AbstractAmountInputModel, AbstractAmountModel
 from .tx import TxIoListModel
-from ..network.interfaces import MutableTxNetworkInterface
+from ..coin_interfaces import MutableTxInterface
 
 if TYPE_CHECKING:
     from typing import Optional, Sequence
@@ -206,15 +206,17 @@ class MutableTxSourceListModel(TxIoListModel):
             self.__stateChanged.emit()
 
 
-class MutableTxModel(MutableTxNetworkInterface, AbstractModel):
+class MutableTxModel(MutableTxInterface, AbstractModel):
     __stateChanged = QSignal()
 
     def __init__(
             self,
             application: Application,
             tx: AbstractCoin.MutableTx) -> None:
-        super().__init__(application)
-        self._tx = tx
+        super().__init__(
+            application,
+            query_scheduler=application.networkQueryScheduler,
+            tx=tx)
 
         self._source_amount = MutableTxSourceAmountModel(
             self._application,
