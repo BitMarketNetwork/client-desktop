@@ -15,11 +15,9 @@ from PySide2.QtWidgets import QApplication
 import bmnclient.version
 from . import \
     coin_manager, \
-    receive_manager, \
     settings_manager, \
     ui_manager
 from .coin_manager import CoinManager, CoinManager
-from .receive_manager import ReceiveManager, ReceiveManager
 from .settings_manager import SettingsManager, SettingsManager
 from .ui_manager import UIManager, UIManager
 from ...application import CoreApplication
@@ -51,7 +49,6 @@ class Application(CoreApplication):
         self._settings_manager = SettingsManager(self)
         self._ui_manager = UIManager(self)
         self._coin_manager = CoinManager(self)
-        self._receive_manager = ReceiveManager(self)
         self._debug_manager = DebugManager(self)
         self._backend_context = BackendContext(self)
 
@@ -105,10 +102,6 @@ class Application(CoreApplication):
     @property
     def coinManager(self) -> CoinManager:
         return self._coin_manager
-
-    @property
-    def receiveManager(self) -> ReceiveManager:
-        return self._receive_manager
 
     @property
     def debugManager(self) -> DebugManager:
@@ -197,7 +190,3 @@ class BackendContext(QObject):
     @QProperty(CoinManager, constant=True)
     def coinManager(self) -> CoinManager:
         return self._application.coinManager
-
-    @QProperty(ReceiveManager, constant=True)
-    def receiveManager(self) -> ReceiveManager:
-        return self._application.receiveManager

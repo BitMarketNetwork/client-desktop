@@ -19,7 +19,6 @@ log = logging.getLogger(__name__)
 
 class CoinManager(QObject):
     coinIndexChanged = QSignal()
-    addressIndexChanged = QSignal()
     emptyBalancesChanged = QSignal()
 
     def __init__(self, application: Application) -> None:
@@ -47,8 +46,6 @@ class CoinManager(QObject):
             return
         assert idx < len(self._application.coinList)
         self.__current_coin_idx = idx
-        self.addressIndexChanged.emit()
-        # self.addressIndexChanged.emit()
         self.coinIndexChanged.emit()
 
     @qt_core.Slot(int, str, bool)

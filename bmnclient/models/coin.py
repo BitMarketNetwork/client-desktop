@@ -10,7 +10,7 @@ from PySide2.QtCore import \
     Signal as QSignal, \
     Slot as QSlot
 
-from . import AbstractModel, AbstractStateModel
+from . import AbstractModel, AbstractStateModel, ValidStatus
 from .address import \
     AddressListModel, \
     AddressListSortedModel
@@ -132,6 +132,11 @@ class CoinModel(CoinInterface, AbstractModel):
             self._coin.addressList)
         self._tx_list_model = TxListConcatenateModel(self._application)
 
+        self._receive_manager = CoinReceiveManagerModel(
+            self._application,
+            self._coin)
+        self.connectModelRefresh(self._receive_manager)
+
     @QProperty(str, constant=True)
     def shortName(self) -> str:
         return self._coin.shortName
@@ -176,6 +181,10 @@ class CoinModel(CoinInterface, AbstractModel):
     def txListSorted(self) -> TxListSortedModel:
         return TxListSortedModel(self._application, self._tx_list_model)
 
+    @QProperty(QObject, constant=True)
+    def receiveManager(self) -> CoinReceiveManagerModel:
+        return self._receive_manager
+
     def afterSetHeight(self) -> None:
         self._state_model.refresh()
         super().afterSetHeight()
@@ -217,6 +226,7 @@ class CoinListModel(AbstractListModel):
         ADDRESS_LIST: Final = auto()
         TX_LIST: Final = auto()
         MUTABLE_TX: Final = auto()
+        RECEIVE_MANAGER: Final = auto()
 
     ROLE_MAP: Final = {
         Role.SHORT_NAME: (
@@ -245,5 +255,8 @@ class CoinListModel(AbstractListModel):
             lambda c: c.model.txListSorted()),
         Role.MUTABLE_TX: (
             b"mutableTx",
-            lambda c: c.mutableTx.model)
+            lambda c: c.mutableTx.model),
+        Role.RECEIVE_MANAGER: (
+            b"receiveManager",
+            lambda c: c.model.receiveManager)
     }
