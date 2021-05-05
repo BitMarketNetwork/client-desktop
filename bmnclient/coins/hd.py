@@ -66,9 +66,9 @@ class HdAddressIterator(Iterator):
 
     def markLastAddress(self, empty: bool) -> None:
         if not empty:
-            self._empty_address_counter[self._last_address.addressType] = 0
+            self._empty_address_counter[self._last_address.type] = 0
         else:
-            self._empty_address_counter[self._last_address.addressType] += 1
+            self._empty_address_counter[self._last_address.type] += 1
             for count in self._empty_address_counter.values():
                 if count <= self._EMPTY_ADDRESS_LIMIT:
                     return

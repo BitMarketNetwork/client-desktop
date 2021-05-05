@@ -280,16 +280,18 @@ class AbstractCoin(Serializable):
             **kwargs) -> Optional[Address]:
         if self._hd_path is None:
             return None
+
         if index < 0:
             # TODO auto
             pass
+
         hd_path = self.hdAddressPath(account, is_change, index)
         if hd_path is None:
             return None
 
         address = self.Address(
             self,
-            name=hd_path.to_address(type_),
+            name=hd_path.to_address(type_.value[2]),
             type_=type_,
             private_key=hd_path,
             **kwargs)

@@ -7,9 +7,11 @@ from typing import TYPE_CHECKING
 from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
-    from typing import List, Optional
+    from typing import List, Optional, Union
     from .coin import AbstractCoin
     from .tx import AbstractTx
+    from ...wallet.hd import HDNode
+    from ...wallet.key import PrivateKey
 
 
 class AbstractAddress(Serializable):
@@ -45,6 +47,7 @@ class AbstractAddress(Serializable):
             name: Optional[str],
             type_: Type,
             data: bytes = b"",
+            private_key: Union[HDNode, PrivateKey] = None,
             amount: int = 0,
             label: str = "",
             comment: str = "") -> None:
@@ -54,6 +57,7 @@ class AbstractAddress(Serializable):
         self._name = name or self._NULLDATA_NAME
         self._type = type_  # TODO check usage
         self._data = data
+        self._private_key = private_key
         self._amount = amount
         self._label = label
         self._comment = comment
@@ -81,7 +85,7 @@ class AbstractAddress(Serializable):
         return self._name
 
     @property
-    def addressType(self) -> Optional[Type]:  # TODO rename to type()
+    def type(self) -> Type:
         return self._type
 
     @classmethod
