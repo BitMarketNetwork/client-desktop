@@ -344,17 +344,17 @@ class AddressUtxoIteratorApiQuery(AddressTxIteratorApiQuery):
 
     def __init__(
             self,
-            application: CoreApplication,
             address: AbstractCoin.Address,
             *,
+            query_manager: NetworkQueryManager,
             finished_callback: Optional[
                 Callable[[HdAddressIteratorApiQuery], None]] = None,
             first_offset: Optional[str] = None,
             last_offset: Optional[str] = None,
             _utxo_list: Optional[List[AbstractCoin.Tx.Utxo]] = None) -> None:
         super().__init__(
-            application,
             address,
+            query_manager=query_manager,
             finished_callback=finished_callback,
             first_offset=first_offset,
             last_offset=last_offset)
@@ -376,8 +376,9 @@ class AddressUtxoIteratorApiQuery(AddressTxIteratorApiQuery):
             self._address.utxoList = self._utxo_list
         else:
             self._next_query = self.__class__(
-                self._application,
                 self._address,
+                query_manager=self._query_manager,
+                finished_callback=self._finished_callback,
                 first_offset=parser.lastOffset,
                 last_offset=None,
                 _utxo_list=self._utxo_list)
