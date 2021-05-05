@@ -4,7 +4,6 @@ import sqlite3 as sql
 import PySide2.QtCore as qt_core
 
 from . import db_wrapper
-from .. import loading_level
 from ..coins.abstract.coin import AbstractCoin
 
 log = logging.getLogger(__name__)
@@ -62,10 +61,7 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
 
         self._read_all_coins(coins)
         adds = self._read_all_addresses(coins)
-        self._parent.db_level_loaded(loading_level.LoadingLevel.ADDRESSES)
         self._read_all_tx(adds)
-        self._parent.db_level_loaded(loading_level.LoadingLevel.TRANSACTIONS)
-        self._parent.db_level_loaded(loading_level.LoadingLevel.INPUTS)
 
     def timerEvent(self, event: qt_core.QTimerEvent):
         if event.timerId() == self._save_address_timer.timerId():
