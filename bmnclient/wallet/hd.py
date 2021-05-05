@@ -118,7 +118,7 @@ class HDNode(key.AbstractAddress):
     def is_private(self) -> bool:
         return isinstance(self.key, key.PrivateKey)
 
-    def to_address(self, type_, witver=0) -> str:
+    def to_address(self, type_, witver: int = 0) -> str:
         return self.key.public_key.to_address(type_, witver)
 
     @property

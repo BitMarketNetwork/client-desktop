@@ -136,7 +136,7 @@ class TestCoins(TestCase):
                 self.assertIsNone(a)
             else:
                 self.assertIsNotNone(a)
-                self.assertEqual(type_, a.addressType)
+                self.assertEqual(type_, a.type)
                 self.assertEqual(data, a.data.hex())
 
     def test_address_decode(self) -> None:

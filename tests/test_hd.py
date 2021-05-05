@@ -34,14 +34,14 @@ class TestHdAddressIterator(TestCase):
                     it.markLastAddress(True)
                     # noinspection PyProtectedMember
                     self.assertGreater(
-                        it._empty_address_counter[address.addressType],
+                        it._empty_address_counter[address.type],
                         0)
                 else:
                     append += 1
                     it.markLastAddress(False)
                     # noinspection PyProtectedMember
                     self.assertEqual(
-                        it._empty_address_counter[address.addressType],
+                        it._empty_address_counter[address.type],
                         0)
             self.assertRaises(StopIteration, next, it)
 

@@ -19,26 +19,6 @@ class KeyError(Exception):
     pass
 
 
-class AddressType(enum.IntEnum):
-    """
-    p2pkh, p2sh, p2wpkh, p2wsh, witness_unknown, unknown.
-    """
-    P2PKH = enum.auto()
-    P2SH = enum.auto()
-    P2WPKH = enum.auto()
-    P2WSH = enum.auto()
-    WITNESS_UNKNOWN = enum.auto()
-    UNKNOWN = enum.auto()
-
-    @classmethod
-    def make(cls, string: str) -> 'AddressType':
-        return cls[string.upper()]
-
-    @property
-    def lower(self) -> str:
-        return str(self.name).lower()
-
-
 class AddressMalformedError(Exception):
     pass
 

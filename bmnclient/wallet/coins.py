@@ -37,8 +37,6 @@ class CoinType(qt_core.QObject):
             type_: key.AddressType = key.AddressType.P2WPKH,
             label: str = "",
             message: str = "") -> address.CAddress:
-        if self._hd_path is None:
-            raise address.AddressError(f"There's no private key in {self}")
 
         hd_index = 1
         while any(w.hd_index == hd_index for w in self._address_list):
@@ -49,22 +47,20 @@ class CoinType(qt_core.QObject):
             False,
             self.network)
 
-        wallet = address.CAddress.make_from_hd(new_hd, self, type_)
+        wallet = address.CAddress(
+            self,
+            name=new_hd.to_address(type_),
+            type_=type_,
+            private_key=new_hd,
+            label=label,
+            comment=message)
         assert wallet.hd_index == hd_index
-        wallet.label = label
-        wallet._message = message
-        self.appendAddress(wallet)
-
-        from ..application import CoreApplication
-        CoreApplication.instance().databaseThread.save_address(wallet)
-        return wallet
 
     def add_watch_address(self, name: str, label: str = "") -> address.CAddress:
         adr = address.CAddress(
             self,
             name=name,
             label=label)
-        adr.create()
         self.appendAddress(adr)
         from ..application import CoreApplication
         CoreApplication.instance().databaseThread.save_address(adr)

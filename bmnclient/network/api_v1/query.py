@@ -300,7 +300,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
                     self._application,
                     self._address))
             self._application.networkQueryManager.put(
-                AddressUnspentIteratorApiQuery(
+                AddressUtxoIteratorApiQuery(
                     self._application,
                     self._address))
 
