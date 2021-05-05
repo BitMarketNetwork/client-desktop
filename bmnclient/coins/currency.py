@@ -1,16 +1,15 @@
 # JOK4
 from __future__ import annotations
 
-from typing import Type, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from PySide2.QtCore import QObject
 
 from .abstract.currency import AbstractCurrency
-from ..config import UserConfig
-from ..utils.static_list import UserStaticList
+from ..config import UserConfig, UserConfigStaticList
 
 if TYPE_CHECKING:
-    from typing import Final
+    from typing import Final, Iterator, Optional, Type, Union
     from ..application import CoreApplication
 
 
@@ -33,9 +32,7 @@ class EuroFiatCurrency(FiatCurrency):
     _UNIT: Final = "EUR"
 
 
-class FiatCurrencyList(UserStaticList):
-    ItemType = Type[FiatCurrency]
-
+class FiatCurrencyList(UserConfigStaticList):
     def __init__(self, application: CoreApplication) -> None:
         super().__init__(
             application.userConfig,
@@ -48,7 +45,19 @@ class FiatCurrencyList(UserStaticList):
             item_property="unit")
         self._logger.debug(
             "Current fiat currency is \"%s\".",
-            self._list[self._current_index].unit)
+            self.current.unit)
+
+    def __iter__(self) -> Iterator[Type[FiatCurrency]]:
+        return super().__iter__()
+
+    def __getitem__(
+            self,
+            value: Union[str, int]) -> Optional[Type[FiatCurrency]]:
+        return super().__getitem__(value)
+
+    @property
+    def current(self) -> Type[FiatCurrency]:
+        return super().current
 
 
 class FiatRate:

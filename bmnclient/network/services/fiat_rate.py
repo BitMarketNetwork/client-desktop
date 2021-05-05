@@ -1,8 +1,8 @@
-# JOK++
+# JOK4
 from __future__ import annotations
 
 from io import BytesIO
-from typing import Dict, List, Optional, Type, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from PySide2.QtCore import QObject
 
@@ -12,12 +12,11 @@ from ...coins.currency import \
     FiatCurrency, \
     FiatRate, \
     UsdFiatCurrency
-from ...config import UserConfig
+from ...config import UserConfig, UserConfigStaticList
 from ...utils.meta import classproperty
-from ...utils.static_list import UserStaticList
 
 if TYPE_CHECKING:
-    from typing import Final
+    from typing import Dict, Final, Iterator, List, Optional, Type, Union
     from ...application import CoreApplication
     from ...coins.list import CoinList
 
@@ -159,9 +158,7 @@ class CoinGeckoFiatRateService(AbstractFiatRateService):
             return None
 
 
-class FiatRateServiceList(UserStaticList):
-    ItemType = Type[AbstractFiatRateService]
-
+class FiatRateServiceList(UserConfigStaticList):
     def __init__(self, application: CoreApplication) -> None:
         service_list = (
             NoneFiatRateService,
@@ -179,4 +176,16 @@ class FiatRateServiceList(UserStaticList):
             item_property="shortName")
         self._logger.debug(
             "Current fiat rate service is \"%s\".",
-            self._list[self._current_index].fullName)
+            self.current.fullName)
+
+    def __iter__(self) -> Iterator[Type[AbstractFiatRateService]]:
+        return super().__iter__()
+
+    def __getitem__(
+            self,
+            value: Union[str, int]) -> Optional[Type[AbstractFiatRateService]]:
+        return super().__getitem__(value)
+
+    @property
+    def current(self) -> Type[AbstractFiatRateService]:
+        return super().current

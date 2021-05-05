@@ -1,4 +1,4 @@
-# JOK+++
+# JOK4
 from __future__ import annotations
 
 import json
@@ -9,10 +9,11 @@ from typing import TYPE_CHECKING
 
 from .logger import Logger
 from .platform import PlatformPaths
+from .utils.static_list import StaticList
 from .version import Product
 
 if TYPE_CHECKING:
-    from typing import Any, Final, Type
+    from typing import Any, Final, Type, Union
     from pathlib import PurePath
 
 # TODO move to platform
@@ -151,3 +152,53 @@ class UserConfig:
     def _updateVersion(self) -> None:
         if not self.get(self.KEY_VERSION, str):
             self.set(self.KEY_VERSION, Product.VERSION_STRING, save=False)
+
+
+class UserConfigStaticList(StaticList):
+    def __init__(
+            self,
+            user_config: UserConfig,
+            user_config_key: str,
+            source_list: Union[list, tuple],
+            *,
+            default_index: int,
+            item_property: str) -> None:
+        super().__init__(source_list, item_property=item_property)
+        self._logger = Logger.getClassLogger(__name__, self.__class__)
+
+        self._user_config = user_config
+        self._user_config_key = user_config_key
+        self._current_index = default_index
+        if self._current_index >= len(self):
+            self._current_index = 0
+
+        value = self._user_config.get(self._user_config_key)
+        if value:
+            for i in range(len(self._list)):
+                if getattr(self._list[i], self._item_property) == value:
+                    self._current_index = i
+                    break
+
+    @property
+    def currentIndex(self) -> int:
+        return self._current_index
+
+    def setCurrentIndex(self, index: int) -> bool:
+        if index < 0 or index >= len(self._list):
+            return False
+        with self._user_config.lock:
+            self._current_index = index
+            return self._user_config.set(
+                self._user_config_key,
+                getattr(self._list[index], self._item_property))
+
+    @property
+    def current(self) -> Any:
+        return self._list[self._current_index]
+
+    def setCurrent(self, value: str) -> bool:
+        with self._user_config.lock:
+            for i in range(len(self._list)):
+                if getattr(self._list[i], self._item_property) == value:
+                    return self.setCurrentIndex(i)
+        return False
