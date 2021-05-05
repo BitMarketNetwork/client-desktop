@@ -206,13 +206,11 @@ class AddressInfoApiQuery(AbstractApiQuery):
 
     def __init__(
             self,
-            application: CoreApplication,
             address: AbstractCoin.Address,
             *args,
             name_suffix: Optional[str] = None,
             **kwargs) -> None:
         super().__init__(
-            application,
             *args,
             name_suffix=name_suffix or self.addressToNameSuffix(address),
             **kwargs)
@@ -230,18 +228,6 @@ class AddressInfoApiQuery(AbstractApiQuery):
         parser(value)
         self._address.amount = parser.amount
         self._address.txCount = parser.txCount
-
-        # TODO
-        # if balance != self._address.amount or \
-        #        txCount != self._address.txCount or \
-        #        type_ != self._address.type:
-        #    self._address.type = type_
-        #    databaseThread.save_address(self._address)
-        #    diff = txCount - self._address.realTxCount
-        #    if diff > 0 and not self._address.is_going_update:
-        #        log.debug("Need to download more %s tx for %s",
-        #                  diff, self._address)
-        #       AddressHistoryCommand(self._address, parent=self)
 
 
 class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
