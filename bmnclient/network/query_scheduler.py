@@ -125,7 +125,7 @@ class NetworkQueryScheduler:
 
     def updateSysinfo(self) -> None:
         self._putRepeatedApiQuery(
-            SysinfoApiQuery(self._application),
+            SysinfoApiQuery(self._application.coinList),
             ("updateSysinfo", "global"),
             unique=True)
 

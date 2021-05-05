@@ -22,8 +22,10 @@ from ...logger import Logger
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, Final, List, Optional, Tuple, Union
+    from ..query_manager import NetworkQueryManager
     from ...application import CoreApplication
     from ...coins.abstract.coin import AbstractCoin
+    from ...coins.list import CoinList
     from ...wallet.mtx_impl import Mtx
 
 
@@ -134,8 +136,9 @@ class AbstractIteratorApiQuery(AbstractApiQuery):
 class SysinfoApiQuery(AbstractApiQuery):
     _ACTION = ("sysinfo", )
 
-    def __init__(self, application: CoreApplication) -> None:
-        super().__init__(application, name_suffix=None)
+    def __init__(self, coin_list: CoinList) -> None:
+        super().__init__(name_suffix=None)
+        self._coin_list = coin_list
 
     def _processData(
             self,
@@ -154,7 +157,7 @@ class SysinfoApiQuery(AbstractApiQuery):
             parser.serverData.get("server_version_string", "UNKNOWN"),
             parser.serverData.get("server_version", 0xffffffff))
 
-        for coin in self._application.coinList:
+        for coin in self._coin_list:
             coin.serverData = {
                 **parser.serverData,
                 **parser.serverCoinList.get(coin.shortName, {})
