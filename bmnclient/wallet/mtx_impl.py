@@ -8,8 +8,7 @@ import logging
 import random
 import re
 from collections import namedtuple
-from typing import Union, List, Tuple
-from ..coins.tx import AbstractUtxo
+from typing import List, Tuple, Union
 
 from . import constants, util
 
@@ -22,61 +21,6 @@ TX_TRUST_HIGH = 30
 
 class InsufficientFunds(Exception):
     pass
-
-
-UNSPENT_TYPES = {
-    # Dictionary containing as keys known unspent types and as value a
-    # dictionary containing information if spending uses a witness
-    # program (Segwit) and its estimated scriptSig size.
-    'unknown': {'segwit': None, 'vsize': 180},     # Unknown type
-    'p2pkh-uncompressed':                          # Legacy P2PKH using
-               {'segwit': False, 'vsize': 180},    # uncompressed keys
-    'p2pkh':   {'segwit': False, 'vsize': 148},    # Legacy P2PKH
-    # Legacy P2SH (vsize corresponds to a 2-of-3 multisig input)
-    'p2sh':    {'segwit': False, 'vsize': 292},
-    'np2wkh':  {'segwit': True,  'vsize': 90},     # (Nested) P2SH-P2WKH
-    # (Nested) P2SH-P2WSH (vsize corresponds to a 2-of-3 multisig input)
-    'np2wsh':  {'segwit': True,  'vsize': 139},
-    # Bech32 P2WKH -- Not yet supported to sign
-    'p2wpkh':   {'segwit': True,  'vsize': 67},
-    # Bech32 P2WSH -- Not yet supported to sign (vsize corresponds to a 2-of-3 multisig input)
-    'p2wsh':   {'segwit': True,  'vsize': 104}
-}
-
-
-class UTXO(AbstractUtxo):
-    def __init__(
-            self,
-            address,
-            *,
-            script = None,
-            type='p2pkh',
-            vsize=None,
-            **kwargs) -> None:
-        super().__init__(address, **kwargs)
-
-        self.script = script
-        self.type = type if type in UNSPENT_TYPES else 'unknown'
-        assert 'unknown' != self.type
-        self.vsize = vsize if vsize else UNSPENT_TYPES[self.type]['vsize']
-        self.segwit = UNSPENT_TYPES[self.type]['segwit']
-
-    def __hash__(self) -> int:
-        return hash((self.amount, self.address, self.script, self.txName, self.index))
-
-    def __eq__(self, other) -> bool:
-        return (self.amount == other.amount and
-                self.address == other.address and
-                self.script == other.script and
-                self.txName == other.txName and
-                self.index == other.index and
-                self.segwit == other.segwit)
-
-    def set_type(self, type, vsize=0):
-        self.type = type if type in UNSPENT_TYPES else 'unknown'
-        self.vsize = vsize if vsize else UNSPENT_TYPES[self.type]['vsize']
-        self.segwit = UNSPENT_TYPES[self.type]['segwit']
-        return self
 
 
 class TxEntity:
@@ -255,7 +199,7 @@ class Mtx:
         inputs = []
         for unspent in utxo_list:
             script_sig = b''  # empty scriptSig for new unsigned transaction.
-            txid = util.hex_to_bytes(unspent.txName)[::-1]
+            txid = util.hex_to_bytes(unspent.name)[::-1]
             txindex = unspent.index.to_bytes(4, byteorder='little')
             amount = int(unspent.amount).to_bytes(8, byteorder='little')
             assert unspent.address
@@ -351,7 +295,7 @@ class Mtx:
                     log.warning(f"key {private_key} can't sign {unspent}")
                     continue
                 tx_input = \
-                    util.hex_to_bytes(unspent.txName)[::-1] \
+                    util.hex_to_bytes(unspent.name)[::-1] \
                     + unspent.index.to_bytes(4, byteorder='little')
                 input_dict[tx_input] = unspent.serialize()
                 input_dict[tx_input]["segwit"] = unspent.segwit  # TODO tmp

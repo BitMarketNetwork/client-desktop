@@ -4,11 +4,11 @@ import itertools
 from typing import TYPE_CHECKING
 
 from . import key, mtx_impl
-from ..coins.mutable_tx import AbstractMutableTx
+from ..coins.abstract.mutable_tx import AbstractMutableTx
 
 if TYPE_CHECKING:
     from typing import Tuple
-    from ..coins.coin import AbstractCoin
+    from ..coins.abstract.coin import AbstractCoin
 
 
 class MutableTransaction(AbstractMutableTx):

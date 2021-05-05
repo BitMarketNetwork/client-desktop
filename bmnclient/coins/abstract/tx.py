@@ -21,6 +21,34 @@ class _AbstractTxIo:
         return self._address
 
 
+################################################################################
+# TODO old code
+
+_UNSPENT_TYPES = {
+    # Dictionary containing as keys known unspent types and as value a
+    # dictionary containing information if spending uses a witness
+    # program (Segwit) and its estimated scriptSig size.
+
+    # Unknown type
+    'unknown': {'segwit': None, 'vsize': 180},
+    # Legacy P2PKH using uncompressed keys
+    'p2pkh-uncompressed': {'segwit': False, 'vsize': 180},
+    # Legacy P2PKH
+    'p2pkh':   {'segwit': False, 'vsize': 148},
+    # Legacy P2SH (vsize corresponds to a 2-of-3 multisig input)
+    'p2sh':    {'segwit': False, 'vsize': 292},
+    # (Nested) P2SH-P2WKH
+    'np2wkh':  {'segwit': True,  'vsize': 90},
+    # (Nested) P2SH-P2WSH (vsize corresponds to a 2-of-3 multisig input)
+    'np2wsh':  {'segwit': True,  'vsize': 139},
+    # Bech32 P2WKH -- Not yet supported to sign
+    'p2wpkh':   {'segwit': True,  'vsize': 67},
+    # Bech32 P2WSH -- Not yet supported to sign
+    'p2wsh':   {'segwit': True,  'vsize': 104}
+}
+################################################################################
+
+
 class _AbstractUtxo(Serializable):
     def __init__(
             self,
@@ -36,6 +64,30 @@ class _AbstractUtxo(Serializable):
         self._height = height
         self._index = index
         self._amount = amount
+
+        # TODO old code
+        self.script = None
+        self.type = self._address.addressType.value[2]
+        self.vsize = _UNSPENT_TYPES[self.type]['vsize']
+        self.segwit = _UNSPENT_TYPES[self.type]['segwit']
+
+    # TODO old code
+    def __hash__(self) -> int:
+        return hash((
+            self._amount,
+            self._address.name,
+            self.script,
+            self._name,
+            self._index))
+
+    # TODO old code
+    def __eq__(self, other: _AbstractUtxo) -> bool:
+        return (self._amount == other._amount and
+                self._address.name == other._address.name and
+                self.script == other.script and
+                self._name == other._name and
+                self._index == other._index and
+                self.segwit == other.segwit)
 
     @property
     def address(self) -> AbstractAddress:
