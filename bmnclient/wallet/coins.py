@@ -28,29 +28,6 @@ class CoinType(qt_core.QObject):
         super().__init__()
         self.__visible = True
 
-    def _next_hd_index(self):
-        idxs = [a.hd_index for a in self._address_list]
-        return next(k for k in itertools.count(1) if k not in idxs)
-
-    def make_address(self, type_, label, message):
-        hd_index = 1
-        while any(w.hd_index == hd_index for w in self._address_list):
-            hd_index += 1
-
-        new_hd = self._hd_path.make_child_prv(
-            self._next_hd_index(),
-            False,
-            self.network)
-
-        wallet = address.CAddress(
-            self,
-            name=new_hd.to_address(type_.value[2]),
-            type_=type_,
-            private_key=new_hd,
-            label=label,
-            comment=message)
-        assert wallet.hd_index == hd_index
-
     def add_watch_address(self, name: str, label: str = "") -> address.CAddress:
         adr = address.CAddress(
             self,

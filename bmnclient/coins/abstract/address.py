@@ -47,7 +47,7 @@ class AbstractAddress(Serializable):
             name: Optional[str],
             type_: Type,
             data: bytes = b"",
-            private_key: Union[HDNode, PrivateKey] = None,
+            private_key: Optional[HDNode, PrivateKey] = None,
             amount: int = 0,
             label: str = "",
             comment: str = "") -> None:
