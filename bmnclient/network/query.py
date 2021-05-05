@@ -73,8 +73,8 @@ class AbstractQuery:
         )
     )
 
-    def __init__(self, *, name_suffix: Optional[str]) -> None:
-        super().__init__()
+    def __init__(self, *args, name_suffix: Optional[str], **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self.__name_suffix = name_suffix
         self._logger = Logger.getClassLogger(
             __name__,
@@ -253,8 +253,8 @@ class AbstractQuery:
 class AbstractJsonQuery(AbstractQuery):
     _DEFAULT_CONTENT_TYPE = "application/json"
 
-    def __init__(self, *, name_suffix: Optional[str]) -> None:
-        super().__init__(name_suffix=name_suffix)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self._json_buffer = BytesIO()
 
     @property

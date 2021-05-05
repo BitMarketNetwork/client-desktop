@@ -33,15 +33,6 @@ class AbstractApiQuery(AbstractJsonQuery):
     _VERSION = "v1"
     _ACTION: Tuple[Union[str, Callable]] = ("", )
 
-    def __init__(
-            self,
-            application: CoreApplication,
-            *args,
-            name_suffix: Optional[str],
-            **kwargs) -> None:
-        super().__init__(name_suffix=name_suffix)
-        self._application = application
-
     @classmethod
     def coinToNameSuffix(cls, coin: AbstractCoin):
         return coin.shortName
@@ -114,12 +105,13 @@ class AbstractApiQuery(AbstractJsonQuery):
 class AbstractIteratorApiQuery(AbstractApiQuery):
     def __init__(
             self,
-            application: CoreApplication,
             *args,
+            query_manager: NetworkQueryManager,
             finished_callback: Optional[
                 Callable[[AbstractApiQuery], None]] = None,
             **kwargs) -> None:
-        super().__init__(application, *args, **kwargs)
+        super().__init__(*args, **kwargs)
+        self._query_manager = query_manager
         self._finished_callback = finished_callback
         self._next_query: Optional[AbstractApiQuery] = None
 
@@ -136,7 +128,7 @@ class AbstractIteratorApiQuery(AbstractApiQuery):
             if self._finished_callback is not None:
                 self._finished_callback(self)
         else:
-            self._application.networkQueryManager.put(self._next_query)
+            self._query_manager.put(self._next_query)
 
 
 class SysinfoApiQuery(AbstractApiQuery):
