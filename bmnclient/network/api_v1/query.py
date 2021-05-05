@@ -207,11 +207,10 @@ class AddressInfoApiQuery(AbstractApiQuery):
     def __init__(
             self,
             address: AbstractCoin.Address,
-            *args,
+            *,
             name_suffix: Optional[str] = None,
             **kwargs) -> None:
         super().__init__(
-            *args,
             name_suffix=name_suffix or self.addressToNameSuffix(address),
             **kwargs)
         self._address = address
@@ -233,9 +232,9 @@ class AddressInfoApiQuery(AbstractApiQuery):
 class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
     def __init__(
             self,
-            application: CoreApplication,
             coin: AbstractCoin,
             *,
+            query_manager: NetworkQueryManager,
             finished_callback: Optional[
                 Callable[[HdAddressIteratorApiQuery], None]] = None,
             _hd_iterator: Optional[HdAddressIterator] = None,
@@ -245,8 +244,8 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
         if _current_address is None:
             _current_address = next(_hd_iterator)
         super().__init__(
-            application,
             _current_address,
+            query_manager=query_manager,
             finished_callback=finished_callback)
         self._hd_iterator = _hd_iterator
 
@@ -265,16 +264,6 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
             self._hd_iterator.markLastAddress(False)
             self._address.coin.appendAddress(self._address)
 
-            # TODO tmp
-            self._application.networkQueryManager.put(
-                AddressTxIteratorApiQuery(
-                    self._application,
-                    self._address))
-            self._application.networkQueryManager.put(
-                AddressUtxoIteratorApiQuery(
-                    self._application,
-                    self._address))
-
         try:
             next_address = next(self._hd_iterator)
         except StopIteration:
@@ -284,8 +273,8 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
             return
 
         self._next_query = self.__class__(
-            self._application,
             self._address.coin,
+            query_manager=self._query_manager,
             finished_callback=self._finished_callback,
             _hd_iterator=self._hd_iterator,
             _current_address=next_address)

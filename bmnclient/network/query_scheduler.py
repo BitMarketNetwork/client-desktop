@@ -141,8 +141,8 @@ class NetworkQueryScheduler:
             timer.start()
         else:
             query = HdAddressIteratorApiQuery(
-                self._application,
                 coin,
+                query_manager=self._manager,
                 finished_callback=timer.start)
             self._manager.put(query)
 
