@@ -1,4 +1,4 @@
-# JOK+++
+# JOK4
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -22,7 +22,6 @@ from ...logger import Logger
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, Final, List, Optional, Tuple, Union
     from ..query_manager import NetworkQueryManager
-    from ...application import CoreApplication
     from ...coins.abstract.coin import AbstractCoin
     from ...coins.list import CoinList
     from ...wallet.mtx_impl import Mtx
@@ -465,12 +464,8 @@ class TxBroadcastApiQuery(AbstractApiQuery):
     )
     _DEFAULT_METHOD = AbstractApiQuery.Method.POST
 
-    def __init__(
-            self,
-            application: CoreApplication,
-            tx: Mtx) -> None:
+    def __init__(self, tx: Mtx) -> None:
         super().__init__(
-            application,
             name_suffix=self.coinToNameSuffix(tx.coin))
         self._tx = tx
 
@@ -490,12 +485,6 @@ class TxBroadcastApiQuery(AbstractApiQuery):
         parser = BroadcastTxParser()
         parser(value)
 
-        # TODO
-        # if parser.txName != self._tx.name:
-        #     self._logger.warning(
-        #         "Server gives transaction: \'%s\", but was sent \"%s\".",
-        #         parser.txName,
-        #         self._tx.name)
         self._logger.info(
             "Transaction \"%s\" broadcasted successfully!",
             parser.txName)
