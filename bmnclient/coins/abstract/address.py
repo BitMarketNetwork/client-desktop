@@ -5,9 +5,10 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 from ...utils.serialize import Serializable, serializable
+from ...version import Product
 
 if TYPE_CHECKING:
-    from typing import List, Optional, Union
+    from typing import List, Optional
     from .coin import AbstractCoin
     from .tx import AbstractTx
     from ...wallet.hd import HDNode
@@ -37,8 +38,19 @@ class AbstractAddress(Serializable):
             raise NotImplementedError
 
     class Type(Enum):
-        # Tuple[version: int, excepted_size: int, friendly_name: str]
-        pass
+        # Tuple[version: int, size: int, name: str]
+
+        @classmethod
+        def version(cls, t) -> int:
+            return t.value[0]
+
+        @classmethod
+        def size(cls, t) -> int:
+            return t.value[1]
+
+        @classmethod
+        def typeName(cls, t) -> str:
+            return t.value[2]
 
     def __init__(
             self,
@@ -71,6 +83,15 @@ class AbstractAddress(Serializable):
         self._model: Optional[AbstractAddress.Interface] = \
             self._coin.model_factory(self)
 
+    def __hash__(self) -> int:
+        return hash((self._name, self.Type.typeName(self._type)))
+
+    def __eq__(self, other: AbstractAddress) -> bool:
+        return (
+                self._name == other.name
+                and self._type == other._type
+        )
+
     @property
     def model(self) -> Optional[AbstractAddress.Interface]:
         return self._model
@@ -102,6 +123,25 @@ class AbstractAddress(Serializable):
     @property
     def data(self) -> bytes:
         return self._data
+
+    @property
+    def privateKey(self) -> Optional[PrivateKey]:
+        if isinstance(self._private_key, HDNode):
+            value = self._private_key.key
+        elif isinstance(self._private_key, PrivateKey):
+            value = self._private_key
+        else:
+            value = None
+        return value
+
+    def exportPrivateKey(self) -> str:
+        if isinstance(self._private_key, HDNode):
+            value = self._private_key.extended_key
+        elif isinstance(self._private_key, PrivateKey):
+            value = self._private_key.to_wif
+        else:
+            return ""
+        return value.decode(encoding=Product.ENCODING)
 
     @property
     def hdIndex(self) -> int:
@@ -149,7 +189,7 @@ class AbstractAddress(Serializable):
 
     @property
     def readOnly(self) -> bool:
-        return True  # TODO
+        return self.privateKey is None
 
     @property
     def txCount(self) -> int:
