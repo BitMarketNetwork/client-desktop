@@ -4,7 +4,6 @@ import sqlite3 as sql
 import PySide2.QtCore as qt_core
 
 from . import db_wrapper
-from ..wallet import address
 from .. import loading_level
 from ..coins.abstract.coin import AbstractCoin
 

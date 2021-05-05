@@ -6,13 +6,34 @@ from typing import TYPE_CHECKING
 
 from ...utils.serialize import Serializable, serializable
 from ...version import Product
+from ...wallet.hd import HDNode
+from ...wallet.key import PrivateKey
 
 if TYPE_CHECKING:
     from typing import List, Optional
     from .coin import AbstractCoin
     from .tx import AbstractTx
-    from ...wallet.hd import HDNode
-    from ...wallet.key import PrivateKey
+
+
+class _AbstractAddressTypeValue:
+    __slots__ = ("_name", "_version", "_size")
+
+    def __init__(self, *, name: str, version: int, size: int) -> None:
+        self._name = name
+        self._version = version
+        self._size = size
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def version(self) -> int:
+        return self._version
+
+    @property
+    def size(self) -> int:
+        return self._size
 
 
 class AbstractAddress(Serializable):
@@ -37,20 +58,11 @@ class AbstractAddress(Serializable):
         def afterAppendTx(self, tx: AbstractCoin.Tx) -> None:
             raise NotImplementedError
 
+    class TypeValue(_AbstractAddressTypeValue):
+        pass
+
     class Type(Enum):
-        # Tuple[version: int, size: int, name: str]
-
-        @classmethod
-        def version(cls, t) -> int:
-            return t.value[0]
-
-        @classmethod
-        def size(cls, t) -> int:
-            return t.value[1]
-
-        @classmethod
-        def typeName(cls, t) -> str:
-            return t.value[2]
+        pass
 
     def __init__(
             self,
@@ -84,7 +96,7 @@ class AbstractAddress(Serializable):
             self._coin.model_factory(self)
 
     def __hash__(self) -> int:
-        return hash((self._name, self.Type.typeName(self._type)))
+        return hash((self._name, self._type.value.name))
 
     def __eq__(self, other: AbstractAddress) -> bool:
         return (

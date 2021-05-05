@@ -6,7 +6,7 @@ from typing import Iterable, Optional, Union
 
 import PySide2.QtCore as qt_core
 
-from . import address, coin_network, hd, key
+from . import coin_network, key
 from ..utils.meta import classproperty
 from ..coins import coin_bitcoin
 from ..coins import coin_litecoin

@@ -56,10 +56,10 @@ class HdAddressIterator(Iterator):
             cls,
             address_type: AbstractCoin.Address.Type) -> bool:
         # TODO move to Address
-        if address_type.value[1] > 0:
-            if address_type.value[2] == "p2pkh":
+        if address_type.value.size > 0:
+            if address_type.value.name == "p2pkh":
                 return True
-            if address_type.value[2] == "p2wpkh":
+            if address_type.value.name == "p2wpkh":
                 return True
         return False
 

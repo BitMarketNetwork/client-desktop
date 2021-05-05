@@ -288,7 +288,7 @@ class AbstractCoin(Serializable):
 
         address = self.Address(
             self,
-            name=hd_path.to_address(type_.value[2]),
+            name=hd_path.to_address(type_.value.name),
             type_=type_,
             private_key=hd_path,
             **kwargs)
