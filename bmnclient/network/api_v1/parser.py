@@ -404,8 +404,7 @@ class AddressUtxoParser(AddressTxParser):
                     "name": self.parseKey(tx_value, "tx", str),
                     "height": height,
                     "index": self.parseKey(tx_value, "index", int),
-                    "amount": self.parseKey(tx_value, "amount", int),
-                    "type": self._address_type  # TODO convert from string
+                    "amount": self.parseKey(tx_value, "amount", int)
                 }
                 if data["amount"] > 0:
                     utxo = self._address.coin.Tx.Utxo.deserialize(

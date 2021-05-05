@@ -8,16 +8,9 @@ class CoinNetworkBase:
     EX_PREFIX_PUB = None
     PRIVATE_KEY = None
 
-    def __str__(self):
-        return self.__class__.__name__
-
     @classproperty
     def all(cls) -> List["CoinNetworkBase"]:  # pylint: disable=no-self-argument
         return (val for _, val in globals().items() if isinstance(val, type) and issubclass(val, cls) and val is not cls)
-
-    @classproperty
-    def bech32_hrps(cls) -> List[str]:  # pylint: disable=no-self-argument
-        return [me.BECH32_HRP for me in cls.all]
 
     @classmethod
     def from_prv_version(cls, version) -> "CoinNetworkBase":

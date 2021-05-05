@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import itertools
 import logging
-from typing import Iterable, Optional, Union
+from typing import Iterable, Union
 
 import PySide2.QtCore as qt_core
 

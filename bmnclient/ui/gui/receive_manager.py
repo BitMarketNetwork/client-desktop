@@ -7,7 +7,6 @@ from PySide2.QtCore import \
     Signal as QSignal
 
 import PySide2.QtCore as qt_core
-from ...wallet import key
 
 if TYPE_CHECKING:
     from . import Application
