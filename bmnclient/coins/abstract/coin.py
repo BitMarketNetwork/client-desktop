@@ -139,7 +139,6 @@ class AbstractCoin(Serializable):
     @offset.setter
     def offset(self, value: str) -> None:
         if self._offset != value:
-            self._update_wallets(self._offset)
             self._offset = value
             self._updateState()
 
@@ -151,7 +150,6 @@ class AbstractCoin(Serializable):
     @unverifiedOffset.setter
     def unverifiedOffset(self, value: str) -> None:
         if self._unverified_offset != value:
-            # self._update_wallets(self._offset)
             self._unverified_offset = value
             self._updateState()
 
@@ -163,12 +161,6 @@ class AbstractCoin(Serializable):
     @unverifiedHash.setter
     def unverifiedHash(self, value: str) -> None:
         if self._unverified_hash != value:
-            if not self._unverified_hash:
-                self._update_wallets()
-            else:
-                self._update_wallets(
-                    self._unverified_offset,
-                    self._verified_height)
             self._unverified_hash = value
             self._updateState()
 

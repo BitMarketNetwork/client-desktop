@@ -9,7 +9,6 @@ from ...logger import Logger
 if TYPE_CHECKING:
     from typing import Dict, List, Optional
     from .coin import AbstractCoin
-    from ...wallet.address import CAddress
     from ...wallet.mtx_impl import Mtx
 
 
@@ -236,7 +235,7 @@ class AbstractMutableTx:
             return False
 
         # TODO Dict[str, ...]?
-        source_list: Dict[CAddress, List[AbstractCoin.Tx.Utxo]] = {}
+        source_list: Dict[AbstractCoin.Address, List[AbstractCoin.Tx.Utxo]] = {}
         for utxo in self._selected_utxo_list:
             source_list.setdefault(utxo.address, []).append(utxo)
 
@@ -249,7 +248,7 @@ class AbstractMutableTx:
                         utxo.name,
                         utxo.index,
                         utxo.amount)
-            self.__mtx.sign(address.private_key, utxo_list=utxo_list)
+            self.__mtx.sign(address.privateKey, utxo_list=utxo_list)
 
         self.__mtx_result = self.__mtx.to_hex()
         if self.__mtx_result is None or len(self.__mtx_result) <= 0:

@@ -4,8 +4,6 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
-from ..wallet.address import CAddress
-
 if TYPE_CHECKING:
     from typing import Dict, Optional
     from .abstract.coin import AbstractCoin
@@ -17,7 +15,7 @@ class HdAddressIterator(Iterator):
     def __init__(self, coin: AbstractCoin, hd_index: int = 0) -> None:
         self._coin = coin
         self._type_index = -1
-        self._last_address: Optional[CAddress] = None
+        self._last_address: Optional[AbstractCoin.Address] = None
         self._hd_index = hd_index
         self._stop = False
 
@@ -30,7 +28,7 @@ class HdAddressIterator(Iterator):
     def __iter__(self) -> HdAddressIterator:
         return self
 
-    def __next__(self) -> CAddress:
+    def __next__(self) -> AbstractCoin.Address:
         if self._coin.hdPath is None or self._stop:
             raise StopIteration
 

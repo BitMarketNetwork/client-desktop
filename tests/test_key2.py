@@ -135,7 +135,7 @@ class Test_HD(unittest.TestCase):
         km = gcd_.key_man
         km.generate_master_key()
         self.assertEqual(len(gcd_.all_enabled_coins) + 2, hd.Utils.keys_count)
-        self.assertEqual(gcd_.btc_coin.private_key.chain_path, "/m/0'/0'")
+        self.assertEqual(gcd_.btc_coin.privateKey.chain_path, "/m/0'/0'")
 
 
 class TestPrivateKey(unittest.TestCase):

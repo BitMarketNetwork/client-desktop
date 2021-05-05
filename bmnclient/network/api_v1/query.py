@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Dict, Final, List, Optional, Tuple, Union
     from ...application import CoreApplication
     from ...coins.abstract.coin import AbstractCoin
-    from ...wallet.address import CAddress
     from ...wallet.mtx_impl import Mtx
 
 
@@ -48,7 +47,7 @@ class AbstractApiQuery(AbstractJsonQuery):
         return coin.shortName
 
     @classmethod
-    def addressToNameSuffix(cls, address: CAddress):
+    def addressToNameSuffix(cls, address: AbstractCoin.Address):
         return "{}:{}".format(address.coin.shortName, address.name)
 
     @property
@@ -222,7 +221,7 @@ class AddressInfoApiQuery(AbstractApiQuery):
     def __init__(
             self,
             application: CoreApplication,
-            address: CAddress,
+            address: AbstractCoin.Address,
             *args,
             name_suffix: Optional[str] = None,
             **kwargs) -> None:
@@ -268,7 +267,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
             finished_callback: Optional[
                 Callable[[HdAddressIteratorApiQuery], None]] = None,
             _hd_iterator: Optional[HdAddressIterator] = None,
-            _current_address: Optional[CAddress] = None) -> None:
+            _current_address: Optional[AbstractCoin.Address] = None) -> None:
         if _hd_iterator is None:
             _hd_iterator = HdAddressIterator(coin)
         if _current_address is None:
@@ -328,7 +327,7 @@ class AddressTxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
     def __init__(
             self,
             application: CoreApplication,
-            address: CAddress,
+            address: AbstractCoin.Address,
             *,
             finished_callback: Optional[
                 Callable[[HdAddressIteratorApiQuery], None]] = None,
@@ -394,7 +393,7 @@ class AddressUtxoIteratorApiQuery(AddressTxIteratorApiQuery):
     def __init__(
             self,
             application: CoreApplication,
-            address: CAddress,
+            address: AbstractCoin.Address,
             *,
             finished_callback: Optional[
                 Callable[[HdAddressIteratorApiQuery], None]] = None,

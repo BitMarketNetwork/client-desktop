@@ -103,7 +103,7 @@ class TestWorkflow(unittest.TestCase):
         addr.last_offset = 2344
         addr.first_offset = 8989
         self.assertEqual(1, len(coin))
-        self.assertIsInstance(addr, address.CAddress)
+        self.assertIsInstance(addr, AbstractCoin.Address)
         self.db._add_or_save_address(addr, None)
         coin._wallet_list.clear()
         self.assertEqual(0, len(coin))

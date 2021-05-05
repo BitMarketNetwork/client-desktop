@@ -6,6 +6,7 @@ import PySide2.QtCore as qt_core
 from . import db_wrapper
 from ..wallet import address
 from .. import loading_level
+from ..coins.abstract.coin import AbstractCoin
 
 log = logging.getLogger(__name__)
 
@@ -25,10 +26,6 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
             self._add_or_save_address, qt_core.Qt.QueuedConnection)
         self._parent.saveTx.connect(
             self._write_transaction, qt_core.Qt.QueuedConnection)
-        self._parent.removeTxList.connect(
-            self._remove_tx_list, qt_core.Qt.QueuedConnection)
-        self._parent.clearAddressTx.connect(
-            self._clear_tx, qt_core.Qt.QueuedConnection)
         self._parent.dropDb.connect(
             self.drop_db, qt_core.Qt.QueuedConnection)
         self._parent.resetDb.connect(
@@ -56,7 +53,7 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
         for coin in CoreApplication.instance().coinList:
             self._update_coin(coin)
 
-    @qt_core.Slot(address.CAddress)
+    @qt_core.Slot(AbstractCoin.Address)
     def save_address(self, wallet):
         self._add_or_save_address(wallet, None)
 

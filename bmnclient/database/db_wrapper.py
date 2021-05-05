@@ -11,9 +11,8 @@ import PySide2.QtCore as qt_core
 
 import bmnclient.config
 from . import sqlite_impl
-from ..coins.tx import AbstractTx
+from ..coins.abstract.coin import AbstractCoin
 from ..wallet import coins
-from ..wallet.address import CAddress
 
 log = logging.getLogger(__name__)
 
@@ -175,7 +174,7 @@ class DbWrapper:
             ##
             # self.update_wallet.emit(wallet)
 
-    def _read_tx_list(self, wallet: CAddress) -> None:
+    def _read_tx_list(self, wallet: AbstractCoin.Address) -> None:
         query = f"""
             SELECT
                 id,
@@ -196,7 +195,7 @@ class DbWrapper:
             self._read_input_list(tx)
             wallet.appendTx(tx)
 
-    def _read_input_list(self, tx: AbstractTx) -> None:
+    def _read_input_list(self, tx: AbstractCoin.Tx) -> None:
         """
         and outputs too of course
         """
@@ -215,45 +214,7 @@ class DbWrapper:
             tx.make_input(iter(values))
         qt_core.QCoreApplication.processEvents()
 
-    def _clear_tx(self, address: CAddress) -> None:
-        query = f"""
-        DELETE FROM {self.transactions_table}
-        WHERE {self.address_id_column} == ?;
-        """
-        with closing(self.__exec(query, (address.rowId,))):
-            pass
-
-    def _remove_tx(self, tx: AbstractTx) -> None:
-        if tx.rowId is None:
-            query = f"""
-            DELETE FROM {self.transactions_table}
-            WHERE {self.name_column} == ?;
-            """
-            with closing(self.__exec(query, (self.__impl(tx.name),))):
-                pass
-        else:
-            query = f"""
-            DELETE FROM {self.transactions_table}
-            WHERE id == ?;
-            """
-            with closing(self.__exec(query, (self.__impl(tx.rowId),))):
-                pass
-
-    def _remove_tx_list(self, tx_list: List[AbstractTx]) -> None:
-        # TODO: optimize
-        # may be row ids?
-        # tx_hashes = f"({','.join(map(lambda t: self.__impl(t.name),tx_list))})"
-        # log.warning(f"tx hashes:{tx_hashes}")
-        # query = f"""
-        # DELETE FROM {self.transactions_table}
-        # WHERE {self.name_column} IN ?;
-        # """
-        # self._exec_(query, (tx_list,))
-
-        for tx in tx_list:
-            self._remove_tx(tx)
-
-    def _add_or_save_address(self, wallet: CAddress, timeout: int = None) -> None:
+    def _add_or_save_address(self, wallet: AbstractCoin.Address, timeout: int = None) -> None:
         if not timeout:
             self._add_or_save_address_impl(wallet)
         else:
@@ -262,7 +223,7 @@ class DbWrapper:
             self._save_address_timer.wallet = wallet
             self._save_address_timer.start(timeout, self)
 
-    def _add_or_save_address_impl(self, wallet: CAddress) -> None:
+    def _add_or_save_address_impl(self, wallet: AbstractCoin.Address) -> None:
         assert wallet.coin.rowId
 
         table = wallet.serialize()
@@ -348,7 +309,7 @@ class DbWrapper:
         self.open_db()
         self._init_actions()
 
-    def _write_transaction(self, tx: AbstractTx) -> None:
+    def _write_transaction(self, tx: AbstractCoin.Tx) -> None:
         table = tx.serialize()
         for (key, value) in table.items():
             if not isinstance(table[key], list):
@@ -394,7 +355,7 @@ class DbWrapper:
         except AssertionError:
             sys.exit(1)
 
-    def _write_input(self, tx: AbstractTx, inp, out) -> None:
+    def _write_input(self, tx: AbstractCoin.Tx, inp, out) -> None:
         table = inp.serialize()
         for (key, value) in table.items():
             if not isinstance(table[key], list):
@@ -466,7 +427,7 @@ class DbWrapper:
             else:
                 log.warning(f"saved coin {name} isn't found ")
 
-    def _read_all_addresses(self, coins: coins.CoinType) -> CAddress:
+    def _read_all_addresses(self, coins: coins.CoinType) -> AbstractCoin.Address:
         assert coins
         """
         we call this version on start
@@ -512,7 +473,7 @@ class DbWrapper:
 
     def _read_all_tx(
             self,
-            address_list: List[CAddress]) -> None:
+            address_list: List[AbstractCoin.Address]) -> None:
         if not address_list:
             return []
 

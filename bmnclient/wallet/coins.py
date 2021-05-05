@@ -10,6 +10,7 @@ from . import address, coin_network, hd, key
 from ..utils.meta import classproperty
 from ..coins import coin_bitcoin
 from ..coins import coin_litecoin
+from ..coins.abstract.coin import AbstractCoin
 
 log = logging.getLogger(__name__)
 
@@ -28,8 +29,8 @@ class CoinType(qt_core.QObject):
         super().__init__()
         self.__visible = True
 
-    def add_watch_address(self, name: str, label: str = "") -> address.CAddress:
-        adr = address.CAddress(
+    def add_watch_address(self, name: str, label: str = "") -> AbstractCoin.Address:
+        adr = AbstractCoin.Address(
             self,
             name=name,
             label=label)
@@ -56,11 +57,11 @@ class CoinType(qt_core.QObject):
         self.__wallet_iter = iter(self._address_list)
         return self
 
-    def __next__(self) -> address.CAddress:
+    def __next__(self) -> AbstractCoin.Address:
         return next(self.__wallet_iter)
 
     # abc implemented it but we can do it better
-    def __contains__(self, value: Union[str, address.CAddress]) -> bool:
+    def __contains__(self, value: Union[str, AbstractCoin.Address]) -> bool:
         if not isinstance(value, str):
             value = value.name
         return any(value == add.name for add in self._address_list)
@@ -72,26 +73,11 @@ class CoinType(qt_core.QObject):
         return bool(self._address_list)
 
     # don't bind not_empty with addressModel !!! . beware recursion
-    def __getitem__(self, key: Union[int, str]) -> address.CAddress:
+    def __getitem__(self, key: Union[int, str]) -> AbstractCoin.Address:
         if isinstance(key, int):
             return self._address_list[key]
         if isinstance(key, str):
             return next((w for w in self._address_list if w.name == key), None)
-
-    def _update_wallets(
-            self,
-            from_=Optional[int],
-            remove_txs_from: Optional[int] = None,
-            verbose: bool = False):
-        "from old to new one !!!"
-        for w in self._address_list:
-            w.update_tx_list(from_, remove_txs_from, verbose)
-
-    def clear(self):
-        for addr in self._address_list:
-            addr.clear()
-        self._address_list.clear()
-        self.refreshAmount()  # TODO
 
     @qt_core.Property(bool, notify=visibleChanged)
     def visible(self) -> bool:
