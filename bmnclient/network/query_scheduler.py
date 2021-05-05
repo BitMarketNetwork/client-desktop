@@ -108,6 +108,10 @@ class NetworkQueryScheduler:
         query.putFinishedCallback(timer.start)
         self._manager.put(query, **kwargs)
 
+    @property
+    def manager(self) -> NetworkQueryManager:
+        return self._manager
+
     def start(self) -> None:
         self._createTimerList()
         for timer in self._timer_list.values():

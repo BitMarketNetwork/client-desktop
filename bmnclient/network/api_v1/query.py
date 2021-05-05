@@ -1,7 +1,6 @@
 # JOK+++
 from __future__ import annotations
 
-from random import randint
 from typing import TYPE_CHECKING
 
 from .parser import \
@@ -287,29 +286,26 @@ class AddressTxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
 
     def __init__(
             self,
-            application: CoreApplication,
             address: AbstractCoin.Address,
             *,
+            query_manager: NetworkQueryManager,
             finished_callback: Optional[
                 Callable[[HdAddressIteratorApiQuery], None]] = None,
             first_offset: Optional[str] = None,
             last_offset: Optional[str] = None) -> None:
         super().__init__(
-            application,
             address,
+            query_manager=query_manager,
             finished_callback=finished_callback)
         self._first_offset = first_offset
         self._last_offset = last_offset
 
     @property
     def arguments(self) -> Dict[str, Union[int, str]]:
-        args = {
+        return {
             "first_offset": self._first_offset or self._BEST_OFFSET_NAME,
             "last_offset": self._last_offset or self._BASE_OFFSET_NAME,
         }
-        if self._application.isDebugMode:
-            args["limit"] = randint(0, 52)
-        return args
 
     def _processData(
             self,
@@ -324,9 +320,6 @@ class AddressTxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
 
         for tx in parser.txList:
             self._address.appendTx(tx)
-            # TODO
-            # self._application.databaseThread.database._write_transaction(tx)
-            # self._application.uiManager.process_incoming_tx(tx)
 
         # if scan from "best", save real offset
         if not self._first_offset:
@@ -337,13 +330,11 @@ class AddressTxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
         else:
             self._address.historyLastOffset = self._BASE_OFFSET_NAME
 
-        # TODO
-        # self._application.databaseThread.save_address(self._address)
-
         if parser.lastOffset is not None:
             self._next_query = self.__class__(
-                self._application,
                 self._address,
+                query_manager=self._query_manager,
+                finished_callback=self._finished_callback,
                 first_offset=parser.lastOffset,
                 last_offset=None)
 
