@@ -271,8 +271,35 @@ class AbstractCoin(Serializable):
             self.network)
         return address_path
 
+    def createHdAddress(
+            self,
+            account: int,
+            is_change: bool,
+            index: int,
+            type_: Address.Type,
+            **kwargs) -> Optional[Address]:
+        if self._hd_path is None:
+            return None
+        if index < 0:
+            # TODO auto
+            pass
+        hd_path = self.hdAddressPath(account, is_change, index)
+        if hd_path is None:
+            return None
+
+        address = self.Address(
+            self,
+            name=hd_path.to_address(type_),
+            type_=type_,
+            private_key=hd_path,
+            **kwargs)
+        return address
+
     def decodeAddress(self, **kwargs) -> Optional[Address]:
         return self.Address.decode(self, **kwargs)
+
+    def createNullDataAddress(self, **kwargs) -> Address:
+        return self.Address.createNullData(self, **kwargs)
 
     @property
     def addressList(self) -> List[Address]:

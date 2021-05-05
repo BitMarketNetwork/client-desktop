@@ -5,7 +5,6 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 from ..wallet.address import CAddress
-from ..wallet.key import AddressType
 
 if TYPE_CHECKING:
     from typing import Dict, Optional
@@ -24,7 +23,7 @@ class HdAddressIterator(Iterator):
 
         self._empty_address_counter: Dict[AbstractCoin.Address.Type, int] = {}
         for address_type in self._coin.Address.Type:
-            if self.isSupportedAddressType(address_type) is not None:
+            if self.isSupportedAddressType(address_type):
                 self._empty_address_counter[address_type] = 0
         assert len(self._empty_address_counter) > 0
 
@@ -40,17 +39,15 @@ class HdAddressIterator(Iterator):
                 if type_index <= self._type_index:
                     continue
 
-                address_type_old = self.isSupportedAddressType(address_type)
-                if address_type_old is None:
+                if not self.isSupportedAddressType(address_type):
                     continue
 
                 self._type_index = type_index
-                hd_path = self._coin.hdAddressPath(0, False, self._hd_index)
-                self._last_address = CAddress(
-                    self._coin,
-                    name=hd_path.to_address(address_type_old),
-                    type_=address_type)
-                self._last_address.set_prv_key(hd_path)
+                self._last_address = self._coin.createHdAddress(
+                    0,
+                    False,
+                    self._hd_index,
+                    address_type)
                 return self._last_address
 
             self._type_index = -1
@@ -59,14 +56,13 @@ class HdAddressIterator(Iterator):
     @classmethod
     def isSupportedAddressType(
             cls,
-            address_type: AbstractCoin.Address.Type) -> Optional[AddressType]:
-        # TODO return bool
+            address_type: AbstractCoin.Address.Type) -> bool:
         if address_type.value[1] > 0:
             if address_type.value[2] == "p2pkh":
-                return AddressType.P2PKH
+                return True
             if address_type.value[2] == "p2wpkh":
-                return AddressType.P2WPKH
-        return None
+                return True
+        return False
 
     def markLastAddress(self, empty: bool) -> None:
         if not empty:
