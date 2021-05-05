@@ -67,7 +67,7 @@ class _AbstractUtxo(Serializable):
 
         # TODO old code
         self.script = None
-        self.type = self._address.addressType.value[2]
+        self.type = self._address.type.value[2]
         self.vsize = _UNSPENT_TYPES[self.type]['vsize']
         self.segwit = _UNSPENT_TYPES[self.type]['segwit']
 

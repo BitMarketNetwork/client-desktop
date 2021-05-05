@@ -82,15 +82,15 @@ class TestAdvanced(TestCase):
         coin = coins.Bitcoin(None)
         dummy = hd.HDNode.make_master(os.urandom(64))
         coin.makeHdPath(dummy)
-        self.assertEqual(coin._next_hd_index(), 1)
+        self.assertEqual(coin.nextHdIndex(0, False), 1)
         coin.make_address()
-        self.assertEqual(coin._next_hd_index(), 2)
+        self.assertEqual(coin.nextHdIndex(0, False), 2)
         w2 = coin.make_address()
         coin.make_address()
-        self.assertEqual(coin._next_hd_index(), 4)
+        self.assertEqual(coin.nextHdIndex(0, False), 4)
         coin.remove_wallet(w2)
         # the key is here !!!!
-        self.assertEqual(coin._next_hd_index(), 2)
+        self.assertEqual(coin.nextHdIndex(0, False), 2)
 
     def test_main(self):
 

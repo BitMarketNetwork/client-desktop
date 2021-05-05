@@ -37,7 +37,7 @@ class AbstractAddress(Serializable):
             raise NotImplementedError
 
     class Type(Enum):
-        # Tuple(version, excepted_size, friendly_name)
+        # Tuple[version: int, excepted_size: int, friendly_name: str]
         pass
 
     def __init__(
@@ -55,7 +55,7 @@ class AbstractAddress(Serializable):
 
         self._coin = coin
         self._name = name or self._NULLDATA_NAME
-        self._type = type_  # TODO check usage
+        self._type = type_
         self._data = data
         self._private_key = private_key
         self._amount = amount
@@ -102,6 +102,14 @@ class AbstractAddress(Serializable):
     @property
     def data(self) -> bytes:
         return self._data
+
+    @property
+    def hdIndex(self) -> int:
+        if isinstance(self._private_key, HDNode):
+            index = self._private_key.index
+            if index >= 0:
+                return index
+        return -1
 
     @serializable
     @property

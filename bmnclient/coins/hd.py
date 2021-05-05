@@ -44,10 +44,10 @@ class HdAddressIterator(Iterator):
 
                 self._type_index = type_index
                 self._last_address = self._coin.createHdAddress(
-                    0,
-                    False,
-                    self._hd_index,
-                    address_type)
+                    account=0,
+                    is_change=False,
+                    index=self._hd_index,
+                    type_=address_type)
                 return self._last_address
 
             self._type_index = -1
@@ -57,6 +57,7 @@ class HdAddressIterator(Iterator):
     def isSupportedAddressType(
             cls,
             address_type: AbstractCoin.Address.Type) -> bool:
+        # TODO move to Address
         if address_type.value[1] > 0:
             if address_type.value[2] == "p2pkh":
                 return True

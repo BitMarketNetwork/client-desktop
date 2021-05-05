@@ -27,6 +27,7 @@ class LitecoinAddress(BitcoinAddress):
             BitcoinAddress.Type.WITNESS_V0_SCRIPT_HASH.value
         WITNESS_UNKNOWN: Final = \
             BitcoinAddress.Type.WITNESS_UNKNOWN.value
+        DEFAULT = WITNESS_V0_KEY_HASH
 
 
 class Litecoin(Bitcoin):

@@ -273,17 +273,22 @@ class AbstractCoin(Serializable):
 
     def createHdAddress(
             self,
+            *,
             account: int,
             is_change: bool,
-            index: int,
-            type_: Address.Type,
+            index: int = -1,
+            type_: Optional[Address.Type] = None,
             **kwargs) -> Optional[Address]:
         if self._hd_path is None:
             return None
 
+        if type_ is None:
+            type_ = self.Address.Type.DEFAULT
+
         if index < 0:
-            # TODO auto
-            pass
+            # TODO fail if coin in "updating" mode
+            index = self.nextHdIndex(account, is_change)
+            assert index >= 0
 
         hd_path = self.hdAddressPath(account, is_change, index)
         if hd_path is None:

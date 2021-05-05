@@ -24,6 +24,7 @@ class BitcoinAddress(AbstractCoin.Address):
         WITNESS_V0_KEY_HASH: Final = (0x00, Ripemd160Digest.SIZE, "p2wpkh")
         WITNESS_V0_SCRIPT_HASH: Final = (0x00, Sha256Digest.SIZE, "p2wsh")
         WITNESS_UNKNOWN: Final = (0x00, -40, "witness_unknown")
+        DEFAULT = WITNESS_V0_KEY_HASH
 
     @classmethod
     def decode(
@@ -140,6 +141,7 @@ class BitcoinTestAddress(BitcoinAddress):
             BitcoinAddress.Type.WITNESS_V0_SCRIPT_HASH.value
         WITNESS_UNKNOWN: Final = \
             BitcoinAddress.Type.WITNESS_UNKNOWN.value
+        DEFAULT = WITNESS_V0_KEY_HASH
 
 
 class BitcoinTest(Bitcoin):

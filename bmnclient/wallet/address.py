@@ -15,11 +15,6 @@ class AddressError(Exception):
 
 
 class CAddress(AbstractCoin.Address):
-    @property
-    def hd_index(self) -> Optional[int]:
-        if self._private_key and isinstance(self._private_key, hd.HDNode):
-            return self._private_key.index
-
     def is_receiver(self, tx: AbstractCoin.Tx) -> bool:
         return any(self.name == o.address for o in tx.output_iter)
 
@@ -58,7 +53,7 @@ class CAddress(AbstractCoin.Address):
         if other is None or not isinstance(other, CAddress):
             return False
         return self._name == other.name and \
-            self.__type == other.type and \
+            self._type == other._type and \
             self._history_last_offset == other._history_last_offset and \
             self._history_first_offset == other._history_first_offset and \
             True
@@ -99,25 +94,6 @@ class CAddress(AbstractCoin.Address):
         return not self.readOnly and self._amount > 0
 
     @property
-    def created(self) -> datetime:
-        return self.__created
-
-    # @qt_core.Property('QVariantList', constant=True)
-    @property
-    def tx_list(self) -> List:
-        return list(self._tx_list)
-
-    @property
     def readOnly(self) -> bool:
         return self._private_key is None or \
             isinstance(self._private_key, key.PublicKey)
-
-    def save(self):
-        from ..application import CoreApplication
-        CoreApplication.instance().databaseThread.save_address(self)
-
-    def __len__(self):
-        return len(self._tx_list)
-
-    def __getitem__(self, val: int) -> AbstractCoin.Tx:
-        return self._tx_list[val]
