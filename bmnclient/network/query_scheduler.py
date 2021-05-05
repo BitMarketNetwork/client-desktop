@@ -31,6 +31,7 @@ class NetworkQueryTimer(QObject):
         self._delay = delay
         self._callback = callback
 
+    # noinspection PyUnusedLocal
     def start(self, *args, **kwargs) -> None:
         self._timer.start(self._delay, self)
 
@@ -152,8 +153,7 @@ class NetworkQueryScheduler:
             timer.start()
         else:
             query = CoinMempoolIteratorApiQuery(
-                self._application,
                 coin,
+                query_manager=self._manager,
                 finished_callback=timer.start)
             self._manager.put(query)
-

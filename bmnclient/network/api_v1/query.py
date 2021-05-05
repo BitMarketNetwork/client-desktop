@@ -402,25 +402,21 @@ class CoinMempoolIteratorApiQuery(AbstractIteratorApiQuery):
 
     def __init__(
             self,
-            application: CoreApplication,
             coin: AbstractCoin,
             *,
+            query_manager: NetworkQueryManager,
             finished_callback: Optional[Callable[
                 [CoinMempoolIteratorApiQuery], None]] = None,
             _address_list: List[Dict[str, Any]] = None) -> None:
         super().__init__(
-            application,
+            query_manager=query_manager,
             finished_callback=finished_callback,
             name_suffix=self.coinToNameSuffix(coin))
         self._coin = coin
         self._local_hash = b""
         if _address_list is None:
-            if self._application.isDebugMode:
-                self._address_list = self._coin.createMempoolAddressLists(
-                    randint(1, self.ADDRESS_COUNT_PER_REQUEST))
-            else:
-                self._address_list = self._coin.createMempoolAddressLists(
-                    self.ADDRESS_COUNT_PER_REQUEST)
+            self._address_list = self._coin.createMempoolAddressLists(
+                self.ADDRESS_COUNT_PER_REQUEST)
         else:
             self._address_list = _address_list
 
@@ -463,8 +459,8 @@ class CoinMempoolIteratorApiQuery(AbstractIteratorApiQuery):
 
         if len(self._address_list) > 0:
             self._next_query = self.__class__(
-                self._application,
                 self._coin,
+                query_manager=self._query_manager,
                 finished_callback=self._finished_callback,
                 _address_list=self._address_list)
 
