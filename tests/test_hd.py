@@ -72,7 +72,7 @@ class TestBase(TestCase):
         btc_hd = h44.make_child_prv(0, True, net)
         for i in range(0, 20):
             hdk = btc_hd.make_child_prv(i, False, net)
-            addr = hdk.to_address(key_mod.AddressType.P2WPKH)
+            addr = hdk.to_address("p2wpkh")
             log.warning(f"{i}: {addr} hdpath:{hdk.chain_path}")
 
 

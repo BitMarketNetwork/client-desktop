@@ -20,7 +20,7 @@ class HDError(Exception):
 
 
 # https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
-class HDNode(key.AbstractAddress):
+class HDNode(key.AbstractAddressOld):
     def __init__(self, key: key.PrivateKey, parent=None):
         """
         TODO:
@@ -118,8 +118,8 @@ class HDNode(key.AbstractAddress):
     def is_private(self) -> bool:
         return isinstance(self.key, key.PrivateKey)
 
-    def to_address(self, type_, witver: int = 0) -> str:
-        return self.key.public_key.to_address(type_, witver)
+    def to_address(self, type_: str) -> str:
+        return self.key.public_key.to_address(type_)
 
     @property
     def to_wif(self) -> str:

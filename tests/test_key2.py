@@ -186,26 +186,6 @@ class TestPrivateKey(unittest.TestCase):
         self.assertEqual(private_key.network, coin_network.LitecoinTestNetwork)
         self.assertEqual(private_key.to_wif, WALLET_LITECOIN_TEST)
 
-    def test_can_sign_unspent(self):
-        private_key = key.PrivateKey.from_wif(WALLET_FORMAT_MAIN)
-        self.assertTrue(private_key.can_sign_unspent(UNSPENTS[0]))
-        self.assertFalse(private_key.can_sign_unspent(UNSPENTS[1]))
-
-        private_key = key.PrivateKey.from_wif(WALLET_FORMAT_COMPRESSED_MAIN)
-        self.assertTrue(private_key.can_sign_unspent(UNSPENTS[1]))
-        self.assertTrue(private_key.compressed)
-        self.assertTrue(private_key.public_key.compressed)
-        self.assertTrue(private_key.P2WPKH)
-        self.assertTrue(private_key.can_sign_unspent(UNSPENTS[2]))
-
-        private_key = key.PrivateKey.from_wif(WALLET_FORMAT_TEST)
-        self.assertTrue(private_key.can_sign_unspent(UNSPENTS[0]))
-        self.assertFalse(private_key.can_sign_unspent(UNSPENTS[1]))
-
-        private_key = key.PrivateKey.from_wif(WALLET_FORMAT_COMPRESSED_TEST)
-        self.assertTrue(private_key.can_sign_unspent(UNSPENTS[1]))
-        self.assertTrue(private_key.can_sign_unspent(UNSPENTS[2]))
-
 
 class TestBtcCore(unittest.TestCase):
 

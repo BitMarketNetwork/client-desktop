@@ -1,5 +1,3 @@
-import abc
-import enum
 import hashlib
 import logging
 from typing import Any, Optional, Union
@@ -30,24 +28,20 @@ class AddressString:
         return hrp is not None
 
 
-class AbstractAddress(abc.ABC):
-
-    @abc.abstractproperty
-    def to_address(self, type_):
-        pass
+class AbstractAddressOld:
+    def to_address(self, type_: str):
+        raise NotImplementedError
 
     @property
     def P2PKH(self) -> str:
         if not hasattr(self, "_p2pkh"):
-            self._p2pkh = self.to_address(
-                AddressType.P2PKH)
+            self._p2pkh = self.to_address("p2pkh")
         return self._p2pkh
 
     @property
     def P2WPKH(self) -> str:
         if not hasattr(self, "_p2wpkh"):
-            self._p2wpkh = self.to_address(
-                AddressType.P2WPKH)
+            self._p2wpkh = self.to_address("p2wpkh")
         return self._p2wpkh
 
     @property
@@ -55,8 +49,7 @@ class AbstractAddress(abc.ABC):
         return util.address_to_scriptpubkey(self.P2PKH)
 
 
-class Keybase(abc.ABC):
-
+class Keybase:
     def __init__(self, data: bytes, network: coin_network.CoinNetworkBase):
         self._data = util.get_bytes(data) if data else None
         self._network = network
@@ -67,24 +60,14 @@ class Keybase(abc.ABC):
     def __len__(self) -> int:
         return len(self._data)
 
-    @abc.abstractproperty
     def is_valid(self):
-        pass
+        raise NotImplementedError
 
-    @abc.abstractproperty
     def compressed_bytes(self):
-        pass
+        raise NotImplementedError
 
-    @abc.abstractmethod
     def __eq__(self, other: Any) -> bool:
-        pass
-
-    @property
-    def is_multi_sig(self) -> bool:
-        """
-        for future
-        """
-        return False
+        raise NotImplementedError
 
     @property
     def data(self) -> bytes:
@@ -99,17 +82,17 @@ class Keybase(abc.ABC):
         return self._network
 
 
-class PublicKey(Keybase, AbstractAddress):
-
-    # def __init__(self, data: Union[bytes, ec.EllipticCurvePublicKey], network: coin_network.CoinNetworkBase, compressed: bool = True):
-    def __init__(self, data: Union[bytes, ecdsa.VerifyingKey], network: coin_network.CoinNetworkBase, compressed: bool = True):
+class PublicKey(Keybase, AbstractAddressOld):
+    def __init__(
+            self,
+            data: Union[bytes, ecdsa.VerifyingKey],
+            network: coin_network.CoinNetworkBase,
+            compressed: bool = True):
         if not isinstance(data, bytes):
-            # data = data.public_bytes( encoding=serialization.Encoding.X962, format=serialization.PublicFormat.CompressedPoint if compressed else serialization.PublicFormat.UncompressedPoint,)
             data = data.to_string(
                 "compressed" if compressed else "uncompressed")
         super().__init__(data, network)
         if len(data) not in (33, 65):
-            # raise KeyError(f"Bad  input  length:{len(data)} for public key")
             log.critical(f"Bad  input  length:{len(data)} for public key")
             self._data = None
 
@@ -132,11 +115,12 @@ class PublicKey(Keybase, AbstractAddress):
         return self._data == other._data and \
             self._network == other._network
 
-    def to_address(self, type_: AddressType, witver: int = 0) -> str:
+    def to_address(self, type_: str) -> str:
+        witver = 0
         if self._data:
-            if type_ == AddressType.P2PKH:
+            if type_ == "p2pkh":
                 return util.b58_check_encode(self._network.ADDRESS_BYTE_PREFIX + util.hash160(self._data))
-            if type_ == AddressType.P2WPKH:
+            if type_ == "p2wpkh":
                 if self.compressed:
                     if len(self._data) != 33:
                         raise KeyError("SEGWIT only for compressed keys")
@@ -150,19 +134,21 @@ class PublicKey(Keybase, AbstractAddress):
         return constants.OP_0 + constants.OP_PUSH_20 + util.hash160(self._data)
 
 
-class PrivateKey(Keybase, AbstractAddress):
+class PrivateKey(Keybase, AbstractAddressOld):
     EC_CURVE = ec.SECP256K1()
 
-    def __init__(self, data: bytes, network: coin_network.CoinNetworkBase, compressed=True):
+    def __init__(
+            self,
+            data: bytes,
+            network: coin_network.CoinNetworkBase,
+            compressed=True):
         super().__init__(data, network)
-        # self.eckey: ec.EllipticCurvePrivateKey = None
         self.eckey: ecdsa.SigningKey = None
         self._compressed = compressed
         if data:
             if len(data) != 32:
                 raise KeyError(
                     f"Bad  input  length {len(data)} for private key")
-            # self.eckey = ec.derive_private_key( util.bytes_to_number(data), self.EC_CURVE, default_backend(),)
             self.eckey = ecdsa.SigningKey.from_string(
                 data,
                 curve=ecdsa.SECP256k1,
@@ -213,41 +199,17 @@ class PrivateKey(Keybase, AbstractAddress):
         private_key = self._network.PRIVATE_KEY + self._data + suffix
         return util.b58_check_encode(private_key)
 
-    def can_sign_unspent(self, utxo: "Unspent") -> bool:
-        """
-        Server doesn't give us scripts
-        """
-        return True
-        # if utxo.script is None:
-        #     # log.debug("Skip key sign check for utxo")
-        #     return True
-        # script = util.bytes_to_hex(util.address_to_scriptpubkey(self.P2PKH))
-        # if utxo.script == script:
-        #     return True
-        # if self.P2WPKH is not None:
-        #     segwit_script = util.bytes_to_hex(
-        #         util.address_to_scriptpubkey(self.P2WPKH))
-        #     if utxo.script == segwit_script:
-        #         return True
-        #     else:
-        #         log.warning(f"@@@@ {utxo.script} != {segwit_script} @@@@@")
-        # return False
-
     @property
     def compressed(self) -> bool:
         return self._compressed
 
     def sign(self, message, hasher: Optional[callable] = util.sha256):
         message = hasher(message) if hasher else message
-        # return self.eckey.sign(message.encode(), ec.ECDSA(hashes.SHA256()))
-        # return self.eckey.sign_digest(message , hashfunc = hashlib.sha256)
         return self.eckey.sign_digest_deterministic(message, sigencode=ecdsa.util.sigencode_der_canonize)
 
     def verify(self, sig, message, hasher=util.sha256) -> bool:
         message = hasher(message) if hasher else message
         try:
-            # sig_meth = ec.ECDSA(hashes.SHA256())
-            # self.eckey.public_key().verify(sig, message, sig_meth)
             return self.eckey.verifying_key.verify_digest(sig, message)
         except InvalidSignature:
             return False
@@ -264,11 +226,10 @@ class PrivateKey(Keybase, AbstractAddress):
 
     @property
     def public_key(self):
-        # return PublicKey(self.eckey.public_key(), self._network, self._compressed)
         return PublicKey(self.eckey.verifying_key, self._network, self._compressed)
 
-    def to_address(self, type_: AddressType, witver: int = 0) -> str:
-        return self.public_key.to_address(type_, witver)
+    def to_address(self, type_: str) -> str:
+        return self.public_key.to_address(type_)
 
     @property
     def segwit_scriptcode(self) -> str:

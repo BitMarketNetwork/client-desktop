@@ -40,7 +40,7 @@ class Test_primitives(unittest.TestCase):
         self.assertEqual(prv.to_wif, WIF)
         pub = prv.public_key
         self.assertEqual(pub.to_hex.upper(), PUBC_HEX)
-        self.assertEqual(pub.to_address(key_mod.AddressType.P2PKH), ADDRC)
+        self.assertEqual(pub.to_address("p2pkh"), ADDRC)
 
     def test_addr2(self):
         WIF = '5KHxtARu5yr1JECrYGEA2YpCPdh1i9ciEgQayAF8kcqApkGzT9s'
@@ -50,4 +50,4 @@ class Test_primitives(unittest.TestCase):
         self.assertEqual(prv.to_wif, WIF)
         pub = prv.public_key
         # self.assertEqual(pub.to_hex.upper(), PUBC_HEX)
-        self.assertEqual(pub.to_address(key_mod.AddressType.P2PKH), ADDRC)
+        self.assertEqual(pub.to_address("p2pkh"), ADDRC)

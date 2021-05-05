@@ -291,9 +291,6 @@ class Mtx:
         input_dict = {}
         try:
             for unspent in (utxo_list or self.unspents):
-                if not private_key.can_sign_unspent(unspent):
-                    log.warning(f"key {private_key} can't sign {unspent}")
-                    continue
                 tx_input = \
                     util.hex_to_bytes(unspent.name)[::-1] \
                     + unspent.index.to_bytes(4, byteorder='little')
@@ -350,9 +347,7 @@ class Mtx:
         for hash_, (i, _, segwit_input) in zip(preimages, inputs_parameters):
             tx_in = self.TxIn[i]
             signature = private_key.sign(hash_) + b'\x01'
-            if private_key.is_multi_sig:
-                raise NotImplementedError("Multisig will be implemented later")
-            else:
+            if True:
                 script_sig = b'\x16' + private_key.segwit_scriptcode
 
                 witness = (
