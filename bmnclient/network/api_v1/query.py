@@ -167,8 +167,9 @@ class SysinfoApiQuery(AbstractApiQuery):
 class CoinsInfoApiQuery(AbstractApiQuery):
     _ACTION = ("coins", )
 
-    def __init__(self, application: CoreApplication) -> None:
-        super().__init__(application, name_suffix=None)
+    def __init__(self, coin_list: CoinList) -> None:
+        super().__init__(name_suffix=None)
+        self._coin_list = coin_list
 
     def _processData(
             self,
@@ -178,8 +179,7 @@ class CoinsInfoApiQuery(AbstractApiQuery):
         if self.statusCode != 200 or value is None:
             return
 
-        for coin in self._application.coinList:
-            state_hash = coin.stateHash
+        for coin in self._coin_list:
             parser = CoinsInfoParser()
             if not parser(value, coin.shortName):
                 self._logger.warning(
@@ -187,24 +187,15 @@ class CoinsInfoApiQuery(AbstractApiQuery):
                     coin.shortName)
                 continue
 
-            # TODO legacy order
-            coin.status = parser.status
-            coin.unverifiedHash = parser.unverifiedHash
-            coin.unverifiedOffset = parser.unverifiedOffset
-            coin.offset = parser.offset
-            coin.verifiedHeight = parser.verifiedHeight
-            coin.height = parser.height
-
-            if coin.stateHash == state_hash:
-                continue
-
-            self._logger.debug("Coin state was changed, updating addresses...")
-            # TODO
-            # self._application.databaseThread.saveCoin.emit(coin)
-            # for address in coin.addressList:
-            #     self._application.networkQueryManager.put(
-            #            AddressInfoApiQuery(self._application, address))
-            #     AddressHistoryCommand()
+            coin.beginUpdateState()
+            if True:
+                coin.status = parser.status
+                coin.unverifiedHash = parser.unverifiedHash
+                coin.unverifiedOffset = parser.unverifiedOffset
+                coin.offset = parser.offset
+                coin.verifiedHeight = parser.verifiedHeight
+                coin.height = parser.height
+            coin.endUpdateState()
 
 
 class AddressInfoApiQuery(AbstractApiQuery):

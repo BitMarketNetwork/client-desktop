@@ -48,6 +48,9 @@ class AbstractCoin(Serializable):
         def afterSetServerData(self) -> None:
             raise NotImplementedError
 
+        def afterStateChanged(self) -> None:
+            raise NotImplementedError
+
     class Currency(AbstractCurrency):
         pass
 
@@ -72,6 +75,7 @@ class AbstractCoin(Serializable):
 
         self._model_factory = model_factory
         self.__state_hash = 0
+        self.__old_state_hash = 0
 
         self._offset = ""
         self._unverified_offset = ""
@@ -99,14 +103,21 @@ class AbstractCoin(Serializable):
     def model(self) -> Optional[AbstractCoin.Interface]:
         return self._model
 
+    def beginUpdateState(self) -> None:
+        self.__old_state_hash = self.__state_hash
+
+    def endUpdateState(self) -> bool:
+        if self.__old_state_hash != self.__state_hash:
+            self.__old_state_hash = self.__state_hash
+            if self._model:
+                self._model.afterStateChanged()
+            return True
+        return False
+
     def _updateState(self) -> int:
         old_value = self.__state_hash
         self.__state_hash = (old_value + 1) & ((1 << 64) - 1)
         return old_value
-
-    @property
-    def stateHash(self) -> int:
-        return self.__state_hash
 
     def model_factory(self, owner: object) -> Optional[object]:
         if self._model_factory:

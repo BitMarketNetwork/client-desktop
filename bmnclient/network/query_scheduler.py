@@ -131,7 +131,7 @@ class NetworkQueryScheduler:
 
     def updateCoinsInfo(self) -> None:
         self._putRepeatedApiQuery(
-            CoinsInfoApiQuery(self._application),
+            CoinsInfoApiQuery(self._application.coinList),
             ("updateCoinsInfo", "global"),
             unique=True)
 
