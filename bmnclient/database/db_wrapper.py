@@ -303,7 +303,7 @@ class DbWrapper:
 
     def open(self) -> None:
         self.open_db()
-        self._init_actions()
+        self.load_everything()
 
     def _write_transaction(self, tx: AbstractCoin.Tx) -> None:
         table = tx.serialize()

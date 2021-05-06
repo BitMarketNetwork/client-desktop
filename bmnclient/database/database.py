@@ -14,15 +14,6 @@ class Database(DbWrapper, QObject):
         super().__init__()
         log.info(f"SQLite version {sqlite3.sqlite_version}")
 
-    def _init_actions(self) -> None:
-        self._parent.saveCoin.connect(
-            self._update_coin, Qt.QueuedConnection)
-        self._parent.saveAddress.connect(
-            self._add_or_save_address, Qt.QueuedConnection)
-        self._parent.saveTx.connect(
-            self._write_transaction, Qt.QueuedConnection)
-        self.load_everything()
-
     @QSlot()
     def close(self) -> None:
         self.close_db()
