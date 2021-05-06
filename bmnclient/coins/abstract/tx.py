@@ -7,17 +7,46 @@ from typing import TYPE_CHECKING
 from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
-    from typing import Any, List, Optional, Tuple
+    from typing import Any, Dict, List, Optional, Tuple
     from .address import AbstractAddress
     from .coin import AbstractCoin
 
 
 class _AbstractTxIo(Serializable):
-    def __init__(self, address: AbstractAddress) -> None:
+    def __init__(
+            self,
+            coin: AbstractCoin,
+            *,
+            output_type: str,
+            address_name: Optional[str],
+            amount: int) -> None:
         super().__init__()
-        self._address = address
+        self._output_type = output_type
 
-    @serializable
+        if not address_name:
+            self._address = coin.createNullDataAddress(amount=amount)
+        else:
+            self._address = coin.decodeAddress(
+                name=address_name,
+                amount=amount)
+            if self._address is None:
+                self._address = coin.createNullDataAddress(
+                    name=address_name or "UNKNOWN",
+                    amount=amount)
+
+    def serialize(self) -> Dict[str, Any]:
+        if self._address.isNullData:
+            address_name = None
+        else:
+            address_name = self._address.name
+
+        return {
+            "output_type": self._output_type,
+            "address_name": address_name,
+            "amount": self._address.amount,
+            **super().serialize()
+        }
+
     @property
     def address(self) -> AbstractAddress:
         return self._address
@@ -182,22 +211,7 @@ class AbstractTx(Serializable):
     @classmethod
     def _deserialize(cls, args: Tuple[Any], key: str, value: Any) -> Any:
         if isinstance(value, dict) and key in ("input_list", "output_list"):
-            coin: AbstractCoin = args[0].coin
-            address_type = value["address_type"]
-            address_name = value["address_name"]
-            amount = value["amount"]
-
-            if address_name is None or address_type is None:
-                address = coin.createNullDataAddress(amount=amount)
-            else:
-                address = coin.decodeAddress(
-                    name=address_name,
-                    amount=amount)
-                if address is None:
-                    address = coin.createNullDataAddress(
-                        name=address_name or "UNKNOWN",
-                        amount=amount)
-            return cls.Io(address)
+            return cls.Io.deserialize(args[0].coin, **value)
         return super()._deserialize(args, key, value)
 
     @property

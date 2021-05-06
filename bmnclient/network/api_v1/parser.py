@@ -151,16 +151,17 @@ class TxParser(AbstractParser):
         }
 
     def _parseIo(self, item: dict) -> dict:
+        self.parseKey(
+            item,
+            "type",
+            str,
+            allow_none=True)
+
         return {
             "output_type": self.parseKey(
                 item,
                 "output_type",
                 str),
-            "address_type": self.parseKey(
-                item,
-                "type",
-                str,
-                allow_none=True),
             "address_name": self.parseKey(
                 item,
                 "address",

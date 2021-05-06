@@ -6,6 +6,11 @@ from .meta import classproperty
 from .string import toSnakeCase
 
 
+class DeserializationNotSupportedError(Exception):
+    def __init__(self) -> None:
+        super().__init__("deserialization not supported")
+
+
 def serializable(func) -> Any:
     assert isinstance(func, property)
     getattr(func, "fget").__serializable = True
@@ -49,7 +54,7 @@ class Serializable:
     def _serialize(self, value: Any) -> Any:
         if isinstance(value, Serializable):
             return value.serialize()
-        if isinstance(value, (int, str)):
+        if isinstance(value, (int, str, type(None))):
             return value
         if isinstance(value, list):
             return [self._serialize(v) for v in value]
@@ -65,7 +70,7 @@ class Serializable:
 
     @classmethod
     def _deserialize(cls, args: Tuple[Any], key: str, value: Any) -> Any:
-        if isinstance(value, (int, str)):
+        if isinstance(value, (int, str, type(None))):
             return value
         if isinstance(value, list):
             return [cls._deserialize(args, key, v) for v in value]

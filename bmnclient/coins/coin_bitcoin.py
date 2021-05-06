@@ -126,6 +126,10 @@ class BitcoinAddress(AbstractCoin.Address):
         kwargs["type_"] = cls.Type.UNKNOWN
         return cls(coin, **kwargs)
 
+    @property
+    def isNullData(self) -> bool:
+        return self._type == self.Type.UNKNOWN
+
 
 class Bitcoin(AbstractCoin):
     _SHORT_NAME = "btc"

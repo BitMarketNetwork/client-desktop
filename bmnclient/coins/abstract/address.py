@@ -4,13 +4,15 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from ...utils.serialize import Serializable, serializable
-from ...version import Product
+from ...utils.serialize import \
+    DeserializationNotSupportedError, \
+    Serializable, \
+    serializable
 from ...wallet.hd import HDNode
 from ...wallet.key import PrivateKey
 
 if TYPE_CHECKING:
-    from typing import List, Optional
+    from typing import Any, Dict, List, Optional
     from .coin import AbstractCoin
     from .tx import AbstractTx
 
@@ -37,7 +39,7 @@ class _AbstractAddressTypeValue:
 
 
 class AbstractAddress(Serializable):
-    _NULLDATA_NAME = "nulldata"
+    _NULLDATA_NAME = "NULL_DATA"
 
     class Interface:
         def __init__(
@@ -112,6 +114,9 @@ class AbstractAddress(Serializable):
                 and self._type == other._type
         )
 
+    def deserialize(self) -> Dict[str, Any]:
+        raise DeserializationNotSupportedError
+
     @property
     def model(self) -> Optional[AbstractAddress.Interface]:
         return self._model
@@ -138,6 +143,10 @@ class AbstractAddress(Serializable):
 
     @classmethod
     def createNullData(cls, coin: AbstractCoin, **kwargs) -> AbstractAddress:
+        raise NotImplementedError
+
+    @property
+    def isNullData(self) -> bool:
         raise NotImplementedError
 
     @property
@@ -227,7 +236,7 @@ class AbstractAddress(Serializable):
     def txList(self) -> List[AbstractTx]:
         return self._tx_list
 
-    def appendTx(self, tx: AbstractTx) -> bool:
+    def appendTx(self, tx: AbstractCoin.Tx) -> bool:
         for etx in self._tx_list:
             if tx.name != etx.name:
                 continue

@@ -10,7 +10,10 @@ from .tx import AbstractTx
 from ..currency import FiatRate, NoneFiatCurrency
 from ...crypto.digest import Sha256Digest
 from ...utils.meta import classproperty
-from ...utils.serialize import Serializable, serializable
+from ...utils.serialize import \
+    DeserializationNotSupportedError, \
+    Serializable, \
+    serializable
 from ...wallet.mutable_tx import MutableTransaction
 
 if TYPE_CHECKING:
@@ -101,6 +104,9 @@ class AbstractCoin(Serializable):
         self._mutable_tx = self.MutableTx(self)
 
         self._model: Optional[AbstractCoin.Interface] = self.model_factory(self)
+
+    def deserialize(self) -> Dict[str, Any]:
+        raise DeserializationNotSupportedError
 
     @property
     def model(self) -> Optional[AbstractCoin.Interface]:
