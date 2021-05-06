@@ -5,13 +5,13 @@ BDialogLayout {
     id: _base
 
     enum Type {
-        Generate,
+        Create,
         View,
 
-        GenerateRecipient,
+        CreateRecipient,
         ViewRecipient,
 
-        AddWatchOnly
+        CreateWatchOnly
     }
 
     property var coin
@@ -25,21 +25,21 @@ BDialogLayout {
 
     property string dialogTitleText: {
         switch (_base.type) {
-        case BAddressEditBox.Type.Generate:
-            return qsTr("Generate new address")
+        case BAddressEditBox.Type.Create:
+            return qsTr("Create new address")
         case BAddressEditBox.Type.View:
             return qsTr("Address information")
-        case BAddressEditBox.Type.GenerateRecipient:
-            return qsTr("Generate recipient address")
+        case BAddressEditBox.Type.CreateRecipient:
+            return qsTr("Create recipient address")
         case BAddressEditBox.Type.ViewRecipient:
             return qsTr("Recipient address information")
-        case BAddressEditBox.Type.AddWatchOnly:
+        case BAddressEditBox.Type.CreateWatchOnly:
             return qsTr("Add Watch-Only Address")
         }
     }
     property string descriptionText: {
         switch (_base.type) {
-        case BAddressEditBox.Type.AddWatchOnly:
+        case BAddressEditBox.Type.CreateWatchOnly:
             return qsTr(
                         "Impossible to make transactions with this address.\n"
                         + "You can check the balance and view transactions only.")
@@ -50,7 +50,7 @@ BDialogLayout {
 
     property string addressPromptText: {
         switch (_base.type) {
-        case BAddressEditBox.Type.GenerateRecipient:
+        case BAddressEditBox.Type.CreateRecipient:
         case BAddressEditBox.Type.ViewRecipient:
             return qsTr("Recipient address:")
         default:
@@ -59,13 +59,13 @@ BDialogLayout {
     }
     property string addressPlaceholderText: {
         switch (_base.type) {
-        case BAddressEditBox.Type.Generate:
-        case BAddressEditBox.Type.GenerateRecipient:
-            return qsTr("Not generated")
+        case BAddressEditBox.Type.Create:
+        case BAddressEditBox.Type.CreateRecipient:
+            return qsTr("Not created")
         case BAddressEditBox.Type.View:
         case BAddressEditBox.Type.ViewRecipient:
             return qsTr("None")
-        case BAddressEditBox.Type.AddWatchOnly:
+        case BAddressEditBox.Type.CreateWatchOnly:
             return qsTr("Enter watch-only address")
         }
     }
@@ -75,13 +75,13 @@ BDialogLayout {
     property string labelPromptText: qsTr("Label:")
     property string labelPlaceholderText: {
         switch (_base.type) {
-        case BAddressEditBox.Type.Generate:
-        case BAddressEditBox.Type.GenerateRecipient:
+        case BAddressEditBox.Type.Create:
+        case BAddressEditBox.Type.CreateRecipient:
             return qsTr("Enter label for new address (optional)")
         case BAddressEditBox.Type.View:
         case BAddressEditBox.Type.ViewRecipient:
             return qsTr("None")
-        case BAddressEditBox.Type.AddWatchOnly:
+        case BAddressEditBox.Type.CreateWatchOnly:
             return qsTr("Enter label for address (optional)")
         }
     }
@@ -89,26 +89,26 @@ BDialogLayout {
     property string commentPromptText: qsTr("Comment:")
     property string commentPlaceholderText: {
         switch (_base.type) {
-        case BAddressEditBox.Type.Generate:
-        case BAddressEditBox.Type.GenerateRecipient:
+        case BAddressEditBox.Type.Create:
+        case BAddressEditBox.Type.CreateRecipient:
             return qsTr("Enter comment for new address (optional)")
         case BAddressEditBox.Type.View:
         case BAddressEditBox.Type.ViewRecipient:
             return qsTr("None")
-        case BAddressEditBox.Type.AddWatchOnly:
+        case BAddressEditBox.Type.CreateWatchOnly:
             return qsTr("Enter comment for address (optional)")
         }
     }
 
     property string acceptText: {
         switch (_base.type) {
-        case BAddressEditBox.Type.Generate:
-        case BAddressEditBox.Type.GenerateRecipient:
-            return qsTr("Generate address")
+        case BAddressEditBox.Type.Create:
+        case BAddressEditBox.Type.CreateRecipient:
+            return qsTr("Create address")
         case BAddressEditBox.Type.View:
         case BAddressEditBox.Type.ViewRecipient:
             return qsTr("Copy address")
-        case BAddressEditBox.Type.AddWatchOnly:
+        case BAddressEditBox.Type.CreateWatchOnly:
             return BCommon.button.addRole
         }
     }
@@ -136,20 +136,20 @@ BDialogLayout {
     }
     BDialogInputTextField {
         id: _address
-        enabled: _base.type !== BAddressEditBox.Type.Generate && _base.type !== BAddressEditBox.Type.GenerateRecipient
+        enabled: _base.type !== BAddressEditBox.Type.Create && _base.type !== BAddressEditBox.Type.CreateRecipient
         readOnly: _base.readOnly
         placeholderText: _base.addressPlaceholderText
     }
     // TODO validator "✔", "✘"
 
     BDialogPromptLabel {
-        visible: _base.type !== BAddressEditBox.Type.AddWatchOnly
+        visible: _base.type !== BAddressEditBox.Type.CreateWatchOnly
         text: _base.segwitPromptText
     }
     BDialogInputSwitch {
         enabled: !_base.readOnly
         id: _segwitSwitch
-        visible: _base.type !== BAddressEditBox.Type.AddWatchOnly
+        visible: _base.type !== BAddressEditBox.Type.CreateWatchOnly
         checked: true
     }
 
@@ -177,8 +177,8 @@ BDialogLayout {
     onActiveFocusChanged: {
         if (activeFocus) {
             switch (_base.type) {
-            case BAddressEditBox.Type.Generate:
-            case BAddressEditBox.Type.GenerateRecipient:
+            case BAddressEditBox.Type.Create:
+            case BAddressEditBox.Type.CreateRecipient:
                 _label.forceActiveFocus()
                 break
             default:

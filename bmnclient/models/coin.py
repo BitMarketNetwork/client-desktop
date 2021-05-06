@@ -13,7 +13,8 @@ from PySide2.QtCore import \
 from . import AbstractModel, AbstractStateModel, ValidStatus
 from .address import \
     AddressListModel, \
-    AddressListSortedModel
+    AddressListSortedModel, \
+    AddressModel
 from .amount import AbstractAmountModel
 from .list import \
     AbstractListModel, \
@@ -112,6 +113,11 @@ class CoinReceiveManagerModel(AbstractStateModel):
         super().__init__(application, coin)
         self._address: Optional[AbstractCoin.Address] = None
 
+    def _getValidStatus(self) -> ValidStatus:
+        if self._address is not None:
+            return ValidStatus.Reject
+        return super()._getValidStatus()
+
     @QProperty(str, notify=__stateChanged)
     def name(self) -> str:
         return "" if self._address is None else self._address.name
@@ -157,55 +163,42 @@ class CoinReceiveManagerModel(AbstractStateModel):
 
 
 class CoinManagerModel(AbstractStateModel):
-    @QSlot(int, str, bool)
-    def makeAddress(self, coin_index: int, label: str, segwit: bool):
-        if coin_index >= 0:
-            log.debug(f"Coin idx:{coin_index}")
-            coin = self._application.coinList[coin_index]
-            if segwit:
-                address_type = coin.Address.Type.WITNESS_V0_KEY_HASH
-            else:
-                address_type = coin.Address.Type.PUBKEY_HASH
-            address = coin.createHdAddress(
-                account=0,
-                is_change=False,
-                type_=address_type,
-                label=label,
-                comment="")
-            coin.appendAddress(address)
-        else:
-            log.error(f"No coin selected {coin_index}!")
+    # noinspection PyTypeChecker
+    @QSlot(bool, str, str, result=str)
+    def createAddress(
+            self,
+            is_segwit: bool,
+            label: str,
+            comment: str) -> str:
+        receive_manager = CoinReceiveManagerModel(
+            self._application,
+            self._coin)
+        if receive_manager.create(is_segwit, label, comment):
+            return receive_manager.name
+        return ""
 
-    @QSlot(str, str, result=bool)
-    def isValidAddress(self, coin_short_name: str, address_name: str) -> bool:
-        coin = self._application.findCoin(coin_short_name)
-        if coin is None or coin.decodeAddress(name=address_name) is None:
+    # noinspection PyTypeChecker
+    @QSlot(str, str, str, result=bool)
+    def createWatchOnlyAddress(
+            self,
+            address_name: str,
+            label: str,
+            comment: str) -> bool:
+        address = self._coin.decodeAddress(
+            name=address_name,
+            label=label,
+            comment=comment)
+        if address is None:
             return False
+        self._coin.appendAddress(address)
         return True
 
-    @QSlot(int, str, str)
-    def addWatchAddress(self, coin_index: int, name: str, label: str) -> None:
-        """
-        no checks here !!!
-        """
-        if coin_index >= 0:
-            log.debug(f"Coin idx:{coin_index}")
-            coin = self._application.coinList[coin_index]
-            coin.add_watch_address(name, label)
-        else:
-            log.error(f"No coin selected {coin_index}!")
-
-    @QSlot(int)
-    def exportTransactions(self, address_index: int):
-        if self.coin is None or address_index < 0:
-            log.critical(
-                f"invalid coin idecies: coin:{self.__current_coin_idx} address:{address_index}")
-            return
-        iexport = import_export.ImportExportDialog()
-        filename = iexport.doExport(
-            self.tr("Select file to save transactions"), ".json")
-        self.coin[address_index].export_txs(  # pylint: disable=unsubscriptable-object
-            filename)
+    # noinspection PyTypeChecker
+    @QSlot(str, result=bool)
+    def isValidAddress(self, address_name: str) -> bool:
+        if self._coin.decodeAddress(name=address_name) is None:
+            return False
+        return True
 
 
 class CoinModel(CoinInterface, AbstractModel):

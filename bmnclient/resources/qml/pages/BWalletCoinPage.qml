@@ -5,8 +5,8 @@ BControl {
     id: _base
     property var coin // CoinModel
 
-    signal generateAddress
-    signal addWatchOnlyAddress
+    signal createAddress
+    signal createWatchOnlyAddress
 
     contentItem: BColumnLayout {
         BCoinHeader {
@@ -38,15 +38,15 @@ BControl {
     BMenu {
         id: _contextMenu
         BMenuItem {
-            text: qsTr("Generate a new address...")
+            text: qsTr("Create a new address...")
             onTriggered: {
-                _base.generateAddress()
+                _base.createAddress()
             }
         }
         BMenuItem {
             text: qsTr("Add a watch only address...")
             onTriggered: {
-                _base.addWatchOnlyAddress()
+                _base.createWatchOnlyAddress()
             }
         }
     }

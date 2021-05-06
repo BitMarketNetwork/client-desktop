@@ -16,7 +16,7 @@ BPane {
             contentLayoutItem: BAddressEditBox {
                 id: _inputBox
                 coin: _base.coin
-                type: BAddressEditBox.Type.GenerateRecipient
+                type: BAddressEditBox.Type.CreateRecipient
 
                 BDialogInputButtonBox {
                     BButton {
@@ -66,7 +66,7 @@ BPane {
                         }
                         BButton {
                             BDialogButtonBox.buttonRole: BDialogButtonBox.ResetRole
-                            text: qsTr("Generate again")
+                            text: qsTr("Create again")
                         }
                         onReset: {
                             _layout.currentIndex = 0

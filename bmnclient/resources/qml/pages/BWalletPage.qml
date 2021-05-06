@@ -27,38 +27,38 @@ BApplicationPage {
             active: false
             sourceComponent: BWalletCoinPage {
                 coin: model
-                onGenerateAddress: {
-                    _base.generateAddress(coin)
+                onCreateAddress: {
+                    _base.createAddress(coin)
                 }
-                onAddWatchOnlyAddress: {
-                    _base.addWatchOnlyAddress(coin)
+                onCreateWatchOnlyAddress: {
+                    _base.createWatchOnlyAddress(coin)
                 }
             }
         }
     }
 
-    function generateAddress(coin) {
+    function createAddress(coin) {
         let dialog = _applicationManager.createDialog(
                 "BAddressEditDialog", {
                     "coin": coin,
-                    "type": BAddressEditBox.Type.Generate
+                    "type": BAddressEditBox.Type.Create
                 })
         dialog.onAccepted.connect(function () {
-            // TODO dialog.commentText
-            BBackend.coinManager.makeAddress(coin.index, dialog.labelText, dialog.isSegwit)
+            coin.manager.createAddress(dialog.isSegwit, dialog.labelText, dialog.commentText)
+            // TODO show result
         })
         dialog.open()
     }
 
-    function addWatchOnlyAddress(coin) {
+    function createWatchOnlyAddress(coin) {
         let dialog = _applicationManager.createDialog(
                 "BAddressEditDialog", {
                     "coin": coin,
-                    "type": BAddressEditBox.Type.AddWatchOnly
+                    "type": BAddressEditBox.Type.CreateWatchOnly
                 })
         dialog.onAccepted.connect(function () {
-            // TODO dialog.commentText
-            BBackend.coinManager.addWatchAddress(coin.index, dialog.addressNameText, dialog.labelText)
+            coin.manager.createWatchOnlyAddress(dialog.addressNameText, dialog.labelText, dialog.commentText)
+            // TODO show result
         })
         dialog.open()
     }
@@ -82,11 +82,11 @@ BApplicationPage {
         let dialog = _applicationManager.createDialog(
                 "BAddressEditDialog", {
                     "coin": coin,
-                    "type": BAddressEditBox.Type.Generate
+                    "type": BAddressEditBox.Type.Create
                 })
         dialog.onAccepted.connect(function () {
             // TODO dialog.commentText
-            BBackend.coinManager.makeAddress(coin.index, dialog.labelText, dialog.isSegwit)
+            coin.manager.createAddress(coin.index, dialog.labelText, dialog.isSegwit)
         })
         dialog.open()
     }*/

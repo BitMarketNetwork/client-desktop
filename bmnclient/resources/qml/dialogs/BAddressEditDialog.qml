@@ -16,11 +16,9 @@ BDialog {
     contentItem: BAddressEditBox {
         id: _box
         onAddressNameTextChanged: {
-            if (type === BAddressEditBox.Type.AddWatchOnly) {
-                // TODO show invalid address message
-                _acceptButton.enabled = BBackend.coinManager.isValidAddress(
-                            coin.shortName,
-                            addressNameText)
+            if (type === BAddressEditBox.Type.CreateWatchOnly) {
+                // TODO show invalid address icons
+                _acceptButton.enabled = coin.manager.isValidAddress(addressNameText)
             }
         }
     }
@@ -29,7 +27,7 @@ BDialog {
             id: _acceptButton
             BDialogButtonBox.buttonRole: BDialogButtonBox.AcceptRole
             text: _box.acceptText
-            enabled: _box.type !== BAddressEditBox.Type.AddWatchOnly
+            enabled: _box.type !== BAddressEditBox.Type.CreateWatchOnly
         }
         BButton {
             BDialogButtonBox.buttonRole: BDialogButtonBox.RejectRole

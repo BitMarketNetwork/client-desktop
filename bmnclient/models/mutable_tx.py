@@ -81,7 +81,7 @@ class MutableTxAmountModel(AbstractMutableTxAmountInputModel):
 
     def _getValidStatus(self) -> ValidStatus:
         if self._tx.isValidAmount:
-            return ValidStatus.Accept
+            return super()._getValidStatus()
         return ValidStatus.Reject
 
 
@@ -119,7 +119,7 @@ class MutableTxKibFeeAmountModel(AbstractMutableTxAmountInputModel):
 
     def _getValidStatus(self) -> ValidStatus:
         if self._tx.isValidFeeAmount:
-            return ValidStatus.Accept
+            return super()._getValidStatus()
         return ValidStatus.Reject
 
 
@@ -168,7 +168,7 @@ class MutableTxReceiverModel(AbstractMutableTxStateModel):
 
     def _getValidStatus(self) -> ValidStatus:
         if self._tx.receiverAddress is not None:
-            return ValidStatus.Accept
+            return super()._getValidStatus()
         elif self._first_use:
             return ValidStatus.Unset
         return ValidStatus.Reject
