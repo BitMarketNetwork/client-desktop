@@ -46,7 +46,7 @@ BApplicationPage {
                 })
         dialog.onAccepted.connect(function () {
             // TODO dialog.commentText
-            BBackend.coinManager.makeAddress(coin.index, dialog.labelText, dialog.useSegwit)
+            BBackend.coinManager.makeAddress(coin.index, dialog.labelText, dialog.isSegwit)
         })
         dialog.open()
     }
@@ -59,7 +59,7 @@ BApplicationPage {
                 })
         dialog.onAccepted.connect(function () {
             // TODO dialog.commentText
-            BBackend.coinManager.addWatchAddress(coin.index, dialog.addressText, dialog.labelText)
+            BBackend.coinManager.addWatchAddress(coin.index, dialog.addressNameText, dialog.labelText)
         })
         dialog.open()
     }
@@ -87,7 +87,7 @@ BApplicationPage {
                 })
         dialog.onAccepted.connect(function () {
             // TODO dialog.commentText
-            BBackend.coinManager.makeAddress(coin.index, dialog.labelText, dialog.useSegwit)
+            BBackend.coinManager.makeAddress(coin.index, dialog.labelText, dialog.isSegwit)
         })
         dialog.open()
     }*/

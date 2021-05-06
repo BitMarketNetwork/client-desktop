@@ -7,20 +7,20 @@ BDialog {
     property alias coin: _box.coin
     property alias type: _box.type
 
-    property alias addressText: _box.addressText
+    property alias addressNameText: _box.addressNameText
     property alias labelText: _box.labelText
     property alias commentText: _box.commentText
-    property alias useSegwit: _box.useSegwit
+    property alias isSegwit: _box.isSegwit
 
     title: _box.dialogTitleText
     contentItem: BAddressEditBox {
         id: _box
-        onAddressTextChanged: {
+        onAddressNameTextChanged: {
             if (type === BAddressEditBox.Type.AddWatchOnly) {
                 // TODO show invalid address message
                 _acceptButton.enabled = BBackend.coinManager.isValidAddress(
                             coin.shortName,
-                            addressText)
+                            addressNameText)
             }
         }
     }
@@ -45,6 +45,6 @@ BDialog {
         _box.forceActiveFocus()
     }
     onReset: {
-        _box.reset()
+        _box.clear()
     }
 }

@@ -18,10 +18,10 @@ BDialogLayout {
     property int type: BAddressEditBox.Type.View
     property bool readOnly: _base.type === BAddressEditBox.Type.ViewRecipient || _base.type === BAddressEditBox.Type.View
 
-    property alias addressText: _address.text
+    property alias addressNameText: _address.text
     property alias labelText: _label.text
     property alias commentText: _comment.text
-    property alias useSegwit: _segwitSwitch.checked
+    property alias isSegwit: _segwitSwitch.checked
 
     property string dialogTitleText: {
         switch (_base.type) {
@@ -188,10 +188,10 @@ BDialogLayout {
         }
     }
 
-    function reset() {
+    function clear() {
         if (!readOnly) {
-            addressText = ""
-            useSegwit = true
+            addressNameText = ""
+            isSegwit = true
             labelText = ""
             commentText = ""
         }

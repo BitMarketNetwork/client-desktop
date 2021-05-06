@@ -26,6 +26,7 @@ QtObject {
         readonly property string yesRole: qsTr("Yes")
         readonly property string noRole: qsTr("No")
 
+        readonly property string clearRole: qsTr("Clear")
         readonly property string resetRole: qsTr("Reset")
         readonly property string cancelRole: qsTr("Cancel")
         readonly property string closeRole: qsTr("Close")

@@ -25,14 +25,21 @@ BPane {
                     }
                     BButton {
                         BDialogButtonBox.buttonRole: BDialogButtonBox.ResetRole
-                        text: BCommon.button.resetRole
+                        text: BCommon.button.clearRole
                     }
                     onReset: {
-                        _inputBox.reset()
+                        _base.coin.receiveManager.clear()
+                        _inputBox.clear()
                     }
                     onAccepted: {
-                        BBackend.receiveManager.accept(_inputBox.useSegwit, _inputBox.labelText, _inputBox.commentText)
-                        _layout.currentIndex = 1
+                        if (_base.coin.receiveManager.create(
+                                    _inputBox.isSegwit,
+                                    _inputBox.labelText,
+                                    _inputBox.commentText)) {
+                            _layout.currentIndex = 1
+                        } else {
+                            // TODO show error
+                        }
                     }
                 }
             }
@@ -47,11 +54,10 @@ BPane {
                     coin: _base.coin
                     type: BAddressEditBox.Type.ViewRecipient
 
-                    // TODO bad
-                    addressText: BBackend.receiveManager.address
-                    labelText: BBackend.receiveManager.label
-                    commentText: BBackend.receiveManager.message
-                    useSegwit: _inputBox.useSegwit // TODO
+                    addressNameText: _base.coin.receiveManager.name
+                    labelText: _base.coin.receiveManager.label
+                    commentText: _base.coin.receiveManager.comment
+                    isSegwit: _base.coin.receiveManager.isSegwit
 
                     BDialogInputButtonBox {
                         BButton {
@@ -60,13 +66,13 @@ BPane {
                         }
                         BButton {
                             BDialogButtonBox.buttonRole: BDialogButtonBox.ResetRole
-                            text: BCommon.button.resetRole
+                            text: qsTr("Generate again")
                         }
                         onReset: {
                             _layout.currentIndex = 0
                         }
                         onAccepted: {
-                            BBackend.uiManager.copyToClipboard(_resultBox.addressText)
+                            BBackend.uiManager.copyToClipboard(_resultBox.addressNameText)
                         }
                     }
                 }

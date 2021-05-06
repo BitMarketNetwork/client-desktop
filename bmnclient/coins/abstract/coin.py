@@ -264,6 +264,14 @@ class AbstractCoin(Serializable):
     def hdPath(self) -> Optional[HDNode]:
         return self._hd_path
 
+    def nextHdIndex(self, account: int, is_change: bool) -> int:
+        # FIXME broken path!
+        index = 0
+        for address in self._address_list:
+            if address.hdIndex >= index:
+                index = address.hdIndex + 1
+        return index
+
     def hdAddressPath(
             self,
             account: int,

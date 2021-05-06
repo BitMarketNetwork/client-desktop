@@ -105,6 +105,57 @@ class CoinAmountModel(AbstractAmountModel):
         return self._coin.amount
 
 
+class CoinReceiveManagerModel(AbstractStateModel):
+    __stateChanged = QSignal()
+
+    def __init__(self, application: Application, coin: AbstractCoin) -> None:
+        super().__init__(application, coin)
+        self._address: Optional[AbstractCoin.Address] = None
+
+    @QProperty(str, notify=__stateChanged)
+    def name(self) -> str:
+        return "" if self._address is None else self._address.name
+
+    @QProperty(str, notify=__stateChanged)
+    def label(self) -> str:
+        return "" if self._address is None else self._address.label
+
+    @QProperty(str, notify=__stateChanged)
+    def comment(self) -> str:
+        return "" if self._address is None else self._address.comment
+
+    @QProperty(bool, notify=__stateChanged)
+    def isSegwit(self) -> bool:
+        return True if self._address is None else True  # TODO
+
+    # noinspection PyTypeChecker
+    @QSlot(bool, str, str, result=bool)
+    def create(self, is_segwit: bool, label: str, comment: str) -> bool:
+        if is_segwit:
+            address_type = self._coin.Address.Type.WITNESS_V0_KEY_HASH
+        else:
+            address_type = self._coin.Address.Type.PUBKEY_HASH
+
+        self._address = self._coin.createHdAddress(
+            account=0,
+            is_change=False,
+            type_=address_type,
+            label=label,
+            comment=comment)
+        if self._address is None:
+            self.refresh()
+            return False
+
+        self._coin.appendAddress(self._address)
+        self.refresh()
+        return True
+
+    @QSlot()
+    def clear(self) -> None:
+        self._address = None
+        self.refresh()
+
+
 class CoinModel(CoinInterface, AbstractModel):
     def __init__(self, application: Application, coin: AbstractCoin) -> None:
         super().__init__(
