@@ -42,7 +42,7 @@ class Database:
         self.readCoins(coin_list)
 
         address_list = self.readAddresses(coin_list)
-        self._read_all_tx(address_list)
+        self.readTx(address_list)
 
         self._is_loaded = True
 
@@ -147,75 +147,6 @@ class Database:
                 pass
         except sql.IntegrityError as ie:
             log.error("DB integrity: %s (%s)", ie, coin.name)
-
-    def _read_address_list(self, coin: coins.CoinType):
-        # strict order of columns!! stick to the make_address !!
-        query = f"""
-        SELECT
-            {self.address_column},
-            id,
-            {self.label_column},
-            {self.message_column},
-            {self.created_column},
-            {self.type_column},
-            {self.amount_column},
-            {self.tx_count_column},
-            {self.first_offset_column},
-            {self.last_offset_column},
-            {self.key_column}
-        FROM {self.addresses_table} WHERE {self.coin_id_column} == ?;
-        """
-        with closing(self.execute(query, (coin.rowId,))) as c:
-            fetch = c.fetchall()
-        for values in fetch:
-            wallet = CAddress(values[0], c)
-            wallet.create()
-            wallet.from_args(iter(values[1:]))
-            c.appendAddress(wallet)
-            self._read_tx_list(wallet)
-            wallet.valid = True
-            ##
-            # self.update_wallet.emit(wallet)
-
-    def _read_tx_list(self, wallet: AbstractCoin.Address) -> None:
-        query = f"""
-            SELECT
-                id,
-                {self.name_column},
-                {self.height_column},
-                {self.time_column},
-                {self.amount_column},
-                {self.fee_column},
-                {self.status_column}
-            FROM {self.transactions_table} WHERE {self.address_id_column} == ?;
-        """
-        with closing(self.execute(query, (wallet.rowId,))) as c:
-            fetch = c.fetchall()
-        for values in fetch:
-            qt_core.QCoreApplication.processEvents()
-            tx = AbstractTx(wallet)
-            tx.from_args(iter(values))
-            self._read_input_list(tx)
-            wallet.appendTx(tx)
-
-    def _read_input_list(self, tx: AbstractCoin.Tx) -> None:
-        """
-        and outputs too of course
-        """
-        assert tx.rowId
-        query = f"""
-            SELECT
-                {self.type_column},
-                {self.address_column},
-                {self.amount_column},
-                {self.output_type_column}
-            FROM {self.inputs_table} WHERE {self.tx_id_column} == ?;
-        """
-        with closing(self.execute(query, (tx.rowId,))) as c:
-            fetch = c.fetchall()
-        for values in fetch:
-            tx.make_input(iter(values))
-        qt_core.QCoreApplication.processEvents()
 
     def writeCoinAddress(self, address: AbstractCoin.Address) -> None:
         assert address.coin.rowId
@@ -455,18 +386,19 @@ class Database:
                 label=values[3],
                 comment=values[4],
                 history_first_offset=values[9],
-                history_last_offset=values[10]
-                )
-            coin.appendAddress(address)
-            address_list.append(address)
+                history_last_offset=values[10])
+            if address:
+                address.rowId = values[2]
+                coin.appendAddress(address)
+                address_list.append(address)
 
         for coin in coin_list:
             coin.refreshAmount()
         return address_list
 
-    def _read_all_tx(self, address_list: List[AbstractCoin.Address]) -> None:
+    def readTx(self, address_list: List[AbstractCoin.Address]) -> None:
         if not address_list:
-            return []
+            return
 
         tx_input, tx_output = self._read_all_tx_io()
 
@@ -477,7 +409,7 @@ class Database:
                 {self.height_column},
                 {self.time_column},
                 {self.amount_column},
-                {self.fee_column},
+                {self.fee_amount_column},
                 {self.coinbase_column}
             FROM {self.transactions_table}"""
         with closing(self.execute(query)) as c:
@@ -487,13 +419,14 @@ class Database:
 
         # prepare
         address_map = {address.rowId: address for address in address_list}
-        add_cur = None
+        address = None
         for values in fetch:
-            if not add_cur or add_cur.rowId != values[0]:
-                add_cur = address_map.get(int(values[0]))
-                if add_cur is None:
+            if not address or address.rowId != values[0]:
+                address = address_map.get(int(values[0]))
+                if address is None:
                     log.critical(f"No address with row id:{values[0]}")
                     break
+
             arg_iter = iter(values[1:])
             _rowid = next(arg_iter)
             value = {
@@ -501,15 +434,15 @@ class Database:
                 "height": next(arg_iter),
                 "time": next(arg_iter),
                 "amount": next(arg_iter),
-                "fee": next(arg_iter),
+                "fee_amount": next(arg_iter),
                 "coinbase": next(arg_iter),
                 "input_list": tx_input.get(_rowid, []),
                 "output_list": tx_output.get(_rowid, [])
             }
 
-            tx = AbstractTx.deserialize(add_cur, **value)
+            tx = address.coin.Tx.deserialize(address, **value)
             tx.rowId = _rowid
-            add_cur.appendTx(tx)
+            address.appendTx(tx)
 
     def _read_all_tx_io(self) -> Tuple[dict, dict]:
         query = f"""SELECT
@@ -529,7 +462,6 @@ class Database:
         for values in fetch:
             value = {
                 "output_type": values[4],
-                "address_type": "",  # TODO
                 "address_name": values[2],
                 "amount": values[3]
             }
