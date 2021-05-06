@@ -9,20 +9,19 @@ BApplicationPage {
     title: qsTr("Wallet")
     placeholderText: qsTr("Select coin from the left list.")
 
-    list.model: BBackend.coinManager.coinListModel
+    list.model: BBackend.coinList
     list.delegate: BCoinItem {
         visible: model.state.visible
         enabled: model.state.visible
         coin: model
         onClicked: {
-            BBackend.coinManager.coinIndex = coin.index // TODO kill
             _base.stack.currentIndex = _base.coinIndexToListIndex(coin.index)
             _base.stack.children[_base.stack.currentIndex].active = true
         }
     }
 
     Repeater {
-        model: BBackend.coinManager.coinListModel
+        model: BBackend.coinList
         delegate: Loader {
             readonly property int coinIndex: model.index
             active: false

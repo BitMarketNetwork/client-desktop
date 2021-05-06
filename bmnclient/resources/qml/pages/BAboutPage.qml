@@ -15,7 +15,7 @@ BApplicationPage {
         property string title: ""
         property string iconPath: ""
         enabled: false
-        model: BBackend.coinManager.coinListModel
+        model: BBackend.coinList
         delegate: BAboutCoinPane {
             coin: model
         }

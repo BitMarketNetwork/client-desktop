@@ -12,7 +12,7 @@ BPane {
             text: qsTr("Uncheck unnecessary coins:")
         }
         Repeater {
-            model: BBackend.coinManager.coinListModel
+            model: BBackend.coinList
             delegate: BDialogPromptLabel {
                 BLayout.column: 0
                 BLayout.row: index + 1
@@ -20,7 +20,7 @@ BPane {
             }
         }
         Repeater {
-            model: BBackend.coinManager.coinListModel
+            model: BBackend.coinList
             delegate: BDialogInputSwitch {
                 BLayout.column: 1
                 BLayout.row: index + 1

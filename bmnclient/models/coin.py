@@ -156,6 +156,58 @@ class CoinReceiveManagerModel(AbstractStateModel):
         self.refresh()
 
 
+class CoinManagerModel(AbstractStateModel):
+    @QSlot(int, str, bool)
+    def makeAddress(self, coin_index: int, label: str, segwit: bool):
+        if coin_index >= 0:
+            log.debug(f"Coin idx:{coin_index}")
+            coin = self._application.coinList[coin_index]
+            if segwit:
+                address_type = coin.Address.Type.WITNESS_V0_KEY_HASH
+            else:
+                address_type = coin.Address.Type.PUBKEY_HASH
+            address = coin.createHdAddress(
+                account=0,
+                is_change=False,
+                type_=address_type,
+                label=label,
+                comment="")
+            coin.appendAddress(address)
+        else:
+            log.error(f"No coin selected {coin_index}!")
+
+    @QSlot(str, str, result=bool)
+    def isValidAddress(self, coin_short_name: str, address_name: str) -> bool:
+        coin = self._application.findCoin(coin_short_name)
+        if coin is None or coin.decodeAddress(name=address_name) is None:
+            return False
+        return True
+
+    @QSlot(int, str, str)
+    def addWatchAddress(self, coin_index: int, name: str, label: str) -> None:
+        """
+        no checks here !!!
+        """
+        if coin_index >= 0:
+            log.debug(f"Coin idx:{coin_index}")
+            coin = self._application.coinList[coin_index]
+            coin.add_watch_address(name, label)
+        else:
+            log.error(f"No coin selected {coin_index}!")
+
+    @QSlot(int)
+    def exportTransactions(self, address_index: int):
+        if self.coin is None or address_index < 0:
+            log.critical(
+                f"invalid coin idecies: coin:{self.__current_coin_idx} address:{address_index}")
+            return
+        iexport = import_export.ImportExportDialog()
+        filename = iexport.doExport(
+            self.tr("Select file to save transactions"), ".json")
+        self.coin[address_index].export_txs(  # pylint: disable=unsubscriptable-object
+            filename)
+
+
 class CoinModel(CoinInterface, AbstractModel):
     def __init__(self, application: Application, coin: AbstractCoin) -> None:
         super().__init__(
@@ -187,6 +239,11 @@ class CoinModel(CoinInterface, AbstractModel):
             self._application,
             self._coin)
         self.connectModelRefresh(self._receive_manager)
+
+        self._manager = CoinManagerModel(
+            self._application,
+            self._coin)
+        self.connectModelRefresh(self._manager)
 
     @QProperty(str, constant=True)
     def shortName(self) -> str:
@@ -236,6 +293,10 @@ class CoinModel(CoinInterface, AbstractModel):
     def receiveManager(self) -> CoinReceiveManagerModel:
         return self._receive_manager
 
+    @QProperty(QObject, constant=True)
+    def manager(self) -> CoinManagerModel:
+        return self._manager
+
     def afterSetHeight(self) -> None:
         self._state_model.refresh()
         super().afterSetHeight()
@@ -278,6 +339,7 @@ class CoinListModel(AbstractListModel):
         TX_LIST: Final = auto()
         MUTABLE_TX: Final = auto()
         RECEIVE_MANAGER: Final = auto()
+        MANAGER: Final = auto()
 
     ROLE_MAP: Final = {
         Role.SHORT_NAME: (
@@ -309,5 +371,8 @@ class CoinListModel(AbstractListModel):
             lambda c: c.mutableTx.model),
         Role.RECEIVE_MANAGER: (
             b"receiveManager",
-            lambda c: c.model.receiveManager)
+            lambda c: c.model.receiveManager),
+        Role.MANAGER: (
+            b"manager",
+            lambda c: c.model.manager)
     }

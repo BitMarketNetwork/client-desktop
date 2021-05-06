@@ -13,17 +13,14 @@ from PySide2.QtQuickControls2 import QQuickStyle
 from PySide2.QtWidgets import QApplication
 
 import bmnclient.version
-from . import \
-    coin_manager, \
-    settings_manager, \
-    ui_manager
-from .coin_manager import CoinManager, CoinManager
+from . import settings_manager, ui_manager
 from .settings_manager import SettingsManager, SettingsManager
 from .ui_manager import UIManager, UIManager
 from ...application import CoreApplication
 from ...debug_manager import DebugManager
 from ...key_store import KeyStore
 from ...language import Language
+from ...models.coin import CoinListModel
 from ...models.factory import modelFactory
 from ...network.access_manager import NetworkAccessManager
 
@@ -48,7 +45,6 @@ class Application(CoreApplication):
 
         self._settings_manager = SettingsManager(self)
         self._ui_manager = UIManager(self)
-        self._coin_manager = CoinManager(self)
         self._debug_manager = DebugManager(self)
         self._backend_context = BackendContext(self)
 
@@ -98,10 +94,6 @@ class Application(CoreApplication):
     @property
     def uiManager(self) -> UIManager:
         return self._ui_manager
-
-    @property
-    def coinManager(self) -> CoinManager:
-        return self._coin_manager
 
     @property
     def debugManager(self) -> DebugManager:
@@ -166,27 +158,30 @@ class BackendContext(QObject):
     def __init__(self, application: Application) -> None:
         super().__init__()
         self._application = application
+        self._coin_list = CoinListModel(
+            self._application,
+            self._application.coinList)
 
     @QProperty(bool, constant=True)
     def isDebugMode(self) -> bool:
         return self._application.isDebugMode
 
-    @QProperty(DebugManager, constant=True)
+    @QProperty(QObject, constant=True)
     def debugManager(self) -> DebugManager:
         return self._application.debugManager
 
-    @QProperty(KeyStore, constant=True)
+    @QProperty(QObject, constant=True)
     def keyStore(self) -> KeyStore:
         return self._application.keyStore
 
-    @QProperty(SettingsManager, constant=True)
+    @QProperty(QObject, constant=True)
     def settingsManager(self) -> SettingsManager:
         return self._application.settingsManager
 
-    @QProperty(UIManager, constant=True)
+    @QProperty(QObject, constant=True)
     def uiManager(self) -> UIManager:
         return self._application.uiManager
 
-    @QProperty(CoinManager, constant=True)
-    def coinManager(self) -> CoinManager:
-        return self._application.coinManager
+    @QProperty(QObject, constant=True)
+    def coinList(self) -> CoinListModel:
+        return self._coin_list
