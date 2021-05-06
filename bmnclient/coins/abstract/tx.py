@@ -12,10 +12,12 @@ if TYPE_CHECKING:
     from .coin import AbstractCoin
 
 
-class _AbstractTxIo:
+class _AbstractTxIo(Serializable):
     def __init__(self, address: AbstractAddress) -> None:
+        super().__init__()
         self._address = address
 
+    @serializable
     @property
     def address(self) -> AbstractAddress:
         return self._address

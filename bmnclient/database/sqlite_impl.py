@@ -43,7 +43,7 @@ class SqLite:
         "status",
         "time",
         "amount",
-        "fee",
+        "fee_amount",
         "address_id",
         "tx_id",
         "type",
@@ -159,7 +159,7 @@ class SqLite:
             {self.height_column} {integer} NOT NULL,
             {self.time_column}   {integer} NOT NULL,
             {self.amount_column} {integer} NOT NULL,
-            {self.fee_column}    {integer} NOT NULL,
+            {self.fee_amount_column}    {integer} NOT NULL,
             {self.coinbase_column}    {integer} NOT NULL,
             FOREIGN KEY ({self.address_id_column}) REFERENCES {self.addresses_table} (id) ON DELETE CASCADE,
             UNIQUE({self.name_column}, {self.address_id_column})
@@ -205,7 +205,7 @@ class SqLite:
                 return self.__make_title(attr[:-6])
         else:
             raise AttributeError(attr)
-        raise AttributeError(f"Bad table or column: {attr}.")
+        raise AttributeError("bad table or column \"{}\"".format(attr))
 
     def __call__(self, data: Any, strong: bool = False, key: str = None):
         """

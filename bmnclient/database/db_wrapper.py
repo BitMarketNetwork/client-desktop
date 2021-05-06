@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 
 def nmark(number: int) -> str:
-    return f"({','.join('?'*number)})"
+    return f"({','.join('?' * number)})"
 
 
 class Database:
@@ -293,21 +293,21 @@ class Database:
             except sql.InterfaceError as ie:
                 log.error(f"DB integrity: {ie}  for {address.name}")
 
-    def _write_transaction(self, tx: AbstractCoin.Tx) -> None:
+    def writeCoinTx(self, tx: AbstractCoin.Tx) -> None:
         table = tx.serialize()
         for (key, value) in table.items():
-            if not isinstance(table[key], list):
+            if not isinstance(value, list):
                 table[key] = self.__impl(value)
 
         try:
             query = f"""
-            INSERT  INTO {self.transactions_table}
-                ({self.name_column},
+            INSERT  INTO {self.transactions_table} (
+                {self.name_column},
                 {self.address_id_column},
                 {self.height_column},
                 {self.time_column},
                 {self.amount_column},
-                {self.fee_column},
+                {self.fee_amount_column},
                 {self.coinbase_column}
                 ) VALUES  {nmark(7)}
             """
@@ -318,29 +318,28 @@ class Database:
                     table["height"],
                     table["time"],
                     table["amount"],
-                    table["fee"],
+                    table["fee_amount"],
                     table["coinbase"],
             ))) as c:
                 tx.rowId = c.lastrowid
 
             # TODO read from table
             for item in tx.inputList:
-                self._write_input(tx, item, False)
+                self.writeCoinTxIo(tx, item, False)
             for item in tx.outputList:
-                self._write_input(tx, item, True)
+                self.writeCoinTxIo(tx, item, True)
         except sql.IntegrityError as ie:
             # TODO: adjust query instead
             if str(ie).find('UNIQUE') < 0:
-                log.fatal("TX exists: %s (%s)", tx, ie)
+                log.fatal("TX exists: %s (%s)", tx.name, ie)
                 sys.exit(1)
             else:
-                # log.warn(f"Can't save TX:{ie}")
                 pass
         except AssertionError:
             sys.exit(1)
 
-    def _write_input(self, tx: AbstractCoin.Tx, inp, out) -> None:
-        table = inp.serialize()
+    def writeCoinTxIo(self, tx: AbstractCoin.Tx, inp, out) -> None:
+        table = inp.serialize()["address"]
         for (key, value) in table.items():
             if not isinstance(table[key], list):
                 table[key] = self.__impl(value)
@@ -360,7 +359,7 @@ class Database:
                 tx.rowId,
                 table["amount"],
                 self.__impl(out),
-                self.__impl(''),  # TODO
+                "",
             ))):
                 pass
         except sql.IntegrityError as ie:
