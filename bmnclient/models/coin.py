@@ -206,6 +206,7 @@ class CoinModel(CoinInterface, AbstractModel):
         super().__init__(
             application,
             query_scheduler=application.networkQueryScheduler,
+            database=application.database,
             coin=coin)
 
         self._amount_model = CoinAmountModel(

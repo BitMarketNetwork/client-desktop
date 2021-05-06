@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, TypedDict
 
 from .address import AbstractAddress
 from .currency import AbstractCurrency
-from .mutable_tx import AbstractMutableTx
 from .tx import AbstractTx
 from ..currency import FiatRate, NoneFiatCurrency
 from ...crypto.digest import Sha256Digest

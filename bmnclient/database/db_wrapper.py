@@ -46,6 +46,7 @@ class Database:
 
         self._is_loaded = True
 
+    @property
     def isLoaded(self) -> bool:
         return self._is_loaded
 
@@ -64,7 +65,7 @@ class Database:
     def execute(self, query: str, args: tuple = ()):
         return self.__impl.exec(query, args)
 
-    def _add_coin(self, coin: coins.CoinType, read_addresses=False) -> None:
+    def _add_coin(self, coin: coins.CoinType) -> None:
         table = coin.serialize()
         for (key, value) in table.items():
             if not isinstance(table[key], list):
@@ -112,11 +113,7 @@ class Database:
                 coin.rowId = res[0]
                 coin.visible = res[1]
 
-        if read_addresses:
-            self._read_address_list(coin)
-        coin.refreshAmount()
-
-    def _update_coin(self, coin: coins.CoinType) -> None:
+    def writeCoin(self, coin: coins.CoinType) -> None:
         if not coin.rowId:
             log.error("No coin row")
             return

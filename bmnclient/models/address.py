@@ -97,6 +97,7 @@ class AddressModel(AddressInterface, AbstractModel):
         super().__init__(
             application,
             query_scheduler=application.networkQueryScheduler,
+            database=application.database,
             address=address)
 
         self._amount_model = AddressAmountModel(

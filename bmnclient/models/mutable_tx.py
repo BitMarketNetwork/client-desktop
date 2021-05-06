@@ -216,6 +216,7 @@ class MutableTxModel(MutableTxInterface, AbstractModel):
         super().__init__(
             application,
             query_scheduler=application.networkQueryScheduler,
+            database=application.database,
             tx=tx)
 
         self._source_amount = MutableTxSourceAmountModel(

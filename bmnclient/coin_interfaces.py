@@ -11,6 +11,7 @@ from .network.api_v1.query import \
 if TYPE_CHECKING:
     from .wallet.mtx_impl import Mtx
     from .network.query_scheduler import NetworkQueryScheduler
+    from .database.db_wrapper import Database
 
 
 class _AbstractInterface:
@@ -18,9 +19,11 @@ class _AbstractInterface:
             self,
             *args,
             query_scheduler: NetworkQueryScheduler,
+            database: Database,
             **kwargs):
         super().__init__(*args, **kwargs)
         self._query_scheduler = query_scheduler
+        self._database = database
 
 
 class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
@@ -55,14 +58,14 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
         pass
 
     def afterStateChanged(self) -> None:
-        print("afterStateChanged", self._coin.name)
-        # TODO
-        # self._application.database._update_coin(coin)
-        # for address in coin.addressList:
-        #     self._application.networkQueryManager.put(
-        #            AddressInfoApiQuery(self._application, address))
-        #     AddressHistoryCommand()
-        pass
+        if self._database.isLoaded:
+            self._database.writeCoin(self._coin)
+
+        for address in self._coin.addressList:
+            pass
+            # TODO
+            # AddressInfoApiQuery(self._application, address))
+            # AddressHistoryCommand()
 
 
 class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
@@ -99,7 +102,6 @@ class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
 
 
 class TxInterface(_AbstractInterface, AbstractCoin.Tx.Interface):
-
     def afterSetHeight(self) -> None:
         pass
 
