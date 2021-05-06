@@ -30,11 +30,6 @@ class Database:
         self.__db_name = None
         self.__impl = sqlite_impl.SqLite()
 
-    def open_db(self) -> None:
-        self.__db_name = self.DEFAULT_DB_NAME
-        self.__impl.connect_impl(self.__db_name)
-        self.__impl.create_tables()
-
     def close(self) -> None:
         self.__impl.close()
 
@@ -45,10 +40,6 @@ class Database:
             self.__db_name = None
             if pth.exists():
                 pth.unlink()
-
-    @classmethod
-    def has_db(cls) -> bool:
-        return Path(cls.__db_name).exists()
 
     def __exec(self, query: str, args: tuple = ()):
         return self.__impl.exec(query, args)
@@ -295,7 +286,10 @@ class Database:
                 log.error(f"DB integrity: {ie}  for {wallet}")
 
     def open(self) -> None:
-        self.open_db()
+        self.__db_name = self.DEFAULT_DB_NAME
+        self.__impl.connect_impl(self.__db_name)
+        self.__impl.create_tables()
+
         from ..application import CoreApplication
         coin_list = CoreApplication.instance().coinList
 
