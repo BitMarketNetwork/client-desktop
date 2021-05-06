@@ -1,14 +1,14 @@
 # JOK4
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Any, Iterator, Optional, Union
 
 
-class StaticList(Iterable):
+class StaticList(Sequence):
     def __init__(
             self,
             source_list: Union[list, tuple],

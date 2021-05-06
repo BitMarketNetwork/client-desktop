@@ -208,13 +208,8 @@ class SqLite:
         raise AttributeError("bad table or column \"{}\"".format(attr))
 
     def __call__(self, data: Any, strong: bool = False, key: str = None):
-        """
-        key for debugging only!
-        """
         if not self.__proxy:
             return "-"
-        # if key:
-            # log.debug(f"encrypt {key} strong:{strong}")
         return self.__proxy.encrypt(data, strong)
 
     def __pos__(self):

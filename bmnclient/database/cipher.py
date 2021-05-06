@@ -73,10 +73,10 @@ class Cipher:
 #
 
     def encrypt(self, value: Any, strong: bool) -> str:
-        if not self.ENCRYPT:
-            return value
         if value is None:
             return ""
+        if not self.ENCRYPT:
+            return value
         try:
             if isinstance(value, str):
                 return self._encrypt(value.encode(), Type.TypeText, strong)
