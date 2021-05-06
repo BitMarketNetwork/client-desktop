@@ -160,8 +160,8 @@ class AbstractAddress(Serializable):
         elif isinstance(self._private_key, PrivateKey):
             value = self._private_key.to_wif
         else:
-            return ""
-        return value.decode(encoding=Product.ENCODING)
+            value = ""
+        return value
 
     @property
     def hdIndex(self) -> int:
@@ -211,6 +211,7 @@ class AbstractAddress(Serializable):
     def readOnly(self) -> bool:
         return self.privateKey is None
 
+    @serializable
     @property
     def txCount(self) -> int:
         return self._tx_count

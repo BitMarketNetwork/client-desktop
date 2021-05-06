@@ -189,7 +189,7 @@ class PrivateKey(Keybase, AbstractAddressOld):
         return cls(prv, net, compressed)
 
     @property
-    def to_wif(self) -> bytes:
+    def to_wif(self) -> str:
         if self._network is None:
             raise KeyError("Empty network")
         if self.compressed:

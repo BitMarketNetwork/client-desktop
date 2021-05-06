@@ -26,16 +26,6 @@ class CoinType(qt_core.QObject):
         super().__init__()
         self.__visible = True
 
-    def add_watch_address(self, name: str, label: str = "") -> AbstractCoin.Address:
-        adr = AbstractCoin.Address(
-            self,
-            name=name,
-            label=label)
-        self.appendAddress(adr)
-        from ..application import CoreApplication
-        CoreApplication.instance().database._add_or_save_address(adr)
-        return adr
-
     @property
     def private_key(self) -> key.PrivateKey:
         if self.__hd_node:

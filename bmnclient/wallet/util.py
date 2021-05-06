@@ -111,7 +111,7 @@ def b58_decode(data: str) -> bytes:
     return b'\x00' * pad + res
 
 
-def b58_check_encode(data: str) -> bytes:
+def b58_check_encode(data: str) -> str:
     signed = get_bytes(data) + sha256d(data)[:4]
     return b58_encode(signed)
     # return (CKey_58.re_encode(CKey_256, signed))

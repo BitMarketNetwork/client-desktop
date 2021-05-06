@@ -78,7 +78,7 @@ class HDNode(key.AbstractAddressOld):
         return res
 
     @property
-    def extended_key(self) -> bytes:
+    def extended_key(self) -> str:
         res = bytearray()
         res.extend(util.number_to_bytes(
             self.network.EX_PREFIX_PRV if self.is_private else self.network.EX_PREFIX_PUB, 4))

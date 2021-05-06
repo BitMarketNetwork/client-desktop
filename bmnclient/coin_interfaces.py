@@ -43,6 +43,9 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
         pass
 
     def afterAppendAddress(self, address: AbstractCoin.Address) -> None:
+        if self._database.isLoaded:
+            self._database.writeCoinAddress(address)
+
         self._query_scheduler.manager.put(AddressTxIteratorApiQuery(
             address,
             query_manager=self._query_scheduler.manager))
@@ -51,8 +54,6 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
             query_manager=self._query_scheduler.manager))
 
         # self._run_cmd(net_cmd.AddressInfoApiQuery(wallet, self)) TODO
-        # self._application.database._add_or_save_address(self._address)
-        pass
 
     def afterSetServerData(self) -> None:
         pass
@@ -70,25 +71,31 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
 
 class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
     def afterSetAmount(self) -> None:
+        if self._database.isLoaded:
+            self._database.writeCoinAddress(self._address)
+
         # TODO
         # if balance != self._address.amount or \
         #        txCount != self._address.txCount or \
         #        type_ != self._address.type:
         #    self._address.type = type_
-        #    database._add_or_save_address(self._address)
+        #    database.writeCoinAddress(self._address)
         #    diff = txCount - len(self._address.txList)
         #    if diff > 0 and not self._address.is_going_update:
         #       AddressHistoryCommand(self._address, parent=self)
         pass
 
     def afterSetLabel(self) -> None:
-        pass
+        if self._database.isLoaded:
+            self._database.writeCoinAddress(self._address)
 
     def afterSetComment(self) -> None:
-        pass
+        if self._database.isLoaded:
+            self._database.writeCoinAddress(self._address)
 
     def afterSetTxCount(self) -> None:
-        pass
+        if self._database.isLoaded:
+            self._database.writeCoinAddress(self._address)
 
     def beforeAppendTx(self, tx: AbstractCoin.Tx) -> None:
         pass

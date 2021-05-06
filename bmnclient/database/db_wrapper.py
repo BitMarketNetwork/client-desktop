@@ -146,7 +146,7 @@ class Database:
             ))):
                 pass
         except sql.IntegrityError as ie:
-            log.error("DB integrity: %s (%s)", ie, coin)
+            log.error("DB integrity: %s (%s)", ie, coin.name)
 
     def _read_address_list(self, coin: coins.CoinType):
         # strict order of columns!! stick to the make_address !!
@@ -217,62 +217,57 @@ class Database:
             tx.make_input(iter(values))
         qt_core.QCoreApplication.processEvents()
 
-    def _add_or_save_address(self, wallet: AbstractCoin.Address) -> None:
-        assert wallet.coin.rowId
+    def writeCoinAddress(self, address: AbstractCoin.Address) -> None:
+        assert address.coin.rowId
 
-        table = wallet.serialize()
+        table = address.serialize()
         for (key, value) in table.items():
             if not isinstance(table[key], list):
                 table[key] = self.__impl(value)
 
-        if wallet.rowId is None:
+        if address.rowId is None:
             query = f"""
-            INSERT  INTO {self.addresses_table}
-                (
-                    {self.address_column},
-                    {self.coin_id_column},
-                    {self.label_column},
-                    {self.message_column},
-                    {self.created_column},
-                    {self.type_column},
-                    {self.amount_column},
-                    {self.tx_count_column},
-                    {self.first_offset_column},
-                    {self.last_offset_column},
-                    {self.key_column}
-                )
+            INSERT INTO {self.addresses_table} (
+                {self.address_column},
+                {self.coin_id_column},
+                {self.label_column},
+                {self.message_column},
+                {self.created_column},
+                {self.type_column},
+                {self.amount_column},
+                {self.tx_count_column},
+                {self.first_offset_column},
+                {self.last_offset_column},
+                {self.key_column})
                 VALUES  {nmark(11)}
-                ;
             """
             try:
                 with closing(self.execute(query, (
-                    self.__impl(wallet.name),
-                    wallet.coin.rowId,  # don't encrypt!
+                    table["name"],
+                    address.coin.rowId,  # don't encrypt!
                     table["label"],
                     table["comment"],
                     self.__impl(0),
-                    # they're  empty at first place but later not !
-                    self.__impl(wallet.type),
+                    "",
                     table["amount"],
-                    self.__impl(wallet.txCount),
-                    self.__impl(wallet.historyFirstOffset),
-                    self.__impl(wallet.historyLastOffset),
-                    self.__impl(wallet.export_key(), True, "wallet key"),
+                    table["tx_count"],
+                    table["history_first_offset"],
+                    table["history_last_offset"],
+                    self.__impl(address.exportPrivateKey(), True, "wallet key"),
                 ))) as c:
-                    wallet.rowId = c.lastrowid
-                    wallet.valid = True
+                    address.rowId = c.lastrowid
 
             except sql.IntegrityError as ie:
-                log.warning(f"Can't add wallet:'{wallet}' => '{ie}'")
+                log.warning(f"Can't add wallet:'{address.name}' => '{ie}'")
                 # it can happen if user address_list existing address
                 # sys.exit(1)
             """
             we don't put some fields in update scope cause we don't expect them being changed
             """
         else:
-            log.debug("saving wallet info %r" % wallet)
+            log.debug("saving wallet info %s", address.name)
             query = f"""
-            UPDATE  {self.addresses_table} SET
+            UPDATE {self.addresses_table} SET
                 {self.label_column} = ?,
                 {self.type_column} = ?,
                 {self.amount_column} = ?,
@@ -280,24 +275,23 @@ class Database:
                 {self.first_offset_column} = ?,
                 {self.last_offset_column} = ?
             WHERE id = ?
-                ;
             """
 
             try:
                 with closing(self.execute(query, (
-                    self.__impl(wallet.label, True, "wallet label"),
-                    self.__impl(wallet.type),
-                    self.__impl(wallet.amount),
-                    self.__impl(wallet.txCount),
-                    self.__impl(wallet.historyFirstOffset),
-                    self.__impl(wallet.historyLastOffset),
-                    wallet.rowId
+                    table["label"],
+                    "",
+                    table["amount"],
+                    table["tx_count"],
+                    table["history_first_offset"],
+                    table["history_last_offset"],
+                    address.rowId
                 ))):
                     pass
             except sql.IntegrityError as ie:
-                log.error(f"DB integrity: {ie} for {wallet}")
+                log.error(f"DB integrity: {ie} for {address.name}")
             except sql.InterfaceError as ie:
-                log.error(f"DB integrity: {ie}  for {wallet}")
+                log.error(f"DB integrity: {ie}  for {address.name}")
 
     def _write_transaction(self, tx: AbstractCoin.Tx) -> None:
         table = tx.serialize()
