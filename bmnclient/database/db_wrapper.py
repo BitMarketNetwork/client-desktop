@@ -39,7 +39,7 @@ class Database:
         from ..application import CoreApplication
 
         coin_list = CoreApplication.instance().coinList
-        self._read_all_coins(coin_list)
+        self.readCoins(coin_list)
 
         address_list = self._read_all_addresses(coin_list)
         self._read_all_tx(address_list)
@@ -81,7 +81,7 @@ class Database:
                     {self.offset_column},
                     {self.unverified_offset_column},
                     {self.unverified_hash_column})
-                VALUES  {nmark(7)}
+                VALUES {nmark(7)}
             """
             cursor = self.__impl.exec(query, (
                 table["name"],
@@ -365,7 +365,7 @@ class Database:
         except sql.IntegrityError as ie:
             log.error("Input exists: %s (%s)", inp, ie)
 
-    def _read_all_coins(self, coins_: List[coins.CoinType]) -> None:
+    def readCoins(self, coins_: List[coins.CoinType]) -> None:
         # read everything
         query = f"""
             SELECT
@@ -399,16 +399,19 @@ class Database:
                 (coin for coin in coins_ if coin.name == name), None)
             if coin is not None:
                 coin.rowId = rowId
-                coin.visible = visible
-                coin.offset = offset
-                coin.verifiedHeight = vheight
-                coin.unverifiedOffset = uoffset
-                coin.unverifiedHash = usig
-                # TODO coin.fiatRate = FiatRate(rate, UsdFiatCurrency)
-                # let height will be the last
-                coin.height = height
-            else:
-                log.warning(f"saved coin {name} isn't found ")
+                if coin.height < height:  # TODO
+                    coin.beginUpdateState()
+                    if True:
+                        coin.unverifiedHash = usig
+                        coin.unverifiedOffset = uoffset
+                        coin.offset = offset
+                        coin.verifiedHeight = vheight
+                        coin.height = height
+                        coin.visible = visible
+                    coin.endUpdateState()
+                else:
+                    self.writeCoin(coin)
+                    log.debug(f"Saved coin {name} was skipped.")
 
     def _read_all_addresses(self, coins: coins.CoinType) -> AbstractCoin.Address:
         assert coins
