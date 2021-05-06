@@ -83,7 +83,7 @@ class Database:
                 VALUES  {nmark(7)}
             """
             cursor = self.__impl.exec(query, (
-                table["short_name"],
+                table["name"],
                 self.__impl(1),  # TODO
                 table["height"],
                 table["verified_height"],
@@ -107,7 +107,7 @@ class Database:
             query = f"""
                 SELECT id , {self.visible_column} FROM {self.coins_table} WHERE {self.name_column} == ?;
             """
-            with closing(self.execute(query, (table["short_name"],))) as c:
+            with closing(self.execute(query, (table["name"],))) as c:
                 res = c.fetchone()
                 coin.rowId = res[0]
                 coin.visible = res[1]

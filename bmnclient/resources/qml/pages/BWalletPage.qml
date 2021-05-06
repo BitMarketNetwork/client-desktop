@@ -15,7 +15,7 @@ BApplicationPage {
         enabled: model.state.visible
         coin: model
         onClicked: {
-            _base.stack.currentIndex = _base.coinToListIndex(coin.shortName)
+            _base.stack.currentIndex = _base.coinToListIndex(coin.name)
             _base.stack.children[_base.stack.currentIndex].active = true
         }
     }
@@ -23,7 +23,7 @@ BApplicationPage {
     Repeater {
         model: BBackend.coinList
         delegate: Loader {
-            readonly property string coinName: model.shortName
+            readonly property string coinName: model.name
             active: false
             sourceComponent: BWalletCoinPage {
                 coin: model

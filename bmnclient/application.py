@@ -212,12 +212,6 @@ class CoreApplication(QObject):
     def fiatRateServiceList(self) -> FiatRateServiceList:
         return self._fiat_rate_service_list
 
-    def findCoin(self, short_name: str) -> Optional[AbstractCoin]:
-        for coin in self._coin_list:
-            if coin.shortName == short_name:
-                return coin
-        return None
-
     @property
     def title(self) -> str:
         return self._title
@@ -231,7 +225,6 @@ class CoreApplication(QObject):
         self._onRun()
 
     def _onRun(self) -> None:
-        self._wallet_thread.run()
         self._network_query_scheduler.start()
 
     def __onAboutToQuit(self) -> None:

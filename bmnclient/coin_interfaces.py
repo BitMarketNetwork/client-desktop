@@ -55,7 +55,7 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
         pass
 
     def afterStateChanged(self) -> None:
-        print("afterStateChanged", self._coin.shortName)
+        print("afterStateChanged", self._coin.name)
         # TODO
         # self._application.database._update_coin(coin)
         # for address in coin.addressList:

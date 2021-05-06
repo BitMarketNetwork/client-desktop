@@ -89,7 +89,7 @@ class NetworkQueryScheduler:
 
         for (callback, delay) in self._COIN_TIMER_LIST:
             for coin in self._application.coinList:
-                name = callback + "/" + coin.shortName
+                name = callback + "/" + coin.name
                 self._timer_list[name] = NetworkQueryTimer(
                     delay,
                     functools.partial(getattr(self, callback), coin))
@@ -141,7 +141,7 @@ class NetworkQueryScheduler:
             unique=True)
 
     def updateHdAddressList(self, coin: AbstractCoin) -> None:
-        timer = self._prepareTimer(("updateHdAddressList", coin.shortName))
+        timer = self._prepareTimer(("updateHdAddressList", coin.name))
         if coin.hdPath is None:
             timer.start()
         else:
@@ -152,7 +152,7 @@ class NetworkQueryScheduler:
             self._manager.put(query)
 
     def updateMempool(self, coin: AbstractCoin) -> None:
-        timer = self._prepareTimer(("updateMempool", coin.shortName))
+        timer = self._prepareTimer(("updateMempool", coin.name))
         if len(coin.addressList) <= 0:
             timer.start()
         else:

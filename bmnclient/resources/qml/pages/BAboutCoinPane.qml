@@ -37,7 +37,7 @@ BPane {
                 text: qsTr("Short name:")
             }
             BInfoValue {
-                text: _base.coin.shortName
+                text: _base.coin.name
             }
             BInfoSeparator {}
 

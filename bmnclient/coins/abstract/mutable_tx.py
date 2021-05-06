@@ -25,7 +25,7 @@ class AbstractMutableTx:
         self._logger = Logger.getClassLogger(
             __name__,
             self.__class__,
-            coin.shortName)
+            coin.name)
         self._coin = coin
         self._receiver_address: Optional[AbstractCoin.Address] = None
         self._change_address: Optional[AbstractCoin.Address] = None

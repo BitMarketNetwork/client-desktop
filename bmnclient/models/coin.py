@@ -239,8 +239,8 @@ class CoinModel(CoinInterface, AbstractModel):
         self.connectModelRefresh(self._manager)
 
     @QProperty(str, constant=True)
-    def shortName(self) -> str:
-        return self._coin.shortName
+    def name(self) -> str:
+        return self._coin.name
 
     @QProperty(str, constant=True)
     def fullName(self) -> str:
@@ -336,8 +336,8 @@ class CoinListModel(AbstractListModel):
 
     ROLE_MAP: Final = {
         Role.SHORT_NAME: (
-            b"shortName",
-            lambda c: c.model.shortName),
+            b"name",
+            lambda c: c.model.name),
         Role.FULL_NAME: (
             b"fullName",
             lambda c: c.model.fullName),

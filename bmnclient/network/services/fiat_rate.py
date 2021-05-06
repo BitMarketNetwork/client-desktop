@@ -50,7 +50,7 @@ class AbstractFiatRateService(AbstractJsonQuery):
         self._currency_name = self._createFiatCurrencyName()
 
     @classproperty
-    def shortName(cls) -> str:  # noqa
+    def name(cls) -> str:  # noqa
         return cls._SHORT_NAME
 
     @classproperty
@@ -71,7 +71,7 @@ class AbstractFiatRateService(AbstractJsonQuery):
             response = {}
 
         for coin in self._coin_list:
-            name = self._COIN_MAP.get(coin.shortName)
+            name = self._COIN_MAP.get(coin.name)
             if name:
                 fiat_rate = self._getFiatRate(name, response)
                 if fiat_rate is None:
@@ -85,7 +85,7 @@ class AbstractFiatRateService(AbstractJsonQuery):
     def _createCoinNameList(self) -> List[str]:
         result = []
         for coin in self._coin_list:
-            name = self._COIN_MAP.get(coin.shortName)
+            name = self._COIN_MAP.get(coin.name)
             if name:
                 if name not in result:
                     result.append(name)
@@ -173,7 +173,7 @@ class FiatRateServiceList(UserConfigStaticList):
             UserConfig.KEY_SERVICES_FIAT_RATE,
             service_list,
             default_index=1,
-            item_property="shortName")
+            item_property="name")
         self._logger.debug(
             "Current fiat rate service is \"%s\".",
             self.current.fullName)

@@ -22,7 +22,7 @@ class CoinList(StaticList):
                 coins.BitcoinTest(model_factory=model_factory),
                 coins.Litecoin(model_factory=model_factory)
             ),
-            item_property="shortName"
+            item_property="name"
         )
 
     def __iter__(self) -> Iterator[AbstractCoin]:

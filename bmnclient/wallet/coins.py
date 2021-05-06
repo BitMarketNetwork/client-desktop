@@ -15,8 +15,6 @@ log = logging.getLogger(__name__)
 
 
 class CoinType(qt_core.QObject):
-    name: str = None
-
     network: coin_network.CoinNetworkBase = None
     visibleChanged = qt_core.Signal()
 
@@ -91,7 +89,6 @@ class CoinType(qt_core.QObject):
 
 
 class Bitcoin(CoinType, coin_bitcoin.Bitcoin):
-    name = "btc"
     network = coin_network.BitcoinMainNetwork
 
     def __init__(self, **kwargs) -> None:
@@ -100,12 +97,10 @@ class Bitcoin(CoinType, coin_bitcoin.Bitcoin):
 
 
 class BitcoinTest(Bitcoin, coin_bitcoin.BitcoinTest):
-    name = "btctest"
     network = coin_network.BitcoinTestNetwork
 
 
 class Litecoin(CoinType, coin_litecoin.Litecoin):
-    name = "ltc"
     network = coin_network.LitecoinMainNetwork
 
     def __init__(self, **kwargs) -> None:

@@ -35,11 +35,11 @@ class AbstractApiQuery(AbstractJsonQuery):
 
     @classmethod
     def coinToNameSuffix(cls, coin: AbstractCoin):
-        return coin.shortName
+        return coin.name
 
     @classmethod
     def addressToNameSuffix(cls, address: AbstractCoin.Address):
-        return "{}:{}".format(address.coin.shortName, address.name)
+        return "{}:{}".format(address.coin.name, address.name)
 
     @property
     def url(self) -> Optional[str]:
@@ -158,7 +158,7 @@ class SysinfoApiQuery(AbstractApiQuery):
         for coin in self._coin_list:
             coin.serverData = {
                 **parser.serverData,
-                **parser.serverCoinList.get(coin.shortName, {})
+                **parser.serverCoinList.get(coin.name, {})
             }
 
 
@@ -179,10 +179,10 @@ class CoinsInfoApiQuery(AbstractApiQuery):
 
         for coin in self._coin_list:
             parser = CoinsInfoParser()
-            if not parser(value, coin.shortName):
+            if not parser(value, coin.name):
                 self._logger.warning(
                     "Coin \"%s\" not found in server response.",
-                    coin.shortName)
+                    coin.name)
                 continue
 
             coin.beginUpdateState()
@@ -199,7 +199,7 @@ class CoinsInfoApiQuery(AbstractApiQuery):
 class AddressInfoApiQuery(AbstractApiQuery):
     _ACTION = (
         "coins",
-        lambda self: self._address.coin.shortName,
+        lambda self: self._address.coin.name,
         lambda self: self._address.name)
 
     def __init__(
@@ -267,7 +267,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
         except StopIteration:
             self._logger.debug(
                 "HD iteration was finished for coin \"%s\".",
-                self._address.coin.shortName)
+                self._address.coin.name)
             return
 
         self._next_query = self.__class__(
@@ -386,7 +386,7 @@ class AddressUtxoIteratorApiQuery(AddressTxIteratorApiQuery):
 class CoinMempoolIteratorApiQuery(AbstractIteratorApiQuery):
     _ACTION = (
         "coins",
-        lambda self: self._coin.shortName,
+        lambda self: self._coin.name,
         "unconfirmed")
     _DEFAULT_METHOD = AbstractApiQuery.Method.POST
     ADDRESS_COUNT_PER_REQUEST: Final = 50  # TODO dynamic
@@ -459,7 +459,7 @@ class CoinMempoolIteratorApiQuery(AbstractIteratorApiQuery):
 class TxBroadcastApiQuery(AbstractApiQuery):
     _ACTION = (
         "coins",
-        lambda self: self._tx.coin.shortName,
+        lambda self: self._tx.coin.name,
         "tx"
     )
     _DEFAULT_METHOD = AbstractApiQuery.Method.POST
