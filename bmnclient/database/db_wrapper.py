@@ -5,7 +5,7 @@ import sqlite3 as sql
 import sys
 from contextlib import closing
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Sequence
 
 import PySide2.QtCore as qt_core
 
@@ -41,7 +41,7 @@ class Database:
         coin_list = CoreApplication.instance().coinList
         self.readCoins(coin_list)
 
-        address_list = self._read_all_addresses(coin_list)
+        address_list = self.readAddresses(coin_list)
         self._read_all_tx(address_list)
 
         self._is_loaded = True
@@ -338,8 +338,8 @@ class Database:
         except AssertionError:
             sys.exit(1)
 
-    def writeCoinTxIo(self, tx: AbstractCoin.Tx, inp, out) -> None:
-        table = inp.serialize()["address"]
+    def writeCoinTxIo(self, tx: AbstractCoin.Tx.Io, inp, out) -> None:
+        table = inp.serialize()
         for (key, value) in table.items():
             if not isinstance(table[key], list):
                 table[key] = self.__impl(value)
@@ -355,11 +355,11 @@ class Database:
                 VALUES {nmark(5)}
             """
             with closing(self.execute(query, (
-                table["name"],
+                table["address_name"],
                 tx.rowId,
                 table["amount"],
                 self.__impl(out),
-                "",
+                table["output_type"],
             ))):
                 pass
         except sql.IntegrityError as ie:
@@ -413,11 +413,7 @@ class Database:
                     self.writeCoin(coin)
                     log.debug(f"Saved coin {name} was skipped.")
 
-    def _read_all_addresses(self, coins: coins.CoinType) -> AbstractCoin.Address:
-        assert coins
-        """
-        we call this version on start
-        """
+    def readAddresses(self, coin_list: Sequence[AbstractCoin]) -> list:
         query = f"""
         SELECT
             {self.coin_id_column},
@@ -436,24 +432,35 @@ class Database:
         """
         with closing(self.execute(query,)) as c:
             fetch = c.fetchall()
+
         # prepare coins
-        coin_map = {coin.rowId: coin for coin in coins}
-        coin_cur = coins[0]
+        coin_map = {coin.rowId: coin for coin in coin_list}
+        coin = coin_list[0]
         address_list = []
+
         for values in fetch:
             # some sort of caching
-            if coin_cur.rowId != values[0]:
-                coin_cur = coin_map.get(int(values[0]))
-                if coin_cur is None:
-                    log.critical(
+            if coin.rowId != values[0]:
+                coin = coin_map.get(int(values[0]))
+                if coin is None:
+                    log.error(
                         f"No coin with row id:{values[0]} in {coin_map.keys()}")
                     continue
-            addr = CAddress(coin_cur, name=values[1])
-            addr.create()
-            addr.from_args(iter(values[2:]))
-            coin_cur.appendAddress(addr)
-            address_list.append(addr)
-        for coin in coin_map.values():
+            private_key = coin.Address.importPrivateKey(values[11])
+            address = coin.decodeAddress(
+                name=values[1],
+                private_key=private_key,
+                amount=values[7],
+                tx_count=values[8],
+                label=values[3],
+                comment=values[4],
+                history_first_offset=values[9],
+                history_last_offset=values[10]
+                )
+            coin.appendAddress(address)
+            address_list.append(address)
+
+        for coin in coin_list:
             coin.refreshAmount()
         return address_list
 

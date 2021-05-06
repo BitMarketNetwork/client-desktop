@@ -8,7 +8,7 @@ from ...utils.serialize import \
     DeserializationNotSupportedError, \
     Serializable, \
     serializable
-from ...wallet.hd import HDNode
+from ...wallet.hd import HDError, HDNode
 from ...wallet.key import PrivateKey
 
 if TYPE_CHECKING:
@@ -83,8 +83,11 @@ class AbstractAddress(Serializable):
             data: bytes = b"",
             private_key: Optional[HDNode, PrivateKey] = None,
             amount: int = 0,
+            tx_count: int = 0,
             label: str = "",
-            comment: str = "") -> None:
+            comment: str = "",
+            history_first_offset: str = "",
+            history_last_offset: str = "") -> None:
         super().__init__()
 
         self._coin = coin
@@ -95,12 +98,12 @@ class AbstractAddress(Serializable):
         self._amount = amount
         self._label = label
         self._comment = comment
-        self._tx_count = 0  # not linked with self._tx_list
+        self._tx_count = tx_count  # not linked with self._tx_list
         self._tx_list: List[AbstractTx] = []  # TODO enable deserialize
         self._utxo_list: List[AbstractTx.Utxo] = []
 
-        self._history_first_offset = ""
-        self._history_last_offset = ""
+        self._history_first_offset = history_first_offset
+        self._history_last_offset = history_last_offset
 
         self._model: Optional[AbstractAddress.Interface] = \
             self._coin.model_factory(self)
@@ -171,6 +174,15 @@ class AbstractAddress(Serializable):
         else:
             value = ""
         return value
+
+    @classmethod
+    def importPrivateKey(cls, value: str) -> Optional[HDNode, PrivateKey]:
+        if value:
+            try:
+                return HDNode.from_extended_key(value)
+            except HDError:
+                return PrivateKey.from_wif(value)
+        return None
 
     @property
     def hdIndex(self) -> int:

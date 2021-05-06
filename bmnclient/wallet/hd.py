@@ -21,16 +21,8 @@ class HDError(Exception):
 
 # https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
 class HDNode(key.AbstractAddressOld):
-    def __init__(self, key: key.PrivateKey, parent=None):
-        """
-        TODO:
-        There is an issue with parent.
-        Be careful!
-        When address hd made from coin hd - then parent is coin hd
-        But when addres hd made from extended key(import for example), then parent is address instance
-        """
+    def __init__(self, key: key.PrivateKey):
         super().__init__()
-        self._parent = parent
         self.key = key
         self.depth = 0
         self.index = 0
@@ -52,7 +44,7 @@ class HDNode(key.AbstractAddressOld):
         return master
 
     @classmethod
-    def from_extended_key(cls, ext_b58: str, parent) -> "HDNode":
+    def from_extended_key(cls, ext_b58: str) -> "HDNode":
         ext_key = util.b58_check_decode(ext_b58)
         if len(ext_key) != 78:
             raise HDError("Wrong length of extended key")
@@ -70,7 +62,7 @@ class HDNode(key.AbstractAddressOld):
             key_ = key.PrivateKey(ext_key[1:], network)
         else:
             key_ = key.PublicKey(ext_key, network)
-        res = cls(key_, parent)
+        res = cls(key_)
         res.depth = util.bytes_to_number(depth)
         res.chain_code = chain_code
         res.index = util.bytes_to_number(index)
@@ -107,14 +99,6 @@ class HDNode(key.AbstractAddressOld):
         return str(self.index)
 
     @property
-    def chain_path(self) -> str:
-        if self.is_master:
-            return f"{self.chain_id}"
-        if self._parent is None:
-            return ""
-        return f"{self._parent.chain_path}/{self.chain_id}"
-
-    @property
     def is_private(self) -> bool:
         return isinstance(self.key, key.PrivateKey)
 
@@ -136,10 +120,7 @@ class HDNode(key.AbstractAddressOld):
         call instead self.key.public_key
         """
         if self.is_private:
-            copy = HDNode(
-                key=self.key.public_key,
-                parent=self,
-            )
+            copy = HDNode(self.key.public_key)
             copy.chain_code = self.chain_code
             copy.depth = self.depth
             copy.index = self.index
@@ -176,73 +157,13 @@ class HDNode(key.AbstractAddressOld):
         if num_Il >= SECP256k1_N or p256_Il == 0:
             raise HDError()
         child_priv = util.number_to_bytes(p256_Il, 32)
-        res = HDNode(key.PrivateKey(child_priv, net or self.network), self)
+        res = HDNode(key.PrivateKey(child_priv, net or self.network))
         res.chain_code = Ir
         res.depth = self.depth + 1
         res.index = child_index
         res.p_fingerprint = util.hash160(pub)[:4]
         self._children_count += 1
         return res
-
-    def __derive_public(self, child_index: int):
-        """
-        TODO:
-        There's a hole here -> no boundary checks!
-        Not tested !
-        """
-        raise NotImplementedError("don't use public derivation")
-        if not self.is_private:
-            raise HDError("Private derivation from public key is prohibited")
-        is_hardened = child_index & HARDENED_MASK
-        child_index = child_index.to_bytes(length=4, byteorder="big")
-        priv = self.key.compressed_bytes
-        pub = self.key.public_key.compressed_bytes
-        if is_hardened:
-            data = priv + child_index
-        else:
-            data = pub + child_index
-        I = util.hmac_hash(self.chain_code, data)
-        Il, Ir = I[:32], I[32:]
-        num_Il = util.bytes_to_number(Il)
-        p256_Il = (num_Il + util.bytes_to_number(priv)) % SECP256k1_N
-        if num_Il >= SECP256k1_N or p256_Il == 0:
-            raise HDError()
-        ep = pybmn.ECPoint(pub)
-        ep.g_mul(Il)
-        child_pub = ep.content
-        res = HDNode(key.PublicKey(child_pub, self._network),
-                     self._network, self)
-        res.chain_code = Ir
-        res.depth += 1
-        res.child_index = child_index
-        res.p_fingerprint = self.fingerprint
-        self._children_count += 1
-        return res
-
-    def from_chain_path(self, path):
-        """
-        path is string path or list<int>
-        """
-        if isinstance(path, str):
-            path = self.convert_chain_path(path)
-        if not self.is_master:
-            # if we're not master - then cut head of path
-            parent = self
-            sub_path = []
-            while not parent.is_master:
-                sub_path.append(parent.index)
-                parent = parent.parent
-            for i in reversed(sub_path):
-                if i == path[0]:
-                    path = path[1:]
-                else:
-                    raise HDError(f"Wrong parent {1}")
-        #
-        log.debug("bip32 path %s net:%s", path, self.network)
-        key = self
-        for child_index in path:
-            key = key.__derive_private(child_index, self.network)
-        return key
 
     @staticmethod
     def convert_chain_path(path: str):
@@ -283,10 +204,6 @@ class HDNode(key.AbstractAddressOld):
 
     def from_args(self, arg_iter: iter):
         raise NotImplementedError()
-
-    @property
-    def parent(self):
-        return self._parent
 
     @property
     def network(self):
