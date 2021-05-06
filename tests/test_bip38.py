@@ -1,7 +1,4 @@
-
-
 import unittest
-from bmnclient.wallet import util
 
 
 class TestBip38(unittest.TestCase):

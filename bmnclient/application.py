@@ -236,5 +236,6 @@ class CoreApplication(QObject):
     def _onExit(self) -> None:
         assert not self._on_exit_called
         self._on_exit_called = True
+        self.database.close()
         self._signal_handler.close()
 

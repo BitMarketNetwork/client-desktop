@@ -47,7 +47,7 @@ class Cipher:
             if Type.TypeBool == pref:
                 return struct.unpack("?", val[1:])[0]
             if Type.TypeInt == pref:
-                return struct.unpack("Q", val[1:])[0]
+                return struct.unpack("q", val[1:])[0]
             if Type.TypeReal == pref:
                 return struct.unpack("d", val[1:])[0]
             raise RuntimeError(f"Not implemented type {val}")
@@ -85,7 +85,7 @@ class Cipher:
             if isinstance(value, bool):
                 return self._encrypt(struct.pack("?", value), Type.TypeBool, strong)
             if isinstance(value, int):
-                return self._encrypt(struct.pack("Q", value), Type.TypeInt, strong)
+                return self._encrypt(struct.pack("q", value), Type.TypeInt, strong)
             if isinstance(value, float):
                 return self._encrypt(struct.pack("d", value), Type.TypeReal, strong)
         except struct.error as se:

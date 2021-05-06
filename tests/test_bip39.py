@@ -1,5 +1,4 @@
 import unittest
-from bmnclient import gcd
 import key_store
 
 
