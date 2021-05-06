@@ -15,7 +15,7 @@ BApplicationPage {
         enabled: model.state.visible
         coin: model
         onClicked: {
-            _base.stack.currentIndex = _base.coinIndexToListIndex(coin.index)
+            _base.stack.currentIndex = _base.coinToListIndex(coin.shortName)
             _base.stack.children[_base.stack.currentIndex].active = true
         }
     }
@@ -23,7 +23,7 @@ BApplicationPage {
     Repeater {
         model: BBackend.coinList
         delegate: Loader {
-            readonly property int coinIndex: model.index
+            readonly property string coinName: model.shortName
             active: false
             sourceComponent: BWalletCoinPage {
                 coin: model
@@ -91,10 +91,10 @@ BApplicationPage {
         dialog.open()
     }*/
 
-    function coinIndexToListIndex(coinIndex) {
+    function coinToListIndex(coinName) {
         for (let i = 0; i < stack.count; ++i) {
             let item = stack.itemAt(i)
-            if (typeof item.coinIndex !== "undefined" && item.coinIndex === coinIndex) {
+            if (typeof item.coinName !== "undefined" && item.coinName === coinName) {
                 return i
             }
         }

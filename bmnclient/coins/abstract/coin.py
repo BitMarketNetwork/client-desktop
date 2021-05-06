@@ -244,7 +244,7 @@ class AbstractCoin(Serializable):
     def amount(self) -> int:
         return self._amount
 
-    def refreshAmount(self) -> None:  # TODO vs refreshUnspent
+    def refreshAmount(self) -> None:
         a = sum(a.amount for a in self._address_list if not a.readOnly)
         self._amount = a
         if self._model:

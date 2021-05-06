@@ -217,7 +217,9 @@ class AbstractMutableTx:
         output_list = [(self._receiver_address.name, receiver_amount)]
 
         if change_amount > 0:
-            self._change_address = self._coin.make_address()
+            self._change_address = self._coin.createHdAddress(
+                account=0,
+                is_change=True)
             output_list.append((self._change_address.name, change_amount))
         else:
             self._change_address = None
@@ -258,6 +260,8 @@ class AbstractMutableTx:
         if self.__mtx_result is None or len(self.__mtx_result) <= 0:
             return False
         self._logger.debug(f"Signed transaction: %s", self.__mtx_result)
+        if self._change_address is not None:
+            self._coin.appendAddress(self._change_address)
         return True
 
     def broadcast(self) -> bool:

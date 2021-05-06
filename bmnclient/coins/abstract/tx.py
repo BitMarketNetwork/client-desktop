@@ -186,15 +186,13 @@ class AbstractTx(Serializable):
             amount = value["amount"]
 
             if address_name is None or address_type is None:
-                address = coin.Address.createNullData(coin, amount=amount)
+                address = coin.createNullDataAddress(amount=amount)
             else:
-                address = coin.Address.decode(
-                    coin,
+                address = coin.decodeAddress(
                     name=address_name,
                     amount=amount)
                 if address is None:
-                    address = coin.Address.createNullData(
-                        coin,
+                    address = coin.createNullDataAddress(
                         name=address_name or "UNKNOWN",
                         amount=amount)
             return cls.Io(address)
