@@ -18,7 +18,7 @@ from . import resources
 from .coins.currency import FiatCurrencyList, FiatRate
 from .coins.list import CoinList
 from .config import UserConfig
-from .database.database import Database
+from .database.db_wrapper import Database
 from .key_store import KeyStore
 from .language import Language
 from .logger import Logger

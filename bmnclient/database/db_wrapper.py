@@ -21,13 +21,12 @@ def nmark(number: int) -> str:
     return f"({','.join('?'*number)})"
 
 
-class DbWrapper:
+class Database:
     DEFAULT_DB_NAME = str(bmnclient.config.USER_DATABASE_FILE_PATH)
 
     def __init__(self) -> None:
         super().__init__()
-        self._save_address_timer: qt_core.QBasicTimer = qt_core.QBasicTimer()
-        self._save_address_timer.wallet = None
+        log.info(f"SQLite version {sql.sqlite_version}")
         self.__db_name = None
         self.__impl = sqlite_impl.SqLite()
 
@@ -36,11 +35,11 @@ class DbWrapper:
         self.__impl.connect_impl(self.__db_name)
         self.__impl.create_tables()
 
-    def close_db(self) -> None:
+    def close(self) -> None:
         self.__impl.close()
 
     def remove(self) -> None:
-        self.close_db()
+        self.close()
         if self.__db_name:
             pth = Path(self.__db_name)
             self.__db_name = None
@@ -210,14 +209,8 @@ class DbWrapper:
             tx.make_input(iter(values))
         qt_core.QCoreApplication.processEvents()
 
-    def _add_or_save_address(self, wallet: AbstractCoin.Address, timeout: int = None) -> None:
-        if not timeout:
-            self._add_or_save_address_impl(wallet)
-        else:
-            if self._save_address_timer.wallet and self._save_address_timer.wallet is not wallet:
-                self._add_or_save_address_impl(self._save_address_timer.wallet)
-            self._save_address_timer.wallet = wallet
-            self._save_address_timer.start(timeout, self)
+    def _add_or_save_address(self, wallet: AbstractCoin.Address) -> None:
+        self._add_or_save_address_impl(wallet)
 
     def _add_or_save_address_impl(self, wallet: AbstractCoin.Address) -> None:
         assert wallet.coin.rowId
@@ -303,7 +296,13 @@ class DbWrapper:
 
     def open(self) -> None:
         self.open_db()
-        self.load_everything()
+        from ..application import CoreApplication
+        coin_list = CoreApplication.instance().coinList
+
+        self._read_all_coins(coin_list)
+
+        address_list = self._read_all_addresses(coin_list)
+        self._read_all_tx(address_list)
 
     def _write_transaction(self, tx: AbstractCoin.Tx) -> None:
         table = tx.serialize()

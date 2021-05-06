@@ -48,7 +48,7 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
             query_manager=self._query_scheduler.manager))
 
         # self._run_cmd(net_cmd.AddressInfoApiQuery(wallet, self)) TODO
-        # self._application.databaseThread.save_address(self._address)
+        # self._application.database._add_or_save_address(self._address)
         pass
 
     def afterSetServerData(self) -> None:
@@ -57,7 +57,7 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
     def afterStateChanged(self) -> None:
         print("afterStateChanged", self._coin.shortName)
         # TODO
-        # self._application.databaseThread.saveCoin.emit(coin)
+        # self._application.database._update_coin(coin)
         # for address in coin.addressList:
         #     self._application.networkQueryManager.put(
         #            AddressInfoApiQuery(self._application, address))
@@ -72,7 +72,7 @@ class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
         #        txCount != self._address.txCount or \
         #        type_ != self._address.type:
         #    self._address.type = type_
-        #    databaseThread.save_address(self._address)
+        #    database._add_or_save_address(self._address)
         #    diff = txCount - len(self._address.txList)
         #    if diff > 0 and not self._address.is_going_update:
         #       AddressHistoryCommand(self._address, parent=self)
@@ -93,7 +93,7 @@ class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
     def afterAppendTx(self, tx: AbstractCoin.Tx) -> None:
         print("afterAppendTx", tx.name)
         # TODO
-        # self._application.databaseThread.database._write_transaction(tx)
+        # self._application.database.database._write_transaction(tx)
         # self._application.uiManager.process_incoming_tx(tx)
         pass
 

@@ -27,8 +27,8 @@ class TestDataEncoding(unittest.TestCase):
         db = pathlib.Path(self.DB_NAME)
         if db.exists():
             db.unlink()
-        db_wrapper.DbWrapper.DEBUG = True
-        self.db = db_wrapper.DbWrapper(None)
+        db_wrapper.Database.DEBUG = True
+        self.db = db_wrapper.Database(None)
         self.db.open_db(self.PSW, os.urandom(16) , self.DB_NAME)
         self.__test()
         self.db.remove()
@@ -80,7 +80,7 @@ class TestDataEncoding(unittest.TestCase):
 class TestWorkflow(unittest.TestCase):
 
     def setUp(self):
-        self.db = db_wrapper.DbWrapper(True)
+        self.db = db_wrapper.Database(True)
         self.db.open_db( password=b'000' , nonce= os.urandom(16),db_name= "test.db")
         # beware.. it can make his own db !!!!
         self.gcd = gcd.GCD(False)
@@ -104,7 +104,7 @@ class TestWorkflow(unittest.TestCase):
         addr.first_offset = 8989
         self.assertEqual(1, len(coin))
         self.assertIsInstance(addr, AbstractCoin.Address)
-        self.db._add_or_save_address(addr, None)
+        self.db._add_or_save_address(addr)
         coin._wallet_list.clear()
         self.assertEqual(0, len(coin))
         self.db._add_coin(coin, True)
@@ -123,7 +123,7 @@ class Test_password(unittest.TestCase):
     @unittest.skip
     def test_db(self):
         cipher.Cipher.ENCRYPT = True
-        self.db = db_wrapper.DbWrapper(True)
+        self.db = db_wrapper.Database(True)
         self.db.open_db("test.db")
         password = "test password stuff"
         self.db._set_meta_entry("password", password, strong=False)

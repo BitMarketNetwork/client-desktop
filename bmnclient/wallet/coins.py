@@ -35,7 +35,7 @@ class CoinType(qt_core.QObject):
             label=label)
         self.appendAddress(adr)
         from ..application import CoreApplication
-        CoreApplication.instance().database.save_address(adr)
+        CoreApplication.instance().database._add_or_save_address(adr)
         return adr
 
     @property
