@@ -29,8 +29,28 @@ class Database:
         log.info(f"SQLite version {sql.sqlite_version}")
         self.__db_name = None
         self.__impl = sqlite_impl.SqLite()
+        self._is_loaded = False
+
+    def open(self) -> None:
+        self.__db_name = self.DEFAULT_DB_NAME
+        self.__impl.connect_impl(self.__db_name)
+        self.__impl.create_tables()
+
+        from ..application import CoreApplication
+
+        coin_list = CoreApplication.instance().coinList
+        self._read_all_coins(coin_list)
+
+        address_list = self._read_all_addresses(coin_list)
+        self._read_all_tx(address_list)
+
+        self._is_loaded = True
+
+    def isLoaded(self) -> bool:
+        return self._is_loaded
 
     def close(self) -> None:
+        self._is_loaded = False
         self.__impl.close()
 
     def remove(self) -> None:
@@ -41,7 +61,7 @@ class Database:
             if pth.exists():
                 pth.unlink()
 
-    def __exec(self, query: str, args: tuple = ()):
+    def execute(self, query: str, args: tuple = ()):
         return self.__impl.exec(query, args)
 
     def _add_coin(self, coin: coins.CoinType, read_addresses=False) -> None:
@@ -80,14 +100,14 @@ class Database:
             cursor.close()
 
             query = f"SELECT {self.visible_column} FROM {self.coins_table} WHERE id == ?"
-            with closing(self.__exec(query, (coin.rowId,))) as c:
+            with closing(self.execute(query, (coin.rowId,))) as c:
                 res = c.fetchone()
                 coin.visible = res[0]
         else:
             query = f"""
                 SELECT id , {self.visible_column} FROM {self.coins_table} WHERE {self.name_column} == ?;
             """
-            with closing(self.__exec(query, (table["short_name"],))) as c:
+            with closing(self.execute(query, (table["short_name"],))) as c:
                 res = c.fetchone()
                 coin.rowId = res[0]
                 coin.visible = res[1]
@@ -118,7 +138,7 @@ class Database:
                 WHERE id = ?;
             """
 
-            with closing(self.__exec(query, (
+            with closing(self.execute(query, (
                 self.__impl(1),  # TODO
                 table["height"],
                 table["verified_height"],
@@ -148,7 +168,7 @@ class Database:
             {self.key_column}
         FROM {self.addresses_table} WHERE {self.coin_id_column} == ?;
         """
-        with closing(self.__exec(query, (coin.rowId,))) as c:
+        with closing(self.execute(query, (coin.rowId,))) as c:
             fetch = c.fetchall()
         for values in fetch:
             wallet = CAddress(values[0], c)
@@ -172,7 +192,7 @@ class Database:
                 {self.status_column}
             FROM {self.transactions_table} WHERE {self.address_id_column} == ?;
         """
-        with closing(self.__exec(query, (wallet.rowId,))) as c:
+        with closing(self.execute(query, (wallet.rowId,))) as c:
             fetch = c.fetchall()
         for values in fetch:
             qt_core.QCoreApplication.processEvents()
@@ -194,16 +214,13 @@ class Database:
                 {self.output_type_column}
             FROM {self.inputs_table} WHERE {self.tx_id_column} == ?;
         """
-        with closing(self.__exec(query, (tx.rowId,))) as c:
+        with closing(self.execute(query, (tx.rowId,))) as c:
             fetch = c.fetchall()
         for values in fetch:
             tx.make_input(iter(values))
         qt_core.QCoreApplication.processEvents()
 
     def _add_or_save_address(self, wallet: AbstractCoin.Address) -> None:
-        self._add_or_save_address_impl(wallet)
-
-    def _add_or_save_address_impl(self, wallet: AbstractCoin.Address) -> None:
         assert wallet.coin.rowId
 
         table = wallet.serialize()
@@ -231,7 +248,7 @@ class Database:
                 ;
             """
             try:
-                with closing(self.__exec(query, (
+                with closing(self.execute(query, (
                     self.__impl(wallet.name),
                     wallet.coin.rowId,  # don't encrypt!
                     table["label"],
@@ -270,7 +287,7 @@ class Database:
             """
 
             try:
-                with closing(self.__exec(query, (
+                with closing(self.execute(query, (
                     self.__impl(wallet.label, True, "wallet label"),
                     self.__impl(wallet.type),
                     self.__impl(wallet.amount),
@@ -284,19 +301,6 @@ class Database:
                 log.error(f"DB integrity: {ie} for {wallet}")
             except sql.InterfaceError as ie:
                 log.error(f"DB integrity: {ie}  for {wallet}")
-
-    def open(self) -> None:
-        self.__db_name = self.DEFAULT_DB_NAME
-        self.__impl.connect_impl(self.__db_name)
-        self.__impl.create_tables()
-
-        from ..application import CoreApplication
-        coin_list = CoreApplication.instance().coinList
-
-        self._read_all_coins(coin_list)
-
-        address_list = self._read_all_addresses(coin_list)
-        self._read_all_tx(address_list)
 
     def _write_transaction(self, tx: AbstractCoin.Tx) -> None:
         table = tx.serialize()
@@ -317,7 +321,7 @@ class Database:
                 ) VALUES  {nmark(7)}
             """
             assert tx.address.rowId is not None
-            with closing(self.__exec(query, (
+            with closing(self.execute(query, (
                     table["name"],
                     tx.address.rowId,
                     table["height"],
@@ -360,7 +364,7 @@ class Database:
                     {self.output_type_column})
                 VALUES {nmark(5)}
             """
-            with closing(self.__exec(query, (
+            with closing(self.execute(query, (
                 table["name"],
                 tx.rowId,
                 table["amount"],
@@ -385,7 +389,7 @@ class Database:
                 {self.unverified_hash_column}
                 FROM {self.coins_table};
         """
-        with closing(self.__exec(query)) as c:
+        with closing(self.execute(query)) as c:
             fetch = c.fetchall()
         if not fetch:
             for coin in coins_:
@@ -437,7 +441,7 @@ class Database:
             {self.key_column}
         FROM {self.addresses_table}
         """
-        with closing(self.__exec(query,)) as c:
+        with closing(self.execute(query,)) as c:
             fetch = c.fetchall()
         # prepare coins
         coin_map = {coin.rowId: coin for coin in coins}
@@ -460,9 +464,7 @@ class Database:
             coin.refreshAmount()
         return address_list
 
-    def _read_all_tx(
-            self,
-            address_list: List[AbstractCoin.Address]) -> None:
+    def _read_all_tx(self, address_list: List[AbstractCoin.Address]) -> None:
         if not address_list:
             return []
 
@@ -478,7 +480,7 @@ class Database:
                 {self.fee_column},
                 {self.coinbase_column}
             FROM {self.transactions_table}"""
-        with closing(self.__exec(query)) as c:
+        with closing(self.execute(query)) as c:
             fetch = c.fetchall()
         if not fetch:
             return
@@ -517,7 +519,7 @@ class Database:
             {self.amount_column},
             {self.output_type_column}
             FROM {self.inputs_table}"""
-        with closing(self.__exec(query)) as c:
+        with closing(self.execute(query)) as c:
             fetch = c.fetchall()
         if not fetch:
             return {}, {}
