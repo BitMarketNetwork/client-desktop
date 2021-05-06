@@ -1,41 +1,35 @@
 import logging
-import sqlite3 as sql
+import sqlite3
 
-import PySide2.QtCore as qt_core
+from PySide2.QtCore import QObject, Qt, QTimerEvent, Slot as QSlot
 
-from . import db_wrapper
+from .db_wrapper import DbWrapper
 from ..coins.abstract.coin import AbstractCoin
 
 log = logging.getLogger(__name__)
 
 
-class Database(db_wrapper.DbWrapper, qt_core.QObject):
-    def __init__(self, parent):
+class Database(DbWrapper, QObject):
+    def __init__(self, parent) -> None:
         self._parent = parent
         super().__init__()
-        log.info(f"SQLITE version {sql.sqlite_version}")
-        parent.applyPassword.connect(
-            self._apply_password, qt_core.Qt.QueuedConnection)
+        log.info(f"SQLite version {sqlite3.sqlite_version}")
 
-    def _init_actions(self):
+    def _init_actions(self) -> None:
         self._parent.saveCoin.connect(
-            self._update_coin, qt_core.Qt.QueuedConnection)
+            self._update_coin, Qt.QueuedConnection)
         self._parent.saveAddress.connect(
-            self._add_or_save_address, qt_core.Qt.QueuedConnection)
+            self._add_or_save_address, Qt.QueuedConnection)
         self._parent.saveTx.connect(
-            self._write_transaction, qt_core.Qt.QueuedConnection)
-        self._parent.dropDb.connect(
-            self.drop_db, qt_core.Qt.QueuedConnection)
-        self._parent.resetDb.connect(
-            self.reset_db, qt_core.Qt.QueuedConnection)
+            self._write_transaction, Qt.QueuedConnection)
         self.load_everything()
 
-    @qt_core.Slot()
-    def close(self):
+    @QSlot()
+    def close(self) -> None:
         self.close_db()
 
-    @qt_core.Slot()
-    def save_coins_with_addresses(self):
+    @QSlot()
+    def save_coins_with_addresses(self) -> None:
         # TODO: one query
         from ..application import CoreApplication
         for coin in CoreApplication.instance().coinList:
@@ -43,16 +37,16 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
             for address in coin.addressList:
                 self._add_or_save_address(address)
 
-    @qt_core.Slot()
-    def save_coins_settings(self):
+    @QSlot()
+    def save_coins_settings(self) -> None:
         log.debug("updating all coins in db")
         # TODO: one query
         from ..application import CoreApplication
         for coin in CoreApplication.instance().coinList:
             self._update_coin(coin)
 
-    @qt_core.Slot(AbstractCoin.Address)
-    def save_address(self, wallet):
+    @QSlot(AbstractCoin.Address)
+    def save_address(self, wallet) -> None:
         self._add_or_save_address(wallet, None)
 
     def load_everything(self) -> None:
@@ -63,7 +57,7 @@ class Database(db_wrapper.DbWrapper, qt_core.QObject):
         adds = self._read_all_addresses(coins)
         self._read_all_tx(adds)
 
-    def timerEvent(self, event: qt_core.QTimerEvent):
+    def timerEvent(self, event: QTimerEvent) -> None:
         if event.timerId() == self._save_address_timer.timerId():
             self._add_or_save_address_impl(self._save_address_timer.wallet)
             self._save_address_timer.stop()

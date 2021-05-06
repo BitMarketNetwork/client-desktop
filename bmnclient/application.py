@@ -18,16 +18,16 @@ from . import resources
 from .coins.currency import FiatCurrencyList, FiatRate
 from .coins.list import CoinList
 from .config import UserConfig
+from .database.database import Database
 from .key_store import KeyStore
 from .language import Language
 from .logger import Logger
 from .network.query_manager import NetworkQueryManager
+from .network.query_scheduler import NetworkQueryScheduler
 from .network.services.fiat_rate import FiatRateServiceList
 from .signal_handler import SignalHandler
 from .utils.meta import classproperty
 from .version import Product
-from .wallet.thread import WalletThread
-from .network.query_scheduler import NetworkQueryScheduler
 
 if TYPE_CHECKING:
     from .coins.abstract.coin import AbstractCoin
@@ -128,7 +128,7 @@ class CoreApplication(QObject):
             self.setExitEvent,
             Qt.QueuedConnection)
 
-        self._wallet_thread = WalletThread()
+        self._database = Database()
 
         self._coin_list = []
         self._fiat_currency_list = FiatCurrencyList(self)
@@ -188,10 +188,9 @@ class CoreApplication(QObject):
     def keyStore(self) -> KeyStore:
         return self._key_store
 
-    # TODO
     @property
-    def databaseThread(self) -> WalletThread:
-        return self._wallet_thread
+    def database(self) -> Database:
+        return self._database
 
     @property
     def networkQueryManager(self) -> NetworkQueryManager:

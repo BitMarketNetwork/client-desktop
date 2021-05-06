@@ -39,17 +39,13 @@ class DbWrapper:
     def close_db(self) -> None:
         self.__impl.close()
 
-    def drop_db(self) -> None:
+    def remove(self) -> None:
         self.close_db()
         if self.__db_name:
             pth = Path(self.__db_name)
             self.__db_name = None
             if pth.exists():
                 pth.unlink()
-
-    def reset_db(self, password: str) -> None:
-        self.drop_db()
-        self.open_db()
 
     @classmethod
     def has_db(cls) -> bool:

@@ -297,7 +297,7 @@ class KeyStore(QObject):
             self._has_seed = self._loadSeed()
 
         if self._application is not None:
-            self._application.databaseThread.applyPassword.emit()
+            self._application.database.open()
         return True
 
     # noinspection PyTypeChecker
@@ -316,7 +316,7 @@ class KeyStore(QObject):
             self._reset(hard=True)
 
         if self._application is not None:
-            self._application.databaseThread.reset_db()  # TODO
+            self._application.database.remove()
         return True
 
     @QProperty(bool, constant=True)
