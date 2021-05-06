@@ -31,7 +31,7 @@ class TestDataEncoding(unittest.TestCase):
         self.db = db_wrapper.DbWrapper(None)
         self.db.open_db(self.PSW, os.urandom(16) , self.DB_NAME)
         self.__test()
-        self.db.drop_db()
+        self.db.remove()
 
     def __test(self):
         ENTRY = "some_key"
@@ -87,7 +87,7 @@ class TestWorkflow(unittest.TestCase):
 
     def tearDown(self):
         ""
-        # self.db.drop_db()
+        # self.db.remove()
 
     @unittest.skip
     def test_addresses(self):

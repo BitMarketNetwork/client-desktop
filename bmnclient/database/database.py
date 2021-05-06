@@ -10,8 +10,7 @@ log = logging.getLogger(__name__)
 
 
 class Database(DbWrapper, QObject):
-    def __init__(self, parent) -> None:
-        self._parent = parent
+    def __init__(self) -> None:
         super().__init__()
         log.info(f"SQLite version {sqlite3.sqlite_version}")
 

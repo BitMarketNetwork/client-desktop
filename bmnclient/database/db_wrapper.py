@@ -301,7 +301,7 @@ class DbWrapper:
             except sql.InterfaceError as ie:
                 log.error(f"DB integrity: {ie}  for {wallet}")
 
-    def _apply_password(self) -> None:
+    def open(self) -> None:
         self.open_db()
         self._init_actions()
 
