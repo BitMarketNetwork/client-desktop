@@ -5,9 +5,7 @@ import sqlite3 as sql
 import sys
 from contextlib import closing
 from pathlib import Path
-from typing import List, Tuple, Sequence
-
-import PySide2.QtCore as qt_core
+from typing import List, Sequence, Tuple
 
 import bmnclient.config
 from . import sqlite_impl
@@ -68,7 +66,7 @@ class Database:
     def _add_coin(self, coin: coins.CoinType) -> None:
         table = coin.serialize()
         for (key, value) in table.items():
-            if not isinstance(table[key], list):
+            if isinstance(table[key], (str, int)):
                 table[key] = self.__impl(value)
 
         try:
@@ -120,7 +118,7 @@ class Database:
 
         table = coin.serialize()
         for (key, value) in table.items():
-            if not isinstance(table[key], list):
+            if isinstance(table[key], (str, int)):
                 table[key] = self.__impl(value)
 
         try:
@@ -153,7 +151,7 @@ class Database:
 
         table = address.serialize()
         for (key, value) in table.items():
-            if not isinstance(table[key], list):
+            if isinstance(table[key], (str, int)):
                 table[key] = self.__impl(value)
 
         if address.rowId is None:
@@ -272,7 +270,7 @@ class Database:
     def writeCoinTxIo(self, tx: AbstractCoin.Tx.Io, inp, out) -> None:
         table = inp.serialize()
         for (key, value) in table.items():
-            if not isinstance(table[key], list):
+            if isinstance(table[key], (str, int)):
                 table[key] = self.__impl(value)
 
         try:
@@ -331,7 +329,7 @@ class Database:
             if coin is not None:
                 coin.rowId = rowId
                 if coin.height < height:  # TODO
-                    coin.beginUpdateState()
+                    coin.beginUpdateState()  # TODO
                     if True:
                         coin.unverifiedHash = usig
                         coin.unverifiedOffset = uoffset
@@ -387,7 +385,7 @@ class Database:
                 comment=values[4],
                 history_first_offset=values[9],
                 history_last_offset=values[10])
-            if address:
+            if address is not None:
                 address.rowId = values[2]
                 coin.appendAddress(address)
                 address_list.append(address)
@@ -441,8 +439,9 @@ class Database:
             }
 
             tx = address.coin.Tx.deserialize(address, **value)
-            tx.rowId = _rowid
-            address.appendTx(tx)
+            if tx is not None:
+                tx.rowId = _rowid
+                address.appendTx(tx)
 
     def _read_all_tx_io(self) -> Tuple[dict, dict]:
         query = f"""SELECT
