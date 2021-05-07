@@ -13,8 +13,7 @@ from PySide2.QtCore import \
 from . import AbstractModel, AbstractStateModel, ValidStatus
 from .address import \
     AddressListModel, \
-    AddressListSortedModel, \
-    AddressModel
+    AddressListSortedModel
 from .amount import AbstractAmountModel
 from .list import \
     AbstractListModel, \

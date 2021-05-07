@@ -424,4 +424,3 @@ class BroadcastTxParser(AbstractParser):
 
     def __call__(self, value: dict) -> None:
         self._txName = self.parseKey(value, "tx", str)
-

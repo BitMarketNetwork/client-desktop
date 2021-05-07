@@ -227,7 +227,11 @@ class AbstractTx(Serializable):
         return hash(self._name)
 
     @classmethod
-    def _deserializeProperty(cls, args: Tuple[Any], key: str, value: Any) -> Any:
+    def _deserializeProperty(
+            cls,
+            args: Tuple[Any],
+            key: str,
+            value: Any) -> Any:
         if isinstance(value, dict) and key in ("input_list", "output_list"):
             coin: AbstractCoin = args[0]
             return cls.Io.deserialize(coin, **value)

@@ -127,7 +127,11 @@ class AbstractAddress(Serializable):
             **kwargs)
 
     @classmethod
-    def _deserializeProperty(cls, args: Tuple[Any], key: str, value: Any) -> Any:
+    def _deserializeProperty(
+            cls,
+            args: Tuple[Any],
+            key: str,
+            value: Any) -> Any:
         if isinstance(value, str) and key == "private_key":
             return cls.importPrivateKey(value)
         if isinstance(value, dict) and key == "tx_list":
@@ -304,7 +308,7 @@ class AbstractAddress(Serializable):
         self._utxo_list = utxo_list
         for utxo in utxo_list:
             utxo.address = self
-        utxo_amount = sum(map(lambda utxo: utxo.amount, self._utxo_list))
+        utxo_amount = sum(map(lambda u: u.amount, self._utxo_list))
         if self._amount != utxo_amount:
             # TODO test, notify
             self.amount = utxo_amount
