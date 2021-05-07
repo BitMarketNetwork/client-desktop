@@ -1,13 +1,12 @@
 # JOK4
 from __future__ import annotations
 
-import itertools
 from enum import auto, Flag
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, Final, List, Optional, Type, Union
-    from ...coins.abstract.coin import AbstractCoin
+    from typing import Any, Callable, Final, List, Optional, Type, Union
+    from ...utils.serialize import DeserializedData
 
 
 class ParseError(LookupError):
@@ -22,6 +21,11 @@ class AbstractParser:
             self,
             flags: Optional[AbstractParser.ParseFlag] = None) -> None:
         self._flags = flags
+        self._deserialized_data: DeserializedData = {}
+
+    @property
+    def deserializedData(self) -> DeserializedData:
+        return self._deserialized_data
 
     @classmethod
     def parseKey(
@@ -120,7 +124,7 @@ class TxParser(AbstractParser):
     def __call__(
             self,
             name: str,
-            value: dict) -> Dict[str, Any]:
+            value: dict) -> DeserializedData:
         if self._flags & self.ParseFlag.MEMPOOL:
             # TODO fix server
             # self.parseKey(value, "height", type(None), allow_none=True)
@@ -220,32 +224,7 @@ class SysinfoParser(AbstractParser):
 class CoinsInfoParser(AbstractParser):
     def __init__(self) -> None:
         super().__init__()
-        self._offset = ""
-        self._unverified_offset = ""
-        self._unverified_hash = ""
-        self._height = -1
-        self._verified_height = -1
         self._status = -1
-
-    @property
-    def offset(self) -> str:
-        return self._offset
-
-    @property
-    def unverifiedOffset(self) -> str:
-        return self._unverified_offset
-
-    @property
-    def unverifiedHash(self) -> str:
-        return self._unverified_hash
-
-    @property
-    def height(self) -> int:
-        return self._height
-
-    @property
-    def verifiedHeight(self) -> int:
-        return self._verified_height
 
     @property
     def status(self) -> int:
@@ -257,30 +236,33 @@ class CoinsInfoParser(AbstractParser):
             return False
 
         try:
-            self._offset = self.parseKey(
-                coin_info,
-                "offset",
-                str)
-            self._unverified_offset = self.parseKey(
-                coin_info,
-                "unverified_offset",
-                str)
-            self._unverified_hash = self.parseKey(
-                coin_info,
-                "unverified_hash",
-                str)
-            self._height = self.parseKey(
-                coin_info,
-                "height",
-                int)
-            self._verified_height = self.parseKey(
-                coin_info,
-                "verified_height",
-                int)
             self._status = self.parseKey(
                 coin_info,
                 "status",
                 int)
+            self._deserialized_data = {
+                "name": coin_name,
+                "height": self.parseKey(
+                    coin_info,
+                    "height",
+                    int),
+                "verified_height": self.parseKey(
+                    coin_info,
+                    "verified_height",
+                    int),
+                "offset": self.parseKey(
+                    coin_info,
+                    "offset",
+                    str),
+                "unverified_offset": self.parseKey(
+                    coin_info,
+                    "unverified_offset",
+                    str),
+                "unverified_hash": self.parseKey(
+                    coin_info,
+                    "unverified_hash",
+                    str)
+            }
         except ParseError as e:
             raise ParseError(
                 "failed to parse coin \"{}\": {}"
@@ -321,14 +303,13 @@ class AddressInfoParser(AbstractParser):
 
 
 class AddressTxParser(AbstractParser):
-    def __init__(self, address: AbstractCoin.Address) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self._address = address
         self._address_type = ""
         self._address_name = ""
         self._first_offset = ""
         self._last_offset: Optional[str] = None
-        self._tx_list: List[AbstractCoin.Tx] = []
+        self._tx_list: List[DeserializedData] = []
 
     @property
     def addressType(self) -> str:
@@ -347,7 +328,7 @@ class AddressTxParser(AbstractParser):
         return self._last_offset
 
     @property
-    def txList(self) -> List[AbstractCoin.Tx]:
+    def txList(self) -> List[DeserializedData]:
         return self._tx_list
 
     def __call__(self, value: dict) -> None:
@@ -375,10 +356,7 @@ class AddressTxParser(AbstractParser):
         tx_parser = TxParser()
         for (tx_name, tx_value) in tx_value_list.items():
             try:
-                tx = self._address.coin.Tx.deserialize(
-                    self._address,
-                    **tx_parser(tx_name, tx_value))
-                self._tx_list.append(tx)
+                self._tx_list.append(tx_parser(tx_name, tx_value))
             except ParseError as e:
                 raise ParseError(
                     "failed to parse transaction \"{}\": {}"
@@ -386,14 +364,6 @@ class AddressTxParser(AbstractParser):
 
 
 class AddressUtxoParser(AddressTxParser):
-    def __init__(self, address: AbstractCoin.Address) -> None:
-        super().__init__(address)
-        self._tx_list: List[AbstractCoin.Tx.Utxo] = []
-
-    @property
-    def txList(self) -> List[AbstractCoin.Tx.Utxo]:
-        return self._tx_list
-
     def _parseTxList(self, value: dict):
         tx_value_list = self.parseKey(value, "tx_list", list)
         for (tx_index, tx_value) in enumerate(tx_value_list):
@@ -408,10 +378,7 @@ class AddressUtxoParser(AddressTxParser):
                     "amount": self.parseKey(tx_value, "amount", int)
                 }
                 if data["amount"] > 0:
-                    utxo = self._address.coin.Tx.Utxo.deserialize(
-                        self._address,
-                        **data)
-                    self._tx_list.append(utxo)
+                    self._tx_list.append(data)
             except ParseError as e:
                 raise ParseError(
                     "failed to parse UTXO \"{}\": {}"
@@ -419,20 +386,17 @@ class AddressUtxoParser(AddressTxParser):
 
 
 class CoinMempoolParser(AbstractParser):
-    def __init__(
-            self,
-            coin: AbstractCoin) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self._coin = coin
         self._hash = ""
-        self._tx_list: List[AbstractCoin.Tx] = []
+        self._tx_list: List[DeserializedData] = []
 
     @property
     def hash(self) -> str:
         return self._hash
 
     @property
-    def txList(self) -> List[AbstractCoin.Tx]:
+    def txList(self) -> List[DeserializedData]:
         return self._tx_list
 
     def __call__(self, value: dict) -> None:
@@ -442,24 +406,11 @@ class CoinMempoolParser(AbstractParser):
         tx_parser = TxParser(TxParser.ParseFlag.MEMPOOL)
         for (tx_name, tx_value) in tx_value_list.items():
             try:
-                self._processTxData(tx_parser(tx_name, tx_value))
+                self._tx_list.append(tx_parser(tx_name, tx_value))
             except ParseError as e:
                 raise ParseError(
-                    "failed to parse unconfirmed transaction \"{}\": {}"
+                    "failed to parse unconfirmed transaction '{}': {}"
                     .format(tx_name, str(e)))
-
-    def _processTxData(self, tx_data: Dict[str, Any]) -> None:
-        tx_io_list = itertools.chain(
-            tx_data["input_list"],
-            tx_data["output_list"])
-
-        for tx_io in tx_io_list:
-            address_name = tx_io["address_name"]
-            if address_name is not None:
-                address = self._coin.findAddressByName(address_name)
-                if address is not None:
-                    tx = address.coin.Tx.deserialize(address, **tx_data)
-                    self._tx_list.append(tx)
 
 
 class BroadcastTxParser(AbstractParser):

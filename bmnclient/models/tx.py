@@ -29,13 +29,13 @@ if TYPE_CHECKING:
 
 class AbstractTxStateModel(AbstractStateModel):
     def __init__(self, application: Application, tx: AbstractCoin.Tx) -> None:
-        super().__init__(application, tx.address.coin)
+        super().__init__(application, tx.coin)
         self._tx = tx
 
 
 class AbstractTxAmountModel(AbstractAmountModel):
     def __init__(self, application: Application, tx: AbstractCoin.Tx) -> None:
-        super().__init__(application, tx.address.coin)
+        super().__init__(application, tx.coin)
         self._tx = tx
 
     def _getValue(self) -> Optional[int]:

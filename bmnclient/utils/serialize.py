@@ -7,7 +7,8 @@ from .meta import classproperty
 from .string import toSnakeCase
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, Optional, Tuple
+    from typing import Any, Callable, Dict, List, Optional, Tuple
+    DeserializedData = Dict[str, Optional[str, int, List, Dict]]
 
 
 class DeserializationNotSupportedError(Exception):
@@ -49,7 +50,7 @@ class Serializable:
                     cls.__map[toSnakeCase(name)] = name
         return cls.__map
 
-    def serialize(self) -> Dict[str, Any]:
+    def serialize(self) -> DeserializedData:
         result = {}
         for (key, name) in self.serializableMap.items():
             result[key] = self._serializeProperty(key, getattr(self, name))
@@ -64,7 +65,7 @@ class Serializable:
             return [self._serializeProperty(key, v) for v in value]
 
         raise TypeError(
-            "cannot serialize value of type \"{}\"."
+            "cannot serialize value of type '{}'."
             .format(str(type(value))))
 
     @classmethod
@@ -93,5 +94,5 @@ class Serializable:
             return [cls._deserializeProperty(args, key, v) for v in value]
 
         raise TypeError(
-            "cannot deserialize value of type \"{}\"."
+            "cannot deserialize value of type '{}'."
             .format(str(type(value))))

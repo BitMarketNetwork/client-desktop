@@ -1,6 +1,7 @@
 # JOK4
 from __future__ import annotations
 
+import itertools
 from typing import TYPE_CHECKING
 
 from .parser import \
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
     from ..query_manager import NetworkQueryManager
     from ...coins.abstract.coin import AbstractCoin
     from ...coins.list import CoinList
+    from ...utils.serialize import DeserializedData
     from ...wallet.mtx_impl import Mtx
 
 
@@ -184,16 +186,8 @@ class CoinsInfoApiQuery(AbstractApiQuery):
                     "Coin \"%s\" not found in server response.",
                     coin.name)
                 continue
-
-            coin.beginUpdateState()
-            if True:
-                coin.status = parser.status
-                coin.unverifiedHash = parser.unverifiedHash
-                coin.unverifiedOffset = parser.unverifiedOffset
-                coin.offset = parser.offset
-                coin.verifiedHeight = parser.verifiedHeight
-                coin.height = parser.height
-            coin.endUpdateState()
+            coin.status = parser.status
+            coin.deserialize(coin, **parser.deserializedData)
 
 
 class AddressInfoApiQuery(AbstractApiQuery):
@@ -314,11 +308,17 @@ class AddressTxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
         if self.statusCode != 200 or value is None:
             return
 
-        parser = AddressTxParser(self._address)
+        parser = AddressTxParser()
         parser(value)
 
         for tx in parser.txList:
-            self._address.appendTx(tx)
+            tx_d = self._address.coin.Tx.deserialize(self._address.coin, **tx)
+            if tx_d is not None:
+                self._address.appendTx(tx_d)
+            else:
+                self._logger.warning(
+                    "Failed to deserialize transaction '%s'.",
+                    tx.get("name", "unnamed"))
 
         # if scan from "best", save real offset
         if not self._first_offset:
@@ -367,9 +367,20 @@ class AddressUtxoIteratorApiQuery(AddressTxIteratorApiQuery):
         if self.statusCode != 200 or value is None:
             return
 
-        parser = AddressUtxoParser(self._address)
+        parser = AddressUtxoParser()
         parser(value)
-        self._utxo_list.extend(parser.txList)
+
+        for tx in parser.txList:
+            tx_d = self._address.coin.Tx.Utxo.deserialize(
+                self._address.coin,
+                **tx)
+            if tx_d is not None:
+                self._utxo_list.append(tx_d)
+            else:
+                self._logger.warning(
+                    "Failed to deserialize UTXO '%s:%i'.",
+                    tx.get("name", "unnamed"),
+                    tx.get("index", -1))
 
         if parser.lastOffset is None:
             self._address.utxoList = self._utxo_list
@@ -431,17 +442,31 @@ class CoinMempoolIteratorApiQuery(AbstractIteratorApiQuery):
 
         return "unconfirmed", data
 
+    def _processTx(self, tx: DeserializedData) -> None:
+        for tx_io in itertools.chain(tx["input_list"], tx["output_list"]):
+            address = self._coin.findAddressByName(tx_io["address_name"])
+            if address is None:
+                continue
+
+            tx_d = self._coin.Tx.deserialize(self._coin, **tx)
+            if tx_d is not None:
+                address.appendTx(tx_d)
+            else:
+                self._logger.warning(
+                    "Failed to deserialize unconfirmed transaction '%s'.",
+                    tx.get("name", "unnamed"))
+
     def _processData(
             self,
             data_id: Optional[str],
             data_type: Optional[str],
             value: Optional[dict]) -> None:
         if self.statusCode == 200 and value is not None:
-            parser = CoinMempoolParser(self._coin)
+            parser = CoinMempoolParser()
             parser(value)
 
             for tx in parser.txList:
-                tx.address.appendTx(tx)
+                self._processTx(tx)
             self._coin.setMempoolAddressListResult(
                 self._local_hash,
                 parser.hash)

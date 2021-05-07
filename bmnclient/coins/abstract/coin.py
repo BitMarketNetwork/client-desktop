@@ -128,10 +128,10 @@ class AbstractCoin(Serializable):
             *,
             name: str,
             height: int,
+            verified_height: int,
             offset: str,
             unverified_offset: str,
             unverified_hash: str,
-            verified_height: int,
             address_list: Optional[List[Address]] = None) \
             -> Optional[AbstractCoin]:
         if self.name != name or id(coin) != id(self):
@@ -140,10 +140,10 @@ class AbstractCoin(Serializable):
         self.beginUpdateState()
         if True:
             self.height = height
+            self.verifiedHeight = verified_height
             self.offset = offset
             self.unverifiedOffset = unverified_offset
             self.unverifiedHash = unverified_hash
-            self.verifiedHeight = verified_height
 
             if address_list is not None:
                 self._address_list.clear()  # TODO clear with callback
@@ -371,6 +371,8 @@ class AbstractCoin(Serializable):
         return self._address_list
 
     def findAddressByName(self, name: str) -> Optional[Address]:
+        if not name:
+            return None
         name = name.strip().casefold()  # TODO tmp, old wrapper
         for address in self._address_list:
             if name == address.name.casefold():
@@ -378,6 +380,8 @@ class AbstractCoin(Serializable):
         return None
 
     def appendAddress(self, address: Address) -> bool:
+        if address is None:
+            return False
         # TODO tmp, old wrapper
         if self.findAddressByName(address.name) is not None:  # noqa
             return False

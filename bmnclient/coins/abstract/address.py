@@ -4,6 +4,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
+from ...utils import filterNotNone
 from ...utils.serialize import Serializable, serializable
 from ...wallet.hd import HDError, HDNode
 from ...wallet.key import PrivateKey
@@ -99,9 +100,9 @@ class AbstractAddress(Serializable):
         self._tx_count = tx_count  # not linked with self._tx_list
 
         self._tx_list: List[AbstractCoin.Tx] = \
-            [] if tx_list is None else tx_list
+            [] if tx_list is None else list(filterNotNone(tx_list))
         self._utxo_list: List[AbstractCoin.Tx.Utxo] = \
-            [] if tx_list is None else utxo_list
+            [] if tx_list is None else list(filterNotNone(utxo_list))
 
         self._history_first_offset = history_first_offset
         self._history_last_offset = history_last_offset

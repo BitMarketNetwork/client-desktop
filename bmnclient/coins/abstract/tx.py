@@ -4,11 +4,13 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
+from ...utils import filterNotNone
 from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List, Optional, Tuple
+    from typing import Any, List, Optional, Tuple
     from .coin import AbstractCoin
+    from ...utils.serialize import DeserializedData
 
 
 class _AbstractTxIo(Serializable):
@@ -35,7 +37,7 @@ class _AbstractTxIo(Serializable):
                     name=address_name or "UNKNOWN",
                     amount=amount)
 
-    def serialize(self) -> Dict[str, Any]:
+    def serialize(self) -> DeserializedData:
         if self._address.isNullData:
             address_name = None
         else:
@@ -211,8 +213,8 @@ class AbstractTx(Serializable):
         self._fee_amount = fee_amount
         self._coinbase = coinbase
 
-        self._input_list = input_list
-        self._output_list = output_list
+        self._input_list = list(filterNotNone(input_list))
+        self._output_list = list(filterNotNone(output_list))
 
         self._model: Optional[AbstractCoin.Tx.Interface] = \
             self._coin.model_factory(self)
@@ -234,6 +236,10 @@ class AbstractTx(Serializable):
     @property
     def model(self) -> Optional[AbstractCoin.Tx.Interface]:
         return self._model
+
+    @property
+    def coin(self) -> AbstractCoin:
+        return self._coin
 
     @serializable
     @property
