@@ -26,7 +26,7 @@ class Serializable:
     __map = None
 
     def __init__(self, *args, **kwargs) -> None:
-        self.__row_id = None
+        self.__row_id: Optional[int] = None
 
     @property
     def rowId(self) -> Optional[int]:

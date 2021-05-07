@@ -31,7 +31,7 @@ class Cipher:
     def _decrypt(self, value: bytes) -> Any:
         try:
             if not value:
-                return None
+                return ""
             # leave it for a while
             if value[0] == 76:
                 val = self._cipher.decrypt(None, base64.b64decode(value)[1:])

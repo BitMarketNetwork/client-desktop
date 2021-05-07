@@ -70,10 +70,10 @@ class TestDataEncoding(unittest.TestCase):
         coin = coins.Bitcoin(None)
         coin.visible = False
         self.assertIsInstance(coin.visible, bool)
-        self.db._add_coin(coin)
+        self.db.appendCoin(coin)
         self.assertFalse(coin.visible)
         coin.visible = True
-        self.db._add_coin(coin)
+        self.db.appendCoin(coin)
         self.assertFalse(coin.visible)
 
 
@@ -96,7 +96,7 @@ class TestWorkflow(unittest.TestCase):
         master_hd = hd.HDNode.make_master(
             seed, coin_network.BitcoinTestNetwork)
         coin.makeHdPath(master_hd)
-        self.db._add_coin(coin, True)
+        self.db.appendCoin(coin, True)
         self.assertEqual(0, len(coin))
         addr = coin.make_address(key.AddressType.P2PKH)
         addr.balance = 3333
@@ -107,7 +107,7 @@ class TestWorkflow(unittest.TestCase):
         self.db._add_or_save_address(addr)
         coin._wallet_list.clear()
         self.assertEqual(0, len(coin))
-        self.db._add_coin(coin, True)
+        self.db.appendCoin(coin, True)
         self.assertEqual(1, len(coin))
         _addr = coin.addressList[0]
         self.assertIsInstance(addr.first_offset, str)

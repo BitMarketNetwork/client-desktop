@@ -107,17 +107,6 @@ class SqLite:
             log.fatal(f'SQL exception {oe} in {query}')
             sys.exit(1)
 
-    def __exec_many(self, query: str, *args) -> None:
-        try:
-            cursor = self.__conn.cursor()
-            cursor.executemany(query, *args)
-            self.__conn.commit()
-            +self
-            return cursor
-        except sql.OperationalError as oe:
-            log.fatal(f'SQL exception {oe} in {query}')
-            sys.exit(1)
-
     def create_tables(self) -> None:
         integer = "TEXT" if cipher.Cipher.ENCRYPT else "INTEGER"
         query = f"""
@@ -175,16 +164,6 @@ class SqLite:
         """
         c = self.__exec_script(query)
         c.close()
-
-    def test_table(self, table_name: str) -> bool:
-        enc_table_name = self.__make_title(table_name)
-        query = f'''
-        SELECT name FROM sqlite_master WHERE name='{enc_table_name}';
-        '''
-        c = self._exec_(query)
-        recs = c.fetchall()
-        c.close()
-        return recs is not None
 
     def __make_title(self, name: str) -> str:
         if cipher.Cipher.ENCRYPT:
