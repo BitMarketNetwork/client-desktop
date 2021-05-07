@@ -377,10 +377,10 @@ class Database:
                     log.error(
                         f"No coin with row id:{values[0]} in {coin_map.keys()}")
                     continue
-            private_key = coin.Address.importPrivateKey(values[11])
-            address = coin.decodeAddress(
+            address = coin.Address.deserialize(
+                coin,
                 name=values[1],
-                private_key=private_key,
+                private_key=values[11],
                 amount=values[7],
                 tx_count=values[8],
                 label=values[3],

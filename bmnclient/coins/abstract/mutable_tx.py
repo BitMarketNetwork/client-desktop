@@ -62,17 +62,18 @@ class AbstractMutableTx:
         return None
 
     def setReceiverAddressName(self, name: str) -> bool:
-        self._receiver_address = self._coin.decodeAddress(name=name)
+        self._receiver_address = self._coin.Address.decode(
+            self._coin,
+            name=name)
         if self._receiver_address is None:
             self._logger.warning(
                 "Receiver address \"%s\" is invalid.",
                 name)
             return False
-        else:
-            self._logger.debug(
-                "Receiver address: %s",
-                self._receiver_address.name)
-            return True
+        self._logger.debug(
+            "Receiver address: %s",
+            self._receiver_address.name)
+        return True
 
     @property
     def receiverAddress(self) -> Optional[AbstractCoin.Address]:

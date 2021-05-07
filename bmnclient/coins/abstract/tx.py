@@ -24,13 +24,15 @@ class _AbstractTxIo(Serializable):
         self._output_type = output_type
 
         if not address_name:
-            self._address = coin.createNullDataAddress(amount=amount)
+            self._address = coin.Address.createNullData(coin, amount=amount)
         else:
-            self._address = coin.decodeAddress(
+            self._address = coin.Address.decode(
+                coin,
                 name=address_name,
                 amount=amount)
             if self._address is None:
-                self._address = coin.createNullDataAddress(
+                self._address = coin.Address.createNullData(
+                    coin,
                     name=address_name or "UNKNOWN",
                     amount=amount)
 

@@ -4,15 +4,12 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from ...utils.serialize import \
-    DeserializationNotSupportedError, \
-    Serializable, \
-    serializable
+from ...utils.serialize import Serializable, serializable
 from ...wallet.hd import HDError, HDNode
 from ...wallet.key import PrivateKey
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List, Optional
+    from typing import Any, List, Optional, Tuple
     from .coin import AbstractCoin
     from .tx import AbstractTx
 
@@ -117,8 +114,18 @@ class AbstractAddress(Serializable):
                 and self._type == other._type
         )
 
-    def deserialize(self) -> Dict[str, Any]:
-        raise DeserializationNotSupportedError
+    @classmethod
+    def deserialize(cls, *args, **kwargs) -> Optional[AbstractCoin.Address]:
+        return super().deserialize(
+            *args,
+            deserialize_create=cls.decode,
+            **kwargs)
+
+    @classmethod
+    def _deserialize(cls, args: Tuple[Any], key: str, value: Any) -> Any:
+        if key == "private_key":
+            return cls.importPrivateKey(value)
+        return super()._deserialize(args, key, value)
 
     @property
     def model(self) -> Optional[AbstractAddress.Interface]:

@@ -101,7 +101,6 @@ class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
         pass
 
     def afterAppendTx(self, tx: AbstractCoin.Tx) -> None:
-        print("afterAppendTx", tx.name)
         if self._database.isLoaded:
             self._database.writeCoinTx(tx)
 

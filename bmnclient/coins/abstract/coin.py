@@ -105,7 +105,8 @@ class AbstractCoin(Serializable):
 
         self._model: Optional[AbstractCoin.Interface] = self.model_factory(self)
 
-    def deserialize(self) -> Dict[str, Any]:
+    @classmethod
+    def deserialize(cls, *args, **kwargs) -> Optional[AbstractCoin]:
         raise DeserializationNotSupportedError
 
     @property
@@ -321,12 +322,6 @@ class AbstractCoin(Serializable):
             private_key=hd_path,
             **kwargs)
         return address
-
-    def decodeAddress(self, **kwargs) -> Optional[Address]:
-        return self.Address.decode(self, **kwargs)
-
-    def createNullDataAddress(self, **kwargs) -> Address:
-        return self.Address.createNullData(self, **kwargs)
 
     @property
     def addressList(self) -> List[Address]:

@@ -1,9 +1,13 @@
+# JOK4
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING
 
 from .meta import classproperty
 from .string import toSnakeCase
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, Dict, Optional, Tuple
 
 
 class DeserializationNotSupportedError(Exception):
@@ -64,9 +68,16 @@ class Serializable:
             .format(str(type(value))))
 
     @classmethod
-    def deserialize(cls, *args, **kwargs) -> Serializable:
+    def deserialize(
+            cls,
+            *args,
+            deserialize_create: Callable[[...], Serializable] = None,
+            **kwargs) -> Optional[Serializable]:
         kwargs = {k: cls._deserialize(args, k, v) for k, v in kwargs.items()}
-        return cls(*args, **kwargs)
+        if deserialize_create is not None:
+            return deserialize_create(*args, **kwargs)
+        else:
+            return cls(*args, **kwargs)
 
     @classmethod
     def _deserialize(cls, args: Tuple[Any], key: str, value: Any) -> Any:

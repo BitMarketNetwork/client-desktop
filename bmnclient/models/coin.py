@@ -184,7 +184,8 @@ class CoinManagerModel(AbstractStateModel):
             address_name: str,
             label: str,
             comment: str) -> bool:
-        address = self._coin.decodeAddress(
+        address = self._coin.Address.decode(
+            self._coin,
             name=address_name,
             label=label,
             comment=comment)
@@ -196,7 +197,7 @@ class CoinManagerModel(AbstractStateModel):
     # noinspection PyTypeChecker
     @QSlot(str, result=bool)
     def isValidAddress(self, address_name: str) -> bool:
-        if self._coin.decodeAddress(name=address_name) is None:
+        if self._coin.Address.decode(self._coin, name=address_name) is None:
             return False
         return True
 
