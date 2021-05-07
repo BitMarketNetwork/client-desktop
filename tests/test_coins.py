@@ -1,7 +1,7 @@
 # JOK4
 from __future__ import annotations
 
-from random import randint
+from random import randbytes, randint
 from typing import TYPE_CHECKING
 from unittest import TestCase
 
@@ -14,6 +14,7 @@ from bmnclient.coins.coin_litecoin import \
     Litecoin, \
     LitecoinAddress
 from bmnclient.language import Locale
+from bmnclient.wallet.hd import HDNode
 
 if TYPE_CHECKING:
     from typing import Iterable, Type
@@ -273,7 +274,7 @@ class TestCoins(TestCase):
                 address = coin.Address(
                     coin,
                     name="address_{:06d}".format(i),
-                    type_=None)
+                    _type=None)
                 self.assertTrue(coin.appendAddress(address))
 
             limit = randint(1, 10)
@@ -313,9 +314,145 @@ class TestCoins(TestCase):
                 address = coin.Address(
                     coin,
                     name="address_new_{:06d}".format(i),
-                    type_=None)
+                    _type=None)
                 self.assertTrue(coin.appendAddress(address))
 
                 mempool_list = coin.createMempoolAddressLists(limit)
                 # noinspection PyProtectedMember
                 self.assertEqual(len(coin._mempool_cache), len(mempool_list))
+
+    def test_serialization(self) -> None:
+        root_path = HDNode.make_master(randbytes(64))
+        purpose_path = root_path.make_child_prv(44, True)
+
+        from bmnclient.wallet.coins import Bitcoin as BitcoinOld
+        coin = BitcoinOld()
+        coin.makeHdPath(purpose_path)
+        coin.height = randint(1000, 100000)
+        coin.offset = "offset" + str(randint(1000, 100000))
+        coin.unverifiedOffset = "u_offset" + str(randint(1000, 100000))
+        coin.unverifiedHash = "u_hash" + str(randint(1000, 100000))
+        coin.verifiedHeight = randint(1000, 100000)
+
+        for address_index in range(1, 3):
+            address = coin.createHdAddress(
+                account=0,
+                is_change=False,
+                amount=randint(1000, 100000),
+                tx_count=randint(1000, 100000),
+                label="address label " + str(address_index),
+                comment="address comment " + str(address_index),
+                history_first_offset="first_" + str(randint(1000, 100000)),
+                history_last_offset="last_" + str(randint(1000, 100000)))
+            self.assertIsNotNone(address)
+
+            input_list = []
+            for i in range(1, 3):
+                input_list.append(coin.Tx.Io(
+                    coin,
+                    output_type="output_type_" + str(i),
+                    address_name=address.name,
+                    amount=randint(1000, 100000)))
+
+            output_list = []
+            for i in range(1, 3):
+                output_list.append(coin.Tx.Io(
+                    coin,
+                    output_type="output_type_" + str(i),
+                    address_name=address.name,
+                    amount=randint(1000, 100000)))
+            output_list.append(coin.Tx.Io(
+                coin,
+                output_type="output_type_nulldata",
+                address_name=None,
+                amount=0))
+
+            for i in range(1, 4):
+                address.appendTx(coin.Tx(
+                    coin,
+                    name="tx_name_" + str(i),
+                    height=randint(10000, 1000000),
+                    time=randint(10000, 1000000),
+                    amount=randint(10000, 1000000),
+                    fee_amount=randint(10000, 1000000),
+                    coinbase=randint(0, 1) == 1,
+                    input_list=input_list,
+                    output_list=output_list))
+
+            address.utxoList = [coin.Tx.Utxo(
+                coin,
+                name="utxo_" + str(i),
+                height=randint(10000, 1000000),
+                index=randint(10000, 1000000),
+                amount=randint(10000, 1000000)) for i in range(1, 3)]
+
+            coin.appendAddress(address)
+
+        data = coin.serialize()
+        self.assertIsInstance(data, dict)
+
+        # from pprint import pprint
+        # pprint(data, sort_dicts=False)
+
+        coin_new = BitcoinOld()
+        BitcoinOld.deserialize(coin_new, **data)
+
+        # coin compare
+        self.assertEqual(coin.name, coin_new.name)
+        self.assertEqual(coin.height, coin_new.height)
+        self.assertEqual(coin.offset, coin_new.offset)
+        self.assertEqual(coin.unverifiedOffset, coin_new.unverifiedOffset)
+        self.assertEqual(coin.unverifiedHash, coin_new.unverifiedHash)
+        self.assertEqual(coin.verifiedHeight, coin_new.verifiedHeight)
+
+        # address list compare
+        self.assertEqual(len(coin.addressList), len(coin_new.addressList))
+        for address_index in range(len(coin.addressList)):
+            a1 = coin.addressList[address_index]
+            a2 = coin_new.addressList[address_index]
+            self.assertEqual(a1.name, a2.name)
+            self.assertEqual(a1.exportPrivateKey(), a2.exportPrivateKey())
+            self.assertEqual(a1.amount, a2.amount)
+            self.assertEqual(a1.txCount, a2.txCount)
+            self.assertEqual(a1.label, a2.label)
+            self.assertEqual(a1.comment, a2.comment)
+            self.assertEqual(a1.historyFirstOffset, a2.historyFirstOffset)
+            self.assertEqual(a1.historyLastOffset, a2.historyLastOffset)
+
+            # tx list compare
+            self.assertEqual(len(a1.txList), len(a2.txList))
+            for tx_index in range(len(a1.txList)):
+                t1 = a1.txList[tx_index]
+                t2 = a2.txList[tx_index]
+                self.assertEqual(t1.name, t2.name)
+                self.assertEqual(t1.height, t2.height)
+                self.assertEqual(t1.time, t2.time)
+                self.assertEqual(t1.amount, t2.amount)
+                self.assertEqual(t1.feeAmount, t2.feeAmount)
+                self.assertEqual(t1.coinbase, t2.coinbase)
+
+                # io list compare
+                self.assertEqual(len(t1.inputList), len(t2.inputList))
+                self.assertEqual(len(t1.outputList), len(t2.outputList))
+                for io_index in range(len(t1.inputList)):
+                    io1 = t1.inputList[io_index]
+                    io2 = t2.inputList[io_index]
+                    self.assertEqual(io1.outputType, io2.outputType)
+                    self.assertEqual(io1.address.name, io2.address.name)
+                    self.assertEqual(io1.address.amount, io2.address.amount)
+                for io_index in range(len(t1.outputList)):
+                    io1 = t1.outputList[io_index]
+                    io2 = t2.outputList[io_index]
+                    self.assertEqual(io1.outputType, io2.outputType)
+                    self.assertEqual(io1.address.name, io2.address.name)
+                    self.assertEqual(io1.address.amount, io2.address.amount)
+
+            # utxo list compare
+            self.assertEqual(len(a1.utxoList), len(a2.utxoList))
+            for utxo_index in range(len(a1.utxoList)):
+                u1 = a1.utxoList[utxo_index]
+                u2 = a2.utxoList[utxo_index]
+                self.assertEqual(u1.name, u2.name)
+                self.assertEqual(u1.height, u2.height)
+                self.assertEqual(u1.index, u2.index)
+                self.assertEqual(u1.amount, u2.amount)

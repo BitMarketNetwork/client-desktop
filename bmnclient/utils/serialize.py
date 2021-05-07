@@ -52,16 +52,16 @@ class Serializable:
     def serialize(self) -> Dict[str, Any]:
         result = {}
         for (key, name) in self.serializableMap.items():
-            result[key] = self._serialize(getattr(self, name))
+            result[key] = self._serializeProperty(key, getattr(self, name))
         return result
 
-    def _serialize(self, value: Any) -> Any:
+    def _serializeProperty(self, key: str, value: Any) -> Any:
         if isinstance(value, Serializable):
             return value.serialize()
         if isinstance(value, (int, str, type(None))):
             return value
         if isinstance(value, list):
-            return [self._serialize(v) for v in value]
+            return [self._serializeProperty(key, v) for v in value]
 
         raise TypeError(
             "cannot serialize value of type \"{}\"."
@@ -73,18 +73,24 @@ class Serializable:
             *args,
             deserialize_create: Callable[[...], Serializable] = None,
             **kwargs) -> Optional[Serializable]:
-        kwargs = {k: cls._deserialize(args, k, v) for k, v in kwargs.items()}
+        kwargs = {
+            k: cls._deserializeProperty(args, k, v) for k, v in kwargs.items()
+        }
         if deserialize_create is not None:
             return deserialize_create(*args, **kwargs)
         else:
             return cls(*args, **kwargs)
 
     @classmethod
-    def _deserialize(cls, args: Tuple[Any], key: str, value: Any) -> Any:
+    def _deserializeProperty(
+            cls,
+            args: Tuple[Any],
+            key: str,
+            value: Any) -> Any:
         if isinstance(value, (int, str, type(None))):
             return value
         if isinstance(value, list):
-            return [cls._deserialize(args, key, v) for v in value]
+            return [cls._deserializeProperty(args, key, v) for v in value]
 
         raise TypeError(
             "cannot deserialize value of type \"{}\"."

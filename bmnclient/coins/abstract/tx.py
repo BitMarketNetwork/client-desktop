@@ -8,7 +8,6 @@ from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
     from typing import Any, Dict, List, Optional, Tuple
-    from .address import AbstractAddress
     from .coin import AbstractCoin
 
 
@@ -50,7 +49,11 @@ class _AbstractTxIo(Serializable):
         }
 
     @property
-    def address(self) -> AbstractAddress:
+    def outputType(self) -> str:
+        return self._output_type
+
+    @property
+    def address(self) -> AbstractCoin.Address:
         return self._address
 
 
@@ -85,30 +88,24 @@ _UNSPENT_TYPES = {
 class _AbstractUtxo(Serializable):
     def __init__(
             self,
-            address: AbstractAddress,
+            coin: AbstractCoin,
             *,
             name: str,
             height: int,
             index: int,
             amount: int) -> None:
         super().__init__()
-        self._address = address
+        self._coin = coin
+        self._address: Optional[AbstractCoin.Address] = None
         self._name = name
         self._height = height
         self._index = index
         self._amount = amount
 
-        # TODO old code
-        self.script = None
-        self.type = self._address.type.value.name
-        self.vsize = _UNSPENT_TYPES[self.type]['vsize']
-        self.segwit = _UNSPENT_TYPES[self.type]['segwit']
-
     # TODO old code
     def __hash__(self) -> int:
         return hash((
             self._amount,
-            self._address.name,
             self.script,
             self._name,
             self._index))
@@ -116,15 +113,32 @@ class _AbstractUtxo(Serializable):
     # TODO old code
     def __eq__(self, other: _AbstractUtxo) -> bool:
         return (self._amount == other._amount and
-                self._address.name == other._address.name and
                 self.script == other.script and
                 self._name == other._name and
                 self._index == other._index and
                 self.segwit == other.segwit)
 
     @property
-    def address(self) -> AbstractAddress:
+    def address(self) -> AbstractCoin.Address:
         return self._address
+
+    @address.setter
+    def address(self, address: AbstractCoin.Address) -> None:
+        if self._address is not None:
+            raise AttributeError(
+                "already associated with address '{}'"
+                .format(self._address.name))
+        self._address = address
+
+        # TODO old code
+        # noinspection PyAttributeOutsideInit
+        self.script = None
+        # noinspection PyAttributeOutsideInit
+        self.type = self._address.type.value.name
+        # noinspection PyAttributeOutsideInit
+        self.vsize = _UNSPENT_TYPES[self.type]['vsize']
+        # noinspection PyAttributeOutsideInit
+        self.segwit = _UNSPENT_TYPES[self.type]['segwit']
 
     @serializable
     @property
@@ -171,12 +185,12 @@ class AbstractTx(Serializable):
     class Io(_AbstractTxIo):
         pass
 
-    class Utxo(_AbstractUtxo):  # TODO _AbstractUtxo
+    class Utxo(_AbstractUtxo):
         pass
 
     def __init__(
             self,
-            address: AbstractAddress,
+            coin: AbstractCoin,
             *,
             name: str,
             height: int = -1,
@@ -184,11 +198,11 @@ class AbstractTx(Serializable):
             amount: int,
             fee_amount: int,
             coinbase: bool,
-            input_list: List[Io],
-            output_list: List[Io]) -> None:
+            input_list: List[AbstractCoin.Tx.Io],
+            output_list: List[AbstractCoin.Tx.Io]) -> None:
         super().__init__()
 
-        self._address = address
+        self._coin = coin
         self._name = name.strip().lower()
 
         self._height = height
@@ -200,10 +214,10 @@ class AbstractTx(Serializable):
         self._input_list = input_list
         self._output_list = output_list
 
-        self._model: Optional[AbstractTx.Interface] = \
-            self._address.coin.model_factory(self)
+        self._model: Optional[AbstractCoin.Tx.Interface] = \
+            self._coin.model_factory(self)
 
-    def __eq__(self, other: AbstractTx) -> bool:
+    def __eq__(self, other: AbstractCoin.Tx) -> bool:
         # TODO compare self._input_list, self._output_list
         return self._name == other._name
 
@@ -211,18 +225,15 @@ class AbstractTx(Serializable):
         return hash(self._name)
 
     @classmethod
-    def _deserialize(cls, args: Tuple[Any], key: str, value: Any) -> Any:
+    def _deserializeProperty(cls, args: Tuple[Any], key: str, value: Any) -> Any:
         if isinstance(value, dict) and key in ("input_list", "output_list"):
-            return cls.Io.deserialize(args[0].coin, **value)
-        return super()._deserialize(args, key, value)
+            coin: AbstractCoin = args[0]
+            return cls.Io.deserialize(coin, **value)
+        return super()._deserializeProperty(args, key, value)
 
     @property
-    def model(self) -> Optional[AbstractTx.Interface]:
+    def model(self) -> Optional[AbstractCoin.Tx.Interface]:
         return self._model
-
-    @property
-    def address(self) -> AbstractAddress:
-        return self._address
 
     @serializable
     @property
@@ -244,8 +255,8 @@ class AbstractTx(Serializable):
 
     @property
     def confirmations(self) -> int:
-        if 0 <= self._height <= self._address.coin.height:
-            return self._address.coin.height - self._height + 1
+        if 0 <= self._height <= self._coin.height:
+            return self._coin.height - self._height + 1
         return 0
 
     @property
@@ -286,10 +297,10 @@ class AbstractTx(Serializable):
 
     @serializable
     @property
-    def inputList(self) -> List[Io]:
+    def inputList(self) -> List[AbstractCoin.Tx.Io]:
         return self._input_list
 
     @serializable
     @property
-    def outputList(self) -> List[Io]:
+    def outputList(self) -> List[AbstractCoin.Tx.Io]:
         return self._output_list

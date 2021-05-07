@@ -10,14 +10,11 @@ from .tx import AbstractTx
 from ..currency import FiatRate, NoneFiatCurrency
 from ...crypto.digest import Sha256Digest
 from ...utils.meta import classproperty
-from ...utils.serialize import \
-    DeserializationNotSupportedError, \
-    Serializable, \
-    serializable
+from ...utils.serialize import Serializable, serializable
 from ...wallet.mutable_tx import MutableTransaction
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, List, Optional, Union
+    from typing import Any, Callable, Dict, List, Optional, Tuple, Union
     from ...wallet.hd import HDNode
 
 
@@ -60,6 +57,7 @@ class AbstractCoin(Serializable):
     class Currency(AbstractCurrency):
         pass
 
+    # noinspection PyAbstractClass
     class Address(AbstractAddress):
         pass
 
@@ -107,7 +105,52 @@ class AbstractCoin(Serializable):
 
     @classmethod
     def deserialize(cls, *args, **kwargs) -> Optional[AbstractCoin]:
-        raise DeserializationNotSupportedError
+        coin: AbstractCoin = args[0]
+        return super().deserialize(
+            *args,
+            deserialize_create=coin._deserializeToSelf,
+            **kwargs)
+
+    @classmethod
+    def _deserializeProperty(
+            cls,
+            args: Tuple[Any],
+            key: str,
+            value: Any) -> Any:
+        if isinstance(value, dict) and key == "address_list":
+            coin: AbstractCoin = args[0]
+            return cls.Address.deserialize(coin, **value)
+        return super()._deserializeProperty(args, key, value)
+
+    def _deserializeToSelf(
+            self,
+            coin: AbstractCoin,
+            *,
+            name: str,
+            height: int,
+            offset: str,
+            unverified_offset: str,
+            unverified_hash: str,
+            verified_height: int,
+            address_list: Optional[List[Address]] = None) \
+            -> Optional[AbstractCoin]:
+        if self.name != name or id(coin) != id(self):
+            return None
+
+        self.beginUpdateState()
+        if True:
+            self.height = height
+            self.offset = offset
+            self.unverifiedOffset = unverified_offset
+            self.unverifiedHash = unverified_hash
+            self.verifiedHeight = verified_height
+
+            if address_list is not None:
+                self._address_list.clear()  # TODO clear with callback
+                for address in address_list:
+                    self.appendAddress(address)
+        self.endUpdateState()
+        return self
 
     @property
     def model(self) -> Optional[AbstractCoin.Interface]:
@@ -217,7 +260,6 @@ class AbstractCoin(Serializable):
     def status(self, value: int) -> None:
         if self._status != value:
             self._status = value
-            # self._updateState()
             if self._model:
                 self._model.afterSetStatus()
 
@@ -318,11 +360,12 @@ class AbstractCoin(Serializable):
         address = self.Address(
             self,
             name=hd_path.to_address(type_.value.name),
-            type_=type_,
+            _type=type_,
             private_key=hd_path,
             **kwargs)
         return address
 
+    @serializable
     @property
     def addressList(self) -> List[Address]:
         return self._address_list

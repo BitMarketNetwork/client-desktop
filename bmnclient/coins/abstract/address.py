@@ -11,7 +11,6 @@ from ...wallet.key import PrivateKey
 if TYPE_CHECKING:
     from typing import Any, List, Optional, Tuple
     from .coin import AbstractCoin
-    from .tx import AbstractTx
 
 
 class _AbstractAddressTypeValue:
@@ -76,39 +75,44 @@ class AbstractAddress(Serializable):
             coin: AbstractCoin,
             *,
             name: Optional[str],
-            type_: Type,
+            _type: AbstractCoin.Address.Type,
             data: bytes = b"",
             private_key: Optional[HDNode, PrivateKey] = None,
             amount: int = 0,
             tx_count: int = 0,
             label: str = "",
             comment: str = "",
+            tx_list: Optional[List[AbstractCoin.Tx]] = None,
+            utxo_list: Optional[List[AbstractCoin.Tx.Utxo]] = None,
             history_first_offset: str = "",
             history_last_offset: str = "") -> None:
         super().__init__()
 
         self._coin = coin
         self._name = name or self._NULLDATA_NAME
-        self._type = type_
+        self._type = _type
         self._data = data
         self._private_key = private_key
         self._amount = amount
         self._label = label
         self._comment = comment
         self._tx_count = tx_count  # not linked with self._tx_list
-        self._tx_list: List[AbstractTx] = []  # TODO enable deserialize
-        self._utxo_list: List[AbstractTx.Utxo] = []
+
+        self._tx_list: List[AbstractCoin.Tx] = \
+            [] if tx_list is None else tx_list
+        self._utxo_list: List[AbstractCoin.Tx.Utxo] = \
+            [] if tx_list is None else utxo_list
 
         self._history_first_offset = history_first_offset
         self._history_last_offset = history_last_offset
 
-        self._model: Optional[AbstractAddress.Interface] = \
+        self._model: Optional[AbstractCoin.Address.Interface] = \
             self._coin.model_factory(self)
 
     def __hash__(self) -> int:
         return hash((self._name, self._type.value.name))
 
-    def __eq__(self, other: AbstractAddress) -> bool:
+    def __eq__(self, other: AbstractCoin.Address) -> bool:
         return (
                 self._name == other.name
                 and self._type == other._type
@@ -122,13 +126,24 @@ class AbstractAddress(Serializable):
             **kwargs)
 
     @classmethod
-    def _deserialize(cls, args: Tuple[Any], key: str, value: Any) -> Any:
-        if key == "private_key":
+    def _deserializeProperty(cls, args: Tuple[Any], key: str, value: Any) -> Any:
+        if isinstance(value, str) and key == "private_key":
             return cls.importPrivateKey(value)
-        return super()._deserialize(args, key, value)
+        if isinstance(value, dict) and key == "tx_list":
+            coin: AbstractCoin = args[0]
+            return coin.Tx.deserialize(coin, **value)
+        if isinstance(value, dict) and key == "utxo_list":
+            coin: AbstractCoin = args[0]
+            return coin.Tx.Utxo.deserialize(coin, **value)
+        return super()._deserializeProperty(args, key, value)
+
+    def _serializeProperty(self, key: str, value: Any) -> Any:
+        if key == "private_key":
+            return self.exportPrivateKey()
+        return super()._serializeProperty(key, value)
 
     @property
-    def model(self) -> Optional[AbstractAddress.Interface]:
+    def model(self) -> Optional[AbstractCoin.Address.Interface]:
         return self._model
 
     @property
@@ -141,18 +156,21 @@ class AbstractAddress(Serializable):
         return self._name
 
     @property
-    def type(self) -> Type:
+    def type(self) -> AbstractCoin.Address.Type:
         return self._type
 
     @classmethod
     def decode(
             cls,
             coin: AbstractCoin,
-            **kwargs) -> Optional[AbstractAddress]:
+            **kwargs) -> Optional[AbstractCoin.Address]:
         raise NotImplementedError
 
     @classmethod
-    def createNullData(cls, coin: AbstractCoin, **kwargs) -> AbstractAddress:
+    def createNullData(
+            cls,
+            coin: AbstractCoin,
+            **kwargs) -> AbstractCoin.Address:
         raise NotImplementedError
 
     @property
@@ -163,6 +181,7 @@ class AbstractAddress(Serializable):
     def data(self) -> bytes:
         return self._data
 
+    @serializable
     @property
     def privateKey(self) -> Optional[PrivateKey]:
         if isinstance(self._private_key, HDNode):
@@ -251,8 +270,9 @@ class AbstractAddress(Serializable):
             if self._model:
                 self._model.afterSetTxCount()
 
+    @serializable
     @property
-    def txList(self) -> List[AbstractTx]:
+    def txList(self) -> List[AbstractCoin.Tx]:
         return self._tx_list
 
     def appendTx(self, tx: AbstractCoin.Tx) -> bool:
@@ -273,13 +293,16 @@ class AbstractAddress(Serializable):
             self._model.afterAppendTx(tx)
         return True
 
+    @serializable
     @property
-    def utxoList(self) -> List[AbstractTx.Utxo]:
+    def utxoList(self) -> List[AbstractCoin.Tx.Utxo]:
         return self._utxo_list
 
     @utxoList.setter
-    def utxoList(self, utxo_list: List[AbstractTx.Utxo]) -> None:
+    def utxoList(self, utxo_list: List[AbstractCoin.Tx.Utxo]) -> None:
         self._utxo_list = utxo_list
+        for utxo in utxo_list:
+            utxo.address = self
         utxo_amount = sum(map(lambda utxo: utxo.amount, self._utxo_list))
         if self._amount != utxo_amount:
             # TODO test, notify

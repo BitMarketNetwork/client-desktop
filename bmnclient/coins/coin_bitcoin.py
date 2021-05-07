@@ -116,14 +116,14 @@ class BitcoinAddress(AbstractCoin.Address):
                 return None
 
         kwargs["name"] = name
-        kwargs["type_"] = address_type
+        kwargs["_type"] = address_type
         kwargs["data"] = data
         return cls(coin, **kwargs)
 
     @classmethod
     def createNullData(cls, coin: AbstractCoin, **kwargs) -> BitcoinAddress:
         kwargs.setdefault("name", None)
-        kwargs["type_"] = cls.Type.UNKNOWN
+        kwargs["_type"] = cls.Type.UNKNOWN
         return cls(coin, **kwargs)
 
     @property
