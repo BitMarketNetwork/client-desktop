@@ -262,7 +262,7 @@ class HdAddressIteratorApiQuery(AbstractIteratorApiQuery, AddressInfoApiQuery):
             data_id: Optional[str],
             data_type: Optional[str],
             value: Optional[dict]) -> None:
-        super()._processData(data_id, data_type, value)
+        AddressInfoApiQuery._processData(self, data_id, data_type, value)
         if self.statusCode != 200 or value is None:
             return
 

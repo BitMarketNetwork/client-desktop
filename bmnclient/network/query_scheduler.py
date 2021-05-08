@@ -176,7 +176,7 @@ class NetworkQueryScheduler:
             coin,
             query_manager=self._manager,
             finished_callback=timer.start)
-        self._manager.put(query)
+        self._manager.put(query, unique=True)
 
     def updateCoinMempool(self, coin: AbstractCoin) -> None:
         timer = self._prepareTimer(
@@ -191,4 +191,4 @@ class NetworkQueryScheduler:
             coin,
             query_manager=self._manager,
             finished_callback=timer.start)
-        self._manager.put(query)
+        self._manager.put(query, unique=True)

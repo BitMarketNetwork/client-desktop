@@ -34,11 +34,15 @@ class NetworkQueryManager:
             high_priority=False) -> bool:
         if unique:
             found = False
-            if type(self._current_query) == type(query):
+            if (
+                    self._current_query is not None
+                    and self._current_query.isEqualQuery(query)
+            ):
                 found = True
             else:
                 for q in self._queue:
-                    if type(q) == type(query):
+                    if q.isEqualQuery(query):
+                        found = True
                         break
             if found:
                 self._logger.debug("Query \"%s\" already in queue.", str(query))
