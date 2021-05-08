@@ -8,22 +8,12 @@ from threading import RLock
 from typing import TYPE_CHECKING
 
 from .logger import Logger
-from .platform import PlatformPaths
 from .utils.static_list import StaticList
 from .version import Product
 
 if TYPE_CHECKING:
     from typing import Any, Final, Type, Union
     from pathlib import PurePath
-
-# TODO move to platform
-USER_CONFIG_FILE_PATH = \
-    PlatformPaths.USER_APPLICATION_CONFIG_PATH / \
-    "config.json"
-
-USER_DATABASE_FILE_PATH = \
-    PlatformPaths.USER_APPLICATION_CONFIG_PATH / \
-    "database.db"
 
 
 class UserConfig:
@@ -42,9 +32,7 @@ class UserConfig:
     KEY_SERVICES_FIAT_RATE: Final = "services.fiat_rate"
     KEY_SERVICES_FIAT_CURRENCY: Final = "services.fiat_currency"
 
-    def __init__(
-            self,
-            file_path: PurePath = USER_CONFIG_FILE_PATH) -> None:
+    def __init__(self, file_path: PurePath) -> None:
         self._logger = Logger.getClassLogger(__name__, self.__class__)
         self._file_path = file_path
         self._config = dict()

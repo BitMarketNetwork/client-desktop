@@ -32,6 +32,9 @@ class ProductPaths:
     ICON_DARWIN_FILE_PATH: Final = RESOURCES_PATH / "images" / "icon-logo.icns"
     ICON_LINUX_FILE_PATH: Final = RESOURCES_PATH / "images" / "icon-logo.svg"
 
+    CONFIG_FILE_NAME: Final = "config.json"
+    DATABASE_FILE_NAME: Final = "wallet_v1.db"
+
 
 class Timer:
     NETWORK_TRANSFER_TIMEOUT: Final = 30 * 1000

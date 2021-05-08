@@ -29,7 +29,7 @@ from .network.services.fiat_rate import FiatRateServiceList
 from .platform import PlatformPaths
 from .signal_handler import SignalHandler
 from .utils.meta import classproperty
-from .version import Product
+from .version import Product, ProductPaths
 
 if TYPE_CHECKING:
     from typing import Callable, Optional, Type, Union
@@ -107,7 +107,8 @@ class CoreApplication(QObject):
         self._exit_code = 0
         self._on_exit_called = False
 
-        self._user_config = UserConfig()
+        self._user_config = UserConfig(
+            CommandLine.configPath / ProductPaths.CONFIG_FILE_NAME)
         self._user_config.load()
 
         self._key_store = KeyStore(self, self._user_config)
@@ -151,7 +152,8 @@ class CoreApplication(QObject):
             self.setExitEvent,
             Qt.QueuedConnection)
 
-        self._database = Database()
+        self._database = Database(
+            CommandLine.configPath / ProductPaths.DATABASE_FILE_NAME)
 
         self._coin_list = []
         self._fiat_currency_list = FiatCurrencyList(self)

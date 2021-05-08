@@ -4,12 +4,12 @@ import sqlite3
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import bmnclient.config
 from . import sqlite_impl
 from ..coins.abstract.coin import AbstractCoin
 from ..logger import Logger
 
 if TYPE_CHECKING:
+    from pathlib import PurePath
     from typing import Dict, List, Sequence, Tuple
     from ..utils.serialize import DeserializedData
 
@@ -19,12 +19,11 @@ def nmark(number: int) -> str:
 
 
 class Database:
-    DEFAULT_DB_NAME = str(bmnclient.config.USER_DATABASE_FILE_PATH)
-
-    def __init__(self) -> None:
+    def __init__(self, file_path: PurePath) -> None:
         super().__init__()
         self._logger = Logger.getClassLogger(__name__, self.__class__)
-        self._logger.info("SQLite version: %s", sqlite3.sqlite_version)
+        self._logger.debug("SQLite version: %s", sqlite3.sqlite_version)
+        self._file_path = file_path
         self.__db_name = None
         self.__impl = sqlite_impl.SqLite()
         self._is_loaded = False
@@ -35,7 +34,7 @@ class Database:
         raise AttributeError(attr)
 
     def open(self) -> None:
-        self.__db_name = self.DEFAULT_DB_NAME
+        self.__db_name = str(self._file_path)
         self.__impl.connect_impl(self.__db_name)
         self.__impl.create_tables()
 
