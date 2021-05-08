@@ -3,38 +3,33 @@
 <context>
     <name>@default</name>
     <message>
-        <location filename="fiat_rate.py" line="147"/>
+        <location filename="fiat_rate.py" line="132"/>
         <source>-- None --</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="currency.py" line="176"/>
+        <location filename="currency.py" line="27"/>
         <source>US Dollar</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="currency.py" line="181"/>
+        <location filename="currency.py" line="32"/>
         <source>Euro</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>CoinManager</name>
-    <message>
-        <location filename="coin_manager.py" line="99"/>
-        <source>Select file to save transactions</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>KeyStore</name>
     <message>
-        <location filename="key_store.py" line="181"/>
+        <location filename="key_store.py" line="201"/>
         <source>Wrong password.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="key_store.py" line="184"/>
+        <location filename="key_store.py" line="204"/>
         <source>Seed phrase not found.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -60,12 +55,12 @@
 <context>
     <name>UIManager</name>
     <message>
-        <location filename="ui_manager.py" line="181"/>
+        <location filename="ui_manager.py" line="145"/>
         <source>Text &apos;%s&apos; copied to clipboard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="ui_manager.py" line="91"/>
+        <location filename="ui_manager.py" line="89"/>
         <source>New transaction
 Coin: {coin_name}
 ID: {tx_name}

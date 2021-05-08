@@ -1,4 +1,4 @@
-# JOK+++
+# JOK4
 # Only standard imports, used by Makefile.
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ class Product:
     MAINTAINER_URL: Final = "https://" + MAINTAINER_DOMAIN + "/"
     NAME: Final = "BitMarket Network Client"
     SHORT_NAME: Final = "bmn-client"
-    VERSION: Final = (0, 12, 0)
+    VERSION: Final = (0, 12, 1)
     VERSION_STRING: Final = ".".join(map(str, VERSION))
     ENCODING: Final = "utf-8"
     STRING_SEPARATOR: Final = ":"

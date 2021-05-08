@@ -14,17 +14,32 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BAboutCoinPane.qml" line="45"/>
+        <location filename="../qml/pages/BAboutCoinPane.qml" line="49"/>
+        <source>Server URL:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/BAboutCoinPane.qml" line="57"/>
+        <source>Server name:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/BAboutCoinPane.qml" line="65"/>
+        <source>Server version:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/BAboutCoinPane.qml" line="78"/>
         <source>Daemon status:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BAboutCoinPane.qml" line="54"/>
+        <location filename="../qml/pages/BAboutCoinPane.qml" line="95"/>
         <source>Daemon version:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BAboutCoinPane.qml" line="62"/>
+        <location filename="../qml/pages/BAboutCoinPane.qml" line="103"/>
         <source>Daemon height:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -47,12 +62,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BAboutGeneralPane.qml" line="42"/>
-        <source>Server version:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/BAboutGeneralPane.qml" line="58"/>
+        <location filename="../qml/pages/BAboutGeneralPane.qml" line="50"/>
         <source>Copyright © 2020-2021 %1.
 All rights reserved.</source>
         <translation type="unfinished"></translation>
@@ -69,18 +79,8 @@ All rights reserved.</source>
 <context>
     <name>BAddressEditBox</name>
     <message>
-        <location filename="../qml/coincontrols/BAddressEditBox.qml" line="29"/>
-        <source>Generate new address</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../qml/coincontrols/BAddressEditBox.qml" line="31"/>
         <source>Address information</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/coincontrols/BAddressEditBox.qml" line="33"/>
-        <source>Generate recipient address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -110,8 +110,18 @@ You can check the balance and view transactions only.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../qml/coincontrols/BAddressEditBox.qml" line="29"/>
+        <source>Create new address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/coincontrols/BAddressEditBox.qml" line="33"/>
+        <source>Create recipient address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../qml/coincontrols/BAddressEditBox.qml" line="64"/>
-        <source>Not generated</source>
+        <source>Not created</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -163,7 +173,7 @@ You can check the balance and view transactions only.</source>
     </message>
     <message>
         <location filename="../qml/coincontrols/BAddressEditBox.qml" line="107"/>
-        <source>Generate address</source>
+        <source>Create address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -298,41 +308,46 @@ Please use this version carefully for reference only, as it is intended for demo
     </message>
     <message>
         <location filename="../qml/application/BCommon.qml" line="29"/>
-        <source>Reset</source>
+        <source>Clear</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/application/BCommon.qml" line="30"/>
-        <source>Cancel</source>
+        <source>Reset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/application/BCommon.qml" line="31"/>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/application/BCommon.qml" line="32"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/application/BCommon.qml" line="33"/>
+        <location filename="../qml/application/BCommon.qml" line="34"/>
         <source>Accept</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/application/BCommon.qml" line="34"/>
+        <location filename="../qml/application/BCommon.qml" line="35"/>
         <source>Decline</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/application/BCommon.qml" line="84"/>
+        <location filename="../qml/application/BCommon.qml" line="85"/>
         <source>Pending</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/application/BCommon.qml" line="85"/>
+        <location filename="../qml/application/BCommon.qml" line="86"/>
         <source>Confirmed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/application/BCommon.qml" line="86"/>
+        <location filename="../qml/application/BCommon.qml" line="87"/>
         <source>Complete</source>
         <translation type="unfinished"></translation>
     </message>
@@ -694,19 +709,6 @@ Continue?</source>
     </message>
 </context>
 <context>
-    <name>BTxInputListDialog</name>
-    <message>
-        <location filename="../qml/dialogs/BTxInputListDialog.qml" line="11"/>
-        <source>Transaction inputs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/dialogs/BTxInputListDialog.qml" line="15"/>
-        <source>Auto selection</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>BTxItemDetailsPane</name>
     <message>
         <location filename="../qml/coincontrols/BTxItemDetailsPane.qml" line="17"/>
@@ -739,6 +741,19 @@ Continue?</source>
     <message>
         <location filename="../qml/coincontrols/BTxListView.qml" line="17"/>
         <source>Transactions not found.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BTxSourceListDialog</name>
+    <message>
+        <location filename="../qml/dialogs/BTxSourceListDialog.qml" line="11"/>
+        <source>Transaction inputs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BTxSourceListDialog.qml" line="15"/>
+        <source>Auto selection</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -784,7 +799,7 @@ Continue?</source>
     <name>BWalletCoinPage</name>
     <message>
         <location filename="../qml/pages/BWalletCoinPage.qml" line="41"/>
-        <source>Generate a new address...</source>
+        <source>Create a new address...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -811,6 +826,11 @@ Continue?</source>
     <message>
         <location filename="../qml/pages/BWalletReceivePane.qml" line="8"/>
         <source>Receive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/BWalletReceivePane.qml" line="69"/>
+        <source>Create again</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

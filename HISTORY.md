@@ -2,6 +2,13 @@
 
 ## 0.12.1 (xx.0x.2021)
 * UI: Added server info to coin info page
+* Command line fixes:
+  * description optimization
+  * new argument "--configpath"
+  * "--logfile" argument now support: stderr, stdout
+  * argument "--debug_mode" renamed to "--debug"
+  * if the application is not running in debug mode, the logging level is set to "info"
+* reimplemented network engine
 
 ## 0.12 (24.03.2021)
 
