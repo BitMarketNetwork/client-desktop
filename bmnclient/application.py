@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import os
 from argparse import ArgumentParser, Namespace
 from pathlib import PurePath
-from typing import Callable, Optional, Type, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
     QCoreApplication, \
@@ -25,41 +26,66 @@ from .logger import Logger
 from .network.query_manager import NetworkQueryManager
 from .network.query_scheduler import NetworkQueryScheduler
 from .network.services.fiat_rate import FiatRateServiceList
+from .platform import PlatformPaths
 from .signal_handler import SignalHandler
 from .utils.meta import classproperty
 from .version import Product
+
+if TYPE_CHECKING:
+    from typing import Callable, Optional, Type, Union
 
 
 class CommandLine:
     _arguments = Namespace()
 
     @classmethod
+    def _expandPath(cls, path: str) -> PurePath:
+        return PurePath(os.path.expanduser(os.path.expandvars(path)))
+
+    @classmethod
     def parse(cls, argv) -> None:
-        # TODO sync decorations/names/description with server cli, append qsTr()
         parser = ArgumentParser(
             prog=argv[0],
-            description=Product.NAME)
+            description=Product.NAME + " " + Product.VERSION_STRING)
+        parser.add_argument(
+            "-c",
+            "--configpath",
+            default=str(PlatformPaths.USER_APPLICATION_CONFIG_PATH),
+            type=cls._expandPath,
+            help="directory for configuration files; by default, it is '{}'"
+                 .format(str(PlatformPaths.USER_APPLICATION_CONFIG_PATH)),
+            metavar="PATH")
         parser.add_argument(
             "-l",
             "--logfile",
-            help="set file name for logging")
+            default="stderr",
+            type=cls._expandPath,
+            help="file that will store the log; can be one of the following "
+                 "special values: stdout, stderr; by default, it is 'stderr'",
+            metavar="FILE")
         parser.add_argument(
             '-d',
-            '--debug_mode',
+            '--debug',
+            action='store_true',
             default=False,
-            dest='debug_mode',
-            action='store_true')
+            help='run the application in debug mode')
         cls._arguments = parser.parse_args(argv[1:])
 
+        assert isinstance(cls._arguments.configpath, PurePath)
+        assert isinstance(cls._arguments.logfile, PurePath)
+        assert isinstance(cls._arguments.debug, bool)
+
     @classproperty
-    def logFilePath(cls) -> Optional[PurePath]:  # noqa
-        if cls._arguments.logfile:
-            return PurePath(cls._arguments.logfile)
-        return None
+    def configPath(cls) -> PurePath:  # noqa
+        return cls._arguments.configpath
+
+    @classproperty
+    def logFilePath(cls) -> PurePath:  # noqa
+        return cls._arguments.logfile
 
     @classproperty
     def isDebugMode(cls) -> bool:  # noqa
-        return cls._arguments.debug_mode
+        return cls._arguments.debug
 
 
 class CoreApplication(QObject):

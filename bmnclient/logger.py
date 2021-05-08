@@ -68,7 +68,7 @@ class Logger:
     @classmethod
     def configure(
             cls,
-            file_path: Optional[PurePath] = None,
+            file_path: PurePath = PurePath("stderr"),
             level: int = logging.DEBUG) -> None:
         global _is_configured
         global _configure_lock
@@ -78,13 +78,15 @@ class Logger:
             if _is_configured:
                 return
 
-            if file_path:
+            if str(file_path) == "stderr":
+                handler = StreamHandler(stream=sys.stderr)
+            elif str(file_path) == "stdout":
+                handler = StreamHandler(stream=sys.stdout)
+            else:
                 handler = FileHandler(
                     str(file_path),
                     mode="at",
                     encoding=Product.ENCODING)
-            else:
-                handler = StreamHandler(stream=sys.stderr)
             handler.setFormatter(Formatter())
 
             logging.addLevelName(logging.DEBUG, "dd")
