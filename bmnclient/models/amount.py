@@ -27,8 +27,8 @@ class AbstractAmountModel(AbstractStateModel):
     def _toHumanValue(
             self,
             value: int,
-            currency: Type[AbstractCurrency]) -> str:
-        return currency.toString(value, locale=self.locale)
+            currency_type: Type[AbstractCurrency]) -> str:
+        return currency_type.toString(value, locale=self.locale)
 
     @QProperty(str, notify=__stateChanged)
     def value(self) -> int:
@@ -51,11 +51,11 @@ class AbstractAmountModel(AbstractStateModel):
 
         # noinspection PyTypeChecker
         fiat_amount = self._coin.toFiatAmount(self.value)
-        return self._toHumanValue(fiat_amount, self._coin.fiatRate.currency)
+        return self._toHumanValue(fiat_amount, self._coin.fiatRate.currencyType)
 
     @QProperty(str, notify=__stateChanged)
     def fiatUnit(self) -> str:
-        return self._coin.fiatRate.currency.unit
+        return self._coin.fiatRate.currencyType.unit
 
 
 class AbstractAmountInputModel(AbstractAmountModel):
@@ -81,13 +81,16 @@ class AbstractAmountInputModel(AbstractAmountModel):
         def _validateHelper(
                 self,
                 value: str,
-                currency: Type[AbstractCurrency],
+                currency_type: Type[AbstractCurrency],
                 unit_convert: Optional[Callable[[int], int]] = None) \
                 -> QValidator.State:
             value = self._normalizeValue(value)
             if not value:
                 return QValidator.State.Intermediate
-            value = self._owner._fromHumanValue(value, currency, unit_convert)
+            value = self._owner._fromHumanValue(
+                value,
+                currency_type,
+                unit_convert)
             if value is None:
                 return QValidator.State.Invalid
             return QValidator.State.Acceptable
@@ -105,7 +108,7 @@ class AbstractAmountInputModel(AbstractAmountModel):
         def validate(self, value: str, _) -> QValidator.State:
             return self._validateHelper(
                 value,
-                self._owner._coin.fiatRate.currency,
+                self._owner._coin.fiatRate.currencyType,
                 self._owner._coin.fromFiatAmount)
 
     def __init__(self, application: Application, coin: AbstractCoin) -> None:
@@ -125,13 +128,16 @@ class AbstractAmountInputModel(AbstractAmountModel):
     def _fromHumanValue(
             self,
             value: str,
-            currency: Type[AbstractCurrency],
+            currency_type: Type[AbstractCurrency],
             unit_convert: Optional[Callable[[int], Optional[int]]] = None) \
             -> Optional[int]:
         if not value:
             value = 0
         else:
-            value = currency.fromString(value, strict=False, locale=self.locale)
+            value = currency_type.fromString(
+                value,
+                strict=False,
+                locale=self.locale)
             if value is None:
                 return None
 
@@ -142,11 +148,11 @@ class AbstractAmountInputModel(AbstractAmountModel):
     def _setValueHelper(
             self,
             value: Optional[Union[str, int]],
-            currency: Type[AbstractCurrency],
+            currency_type: Type[AbstractCurrency],
             unit_convert: Optional[Callable[[int], Optional[int]]] = None) \
             -> bool:
         if isinstance(value, str):
-            value = self._fromHumanValue(value, currency, unit_convert)
+            value = self._fromHumanValue(value, currency_type, unit_convert)
         result = value is not None
         if value != self._getValue():
             if value is None:
@@ -167,7 +173,7 @@ class AbstractAmountInputModel(AbstractAmountModel):
     @QProperty(str, notify=__stateChanged)
     def valueHumanTemplate(self) -> str:
         a = self._coin.Currency.stringTemplate
-        b = self._coin.fiatRate.currency.stringTemplate
+        b = self._coin.fiatRate.currencyType.stringTemplate
         return a if len(a) > len(b) else b
 
     # noinspection PyTypeChecker
@@ -182,7 +188,7 @@ class AbstractAmountInputModel(AbstractAmountModel):
     def setFiatValueHuman(self, value: str) -> bool:
         return self._setValueHelper(
             value,
-            self._coin.fiatRate.currency,
+            self._coin.fiatRate.currencyType,
             self._coin.fromFiatAmount)
 
     # noinspection PyTypeChecker

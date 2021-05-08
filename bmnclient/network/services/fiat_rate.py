@@ -37,7 +37,7 @@ class AbstractFiatRateService(AbstractJsonQuery):
     def __init__(
             self,
             coin_list: CoinList,
-            currency: Type[FiatCurrency] = UsdFiatCurrency,
+            currency_type: Type[FiatCurrency] = UsdFiatCurrency,
             *,
             name_suffix: Optional[str] = None) -> None:
         super().__init__(name_suffix=name_suffix)
@@ -46,13 +46,14 @@ class AbstractFiatRateService(AbstractJsonQuery):
         self._coin_list = coin_list
         self._coin_name_list = self._createCoinNameList()
 
-        self._currency = currency
+        self._currency_type = currency_type
         self._currency_name = self._createFiatCurrencyName()
 
     def isEqualQuery(self, other: AbstractFiatRateService) -> bool:
         return (
             isinstance(other, self.__class__)
             and self.name == other.name
+            and self._currency_type is other._currency_type
         )
 
     @classproperty
@@ -72,7 +73,7 @@ class AbstractFiatRateService(AbstractJsonQuery):
         ):
             if not self.isDummyRequest:
                 self._logger.warning(
-                    "Invalid response from \"{}\" Service."
+                    "Invalid response from '{}' Service."
                     .format(self._FULL_NAME))
             response = {}
 
@@ -84,9 +85,9 @@ class AbstractFiatRateService(AbstractJsonQuery):
                     fiat_rate = 0
                     if self.url is not None:
                         self._logger.warning(
-                            "Failed to parse fiat rate for \"{}\"."
+                            "Failed to parse fiat rate for '{}'."
                             .format(coin.fullName))
-                coin.fiatRate = FiatRate(fiat_rate, self._currency)
+                coin.fiatRate = FiatRate(fiat_rate, self._currency_type)
 
     def _createCoinNameList(self) -> List[str]:
         result = []
@@ -97,27 +98,27 @@ class AbstractFiatRateService(AbstractJsonQuery):
                     result.append(name)
             else:
                 self._logger.warning(
-                    "Fiat rate for \"{}\" not supported by \"{}\" Service."
+                    "Fiat rate for '{}' not supported by '{}' Service."
                     .format(coin.fullName, self._FULL_NAME))
 
         if not result:
             self._logger.warning(
-                "Required fiat rates not supported by \"{}\" Service."
+                "Required fiat rates not supported by '{}' Service."
                 .format(self._FULL_NAME))
 
         return result
 
     def _createFiatCurrencyName(self) -> Optional[str]:
         result = None
-        for (currency, name) in self._CURRENCY_MAP.items():
-            if currency is self._currency and name:
+        for (currency_type, name) in self._CURRENCY_MAP.items():
+            if currency_type is self._currency_type and name:
                 result = name
                 break
 
         if not result:
             self._logger.warning(
-                "Required fiat currency \"{}\" not supported by \"{}\" Service."
-                .format(self._currency.name, self._FULL_NAME))
+                "Required fiat currency '{}' not supported by '{}' Service."
+                .format(self._currency_type.name, self._FULL_NAME))
 
         return result
 
@@ -159,7 +160,7 @@ class CoinGeckoFiatRateService(AbstractFiatRateService):
     def _getFiatRate(self, coin_name: str, data: dict) -> Optional[int]:
         try:
             value = data[coin_name][self._currency_name]
-            return int(value * self._currency.decimalDivisor)
+            return int(value * self._currency_type.decimalDivisor)
         except (KeyError, TypeError):
             return None
 
@@ -181,7 +182,7 @@ class FiatRateServiceList(UserConfigStaticList):
             default_index=1,
             item_property="name")
         self._logger.debug(
-            "Current fiat rate service is \"%s\".",
+            "Current fiat rate service is '%s'.",
             self.current.fullName)
 
     def __iter__(self) -> Iterator[Type[AbstractFiatRateService]]:

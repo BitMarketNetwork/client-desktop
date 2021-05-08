@@ -61,14 +61,14 @@ class FiatCurrencyList(UserConfigStaticList):
 
 
 class FiatRate:
-    def __init__(self, value: int, currency: Type[FiatCurrency]) -> None:
+    def __init__(self, value: int, currency_type: Type[FiatCurrency]) -> None:
         self._value = value
-        self._currency = currency
+        self._currency_type = currency_type
 
     @property
     def value(self) -> int:
         return self._value
 
     @property
-    def currency(self) -> Type[FiatCurrency]:
-        return self._currency
+    def currencyType(self) -> Type[FiatCurrency]:
+        return self._currency_type

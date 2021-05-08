@@ -278,7 +278,9 @@ class AbstractCoin(Serializable):
             value = self._amount
         value *= self._fiat_rate.value
         value //= self.Currency.decimalDivisor
-        return value if self._fiat_rate.currency.isValidValue(value) else None
+        if self._fiat_rate.currencyType.isValidValue(value):
+            return value
+        return None
 
     def fromFiatAmount(self, value: int) -> Optional[int]:
         value *= self.Currency.decimalDivisor

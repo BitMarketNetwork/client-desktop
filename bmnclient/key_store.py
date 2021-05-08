@@ -263,8 +263,6 @@ class KeyStore(QObject):
         if self._application is not None:
             for coin in self._application.coinList:
                 coin.makeHdPath(purpose_path)
-                self._application.networkQueryScheduler.updateHdAddressList(
-                    coin)
         return True
 
     ############################################################################
@@ -298,6 +296,8 @@ class KeyStore(QObject):
 
         if self._application is not None:
             self._application.database.open()
+            self._application.networkQueryScheduler.start(
+                self._application.networkQueryScheduler.COINS_NAMESPACE)
         return True
 
     # noinspection PyTypeChecker
