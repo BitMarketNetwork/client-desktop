@@ -1,11 +1,11 @@
-# JOK++
+# JOK4
 from __future__ import annotations
 
 import json
 from enum import auto, Enum
 from io import BytesIO
 from json import JSONDecodeError
-from typing import Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING
 
 from PySide2.QtCore import QUrl
 from PySide2.QtNetwork import QNetworkReply, QNetworkRequest
@@ -14,10 +14,12 @@ from .utils import encodeUrlString
 from ..logger import Logger
 from ..version import Product, Timer
 
+if TYPE_CHECKING:
+    from typing import Callable, Dict, List, Optional, Union
+    QueryFinishedCallback = Callable[[object], None]
+
 
 class AbstractQuery:
-    FinishedCallback = Callable[[object], None]
-
     class Method(Enum):
         GET = auto()
         POST = auto()
@@ -83,7 +85,7 @@ class AbstractQuery:
         self._status_code: Optional[int] = None
         self._response: Optional[QNetworkReply] = None
         self._is_success = False
-        self._finished_callback_list: List[AbstractQuery.FinishedCallback] = []
+        self._finished_callback_list: List[QueryFinishedCallback] = []
 
     def __str__(self) -> str:
         return self.__class__.__name__ + Logger.nameSuffix(self.__name_suffix)
@@ -116,9 +118,7 @@ class AbstractQuery:
     def isSuccess(self) -> bool:
         return self._is_success
 
-    def putFinishedCallback(
-            self,
-            callback: AbstractQuery.FinishedCallback) -> None:
+    def putFinishedCallback(self, callback: QueryFinishedCallback) -> None:
         self._finished_callback_list.append(callback)
 
     def _callFinishedCallbackList(self) -> None:

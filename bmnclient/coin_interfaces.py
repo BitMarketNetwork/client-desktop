@@ -44,7 +44,7 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
 
     def afterAppendAddress(self, address: AbstractCoin.Address) -> None:
         if self._database.isLoaded:
-            self._database.writeCoinAddress(address)
+            self._database.updateCoinAddress(address)
 
         self._query_scheduler.manager.put(AddressTxIteratorApiQuery(
             address,
@@ -60,7 +60,7 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
 
     def afterStateChanged(self) -> None:
         if self._database.isLoaded:
-            self._database.writeCoin(self._coin)
+            self._database.updateCoin(self._coin)
 
         for address in self._coin.addressList:
             pass
