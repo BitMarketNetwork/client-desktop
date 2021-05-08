@@ -105,7 +105,7 @@ endef
 define FILE_MTIME
 $(strip $(shell $(PYTHON) -c \
 'import datetime;import os;\
-mtime=os.stat("$(1)").st_mtime;\
+mtime=os.stat("$(1)").st_mtime if os.path.exists("$(1)") else 0;\
 mtime=datetime.datetime.utcfromtimestamp(mtime);\
 print(mtime.strftime("%y%m%d_%H%M%S"))\
 '))
