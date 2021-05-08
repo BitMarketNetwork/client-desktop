@@ -29,9 +29,6 @@ from .signal_handler import SignalHandler
 from .utils.meta import classproperty
 from .version import Product
 
-if TYPE_CHECKING:
-    from .coins.abstract.coin import AbstractCoin
-
 
 class CommandLine:
     _arguments = Namespace()
@@ -225,7 +222,8 @@ class CoreApplication(QObject):
         self._onRun()
 
     def _onRun(self) -> None:
-        self._network_query_scheduler.start()
+        self._network_query_scheduler.start(
+            self._network_query_scheduler.GLOBAL_NAMESPACE)
 
     def __onAboutToQuit(self) -> None:
         self._logger.debug("Shutting down...");
