@@ -49,6 +49,12 @@ class AbstractFiatRateService(AbstractJsonQuery):
         self._currency = currency
         self._currency_name = self._createFiatCurrencyName()
 
+    def isEqualQuery(self, other: AbstractFiatRateService) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.name == other.name
+        )
+
     @classproperty
     def name(cls) -> str:  # noqa
         return cls._SHORT_NAME

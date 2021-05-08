@@ -117,6 +117,9 @@ class AbstractIteratorApiQuery(AbstractApiQuery):
         self._finished_callback = finished_callback
         self._next_query: Optional[AbstractApiQuery] = None
 
+    def isEqualQuery(self, other: AbstractIteratorApiQuery) -> bool:
+        raise NotImplementedError
+
     def _processData(
             self,
             data_id: Optional[str],
@@ -207,6 +210,13 @@ class AddressInfoApiQuery(AbstractApiQuery):
             **kwargs)
         self._address = address
 
+    def isEqualQuery(self, other: AddressInfoApiQuery) -> bool:
+        return (
+                super().isEqualQuery(other)
+                and self._address.coin.name == other._address.coin.name
+                and self._address.name == other._address.name
+        )
+
     def _processData(
             self,
             data_id: Optional[str],
@@ -221,7 +231,7 @@ class AddressInfoApiQuery(AbstractApiQuery):
         self._address.txCount = parser.txCount
 
 
-class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
+class HdAddressIteratorApiQuery(AbstractIteratorApiQuery, AddressInfoApiQuery):
     def __init__(
             self,
             coin: AbstractCoin,
@@ -240,6 +250,12 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
             query_manager=query_manager,
             finished_callback=finished_callback)
         self._hd_iterator = _hd_iterator
+
+    def isEqualQuery(self, other: HdAddressIteratorApiQuery) -> bool:
+        return (
+                isinstance(other, self.__class__)
+                and self._hd_iterator.coin.name == other._hd_iterator.coin.name
+        )
 
     def _processData(
             self,
@@ -272,7 +288,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
             _current_address=next_address)
 
 
-class AddressTxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
+class AddressTxIteratorApiQuery(AbstractIteratorApiQuery, AddressInfoApiQuery):
     _ACTION = AddressInfoApiQuery._ACTION + ("history", )
     _BEST_OFFSET_NAME: Final = "best"
     _BASE_OFFSET_NAME: Final = "base"
@@ -292,6 +308,13 @@ class AddressTxIteratorApiQuery(AddressInfoApiQuery, AbstractIteratorApiQuery):
             finished_callback=finished_callback)
         self._first_offset = first_offset
         self._last_offset = last_offset
+
+    def isEqualQuery(self, other: AddressTxIteratorApiQuery) -> bool:
+        return (
+                isinstance(other, self.__class__)
+                and self._address.coin.name == other._address.coin.name
+                and self._address.name == other._address.name
+        )
 
     @property
     def arguments(self) -> Dict[str, Union[int, str]]:
@@ -422,6 +445,12 @@ class CoinMempoolIteratorApiQuery(AbstractIteratorApiQuery):
         else:
             self._address_list = _address_list
 
+    def isEqualQuery(self, other: CoinMempoolIteratorApiQuery) -> bool:
+        return (
+                isinstance(other, self.__class__)
+                and self._coin.name == other._coin.name
+        )
+
     @property
     def skip(self) -> bool:
         if not super().skip:
@@ -493,6 +522,13 @@ class TxBroadcastApiQuery(AbstractApiQuery):
         super().__init__(
             name_suffix=self.coinToNameSuffix(tx.coin))
         self._tx = tx
+
+    def isEqualQuery(self, other: TxBroadcastApiQuery) -> bool:
+        return (
+                isinstance(other, self.__class__)
+                and self._tx.coin.name == other._tx.coin.name
+                and self._tx.to_hex() == other._tx.to_hex()
+        )
 
     def _createData(self) -> Tuple[str, Any]:
         return "tx_broadcast", {

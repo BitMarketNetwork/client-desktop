@@ -90,6 +90,13 @@ class AbstractQuery:
     def __str__(self) -> str:
         return self.__class__.__name__ + Logger.nameSuffix(self.__name_suffix)
 
+    def isEqualQuery(self, other: AbstractQuery) -> bool:
+        return (
+                isinstance(other, self.__class__)
+                and self.url == other.url
+                and self.method == other.method
+        )
+
     @property
     def url(self) -> Optional[str]:
         return self._DEFAULT_BASE_URL
