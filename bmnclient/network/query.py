@@ -16,7 +16,6 @@ from ..version import Product, Timer
 
 if TYPE_CHECKING:
     from typing import Callable, Dict, List, Optional, Union
-    QueryFinishedCallback = Callable[[object], None]
 
 
 class AbstractQuery:
@@ -85,7 +84,7 @@ class AbstractQuery:
         self._status_code: Optional[int] = None
         self._response: Optional[QNetworkReply] = None
         self._is_success = False
-        self._finished_callback_list: List[QueryFinishedCallback] = []
+        self._finished_callback_list: List[Callable[[AbstractQuery], None]] = []
 
     def __str__(self) -> str:
         return self.__class__.__name__ + Logger.nameSuffix(self.__name_suffix)
@@ -125,7 +124,9 @@ class AbstractQuery:
     def isSuccess(self) -> bool:
         return self._is_success
 
-    def putFinishedCallback(self, callback: QueryFinishedCallback) -> None:
+    def putFinishedCallback(
+            self,
+            callback: Callable[[AbstractQuery], None]) -> None:
         self._finished_callback_list.append(callback)
 
     def _callFinishedCallbackList(self) -> None:
