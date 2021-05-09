@@ -65,6 +65,12 @@ class AbstractAddress(Serializable):
         def afterAppendTx(self, tx: AbstractCoin.Tx) -> None:
             raise NotImplementedError
 
+        def afterSetHistoryFirstOffset(self) -> None:
+            raise NotImplementedError
+
+        def afterSetHistoryLastOffset(self) -> None:
+            raise NotImplementedError
+
     class TypeValue(_AbstractAddressTypeValue):
         pass
 
@@ -321,7 +327,10 @@ class AbstractAddress(Serializable):
 
     @historyFirstOffset.setter
     def historyFirstOffset(self, value: str):
-        self._history_first_offset = value
+        if self._history_first_offset != value:
+            self._history_first_offset = value
+            if self._model:
+                self._model.afterSetHistoryFirstOffset()
 
     @serializable
     @property
@@ -330,4 +339,7 @@ class AbstractAddress(Serializable):
 
     @historyLastOffset.setter
     def historyLastOffset(self, value: str):
-        self._history_last_offset = value
+        if self._history_last_offset != value:
+            self._history_last_offset = value
+            if self._model:
+                self._model.afterSetHistoryLastOffset()

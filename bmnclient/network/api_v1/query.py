@@ -453,11 +453,10 @@ class CoinMempoolIteratorApiQuery(AbstractIteratorApiQuery):
 
     @property
     def skip(self) -> bool:
-        if not super().skip:
-            if len(self._address_list) > 0:
-                return False
+        if len(self._address_list) <= 0:
             self._logger.debug("Address list is empty.")
-        return True
+            return True
+        return super().skip
 
     def _createData(self) -> Tuple[str, Any]:
         current_list = self._address_list.pop(0)
