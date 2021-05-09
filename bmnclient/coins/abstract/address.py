@@ -110,8 +110,12 @@ class AbstractAddress(Serializable):
         self._utxo_list: List[AbstractCoin.Tx.Utxo] = \
             [] if tx_list is None else list(filterNotNone(utxo_list))
 
-        self._history_first_offset = history_first_offset
-        self._history_last_offset = history_last_offset
+        if history_first_offset and history_last_offset:
+            self._history_first_offset = history_first_offset
+            self._history_last_offset = history_last_offset
+        else:
+            self._history_first_offset = ""
+            self._history_last_offset = ""
 
         self._model: Optional[AbstractCoin.Address.Interface] = \
             self._coin.model_factory(self)
@@ -328,9 +332,12 @@ class AbstractAddress(Serializable):
     @historyFirstOffset.setter
     def historyFirstOffset(self, value: str):
         if self._history_first_offset != value:
-            self._history_first_offset = value
-            if self._model:
-                self._model.afterSetHistoryFirstOffset()
+            if not value:
+                self._clearHistoryOffsets()
+            else:
+                self._history_first_offset = value
+                if self._model:
+                    self._model.afterSetHistoryFirstOffset()
 
     @serializable
     @property
@@ -340,6 +347,16 @@ class AbstractAddress(Serializable):
     @historyLastOffset.setter
     def historyLastOffset(self, value: str):
         if self._history_last_offset != value:
-            self._history_last_offset = value
-            if self._model:
-                self._model.afterSetHistoryLastOffset()
+            if not value:
+                self._clearHistoryOffsets()
+            else:
+                self._history_last_offset = value
+                if self._model:
+                    self._model.afterSetHistoryLastOffset()
+
+    def _clearHistoryOffsets(self) -> None:
+        self._history_first_offset = ""
+        self._history_last_offset = ""
+        if self._model:
+            self._model.afterSetHistoryFirstOffset()
+            self._model.afterSetHistoryLastOffset()

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import itertools
+from enum import auto, Enum
 from typing import TYPE_CHECKING
 
 from .parser import \
@@ -115,7 +116,7 @@ class AbstractIteratorApiQuery(AbstractApiQuery):
         super().__init__(*args, **kwargs)
         self._query_manager = query_manager
         self._finished_callback = finished_callback
-        self._next_query: Optional[AbstractApiQuery] = None
+        self._next_query: Optional[AbstractIteratorApiQuery] = None
 
     def isEqualQuery(self, other: AbstractIteratorApiQuery) -> bool:
         raise NotImplementedError
@@ -134,6 +135,95 @@ class AbstractIteratorApiQuery(AbstractApiQuery):
                 self._finished_callback(self)
         else:
             self._query_manager.put(self._next_query)
+
+
+class AbstractOffsetIteratorApiQuery(AbstractIteratorApiQuery):
+    _BEST_OFFSET_NAME: Final = "best"
+    _BASE_OFFSET_NAME: Final = "base"
+
+    class Mode(Enum):
+        FRESH = auto()
+        STALE = auto()
+
+    class InitialData:
+        def __init__(self, *, first_offset: str, last_offset: str) -> None:
+            self._first_offset = first_offset
+            self._last_offset = last_offset
+
+        def __eq__(
+                self,
+                other: AbstractOffsetIteratorApiQuery.InitialData) -> bool:
+            return (
+                isinstance(other, self.__class__)
+                and self._first_offset == other._first_offset
+                and self._last_offset == other._last_offset
+            )
+
+        @property
+        def firstOffset(self) -> str:
+            return self._first_offset
+
+        def setActualFirstOffset(self, value: str) -> bool:
+            best_value = AbstractOffsetIteratorApiQuery._BEST_OFFSET_NAME
+            if self._first_offset == best_value:
+                self._first_offset = value
+                return True
+            return False
+
+        @property
+        def lastOffset(self) -> str:
+            return self._last_offset
+
+        @property
+        def lastOffsetIsBase(self) -> bool:
+            base_value = AbstractOffsetIteratorApiQuery._BASE_OFFSET_NAME
+            return self._last_offset == base_value
+
+    def __init__(
+            self,
+            *args,
+            mode: Mode,
+            first_offset: Optional[str] = None,
+            last_offset: Optional[str] = None,
+            _initial_data: Optional[InitialData] = None,
+            **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._mode = mode
+        self._first_offset = first_offset or self._BEST_OFFSET_NAME
+        self._last_offset = last_offset or self._BASE_OFFSET_NAME
+
+        if _initial_data is None:
+            self._initial_data = self.InitialData(
+                first_offset=self._first_offset,
+                last_offset=self._last_offset)
+        else:
+            self._initial_data = _initial_data
+
+    def isEqualQuery(self, other: AbstractIteratorApiQuery) -> bool:
+        raise NotImplementedError
+
+    @property
+    def arguments(self) -> Dict[str, Union[int, str]]:
+        return {
+            "first_offset": self._first_offset,
+            "last_offset": self._last_offset
+        }
+
+    @property
+    def skip(self) -> bool:
+        if (
+                self._first_offset == self._BASE_OFFSET_NAME
+                or self._first_offset == self._last_offset
+        ):
+            return True
+        return super().skip
+
+    def _processData(
+            self,
+            data_id: Optional[str],
+            data_type: Optional[str],
+            value: Optional[dict]) -> None:
+        raise NotImplementedError
 
 
 class SysinfoApiQuery(AbstractApiQuery):
@@ -288,40 +378,19 @@ class HdAddressIteratorApiQuery(AbstractIteratorApiQuery, AddressInfoApiQuery):
             _current_address=next_address)
 
 
-class AddressTxIteratorApiQuery(AbstractIteratorApiQuery, AddressInfoApiQuery):
+class AddressTxIteratorApiQuery(
+        AbstractOffsetIteratorApiQuery,
+        AddressInfoApiQuery):
     _ACTION = AddressInfoApiQuery._ACTION + ("history", )
-    _BEST_OFFSET_NAME: Final = "best"
-    _BASE_OFFSET_NAME: Final = "base"
-
-    def __init__(
-            self,
-            address: AbstractCoin.Address,
-            *,
-            query_manager: NetworkQueryManager,
-            finished_callback: Optional[
-                Callable[[HdAddressIteratorApiQuery], None]] = None,
-            first_offset: Optional[str] = None,
-            last_offset: Optional[str] = None) -> None:
-        super().__init__(
-            address,
-            query_manager=query_manager,
-            finished_callback=finished_callback)
-        self._first_offset = first_offset
-        self._last_offset = last_offset
 
     def isEqualQuery(self, other: AddressTxIteratorApiQuery) -> bool:
         return (
                 isinstance(other, self.__class__)
+                and self._mode == other._mode
                 and self._address.coin.name == other._address.coin.name
                 and self._address.name == other._address.name
+                and self._initial_data == other._initial_data
         )
-
-    @property
-    def arguments(self) -> Dict[str, Union[int, str]]:
-        return {
-            "first_offset": self._first_offset or self._BEST_OFFSET_NAME,
-            "last_offset": self._last_offset or self._BASE_OFFSET_NAME,
-        }
 
     def _processData(
             self,
@@ -343,22 +412,46 @@ class AddressTxIteratorApiQuery(AbstractIteratorApiQuery, AddressInfoApiQuery):
                     "Failed to deserialize transaction '%s'.",
                     tx.get("name", "unnamed"))
 
-        # if scan from "best", save real offset
-        if not self._first_offset:
-            self._address.historyFirstOffset = parser.firstOffset
+        self._initial_data.setActualFirstOffset(parser.firstOffset)
+        self._updateAddressHistoryOffsets(parser.firstOffset, parser.lastOffset)
 
         if parser.lastOffset:
-            self._address.historyLastOffset = parser.lastOffset
-        else:
-            self._address.historyLastOffset = self._BASE_OFFSET_NAME
-
-        if parser.lastOffset is not None:
             self._next_query = self.__class__(
                 self._address,
                 query_manager=self._query_manager,
                 finished_callback=self._finished_callback,
+                mode=self._mode,
                 first_offset=parser.lastOffset,
-                last_offset=None)
+                last_offset=self._last_offset,
+                _initial_data=self._initial_data)
+
+    def _updateAddressHistoryOffsets(
+            self,
+            first_offset: str,
+            last_offset: Optional[str]) -> None:
+        is_final_query = not last_offset
+        if is_final_query:
+            last_offset = self._initial_data.lastOffset
+
+        # address without history
+        if (
+                not self._address.historyFirstOffset
+                and not self._address.historyLastOffset
+        ):
+            self._address.historyFirstOffset = first_offset
+            self._address.historyLastOffset = last_offset
+            return
+
+        if self._mode == self.Mode.FRESH:
+            if is_final_query:
+                self._address.historyFirstOffset = \
+                    self._initial_data.firstOffset
+            if self._initial_data.lastOffsetIsBase:
+                self._address.historyLastOffset = last_offset
+
+        elif self._mode == self.Mode.STALE:
+            if is_final_query or self._initial_data.lastOffsetIsBase:
+                self._address.historyLastOffset = last_offset
 
 
 class AddressUtxoIteratorApiQuery(AddressTxIteratorApiQuery):
