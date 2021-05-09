@@ -30,6 +30,9 @@ class AbstractCoin(Serializable):
             super().__init__(*args, **kwargs)
             self._coin = coin
 
+        def afterSetOffset(self) -> None:
+            raise NotImplementedError
+
         def afterSetHeight(self) -> None:
             raise NotImplementedError
 
@@ -205,6 +208,8 @@ class AbstractCoin(Serializable):
         if self._offset != value:
             self._offset = value
             self._updateState()
+            if self._model:
+                self._model.afterSetOffset()
 
     @serializable
     @property
