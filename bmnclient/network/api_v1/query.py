@@ -40,8 +40,20 @@ class AbstractApiQuery(AbstractJsonQuery):
         return coin.name
 
     @classmethod
-    def addressToNameSuffix(cls, address: AbstractCoin.Address):
-        return "{}:{}".format(address.coin.name, address.name)
+    def addressToNameSuffix(
+            cls,
+            address: AbstractCoin.Address,
+            hd_index: Optional[int] = None):
+        value = "{}:{}".format(address.coin.name, address.name)
+        if hd_index is not None:
+            value += cls.nameSubSuffix("hd_index", hd_index)
+        return value
+
+    @classmethod
+    def nameSubSuffix(cls, key: str, value: Union[str, int]) -> str:
+        if key:
+            return ":{}={}".format(key, value)
+        return ":{}".format(value)
 
     @property
     def url(self) -> Optional[str]:
@@ -297,7 +309,11 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery):
             _hd_iterator = HdAddressIterator(coin)
         if _current_address is None:
             _current_address = next(_hd_iterator)
-        super().__init__(_current_address)
+        super().__init__(
+            _current_address,
+            name_suffix=self.addressToNameSuffix(
+                _current_address,
+                _hd_iterator.currentHdIndex))
         self._hd_iterator = _hd_iterator
 
     def isEqualQuery(self, other: HdAddressIteratorApiQuery) -> bool:
@@ -566,8 +582,7 @@ class TxBroadcastApiQuery(AbstractApiQuery):
     _DEFAULT_METHOD = AbstractApiQuery.Method.POST
 
     def __init__(self, tx: Mtx) -> None:
-        super().__init__(
-            name_suffix=self.coinToNameSuffix(tx.coin))
+        super().__init__(name_suffix=self.coinToNameSuffix(tx.coin))
         self._tx = tx
 
     def isEqualQuery(self, other: TxBroadcastApiQuery) -> bool:

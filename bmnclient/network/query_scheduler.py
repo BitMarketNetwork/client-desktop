@@ -8,6 +8,8 @@ from PySide2.QtCore import \
     QObject
 
 from .api_v1.query import \
+    AddressInfoApiQuery, \
+    AddressTxIteratorApiQuery, \
     CoinMempoolIteratorApiQuery, \
     CoinsInfoApiQuery, \
     HdAddressIteratorApiQuery, \
@@ -17,7 +19,7 @@ from ..logger import Logger
 from ..version import Timer
 
 if TYPE_CHECKING:
-    from typing import Callable, Dict, Final, Tuple
+    from typing import Callable, Dict, Final, List, Tuple
     from PySide2.QtCore import QTimerEvent
     from .query import AbstractQuery
     from ..application import CoreApplication

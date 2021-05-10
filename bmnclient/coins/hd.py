@@ -55,6 +55,10 @@ class HdAddressIterator(Iterator):
     def coin(self) -> AbstractCoin:
         return self._coin
 
+    @property
+    def currentHdIndex(self) -> int:
+        return self._hd_index
+
     @classmethod
     def isSupportedAddressType(
             cls,
