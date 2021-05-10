@@ -85,16 +85,18 @@ class NetworkQueryManager:
         assert self._current_query is None
         if query.skip:
             self._logger.debug("Query \"%s\" was skipped.", str(query))
+            query.finishSkippedRequest()
             return self.QueryRunState.SKIPPED
 
         if query.isDummyRequest:
             self._logger.debug("Query \"%s\" is dummy.", str(query))
-            query.runDummyRequest()
+            query.finishDummyRequest()
             return self.QueryRunState.FINISHED
 
         self._logger.debug("Staring query \"%s\".", str(query))
         request = query.createRequest()
         if request is None:
+            query.finishInvalidRequest()
             return self.QueryRunState.FAILED
 
         # request.setHttp2Configuration(self._manager.http2Configuration)
@@ -106,7 +108,8 @@ class NetworkQueryManager:
             # noinspection PyTypeChecker
             response = self._manager.post(request, query.content)
         else:
-            self._logger.error("Unsupported HTTP method: %s", query.method)
+            self._logger.error("Unsupported HTTP method '%s'.", query.method)
+            query.finishInvalidRequest()
             return self.QueryRunState.FAILED
 
         self._current_query = query
@@ -116,6 +119,13 @@ class NetworkQueryManager:
     def __runNextQuery(self, query: AbstractQuery) -> None:
         assert query is self._current_query
         self._current_query = None
+
+        while True:
+            query = query.nextQuery
+            if query is None:
+                break
+            if self._run(query) == self.QueryRunState.PENDING:
+                return
 
         while self._queue:
             query = self._queue.pop(0)

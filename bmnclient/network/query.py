@@ -84,6 +84,7 @@ class AbstractQuery:
         self.__status_code: Optional[int] = None
         self.__response: Optional[QNetworkReply] = None
         self.__is_success = False
+        self._next_query: Optional[AbstractQuery] = None
 
         self.__finished_callback_list: List[Callable[[AbstractQuery], None]] = \
             []
@@ -128,6 +129,10 @@ class AbstractQuery:
     def isSuccess(self) -> bool:
         return self.__is_success
 
+    @property
+    def nextQuery(self) -> Optional[AbstractQuery]:
+        return self._next_query
+
     def appendFinishedCallback(
             self,
             callback: Callable[[AbstractQuery], None]) -> None:
@@ -137,20 +142,39 @@ class AbstractQuery:
         for c in self.__finished_callback_list:
             c(self)
 
+    def __prepareNextQuery(self) -> None:
+        if self._next_query is None:
+            return
+        for f in self.__finished_callback_list:
+            if f not in self._next_query.__finished_callback_list:
+                self._next_query.__finished_callback_list.append(f)
+
     @property
     def skip(self) -> bool:
         return False
+
+    def finishSkippedRequest(self) -> None:
+        assert self.skip and self.__response is None
+        self.__is_success = False
+        self.__callFinishedCallbackList()
+        self.__prepareNextQuery()
 
     @property
     def isDummyRequest(self) -> bool:
         return self.url is None
 
-    def runDummyRequest(self) -> None:
+    def finishDummyRequest(self) -> None:
         assert self.isDummyRequest and self.__response is None
         self.__setStatusCode(200)
         self.__is_success = True
         self._onResponseFinished()
         self.__callFinishedCallbackList()
+        self.__prepareNextQuery()
+
+    def finishInvalidRequest(self) -> None:
+        self.__is_success = False
+        self.__callFinishedCallbackList()
+        self.__prepareNextQuery()
 
     def createRequest(self) -> Optional[QNetworkRequest]:
         # prepare full url
@@ -253,6 +277,7 @@ class AbstractQuery:
         # self._response.deleteLater()
         self.__response = None
         self.__callFinishedCallbackList()
+        self.__prepareNextQuery()
 
         if self.__close_callback is not None:
             self.__close_callback(self)
