@@ -7,6 +7,7 @@ from .coins.abstract.coin import AbstractCoin
 from .logger import Logger
 
 if TYPE_CHECKING:
+    from typing import Optional
     from .wallet.mtx_impl import Mtx
     from .network.query_scheduler import NetworkQueryScheduler
     from .database.db_wrapper import Database
@@ -18,13 +19,25 @@ class _AbstractInterface:
             *args,
             query_scheduler: NetworkQueryScheduler,
             database: Database,
+            name_suffix: Optional[str] = None,
             **kwargs):
         super().__init__(*args, **kwargs)
+        self._logger = Logger.getClassLogger(
+            __name__,
+            self.__class__,
+            name_suffix)
         self._query_scheduler = query_scheduler
         self._database = database
 
 
 class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
+    def __init__(self, *args, coin: AbstractCoin, **kwargs) -> None:
+        super().__init__(*args, coin=coin, name_suffix=coin.name, **kwargs)
+
+    def afterSetOffset(self) -> None:
+        for address in self._coin.addressList:
+            self._query_scheduler.updateCoinAddress(address)
+
     def afterSetHeight(self) -> None:
         pass
 
@@ -41,17 +54,9 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
         pass
 
     def afterAppendAddress(self, address: AbstractCoin.Address) -> None:
-        if self._database.isLoaded:
+        if self._database.isLoaded and address.rowId is None:
             self._database.updateCoinAddress(address)
-
-        self._query_scheduler.manager.put(AddressTxIteratorApiQuery(
-            address,
-            query_manager=self._query_scheduler.manager))
-        self._query_scheduler.manager.put(AddressUtxoIteratorApiQuery(
-            address,
-            query_manager=self._query_scheduler.manager))
-
-        # self._run_cmd(net_cmd.AddressInfoApiQuery(wallet, self)) TODO
+        self._query_scheduler.updateCoinAddress(address)
 
     def afterSetServerData(self) -> None:
         pass
@@ -59,12 +64,6 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
     def afterStateChanged(self) -> None:
         if self._database.isLoaded:
             self._database.updateCoin(self._coin)
-
-        for address in self._coin.addressList:
-            pass
-            # TODO
-            # AddressInfoApiQuery(self._application, address))
-            # AddressHistoryCommand()
 
 
 class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):

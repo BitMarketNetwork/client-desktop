@@ -443,7 +443,7 @@ class AddressTxIteratorApiQuery(
             mode=self.Mode.STALE,
             first_offset=self._address.historyLastOffset,
             last_offset=None,
-            _initial_data=self._initial_data)
+            _initial_data=None)
         return None if query.skip else query
 
     def _updateAddressHistoryOffsets(

@@ -95,7 +95,7 @@ class NetworkQueryScheduler:
         self._timer_list: Dict[str, NetworkQueryTimer] = {}
 
         self._pending_queue: Dict[str, List] = {
-            "coin_address_tx_list": []
+            "coin_address": []
         }
 
     def _createTimerName(self, *name: str) -> str:
@@ -201,34 +201,34 @@ class NetworkQueryScheduler:
             (self.COINS_NAMESPACE, "updateCoinMempool", coin.name),
             False)
 
-    def updateCoinAddressTxList(self, address: AbstractCoin.Address) -> None:
+    def updateCoinAddress(self, address: AbstractCoin.Address) -> None:
         query = AddressTxIteratorApiQuery(
             address,
             mode=AddressTxIteratorApiQuery.Mode.FULL,
             first_offset=address.coin.offset,
             last_offset=address.historyFirstOffset)
         query.appendFinishedCallback(
-            lambda q: self._pendingUpdateCoinAddressTxList(q, address))
+            lambda q: self._pendingUpdateCoinAddress(q, address))
 
         status = self._manager.put(query, unique=True)
 
         # this AddressTxIteratorApiQuery already in queue, wait...
         # will be process by
         if status == NetworkQueryManager.PutStatus.ERROR_NOT_UNIQUE:
-            queue = self._pending_queue["coin_address_tx_list"]
+            queue = self._pending_queue["coin_address"]
             if address not in queue:
                 queue.append(address)
         else:
             self._manager.put(AddressInfoApiQuery(address))
             self._manager.put(AddressUtxoIteratorApiQuery(address))
 
-    def _pendingUpdateCoinAddressTxList(
+    def _pendingUpdateCoinAddress(
             self,
             query: AddressTxIteratorApiQuery,
             address: AbstractCoin.Address) -> None:
         if query.nextQuery is not None:
             return
-        queue = self._pending_queue["coin_address_tx_list"]
+        queue = self._pending_queue["coin_address"]
         if address in queue:
             queue.remove(address)
-            self.updateCoinAddressTxList(address)
+            self.updateCoinAddress(address)
