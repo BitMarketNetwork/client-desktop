@@ -72,43 +72,43 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
 
 
 class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
+    def __init__(self, *args, address: AbstractCoin.Address, **kwargs) -> None:
+        super().__init__(
+            *args,
+            address=address,
+            name_suffix=LoggerUtils.addressToNameSuffix(address),
+            **kwargs)
+
     def afterSetAmount(self) -> None:
         if self._database.isLoaded:
-            self._database.writeCoinAddress(self._address)
-
-        # TODO
-        # if balance != self._address.amount or \
-        #        txCount != self._address.txCount or \
-        #        type_ != self._address.type:
-        #    self._address.type = type_
-        #    database.writeCoinAddress(self._address)
-        #    diff = txCount - len(self._address.txList)
-        #    if diff > 0 and not self._address.is_going_update:
-        #       AddressHistoryCommand(self._address, parent=self)
-        pass
+            self._database.updateCoinAddress(self._address)
 
     def afterSetLabel(self) -> None:
         if self._database.isLoaded:
-            self._database.writeCoinAddress(self._address)
+            self._database.updateCoinAddress(self._address)
 
     def afterSetComment(self) -> None:
         if self._database.isLoaded:
-            self._database.writeCoinAddress(self._address)
+            self._database.updateCoinAddress(self._address)
 
     def afterSetTxCount(self) -> None:
         if self._database.isLoaded:
-            self._database.writeCoinAddress(self._address)
+            self._database.updateCoinAddress(self._address)
 
     def beforeAppendTx(self, tx: AbstractCoin.Tx) -> None:
         pass
 
     def afterAppendTx(self, tx: AbstractCoin.Tx) -> None:
-        if self._database.isLoaded:
-            self._database.writeCoinTx(tx)
+        if self._database.isLoaded and tx.height >= 0:
+            self._database.updateCoinAddressTx(self._address, tx)
 
-        # TODO
-        # self._application.uiManager.process_incoming_tx(tx)
-        pass
+    def afterSetHistoryFirstOffset(self) -> None:
+        if self._database.isLoaded:
+            self._database.updateCoinAddress(self._address)
+
+    def afterSetHistoryLastOffset(self) -> None:
+        if self._database.isLoaded:
+            self._database.updateCoinAddress(self._address)
 
 
 class TxInterface(_AbstractInterface, AbstractCoin.Tx.Interface):
