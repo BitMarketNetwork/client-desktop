@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .coins.abstract.coin import AbstractCoin
+from .coins.utils import LoggerUtils
 from .logger import Logger
 
 if TYPE_CHECKING:
@@ -32,7 +33,11 @@ class _AbstractInterface:
 
 class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
     def __init__(self, *args, coin: AbstractCoin, **kwargs) -> None:
-        super().__init__(*args, coin=coin, name_suffix=coin.name, **kwargs)
+        super().__init__(
+            *args,
+            coin=coin,
+            name_suffix=LoggerUtils.coinToNameSuffix(coin),
+            **kwargs)
 
     def afterSetOffset(self) -> None:
         for address in self._coin.addressList:

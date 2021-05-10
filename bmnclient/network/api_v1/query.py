@@ -19,6 +19,7 @@ from .parser import \
 from ..query import AbstractJsonQuery
 from ..utils import urlJoin
 from ...coins.hd import HdAddressIterator
+from ...coins.utils import LoggerUtils
 from ...logger import Logger
 
 if TYPE_CHECKING:
@@ -34,26 +35,6 @@ class AbstractApiQuery(AbstractJsonQuery):
     _DEFAULT_BASE_URL = "https://d1.bitmarket.network:30110/"  # TODO dynamic
     _VERSION = "v1"
     _ACTION: Tuple[Union[str, Callable]] = ("", )
-
-    @classmethod
-    def coinToNameSuffix(cls, coin: AbstractCoin):
-        return coin.name
-
-    @classmethod
-    def addressToNameSuffix(
-            cls,
-            address: AbstractCoin.Address,
-            hd_index: Optional[int] = None):
-        value = "{}:{}".format(address.coin.name, address.name)
-        if hd_index is not None:
-            value += cls.nameSubSuffix("hd_index", hd_index)
-        return value
-
-    @classmethod
-    def nameSubSuffix(cls, key: str, value: Union[str, int]) -> str:
-        if key:
-            return ":{}={}".format(key, value)
-        return ":{}".format(value)
 
     @property
     def url(self) -> Optional[str]:
@@ -169,11 +150,11 @@ class AbstractOffsetIteratorApiQuery(AbstractApiQuery):
             name_suffix: str,
             **kwargs) -> None:
         name_suffix += \
-            self.nameSubSuffix("mode", mode.name) \
-            + self.nameSubSuffix(
+            LoggerUtils.nameToSubSuffix("mode", mode.name) \
+            + LoggerUtils.nameToSubSuffix(
                 "first_offset",
                 first_offset or self._BEST_OFFSET_NAME) \
-            + self.nameSubSuffix(
+            + LoggerUtils.nameToSubSuffix(
                 "last_offset",
                 last_offset or self._BASE_OFFSET_NAME)
 
@@ -288,7 +269,7 @@ class AddressInfoApiQuery(AbstractApiQuery):
             *,
             name_suffix: Optional[str] = None) -> None:
         super().__init__(
-            name_suffix=name_suffix or self.addressToNameSuffix(address))
+            name_suffix=name_suffix or LoggerUtils.addressToNameSuffix(address))
         self._address = address
 
     def isEqualQuery(self, other: AddressInfoApiQuery) -> bool:
@@ -325,7 +306,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery):
             _current_address = next(_hd_iterator)
         super().__init__(
             _current_address,
-            name_suffix=self.addressToNameSuffix(
+            name_suffix=LoggerUtils.addressToNameSuffix(
                 _current_address,
                 _hd_iterator.currentHdIndex))
         self._hd_iterator = _hd_iterator
@@ -387,7 +368,7 @@ class AddressTxIteratorApiQuery(
                 AbstractOffsetIteratorApiQuery.InitialData] = None):
         super().__init__(
             address,
-            name_suffix=self.addressToNameSuffix(address),
+            name_suffix=LoggerUtils.addressToNameSuffix(address),
             mode=mode,
             first_offset=first_offset,
             last_offset=last_offset,
@@ -489,7 +470,7 @@ class AddressUtxoIteratorApiQuery(
             _utxo_list: Optional[List[AbstractCoin.Tx.Utxo]] = None) -> None:
         super().__init__(
             address,
-            name_suffix=self.addressToNameSuffix(address),
+            name_suffix=LoggerUtils.addressToNameSuffix(address),
             mode=AbstractOffsetIteratorApiQuery.Mode.FULL,
             first_offset=first_offset,
             last_offset=last_offset)
@@ -549,7 +530,7 @@ class CoinMempoolIteratorApiQuery(AbstractApiQuery):
             coin: AbstractCoin,
             *,
             _address_list: List[Dict[str, Any]] = None) -> None:
-        super().__init__(name_suffix=self.coinToNameSuffix(coin))
+        super().__init__(name_suffix=LoggerUtils.coinToNameSuffix(coin))
         self._coin = coin
         self._local_hash = b""
         if _address_list is None:
@@ -629,7 +610,7 @@ class TxBroadcastApiQuery(AbstractApiQuery):
     _DEFAULT_METHOD = AbstractApiQuery.Method.POST
 
     def __init__(self, tx: Mtx) -> None:
-        super().__init__(name_suffix=self.coinToNameSuffix(tx.coin))
+        super().__init__(name_suffix=LoggerUtils.coinToNameSuffix(tx.coin))
         self._tx = tx
 
     def isEqualQuery(self, other: TxBroadcastApiQuery) -> bool:
