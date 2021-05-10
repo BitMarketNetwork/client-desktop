@@ -121,6 +121,7 @@ class AbstractOffsetIteratorApiQuery(AbstractApiQuery):
     _BASE_OFFSET_NAME: Final = "base"
 
     class Mode(Enum):
+        FULL = auto()
         FRESH = auto()
         STALE = auto()
 
@@ -165,8 +166,21 @@ class AbstractOffsetIteratorApiQuery(AbstractApiQuery):
             first_offset: Optional[str] = None,
             last_offset: Optional[str] = None,
             _initial_data: Optional[InitialData] = None,
+            name_suffix: str,
             **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+        name_suffix += \
+            self.nameSubSuffix("mode", mode.name) \
+            + self.nameSubSuffix(
+                "first_offset",
+                first_offset or self._BEST_OFFSET_NAME) \
+            + self.nameSubSuffix(
+                "last_offset",
+                last_offset or self._BASE_OFFSET_NAME)
+
+        super().__init__(
+            *args,
+            name_suffix=name_suffix,
+            **kwargs)
         self._mode = mode
         self._first_offset = first_offset or self._BEST_OFFSET_NAME
         self._last_offset = last_offset or self._BASE_OFFSET_NAME
@@ -362,10 +376,29 @@ class AddressTxIteratorApiQuery(
         AddressInfoApiQuery):
     _ACTION = AddressInfoApiQuery._ACTION + ("history", )
 
+    def __init__(
+            self,
+            address: AbstractCoin.Address,
+            *,
+            mode: AbstractOffsetIteratorApiQuery.Mode,
+            first_offset: Optional[str] = None,
+            last_offset: Optional[str] = None,
+            _initial_data: Optional[
+                AbstractOffsetIteratorApiQuery.InitialData] = None):
+        super().__init__(
+            address,
+            name_suffix=self.addressToNameSuffix(address),
+            mode=mode,
+            first_offset=first_offset,
+            last_offset=last_offset,
+            _initial_data=_initial_data)
+
+        if self.skip and self._mode == self.Mode.FULL:
+            self._next_query = self._createStaleQuery()
+
     def isEqualQuery(self, other: AddressTxIteratorApiQuery) -> bool:
         return (
                 isinstance(other, self.__class__)
-                and self._mode == other._mode
                 and self._address.coin.name == other._address.coin.name
                 and self._address.name == other._address.name
         )
@@ -400,6 +433,18 @@ class AddressTxIteratorApiQuery(
                 first_offset=parser.lastOffset,
                 last_offset=self._last_offset,
                 _initial_data=self._initial_data)
+        elif self._mode == self.Mode.FULL:
+            self._next_query = self._createStaleQuery()
+
+    def _createStaleQuery(self) -> AddressTxIteratorApiQuery:
+        assert self._mode == self.Mode.FULL
+        query = self.__class__(
+            self._address,
+            mode=self.Mode.STALE,
+            first_offset=self._address.historyLastOffset,
+            last_offset=None,
+            _initial_data=self._initial_data)
+        return None if query.skip else query
 
     def _updateAddressHistoryOffsets(
             self,
@@ -418,7 +463,7 @@ class AddressTxIteratorApiQuery(
             self._address.historyLastOffset = last_offset
             return
 
-        if self._mode == self.Mode.FRESH:
+        if self._mode in (self.Mode.FULL, self._mode == self.Mode.FRESH):
             if is_final_query:
                 self._address.historyFirstOffset = \
                     self._initial_data.firstOffset
@@ -444,6 +489,8 @@ class AddressUtxoIteratorApiQuery(
             _utxo_list: Optional[List[AbstractCoin.Tx.Utxo]] = None) -> None:
         super().__init__(
             address,
+            name_suffix=self.addressToNameSuffix(address),
+            mode=AbstractOffsetIteratorApiQuery.Mode.FULL,
             first_offset=first_offset,
             last_offset=last_offset)
         self._utxo_list = _utxo_list or []

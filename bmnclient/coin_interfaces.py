@@ -4,9 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .coins.abstract.coin import AbstractCoin
-from .network.api_v1.query import \
-    AddressTxIteratorApiQuery, \
-    AddressUtxoIteratorApiQuery
+from .logger import Logger
 
 if TYPE_CHECKING:
     from .wallet.mtx_impl import Mtx
