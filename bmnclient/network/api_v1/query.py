@@ -130,6 +130,7 @@ class AbstractIteratorApiQuery(AbstractApiQuery):
 
     def _onResponseFinished(self) -> None:
         super()._onResponseFinished()
+        assert self._query_manager.currentQuery is self
         if self._next_query is None:
             if self._finished_callback is not None:
                 self._finished_callback(self)

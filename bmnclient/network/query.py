@@ -81,10 +81,14 @@ class AbstractQuery:
             __name__,
             self.__class__,
             self.__name_suffix)
-        self._status_code: Optional[int] = None
-        self._response: Optional[QNetworkReply] = None
-        self._is_success = False
-        self._finished_callback_list: List[Callable[[AbstractQuery], None]] = []
+        self.__status_code: Optional[int] = None
+        self.__response: Optional[QNetworkReply] = None
+        self.__is_success = False
+
+        self.__finished_callback_list: List[Callable[[AbstractQuery], None]] = \
+            []
+        self.__close_callback: Optional[Callable[[AbstractQuery], None]] = \
+            None
 
     def __str__(self) -> str:
         return self.__class__.__name__ + Logger.nameSuffix(self.__name_suffix)
@@ -118,19 +122,19 @@ class AbstractQuery:
 
     @property
     def statusCode(self) -> Optional[int]:
-        return self._status_code
+        return self.__status_code
 
     @property
     def isSuccess(self) -> bool:
-        return self._is_success
+        return self.__is_success
 
-    def putFinishedCallback(
+    def appendFinishedCallback(
             self,
             callback: Callable[[AbstractQuery], None]) -> None:
-        self._finished_callback_list.append(callback)
+        self.__finished_callback_list.append(callback)
 
-    def _callFinishedCallbackList(self) -> None:
-        for c in self._finished_callback_list:
+    def __callFinishedCallbackList(self) -> None:
+        for c in self.__finished_callback_list:
             c(self)
 
     @property
@@ -142,11 +146,11 @@ class AbstractQuery:
         return self.url is None
 
     def runDummyRequest(self) -> None:
-        assert self.isDummyRequest and self._response is None
+        assert self.isDummyRequest and self.__response is None
         self.__setStatusCode(200)
-        self._is_success = True
+        self.__is_success = True
         self._onResponseFinished()
-        self._callFinishedCallbackList()
+        self.__callFinishedCallbackList()
 
     def createRequest(self) -> Optional[QNetworkRequest]:
         # prepare full url
@@ -202,48 +206,56 @@ class AbstractQuery:
 
         return requests
 
-    def setResponse(self, response: QNetworkReply) -> None:
-        assert self._response is None
-        self._is_success = False
-        self._response = response
+    def setResponse(
+            self,
+            response: QNetworkReply,
+            close_callback: Callable[[AbstractQuery], None]) -> None:
+        assert self.__response is None
+        self.__is_success = False
+        self.__response = response
+        self.__close_callback = close_callback
+
         response.readyRead.connect(self.__onResponseRead)
         response.finished.connect(self.__onResponseFinished)
         response.redirected.connect(self.__onResponseRedirected)
 
     def __setStatusCode(self, status_code: Optional[int] = None) -> None:
-        if self._status_code is not None:
+        if self.__status_code is not None:
             return
         if status_code is None:
-            status_code = self._response.attribute(
+            status_code = self.__response.attribute(
                 QNetworkRequest.HttpStatusCodeAttribute)
-        self._status_code = int(status_code) if status_code else -1
-        self._logger.debug("Status code: %i", self._status_code)
+        self.__status_code = int(status_code) if status_code else -1
+        self._logger.debug("Status code: %i", self.__status_code)
 
     def __onResponseRead(self) -> None:
         self.__setStatusCode()
-        if not self._onResponseData(self._response.readAll()):
-            self._response.abort()
+        if not self._onResponseData(self.__response.readAll()):
+            self.__response.abort()
 
     def __onResponseFinished(self) -> None:
         self.__setStatusCode()
-        while self._response.bytesAvailable():
+        while self.__response.bytesAvailable():
             self.__onResponseRead()
 
         if (
-                self._status_code is not None
-                and self._status_code > 0
-                and self._response is not None
-                and self._response.error() == QNetworkReply.NoError
-                and self._response.isFinished()
+                self.__status_code is not None
+                and self.__status_code > 0
+                and self.__response is not None
+                and self.__response.error() == QNetworkReply.NoError
+                and self.__response.isFinished()
         ):
-            self._is_success = True
+            self.__is_success = True
         else:
-            self._is_success = False
+            self.__is_success = False
 
         self._onResponseFinished()
         # self._response.deleteLater()
-        self._response = None
-        self._callFinishedCallbackList()
+        self.__response = None
+        self.__callFinishedCallbackList()
+
+        if self.__close_callback is not None:
+            self.__close_callback(self)
 
     def __onResponseRedirected(self, url: QUrl) -> None:
         Logger.fatal(

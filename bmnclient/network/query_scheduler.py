@@ -123,7 +123,7 @@ class NetworkQueryScheduler:
             timer_name: Tuple[str, ...],
             **kwargs) -> None:
         timer = self._prepareTimer(*timer_name)
-        query.putFinishedCallback(timer.start)
+        query.appendFinishedCallback(timer.start)
         self._manager.put(query, **kwargs)
 
     @property
