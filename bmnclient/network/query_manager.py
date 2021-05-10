@@ -20,9 +20,8 @@ class NetworkQueryManager:
         FAILED = auto()
 
     class PutStatus(Enum):
-        NOT_UNIQUE_ERROR = auto()
-        STARTED = auto()
-        PENDING = auto()
+        SUCCESS = auto()
+        ERROR_NOT_UNIQUE = auto()
 
     def __init__(self, name: str) -> None:
         self._logger = Logger.getClassLogger(
@@ -59,14 +58,14 @@ class NetworkQueryManager:
             high_priority: bool = False) -> PutStatus:
         if unique and not self.isUnique(query):
             self._logger.debug("Query \"%s\" already in queue.", str(query))
-            return self.PutStatus.NOT_UNIQUE_ERROR
+            return self.PutStatus.ERROR_NOT_UNIQUE
 
-        if self._current_query is None:
+        if self._current_query is None and not self._queue:
             self._logger.debug(
                 "Queue is empty, starting query \"%s\" now.",
                 str(query))
-            self._run(query)
-            return self.PutStatus.STARTED
+            self.__runSequence(query)
+            return self.PutStatus.SUCCESS
 
         if high_priority:
             self._logger.debug(
@@ -79,9 +78,9 @@ class NetworkQueryManager:
                 str(query))
             self._queue.append(query)
         self._logger.debug("New queue size: %i", len(self._queue)),
-        return self.PutStatus.PENDING
+        return self.PutStatus.SUCCESS
 
-    def _run(self, query: AbstractQuery) -> QueryRunState:
+    def __runSingle(self, query: AbstractQuery) -> QueryRunState:
         assert self._current_query is None
         if query.skip:
             self._logger.debug("Query \"%s\" was skipped.", str(query))
@@ -113,22 +112,32 @@ class NetworkQueryManager:
             return self.QueryRunState.FAILED
 
         self._current_query = query
-        self._current_query.setResponse(response, self.__runNextQuery)
+        self._current_query.setResponse(response, self.__runNext)
         return self.QueryRunState.PENDING
 
-    def __runNextQuery(self, query: AbstractQuery) -> None:
+    def __runSequence(self, query: Optional[AbstractQuery]) -> QueryRunState:
+        assert self._current_query is None
+        while True:
+            if query is None:
+                # sequence complete
+                return self.QueryRunState.FINISHED
+            if self.__runSingle(query) == self.QueryRunState.PENDING:
+                # continue at __runNextQuery()
+                return self.QueryRunState.PENDING
+            if self._current_query is not None:
+                # created by query.__finished_callback_list -> put()
+                return self.QueryRunState.PENDING
+            query = query.nextQuery
+
+    def __runNext(self, query: AbstractQuery) -> None:
         assert query is self._current_query
         self._current_query = None
 
-        while True:
-            query = query.nextQuery
-            if query is None:
-                break
-            if self._run(query) == self.QueryRunState.PENDING:
-                return
+        if self.__runSequence(query.nextQuery) == self.QueryRunState.PENDING:
+            return
 
         while self._queue:
             query = self._queue.pop(0)
-            if self._run(query) == self.QueryRunState.PENDING:
+            if self.__runSequence(query) == self.QueryRunState.PENDING:
                 break
         self._logger.debug("Current queue size: %i", len(self._queue)),
