@@ -121,7 +121,7 @@ class _AbstractUtxo(Serializable):
                 self.segwit == other.segwit)
 
     @property
-    def address(self) -> AbstractCoin.Address:
+    def address(self) -> Optional[AbstractCoin.Address]:
         return self._address
 
     @address.setter

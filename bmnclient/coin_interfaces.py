@@ -112,6 +112,13 @@ class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
 
 
 class TxInterface(_AbstractInterface, AbstractCoin.Tx.Interface):
+    def __init__(self, *args, tx: AbstractCoin.Tx, **kwargs) -> None:
+        super().__init__(
+            *args,
+            tx=tx,
+            name_suffix=LoggerUtils.txToNameSuffix(tx),
+            **kwargs)
+
     def afterSetHeight(self) -> None:
         pass
 

@@ -24,6 +24,10 @@ class LoggerUtils:
         return value
 
     @classmethod
+    def txToNameSuffix(cls, tx: AbstractCoin.Tx):
+        return "{}:{}".format(tx.coin.name, tx.name)
+
+    @classmethod
     def nameToSubSuffix(cls, key: str, value: Union[str, int]) -> str:
         if key:
             return ":{}={}".format(key, value)
