@@ -10,6 +10,7 @@ from PySide2.QtCore import \
 from .api_v1.query import \
     AddressInfoApiQuery, \
     AddressTxIteratorApiQuery, \
+    AddressUtxoIteratorApiQuery, \
     CoinMempoolIteratorApiQuery, \
     CoinsInfoApiQuery, \
     HdAddressIteratorApiQuery, \
@@ -93,6 +94,10 @@ class NetworkQueryScheduler:
         self._manager = manager
         self._timer_list: Dict[str, NetworkQueryTimer] = {}
 
+        self._pending_queue: Dict[str, List] = {
+            "coin_address_tx_list": []
+        }
+
     def _createTimerName(self, *name: str) -> str:
         return self.NAMESPACE_SEPARATOR.join(name)
 
@@ -145,7 +150,7 @@ class NetworkQueryScheduler:
             query,
             unique=True,
             high_priority=high_priority)
-        if status == NetworkQueryManager.PutStatus.NOT_UNIQUE_ERROR:
+        if status == NetworkQueryManager.PutStatus.ERROR_NOT_UNIQUE:
             timer.start()
 
     @property
@@ -195,3 +200,35 @@ class NetworkQueryScheduler:
             CoinMempoolIteratorApiQuery(coin),
             (self.COINS_NAMESPACE, "updateCoinMempool", coin.name),
             False)
+
+    def updateCoinAddressTxList(self, address: AbstractCoin.Address) -> None:
+        query = AddressTxIteratorApiQuery(
+            address,
+            mode=AddressTxIteratorApiQuery.Mode.FULL,
+            first_offset=address.coin.offset,
+            last_offset=address.historyFirstOffset)
+        query.appendFinishedCallback(
+            lambda q: self._pendingUpdateCoinAddressTxList(q, address))
+
+        status = self._manager.put(query, unique=True)
+
+        # this AddressTxIteratorApiQuery already in queue, wait...
+        # will be process by
+        if status == NetworkQueryManager.PutStatus.ERROR_NOT_UNIQUE:
+            queue = self._pending_queue["coin_address_tx_list"]
+            if address not in queue:
+                queue.append(address)
+        else:
+            self._manager.put(AddressInfoApiQuery(address))
+            self._manager.put(AddressUtxoIteratorApiQuery(address))
+
+    def _pendingUpdateCoinAddressTxList(
+            self,
+            query: AddressTxIteratorApiQuery,
+            address: AbstractCoin.Address) -> None:
+        if query.nextQuery is not None:
+            return
+        queue = self._pending_queue["coin_address_tx_list"]
+        if address in queue:
+            queue.remove(address)
+            self.updateCoinAddressTxList(address)
