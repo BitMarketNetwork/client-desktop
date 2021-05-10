@@ -23,7 +23,6 @@ from ...logger import Logger
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, Final, List, Optional, Tuple, Union
-    from ..query_manager import NetworkQueryManager
     from ...coins.abstract.coin import AbstractCoin
     from ...coins.list import CoinList
     from ...utils.serialize import DeserializedData
@@ -105,40 +104,7 @@ class AbstractApiQuery(AbstractJsonQuery):
         raise NotImplementedError
 
 
-class AbstractIteratorApiQuery(AbstractApiQuery):
-    def __init__(
-            self,
-            *args,
-            query_manager: NetworkQueryManager,
-            finished_callback: Optional[
-                Callable[[AbstractApiQuery], None]] = None,
-            **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self._query_manager = query_manager
-        self._finished_callback = finished_callback
-        self._next_query: Optional[AbstractIteratorApiQuery] = None
-
-    def isEqualQuery(self, other: AbstractIteratorApiQuery) -> bool:
-        raise NotImplementedError
-
-    def _processData(
-            self,
-            data_id: Optional[str],
-            data_type: Optional[str],
-            value: Optional[dict]) -> None:
-        raise NotImplementedError
-
-    def _onResponseFinished(self) -> None:
-        super()._onResponseFinished()
-        assert self._query_manager.currentQuery is self
-        if self._next_query is None:
-            if self._finished_callback is not None:
-                self._finished_callback(self)
-        else:
-            self._query_manager.put(self._next_query)
-
-
-class AbstractOffsetIteratorApiQuery(AbstractIteratorApiQuery):
+class AbstractOffsetIteratorApiQuery(AbstractApiQuery):
     _BEST_OFFSET_NAME: Final = "best"
     _BASE_OFFSET_NAME: Final = "base"
 
@@ -200,7 +166,7 @@ class AbstractOffsetIteratorApiQuery(AbstractIteratorApiQuery):
         else:
             self._initial_data = _initial_data
 
-    def isEqualQuery(self, other: AbstractIteratorApiQuery) -> bool:
+    def isEqualQuery(self, other: AbstractOffsetIteratorApiQuery) -> bool:
         raise NotImplementedError
 
     @property
@@ -294,11 +260,9 @@ class AddressInfoApiQuery(AbstractApiQuery):
             self,
             address: AbstractCoin.Address,
             *,
-            name_suffix: Optional[str] = None,
-            **kwargs) -> None:
+            name_suffix: Optional[str] = None) -> None:
         super().__init__(
-            name_suffix=name_suffix or self.addressToNameSuffix(address),
-            **kwargs)
+            name_suffix=name_suffix or self.addressToNameSuffix(address))
         self._address = address
 
     def isEqualQuery(self, other: AddressInfoApiQuery) -> bool:
@@ -322,24 +286,18 @@ class AddressInfoApiQuery(AbstractApiQuery):
         self._address.txCount = parser.txCount
 
 
-class HdAddressIteratorApiQuery(AbstractIteratorApiQuery, AddressInfoApiQuery):
+class HdAddressIteratorApiQuery(AddressInfoApiQuery):
     def __init__(
             self,
             coin: AbstractCoin,
             *,
-            query_manager: NetworkQueryManager,
-            finished_callback: Optional[
-                Callable[[HdAddressIteratorApiQuery], None]] = None,
             _hd_iterator: Optional[HdAddressIterator] = None,
             _current_address: Optional[AbstractCoin.Address] = None) -> None:
         if _hd_iterator is None:
             _hd_iterator = HdAddressIterator(coin)
         if _current_address is None:
             _current_address = next(_hd_iterator)
-        super().__init__(
-            _current_address,
-            query_manager=query_manager,
-            finished_callback=finished_callback)
+        super().__init__(_current_address)
         self._hd_iterator = _hd_iterator
 
     def isEqualQuery(self, other: HdAddressIteratorApiQuery) -> bool:
@@ -347,6 +305,12 @@ class HdAddressIteratorApiQuery(AbstractIteratorApiQuery, AddressInfoApiQuery):
                 isinstance(other, self.__class__)
                 and self._hd_iterator.coin.name == other._hd_iterator.coin.name
         )
+
+    @property
+    def skip(self) -> bool:
+        if self._hd_iterator.coin.hdPath is None:
+            return True
+        return super().skip
 
     def _processData(
             self,
@@ -373,8 +337,6 @@ class HdAddressIteratorApiQuery(AbstractIteratorApiQuery, AddressInfoApiQuery):
 
         self._next_query = self.__class__(
             self._address.coin,
-            query_manager=self._query_manager,
-            finished_callback=self._finished_callback,
             _hd_iterator=self._hd_iterator,
             _current_address=next_address)
 
@@ -390,7 +352,6 @@ class AddressTxIteratorApiQuery(
                 and self._mode == other._mode
                 and self._address.coin.name == other._address.coin.name
                 and self._address.name == other._address.name
-                and self._initial_data == other._initial_data
         )
 
     def _processData(
@@ -419,8 +380,6 @@ class AddressTxIteratorApiQuery(
         if parser.lastOffset:
             self._next_query = self.__class__(
                 self._address,
-                query_manager=self._query_manager,
-                finished_callback=self._finished_callback,
                 mode=self._mode,
                 first_offset=parser.lastOffset,
                 last_offset=self._last_offset,
@@ -455,26 +414,31 @@ class AddressTxIteratorApiQuery(
                 self._address.historyLastOffset = last_offset
 
 
-class AddressUtxoIteratorApiQuery(AddressTxIteratorApiQuery):
+class AddressUtxoIteratorApiQuery(
+        AbstractOffsetIteratorApiQuery,
+        AddressInfoApiQuery):
     _ACTION = AddressInfoApiQuery._ACTION + ("unspent", )
 
     def __init__(
             self,
             address: AbstractCoin.Address,
             *,
-            query_manager: NetworkQueryManager,
-            finished_callback: Optional[
-                Callable[[HdAddressIteratorApiQuery], None]] = None,
             first_offset: Optional[str] = None,
             last_offset: Optional[str] = None,
             _utxo_list: Optional[List[AbstractCoin.Tx.Utxo]] = None) -> None:
         super().__init__(
             address,
-            query_manager=query_manager,
-            finished_callback=finished_callback,
             first_offset=first_offset,
             last_offset=last_offset)
         self._utxo_list = _utxo_list or []
+
+    def isEqualQuery(self, other: AddressTxIteratorApiQuery) -> bool:
+        return (
+                isinstance(other, self.__class__)
+                and self._mode == other._mode
+                and self._address.coin.name == other._address.coin.name
+                and self._address.name == other._address.name
+        )
 
     def _processData(
             self,
@@ -504,14 +468,12 @@ class AddressUtxoIteratorApiQuery(AddressTxIteratorApiQuery):
         else:
             self._next_query = self.__class__(
                 self._address,
-                query_manager=self._query_manager,
-                finished_callback=self._finished_callback,
                 first_offset=parser.lastOffset,
                 last_offset=None,
                 _utxo_list=self._utxo_list)
 
 
-class CoinMempoolIteratorApiQuery(AbstractIteratorApiQuery):
+class CoinMempoolIteratorApiQuery(AbstractApiQuery):
     _ACTION = (
         "coins",
         lambda self: self._coin.name,
@@ -523,14 +485,8 @@ class CoinMempoolIteratorApiQuery(AbstractIteratorApiQuery):
             self,
             coin: AbstractCoin,
             *,
-            query_manager: NetworkQueryManager,
-            finished_callback: Optional[Callable[
-                [CoinMempoolIteratorApiQuery], None]] = None,
             _address_list: List[Dict[str, Any]] = None) -> None:
-        super().__init__(
-            query_manager=query_manager,
-            finished_callback=finished_callback,
-            name_suffix=self.coinToNameSuffix(coin))
+        super().__init__(name_suffix=self.coinToNameSuffix(coin))
         self._coin = coin
         self._local_hash = b""
         if _address_list is None:
@@ -598,8 +554,6 @@ class CoinMempoolIteratorApiQuery(AbstractIteratorApiQuery):
         if len(self._address_list) > 0:
             self._next_query = self.__class__(
                 self._coin,
-                query_manager=self._query_manager,
-                finished_callback=self._finished_callback,
                 _address_list=self._address_list)
 
 

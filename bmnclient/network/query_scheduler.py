@@ -12,6 +12,7 @@ from .api_v1.query import \
     CoinsInfoApiQuery, \
     HdAddressIteratorApiQuery, \
     SysinfoApiQuery
+from .query_manager import NetworkQueryManager
 from ..logger import Logger
 from ..version import Timer
 
@@ -19,7 +20,6 @@ if TYPE_CHECKING:
     from typing import Callable, Dict, Final, Tuple
     from PySide2.QtCore import QTimerEvent
     from .query import AbstractQuery
-    from .query_manager import NetworkQueryManager
     from ..application import CoreApplication
     from ..coins.abstract.coin import AbstractCoin
 
@@ -36,8 +36,11 @@ class NetworkQueryTimer(QObject):
         self._callback = callback
         self._callback_args = callback_args
 
-    # noinspection PyUnusedLocal
-    def start(self, *args, **kwargs) -> None:
+    @property
+    def delay(self) -> int:
+        return self._delay
+
+    def start(self) -> None:
         self._timer.start(self._delay, self)
 
     def stop(self) -> None:
@@ -117,14 +120,31 @@ class NetworkQueryScheduler:
         timer.stop()
         return timer
 
+    def __queryFinishedCallback(
+            self,
+            timer: NetworkQueryTimer,
+            query: AbstractQuery) -> None:
+        if query.nextQuery is None:
+            timer.start()
+            self._logger.debug(
+                "Restarting timer after last query '%s', delay %ims.",
+                str(query),
+                timer.delay)
+
     def _createRepeatingQuery(
             self,
             query: AbstractQuery,
             timer_name: Tuple[str, ...],
-            **kwargs) -> None:
+            high_priority: bool) -> None:
         timer = self._prepareTimer(*timer_name)
-        query.appendFinishedCallback(timer.start)
-        self._manager.put(query, **kwargs)
+        query.appendFinishedCallback(
+            lambda q: self.__queryFinishedCallback(timer, q))
+        status = self._manager.put(
+            query,
+            unique=True,
+            high_priority=high_priority)
+        if status == NetworkQueryManager.PutStatus.NOT_UNIQUE_ERROR:
+            timer.start()
 
     @property
     def manager(self) -> NetworkQueryManager:
@@ -148,47 +168,28 @@ class NetworkQueryScheduler:
         self._createRepeatingQuery(
             service,
             (self.GLOBAL_NAMESPACE, "updateCurrentFiatCurrency"),
-            unique=True,
-            high_priority=True)
+            True)
 
     def updateSysinfo(self) -> None:
         self._createRepeatingQuery(
             SysinfoApiQuery(self._application.coinList),
             (self.GLOBAL_NAMESPACE, "updateSysinfo"),
-            unique=True)
+            False)
 
     def updateCoinsInfo(self) -> None:
         self._createRepeatingQuery(
             CoinsInfoApiQuery(self._application.coinList),
             (self.GLOBAL_NAMESPACE, "updateCoinsInfo"),
-            unique=True)
+            False)
 
     def updateCoinHdAddressList(self, coin: AbstractCoin) -> None:
-        timer = self._prepareTimer(
-            self.COINS_NAMESPACE,
-            "updateCoinHdAddressList",
-            coin.name)
-        if coin.hdPath is None:
-            timer.start()
-            return
-
-        query = HdAddressIteratorApiQuery(
-            coin,
-            query_manager=self._manager,
-            finished_callback=timer.start)
-        self._manager.put(query, unique=True)
+        self._createRepeatingQuery(
+            HdAddressIteratorApiQuery(coin),
+            (self.COINS_NAMESPACE, "updateCoinHdAddressList", coin.name),
+            False)
 
     def updateCoinMempool(self, coin: AbstractCoin) -> None:
-        timer = self._prepareTimer(
-            self.COINS_NAMESPACE,
-            "updateCoinMempool",
-            coin.name)
-        if len(coin.addressList) <= 0:
-            timer.start()
-            return
-
-        query = CoinMempoolIteratorApiQuery(
-            coin,
-            query_manager=self._manager,
-            finished_callback=timer.start)
-        self._manager.put(query, unique=True)
+        self._createRepeatingQuery(
+            CoinMempoolIteratorApiQuery(coin),
+            (self.COINS_NAMESPACE, "updateCoinMempool", coin.name),
+            False)
