@@ -222,6 +222,7 @@ class NetworkQueryScheduler:
                 queue.append(address)
         else:
             self._manager.put(AddressInfoApiQuery(address))
+            # TODO run if balance
             self._manager.put(AddressUtxoIteratorApiQuery(address))
 
     def __pendingUpdateCoinAddress(
@@ -234,3 +235,33 @@ class NetworkQueryScheduler:
         if address in queue:
             queue.remove(address)
             self.updateCoinAddress(address)
+
+    def broadcastTx(
+            self,
+            tx: Mtx,
+            finished_callback: Callable[[int, Mtx], None]) -> bool:
+        query = TxBroadcastApiQuery(tx)
+        query.appendFinishedCallback(
+            lambda q: self.__onBroadcastTxFinished(q, tx, finished_callback))
+        status = self._manager.put(query, high_priority=True, unique=True)
+        if status == NetworkQueryManager.PutStatus.SUCCESS:
+            return True
+        finished_callback(-1, tx)  # TODO correct error code
+        return False
+
+    def __onBroadcastTxFinished(
+            self,
+            query: TxBroadcastApiQuery,
+            tx: Mtx,
+            finished_callback: Callable[[int, Mtx], None]) -> None:
+        if query.isSuccess and query.result is not None:
+            if query.result.txName != tx.id:
+                self._logger.warning(
+                    "Server gives transaction: '%s', but was sent '%s'.",
+                    query.result.txName,
+                    tx.id)
+            self.updateCoinMempool(tx.coin)
+            finished_callback(0, tx)
+        else:
+            finished_callback(2005, tx)  # TODO convert error code from response
+

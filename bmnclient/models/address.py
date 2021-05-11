@@ -161,6 +161,7 @@ class AddressModel(AddressInterface, AbstractModel):
     def afterAppendTx(self, tx: AbstractCoin.Tx) -> None:
         self._tx_list_model.unlock()
         super().afterAppendTx(tx)
+        self._application.uiManager.process_incoming_tx(tx)
 
 
 class AddressListModel(AbstractListModel):

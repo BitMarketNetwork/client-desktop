@@ -141,14 +141,7 @@ class MutableTxInterface(_AbstractInterface, AbstractCoin.MutableTx.Interface):
             **kwargs)
 
     def onBroadcast(self, tx: Mtx) -> None:
-        from .network.api_v1.query import TxBroadcastApiQuery
-        query = TxBroadcastApiQuery(tx)
-        self._query_scheduler.manager.put(query, high_priority=True)
-        # TODO force mempool
+        self._query_scheduler.broadcastTx(tx, self.onBroadcastFinished)
 
-        # TODO
-        # if parser.txName != self._tx.name:
-        #     self._logger.warning(
-        #         "Server gives transaction: \'%s\", but was sent \"%s\".",
-        #         parser.txName,
-        #         self._tx.name)
+    def onBroadcastFinished(self, error_code: int, tx: Mtx) -> None:
+        self._logger.debug("Result: error_code=%i, tx=%s", error_code, tx.id)

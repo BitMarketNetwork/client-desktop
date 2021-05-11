@@ -612,6 +612,11 @@ class TxBroadcastApiQuery(AbstractApiQuery):
     def __init__(self, tx: Mtx) -> None:
         super().__init__(name_suffix=LoggerUtils.coinToNameSuffix(tx.coin))
         self._tx = tx
+        self._result: Optional[BroadcastTxParser] = None
+
+    @property
+    def result(self) -> Optional[BroadcastTxParser]:
+        return self._result
 
     def isEqualQuery(self, other: TxBroadcastApiQuery) -> bool:
         return (
@@ -639,3 +644,4 @@ class TxBroadcastApiQuery(AbstractApiQuery):
         self._logger.info(
             "Transaction '%s' broadcasted successfully!",
             parser.txName)
+        self._result = parser

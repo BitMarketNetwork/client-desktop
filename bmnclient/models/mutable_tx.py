@@ -17,6 +17,7 @@ from ..coin_interfaces import MutableTxInterface
 if TYPE_CHECKING:
     from typing import Optional, Sequence
     from ..coins.abstract.coin import AbstractCoin
+    from ..wallet.mtx_impl import Mtx
     from ..ui.gui import Application
 
 
@@ -301,3 +302,11 @@ class MutableTxModel(MutableTxInterface, AbstractModel):
     @QSlot(result=bool)
     def broadcast(self) -> bool:
         return self._tx.broadcast()
+
+    def onBroadcast(self, tx: Mtx) -> None:
+        super().onBroadcast(tx)
+        # TODO show pending dialog
+
+    def onBroadcastFinished(self, error_code: int, tx: Mtx) -> None:
+        super().onBroadcastFinished(error_code, tx)
+        # TODO show finished message
