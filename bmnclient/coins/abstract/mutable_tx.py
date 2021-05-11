@@ -227,8 +227,7 @@ class AbstractMutableTx:
 
         # TODO extend self with Mtx for every coin
         from ...wallet.mtx_impl import Mtx
-        self.__mtx = Mtx.make(self._selected_utxo_list, output_list)
-        self.__mtx.coin = self._coin
+        self.__mtx = Mtx.make(self._coin, self._selected_utxo_list, output_list)
         if self.__mtx.feeAmount != fee_amount:
             self._logger.error(
                 "Fee failure, should be %i but has %i.",
@@ -272,3 +271,4 @@ class AbstractMutableTx:
         self.clear()
         if self._model:
             self._model.onBroadcast(mtx)
+        return True

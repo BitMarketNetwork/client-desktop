@@ -1,6 +1,3 @@
-"""
-https://en.bitcoin.it/wiki/Protocol_documentation
-"""
 from __future__ import annotations
 
 import itertools
@@ -8,9 +5,13 @@ import logging
 import random
 import re
 from collections import namedtuple
-from typing import List, Tuple, Union
+from typing import TYPE_CHECKING
 
 from . import constants, util
+
+if TYPE_CHECKING:
+    from typing import List, Tuple, Union
+    from ..coins.abstract.coin import AbstractCoin
 
 log = logging.getLogger(__name__)
 
@@ -136,7 +137,14 @@ class NoInputsToSignError(MtxError):
 
 
 class Mtx:
-    def __init__(self, version, TxIn, TxOut, locktime) -> None:
+    def __init__(
+            self,
+            coin: AbstractCoin,
+            version,
+            TxIn,
+            TxOut,
+            locktime) -> None:
+        self._coin = coin
         segwit_tx = any([i.segwit_input or i.witness for i in TxIn])
         self.version = version
         self.TxIn = TxIn
@@ -145,12 +153,6 @@ class Mtx:
                 i.witness = i.witness if i.witness else b'\x00'
         self.TxOut = TxOut
         self.locktime = locktime
-
-    def __eq__(self, other):
-        return (self.version == other.version and
-                self.TxIn == other.TxIn and
-                self.TxOut == other.TxOut and
-                self.locktime == other.locktime)
 
     def __repr__(self):
         return f"Mtx({self.version}, {self.TxIn}, {self.TxOut}, {self.locktime})"
@@ -171,8 +173,18 @@ class Mtx:
             self.locktime
         ])
 
-    def __hash__(self):
-        return hash(self.to_hex())
+    def __eq__(self, other) -> bool:
+        return (self.version == other.version and
+                self.TxIn == other.TxIn and
+                self.TxOut == other.TxOut and
+                self.locktime == other.locktime)
+
+    def __hash__(self) -> int:
+        return hash((self.to_hex(), ))
+
+    @property
+    def coin(self) -> AbstractCoin:
+        return self._coin
 
     def legacy_repr(self):
         inp = util.int_to_varint(len(self.TxIn)) + \
@@ -190,7 +202,11 @@ class Mtx:
         return util.bytes_to_hex(bytes(self))
 
     @classmethod
-    def make(cls, utxo_list: List[UTXO], outputs: List[Tuple[str, int]]):
+    def make(
+            cls,
+            coin: AbstractCoin,
+            utxo_list: List[AbstractCoin.Tx.Utxo],
+            outputs: List[Tuple[str, int]]):
         version = constants.VERSION_1
         lock_time = constants.LOCK_TIME
         outputs = construct_outputs(outputs)
@@ -211,7 +227,7 @@ class Mtx:
                     amount=amount,
                     segwit_input=unspent.segwit,
                     address=unspent.address.name))
-        out = cls(version, inputs, outputs, lock_time)
+        out = cls(coin, version, inputs, outputs, lock_time)
         out.unspents = utxo_list
         return out
 

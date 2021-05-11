@@ -14,7 +14,8 @@ from .api_v1.query import \
     CoinMempoolIteratorApiQuery, \
     CoinsInfoApiQuery, \
     HdAddressIteratorApiQuery, \
-    SysinfoApiQuery
+    SysinfoApiQuery, \
+    TxBroadcastApiQuery
 from .query_manager import NetworkQueryManager
 from ..logger import Logger
 from ..version import Timer
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
     from .query import AbstractQuery
     from ..application import CoreApplication
     from ..coins.abstract.coin import AbstractCoin
+    from ..wallet.mtx_impl import Mtx
 
 
 class NetworkQueryTimer(QObject):
@@ -208,7 +210,7 @@ class NetworkQueryScheduler:
             first_offset=address.coin.offset,
             last_offset=address.historyFirstOffset)
         query.appendFinishedCallback(
-            lambda q: self._pendingUpdateCoinAddress(q, address))
+            lambda q: self.__pendingUpdateCoinAddress(q, address))
 
         status = self._manager.put(query, unique=True)
 
@@ -222,7 +224,7 @@ class NetworkQueryScheduler:
             self._manager.put(AddressInfoApiQuery(address))
             self._manager.put(AddressUtxoIteratorApiQuery(address))
 
-    def _pendingUpdateCoinAddress(
+    def __pendingUpdateCoinAddress(
             self,
             query: AddressTxIteratorApiQuery,
             address: AbstractCoin.Address) -> None:

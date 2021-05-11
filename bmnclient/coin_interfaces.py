@@ -133,6 +133,12 @@ class TxInterface(_AbstractInterface, AbstractCoin.Tx.Interface):
 
 
 class MutableTxInterface(_AbstractInterface, AbstractCoin.MutableTx.Interface):
+    def __init__(self, *args, tx: AbstractCoin.MutableTx, **kwargs) -> None:
+        super().__init__(
+            *args,
+            tx=tx,
+            name_suffix=LoggerUtils.coinToNameSuffix(tx.coin),
+            **kwargs)
 
     def onBroadcast(self, tx: Mtx) -> None:
         from .network.api_v1.query import TxBroadcastApiQuery
