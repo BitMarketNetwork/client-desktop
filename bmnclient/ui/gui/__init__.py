@@ -15,7 +15,7 @@ from PySide2.QtWidgets import QApplication
 from . import settings_manager, ui_manager
 from .settings_manager import SettingsManager, SettingsManager
 from .ui_manager import UIManager, UIManager
-from ...application import CoreApplication
+from ...application import CommandLine, CoreApplication
 from ...debug_manager import DebugManager
 from ...key_store import KeyStore
 from ...language import Language
@@ -36,8 +36,8 @@ class GuiApplication(CoreApplication):
         def create(self, parent: QObject) -> NetworkAccessManager:
             return NetworkAccessManager("QML", parent)
 
-    def __init__(self, argv) -> None:
-        super().__init__(QApplication, argv)
+    def __init__(self, command_line: CommandLine) -> None:
+        super().__init__(QApplication, command_line)
         self._initCoinList(lambda o: modelFactory(self, o))
 
         # TODO kill

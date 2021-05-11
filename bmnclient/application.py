@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import logging
 import os
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from pathlib import PurePath
 from typing import TYPE_CHECKING
 
@@ -28,7 +29,6 @@ from .network.query_scheduler import NetworkQueryScheduler
 from .network.services.fiat_rate import FiatRateServiceList
 from .platform import PlatformPaths
 from .signal_handler import SignalHandler
-from .utils.meta import classproperty
 from .version import Product, ProductPaths
 
 if TYPE_CHECKING:
@@ -36,22 +36,17 @@ if TYPE_CHECKING:
 
 
 class CommandLine:
-    _arguments = Namespace()
+    def __init__(self, argv: List[str]) -> None:
+        self._argv = argv
 
-    @classmethod
-    def _expandPath(cls, path: str) -> PurePath:
-        return PurePath(os.path.expanduser(os.path.expandvars(path)))
-
-    @classmethod
-    def parse(cls, argv) -> None:
         parser = ArgumentParser(
-            prog=argv[0],
+            prog=self._argv[0],
             description=Product.NAME + " " + Product.VERSION_STRING)
         parser.add_argument(
             "-c",
             "--configpath",
             default=str(PlatformPaths.USER_APPLICATION_CONFIG_PATH),
-            type=cls._expandPath,
+            type=self._expandPath,
             help="directory for configuration files; by default, it is '{}'"
                  .format(str(PlatformPaths.USER_APPLICATION_CONFIG_PATH)),
             metavar="PATH")
@@ -59,7 +54,7 @@ class CommandLine:
             "-l",
             "--logfile",
             default="stderr",
-            type=cls._expandPath,
+            type=self._expandPath,
             help="file that will store the log; can be one of the following "
                  "special values: stdout, stderr; by default, it is 'stderr'",
             metavar="FILE")
@@ -69,32 +64,45 @@ class CommandLine:
             action='store_true',
             default=False,
             help='run the application in debug mode')
-        cls._arguments = parser.parse_args(argv[1:])
 
-        assert isinstance(cls._arguments.configpath, PurePath)
-        assert isinstance(cls._arguments.logfile, PurePath)
-        assert isinstance(cls._arguments.debug, bool)
+        self._arguments = parser.parse_args(self._argv[1:])
+        assert isinstance(self._arguments.configpath, PurePath)
+        assert isinstance(self._arguments.logfile, PurePath)
+        assert isinstance(self._arguments.debug, bool)
 
-    @classproperty
-    def configPath(cls) -> PurePath:  # noqa
-        return cls._arguments.configpath
+    @property
+    def argv(self) -> List[str]:
+        return self._argv
 
-    @classproperty
-    def logFilePath(cls) -> PurePath:  # noqa
-        return cls._arguments.logfile
+    @property
+    def configPath(self) -> PurePath:
+        return self._arguments.configpath
 
-    @classproperty
-    def isDebugMode(cls) -> bool:  # noqa
-        return cls._arguments.debug
+    @property
+    def logFilePath(self) -> PurePath:
+        return self._arguments.logfile
+
+    @property
+    def logLevel(self) -> int:
+        return logging.DEBUG if self.isDebugMode else logging.INFO
+
+    @property
+    def isDebugMode(self) -> bool:
+        return self._arguments.debug
+
+    @classmethod
+    def _expandPath(cls, path: str) -> PurePath:
+        return PurePath(os.path.expanduser(os.path.expandvars(path)))
 
 
 class CoreApplication(QObject):
     def __init__(
             self,
             qt_class: Union[Type[QCoreApplication], Type[QApplication]],
-            argv: List[str]) -> None:
+            command_line: CommandLine) -> None:
         super().__init__()
 
+        self._command_line = command_line
         self._logger = Logger.getClassLogger(__name__, self.__class__)
         self._title = "{} {}".format(Product.NAME, Product.VERSION_STRING)
         self._icon = QIcon(str(resources.ICON_FILE_PATH))
@@ -103,7 +111,7 @@ class CoreApplication(QObject):
         self._on_exit_called = False
 
         self._user_config = UserConfig(
-            CommandLine.configPath / ProductPaths.CONFIG_FILE_NAME)
+            self._command_line.configPath / ProductPaths.CONFIG_FILE_NAME)
         self._user_config.load()
 
         self._key_store = KeyStore(self, self._user_config)
@@ -123,7 +131,7 @@ class CoreApplication(QObject):
 
         # QCoreApplication
         # noinspection PyArgumentList
-        self._qt_application = qt_class(argv)
+        self._qt_application = qt_class(command_line.argv)
 
         if issubclass(qt_class, QApplication):
             qt_class.setWindowIcon(self._icon)
@@ -149,7 +157,7 @@ class CoreApplication(QObject):
 
         self._database = Database(
             self,
-            CommandLine.configPath / ProductPaths.DATABASE_FILE_NAME)
+            self._command_line.configPath / ProductPaths.DATABASE_FILE_NAME)
 
         self._coin_list = []
         self._fiat_currency_list = FiatCurrencyList(self)
@@ -191,7 +199,7 @@ class CoreApplication(QObject):
 
     @property
     def isDebugMode(self) -> bool:
-        return CommandLine.isDebugMode
+        return self._command_line.isDebugMode
 
     @property
     def exitCode(self) -> int:

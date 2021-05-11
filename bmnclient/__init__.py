@@ -1,7 +1,6 @@
 # JOK4
 from __future__ import annotations
 
-import logging
 import sys
 from typing import TYPE_CHECKING
 
@@ -29,11 +28,9 @@ if sys.version_info[:3] < Product.PYTHON_MINIMAL_VERSION:
 
 def main(argv: List[str]) -> int:
     try:
-        CommandLine.parse(argv)
-        Logger.configure(
-            CommandLine.logFilePath,
-            logging.DEBUG if CommandLine.isDebugMode else logging.INFO)
-        exit_code = GuiApplication(argv).run()
+        command_line = CommandLine(argv)
+        Logger.configure(command_line.logFilePath, command_line.logLevel)
+        exit_code = GuiApplication(command_line).run()
     except SystemExit as e:
         exit_code = e.args[0]
     except Exception:  # noqa
