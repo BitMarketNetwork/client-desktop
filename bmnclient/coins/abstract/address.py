@@ -22,6 +22,17 @@ class _AbstractAddressTypeValue:
         self._version = version
         self._size = size
 
+    def __eq__(self, other: _AbstractAddressTypeValue) -> bool:
+        return (
+                isinstance(other, self.__class__)
+                and self._name == other._name
+                and self._version == other._version
+                and self._size == other._size
+        )
+
+    def __hash__(self) -> int:
+        return hash((self._name, self._version, self._size))
+
     @property
     def name(self) -> str:
         return self._name
@@ -120,14 +131,20 @@ class AbstractAddress(Serializable):
         self._model: Optional[AbstractCoin.Address.Interface] = \
             self._coin.model_factory(self)
 
-    def __hash__(self) -> int:
-        return hash((self._name, self._type.value.name))
-
     def __eq__(self, other: AbstractCoin.Address) -> bool:
         return (
-                self._name == other.name
+                isinstance(other, self.__class__)
+                and self._coin == other.coin
+                and self._name == other.name
                 and self._type == other._type
         )
+
+    def __hash__(self) -> int:
+        return hash((
+            self.coin.__hash__(),
+            self._name,
+            self._type.__hash__()
+        ))
 
     @classmethod
     def deserialize(cls, *args, **kwargs) -> Optional[AbstractCoin.Address]:

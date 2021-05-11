@@ -106,6 +106,15 @@ class AbstractCoin(Serializable):
 
         self._model: Optional[AbstractCoin.Interface] = self.model_factory(self)
 
+    def __eq__(self, other: AbstractCoin) -> bool:
+        return (
+                isinstance(other, self.__class__)
+                and self.name == other.name
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.name, ))
+
     @classmethod
     def deserialize(cls, *args, **kwargs) -> Optional[AbstractCoin]:
         coin: AbstractCoin = args[0]

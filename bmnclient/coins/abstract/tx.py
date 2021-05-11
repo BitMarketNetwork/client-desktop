@@ -22,20 +22,40 @@ class _AbstractTxIo(Serializable):
             address_name: Optional[str],
             amount: int) -> None:
         super().__init__()
+        self._coin = coin
         self._output_type = output_type
 
         if not address_name:
-            self._address = coin.Address.createNullData(coin, amount=amount)
+            self._address = self._coin.Address.createNullData(
+                self._coin,
+                amount=amount)
         else:
-            self._address = coin.Address.decode(
-                coin,
+            self._address = self._coin.Address.decode(
+                self._coin,
                 name=address_name,
                 amount=amount)
             if self._address is None:
-                self._address = coin.Address.createNullData(
-                    coin,
+                self._address = self._coin.Address.createNullData(
+                    self._coin,
                     name=address_name or "UNKNOWN",
                     amount=amount)
+
+    def __eq__(self, other: _AbstractTxIo) -> bool:
+        return (
+                isinstance(other, self.__class__)
+                and self._coin == other._coin
+                and self._address == other.address
+                and self._address.amount == other._address.amount
+                and self._output_type == other._output_type
+        )
+
+    def __hash__(self) -> int:
+        return hash((
+            self._coin.__hash__(),
+            self._address.__hash__(),
+            self._address.amount,
+            self._output_type
+        ))
 
     def serialize(self) -> DeserializedData:
         if self._address.isNullData:
@@ -104,21 +124,24 @@ class _AbstractUtxo(Serializable):
         self._index = index
         self._amount = amount
 
-    # TODO old code
+    def __eq__(self, other: _AbstractUtxo) -> bool:
+        return (
+                isinstance(other, self.__class__)
+                and self._coin == other._coin
+                and self._name == other._name
+                # and self._height == other._height
+                and self._index == other._index
+                # and self._amount == other._amount
+        )
+
     def __hash__(self) -> int:
         return hash((
-            self._amount,
-            self.script,
+            self._coin.__hash__(),
             self._name,
-            self._index))
-
-    # TODO old code
-    def __eq__(self, other: _AbstractUtxo) -> bool:
-        return (self._amount == other._amount and
-                self.script == other.script and
-                self._name == other._name and
-                self._index == other._index and
-                self.segwit == other.segwit)
+            # self._height
+            self._index,
+            # self._amount
+        ))
 
     @property
     def address(self) -> Optional[AbstractCoin.Address]:
@@ -220,11 +243,14 @@ class AbstractTx(Serializable):
             self._coin.model_factory(self)
 
     def __eq__(self, other: AbstractCoin.Tx) -> bool:
-        # TODO compare self._input_list, self._output_list
-        return self._name == other._name
+        return (
+                isinstance(other, self.__class__)
+                and self._coin == other._coin
+                and self._name == other._name
+        )
 
     def __hash__(self) -> int:
-        return hash(self._name)
+        return hash((self._coin.__hash__(), self._name, ))
 
     @classmethod
     def _deserializeProperty(
