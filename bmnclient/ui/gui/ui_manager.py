@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import TYPE_CHECKING, Type
+from typing import Type, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -15,7 +15,7 @@ from ...models.tx import TxModel
 from ...ui.gui.system_tray import MessageIcon, SystemTrayIcon
 
 if TYPE_CHECKING:
-    from . import Application
+    from . import GuiApplication
     from ...coins.abstract.coin import AbstractCoin
 
 
@@ -30,7 +30,7 @@ class UIManager(QObject):
     hide = QSignal()
     show = QSignal()
 
-    def __init__(self, application: Application) -> None:
+    def __init__(self, application: GuiApplication) -> None:
         super().__init__()
         self._application = application
         self.__online = True
@@ -39,7 +39,7 @@ class UIManager(QObject):
         #
         self.__notified_tx_list = []
         #
-        self.__tray = SystemTrayIcon(self)
+        self.__tray = SystemTrayIcon(self._application)
         self.__tray.exit.connect(self._application.setExitEvent)
         self.__tray.showMainWindow.connect(self.show)
         self.__tray.hideMainWindow.connect(self.hide)

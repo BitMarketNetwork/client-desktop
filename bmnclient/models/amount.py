@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from typing import Callable, Optional, Type, Union
     from ..coins.abstract.coin import AbstractCoin
     from ..coins.abstract.currency import AbstractCurrency
-    from ..ui.gui import Application
+    from ..ui.gui import GuiApplication
 
 
 class AbstractAmountModel(AbstractStateModel):
@@ -111,7 +111,7 @@ class AbstractAmountInputModel(AbstractAmountModel):
                 self._owner._coin.fiatRate.currencyType,
                 self._owner._coin.fromFiatAmount)
 
-    def __init__(self, application: Application, coin: AbstractCoin) -> None:
+    def __init__(self, application: GuiApplication, coin: AbstractCoin) -> None:
         super().__init__(application, coin)
         self._value_human_validator = self._ValueHumanValidator(self)
         self._fiat_value_human_validator = self._FiatValueHumanValidator(self)

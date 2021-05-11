@@ -1,9 +1,16 @@
+from __future__ import annotations
+
+import base64
 import enum
 import logging
 import struct
-from typing import Any
-import base64
+from typing import TYPE_CHECKING
+
 from ..key_store import KeyIndex
+
+if TYPE_CHECKING:
+    from typing import Any
+    from ..application import CoreApplication
 
 log = logging.getLogger(__name__)
 
@@ -19,9 +26,9 @@ class Type(enum.IntEnum):
 class Cipher:
     ENCRYPT = True
 
-    def __init__(self) -> None:
-        from ..application import CoreApplication
-        self._cipher = CoreApplication.instance().keyStore.deriveCipher(KeyIndex.WALLET_DATABASE)
+    def __init__(self, application: CoreApplication) -> None:
+        self._cipher = application.keyStore.deriveCipher(
+            KeyIndex.WALLET_DATABASE)
 
     def text_from(self, value: bytes) -> str:
         if self.ENCRYPT:

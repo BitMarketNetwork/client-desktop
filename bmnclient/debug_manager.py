@@ -8,11 +8,11 @@ from PySide2.QtCore import \
     Slot as QSlot
 
 if TYPE_CHECKING:
-    from . import Application
+    from . import GuiApplication
 
 
 class DebugManager(QObject):
-    def __init__(self, application: Application):
+    def __init__(self, application: GuiApplication):
         super().__init__()
         self._application = application
 

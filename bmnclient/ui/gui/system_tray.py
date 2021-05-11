@@ -1,15 +1,19 @@
 # JOK+
+from __future__ import annotations
+
 from enum import IntEnum
+from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
-    QCoreApplication, \
     QObject, \
     Signal as QSignal, \
     Slot as QSlot
-from PySide2.QtWidgets import QSystemTrayIcon, QMenu
+from PySide2.QtWidgets import QMenu, QSystemTrayIcon
 
-from bmnclient.logger import Logger
-from ...application import CoreApplication
+from ...logger import Logger
+
+if TYPE_CHECKING:
+    from . import GuiApplication
 
 
 class MessageIcon(IntEnum):
@@ -24,8 +28,9 @@ class SystemTrayIcon(QObject):
     showMainWindow = QSignal()
     hideMainWindow = QSignal()
 
-    def __init__(self, parent=None) -> None:
-        super().__init__(parent=parent)
+    def __init__(self, application: GuiApplication) -> None:
+        super().__init__()
+        self._application = application
         self._logger = Logger.getClassLogger(__name__, self.__class__)
 
         if not QSystemTrayIcon.isSystemTrayAvailable():
@@ -33,12 +38,12 @@ class SystemTrayIcon(QObject):
         if not QSystemTrayIcon.supportsMessages():
             self._logger.warning("System tray don't support balloon messages.")
 
-        self._menu = QMenu(CoreApplication.instance().title)
+        self._menu = QMenu(self._application.title)
         self._fillMenu()
 
         self._tray_icon = QSystemTrayIcon(self)
-        self._tray_icon.setIcon(CoreApplication.instance().icon)
-        self._tray_icon.setToolTip(CoreApplication.instance().title)
+        self._tray_icon.setIcon(self._application.icon)
+        self._tray_icon.setToolTip(self._application.title)
         self._tray_icon.activated.connect(self._onActivated)
         self._tray_icon.messageClicked.connect(self._onMessageClicked)
         self._tray_icon.setContextMenu(self._menu)
@@ -91,7 +96,7 @@ class SystemTrayIcon(QObject):
 
         self._logger.debug("Message %i: %s.", icon, message)
         self._tray_icon.showMessage(
-            QCoreApplication.instance().applicationName(),  # TODO
+            self._application.applicationName(),  # TODO
             message,
             # TODO this icon replace tray icon icon_map[icon],
             QSystemTrayIcon.MessageIcon.NoIcon,

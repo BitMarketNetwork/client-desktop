@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import List, Optional, TYPE_CHECKING, Tuple
+from typing import List, Optional, Tuple, TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
@@ -14,7 +14,7 @@ from ...config import UserConfig
 from ...language import Language
 
 if TYPE_CHECKING:
-    from . import Application
+    from . import GuiApplication
 
 log = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class SettingsManager(QObject):
     newAddressChanged = QSignal()
     fiatCurrencyChanged = QSignal()
 
-    def __init__(self, application: Application) -> None:
+    def __init__(self, application: GuiApplication) -> None:
         super().__init__()
         self._application = application
 

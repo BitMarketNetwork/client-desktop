@@ -24,17 +24,23 @@ from ..coin_interfaces import TxInterface
 if TYPE_CHECKING:
     from typing import Final, Optional
     from ..coins.abstract.coin import AbstractCoin
-    from ..ui.gui import Application
+    from ..ui.gui import GuiApplication
 
 
 class AbstractTxStateModel(AbstractStateModel):
-    def __init__(self, application: Application, tx: AbstractCoin.Tx) -> None:
+    def __init__(
+            self,
+            application: GuiApplication,
+            tx: AbstractCoin.Tx) -> None:
         super().__init__(application, tx.coin)
         self._tx = tx
 
 
 class AbstractTxAmountModel(AbstractAmountModel):
-    def __init__(self, application: Application, tx: AbstractCoin.Tx) -> None:
+    def __init__(
+            self,
+            application: GuiApplication,
+            tx: AbstractCoin.Tx) -> None:
         super().__init__(application, tx.coin)
         self._tx = tx
 
@@ -107,7 +113,10 @@ class TxIoListModel(AbstractListModel):
 
 
 class TxModel(TxInterface, AbstractModel):
-    def __init__(self, application: Application, tx: AbstractCoin.Tx) -> None:
+    def __init__(
+            self,
+            application: GuiApplication,
+            tx: AbstractCoin.Tx) -> None:
         super().__init__(
             application,
             query_scheduler=application.networkQueryScheduler,
@@ -239,7 +248,7 @@ class TxListConcatenateModel(AbstractConcatenateModel):
 class TxListSortedModel(AbstractListSortedModel):
     def __init__(
             self,
-            application: Application,
+            application: GuiApplication,
             source_model: TxListModel) -> None:
         super().__init__(
             application,

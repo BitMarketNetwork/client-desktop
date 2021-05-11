@@ -26,7 +26,7 @@ from ..coin_interfaces import CoinInterface
 if TYPE_CHECKING:
     from typing import Final, Optional
     from ..coins.abstract.coin import AbstractCoin
-    from ..ui.gui import Application
+    from ..ui.gui import GuiApplication
 
 
 class CoinStateModel(AbstractStateModel):
@@ -108,7 +108,7 @@ class CoinAmountModel(AbstractAmountModel):
 class CoinReceiveManagerModel(AbstractStateModel):
     __stateChanged = QSignal()
 
-    def __init__(self, application: Application, coin: AbstractCoin) -> None:
+    def __init__(self, application: GuiApplication, coin: AbstractCoin) -> None:
         super().__init__(application, coin)
         self._address: Optional[AbstractCoin.Address] = None
 
@@ -202,7 +202,7 @@ class CoinManagerModel(AbstractStateModel):
 
 
 class CoinModel(CoinInterface, AbstractModel):
-    def __init__(self, application: Application, coin: AbstractCoin) -> None:
+    def __init__(self, application: GuiApplication, coin: AbstractCoin) -> None:
         super().__init__(
             application,
             query_scheduler=application.networkQueryScheduler,

@@ -11,6 +11,7 @@ from ..logger import Logger
 if TYPE_CHECKING:
     from pathlib import PurePath
     from typing import Dict, List, Sequence, Tuple
+    from ..application import CoreApplication
     from ..utils.serialize import DeserializedData
 
 
@@ -19,8 +20,12 @@ def nmark(number: int) -> str:
 
 
 class Database:
-    def __init__(self, file_path: PurePath) -> None:
+    def __init__(
+            self,
+            application: CoreApplication,
+            file_path: PurePath) -> None:
         super().__init__()
+        self._application = application
         self._logger = Logger.getClassLogger(__name__, self.__class__)
         self._logger.debug("SQLite version: %s", sqlite3.sqlite_version)
         self._file_path = file_path
@@ -35,15 +40,11 @@ class Database:
 
     def open(self) -> None:
         self.__db_name = str(self._file_path)
-        self.__impl.connect_impl(self.__db_name)
+        self.__impl.connect_impl(self._application, self.__db_name)
         self.__impl.create_tables()
 
-        from ..application import CoreApplication
-
-        coin_list = CoreApplication.instance().coinList
-        self.readCoinList(coin_list)
-
-        address_list = self.readCoinAddressList(coin_list)
+        self.readCoinList(self._application.coinList)
+        address_list = self.readCoinAddressList(self._application.coinList)
         self.readCoinTxList(address_list)
 
         self._is_loaded = True

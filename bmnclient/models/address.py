@@ -22,13 +22,13 @@ if TYPE_CHECKING:
     from typing import Final, Optional
     from .tx import TxListModel, TxListSortedModel
     from ..coins.abstract.coin import AbstractCoin
-    from ..ui.gui import Application
+    from ..ui.gui import GuiApplication
 
 
 class AbstractAddressStateModel(AbstractStateModel):
     def __init__(
             self,
-            application: Application,
+            application: GuiApplication,
             address: AbstractCoin.Address) -> None:
         super().__init__(application, address.coin)
         self._address = address
@@ -37,7 +37,7 @@ class AbstractAddressStateModel(AbstractStateModel):
 class AbstractAddressAmountModel(AbstractAmountModel):
     def __init__(
             self,
-            application: Application,
+            application: GuiApplication,
             address: AbstractCoin.Address) -> None:
         super().__init__(application, address.coin)
         self._address = address
@@ -92,7 +92,7 @@ class AddressAmountModel(AbstractAddressAmountModel):
 class AddressModel(AddressInterface, AbstractModel):
     def __init__(
             self,
-            application: Application,
+            application: GuiApplication,
             address: AbstractCoin.Address) -> None:
         super().__init__(
             application,
@@ -190,6 +190,6 @@ class AddressListModel(AbstractListModel):
 class AddressListSortedModel(AbstractListSortedModel):
     def __init__(
             self,
-            application: Application,
+            application: GuiApplication,
             source_model: AddressListModel) -> None:
         super().__init__(application, source_model, AddressListModel.Role.NAME)

@@ -12,7 +12,6 @@ from PySide2.QtQml import QQmlApplicationEngine, QQmlNetworkAccessManagerFactory
 from PySide2.QtQuickControls2 import QQuickStyle
 from PySide2.QtWidgets import QApplication
 
-import bmnclient.version
 from . import settings_manager, ui_manager
 from .settings_manager import SettingsManager, SettingsManager
 from .ui_manager import UIManager, UIManager
@@ -23,6 +22,7 @@ from ...language import Language
 from ...models.coin import CoinListModel
 from ...models.factory import modelFactory
 from ...network.access_manager import NetworkAccessManager
+from ...resources import QML_URL
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ QML_FILE = "main.qml"
 QML_CONTEXT_NAME = "BBackend"
 
 
-class Application(CoreApplication):
+class GuiApplication(CoreApplication):
     class QmlNetworkAccessManagerFactory(QQmlNetworkAccessManagerFactory):
         def create(self, parent: QObject) -> NetworkAccessManager:
             return NetworkAccessManager("QML", parent)
@@ -55,21 +55,21 @@ class Application(CoreApplication):
 
     def _initializeQml(self) -> None:
         QQuickStyle.setStyle(QML_STYLE)
-        log.debug("QML Base URL: %s", bmnclient.resources.QML_URL)
+        log.debug("QML Base URL: %s", QML_URL)
 
         self._qml_network_access_manager_factory = \
             self.QmlNetworkAccessManagerFactory()
         self._qml_engine = QQmlApplicationEngine(self)
 
         # TODO self._engine.offlineStoragePath
-        self._qml_engine.setBaseUrl(bmnclient.resources.QML_URL)
+        self._qml_engine.setBaseUrl(QML_URL)
         self._qml_engine.setNetworkAccessManagerFactory(
             self._qml_network_access_manager_factory)
         # TODO replace with self._engine.warnings
         self._qml_engine.setOutputWarningsToStandardError(True)
 
         qml_root_context = self._qml_engine.rootContext()
-        qml_root_context.setBaseUrl(bmnclient.resources.QML_URL)
+        qml_root_context.setBaseUrl(QML_URL)
         qml_root_context.setContextProperty(
             QML_CONTEXT_NAME,
             self._backend_context)
@@ -78,10 +78,6 @@ class Application(CoreApplication):
         # TODO self._qml_engine.warnings.connect(self._onQmlWarnings)
         self._qml_engine.exit.connect(self._onQmlExit)
         self._qml_engine.quit.connect(self._onQmlExit)
-
-    @classmethod
-    def instance(cls) -> Application:
-        return super().instance()
 
     @property
     def defaultFont(self) -> QFont:
@@ -155,7 +151,7 @@ class Application(CoreApplication):
 
 
 class BackendContext(QObject):
-    def __init__(self, application: Application) -> None:
+    def __init__(self, application: GuiApplication) -> None:
         super().__init__()
         self._application = application
         self._coin_list = CoinListModel(

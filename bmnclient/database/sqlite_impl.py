@@ -1,10 +1,16 @@
+from __future__ import annotations
 
 import logging
-from typing import Any
-import threading
-import sys
 import sqlite3 as sql
+import sys
+import threading
+from typing import TYPE_CHECKING
+
 from . import cipher
+
+if TYPE_CHECKING:
+    from typing import Any
+    from ..application import CoreApplication
 
 log = logging.getLogger(__name__)
 
@@ -66,8 +72,8 @@ class SqLite:
         self.__conn = None
         self.__proxy = None
 
-    def connect_impl(self, db_name: str) -> None:
-        self.__proxy = cipher.Cipher()
+    def connect_impl(self, application: CoreApplication, db_name: str) -> None:
+        self.__proxy = cipher.Cipher(application)
         self.__conn = sql.connect(
             db_name,
             timeout=3,

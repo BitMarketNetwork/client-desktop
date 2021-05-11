@@ -18,13 +18,13 @@ if TYPE_CHECKING:
     from typing import Optional, Sequence
     from ..coins.abstract.coin import AbstractCoin
     from ..wallet.mtx_impl import Mtx
-    from ..ui.gui import Application
+    from ..ui.gui import GuiApplication
 
 
 class AbstractMutableTxStateModel(AbstractStateModel):
     def __init__(
             self,
-            application: Application,
+            application: GuiApplication,
             tx: AbstractCoin.MutableTx) -> None:
         super().__init__(application, tx.coin)
         self._tx = tx
@@ -33,7 +33,7 @@ class AbstractMutableTxStateModel(AbstractStateModel):
 class AbstractMutableTxAmountModel(AbstractAmountModel):
     def __init__(
             self,
-            application: Application,
+            application: GuiApplication,
             tx: AbstractCoin.MutableTx) -> None:
         super().__init__(application, tx.coin)
         self._tx = tx
@@ -45,7 +45,7 @@ class AbstractMutableTxAmountModel(AbstractAmountModel):
 class AbstractMutableTxAmountInputModel(AbstractAmountInputModel):
     def __init__(
             self,
-            application: Application,
+            application: GuiApplication,
             tx: AbstractCoin.MutableTx) -> None:
         super().__init__(application, tx.coin)
         self._tx = tx
@@ -149,7 +149,7 @@ class MutableTxReceiverModel(AbstractMutableTxStateModel):
 
     def __init__(
             self,
-            application: Application,
+            application: GuiApplication,
             tx: AbstractCoin.MutableTx) -> None:
         super().__init__(application, tx)
         self._first_use = True
@@ -179,7 +179,10 @@ class MutableTxReceiverModel(AbstractMutableTxStateModel):
 class MutableTxSourceListModel(TxIoListModel):
     __stateChanged = QSignal()
 
-    def __init__(self, application: Application, source_list: Sequence) -> None:
+    def __init__(
+            self,
+            application: GuiApplication,
+            source_list: Sequence) -> None:
         super().__init__(application, source_list)
         # noinspection PyUnresolvedReferences
         self.rowsInserted.connect(lambda **_: self.__stateChanged.emit())
@@ -212,7 +215,7 @@ class MutableTxModel(MutableTxInterface, AbstractModel):
 
     def __init__(
             self,
-            application: Application,
+            application: GuiApplication,
             tx: AbstractCoin.MutableTx) -> None:
         super().__init__(
             application,

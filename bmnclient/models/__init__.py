@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from typing import Iterable, Optional
     from ..coins.abstract.coin import AbstractCoin
     from ..language import Locale
-    from ..ui.gui import Application
+    from ..ui.gui import GuiApplication
 
 
 class ValidStatus(IntEnum):
@@ -27,7 +27,7 @@ class ValidStatus(IntEnum):
 class AbstractStateModel(QObject):
     stateChanged = QSignal()
 
-    def __init__(self, application: Application, coin: AbstractCoin) -> None:
+    def __init__(self, application: GuiApplication, coin: AbstractCoin) -> None:
         super().__init__()
         self._application = application
         self._coin = coin
@@ -61,7 +61,7 @@ class AbstractStateModel(QObject):
 class AbstractModel(QObject):
     stateChanged = QSignal()
 
-    def __init__(self, application: Application, *args, **kwargs) -> None:
+    def __init__(self, application: GuiApplication, *args, **kwargs) -> None:
         super().__init__()
         self._application = application
         self._refresh_lock = Lock()

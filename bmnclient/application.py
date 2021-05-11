@@ -32,7 +32,7 @@ from .utils.meta import classproperty
 from .version import Product, ProductPaths
 
 if TYPE_CHECKING:
-    from typing import Callable, Optional, Type, Union
+    from typing import Callable, List, Optional, Type, Union
 
 
 class CommandLine:
@@ -89,17 +89,12 @@ class CommandLine:
 
 
 class CoreApplication(QObject):
-
-    _instance: CoreApplication = None
-
     def __init__(
             self,
             qt_class: Union[Type[QCoreApplication], Type[QApplication]],
-            argv: list[str]) -> None:
-        assert self.__class__._instance is None
+            argv: List[str]) -> None:
         super().__init__()
 
-        CoreApplication._instance = self
         self._logger = Logger.getClassLogger(__name__, self.__class__)
         self._title = "{} {}".format(Product.NAME, Product.VERSION_STRING)
         self._icon = QIcon(str(resources.ICON_FILE_PATH))
@@ -153,6 +148,7 @@ class CoreApplication(QObject):
             Qt.QueuedConnection)
 
         self._database = Database(
+            self,
             CommandLine.configPath / ProductPaths.DATABASE_FILE_NAME)
 
         self._coin_list = []
@@ -192,10 +188,6 @@ class CoreApplication(QObject):
 
     def setExitEvent(self, code: int = 0) -> None:
         self._qt_application.exit(code)
-
-    @classmethod
-    def instance(cls) -> CoreApplication:
-        return cls._instance
 
     @property
     def isDebugMode(self) -> bool:

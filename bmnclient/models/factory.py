@@ -11,10 +11,12 @@ from ..coins.abstract.coin import AbstractCoin
 
 if TYPE_CHECKING:
     from typing import Optional, TYPE_CHECKING
-    from ..ui.gui import Application
+    from ..ui.gui import GuiApplication
 
 
-def modelFactory(application: Application, owner: object) -> Optional[object]:
+def modelFactory(
+        application: GuiApplication,
+        owner: object) -> Optional[object]:
     if isinstance(owner, AbstractCoin):
         return CoinModel(application, owner)
 
