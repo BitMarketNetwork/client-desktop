@@ -114,7 +114,6 @@ def b58_decode(data: str) -> bytes:
 def b58_check_encode(data: str) -> str:
     signed = get_bytes(data) + sha256d(data)[:4]
     return b58_encode(signed)
-    # return (CKey_58.re_encode(CKey_256, signed))
 
 
 def b58_check_decode(data: bytes) -> bytes:
@@ -272,44 +271,9 @@ class CKey:
         return cls.encode(from_.decode(string), minlen=minlen)
 
 
-class CKey_2(CKey):
-    base = KeyBasis.BASE_2
-    source = "01"
-
-
-class CKey_10(CKey):
-    base = KeyBasis.BASE_10
-    source = "0123456789"
-
-
-class CKey_16(CKey):
-    base = KeyBasis.BASE_16
-    source = "0123456789abcdef"
-
-
-class CKey_32(CKey):
-    base = KeyBasis.BASE_32
-    source = "abcdefghijklmnopqrstuvwxyz234567"
-
-
 class CKey_58(CKey):
     """
     dont use it for a while..use b58_encode
     """
     base = KeyBasis.BASE_58
     source = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-
-
-class CKey_256(CKey):
-    base = KeyBasis.BASE_256
-    source = ''.join([chr(x) for x in range(256)])
-
-    @classmethod
-    def encode(cls, val: int, minlen: int = 0):
-        if val < sys.maxsize:
-            return val.to_bytes(length=minlen, byteorder="big")
-        return super().encode(val, minlen)
-
-    @classmethod
-    def decode(cls, string: str):
-        return int.from_bytes(string, byteorder="big")
