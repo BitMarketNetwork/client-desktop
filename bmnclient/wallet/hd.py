@@ -28,7 +28,6 @@ class HDNode(key.AbstractAddressOld):
         self.index = 0
         self.chain_code = None
         self.p_fingerprint = b"\x00" * 4
-        self._children_count = 0
 
     @classmethod
     def make_hardened_index(cls, index: int):
@@ -114,27 +113,8 @@ class HDNode(key.AbstractAddressOld):
         return self.key.to_hex
 
     @property
-    def public_hd_key(self) -> "HDNode":
-        """
-        avoid calling it if you need jsut public key
-        call instead self.key.public_key
-        """
-        if self.is_private:
-            copy = HDNode(self.key.public_key)
-            copy.chain_code = self.chain_code
-            copy.depth = self.depth
-            copy.index = self.index
-            copy.p_fingerprint = self.p_fingerprint
-            return copy
-        return self
-
-    @property
     def fingerprint(self) -> str:
         return self.identifier[:4]
-
-    @property
-    def children_count(self) -> int:
-        return self._children_count
 
     def make_child_prv(self, index: int, hardened: bool, net: coin_network.CoinNetworkBase = None) -> 'HDNode':
         return self.__derive_private(self.make_hardened_index(index) if hardened else index, net)
@@ -162,48 +142,10 @@ class HDNode(key.AbstractAddressOld):
         res.depth = self.depth + 1
         res.index = child_index
         res.p_fingerprint = util.hash160(pub)[:4]
-        self._children_count += 1
         return res
-
-    @staticmethod
-    def convert_chain_path(path: str):
-        """
-        Convert bip32 path to list  integers with  flags
-        m/0/-1/1' -> [0, 0x80000001, 0x80000001]
-        based on code in trezorlib
-        """
-        if not path:
-            return []
-        if path.endswith("/"):
-            path = path[:-1]
-        path = path.split('/')
-        if path[0] == "m":
-            path = path[1:]
-        result = []
-        for x in path:
-            if x == '':
-                continue
-            prime = 0
-            if x.endswith("'") or x.endswith("h") or x.endswith("H"):
-                x = x[:-1]
-                prime = HARDENED_MASK
-            if x.startswith('-'):
-                if prime:
-                    raise HDError(
-                        f"bip32 path child index is signalling hardened level in multiple ways")
-                prime = HARDENED_MASK
-            child_index = abs(int(x)) | prime
-            if child_index > UINT_MAX:
-                raise HDError(
-                    f"bip32 path child index too large: {child_index} > {UINT_MAX}")
-            result.append(child_index)
-        return result
 
     def __repr__(self):
         return f"depth:{self.depth} index:{self.index}"
-
-    def from_args(self, arg_iter: iter):
-        raise NotImplementedError()
 
     @property
     def network(self):

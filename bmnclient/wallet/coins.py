@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from typing import Iterable, Union
 
 import PySide2.QtCore as qt_core
@@ -10,8 +9,6 @@ from ..utils.meta import classproperty
 from ..coins import coin_bitcoin
 from ..coins import coin_litecoin
 from ..coins.abstract.coin import AbstractCoin
-
-log = logging.getLogger(__name__)
 
 
 class CoinType(qt_core.QObject):
