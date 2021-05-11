@@ -57,24 +57,24 @@ class NetworkQueryManager:
             unique: bool = False,
             high_priority: bool = False) -> PutStatus:
         if unique and not self.isUnique(query):
-            self._logger.debug("Query \"%s\" already in queue.", str(query))
+            self._logger.debug("Query '%s' already in queue.", str(query))
             return self.PutStatus.ERROR_NOT_UNIQUE
 
         if self._current_query is None and not self._queue:
             self._logger.debug(
-                "Queue is empty, starting query \"%s\" now.",
+                "Queue is empty, starting query '%s' now.",
                 str(query))
             self.__runSequence(query)
             return self.PutStatus.SUCCESS
 
         if high_priority:
             self._logger.debug(
-                "Appending query \"%s\" to the top position.",
+                "Appending query '%s' to the top position.",
                 str(query)),
             self._queue.insert(0, query)
         else:
             self._logger.debug(
-                "Appending query \"%s\" to the bottom position.",
+                "Appending query '%s' to the bottom position.",
                 str(query))
             self._queue.append(query)
         self._logger.debug("New queue size: %i", len(self._queue)),
@@ -83,16 +83,16 @@ class NetworkQueryManager:
     def __runSingle(self, query: AbstractQuery) -> QueryRunState:
         assert self._current_query is None
         if query.skip:
-            self._logger.debug("Query \"%s\" was skipped.", str(query))
+            self._logger.debug("Query '%s' was skipped.", str(query))
             query.finishSkippedRequest()
             return self.QueryRunState.SKIPPED
 
         if query.isDummyRequest:
-            self._logger.debug("Query \"%s\" is dummy.", str(query))
+            self._logger.debug("Query '%s' is dummy.", str(query))
             query.finishDummyRequest()
             return self.QueryRunState.FINISHED
 
-        self._logger.debug("Staring query \"%s\".", str(query))
+        self._logger.debug("Staring query '%s'.", str(query))
         request = query.createRequest()
         if request is None:
             query.finishInvalidRequest()

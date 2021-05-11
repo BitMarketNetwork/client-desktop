@@ -129,12 +129,12 @@ class NetworkAccessManager(QNetworkAccessManager):
 
         if parent:
             self._logger.debug(
-                "\"%s\" network access manager was created for \"%s\".",
+                "'%s' network access manager was created for '%s'.",
                 self._name,
                 parent.objectName())
         else:
             self._logger.debug(
-                "\"%s\" network access manager was created.",
+                "'%s' network access manager was created.",
                 self._name)
 
     @property

@@ -20,7 +20,7 @@ elif sys.platform.startswith("darwin"):
 elif sys.platform.startswith("linux"):
     PLATFORM_LINUX = True
 else:
-    raise RuntimeError("Unsupported platform \"{}\".".format(sys.platform))
+    raise RuntimeError("unsupported platform '{}'".format(sys.platform))
 
 if PLATFORM_WINDOWS:
     from PyInstaller.utils.win32.versioninfo import VSVersionInfo, \

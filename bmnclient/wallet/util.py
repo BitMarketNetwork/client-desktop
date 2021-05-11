@@ -256,7 +256,7 @@ class CKey:
             def ex(s, d):
                 idx = cls.source.find(d if isinstance(d, str) else chr(d))
                 if idx < 0:
-                    raise ConvertionError(f"Bad symbol {d}")
+                    raise ConvertionError(f"bad symbol {d}")
                 return s * cls.base + idx
             # ex = lambda d: cls.source.find(d)
         if cls.base == KeyBasis.BASE_16:

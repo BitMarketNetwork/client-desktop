@@ -250,7 +250,7 @@ class CoinsInfoApiQuery(AbstractApiQuery):
             parser = CoinsInfoParser()
             if not parser(value, coin.name):
                 self._logger.warning(
-                    "Coin \"%s\" not found in server response.",
+                    "Coin '%s' not found in server response.",
                     coin.name)
                 continue
             coin.status = parser.status
@@ -342,7 +342,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery):
             next_address = next(self._hd_iterator)
         except StopIteration:
             self._logger.debug(
-                "HD iteration was finished for coin \"%s\".",
+                "HD iteration was finished for coin '%s'.",
                 self._address.coin.name)
             return
 
@@ -637,5 +637,5 @@ class TxBroadcastApiQuery(AbstractApiQuery):
         parser(value)
 
         self._logger.info(
-            "Transaction \"%s\" broadcasted successfully!",
+            "Transaction '%s' broadcasted successfully!",
             parser.txName)

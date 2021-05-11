@@ -120,7 +120,7 @@ class SettingsManager(QObject):
     def _setCurrentLanguageName(self, name: str) -> None:
         assert type(name) is str
         if not self._isValidLanguageName(name):
-            log.error(f"Unknown language \"{name}\".")
+            log.error(f"Unknown language '{name}'.")
             return
         self._application.userConfig.set(UserConfig.KEY_UI_LANGUAGE, name)
         if self._current_language_name != name:

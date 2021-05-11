@@ -37,7 +37,7 @@ class Mnemonic:
 
         error_message = None
         try:
-            self._logger.debug("Reading words from \"%s\"...", self._file_path)
+            self._logger.debug("Reading words from '%s'...", self._file_path)
             with open(  # TODO global cache
                     self._file_path,
                     mode="rt",
@@ -54,7 +54,7 @@ class Mnemonic:
             error_message = Logger.exceptionToString(e)
         if error_message is not None:
             Logger.fatal(
-                "Failed to read file \"{}\". {}"
+                "Failed to read file '{}'. {}"
                 .format(self._file_path, error_message),
                 self._logger)
 

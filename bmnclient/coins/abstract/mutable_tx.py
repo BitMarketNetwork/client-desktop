@@ -67,7 +67,7 @@ class AbstractMutableTx:
             name=name)
         if self._receiver_address is None:
             self._logger.warning(
-                "Receiver address \"%s\" is invalid.",
+                "Receiver address '%s' is invalid.",
                 name)
             return False
         self._logger.debug(
@@ -100,7 +100,7 @@ class AbstractMutableTx:
             if append:
                 self._source_list.append(address)
                 self._logger.debug(
-                    "Address \"%s\" appended to source list.",
+                    "Address '%s' appended to source list.",
                     address.name)
 
         # TODO check,filter unique
@@ -250,7 +250,7 @@ class AbstractMutableTx:
             if self._logger.isEnabledFor(logging.DEBUG):
                 for utxo in utxo_list:
                     self._logger.debug(
-                        "Input: %s, UTXO \"%s\":%i, amount %i.",
+                        "Input: %s, UTXO '%s':%i, amount %i.",
                         address.name,
                         utxo.name,
                         utxo.index,

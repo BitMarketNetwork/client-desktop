@@ -94,5 +94,5 @@ class Serializable:
             return [cls._deserializeProperty(args, key, v) for v in value]
 
         raise TypeError(
-            "cannot deserialize value of type '{}'."
+            "cannot deserialize value of type '{}'"
             .format(str(type(value))))

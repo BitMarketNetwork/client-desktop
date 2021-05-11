@@ -197,7 +197,7 @@ class AbstractQuery:
                     bad_argument = True
             if bad_argument:
                 self._logger.error(
-                    "Cannot create request for URL \"%s\", "
+                    "Cannot create request for URL '%s', "
                     + "invalid query arguments.",
                     url_string)
                 return None
@@ -210,7 +210,7 @@ class AbstractQuery:
         url = QUrl(url_string, QUrl.StrictMode)
         if not url.isValid():
             self._logger.error(
-                "Cannot create request, invalid URL \"%s\".",
+                "Cannot create request, invalid URL '%s'.",
                 url_string)
             return None
 
@@ -284,7 +284,7 @@ class AbstractQuery:
 
     def __onResponseRedirected(self, url: QUrl) -> None:
         Logger.fatal(
-            "Redirect to \"{}\" detected, but redirects was disabled."
+            "Redirect to '{}' detected, but redirects was disabled."
             .format(url.toString()),
             self._logger)
 

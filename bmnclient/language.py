@@ -86,11 +86,11 @@ class Language:
         for translator in self._translator_list:
             if translator.isEmpty():
                 self._logger.warning(
-                    "Translator file \"%s\" is empty.",
+                    "Translator file '%s' is empty.",
                     translator.filePath())
             elif not QCoreApplication.installTranslator(translator):
                 self._logger.error(
-                    "Can't install translator file \"%s\".",
+                    "Can't install translator file '%s'.",
                     translator.filePath())
             else:
                 translated = True
@@ -142,7 +142,7 @@ class Language:
 
         if not result:
             Logger.getClassLogger(__name__, cls).error(
-                "Failed to load translator: locale \"{}\", suffix \"{}\"."
+                "Failed to load translator: locale '{}', suffix '{}'."
                 .format(locale.name(), suffix))
             return None
         return translator

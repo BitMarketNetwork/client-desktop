@@ -44,7 +44,7 @@ class FiatCurrencyList(UserConfigStaticList):
             default_index=0,
             item_property="unit")
         self._logger.debug(
-            "Current fiat currency is \"%s\".",
+            "Current fiat currency is '%s'.",
             self.current.unit)
 
     def __iter__(self) -> Iterator[Type[FiatCurrency]]:

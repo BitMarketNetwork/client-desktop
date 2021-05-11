@@ -61,7 +61,7 @@ class UserConfig:
                 error_message = Logger.exceptionToString(e)
 
             self._logger.warning(
-                "Failed to read file \"%s\". %s",
+                "Failed to read file '%s'. %s",
                 self._file_path,
                 str(error_message))
             self._config = dict()
@@ -90,7 +90,7 @@ class UserConfig:
             except ValueError as e:
                 error_message = Logger.exceptionToString(e)
             self._logger.warning(
-                "Failed to write file \"%s\". %s",
+                "Failed to write file '%s'. %s",
                 self._file_path,
                 str(error_message))
         return False

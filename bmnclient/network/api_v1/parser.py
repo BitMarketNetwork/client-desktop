@@ -57,10 +57,10 @@ class AbstractParser:
             if default_value is not None:
                 return default_value
             raise ParseError(
-                "key \"{}\" not found".format(str(key_name)))
+                "key '{}' not found".format(str(key_name)))
         except (TypeError, ValueError):
             raise ParseError(
-                "invalid value for key \"{}\"".format(str(key_name)))
+                "invalid value for key '{}'".format(str(key_name)))
 
 
 class ResponseParser(AbstractParser):
@@ -208,7 +208,7 @@ class SysinfoParser(AbstractParser):
                 self._server_coin_list[coin_name] = self._parseCoin(coin_value)
             except ParseError as e:
                 raise ParseError(
-                    "failed to parse coin \"{}\": {}"
+                    "failed to parse coin '{}': {}"
                     .format(coin_name, str(e)))
 
     def _parseCoin(self, value: dict) -> dict:
@@ -265,7 +265,7 @@ class CoinsInfoParser(AbstractParser):
             }
         except ParseError as e:
             raise ParseError(
-                "failed to parse coin \"{}\": {}"
+                "failed to parse coin '{}': {}"
                 .format(coin_name, str(e)))
 
         return True
@@ -359,7 +359,7 @@ class AddressTxParser(AbstractParser):
                 self._tx_list.append(tx_parser(tx_name, tx_value))
             except ParseError as e:
                 raise ParseError(
-                    "failed to parse transaction \"{}\": {}"
+                    "failed to parse transaction '{}': {}"
                     .format(tx_name, str(e)))
 
 
@@ -381,7 +381,7 @@ class AddressUtxoParser(AddressTxParser):
                     self._tx_list.append(data)
             except ParseError as e:
                 raise ParseError(
-                    "failed to parse UTXO \"{}\": {}"
+                    "failed to parse UTXO '{}': {}"
                     .format(tx_index, str(e)))
 
 

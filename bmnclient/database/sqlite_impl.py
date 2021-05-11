@@ -184,7 +184,7 @@ class SqLite:
                 return self.__make_title(attr[:-6])
         else:
             raise AttributeError(attr)
-        raise AttributeError("bad table or column \"{}\"".format(attr))
+        raise AttributeError("bad table or column '{}'".format(attr))
 
     def __call__(self, data: Any, strong: bool = False, key: str = None):
         if not self.__proxy:

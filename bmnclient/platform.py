@@ -28,7 +28,7 @@ class Platform:
         TYPE: Final = Type.LINUX
     else:
         TYPE: Final = Type.UNKNOWN
-        raise RuntimeError("unsupported platform \"{}\"".format(sys.platform))
+        raise RuntimeError("unsupported platform '{}'".format(sys.platform))
 
     @classmethod
     def isWindows(cls) -> bool:
