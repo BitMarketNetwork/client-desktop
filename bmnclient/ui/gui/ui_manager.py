@@ -72,6 +72,8 @@ class UIManager(QObject):
         getattr(dialog, signal)()
 
     def process_incoming_tx(self, tx: AbstractCoin.Tx) -> None:
+        if tx.rowId is not None:
+            return
         if tx.name in self.__notified_tx_list:
             return
         self.__notified_tx_list.append(tx.name)
@@ -87,7 +89,7 @@ class UIManager(QObject):
             "ID: {tx_name}\n"
             "Amount: {amount} {unit} / {fiat_amount} {fiat_unit}")
         message = message.format(
-            coin_name=tx.address.coin.fullName,
+            coin_name=tx.coin.fullName,
             tx_name=tx_model.name,
             amount=tx_model.amount.valueHuman,
             unit=tx_model.amount.unit,

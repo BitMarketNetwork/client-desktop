@@ -323,7 +323,7 @@ class Database:
         assert address.rowId is not None
         data = self._encryptDeserializedData(tx.serialize())
         query = " ".join((
-            f"INSERT  INTO {self.transactions_table} (",
+            f"INSERT INTO {self.transactions_table} (",
             f"{self.name_column},",                       # 0
             f"{self.address_id_column},",                 # 1
             f"{self.height_column},",                     # 2

@@ -233,7 +233,7 @@ class AbstractQuery:
     def setResponse(
             self,
             response: QNetworkReply,
-            close_callback: Callable[[AbstractQuery], None]) -> None:
+            close_callback: Optional[Callable[[AbstractQuery], None]]) -> None:
         assert self.__response is None
         self.__is_success = False
         self.__response = response

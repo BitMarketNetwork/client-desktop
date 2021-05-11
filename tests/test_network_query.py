@@ -127,7 +127,7 @@ class TestNetworkQuery(TestCase):
             response = None
         self.assertIsInstance(response, QNetworkReply)
 
-        query.setResponse(response)
+        query.setResponse(response, None)
         query.event_loop = QEventLoop()
         query.event_loop.exec_()
         query.event_loop = None
@@ -221,7 +221,7 @@ class TestNetworkQuery(TestCase):
         q = DummyQuery()
         self.assertTrue(q.isDummyRequest)
         self.assertFalse(q.isSuccess)
-        q.runDummyRequest()
+        q.finishDummyRequest()
         self.assertTrue(q.isSuccess)
         self.assertFalse(q.response_data_called)
         self.assertTrue(q.response_finished_called)
