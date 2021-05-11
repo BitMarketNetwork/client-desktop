@@ -120,10 +120,16 @@ class TxInterface(_AbstractInterface, AbstractCoin.Tx.Interface):
             **kwargs)
 
     def afterSetHeight(self) -> None:
-        pass
+        # TODO slow, bad
+        for address in self._tx.coin.addressList:
+            if self._tx in address.txList:
+                self._database.updateCoinAddressTx(address, self._tx)
 
     def afterSetTime(self) -> None:
-        pass
+        # TODO slow, bad
+        for address in self._tx.coin.addressList:
+            if self._tx in address.txList:
+                self._database.updateCoinAddressTx(address, self._tx)
 
 
 class MutableTxInterface(_AbstractInterface, AbstractCoin.MutableTx.Interface):

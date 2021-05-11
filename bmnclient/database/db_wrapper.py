@@ -322,41 +322,58 @@ class Database:
             tx: AbstractCoin.Tx) -> bool:
         assert address.rowId is not None
         data = self._encryptDeserializedData(tx.serialize())
-        query = " ".join((
-            f"INSERT INTO {self.transactions_table} (",
-            f"{self.name_column},",                       # 0
-            f"{self.address_id_column},",                 # 1
-            f"{self.height_column},",                     # 2
-            f"{self.time_column},",                       # 3
-            f"{self.amount_column},",                     # 4
-            f"{self.fee_amount_column},",                 # 5
-            f"{self.coinbase_column}",                    # 6
-            f") VALUES {nmark(7)}"
-        ))
-        cursor = self.execute(query, (
-            data["name"],
-            address.rowId,
-            data["height"],
-            data["time"],
-            data["amount"],
-            data["fee_amount"],
-            data["coinbase"],
-        ))
-        if cursor is None:
-            return False
-        tx.rowId = cursor.lastrowid
-        cursor.close()
 
-        for io_data in data["input_list"]:
-            self._writeCoinTxIo(
-                tx.rowId,
-                self._encryptDeserializedData(io_data),
-                True)
-        for io_data in data["output_list"]:
-            self._writeCoinTxIo(
-                tx.rowId,
-                self._encryptDeserializedData(io_data),
-                False)
+        if tx.rowId is None:
+            query = " ".join((
+                f"INSERT INTO {self.transactions_table} (",
+                f"{self.name_column},",                       # 0
+                f"{self.address_id_column},",                 # 1
+                f"{self.height_column},",                     # 2
+                f"{self.time_column},",                       # 3
+                f"{self.amount_column},",                     # 4
+                f"{self.fee_amount_column},",                 # 5
+                f"{self.coinbase_column}",                    # 6
+                f") VALUES {nmark(7)}"
+            ))
+            cursor = self.execute(query, (
+                data["name"],
+                address.rowId,
+                data["height"],
+                data["time"],
+                data["amount"],
+                data["fee_amount"],
+                data["coinbase"],
+            ))
+            if cursor is None:
+                return False
+            tx.rowId = cursor.lastrowid
+            cursor.close()
+
+            for io_data in data["input_list"]:
+                self._writeCoinTxIo(
+                    tx.rowId,
+                    self._encryptDeserializedData(io_data),
+                    True)
+            for io_data in data["output_list"]:
+                self._writeCoinTxIo(
+                    tx.rowId,
+                    self._encryptDeserializedData(io_data),
+                    False)
+        else:
+            query = " ".join((
+                f"UPDATE {self.transactions_table} SET",
+                f"{self.height_column}=?,",               # 0
+                f"{self.time_column}=?",                  # 1
+                f"WHERE id=?"
+            ))
+            cursor = self.execute(query, (
+                data["height"],
+                data["time"],
+                tx.rowId
+            ))
+            if cursor is None:
+                return False
+            cursor.close()
         return True
 
     def readCoinTxList(self, address_list: List[AbstractCoin.Address]) -> bool:
