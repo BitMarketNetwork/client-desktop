@@ -50,7 +50,7 @@ class Cipher:
                 return struct.unpack("q", val[1:])[0]
             if Type.TypeReal == pref:
                 return struct.unpack("d", val[1:])[0]
-            raise RuntimeError(f"Not implemented type {val}")
+            raise RuntimeError(f"not implemented type {val}")
         except RuntimeError as re:
             log.fatal(f"{re} +> {value}")
         except Exception as te:

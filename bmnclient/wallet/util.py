@@ -95,7 +95,7 @@ def b58_decode(data: str) -> bytes:
         n *= 58
         if c not in CKey_58.source:
             raise ConvertionError(
-                'Character %r is not a valid base58 character' % c)
+                'character %r is not a valid base58 character' % c)
         digit = CKey_58.source.index(c)
         n += digit
     h = '%x' % n
@@ -122,7 +122,7 @@ def b58_check_decode(data: bytes) -> bytes:
     if sha256d(shortened)[:4] == bytes_[-4:]:
         return shortened
     else:
-        raise ConvertionError("Hash mismatch")
+        raise ConvertionError("hash mismatch")
 
 
 def number_to_bytes(number: int, length: int) -> bytes:
@@ -162,7 +162,7 @@ def get_version(address: str) -> str:
         return 'test'
     else:
         raise ConvertionError(
-            f'{hrp} does not correspond to a mainnet nor testnet address.')
+            f'{hrp} does not correspond to a mainnet nor testnet address')
 
 
 def address_to_scriptpubkey(address: str) -> str:
@@ -237,7 +237,7 @@ class CKey:
             indexes.append(ord(cls.source[mod]))
         if len(indexes) < minlen:
             if cls.base == KeyBasis.BASE_32:
-                raise NotImplementedError("What's padding on 32?")
+                raise NotImplementedError("what's padding on 32?")
             indexes += [0] * (minlen - len(indexes))
         result_bytes = bytes(indexes[::-1])
         if cls.base == KeyBasis.BASE_256:

@@ -46,12 +46,12 @@ class HDNode(key.AbstractAddressOld):
     def from_extended_key(cls, ext_b58: str) -> "HDNode":
         ext_key = util.b58_check_decode(ext_b58)
         if len(ext_key) != 78:
-            raise HDError("Wrong length of extended key")
+            raise HDError("wrong length of extended key")
         net_pref, ext_key = util.split_bytes(util.get_bytes(ext_key), 4)
         network, prv = coin_network.CoinNetworkBase.from_ex_prefix(
             util.bytes_to_number(net_pref))
         if network is None:
-            raise HDError(f"Bad network prefix {net_pref} in extended key")
+            raise HDError(f"bad network prefix {net_pref} in extended key")
         depth, ext_key = util.split_bytes(ext_key, 1)
         fingerprint, ext_key = util.split_bytes(ext_key, 4)
         index, ext_key = util.split_bytes(ext_key, 4)
@@ -121,7 +121,7 @@ class HDNode(key.AbstractAddressOld):
 
     def __derive_private(self, child_index: int, net: coin_network.CoinNetworkBase) -> 'HDNode':
         if not self.is_private:
-            raise HDError("Private derivation from public key is prohibited")
+            raise HDError("private derivation from public key is prohibited")
         is_hardened = child_index & HARDENED_MASK
         child_index_bytes = child_index.to_bytes(length=4, byteorder="big")
         priv = self.key.compressed_bytes

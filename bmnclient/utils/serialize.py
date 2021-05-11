@@ -65,7 +65,7 @@ class Serializable:
             return [self._serializeProperty(key, v) for v in value]
 
         raise TypeError(
-            "cannot serialize value of type '{}'."
+            "cannot serialize value of type '{}'"
             .format(str(type(value))))
 
     @classmethod

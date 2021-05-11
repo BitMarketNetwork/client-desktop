@@ -297,8 +297,8 @@ class Mtx:
                 input_dict[tx_input] = unspent.serialize()
                 input_dict[tx_input]["segwit"] = unspent.segwit  # TODO tmp
         except TypeError:
-            raise TypeError('Please provide as unspents at least all inputs to '
-                            'be signed with the function call in a list.')
+            raise TypeError('please provide as unspents at least all inputs to '
+                            'be signed with the function call in a list')
         # Determine input indices to sign from input_dict (allows for transaction batching)
         sign_inputs = [j for j, i in enumerate(self.TxIn) if i.txid + i.txindex in input_dict]
 
@@ -335,10 +335,10 @@ class Mtx:
                     input_script_field[i] = tx_in.witness
                 except AttributeError:
                     raise ValueError(
-                        'Cannot sign a segwit input when the input\'s amount is '
+                        'cannot sign a segwit input when the input\'s amount is '
                         'unknown. Maybe no network connection or the input is '
                         'already spent? Then please provide all inputs to sign as '
-                        '`UTXO` objects to the function call.')
+                        '`UTXO` objects to the function call')
 
             inputs_parameters.append([i, hash_type, segwit_input])
 
@@ -385,7 +385,7 @@ class Mtx:
         for input_index, hash_type, segwit_input in inputs_parameters:
             # We can only handle hashType == 1:
             if hash_type != constants.HASH_TYPE:
-                raise ValueError('Bit only support hashType of value 1.')
+                raise ValueError('bit only support hashType of value 1')
             # Calculate prehashes:
             if segwit_input:
                 # BIP-143 preimage:
@@ -556,7 +556,7 @@ def select_coins(target, fee_amount, output_size, min_change, *, absolute_fee=Fa
                 break
         else:
             raise InsufficientFunds(
-                'Balance {} is less than {} (including fee).'
+                'balance {} is less than {} (including fee)'
                 .format(
                     sum(u.amount for u in selected_coins),
                     target + min_change + estimated_fee))
@@ -585,7 +585,7 @@ def sanitize_tx_data(utxo_list, outputs, fee_amount, leftover, combine=True,
         # outputs[i] = (dest, rates.currency_to_satoshi_cached(amount, currency))
 
     if not utxo_list:
-        raise ValueError('Transactions must have at least one unspent.')
+        raise ValueError('transactions must have at least one unspent')
 
     # Temporary storage so all outputs precede messages.
     messages = []
@@ -618,7 +618,7 @@ def sanitize_tx_data(utxo_list, outputs, fee_amount, leftover, combine=True,
         vs = util.get_version(dest)
         if vs and vs != version:
             raise ValueError(
-                f"Cannot send to {vs}net address when spending from a {version}net address.")
+                f"cannot send to {vs}net address when spending from a {version}net address")
 
     outputs.extend(messages)
 
