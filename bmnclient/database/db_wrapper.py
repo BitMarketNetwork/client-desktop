@@ -59,11 +59,10 @@ class Database:
 
     def remove(self) -> None:
         self.close()
-        if self.__db_name:
-            pth = Path(self.__db_name)
-            self.__db_name = None
-            if pth.exists():
-                pth.unlink()
+        pth = Path(self._file_path)
+        self.__db_name = None
+        if pth.exists():
+            pth.unlink()
 
     def execute(self, query: str, args: tuple = ()):
         try:

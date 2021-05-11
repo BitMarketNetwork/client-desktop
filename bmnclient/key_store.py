@@ -23,8 +23,7 @@ from .version import Product
 from .wallet.hd import HDNode
 
 if TYPE_CHECKING:
-    from typing import Final, List, Optional, Tuple
-    from .application import CoreApplication
+    from typing import Callable, Final, List, Optional, Tuple
 
 
 class KeyIndex(Enum):
@@ -35,13 +34,17 @@ class KeyIndex(Enum):
 class KeyStore(QObject):
     def __init__(
             self,
-            application: Optional[CoreApplication],
-            user_config: UserConfig) -> None:
+            *,
+            user_config: UserConfig,
+            open_callback: Optional[Callable[[HDNode], None]] = None,
+            reset_callback: Optional[Callable[[], None]] = None) -> None:
         super().__init__()
-        self._application = application
-        self._user_config = user_config
         self._logger = Logger.getClassLogger(__name__, self.__class__)
         self._lock = RLock()
+
+        self._user_config = user_config
+        self._open_callback = open_callback
+        self._reset_callback = reset_callback
 
         self._nonce_list: List[Optional[bytes]] = [None] * len(KeyIndex)
         self._key_list: List[Optional[bytes]] = [None] * len(KeyIndex)
@@ -315,8 +318,8 @@ class KeyStore(QObject):
         with self._lock:
             self._reset(hard=True)
 
-        if self._application is not None:
-            self._application.database.remove()
+        if self._reset_callback is not None:
+            self._reset_callback()
         return True
 
     @QProperty(bool, constant=True)

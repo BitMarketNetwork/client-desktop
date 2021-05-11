@@ -37,8 +37,10 @@ class GuiApplication(CoreApplication):
             return NetworkAccessManager("QML", parent)
 
     def __init__(self, command_line: CommandLine) -> None:
-        super().__init__(QApplication, command_line)
-        self._initCoinList(lambda o: modelFactory(self, o))
+        super().__init__(
+            qt_class=QApplication,
+            command_line=command_line,
+            model_factory=lambda o: modelFactory(self, o))
 
         # TODO kill
         self._coin_manager = None

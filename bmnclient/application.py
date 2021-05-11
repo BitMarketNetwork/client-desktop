@@ -1,3 +1,4 @@
+# JOK4
 from __future__ import annotations
 
 import logging
@@ -7,7 +8,6 @@ from pathlib import PurePath
 from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
-    QCoreApplication, \
     QLocale, \
     QMetaObject, \
     QObject, \
@@ -16,13 +16,12 @@ from PySide2.QtCore import \
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 
-from . import resources
+from .resources import ICON_FILE_PATH
 from .coins.currency import FiatCurrencyList, FiatRate
 from .coins.list import CoinList
 from .config import UserConfig
 from .database.db_wrapper import Database
 from .key_store import KeyStore
-from .language import Language
 from .logger import Logger
 from .network.query_manager import NetworkQueryManager
 from .network.query_scheduler import NetworkQueryScheduler
@@ -33,6 +32,9 @@ from .version import Product, ProductPaths
 
 if TYPE_CHECKING:
     from typing import Callable, List, Optional, Type, Union
+    from PySide2.QtCore import QCoreApplication
+    from .language import Language
+    from .wallet.hd import HDNode
 
 
 class CommandLine:
@@ -98,14 +100,16 @@ class CommandLine:
 class CoreApplication(QObject):
     def __init__(
             self,
+            *,
             qt_class: Union[Type[QCoreApplication], Type[QApplication]],
-            command_line: CommandLine) -> None:
+            command_line: CommandLine,
+            model_factory: Optional[Callable[[object], object]] = None) -> None:
         super().__init__()
 
         self._command_line = command_line
         self._logger = Logger.getClassLogger(__name__, self.__class__)
         self._title = "{} {}".format(Product.NAME, Product.VERSION_STRING)
-        self._icon = QIcon(str(resources.ICON_FILE_PATH))
+        self._icon = QIcon(str(ICON_FILE_PATH))
         self._language: Optional[Language] = None
         self._exit_code = 0
         self._on_exit_called = False
@@ -114,7 +118,10 @@ class CoreApplication(QObject):
             self._command_line.configPath / ProductPaths.CONFIG_FILE_NAME)
         self._user_config.load()
 
-        self._key_store = KeyStore(self, self._user_config)
+        self._key_store = KeyStore(
+            user_config=self._user_config,
+            open_callback=self._onKeyStoreOpen,
+            reset_callback=self._onKeyStoreReset)
 
         # Prepare QCoreApplication
         QLocale.setDefault(QLocale.c())
@@ -139,6 +146,8 @@ class CoreApplication(QObject):
         # We recommend that you connect clean-up code to the aboutToQuit()
         # signal, instead of putting it in your application's main() function
         # because on some platforms the exec() call may not return.
+        #
+        # noinspection PyUnresolvedReferences
         self._qt_application.aboutToQuit.connect(
             self.__onAboutToQuit,
             Qt.DirectConnection)
@@ -159,7 +168,6 @@ class CoreApplication(QObject):
             self,
             self._command_line.configPath / ProductPaths.DATABASE_FILE_NAME)
 
-        self._coin_list = []
         self._fiat_currency_list = FiatCurrencyList(self)
         self._fiat_rate_service_list = FiatRateServiceList(self)
 
@@ -168,9 +176,7 @@ class CoreApplication(QObject):
             self,
             self._network_query_manager)
 
-    def _initCoinList(
-            self,
-            model_factory: Optional[Callable[[object], object]] = None) -> None:
+        # initialize coins
         self._coin_list = CoinList(model_factory=model_factory)
         for coin in self._coin_list:
             coin.fiatRate = FiatRate(0, self._fiat_currency_list.current)
@@ -245,6 +251,19 @@ class CoreApplication(QObject):
     def icon(self) -> QIcon:
         return self._icon
 
+    def _onKeyStoreOpen(self, purpose_path: HDNode) -> None:
+        assert not self._database.isLoaded
+
+        for coin in self._coin_list:
+            coin.makeHdPath(purpose_path)
+
+        self._database.open()
+        self._network_query_scheduler.start(
+            self._network_query_scheduler.COINS_NAMESPACE)
+
+    def _onKeyStoreReset(self) -> None:
+        self.database.remove()
+
     @QSlot()
     def _onRunPrivate(self) -> None:
         self._onRun()
@@ -254,7 +273,7 @@ class CoreApplication(QObject):
             self._network_query_scheduler.GLOBAL_NAMESPACE)
 
     def __onAboutToQuit(self) -> None:
-        self._logger.debug("Shutting down...");
+        self._logger.debug("Shutting down...")
         # for w in QGuiApplication.topLevelWindows():
         #     w.close()
         self._onExit()
@@ -264,4 +283,3 @@ class CoreApplication(QObject):
         self._on_exit_called = True
         self.database.close()
         self._signal_handler.close()
-
