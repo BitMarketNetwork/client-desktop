@@ -102,6 +102,9 @@ class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
         if self._database.isLoaded and tx.height >= 0:
             self._database.updateCoinAddressTx(self._address, tx)
 
+    def afterSetUtxoList(self) -> None:
+        pass
+
     def afterSetHistoryFirstOffset(self) -> None:
         if self._database.isLoaded:
             self._database.updateCoinAddress(self._address)

@@ -76,6 +76,9 @@ class AbstractAddress(Serializable):
         def afterAppendTx(self, tx: AbstractCoin.Tx) -> None:
             raise NotImplementedError
 
+        def afterSetUtxoList(self) -> None:
+            raise NotImplementedError
+
         def afterSetHistoryFirstOffset(self) -> None:
             raise NotImplementedError
 
@@ -332,13 +335,19 @@ class AbstractAddress(Serializable):
 
     @utxoList.setter
     def utxoList(self, utxo_list: List[AbstractCoin.Tx.Utxo]) -> None:
-        self._utxo_list = utxo_list
+        if self._utxo_list == utxo_list:
+            return
+
         for utxo in utxo_list:
             utxo.address = self
+        self._utxo_list = utxo_list
+
         utxo_amount = sum(map(lambda u: u.amount, self._utxo_list))
         if self._amount != utxo_amount:
             # TODO test, notify
             self.amount = utxo_amount
+        if self._model:
+            self._model.afterSetUtxoList()
         self._coin.refreshUtxoList()
 
     @serializable
