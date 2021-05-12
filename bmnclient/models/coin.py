@@ -300,6 +300,7 @@ class CoinModel(CoinInterface, AbstractModel):
 
     def afterSetFiatRate(self) -> None:
         self._amount_model.refresh()
+        self._coin.mutableTx.model.refresh()
         super().afterSetFiatRate()
 
     def afterRefreshAmount(self) -> None:

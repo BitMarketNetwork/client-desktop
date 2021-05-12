@@ -264,6 +264,7 @@ class AbstractAddress(Serializable):
             self._amount = value
             if self._model:
                 self._model.afterSetAmount()
+            self._coin.refreshAmount()
 
     @serializable
     @property
@@ -342,13 +343,11 @@ class AbstractAddress(Serializable):
             utxo.address = self
         self._utxo_list = utxo_list
 
-        utxo_amount = sum(map(lambda u: u.amount, self._utxo_list))
-        if self._amount != utxo_amount:
-            # TODO test, notify
-            self.amount = utxo_amount
         if self._model:
             self._model.afterSetUtxoList()
         self._coin.refreshUtxoList()
+
+        self.amount = sum(map(lambda u: u.amount, self._utxo_list))
 
     @serializable
     @property
