@@ -1,6 +1,6 @@
 # BitMarket Network Client Change Log
 
-## 0.12.1 (xx.0x.2021)
+## 0.12.1 (12.05.2021)
 * UI: Added server info to coin info page
 * Command line fixes:
   * description optimization
@@ -9,6 +9,7 @@
   * argument "--debug_mode" renamed to "--debug"
   * if the application is not running in debug mode, the logging level is set to "info"
 * reimplemented network engine
+* big code optimization
 
 ## 0.12 (24.03.2021)
 
