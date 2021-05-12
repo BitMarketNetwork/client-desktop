@@ -3,7 +3,7 @@
 <context>
     <name>@default</name>
     <message>
-        <location filename="fiat_rate.py" line="132"/>
+        <location filename="fiat_rate.py" line="130"/>
         <source>-- None --</source>
         <translation type="unfinished"></translation>
     </message>
@@ -19,17 +19,14 @@
     </message>
 </context>
 <context>
-    <name>CoinManager</name>
-</context>
-<context>
     <name>KeyStore</name>
     <message>
-        <location filename="key_store.py" line="201"/>
+        <location filename="key_store.py" line="212"/>
         <source>Wrong password.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="key_store.py" line="204"/>
+        <location filename="key_store.py" line="215"/>
         <source>Seed phrase not found.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -37,17 +34,17 @@
 <context>
     <name>SystemTrayIcon</name>
     <message>
-        <location filename="system_tray.py" line="49"/>
+        <location filename="system_tray.py" line="54"/>
         <source>Show</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="system_tray.py" line="53"/>
+        <location filename="system_tray.py" line="58"/>
         <source>Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="system_tray.py" line="60"/>
+        <location filename="system_tray.py" line="65"/>
         <source>Quit</source>
         <translation type="unfinished"></translation>
     </message>
@@ -55,12 +52,12 @@
 <context>
     <name>UIManager</name>
     <message>
-        <location filename="ui_manager.py" line="145"/>
+        <location filename="ui_manager.py" line="147"/>
         <source>Text &apos;%s&apos; copied to clipboard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="ui_manager.py" line="89"/>
+        <location filename="ui_manager.py" line="91"/>
         <source>New transaction
 Coin: {coin_name}
 ID: {tx_name}
