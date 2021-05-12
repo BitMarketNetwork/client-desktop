@@ -306,6 +306,10 @@ class CoinModel(CoinInterface, AbstractModel):
         self._amount_model.refresh()
         super().afterRefreshAmount()
 
+    def afterRefreshUtxoList(self) -> None:
+        self._coin.mutableTx.model.refresh()
+        super().afterRefreshUtxoList()
+
     def beforeAppendAddress(self, address: AbstractCoin.Address) -> None:
         self._address_list_model.lock(self._address_list_model.lockInsertRows())
         super().beforeAppendAddress(address)

@@ -45,6 +45,9 @@ class AbstractCoin(Serializable):
         def afterRefreshAmount(self) -> None:
             raise NotImplementedError
 
+        def afterRefreshUtxoList(self) -> None:
+            raise NotImplementedError
+
         def beforeAppendAddress(self, address: AbstractCoin.Address) -> None:
             raise NotImplementedError
 
@@ -316,6 +319,8 @@ class AbstractCoin(Serializable):
 
     def refreshUtxoList(self) -> None:
         self._mutable_tx.refreshSourceList()
+        if self._model:
+            self._model.afterRefreshUtxoList()
 
     def makeHdPath(self, purpose_path: HDNode) -> None:
         assert self._hd_path is None

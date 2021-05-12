@@ -55,6 +55,9 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
     def afterRefreshAmount(self) -> None:
         pass
 
+    def afterRefreshUtxoList(self) -> None:
+        pass
+
     def beforeAppendAddress(self, address: AbstractCoin.Address) -> None:
         pass
 
