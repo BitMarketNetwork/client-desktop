@@ -36,8 +36,8 @@ class KeyStore(QObject):
             self,
             *,
             user_config: UserConfig,
-            open_callback: Optional[Callable[[HDNode], None]] = None,
-            reset_callback: Optional[Callable[[], None]] = None) -> None:
+            open_callback: Callable[[HDNode], None] = None,
+            reset_callback: Callable[[], None] = None) -> None:
         super().__init__()
         self._logger = Logger.getClassLogger(__name__, self.__class__)
         self._lock = RLock()
@@ -161,12 +161,16 @@ class KeyStore(QObject):
     @QSlot(str, result=bool)
     def finalizeGenerateSeedPhrase(self, phrase: str) -> bool:
         with self._lock:
-            if self.validateGenerateSeedPhrase(phrase):
-                if self._saveSeedWithPhrase(self._mnemonic.language, phrase):
-                    self._mnemonic = None
-                    self._mnemonic_salt_hash = None
-                    return self._loadSeed()
-        return False
+            if not self.validateGenerateSeedPhrase(phrase):
+                return False
+            if not self._saveSeedWithPhrase(self._mnemonic.language, phrase):
+                return False
+            purpose_path = self._loadSeed()
+            if purpose_path is None:
+                return False
+
+        self._open_callback(purpose_path)
+        return True
 
     # noinspection PyTypeChecker
     @QSlot(str, result=bool)
@@ -188,12 +192,16 @@ class KeyStore(QObject):
     @QSlot(str, result=bool)
     def finalizeRestoreSeedPhrase(self, phrase: str) -> bool:
         with self._lock:
-            if self._mnemonic and self._mnemonic.isValidPhrase(phrase):
-                if self._saveSeedWithPhrase(self._mnemonic.language, phrase):
-                    self._mnemonic = None
-                    self._mnemonic_salt_hash = None
-                    return self._loadSeed()
-        return False
+            if not self._mnemonic or not self._mnemonic.isValidPhrase(phrase):
+                return False
+            if not self._saveSeedWithPhrase(self._mnemonic.language, phrase):
+                return False
+            purpose_path = self._loadSeed()
+            if purpose_path is None:
+                return False
+
+        self._open_callback(purpose_path)
+        return True
 
     # noinspection PyTypeChecker
     @QSlot(str, result=str)
@@ -255,18 +263,19 @@ class KeyStore(QObject):
         phrase = Mnemonic.friendlyPhrase(language, phrase)
         return language, phrase
 
-    def _loadSeed(self) -> bool:
+    def _loadSeed(self) -> Optional[HDNode]:
+        self._mnemonic = None
+        self._mnemonic_salt_hash = None
+        self._has_seed = False
+
         seed = self._getSeed()
         if not seed:
-            return False
+            return None
 
         root_path = HDNode.make_master(seed)
         purpose_path = root_path.make_child_prv(44, True)  # BIP-0044
-
-        if self._application is not None:
-            for coin in self._application.coinList:
-                coin.makeHdPath(purpose_path)
-        return True
+        self._has_seed = purpose_path is not None
+        return purpose_path
 
     ############################################################################
 
@@ -295,12 +304,10 @@ class KeyStore(QObject):
             value = SecretStore(password).decryptValue(value)
             if not value or not self._loadSecretStoreValue(value):
                 return False
-            self._has_seed = self._loadSeed()
+            purpose_path = self._loadSeed()
 
-        if self._application is not None:
-            self._application.database.open()
-            self._application.networkQueryScheduler.start(
-                self._application.networkQueryScheduler.COINS_NAMESPACE)
+        if purpose_path is not None:
+            self._open_callback(purpose_path)
         return True
 
     # noinspection PyTypeChecker
@@ -317,9 +324,7 @@ class KeyStore(QObject):
     def resetPassword(self) -> bool:
         with self._lock:
             self._reset(hard=True)
-
-        if self._reset_callback is not None:
-            self._reset_callback()
+        self._reset_callback()
         return True
 
     @QProperty(bool, constant=True)
