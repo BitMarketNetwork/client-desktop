@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import logging
-
 from PySide2.QtCore import \
     Property as QProperty, \
     QObject, \
@@ -24,8 +22,6 @@ from ...models.factory import modelFactory
 from ...network.access_manager import NetworkAccessManager
 from ...resources import QML_URL
 
-log = logging.getLogger(__name__)
-
 QML_STYLE = "Material"
 QML_FILE = "main.qml"
 QML_CONTEXT_NAME = "BBackend"
@@ -42,9 +38,6 @@ class GuiApplication(CoreApplication):
             command_line=command_line,
             model_factory=lambda o: modelFactory(self, o))
 
-        # TODO kill
-        self._coin_manager = None
-
         self._settings_manager = SettingsManager(self)
         self._ui_manager = UIManager(self)
         self._debug_manager = DebugManager(self)
@@ -57,7 +50,7 @@ class GuiApplication(CoreApplication):
 
     def _initializeQml(self) -> None:
         QQuickStyle.setStyle(QML_STYLE)
-        log.debug("QML Base URL: %s", QML_URL)
+        self._logger.debug("QML Base URL: %s", QML_URL.toString())
 
         self._qml_network_access_manager_factory = \
             self.QmlNetworkAccessManagerFactory()
@@ -119,7 +112,7 @@ class GuiApplication(CoreApplication):
             #  a null pointer as parameter an
             self.setExitEvent()
         else:
-            log.debug(f"QML object was created: {url.toString()}")
+            self._logger.debug("QML object was created: %s", url.toString())
 
     @QSlot(list)
     def _onQmlWarnings(self, warning_list) -> None:

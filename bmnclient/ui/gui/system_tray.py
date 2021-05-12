@@ -96,7 +96,7 @@ class SystemTrayIcon(QObject):
 
         self._logger.debug("Message %i: %s.", icon, message)
         self._tray_icon.showMessage(
-            self._application.applicationName(),  # TODO
+            self._application.title,
             message,
             # TODO this icon replace tray icon icon_map[icon],
             QSystemTrayIcon.MessageIcon.NoIcon,
