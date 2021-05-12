@@ -54,8 +54,8 @@ class AddressStateModel(AbstractAddressStateModel):
         return self._address.label
 
     @QProperty(bool, constant=True)
-    def watchOnly(self) -> bool:
-        return self._address.readOnly
+    def isReadOnly(self) -> bool:
+        return self._address.isReadOnly
 
     @QProperty(bool, notify=__stateChanged)
     def isUpdating(self) -> bool:

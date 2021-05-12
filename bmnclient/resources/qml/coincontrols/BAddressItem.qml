@@ -36,7 +36,7 @@ BItemDelegate {
         }
         BAmountLabel {
             font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
-            font.strikeout: _base.address.state.watchOnly // TODO tmp
+            font.strikeout: _base.address.state.isReadOnly // TODO tmp
             amount: _base.address.amount
         }
         Loader {

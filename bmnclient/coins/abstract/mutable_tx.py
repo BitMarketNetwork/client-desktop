@@ -88,7 +88,7 @@ class AbstractMutableTx:
         self._source_amount = 0
 
         for address in self._coin.addressList:
-            if address.readOnly:
+            if address.isReadOnly:
                 continue
 
             append = False

@@ -287,7 +287,7 @@ class AbstractAddress(Serializable):
                 self._model.afterSetComment()
 
     @property
-    def readOnly(self) -> bool:
+    def isReadOnly(self) -> bool:
         return self.privateKey is None
 
     @serializable

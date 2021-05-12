@@ -309,7 +309,7 @@ class AbstractCoin(Serializable):
         return self._amount
 
     def refreshAmount(self) -> None:
-        a = sum(a.amount for a in self._address_list if not a.readOnly)
+        a = sum(a.amount for a in self._address_list if not a.isReadOnly)
         self._amount = a
         if self._model:
             self._model.afterRefreshAmount()
