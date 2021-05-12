@@ -33,12 +33,12 @@ class CoinStateModel(AbstractStateModel):
     __stateChanged = QSignal()
 
     @QProperty(bool, notify=__stateChanged)
-    def visible(self) -> bool:
-        return self._coin.visible
+    def enabled(self) -> bool:
+        return self._coin.enabled
 
-    @visible.setter
-    def _setVisible(self, value) -> None:
-        self._coin.visible = value
+    @enabled.setter
+    def _setEnabled(self, value: bool) -> None:
+        self._coin.enabled = value
 
 
 class CoinServerDataModel(AbstractStateModel):
@@ -290,6 +290,10 @@ class CoinModel(CoinInterface, AbstractModel):
     @QProperty(QObject, constant=True)
     def manager(self) -> CoinManagerModel:
         return self._manager
+
+    def afterSetEnabled(self) -> None:
+        self._state_model.refresh()
+        super().afterSetEnabled()
 
     def afterSetHeight(self) -> None:
         self._state_model.refresh()

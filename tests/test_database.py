@@ -68,13 +68,13 @@ class TestDataEncoding(unittest.TestCase):
         self.db._set_meta_entry("seed", HASH)
         self.assertEqual(self.db._get_meta_entry("seed"),HASH)
         coin = coins.Bitcoin(None)
-        coin.visible = False
-        self.assertIsInstance(coin.visible, bool)
+        coin.enabled = False
+        self.assertIsInstance(coin.enabled, bool)
         self.db.appendCoin(coin)
-        self.assertFalse(coin.visible)
-        coin.visible = True
+        self.assertFalse(coin.enabled)
+        coin.enabled = True
         self.db.appendCoin(coin)
-        self.assertFalse(coin.visible)
+        self.assertFalse(coin.enabled)
 
 
 class TestWorkflow(unittest.TestCase):

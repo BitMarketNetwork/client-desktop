@@ -30,10 +30,13 @@ class AbstractCoin(Serializable):
             super().__init__(*args, **kwargs)
             self._coin = coin
 
-        def afterSetOffset(self) -> None:
+        def afterSetEnabled(self) -> None:
             raise NotImplementedError
 
         def afterSetHeight(self) -> None:
+            raise NotImplementedError
+
+        def afterSetOffset(self) -> None:
             raise NotImplementedError
 
         def afterSetStatus(self) -> None:
@@ -94,12 +97,14 @@ class AbstractCoin(Serializable):
         self.__state_hash = 0
         self.__old_state_hash = 0
 
-        self._offset = ""
-        self._unverified_offset = ""
-        self._unverified_hash = ""
+        self._enabled = True
 
         self._height = 0
         self._verified_height = 0
+
+        self._offset = ""
+        self._unverified_offset = ""
+        self._unverified_hash = ""
 
         self._status = 0
 
@@ -149,6 +154,7 @@ class AbstractCoin(Serializable):
             coin: AbstractCoin,
             *,
             name: str,
+            enabled: bool,
             height: int,
             verified_height: int,
             offset: str,
@@ -158,6 +164,8 @@ class AbstractCoin(Serializable):
             -> Optional[AbstractCoin]:
         if self.name != name or id(coin) != id(self):
             return None
+
+        self.enabled = enabled
 
         self.beginUpdateState()
         if True:
@@ -219,6 +227,42 @@ class AbstractCoin(Serializable):
 
     @serializable
     @property
+    def enabled(self) -> bool:
+        return self._enabled
+
+    @enabled.setter
+    def enabled(self, value: bool):
+        if self._enabled != value:
+            self._enabled = value
+            if self._model:
+                self._model.afterSetEnabled()
+
+    @serializable
+    @property
+    def height(self) -> int:
+        return self._height
+
+    @height.setter
+    def height(self, value: int) -> None:
+        if self._height != value:
+            self._height = value
+            self._updateState()
+            if self._model:
+                self._model.afterSetHeight()
+
+    @serializable
+    @property
+    def verifiedHeight(self) -> int:
+        return self._verified_height
+
+    @verifiedHeight.setter
+    def verifiedHeight(self, value: int) -> None:
+        if self._verified_height != value:
+            self._verified_height = value
+            self._updateState()
+
+    @serializable
+    @property
     def offset(self) -> str:
         return self._offset
 
@@ -250,30 +294,6 @@ class AbstractCoin(Serializable):
     def unverifiedHash(self, value: str) -> None:
         if self._unverified_hash != value:
             self._unverified_hash = value
-            self._updateState()
-
-    @serializable
-    @property
-    def height(self) -> int:
-        return self._height
-
-    @height.setter
-    def height(self, value: int) -> None:
-        if self._height != value:
-            self._height = value
-            self._updateState()
-            if self._model:
-                self._model.afterSetHeight()
-
-    @serializable
-    @property
-    def verifiedHeight(self) -> int:
-        return self._verified_height
-
-    @verifiedHeight.setter
-    def verifiedHeight(self, value: int) -> None:
-        if self._verified_height != value:
-            self._verified_height = value
             self._updateState()
 
     @property

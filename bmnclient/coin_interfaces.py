@@ -39,12 +39,16 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
             name_suffix=LoggerUtils.coinToNameSuffix(coin),
             **kwargs)
 
-    def afterSetOffset(self) -> None:
-        for address in self._coin.addressList:
-            self._query_scheduler.updateCoinAddress(address)
+    def afterSetEnabled(self) -> None:
+        if self._database.isLoaded:
+            self._database.updateCoin(self._coin)
 
     def afterSetHeight(self) -> None:
         pass
+
+    def afterSetOffset(self) -> None:
+        for address in self._coin.addressList:
+            self._query_scheduler.updateCoinAddress(address)
 
     def afterSetStatus(self) -> None:
         pass

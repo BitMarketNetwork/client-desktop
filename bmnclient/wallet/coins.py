@@ -1,41 +1,16 @@
 from __future__ import annotations
 
-from typing import Iterable, Union
+from typing import Union
 
 import PySide2.QtCore as qt_core
 
-from . import coin_network, key
-from ..utils.meta import classproperty
-from ..coins import coin_bitcoin
-from ..coins import coin_litecoin
+from . import coin_network
+from ..coins import coin_bitcoin, coin_litecoin
 from ..coins.abstract.coin import AbstractCoin
 
 
 class CoinType(qt_core.QObject):
     network: coin_network.CoinNetworkBase = None
-    visibleChanged = qt_core.Signal()
-
-    @classproperty
-    def all(cls) -> Iterable:  # pylint: disable=E0213
-        return (val for _, val in globals().items() if isinstance(val, type) and issubclass(val, cls) and val is not cls)
-
-    def __init__(self):
-        super().__init__()
-        self.__visible = True
-
-    @property
-    def private_key(self) -> key.PrivateKey:
-        if self.__hd_node:
-            return self.__hd_node.key
-
-    @property
-    def tx_count(self) -> int:
-        return sum(len(w) for w in self._address_list)
-
-    def empty(self, skip_zero: bool) -> bool:
-        if skip_zero:
-            return next((w for w in self._address_list if self._amount != 0), None) is None
-        return not self
 
     def __iter__(self) -> "CoinType":
         self.__wallet_iter = iter(self._address_list)
@@ -62,17 +37,6 @@ class CoinType(qt_core.QObject):
             return self._address_list[key]
         if isinstance(key, str):
             return next((w for w in self._address_list if w.name == key), None)
-
-    @qt_core.Property(bool, notify=visibleChanged)
-    def visible(self) -> bool:
-        return self.__visible
-
-    @visible.setter
-    def _set_visible(self, ex: bool):
-        if ex != self.__visible:
-            self.__visible = ex
-            self.visibleChanged.emit()
-            self._state_model.refresh()
 
 
 class Bitcoin(CoinType, coin_bitcoin.Bitcoin):

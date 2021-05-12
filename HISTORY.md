@@ -1,5 +1,10 @@
 # BitMarket Network Client Change Log
 
+## 0.12.2 (xx.05.2021)
+
+* UI: The configuration of visible coins now works correctly.
+
+
 ## 0.12.1 (12.05.2021)
 * UI: Added server info to coin info page
 * Command line fixes:

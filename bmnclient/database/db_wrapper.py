@@ -84,7 +84,7 @@ class Database:
         query = " ".join((
             f"INSERT OR IGNORE INTO {self.coins_table} (",
             f"{self.name_column},",
-            f"{self.visible_column},",
+            f"{self.visible_column},",  # TODO to config
             f"{self.height_column},",
             f"{self.verified_height_column},",
             f"{self.offset_column},",
@@ -94,7 +94,7 @@ class Database:
         ))
         cursor = self.execute(query, (
             data["name"],
-            self.__impl(1),
+            data["enabled"],
             data["height"],
             data["verified_height"],
             data["offset"],
@@ -129,11 +129,12 @@ class Database:
             f"SELECT",
             f"id,"                                # 0
             f"{self.name_column},",               # 1
-            f"{self.height_column},",             # 2
-            f"{self.verified_height_column},",    # 3
-            f"{self.offset_column},",             # 4
-            f"{self.unverified_offset_column},",  # 5
-            f"{self.unverified_hash_column}",     # 6
+            f"{self.visible_column},",            # 2  # TODO to config
+            f"{self.height_column},",             # 3
+            f"{self.verified_height_column},",    # 4
+            f"{self.offset_column},",             # 5
+            f"{self.unverified_offset_column},",  # 6
+            f"{self.unverified_hash_column}",     # 7
             f"FROM {self.coins_table}"
         ))
         cursor = self.execute(query)
@@ -154,17 +155,19 @@ class Database:
                     continue
 
                 coin.rowId = int(value[0])
-                if coin.height < int(value[2]):
+                if coin.height < int(value[3]):
                     coin.deserialize(
                         coin,
                         name=coin_name,
-                        height=int(value[2]),
-                        verified_height=int(value[3]),
-                        offset=str(value[4]),
-                        unverified_offset=str(value[5]),
-                        unverified_hash=str(value[6]))
+                        enabled=int(value[2]),
+                        height=int(value[3]),
+                        verified_height=int(value[4]),
+                        offset=str(value[5]),
+                        unverified_offset=str(value[6]),
+                        unverified_hash=str(value[7]))
                 else:
                     self._logger.debug(f"Saved coin {coin_name} was skipped.")
+                    coin.enabled = int(value[2])
                     self.updateCoin(coin)
         return True
 
@@ -176,7 +179,7 @@ class Database:
         data = self._encryptDeserializedData(coin.serialize())
         query = " ".join((
             f"UPDATE {self.coins_table} SET",
-            f"{self.visible_column}=?,",            # 0
+            f"{self.visible_column}=?,",            # 0  # TODO to config
             f"{self.height_column}=?,",             # 1
             f"{self.verified_height_column}=?,",    # 2
             f"{self.offset_column}=?,",             # 3
@@ -185,7 +188,7 @@ class Database:
             f"WHERE id=?"                           # 6
         ))
         cursor = self.execute(query, (
-            self.__impl(1),
+            data["enabled"],
             data["height"],
             data["verified_height"],
             data["offset"],

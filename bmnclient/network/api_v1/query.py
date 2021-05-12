@@ -247,6 +247,9 @@ class CoinsInfoApiQuery(AbstractApiQuery):
             return
 
         for coin in self._coin_list:
+            if not coin.enabled:
+                continue
+
             parser = CoinsInfoParser()
             if not parser(value, coin.name):
                 self._logger.warning(
@@ -254,7 +257,10 @@ class CoinsInfoApiQuery(AbstractApiQuery):
                     coin.name)
                 continue
             coin.status = parser.status
-            coin.deserialize(coin, **parser.deserializedData)
+            coin.deserialize(
+                coin,
+                enabled=coin.enabled,
+                **parser.deserializedData)
 
 
 class AddressInfoApiQuery(AbstractApiQuery):
