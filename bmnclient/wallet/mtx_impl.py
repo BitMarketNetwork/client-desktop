@@ -213,20 +213,20 @@ class Mtx:
 
         # Optimize for speed, not memory, by pre-computing values.
         inputs = []
-        for unspent in utxo_list:
+        for utxo in utxo_list:
             script_sig = b''  # empty scriptSig for new unsigned transaction.
-            txid = util.hex_to_bytes(unspent.name)[::-1]
-            txindex = unspent.index.to_bytes(4, byteorder='little')
-            amount = int(unspent.amount).to_bytes(8, byteorder='little')
-            assert unspent.address
+            txid = util.hex_to_bytes(utxo.name)[::-1]
+            txindex = utxo.index.to_bytes(4, byteorder='little')
+            amount = int(utxo.amount).to_bytes(8, byteorder='little')
+            assert utxo.address
             inputs.append(
                 TxInput(
                     script_sig,
                     txid,
                     txindex,
                     amount=amount,
-                    segwit_input=unspent.segwit,
-                    address=unspent.address.name))
+                    segwit_input=utxo.segwit,
+                    address=utxo.address.name))
         out = cls(coin, version, inputs, outputs, lock_time)
         out.unspents = utxo_list
         return out
@@ -306,12 +306,12 @@ class Mtx:
     def sign(self, private_key, *, utxo_list: list = None) -> str:
         input_dict = {}
         try:
-            for unspent in (utxo_list or self.unspents):
+            for utxo in (utxo_list or self.unspents):
                 tx_input = \
-                    util.hex_to_bytes(unspent.name)[::-1] \
-                    + unspent.index.to_bytes(4, byteorder='little')
-                input_dict[tx_input] = unspent.serialize()
-                input_dict[tx_input]["segwit"] = unspent.segwit  # TODO tmp
+                    util.hex_to_bytes(utxo.name)[::-1] \
+                    + utxo.index.to_bytes(4, byteorder='little')
+                input_dict[tx_input] = utxo.serialize()
+                input_dict[tx_input]["segwit"] = utxo.segwit  # TODO tmp
         except TypeError:
             raise TypeError('please provide as unspents at least all inputs to '
                             'be signed with the function call in a list')

@@ -339,7 +339,7 @@ class AbstractAddress(Serializable):
         if self._amount != utxo_amount:
             # TODO test, notify
             self.amount = utxo_amount
-        self._coin.refreshUnspent()
+        self._coin.refreshUtxoList()
 
     @serializable
     @property

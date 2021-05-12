@@ -314,7 +314,7 @@ class AbstractCoin(Serializable):
         if self._model:
             self._model.afterRefreshAmount()
 
-    def refreshUnspent(self) -> None:
+    def refreshUtxoList(self) -> None:
         self._mutable_tx.refreshSourceList()
 
     def makeHdPath(self, purpose_path: HDNode) -> None:
