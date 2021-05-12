@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING
 
 from .address import AbstractAddress
 from .currency import AbstractCurrency
@@ -73,9 +73,16 @@ class AbstractCoin(Serializable):
     class MutableTx(MutableTransaction):  # TODO AbstractMutableTx
         pass
 
-    class MempoolCacheItem(TypedDict):
-        remote_hash: Optional[str]
-        access_count: int
+    class MempoolCacheItem:
+        __slots__ = ("remote_hash", "access_count")
+
+        def __init__(
+                self,
+                *,
+                remote_hash: Optional[str] = None,
+                access_count: int = 0) -> None:
+            self.remote_hash = remote_hash
+            self.access_count = access_count
 
     def __init__(
             self,
@@ -433,14 +440,12 @@ class AbstractCoin(Serializable):
         local_hash.update(b"\0")
         local_hash = local_hash.final()
         cache_value = self._mempool_cache.setdefault(
-            local_hash, {
-                "remote_hash": None,
-                "access_count": 0
-            })
-        cache_value["access_count"] = self._mempool_cache_access_counter
+            local_hash,
+            self.MempoolCacheItem())
+        cache_value.access_count = self._mempool_cache_access_counter
         return {
             "local_hash": local_hash,
-            "remote_hash": cache_value["remote_hash"],
+            "remote_hash": cache_value.remote_hash,
             "list": address_list
         }
 
@@ -471,7 +476,7 @@ class AbstractCoin(Serializable):
                 address_list))
 
         for key, cache_value in self._mempool_cache.copy().items():
-            if cache_value["access_count"] < self._mempool_cache_access_counter:
+            if cache_value.access_count < self._mempool_cache_access_counter:
                 del self._mempool_cache[key]
 
         return result
@@ -482,7 +487,7 @@ class AbstractCoin(Serializable):
             remote_hash: str) -> bool:
         cache_value = self._mempool_cache.get(local_hash)
         if cache_value is not None:
-            cache_value["remote_hash"] = remote_hash
+            cache_value.remote_hash = remote_hash
             return True
         return False
 
