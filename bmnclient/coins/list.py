@@ -3,8 +3,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .coin_bitcoin import Bitcoin, BitcoinTest
+from .coin_litecoin import Litecoin
 from ..utils.static_list import StaticList
-from ..wallet import coins
 
 if TYPE_CHECKING:
     from typing import Callable, Iterator, Optional, Union
@@ -18,9 +19,9 @@ class CoinList(StaticList):
             model_factory: Optional[Callable[[object], object]] = None) -> None:
         super().__init__(
             (
-                coins.Bitcoin(model_factory=model_factory),
-                coins.BitcoinTest(model_factory=model_factory),
-                coins.Litecoin(model_factory=model_factory)
+                Bitcoin(model_factory=model_factory),
+                BitcoinTest(model_factory=model_factory),
+                Litecoin(model_factory=model_factory)
             ),
             item_property="name"
         )

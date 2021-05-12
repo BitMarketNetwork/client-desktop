@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .coin_bitcoin import AbstractCoin, Bitcoin, BitcoinAddress
+from ..wallet.coin_network import LitecoinMainNetwork
 
 if TYPE_CHECKING:
     from typing import Final
@@ -35,6 +36,8 @@ class LitecoinAddress(BitcoinAddress):
 
 
 class Litecoin(Bitcoin):
+    network = LitecoinMainNetwork  # TODO tmp
+
     _SHORT_NAME = "ltc"
     _FULL_NAME = "Litecoin"
     _BIP0044_COIN_TYPE = 2

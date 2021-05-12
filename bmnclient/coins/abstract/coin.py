@@ -14,11 +14,14 @@ from ...utils.serialize import Serializable, serializable
 from ...wallet.mutable_tx import MutableTransaction
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+    from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+    from ...wallet.coin_network import CoinNetworkBase
     from ...wallet.hd import HDNode
 
 
 class AbstractCoin(Serializable):
+    network: Optional[Type[CoinNetworkBase]] = None  # TODO tmp
+
     _SHORT_NAME = ""
     _FULL_NAME = ""
     _IS_TEST_NET = False

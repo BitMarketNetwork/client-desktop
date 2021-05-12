@@ -7,6 +7,7 @@ from .abstract.coin import AbstractCoin
 from ..crypto.base58 import Base58
 from ..crypto.bech32 import Bech32
 from ..crypto.digest import Ripemd160Digest, Sha256Digest
+from ..wallet.coin_network import BitcoinMainNetwork, BitcoinTestNetwork
 
 if TYPE_CHECKING:
     from typing import Final, Optional
@@ -132,6 +133,8 @@ class BitcoinAddress(AbstractCoin.Address):
 
 
 class Bitcoin(AbstractCoin):
+    network = BitcoinMainNetwork  # TODO tmp
+
     _SHORT_NAME = "btc"
     _FULL_NAME = "Bitcoin"
     _BIP0044_COIN_TYPE = 0
@@ -170,6 +173,8 @@ class BitcoinTestAddress(BitcoinAddress):
 
 
 class BitcoinTest(Bitcoin):
+    network = BitcoinTestNetwork  # TODO tmp
+
     _SHORT_NAME = "btctest"
     _FULL_NAME = "Bitcoin Testnet"
     _IS_TEST_NET = True
