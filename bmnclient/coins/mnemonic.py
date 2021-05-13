@@ -70,9 +70,7 @@ class Mnemonic:
                 .format(self.DATA_LENGTH_LIST, len(data)),
                 self._logger)
 
-        h = Sha256Digest()
-        h.update(data)
-        h = h.final().hex()
+        h = Sha256Digest().update(data).finalize().hex()
 
         b = bin(int.from_bytes(data, byteorder="big"))[2:].zfill(len(data) * 8)
         b += bin(int(h, 16))[2:].zfill(256)[: len(data) * 8 // 32]
@@ -99,9 +97,7 @@ class Mnemonic:
         h = b[-j // 33:]
         nd = int(d, 2).to_bytes(j // 33 * 4, byteorder="big")
 
-        nh = Sha256Digest()
-        nh.update(nd)
-        nh = nh.final().hex()
+        nh = Sha256Digest().update(nd).finalize().hex()
         nh = bin(int(nh, 16))[2:].zfill(256)[: j // 33]
         return h == nh
 

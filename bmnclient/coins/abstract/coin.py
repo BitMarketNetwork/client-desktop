@@ -460,8 +460,7 @@ class AbstractCoin(Serializable):
             self,
             local_hash: Sha256Digest,
             address_list: List[str]) -> Dict[str, Any]:
-        local_hash.update(b"\0")
-        local_hash = local_hash.final()
+        local_hash = local_hash.update(b"\0").finalize()
         cache_value = self._mempool_cache.setdefault(
             local_hash,
             self.MempoolCacheItem())

@@ -15,7 +15,7 @@ from PySide2.QtCore import \
 from .coins.mnemonic import Mnemonic
 from .config import UserConfig
 from .crypto.cipher import AeadCipher, MessageCipher
-from .crypto.digest import Digest, Sha256Digest
+from .crypto.digest import Sha256Digest
 from .crypto.kdf import SecretStore
 from .crypto.password import PasswordStrength
 from .logger import Logger
@@ -24,6 +24,7 @@ from .wallet.hd import HDNode
 
 if TYPE_CHECKING:
     from typing import Callable, Final, List, Optional, Tuple
+    from .crypto.digest import AbstractDigest
 
 
 class KeyIndex(Enum):
@@ -50,7 +51,7 @@ class KeyStore(QObject):
         self._key_list: List[Optional[bytes]] = [None] * len(KeyIndex)
 
         self._mnemonic: Optional[Mnemonic] = None
-        self._mnemonic_salt_hash: Optional[Digest] = None
+        self._mnemonic_salt_hash: Optional[AbstractDigest] = None
 
         self._has_seed = False
 
@@ -132,7 +133,7 @@ class KeyStore(QObject):
             self._mnemonic = Mnemonic(language)
             self._mnemonic_salt_hash = Sha256Digest()
             self._mnemonic_salt_hash.update(os.urandom(64))
-            result = self._mnemonic_salt_hash.copy().final()
+            result = self._mnemonic_salt_hash.copy().finalize()
             result = result[:Mnemonic.DEFAULT_DATA_LENGTH]
             return self._mnemonic.getPhrase(result)
 
@@ -145,7 +146,7 @@ class KeyStore(QObject):
                     self._mnemonic_salt_hash.update(
                         salt.encode(encoding=Product.ENCODING))
                     self._mnemonic_salt_hash.update(os.urandom(4))
-                result = self._mnemonic_salt_hash.copy().final()
+                result = self._mnemonic_salt_hash.copy().finalize()
                 result = result[:Mnemonic.DEFAULT_DATA_LENGTH]
                 return self._mnemonic.getPhrase(result)
         return ""

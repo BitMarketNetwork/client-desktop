@@ -24,7 +24,7 @@ class KeyDerivationFunction:
             Product.SHORT_NAME.encode(encoding=Product.ENCODING))
         password_hash.update(
             password.encode(encoding=Product.ENCODING))
-        password_hash = password_hash.final()
+        password_hash = password_hash.finalize()
         self._password_hash = password_hash
 
     def derive(

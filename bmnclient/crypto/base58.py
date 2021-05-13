@@ -69,5 +69,5 @@ class Base58:
         digest0 = Sha256Digest()
         digest1 = Sha256Digest()
         digest0.update(source)
-        digest1.update(digest0.final())
-        return digest1.final()[:cls.CHECKSUM_SIZE]
+        digest1.update(digest0.finalize())
+        return digest1.finalize()[:cls.CHECKSUM_SIZE]
