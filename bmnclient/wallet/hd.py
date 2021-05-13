@@ -1,18 +1,14 @@
-import logging
-from . import util
-from . import coin_network
-from . import key
+from __future__ import annotations
 
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.hmac import HMAC
+import logging
+
+from . import coin_network, key, util
+from ..crypto.digest import Hmac, Sha512Digest
 
 log = logging.getLogger(__name__)
 
 SECP256k1_N = 0xFFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFE_BAAEDCE6_AF48A03B_BFD25E8C_D0364141
-UINT_MAX = (1 << 32) - 1
 HARDENED_MASK = 0x80000000
-
-key_count = 0
 
 
 class HDError(Exception):
@@ -35,11 +31,13 @@ class HDNode(key.AbstractAddressOld):
         return index | HARDENED_MASK
 
     @classmethod
-    def make_master(cls, seed: bytes) -> "HDNode":
-        I = cls.hmacSha512(b"Bitcoin seed", seed)
-        Il, Ir = I[:32], I[32:]
-        master = cls(key.PrivateKey.from_secret(Il, None))
-        master.chain_code = Ir
+    def make_master(cls, seed: bytes) -> HDNode:
+        key_i = Hmac(b"Bitcoin seed", Sha512Digest).update(seed).finalize()
+        key_i_l = key_i[:32]
+        key_i_r = key_i[32:]
+
+        master = cls(key.PrivateKey.from_secret(key_i_l, None))
+        master.chain_code = key_i_r
         return master
 
     @classmethod
@@ -130,7 +128,7 @@ class HDNode(key.AbstractAddressOld):
             data = priv + child_index_bytes
         else:
             data = pub + child_index_bytes
-        I_ = self.hmacSha512(self.chain_code, data)
+        I_ = Hmac(self.chain_code, Sha512Digest).update(data).finalize()
         Il, Ir = I_[:32], I_[32:]
         num_Il = util.bytes_to_number(Il)
         p256_Il = (num_Il + util.bytes_to_number(priv)) % SECP256k1_N
@@ -170,9 +168,3 @@ class HDNode(key.AbstractAddressOld):
             self.index != other.index or \
             self.chain_code != other.chain_code or \
             self != other
-
-    @classmethod
-    def hmacSha512(cls, key: bytes, data: bytes) -> bytes:
-        hmac = HMAC(key, hashes.SHA512())
-        hmac.update(data)
-        return hmac.finalize()
