@@ -27,7 +27,7 @@ class Base58:
         if check:
             source += cls._digest(source)
 
-        value = int.from_bytes(source[offset:], byteorder='big')
+        value = int.from_bytes(source[offset:], "big")
         result = []
         while value:
             value, mod = divmod(value, cls.BASE)
