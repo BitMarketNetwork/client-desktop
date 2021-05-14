@@ -14,7 +14,7 @@ from ecdsa.util import sigdecode_der, sigencode_der_canonize
 
 from .base58 import Base58
 from .bech32 import Bech32
-from .digest import HashlibWrapper, Ripemd160Digest, Sha256Digest
+from .digest import HashlibWrapper, Hash160Digest, Sha256Digest
 from ..utils.meta import classproperty
 
 if TYPE_CHECKING:
@@ -88,15 +88,13 @@ class PublicKey(AbstractKey):
         if not 0x00 <= version <= 0xff:
             return None
         version = version.to_bytes(1, self._BYTE_ORDER)
-        data = Sha256Digest(self.data).finalize()
-        data = Ripemd160Digest(data).finalize()
+        data = Hash160Digest(self.data).finalize()
         return Base58.encode(version + data)
 
     def toBech32Address(self, hrp: str, version: int) -> Optional[str]:
         if not self._compressed:
             return None
-        data = Sha256Digest(self.data).finalize()
-        data = Ripemd160Digest(data).finalize()
+        data = Hash160Digest(self.data).finalize()
         return Bech32.encode(hrp, version, data)
 
 

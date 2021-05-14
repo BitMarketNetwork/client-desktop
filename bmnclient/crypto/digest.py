@@ -154,6 +154,31 @@ class Blake2bDigest(AbstractDigestHazmat):
     _HAZMAT_ARGS: Final = (512 // 8, )
 
 
+# Ripemd160Digest after Sha256Digest
+class Hash160Digest(AbstractDigest):
+    _NAME: Final = "hash160"
+    _SIZE = Ripemd160Digest.size
+    _BLOCK_SIZE = Ripemd160Digest.blockSize
+
+    def __init__(
+            self,
+            data: Optional[bytes] = None,
+            *,
+            context: Optional[Sha256Digest] = None) -> None:
+        super().__init__(
+            data,
+            context=context or Sha256Digest())
+
+    def update(self, data: bytes) -> AbstractDigest:
+        return self._context.update(data)
+
+    def finalize(self) -> bytes:
+        return Ripemd160Digest(self._context.finalize()).finalize()
+
+    def copy(self) -> AbstractDigest:
+        return self.__class__(context=self._context.copy())
+
+
 class Hmac(AbstractDigest):
     def __init__(
             self,
