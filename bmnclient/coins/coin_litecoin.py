@@ -21,11 +21,13 @@ class LitecoinAddress(BitcoinAddress):
         PUBKEY_HASH: Final = AbstractCoin.Address.TypeValue(
             name=BitcoinAddress.Type.PUBKEY_HASH.value.name,
             version=0x30,
-            size=BitcoinAddress.Type.PUBKEY_HASH.value.size)
+            size=BitcoinAddress.Type.PUBKEY_HASH.value.size,
+            encoding=BitcoinAddress.Type.PUBKEY_HASH.value.encoding)
         SCRIPT_HASH: Final = AbstractCoin.Address.TypeValue(
             name=BitcoinAddress.Type.SCRIPT_HASH.value.name,
             version=0x32,
-            size=BitcoinAddress.Type.SCRIPT_HASH.value.size)
+            size=BitcoinAddress.Type.SCRIPT_HASH.value.size,
+            encoding=BitcoinAddress.Type.SCRIPT_HASH.value.encoding)
         WITNESS_V0_KEY_HASH: Final = \
             BitcoinAddress.Type.WITNESS_V0_KEY_HASH.value
         WITNESS_V0_SCRIPT_HASH: Final = \

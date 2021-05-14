@@ -1,10 +1,11 @@
 # JOK4
 from __future__ import annotations
 
-from enum import Enum
+from enum import auto, Enum
 from typing import TYPE_CHECKING
 
 from ...utils import filterNotNone
+from ...utils.meta import classproperty
 from ...utils.serialize import Serializable, serializable
 from ...wallet.hd import HDError, HDNode
 from ...wallet.key import PrivateKey
@@ -15,12 +16,19 @@ if TYPE_CHECKING:
 
 
 class _AbstractAddressTypeValue:
-    __slots__ = ("_name", "_version", "_size")
+    __slots__ = ("_name", "_version", "_size", "_encoding")
 
-    def __init__(self, *, name: str, version: int, size: int) -> None:
+    def __init__(
+            self,
+            *,
+            name: str,
+            version: int,
+            size: int,
+            encoding: AbstractCoin.Address.Encoding) -> None:
         self._name = name
         self._version = version
         self._size = size
+        self._encoding = encoding
 
     def __eq__(self, other: _AbstractAddressTypeValue) -> bool:
         return (
@@ -28,10 +36,15 @@ class _AbstractAddressTypeValue:
                 and self._name == other._name
                 and self._version == other._version
                 and self._size == other._size
+                and self._encoding == other._encoding
         )
 
     def __hash__(self) -> int:
-        return hash((self._name, self._version, self._size))
+        return hash((
+            self._name,
+            self._version,
+            self._size,
+            self._encoding))
 
     @property
     def name(self) -> str:
@@ -45,9 +58,14 @@ class _AbstractAddressTypeValue:
     def size(self) -> int:
         return self._size
 
+    @property
+    def encoding(self) -> AbstractCoin.Address.Encoding:
+        return self._encoding
+
 
 class AbstractAddress(Serializable):
     _NULLDATA_NAME = "NULL_DATA"
+    _HRP = "hrp"
 
     class Interface:
         def __init__(
@@ -84,6 +102,11 @@ class AbstractAddress(Serializable):
 
         def afterSetHistoryLastOffset(self) -> None:
             raise NotImplementedError
+
+    class Encoding(Enum):
+        NONE = auto()
+        BASE58 = auto()
+        BECH32 = auto()
 
     class TypeValue(_AbstractAddressTypeValue):
         pass
@@ -176,6 +199,10 @@ class AbstractAddress(Serializable):
         if key == "private_key":
             return self.exportPrivateKey()
         return super()._serializeProperty(key, value)
+
+    @classproperty
+    def hrp(cls) -> str:  # noqa
+        return cls._HRP
 
     @property
     def model(self) -> Optional[AbstractCoin.Address.Interface]:
