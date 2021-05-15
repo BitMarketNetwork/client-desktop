@@ -167,9 +167,9 @@ class AbstractAddress(Serializable):
 
     def __hash__(self) -> int:
         return hash((
-            self.coin.__hash__(),
+            self.coin,
             self._name,
-            self._type.__hash__()
+            self._type
         ))
 
     @classmethod

@@ -40,6 +40,25 @@ class HdNode:
         assert 0x00 <= self._depth <= 0xff
         assert len(self._parent_fingerprint) == 4
 
+    def __eq__(self, other: HdNode) -> bool:
+        return (
+                isinstance(other, self.__class__)
+                and self._chain_code == other._chain_code
+                and self._depth == other._depth
+                and self._index == other._index
+                and self._parent_fingerprint == other._parent_fingerprint
+                and self.publicKey == other.publicKey
+        )
+
+    def __hash__(self) -> int:
+        return hash((
+            self._chain_code,
+            self._depth,
+            self._index,
+            self._parent_fingerprint,
+            self.publicKey
+        ))
+
     @property
     def publicKey(self) -> PublicKey:
         return self.__key.publicKey if self.__is_private_key else self.__key
@@ -281,29 +300,3 @@ class HdNode:
             _type=type_,
             private_key=self,  # TODO
             **kwargs)
-
-    # TODO
-    @property
-    def to_wif(self) -> str:
-        return self.key.to_wif
-
-    # TODO
-    @property
-    def to_hex(self) -> str:
-        return self.key.to_hex
-
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            raise NotImplementedError
-        return self.depth == other.depth and \
-            self.index == other.index and \
-            self.chain_code == other.chain_code and \
-            self.key == self.key
-
-    def __ne__(self, other):
-        if not isinstance(other, self.__class__):
-            raise NotImplementedError
-        return self.depth != other.depth or \
-            self.index != other.index or \
-            self.chain_code != other.chain_code or \
-            self != other

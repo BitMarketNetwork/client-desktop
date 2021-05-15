@@ -322,11 +322,16 @@ class TestCoins(TestCase):
                 self.assertEqual(len(coin._mempool_cache), len(mempool_list))
 
     def test_serialization(self) -> None:
-        root_path = HdNode.make_master(randbytes(64))
-        purpose_path = root_path.make_child_prv(44, True)
+        root_path = HdNode.deriveRootNode(randbytes(64))
+        self.assertIsNotNone(root_path)
 
-        from bmnclient.wallet.coins import Bitcoin as BitcoinOld
-        coin = BitcoinOld()
+        purpose_path = root_path.deriveChildNode(
+            44,
+            hardened=True,
+            private=True)
+        self.assertIsNotNone(purpose_path)
+
+        coin = Bitcoin()
         coin.makeHdPath(purpose_path)
         coin.height = randint(1000, 100000)
         coin.offset = "offset" + str(randint(1000, 100000))
@@ -394,8 +399,8 @@ class TestCoins(TestCase):
         # from pprint import pprint
         # pprint(data, sort_dicts=False)
 
-        coin_new = BitcoinOld()
-        BitcoinOld.deserialize(coin_new, **data)
+        coin_new = Bitcoin()
+        Bitcoin.deserialize(coin_new, **data)
 
         # coin compare
         self.assertEqual(coin.name, coin_new.name)

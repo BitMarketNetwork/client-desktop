@@ -229,6 +229,7 @@ class TestHd(TestCase):
     def test_hd_address_index(self) -> None:
         coin = Bitcoin()
         root_node = hd.HdNode.deriveRootNode(random.randbytes(64))
+        self.assertIsNotNone(root_node)
         coin.makeHdPath(root_node)
 
         for i in range(10):
@@ -240,10 +241,12 @@ class TestHd(TestCase):
 class TestHdAddressIterator(TestCase):
     def setUp(self) -> None:
         root_node = HdNode.deriveRootNode(random.randbytes(64))
+        self.assertIsNotNone(root_node)
         self._purpose_node = root_node.deriveChildNode(
             44,
             hardened=True,
             private=True)
+        self.assertIsNotNone(self._purpose_node)
 
     def test(self) -> None:
         coin = Bitcoin()

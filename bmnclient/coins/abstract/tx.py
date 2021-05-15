@@ -51,8 +51,8 @@ class _AbstractTxIo(Serializable):
 
     def __hash__(self) -> int:
         return hash((
-            self._coin.__hash__(),
-            self._address.__hash__(),
+            self._coin,
+            self._address,
             self._address.amount,
             self._output_type
         ))
@@ -136,7 +136,7 @@ class _AbstractUtxo(Serializable):
 
     def __hash__(self) -> int:
         return hash((
-            self._coin.__hash__(),
+            self._coin,
             self._name,
             # self._height
             self._index,
@@ -250,7 +250,7 @@ class AbstractTx(Serializable):
         )
 
     def __hash__(self) -> int:
-        return hash((self._coin.__hash__(), self._name, ))
+        return hash((self._coin, self._name, ))
 
     @classmethod
     def _deserializeProperty(

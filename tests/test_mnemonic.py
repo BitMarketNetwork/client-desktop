@@ -33,7 +33,8 @@ class TestMnemonic(TestCase):
         self.assertEqual(generated_seed.hex(), seed)
 
         # TODO
-        hd_node = HdNode.make_master(generated_seed)
+        hd_node = HdNode.deriveRootNode(generated_seed)
+        self.assertIsNotNone(hd_node)
         from bmnclient.wallet.coin_network import BitcoinMainNetwork
         hd_node.key._network = BitcoinMainNetwork
         self.assertEqual(bip32_xprv, hd_node.extended_key)
