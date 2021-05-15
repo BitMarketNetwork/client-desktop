@@ -14,7 +14,7 @@ from ecdsa.util import sigdecode_der, sigencode_der_canonize
 
 from .base58 import Base58
 from .bech32 import Bech32
-from .digest import HashlibWrapper, Hash160Digest, Sha256Digest
+from .digest import Hash160Digest, HashlibWrapper, Sha256Digest
 from ..utils.meta import classproperty
 
 if TYPE_CHECKING:
@@ -25,10 +25,31 @@ def _hashHelper(data: Optional[bytes] = None):
     return HashlibWrapper(Sha256Digest(data))
 
 
+class KeyUtils:
+    _BYTE_ORDER: Final = "big"
+    # secp256k1 n
+    _N: Final = \
+        0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
+
+    @classproperty
+    def n(cls) -> int:  # noqa
+        return cls._N
+
+    @classmethod
+    def integerToBytes(cls, value: int, length) -> Optional[bytes]:  # noqa
+        try:
+            return value.to_bytes(length, cls._BYTE_ORDER)
+        except OverflowError:
+            return None
+
+    @classmethod
+    def integerFromBytes(cls, value: bytes) -> int:  # noqa
+        return int.from_bytes(value, cls._BYTE_ORDER)
+
+
 class AbstractKey:
     _SIZE: int = 256 // 8
     _COMPRESSED_FLAG: int = 0x01
-    _BYTE_ORDER: Final = "big"
 
     def __init__(
             self,
@@ -50,8 +71,8 @@ class AbstractKey:
         return hash((self._compressed, self.data))
 
     @classproperty
-    def size(self) -> int:
-        return self._SIZE
+    def size(cls) -> int:  # noqa
+        return cls._SIZE
 
     @property
     def compressed(self) -> bool:
@@ -85,9 +106,9 @@ class PublicKey(AbstractKey):
             return False
 
     def toBase58Address(self, version: int) -> Optional[str]:
-        if not 0x00 <= version <= 0xff:
+        version = KeyUtils.integerToBytes(version, 1)
+        if version is None:
             return None
-        version = version.to_bytes(1, self._BYTE_ORDER)
         data = Hash160Digest(self.data).finalize()
         return Base58.encode(version + data)
 
@@ -116,7 +137,7 @@ class PrivateKey(AbstractKey):
             *,
             compressed: bool) -> Optional[PrivateKey]:
         return cls.fromSecretKey(
-            int.from_bytes(secret_data, cls._BYTE_ORDER),
+            KeyUtils.integerFromBytes(secret_data),
             compressed=compressed)
 
     @classmethod
@@ -156,7 +177,7 @@ class PrivateKey(AbstractKey):
             return 0, None
 
         result = cls.fromSecretKey(
-            int.from_bytes(result, cls._BYTE_ORDER),
+            KeyUtils.integerFromBytes(result),
             compressed=compressed)
         if result is None:
             return 0, None
@@ -164,11 +185,12 @@ class PrivateKey(AbstractKey):
         return version, result
 
     def toWif(self, version: int) -> Optional[str]:
-        if not 0x00 <= version <= 0xff:
+        result = KeyUtils.integerToBytes(version, 1)
+        if result is None:
             return None
-        result = version.to_bytes(1, self._BYTE_ORDER) + self.data
+        result += self.data
         if self._compressed:
-            result += self._COMPRESSED_FLAG.to_bytes(1, self._BYTE_ORDER)
+            result += KeyUtils.integerToBytes(self._COMPRESSED_FLAG, 1)
         return Base58.encode(result)
 
     @property
