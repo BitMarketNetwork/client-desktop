@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ecdsa.curves import SECP256k1
+from ecdsa.ellipticcurve import INFINITY, Point
 from ecdsa.keys import \
     BadDigestError, \
     BadSignatureError, \
@@ -15,36 +16,34 @@ from ecdsa.util import sigdecode_der, sigencode_der_canonize
 from .base58 import Base58
 from .bech32 import Bech32
 from .digest import Hash160Digest, HashlibWrapper, Sha256Digest
-from ..utils.meta import classproperty
+from ..utils.meta import classproperty, NotImplementedInstance
 
 if TYPE_CHECKING:
     from typing import Final, Optional, Tuple, Union
+
+_BYTE_ORDER: Final = "big"
+_CURVE: Final = SECP256k1
 
 
 def _hashHelper(data: Optional[bytes] = None):
     return HashlibWrapper(Sha256Digest(data))
 
 
-class KeyUtils:
-    _BYTE_ORDER: Final = "big"
-    # secp256k1 n
-    _N: Final = \
-        0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
-
+class KeyUtils(NotImplementedInstance):
     @classproperty
     def n(cls) -> int:  # noqa
-        return cls._N
+        return _CURVE.order
 
-    @classmethod
-    def integerToBytes(cls, value: int, length) -> Optional[bytes]:  # noqa
+    @staticmethod
+    def integerToBytes(value: int, length) -> Optional[bytes]:
         try:
-            return value.to_bytes(length, cls._BYTE_ORDER)
+            return value.to_bytes(length, _BYTE_ORDER)
         except OverflowError:
             return None
 
-    @classmethod
-    def integerFromBytes(cls, value: bytes) -> int:  # noqa
-        return int.from_bytes(value, cls._BYTE_ORDER)
+    @staticmethod
+    def integerFromBytes(value: bytes) -> int:
+        return int.from_bytes(value, _BYTE_ORDER)
 
 
 class AbstractKey:
@@ -90,10 +89,42 @@ class AbstractKey:
 
 
 class PublicKey(AbstractKey):
+    @classmethod
+    def fromPublicInteger(
+            cls,
+            integer: int,
+            parent_point: Optional[Tuple[int, int]],
+            *,
+            is_compressed: bool) -> Optional[PublicKey]:
+        try:
+            point = integer * _CURVE.generator
+            if parent_point is not None:
+                point += Point(
+                    _CURVE.curve,
+                    parent_point[0],
+                    parent_point[1],
+                    _CURVE.order)
+            if point == INFINITY:
+                return None
+
+            key = VerifyingKey.from_public_point(
+                point,
+                _CURVE,
+                _hashHelper,
+                True)
+        except (MalformedPointError, RuntimeError):
+            return None
+
+        return cls(key, is_compressed=is_compressed)
+
     @property
     def data(self) -> bytes:
         encoding = "compressed" if self._is_compressed else "uncompressed"
         return self._data(encoding)
+
+    @property
+    def point(self) -> Tuple[int, int]:
+        return self._key.pubkey.point.x(), self._key.pubkey.point.y()
 
     def verify(self, signature: bytes, data: bytes) -> bool:
         data = Sha256Digest(data).finalize()
@@ -136,20 +167,20 @@ class PrivateKey(AbstractKey):
             secret_data: bytes,
             *,
             is_compressed: bool) -> Optional[PrivateKey]:
-        return cls.fromSecretKey(
+        return cls.fromSecretInteger(
             KeyUtils.integerFromBytes(secret_data),
             is_compressed=is_compressed)
 
     @classmethod
-    def fromSecretKey(
+    def fromSecretInteger(
             cls,
-            secret_key: int,
+            integer: int,
             *,
             is_compressed: bool) -> Optional[PrivateKey]:
         try:
             key = SigningKey.from_secret_exponent(
-                secret_key,
-                SECP256k1,
+                integer,
+                _CURVE,
                 _hashHelper)
         except (MalformedPointError, RuntimeError):
             return None
@@ -176,7 +207,7 @@ class PrivateKey(AbstractKey):
         if len(result) != cls.size:
             return 0, None
 
-        result = cls.fromSecretKey(
+        result = cls.fromSecretInteger(
             KeyUtils.integerFromBytes(result),
             is_compressed=is_compressed)
         if result is None:
