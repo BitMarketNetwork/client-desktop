@@ -4,11 +4,11 @@ from __future__ import annotations
 from enum import auto, Enum
 from typing import TYPE_CHECKING
 
+from ...crypto.secp256k1 import PrivateKey, PublicKey
 from ...utils import filterNotNone
 from ...utils.meta import classproperty
 from ...utils.serialize import Serializable, serializable
 from ...wallet.hd import HdNode
-from ...wallet.key import PrivateKey
 
 if TYPE_CHECKING:
     from typing import Any, List, Optional, Tuple
@@ -119,9 +119,9 @@ class AbstractAddress(Serializable):
             coin: AbstractCoin,
             *,
             name: Optional[str],
-            _type: AbstractCoin.Address.Type,
+            type_: AbstractCoin.Address.Type,
             data: bytes = b"",
-            private_key: Optional[HdNode, PrivateKey] = None,
+            key: Optional[HdNode, PrivateKey, PublicKey] = None,
             amount: int = 0,
             tx_count: int = 0,
             label: str = "",
@@ -134,9 +134,9 @@ class AbstractAddress(Serializable):
 
         self._coin = coin
         self._name = name or self._NULLDATA_NAME
-        self._type = _type
+        self._type = type_
         self._data = data
-        self._private_key = private_key
+        self._key = key
         self._amount = amount
         self._label = label
         self._comment = comment
@@ -185,7 +185,7 @@ class AbstractAddress(Serializable):
             args: Tuple[Any],
             key: str,
             value: Any) -> Any:
-        if isinstance(value, str) and key == "private_key":
+        if isinstance(value, str) and key == "key":
             return cls.importPrivateKey(value)
         if isinstance(value, dict) and key == "tx_list":
             coin: AbstractCoin = args[0]
@@ -196,7 +196,7 @@ class AbstractAddress(Serializable):
         return super()._deserializeProperty(args, key, value)
 
     def _serializeProperty(self, key: str, value: Any) -> Any:
-        if key == "private_key":
+        if key == "key":
             return self.exportPrivateKey()
         return super()._serializeProperty(key, value)
 
@@ -243,13 +243,25 @@ class AbstractAddress(Serializable):
     def data(self) -> bytes:
         return self._data
 
+    @property
+    def publicKey(self) -> Optional[PublicKey]:
+        if isinstance(self._key, HdNode):
+            value = self._key.publicKey
+        elif isinstance(self._key, PrivateKey):
+            value = self._key.publicKey
+        elif isinstance(self._key, PublicKey):
+            value = self._key
+        else:
+            value = None
+        return value
+
     @serializable
     @property
     def privateKey(self) -> Optional[PrivateKey]:
-        if isinstance(self._private_key, HdNode):
-            value = self._private_key.key
-        elif isinstance(self._private_key, PrivateKey):
-            value = self._private_key
+        if isinstance(self._key, HdNode):
+            value = self._key.privateKey
+        elif isinstance(self._key, PrivateKey):
+            value = self._key
         else:
             value = None
         return value
@@ -274,8 +286,8 @@ class AbstractAddress(Serializable):
 
     @property
     def hdIndex(self) -> int:
-        if isinstance(self._private_key, HdNode):
-            index = self._private_key.index
+        if isinstance(self._key, HdNode):
+            index = self._key.index
             if index >= 0:
                 return index
         return -1

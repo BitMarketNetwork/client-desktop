@@ -131,14 +131,13 @@ class TestCoins(TestCase):
             address_cls: Type[AbstractCoin.Address],
             address_list: Iterable[tuple]) -> None:
         # noinspection PyUnusedLocal
-        for (address, type_, version, data) in address_list:
-            a = address_cls.decode(coin, name=address)
+        for (address, type_, version, hash_) in address_list:
+            address = address_cls.decode(coin, name=address)
             if type_ is None:
-                self.assertIsNone(a)
+                self.assertIsNone(address)
             else:
-                self.assertIsNotNone(a)
-                self.assertEqual(type_, a.type)
-                self.assertEqual(data, a.data.hex())
+                self.assertIsNotNone(address)
+                self.assertEqual(type_, address.type)
 
     def test_address_decode(self) -> None:
         self._test_address_decode(
@@ -274,7 +273,7 @@ class TestCoins(TestCase):
                 address = coin.Address(
                     coin,
                     name="address_{:06d}".format(i),
-                    _type=None)
+                    type_=coin.Address.Type.UNKNOWN)
                 self.assertTrue(coin.appendAddress(address))
 
             limit = randint(1, 10)
@@ -314,7 +313,7 @@ class TestCoins(TestCase):
                 address = coin.Address(
                     coin,
                     name="address_new_{:06d}".format(i),
-                    _type=None)
+                    type_=coin.Address.Type.UNKNOWN)
                 self.assertTrue(coin.appendAddress(address))
 
                 mempool_list = coin.createMempoolAddressLists(limit)

@@ -297,6 +297,6 @@ class HdNode:
         return coin.Address(
             coin,
             name=name,
-            _type=type_,
+            type_=type_,
             key=self,
             **kwargs)

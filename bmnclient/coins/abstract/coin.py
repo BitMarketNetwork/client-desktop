@@ -382,8 +382,9 @@ class AbstractCoin(Serializable):
         # FIXME broken path!
         index = 0
         for address in self._address_list:
-            if address.hdIndex >= index:
-                index = address.hdIndex + 1
+            address_index = address.hdIndex
+            if address_index >= index:
+                index = address_index + 1
         return index
 
     def deriveHdAddress(
