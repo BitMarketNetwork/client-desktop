@@ -31,3 +31,14 @@ def classproperty(func) -> ClassProperty:
     if not isinstance(func, classmethod):
         func = classmethod(func)
     return ClassProperty(func)
+
+
+class NotImplementedInstanceError(Exception):
+    pass
+
+
+class NotImplementedInstance:
+    def __init__(self, *args, **kwargs) -> None:
+        raise NotImplementedInstanceError(
+            "__init__ not implemented for class '{}'"
+            .format(self.__class__.__name__))

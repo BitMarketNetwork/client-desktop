@@ -3,23 +3,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utils.meta import classproperty
+from ...utils.meta import classproperty, NotImplementedInstance
 
 if TYPE_CHECKING:
     from typing import Optional
     from ...language import Locale
 
 
-class AbstractCurrency:
+class AbstractCurrency(NotImplementedInstance):
     _DECIMAL_SIZE = (0, 0)
     _VALUE_BITS = 63  # int64
     _NAME = "YYY"
     _UNIT = "YYY"
     __string_template: Optional[str] = None
-
-    def __init__(self) -> None:
-        raise Exception(
-            "__init__ disabled for class {}".format(self.__class__.__name__))
 
     @classproperty
     def name(cls) -> str: # noqa
