@@ -156,19 +156,6 @@ class PublicKey(AbstractKey):
         except (BadSignatureError, BadDigestError):
             return False
 
-    def toBase58Address(self, version: int) -> Optional[str]:
-        version = KeyUtils.integerToBytes(version, 1)
-        if version is None:
-            return None
-        data = Hash160Digest(self.data).finalize()
-        return Base58.encode(version + data)
-
-    def toBech32Address(self, hrp: str, version: int) -> Optional[str]:
-        if not self._is_compressed:
-            return None
-        data = Hash160Digest(self.data).finalize()
-        return Bech32.encode(hrp, version, data)
-
 
 class PrivateKey(AbstractKey):
     def __init__(

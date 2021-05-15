@@ -5,7 +5,8 @@ from unittest import TestCase
 
 from bmnclient.crypto.base58 import Base58
 from bmnclient.crypto.bech32 import Bech32
-from bmnclient.crypto.secp256k1 import PrivateKey
+from bmnclient.crypto.digest import Hash160Digest
+from bmnclient.crypto.secp256k1 import KeyUtils, PrivateKey
 
 # https://learnmeabitcoin.com/technical/wif
 # https://learnmeabitcoin.com/technical/public-key
@@ -75,18 +76,21 @@ class TestSecp256k1(TestCase):
 
             b = Base58.decode(key_data["base58_address"])
             self.assertIsNotNone(b)
-            b_version = int(b[0])
-            self.assertEqual(
-                key_data["base58_address"],
-                key.publicKey.toBase58Address(b_version))
+            b_version = KeyUtils.integerToBytes(b[0], 1)
+            self.assertIsNotNone(b_version)
+            b = Base58.encode(
+                b_version + Hash160Digest(key.publicKey.data).finalize())
+            self.assertEqual(key_data["base58_address"], b)
 
             if key_data["bech32_address"] is None:
-                self.assertIsNone(key.publicKey.toBech32Address("bc", 0))
+                self.assertFalse(key.isCompressed)
             else:
                 (b_hrp, b_version, _) = Bech32.decode(
                     key_data["bech32_address"])
                 self.assertIsNotNone(b_hrp)
                 self.assertIsNotNone(b_version)
-                self.assertEqual(
-                    key_data["bech32_address"],
-                    key.publicKey.toBech32Address(b_hrp, b_version))
+                b = Bech32.encode(
+                    b_hrp,
+                    b_version,
+                    Hash160Digest(key.publicKey.data).finalize())
+                self.assertEqual(key_data["bech32_address"], b)
