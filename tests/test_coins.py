@@ -322,17 +322,17 @@ class TestCoins(TestCase):
                 self.assertEqual(len(coin._mempool_cache), len(mempool_list))
 
     def test_serialization(self) -> None:
-        root_path = HdNode.deriveRootNode(randbytes(64))
-        self.assertIsNotNone(root_path)
+        root_node = HdNode.deriveRootNode(randbytes(64))
+        self.assertIsNotNone(root_node)
 
-        purpose_path = root_path.deriveChildNode(
+        purpose_node = root_node.deriveChildNode(
             44,
             hardened=True,
             private=True)
-        self.assertIsNotNone(purpose_path)
+        self.assertIsNotNone(purpose_node)
 
         coin = Bitcoin()
-        coin.makeHdPath(purpose_path)
+        coin.deriveHdNode(purpose_node)
         coin.height = randint(1000, 100000)
         coin.offset = "offset" + str(randint(1000, 100000))
         coin.unverifiedOffset = "u_offset" + str(randint(1000, 100000))

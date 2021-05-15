@@ -230,7 +230,7 @@ class TestHd(TestCase):
         coin = Bitcoin()
         root_node = hd.HdNode.deriveRootNode(random.randbytes(64))
         self.assertIsNotNone(root_node)
-        coin.makeHdPath(root_node)
+        coin.deriveHdNode(root_node)
 
         for i in range(10):
             self.assertEqual(coin.nextHdIndex(0, False), i)
@@ -250,7 +250,7 @@ class TestHdAddressIterator(TestCase):
 
     def test(self) -> None:
         coin = Bitcoin()
-        coin.makeHdPath(self._purpose_node)
+        coin.deriveHdNode(self._purpose_node)
 
         flush = 0
         append = 0

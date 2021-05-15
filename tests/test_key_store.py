@@ -30,7 +30,10 @@ class TestKeyStore(TestCase):
         self.user_config = None
 
     def test_secret_store_value(self) -> None:
-        key_store = KeyStore(None, self.user_config)
+        key_store = KeyStore(
+            user_config=self.user_config,
+            open_callback=lambda *_: None,
+            reset_callback=lambda *_: None)
         # noinspection PyProtectedMember
         self.assertEqual(len(KeyIndex), len(key_store._nonce_list))
         # noinspection PyProtectedMember
@@ -57,7 +60,10 @@ class TestKeyStore(TestCase):
             self.assertIsInstance(key_store._getKey(k), bytes)
 
     def test_password(self) -> None:
-        key_store = KeyStore(None, self.user_config)
+        key_store = KeyStore(
+            user_config=self.user_config,
+            open_callback=lambda *_: None,
+            reset_callback=lambda *_: None)
 
         self.assertFalse(key_store.hasPassword)
         self.assertIsNone(
@@ -103,7 +109,10 @@ class TestKeyStore(TestCase):
             self.user_config.get(UserConfig.KEY_KEY_STORE_VALUE, str))
 
     def test_generate_seed_phrase(self) -> None:
-        key_store = KeyStore(None, self.user_config)
+        key_store = KeyStore(
+            user_config=self.user_config,
+            open_callback=lambda *_: None,
+            reset_callback=lambda *_: None)
         self.assertFalse(key_store.hasPassword)
         self.assertTrue(key_store.createPassword(self.password))
         self.assertTrue(key_store.applyPassword(self.password))
@@ -147,7 +156,11 @@ class TestKeyStore(TestCase):
             self.assertEqual(phrase2, result[1])
 
     def test_restore_seed_phrase(self) -> None:
-        key_store = KeyStore(None, self.user_config)
+        key_store = KeyStore(
+            user_config=self.user_config,
+            open_callback=lambda *_: None,
+            reset_callback=lambda *_: None)
+
         self.assertFalse(key_store.hasPassword)
         self.assertTrue(key_store.createPassword(self.password))
         self.assertTrue(key_store.applyPassword(self.password))
