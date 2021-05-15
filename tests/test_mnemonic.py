@@ -4,6 +4,7 @@ import os
 import random
 from unittest import TestCase
 
+from bmnclient.coins.coin_bitcoin import Bitcoin
 from bmnclient.coins.mnemonic import Mnemonic
 from bmnclient.wallet.hd import HdNode
 from tests import getLogger, TEST_DATA_PATH
@@ -32,12 +33,11 @@ class TestMnemonic(TestCase):
         generated_seed = Mnemonic.phraseToSeed(phrase, password)
         self.assertEqual(generated_seed.hex(), seed)
 
-        # TODO
-        hd_node = HdNode.deriveRootNode(generated_seed)
-        self.assertIsNotNone(hd_node)
-        from bmnclient.wallet.coin_network import BitcoinMainNetwork
-        hd_node.key._network = BitcoinMainNetwork
-        self.assertEqual(bip32_xprv, hd_node.extended_key)
+        root_node = HdNode.deriveRootNode(generated_seed)
+        self.assertIsNotNone(root_node)
+        self.assertEqual(bip32_xprv, root_node.toExtendedKey(
+            Bitcoin.bip0032VersionPrivateKey,
+            private=True))
 
     def test_seed_en(self) -> None:
         test_list = json.loads(

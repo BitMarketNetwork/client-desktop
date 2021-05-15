@@ -275,8 +275,7 @@ class HdNode:
                 return None
         return node
 
-    # TODO
-    def toAddress(
+    def createAddress(
             self,
             coin: AbstractCoin,
             type_: AbstractCoin.Address.Type,
@@ -294,9 +293,10 @@ class HdNode:
             name = Bech32.encode(coin.Address.hrp, type_.value.version, name)
         else:
             return None
+
         return coin.Address(
             coin,
             name=name,
             _type=type_,
-            private_key=self,  # TODO
+            key=self,
             **kwargs)
