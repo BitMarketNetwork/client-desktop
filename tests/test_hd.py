@@ -99,11 +99,45 @@ LEVELS_PATH_LIST = (
     ("m/4294967296", None),
 )
 
+# data from https://iancoleman.io/bip39/
+PUBLIC_KEY_ROOT_SEED = "a7d4b121dd7240b4122509060da1acdcd55d85ab09d5c6249e8d2cf530142ab8b0b99b511c8ab3778a6e62f8c7fdf3524eb7fddab29aa49a5329bf1aa3d403e6"  # noqa
+PUBLIC_KEY_PATH_LIST = {
+    "m/0": "xpub69PLnHQACW9e7DpECfkdGpqk7h4Z9M8MdGgYSQEjVYHFRzpYqshxRTAZWrKGt8XJhqrfYbYC1JURDjevFUNpk51mta38EbMbN4qDHm26f61",  # noqa
+    "m/0/1": "xpub6AUip5vufjmgE6oDSoAXswSKsHG8ABr5AxNedpnBiuJW64xrurc7CaY1gwGLJ4PMds2VnssFFexPnT1GvxE5YEeC5oR6Cag9bMNMphBJxPM",  # noqa
+    "m/0/1/2": "xpub6CRz7SMHQTHEgHFq5whoNpvs9Rf3gTfCsoFtFB8Nipjf3ATPdGJ6GvqNthbRyp8iqnPEWZUfWiFtiUk6wGduCW3zEcGFtkCqYS21hqwM6Au", # noqa
+    "m/0/1/2/3": "xpub6EJR9VYp4YKnyFtsVjrtJ2BXaFDzFXgDrTtn9QwTYeJM2rB2RMdNcte54JrPEomKY8AB2XJEYuqmP6Ty9nQCegRuvmbxXFpx4cZRPGapgUv",  # noqa
+    "m/0/1/2/3/4/5": "xpub6JELTtwmGq9eMz8RMKCEgyGNeiydWYVVK6GyNyp45s4pspiM6n2W2xxomE6Lqox86Pe4VwzLMfoSakr5CxchY9RkDdg21xMvtr2474o5q8p",  # noqa
+    "m/5": "xpub69PLnHQACW9eHy3pM678VstoZAke9ioaxDtSafz42375VPs24P7dw3gzGTjeQ8i1tBYoxic8VQYUmRHhy6wLGAYAmLURAAiDGGMPsycGmf5",  # noqa
+    "m/5/4": "xpub6ALK4QJGfad6hKcdDmA3JsZ1GcPUeXnwFva6RGVWuefp1CS6eSVC6krcw5iAjQbbTKgGMNnpWgX1Pvv61zUtbF4R28DBjhJx8pLZGdHXBve",  # noqa
+    "m/5/4/3": "xpub6CvLsvdDDbUXn6NxgPdzHfbe1afg8V8npCS7teWaDsFA1WVvWT1g8pdd7U5zEMmybb9ngpJAukaWLtwyfCE1hBqqCKmZzbUBLUJZzQZ3EDk",  # noqa
+    "m/5/4/3/2": "xpub6DjXp4LW8ZYq4S2hZsXfAKjWrjVdpALCdPDYirWtaJFEaw2M7yJ46UAjpcNeATWezoadLJegySUWuTmpshsSigMvx4B3wEVbGt37i3ezGnG",  # noqa
+    "m/5/4/3/2/1": "xpub6FSGCME7EqcZayAiGM4tmbtJrJcedMegqvsB9tvFSN9cy5XPTCcKKcpYfJdCEtokcpJUFaoEsDMqGMKKP9RZHtKfhVPXR1UbQGLEfGpajiz",  # noqa
+    "m/5/4/3/2/1/0": "xpub6JW8M2XwLsRLaecwaxKx6xXHmFx4Bt5KeCim5QgjuErEtVv2yZv7UgrTyWoYM9xvz5CsqtfncQiadWqYaCcSQMFUjsPRVd789RxzkJUKZ7m",  # noqa
+}
+
 
 class TestHd(TestCase):
     def test_levels_path(self) -> None:
         for (s, r) in LEVELS_PATH_LIST:
             self.assertEqual(r, HdNode.levelsPathFromString(s))
+
+    def _assertKeys(
+            self,
+            node: HdNode,
+            excepted_public_key: str,
+            excepted_private_key: str) -> None:
+        self.assertIsNotNone(node)
+        self.assertEqual(
+            excepted_public_key,
+            node.toExtendedKey(
+                Bitcoin.bip0032VersionPublicKey,
+                private=False))
+        if node.isPrivateKey:
+            self.assertEqual(
+                excepted_private_key,
+                node.toExtendedKey(
+                    Bitcoin.bip0032VersionPrivateKey,
+                    private=True))
 
     def test_bip32(self) -> None:
         test_list = (
@@ -118,18 +152,58 @@ class TestHd(TestCase):
             for (path, keys) in t.items():
                 if not path.startswith("m"):
                     continue
-                node = root_node.fromLevelsPath(path)
+                node = root_node.fromLevelsPath(path, private=True)
+                self._assertKeys(node, keys[0], keys[1])
+
+                version, node = HdNode.fromExtendedKey(keys[1])
+                self.assertEqual(Bitcoin.bip0032VersionPrivateKey, version)
+                self._assertKeys(node, keys[0], keys[1])
+
+                path = HdNode.levelsPathFromString(path)
+                self.assertIsNotNone(path)
+                if not path:
+                    continue
+                node = root_node.fromLevelsPath(path[:-1], private=True)
+                self.assertIsNotNone(node)
+                self.assertTrue(node.isPrivateKey)
+                node = node.deriveChildNode(
+                    path[-1] & ~0x80000000,
+                    hardened=(path[-1] & 0x80000000) == 0x80000000,
+                    private=False)
+                self._assertKeys(node, keys[0], keys[1])
+
+    def test_derive_public_key(self) -> None:
+        seed = bytes.fromhex(PUBLIC_KEY_ROOT_SEED)
+        root_node = HdNode.deriveRootNode(seed)
+        self.assertIsNotNone(root_node)
+
+        # public -> public
+        for (path, value) in PUBLIC_KEY_PATH_LIST.items():
+            node = root_node.fromLevelsPath(path, private=False)
+            self.assertIsNotNone(node)
+            self.assertEqual(
+                value,
+                node.toExtendedKey(
+                    Bitcoin.bip0032VersionPublicKey,
+                    private=False))
+
+        # private -> public
+        for (path, value) in PUBLIC_KEY_PATH_LIST.items():
+            path = HdNode.levelsPathFromString(path)
+            self.assertIsNotNone(path)
+            for i in range(2, 10):
+                if len(path) < i:
+                    continue
+                node = root_node.fromLevelsPath(path[:-i], private=True)
+                self.assertIsNotNone(node)
+
+                node = node.fromLevelsPath(path[-i:], private=False)
                 self.assertIsNotNone(node)
                 self.assertEqual(
-                    keys[0],
+                    value,
                     node.toExtendedKey(
                         Bitcoin.bip0032VersionPublicKey,
                         private=False))
-                self.assertEqual(
-                    keys[1],
-                    node.toExtendedKey(
-                        Bitcoin.bip0032VersionPrivateKey,
-                        private=True))
 
     def test_hd_address_index(self) -> None:
         coin = Bitcoin()
@@ -145,7 +219,10 @@ class TestHd(TestCase):
 class TestHdAddressIterator(TestCase):
     def setUp(self) -> None:
         root_node = HdNode.deriveRootNode(random.randbytes(64))
-        self._purpose_node = root_node.deriveChildNode(44, hardened=True)
+        self._purpose_node = root_node.deriveChildNode(
+            44,
+            hardened=True,
+            private=True)
 
     def test(self) -> None:
         coin = Bitcoin()
