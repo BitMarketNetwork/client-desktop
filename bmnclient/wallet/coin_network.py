@@ -18,20 +18,6 @@ class CoinNetworkBase:
             if version == net.PRIVATE_KEY:
                 return net
 
-    @classmethod
-    def from_ex_prefix(cls, pref: int) -> Tuple["CoinNetworkBase", Optional[bool]]:
-        """
-        returns net, bool[prv else pub] or None , None
-        """
-        net = next((net for net in cls.all if net.EX_PREFIX_PRV == pref), None)
-        if net is None:
-            net = next(
-                (net for net in cls.all if net.EX_PREFIX_PUB == pref), None)
-            if net is None:
-                return None, None
-            return net, False
-        return net, True
-
 
 class BitcoinMainNetwork(CoinNetworkBase):
     EX_PREFIX_PRV = 0x0488ADE4
