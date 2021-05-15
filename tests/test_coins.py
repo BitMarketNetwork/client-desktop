@@ -14,7 +14,7 @@ from bmnclient.coins.coin_litecoin import \
     Litecoin, \
     LitecoinAddress
 from bmnclient.language import Locale
-from bmnclient.wallet.hd import HDNode
+from bmnclient.wallet.hd import HdNode
 
 if TYPE_CHECKING:
     from typing import Iterable, Type
@@ -322,7 +322,7 @@ class TestCoins(TestCase):
                 self.assertEqual(len(coin._mempool_cache), len(mempool_list))
 
     def test_serialization(self) -> None:
-        root_path = HDNode.make_master(randbytes(64))
+        root_path = HdNode.make_master(randbytes(64))
         purpose_path = root_path.make_child_prv(44, True)
 
         from bmnclient.wallet.coins import Bitcoin as BitcoinOld

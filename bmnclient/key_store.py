@@ -20,7 +20,7 @@ from .crypto.kdf import SecretStore
 from .crypto.password import PasswordStrength
 from .logger import Logger
 from .version import Product
-from .wallet.hd import HDNode
+from .wallet.hd import HdNode
 
 if TYPE_CHECKING:
     from typing import Callable, Final, List, Optional, Tuple
@@ -37,7 +37,7 @@ class KeyStore(QObject):
             self,
             *,
             user_config: UserConfig,
-            open_callback: Callable[[HDNode], None] = None,
+            open_callback: Callable[[HdNode], None] = None,
             reset_callback: Callable[[], None] = None) -> None:
         super().__init__()
         self._logger = Logger.getClassLogger(__name__, self.__class__)
@@ -264,7 +264,7 @@ class KeyStore(QObject):
         phrase = Mnemonic.friendlyPhrase(language, phrase)
         return language, phrase
 
-    def _loadSeed(self) -> Optional[HDNode]:
+    def _loadSeed(self) -> Optional[HdNode]:
         self._mnemonic = None
         self._mnemonic_salt_hash = None
         self._has_seed = False

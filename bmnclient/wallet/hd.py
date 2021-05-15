@@ -1,22 +1,23 @@
 from __future__ import annotations
 
-import logging
+from typing import TYPE_CHECKING
 
-from . import coin_network, key, util
-from ..crypto.digest import Hmac, Sha512Digest
+from ..crypto.base58 import Base58
+from ..crypto.bech32 import Bech32
+from ..crypto.digest import Hash160Digest, Hmac, Sha512Digest
+from ..crypto.secp256k1 import KeyUtils, PrivateKey
 
-log = logging.getLogger(__name__)
-
-SECP256k1_N = 0xFFFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFE_BAAEDCE6_AF48A03B_BFD25E8C_D0364141
-HARDENED_MASK = 0x80000000
-
-
-class HDError(Exception):
-    pass
+if TYPE_CHECKING:
+    from typing import Final, List, Optional, Sequence, Tuple, Union
+    from ..coins.abstract.coin import AbstractCoin
 
 
 # https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
-class HDNode(key.AbstractAddressOld):
+class HdNode:
+    _ROOT_KEY: Final = b"Bitcoin seed"
+    _EXTENDED_KEY_SIZE: int = (4 + 1 + 4 + 4 + 32 + 33)
+    _HARDENED_MASK = 0x80000000
+
     def __init__(self, key: key.PrivateKey):
         super().__init__()
         self.key = key

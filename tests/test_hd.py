@@ -5,7 +5,7 @@ from unittest import TestCase
 from bmnclient.coins.coin_bitcoin import Bitcoin
 from bmnclient.coins.hd import HdAddressIterator
 from bmnclient.wallet import hd
-from bmnclient.wallet.hd import HDNode
+from bmnclient.wallet.hd import HdNode
 
 BIP32_TEST_VECTOR_1 = {
     "seed": "000102030405060708090a0b0c0d0e0f",
@@ -103,7 +103,7 @@ LEVELS_PATH_LIST = (
 class TestHd(TestCase):
     def test_levels_path(self) -> None:
         for (s, r) in LEVELS_PATH_LIST:
-            self.assertEqual(r, HDNode.levelsPathFromString(s))
+            self.assertEqual(r, HdNode.levelsPathFromString(s))
 
     def test_bip32(self) -> None:
         test_list = (
@@ -112,7 +112,7 @@ class TestHd(TestCase):
             BIP32_TEST_VECTOR_3)
         for t in test_list:
             seed = bytes.fromhex(t["seed"])
-            root_node = HDNode.deriveRootNode(seed)
+            root_node = HdNode.deriveRootNode(seed)
             self.assertIsNotNone(root_node)
 
             for (path, keys) in t.items():
@@ -133,7 +133,7 @@ class TestHd(TestCase):
 
     def test_hd_address_index(self) -> None:
         coin = Bitcoin()
-        root_node = hd.HDNode.deriveRootNode(random.randbytes(64))
+        root_node = hd.HdNode.deriveRootNode(random.randbytes(64))
         coin.makeHdPath(root_node)
 
         for i in range(10):
@@ -144,7 +144,7 @@ class TestHd(TestCase):
 
 class TestHdAddressIterator(TestCase):
     def setUp(self) -> None:
-        root_node = HDNode.deriveRootNode(random.randbytes(64))
+        root_node = HdNode.deriveRootNode(random.randbytes(64))
         self._purpose_node = root_node.deriveChildNode(44, hardened=True)
 
     def test(self) -> None:

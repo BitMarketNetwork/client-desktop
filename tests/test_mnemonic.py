@@ -5,7 +5,7 @@ import random
 from unittest import TestCase
 
 from bmnclient.coins.mnemonic import Mnemonic
-from bmnclient.wallet.hd import HDNode
+from bmnclient.wallet.hd import HdNode
 from tests import getLogger, TEST_DATA_PATH
 
 _logger = getLogger(__name__)
@@ -33,7 +33,7 @@ class TestMnemonic(TestCase):
         self.assertEqual(generated_seed.hex(), seed)
 
         # TODO
-        hd_node = HDNode.make_master(generated_seed)
+        hd_node = HdNode.make_master(generated_seed)
         from bmnclient.wallet.coin_network import BitcoinMainNetwork
         hd_node.key._network = BitcoinMainNetwork
         self.assertEqual(bip32_xprv, hd_node.extended_key)

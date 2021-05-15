@@ -16,7 +16,7 @@ from ...wallet.mutable_tx import MutableTransaction
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
     from ...wallet.coin_network import CoinNetworkBase
-    from ...wallet.hd import HDNode
+    from ...wallet.hd import HdNode
 
 
 class AbstractCoin(Serializable):
@@ -116,7 +116,7 @@ class AbstractCoin(Serializable):
         self._fiat_rate = FiatRate(0, NoneFiatCurrency)
         self._amount = 0
 
-        self._hd_path: Optional[HDNode] = None
+        self._hd_path: Optional[HdNode] = None
 
         self._address_list: List[AbstractCoin.Address] = []
         self._server_data: Dict[str, Union[int, str]] = {}
@@ -366,7 +366,7 @@ class AbstractCoin(Serializable):
         if self._model:
             self._model.afterRefreshUtxoList()
 
-    def makeHdPath(self, purpose_path: HDNode) -> None:
+    def makeHdPath(self, purpose_path: HdNode) -> None:
         assert self._hd_path is None
         self._hd_path = purpose_path.make_child_prv(
             self._BIP0044_COIN_TYPE,
@@ -389,7 +389,7 @@ class AbstractCoin(Serializable):
             self,
             account: int,
             is_change: bool,
-            index: int) -> Optional[HDNode]:
+            index: int) -> Optional[HdNode]:
         if self._hd_path is None:
             return None
         # FIXME broken path!

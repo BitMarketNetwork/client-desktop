@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from ...utils import filterNotNone
 from ...utils.meta import classproperty
 from ...utils.serialize import Serializable, serializable
-from ...wallet.hd import HDError, HDNode
+from ...wallet.hd import HdNode
 from ...wallet.key import PrivateKey
 
 if TYPE_CHECKING:
@@ -121,7 +121,7 @@ class AbstractAddress(Serializable):
             name: Optional[str],
             _type: AbstractCoin.Address.Type,
             data: bytes = b"",
-            private_key: Optional[HDNode, PrivateKey] = None,
+            private_key: Optional[HdNode, PrivateKey] = None,
             amount: int = 0,
             tx_count: int = 0,
             label: str = "",
@@ -246,7 +246,7 @@ class AbstractAddress(Serializable):
     @serializable
     @property
     def privateKey(self) -> Optional[PrivateKey]:
-        if isinstance(self._private_key, HDNode):
+        if isinstance(self._private_key, HdNode):
             value = self._private_key.key
         elif isinstance(self._private_key, PrivateKey):
             value = self._private_key
@@ -255,7 +255,7 @@ class AbstractAddress(Serializable):
         return value
 
     def exportPrivateKey(self) -> str:
-        if isinstance(self._private_key, HDNode):
+        if isinstance(self._private_key, HdNode):
             value = self._private_key.extended_key
         elif isinstance(self._private_key, PrivateKey):
             value = self._private_key.to_wif
@@ -264,7 +264,7 @@ class AbstractAddress(Serializable):
         return value
 
     @classmethod
-    def importPrivateKey(cls, value: str) -> Optional[HDNode, PrivateKey]:
+    def importPrivateKey(cls, value: str) -> Optional[HdNode, PrivateKey]:
         if value:
             try:
                 return HDNode.from_extended_key(value)
@@ -274,7 +274,7 @@ class AbstractAddress(Serializable):
 
     @property
     def hdIndex(self) -> int:
-        if isinstance(self._private_key, HDNode):
+        if isinstance(self._private_key, HdNode):
             index = self._private_key.index
             if index >= 0:
                 return index

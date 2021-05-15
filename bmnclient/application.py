@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from typing import Callable, List, Optional, Type, Union
     from PySide2.QtCore import QCoreApplication
     from .language import Language
-    from .wallet.hd import HDNode
+    from .wallet.hd import HdNode
 
 
 class CommandLine:
@@ -251,7 +251,7 @@ class CoreApplication(QObject):
     def icon(self) -> QIcon:
         return self._icon
 
-    def _onKeyStoreOpen(self, purpose_path: HDNode) -> None:
+    def _onKeyStoreOpen(self, purpose_path: HdNode) -> None:
         assert not self._database.isLoaded
 
         for coin in self._coin_list:

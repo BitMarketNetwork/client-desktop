@@ -93,7 +93,7 @@ class TestWorkflow(unittest.TestCase):
     def test_addresses(self):
         coin = coins.BitcoinTest(self.gcd)
         seed = os.urandom(32)
-        master_hd = hd.HDNode.make_master(
+        master_hd = hd.HdNode.make_master(
             seed, coin_network.BitcoinTestNetwork)
         coin.makeHdPath(master_hd)
         self.db.appendCoin(coin, True)
