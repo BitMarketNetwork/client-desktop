@@ -132,12 +132,33 @@ class TestHd(TestCase):
             node.toExtendedKey(
                 Bitcoin.bip0032VersionPublicKey,
                 private=False))
-        if node.isPrivateKey:
-            self.assertEqual(
-                excepted_private_key,
-                node.toExtendedKey(
-                    Bitcoin.bip0032VersionPrivateKey,
-                    private=True))
+
+        version, node2 = HdNode.fromExtendedKey(excepted_public_key)
+        self.assertEqual(Bitcoin.bip0032VersionPublicKey, version)
+        self.assertIsNotNone(node2)
+        self.assertEqual(
+            excepted_public_key,
+            node2.toExtendedKey(
+                Bitcoin.bip0032VersionPublicKey,
+                private=False))
+
+        if node.privateKey is None:
+            return
+
+        self.assertEqual(
+            excepted_private_key,
+            node.toExtendedKey(
+                Bitcoin.bip0032VersionPrivateKey,
+                private=True))
+
+        version, node2 = HdNode.fromExtendedKey(excepted_private_key)
+        self.assertEqual(Bitcoin.bip0032VersionPrivateKey, version)
+        self.assertIsNotNone(node2)
+        self.assertEqual(
+            excepted_private_key,
+            node2.toExtendedKey(
+                Bitcoin.bip0032VersionPrivateKey,
+                private=True))
 
     def test_bip32(self) -> None:
         test_list = (
@@ -165,7 +186,7 @@ class TestHd(TestCase):
                     continue
                 node = root_node.fromLevelsPath(path[:-1], private=True)
                 self.assertIsNotNone(node)
-                self.assertTrue(node.isPrivateKey)
+                self.assertIsNotNone(node.privateKey)
                 node = node.deriveChildNode(
                     path[-1] & ~0x80000000,
                     hardened=(path[-1] & 0x80000000) == 0x80000000,

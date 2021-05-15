@@ -90,12 +90,32 @@ class AbstractKey:
 
 class PublicKey(AbstractKey):
     @classmethod
+    def fromPublicData(
+            cls,
+            data: bytes,
+            *,
+            is_compressed: bool) -> Optional[PublicKey]:
+        try:
+            key = VerifyingKey.from_string(
+                data,
+                _CURVE,
+                _hashHelper,
+                True)
+        except (MalformedPointError, RuntimeError):
+            return None
+
+        return cls(key, is_compressed=is_compressed)
+
+    @classmethod
     def fromPublicInteger(
             cls,
             integer: int,
             parent_point: Optional[Tuple[int, int]],
             *,
             is_compressed: bool) -> Optional[PublicKey]:
+        if integer >= KeyUtils.n:
+            return None
+
         try:
             point = integer * _CURVE.generator
             if parent_point is not None:
@@ -177,6 +197,9 @@ class PrivateKey(AbstractKey):
             integer: int,
             *,
             is_compressed: bool) -> Optional[PrivateKey]:
+        if not 0 < integer < KeyUtils.n:
+            return None
+
         try:
             key = SigningKey.from_secret_exponent(
                 integer,
