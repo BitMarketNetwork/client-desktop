@@ -52,7 +52,7 @@ class TestSecp256k1(TestCase):
         for key_data in KEY_LIST:
             (version, key) = PrivateKey.fromWif(key_data["wif"])
             self.assertIsNotNone(key)
-            self.assertEqual(key_data["compressed"], key.compressed)
+            self.assertEqual(key_data["compressed"], key.isCompressed)
             self.assertEqual(key_data["version"], version)
             self.assertEqual(key_data["private_key"], key.data.hex())
 

@@ -55,28 +55,28 @@ class AbstractKey:
             self,
             key: Union[SigningKey, VerifyingKey],
             *,
-            compressed: bool) -> None:
+            is_compressed: bool) -> None:
         self._key = key
-        self._compressed = compressed
+        self._is_compressed = is_compressed
         self._data_cache: Optional[bytes] = None
 
     def __eq__(self, other: AbstractKey) -> bool:
         return (
                 isinstance(other, self.__class__)
-                and self._compressed == other._compressed
+                and self._is_compressed == other._is_compressed
                 and self.data == other.data
         )
 
     def __hash__(self) -> int:
-        return hash((self._compressed, self.data))
+        return hash((self._is_compressed, self.data))
 
     @classproperty
     def size(cls) -> int:  # noqa
         return cls._SIZE
 
     @property
-    def compressed(self) -> bool:
-        return self._compressed
+    def isCompressed(self) -> bool:
+        return self._is_compressed
 
     def _data(self, *args) -> bytes:
         if self._data_cache is None:
@@ -92,7 +92,7 @@ class AbstractKey:
 class PublicKey(AbstractKey):
     @property
     def data(self) -> bytes:
-        encoding = "compressed" if self._compressed else "uncompressed"
+        encoding = "compressed" if self._is_compressed else "uncompressed"
         return self._data(encoding)
 
     def verify(self, signature: bytes, data: bytes) -> bool:
@@ -113,7 +113,7 @@ class PublicKey(AbstractKey):
         return Base58.encode(version + data)
 
     def toBech32Address(self, hrp: str, version: int) -> Optional[str]:
-        if not self._compressed:
+        if not self._is_compressed:
             return None
         data = Hash160Digest(self.data).finalize()
         return Bech32.encode(hrp, version, data)
@@ -124,28 +124,28 @@ class PrivateKey(AbstractKey):
             self,
             key: SigningKey,
             *,
-            compressed: bool) -> None:
-        super().__init__(key, compressed=compressed)
+            is_compressed: bool) -> None:
+        super().__init__(key, is_compressed=is_compressed)
         self._public_key = PublicKey(
             self._key.verifying_key,
-            compressed=self._compressed)
+            is_compressed=self._is_compressed)
 
     @classmethod
     def fromSecretData(
             cls,
             secret_data: bytes,
             *,
-            compressed: bool) -> Optional[PrivateKey]:
+            is_compressed: bool) -> Optional[PrivateKey]:
         return cls.fromSecretKey(
             KeyUtils.integerFromBytes(secret_data),
-            compressed=compressed)
+            is_compressed=is_compressed)
 
     @classmethod
     def fromSecretKey(
             cls,
             secret_key: int,
             *,
-            compressed: bool) -> Optional[PrivateKey]:
+            is_compressed: bool) -> Optional[PrivateKey]:
         try:
             key = SigningKey.from_secret_exponent(
                 secret_key,
@@ -154,7 +154,7 @@ class PrivateKey(AbstractKey):
         except (MalformedPointError, RuntimeError):
             return None
 
-        return cls(key, compressed=compressed)
+        return cls(key, is_compressed=is_compressed)
 
     @classmethod
     def fromWif(cls, wif_string: str) -> Tuple[int, Optional[PrivateKey]]:
@@ -169,16 +169,16 @@ class PrivateKey(AbstractKey):
             if result[-1] != cls._COMPRESSED_FLAG:
                 return 0, None
             result = result[:-1]
-            compressed = True
+            is_compressed = True
         else:
-            compressed = False
+            is_compressed = False
 
         if len(result) != cls.size:
             return 0, None
 
         result = cls.fromSecretKey(
             KeyUtils.integerFromBytes(result),
-            compressed=compressed)
+            is_compressed=is_compressed)
         if result is None:
             return 0, None
 
@@ -189,7 +189,7 @@ class PrivateKey(AbstractKey):
         if result is None:
             return None
         result += self.data
-        if self._compressed:
+        if self._is_compressed:
             result += KeyUtils.integerToBytes(self._COMPRESSED_FLAG, 1)
         return Base58.encode(result)
 
