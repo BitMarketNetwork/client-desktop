@@ -166,11 +166,11 @@ class KeyStore(QObject):
                 return False
             if not self._saveSeedWithPhrase(self._mnemonic.language, phrase):
                 return False
-            purpose_path = self._loadSeed()
-            if purpose_path is None:
+            purpose_node = self._loadSeed()
+            if purpose_node is None:
                 return False
 
-        self._open_callback(purpose_path)
+        self._open_callback(purpose_node)
         return True
 
     # noinspection PyTypeChecker
@@ -197,11 +197,11 @@ class KeyStore(QObject):
                 return False
             if not self._saveSeedWithPhrase(self._mnemonic.language, phrase):
                 return False
-            purpose_path = self._loadSeed()
-            if purpose_path is None:
+            purpose_node = self._loadSeed()
+            if purpose_node is None:
                 return False
 
-        self._open_callback(purpose_path)
+        self._open_callback(purpose_node)
         return True
 
     # noinspection PyTypeChecker
@@ -273,10 +273,21 @@ class KeyStore(QObject):
         if not seed:
             return None
 
-        root_path = HDNode.make_master(seed)
-        purpose_path = root_path.make_child_prv(44, True)  # BIP-0044
-        self._has_seed = purpose_path is not None
-        return purpose_path
+        root_node = HdNode.deriveRootNode(seed)
+        if root_node is None:
+            # TODO show message, this has probability lower than 1 in 2 ** 127.
+            return None
+
+        purpose_node = root_node.deriveChildNode(
+            44,  # BIP-0044
+            hardened=True,
+            private=True)
+        if purpose_node is None:
+            # TODO show message, this has probability lower than 1 in 2 ** 127.
+            return None
+
+        self._has_seed = purpose_node is not None
+        return purpose_node
 
     ############################################################################
 
@@ -305,10 +316,10 @@ class KeyStore(QObject):
             value = SecretStore(password).decryptValue(value)
             if not value or not self._loadSecretStoreValue(value):
                 return False
-            purpose_path = self._loadSeed()
+            purpose_node = self._loadSeed()
 
-        if purpose_path is not None:
-            self._open_callback(purpose_path)
+        if purpose_node is not None:
+            self._open_callback(purpose_node)
         return True
 
     # noinspection PyTypeChecker

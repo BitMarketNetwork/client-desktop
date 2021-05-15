@@ -29,7 +29,7 @@ class HdAddressIterator(Iterator):
         return self
 
     def __next__(self) -> AbstractCoin.Address:
-        if self._coin.hdPath is None or self._stop:
+        if self._coin.hdNode is None or self._stop:
             raise StopIteration
 
         while True:

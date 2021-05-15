@@ -251,11 +251,11 @@ class CoreApplication(QObject):
     def icon(self) -> QIcon:
         return self._icon
 
-    def _onKeyStoreOpen(self, purpose_path: HdNode) -> None:
+    def _onKeyStoreOpen(self, purpose_node: HdNode) -> None:
         assert not self._database.isLoaded
 
         for coin in self._coin_list:
-            coin.makeHdPath(purpose_path)
+            coin.deriveHdNode(purpose_node)
 
         self._database.open()
         self._network_query_scheduler.start(

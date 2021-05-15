@@ -116,7 +116,7 @@ class AbstractCoin(Serializable):
         self._fiat_rate = FiatRate(0, NoneFiatCurrency)
         self._amount = 0
 
-        self._hd_path: Optional[HdNode] = None
+        self._hd_node: Optional[HdNode] = None
 
         self._address_list: List[AbstractCoin.Address] = []
         self._server_data: Dict[str, Union[int, str]] = {}
@@ -366,16 +366,16 @@ class AbstractCoin(Serializable):
         if self._model:
             self._model.afterRefreshUtxoList()
 
-    def makeHdPath(self, purpose_path: HdNode) -> None:
-        assert self._hd_path is None
+    def deriveHdNode(self, purpose_node: HdNode) -> None:
+        assert self._hd_node is None
         self._hd_path = purpose_path.make_child_prv(
             self._BIP0044_COIN_TYPE,
             True,
             self.network)
 
     @property
-    def hdPath(self) -> Optional[HDNode]:
-        return self._hd_path
+    def hdNode(self) -> Optional[HdNode]:
+        return self._hd_node
 
     def nextHdIndex(self, account: int, is_change: bool) -> int:
         # FIXME broken path!
@@ -407,7 +407,7 @@ class AbstractCoin(Serializable):
             index: int = -1,
             type_: Optional[Address.Type] = None,
             **kwargs) -> Optional[Address]:
-        if self._hd_path is None:
+        if self._hd_node is None:
             return None
 
         if type_ is None:
@@ -418,8 +418,8 @@ class AbstractCoin(Serializable):
             index = self.nextHdIndex(account, is_change)
             assert index >= 0
 
-        hd_path = self.hdAddressPath(account, is_change, index)
-        if hd_path is None:
+        hd_node = self.hdAddressPath(account, is_change, index)
+        if hd_node is None:
             return None
 
         address = self.Address(

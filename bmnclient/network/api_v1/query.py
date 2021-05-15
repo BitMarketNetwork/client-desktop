@@ -325,7 +325,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery):
 
     @property
     def skip(self) -> bool:
-        if self._hd_iterator.coin.hdPath is None:
+        if self._hd_iterator.coin.hdNode is None:
             return True
         return super().skip
 
