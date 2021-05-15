@@ -128,16 +128,6 @@ class TestKey(unittest.TestCase):
         self.assertEqual(WALLET_FORMAT_COMPRESSED_TEST, prv.to_wif)
 
 
-class Test_HD(unittest.TestCase):
-
-    def _test_hierarchy_creation(self):
-        gcd_ = gcd.GCD(None)
-        km = gcd_.key_man
-        km.generate_master_key()
-        self.assertEqual(len(gcd_.all_enabled_coins) + 2, hd.Utils.keys_count)
-        self.assertEqual(gcd_.btc_coin.privateKey.chain_path, "/m/0'/0'")
-
-
 class TestPrivateKey(unittest.TestCase):
 
     def test_address(self):

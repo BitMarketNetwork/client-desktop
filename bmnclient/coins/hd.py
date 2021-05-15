@@ -40,12 +40,16 @@ class HdAddressIterator(Iterator):
                 if not self.isSupportedAddressType(address_type):
                     continue
 
-                self._type_index = type_index
-                self._last_address = self._coin.createHdAddress(
+                address = self._coin.deriveHdAddress(
                     account=0,
                     is_change=False,
                     index=self._hd_index,
                     type_=address_type)
+                if address is None:
+                    continue
+
+                self._type_index = type_index
+                self._last_address = address
                 return self._last_address
 
             self._type_index = -1

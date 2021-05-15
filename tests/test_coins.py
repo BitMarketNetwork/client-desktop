@@ -340,7 +340,7 @@ class TestCoins(TestCase):
         coin.verifiedHeight = randint(1000, 100000)
 
         for address_index in range(1, 3):
-            address = coin.createHdAddress(
+            address = coin.deriveHdAddress(
                 account=0,
                 is_change=False,
                 amount=randint(1000, 100000),

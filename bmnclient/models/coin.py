@@ -141,7 +141,7 @@ class CoinReceiveManagerModel(AbstractStateModel):
         else:
             address_type = self._coin.Address.Type.PUBKEY_HASH
 
-        self._address = self._coin.createHdAddress(
+        self._address = self._coin.deriveHdAddress(
             account=0,
             is_change=False,
             type_=address_type,

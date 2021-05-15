@@ -234,7 +234,9 @@ class TestHd(TestCase):
 
         for i in range(10):
             self.assertEqual(coin.nextHdIndex(0, False), i)
-            coin.appendAddress(coin.createHdAddress(account=0, is_change=False))
+            address = coin.deriveHdAddress(account=0, is_change=False)
+            self.assertIsNotNone(address)
+            coin.appendAddress(address)
             self.assertEqual(coin.nextHdIndex(0, False), i + 1)
 
 

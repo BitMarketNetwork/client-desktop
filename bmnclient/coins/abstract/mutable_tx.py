@@ -218,9 +218,11 @@ class AbstractMutableTx:
         output_list = [(self._receiver_address.name, receiver_amount)]
 
         if change_amount > 0:
-            self._change_address = self._coin.createHdAddress(
+            self._change_address = self._coin.deriveHdAddress(
                 account=0,
                 is_change=True)
+            # TODO validate hd node private key
+            assert self._change_address is not None
             output_list.append((self._change_address.name, change_amount))
         else:
             self._change_address = None

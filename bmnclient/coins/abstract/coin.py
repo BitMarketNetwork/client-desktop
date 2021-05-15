@@ -386,21 +386,7 @@ class AbstractCoin(Serializable):
                 index = address.hdIndex + 1
         return index
 
-    def hdAddressPath(
-            self,
-            account: int,
-            is_change: bool,
-            index: int) -> Optional[HdNode]:
-        if self._hd_path is None:
-            return None
-        # FIXME broken path!
-        address_path = self._hd_path.make_child_prv(
-            index,
-            False,
-            self.network)
-        return address_path
-
-    def createHdAddress(
+    def deriveHdAddress(
             self,
             *,
             account: int,
@@ -416,20 +402,24 @@ class AbstractCoin(Serializable):
 
         if index < 0:
             # TODO fail if coin in "updating" mode
-            index = self.nextHdIndex(account, is_change)
-            assert index >= 0
+            current_index = self.nextHdIndex(account, is_change)
+            assert current_index >= 0
+        else:
+            current_index = index
 
-        hd_node = self.hdAddressPath(account, is_change, index)
-        if hd_node is None:
-            return None
+        while True:
+            # TODO broken bip0044 path!
+            address_node = self._hd_node.deriveChildNode(
+                current_index,
+                hardened=False,
+                private=self._hd_node.privateKey is not None)
+            if address_node is not None:
+                break
+            if index >= 0:
+                return None
+            current_index += 1  # BIP0032
 
-        address = self.Address(
-            self,
-            name=hd_path.to_address(type_.value.name),
-            _type=type_,
-            private_key=hd_path,
-            **kwargs)
-        return address
+        return address_node.createAddress(self, type_, **kwargs)
 
     @serializable
     @property
