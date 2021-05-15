@@ -332,7 +332,7 @@ class TestCoins(TestCase):
         self.assertIsNotNone(purpose_node)
 
         coin = Bitcoin()
-        coin.deriveHdNode(purpose_node)
+        self.assertTrue(coin.deriveHdNode(purpose_node))
         coin.height = randint(1000, 100000)
         coin.offset = "offset" + str(randint(1000, 100000))
         coin.unverifiedOffset = "u_offset" + str(randint(1000, 100000))

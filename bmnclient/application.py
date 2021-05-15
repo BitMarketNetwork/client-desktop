@@ -255,7 +255,9 @@ class CoreApplication(QObject):
         assert not self._database.isLoaded
 
         for coin in self._coin_list:
-            coin.deriveHdNode(purpose_node)
+            if not coin.deriveHdNode(purpose_node):
+                # TODO show message, force user to regenerate seed?
+                pass
 
         self._database.open()
         self._network_query_scheduler.start(

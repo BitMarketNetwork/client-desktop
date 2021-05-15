@@ -366,12 +366,13 @@ class AbstractCoin(Serializable):
         if self._model:
             self._model.afterRefreshUtxoList()
 
-    def deriveHdNode(self, purpose_node: HdNode) -> None:
+    def deriveHdNode(self, purpose_node: HdNode) -> bool:
         assert self._hd_node is None
-        self._hd_path = purpose_path.make_child_prv(
+        self._hd_node = purpose_node.deriveChildNode(
             self._BIP0044_COIN_TYPE,
-            True,
-            self.network)
+            hardened=True,
+            private=True)
+        return self._hd_node is not None
 
     @property
     def hdNode(self) -> Optional[HdNode]:
