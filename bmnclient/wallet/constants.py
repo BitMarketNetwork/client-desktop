@@ -20,5 +20,3 @@ OP_PUSH_20 = b'\x14'
 OP_PUSH_32 = b'\x20'
 OP_RETURN = b'\x6a'
 OP_EQUAL = b'\x87'
-
-PRIVATE_KEY_COMPRESSED_PUBKEY = b'\x01'

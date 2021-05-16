@@ -3,7 +3,6 @@ import logging
 from typing import Union, Tuple, Generator
 import enum
 import binascii
-import sys
 import functools
 import hashlib
 from . import coin_network
