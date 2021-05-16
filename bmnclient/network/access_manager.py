@@ -16,7 +16,7 @@ from PySide2.QtNetwork import \
     QSslConfiguration, \
     QSslSocket
 
-from .utils import hostPortToString
+from .utils import NetworkUtils
 from ..logger import Logger
 from ..version import Timer
 
@@ -197,7 +197,7 @@ class NetworkAccessManager(QNetworkAccessManager):
             authenticator: QAuthenticator) -> None:
         self._logger.warning(
             "Authentication required for proxy %s.",
-            hostPortToString(proxy.hostName(), proxy.port()))
+            NetworkUtils.hostPortToString(proxy.hostName(), proxy.port()))
 
     def __onEncrypted(self, reply: QNetworkReply) -> None:
         if self._logger.isEnabledFor(logging.DEBUG):

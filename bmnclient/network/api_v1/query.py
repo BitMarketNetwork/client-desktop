@@ -17,7 +17,7 @@ from .parser import \
     ResponseParser, \
     SysinfoParser
 from ..query import AbstractJsonQuery
-from ..utils import urlJoin
+from ..utils import NetworkUtils
 from ...coins.hd import HdAddressIterator
 from ...coins.utils import LoggerUtils
 from ...logger import Logger
@@ -46,7 +46,7 @@ class AbstractApiQuery(AbstractJsonQuery):
                 path_list.append(v(self))
             else:
                 assert ValueError
-        return urlJoin(super().url, self._VERSION, *path_list)
+        return NetworkUtils.urlJoin(super().url, self._VERSION, *path_list)
 
     @property
     def jsonContent(self) -> Optional[dict]:

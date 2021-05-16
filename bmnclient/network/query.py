@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from PySide2.QtCore import QUrl
 from PySide2.QtNetwork import QNetworkReply, QNetworkRequest
 
-from .utils import encodeUrlString
+from .utils import NetworkUtils
 from ..logger import Logger
 from ..version import Product, Timer
 
@@ -191,8 +191,8 @@ class AbstractQuery:
             if not isinstance(k, str) or not isinstance(v, (str, int)):
                 bad_argument = True
             else:
-                k = encodeUrlString(str(k))
-                v = encodeUrlString(str(v))
+                k = NetworkUtils.encodeUrlString(str(k))
+                v = NetworkUtils.encodeUrlString(str(v))
                 if k is None or v is None:
                     bad_argument = True
             if bad_argument:
