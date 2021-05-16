@@ -57,11 +57,6 @@ def read_segwit_string(stream: str) -> Tuple[bytes, bytes]:
     return int_to_varint(bytes_) + witness, stream
 
 
-def hash160(data: Union[str, bytes]) -> bytes:
-    rh = hashlib.new('ripemd160', hashlib.sha256(get_bytes(data)).digest())
-    return rh.digest()
-
-
 def sha256(data: Union[str, bytes]) -> bytes:
     return bytes(hashlib.sha256(get_bytes(data)).digest())
 

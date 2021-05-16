@@ -284,8 +284,9 @@ class HdNode:
             type_: AbstractCoin.Address.Type,
             **kwargs) -> Optional[AbstractCoin.Address]:
         if type_.value.encoding == coin.Address.Encoding.BASE58:
-            version = KeyUtils.integerToBytes(type_.value.version, 1)
-            if version is None:
+            try:
+                version = type_.value.version.to_bytes(1, "big")
+            except OverflowError:
                 return None
             name = Hash160Digest(self.publicKey.data).finalize()
             name = Base58.encode(version + name)

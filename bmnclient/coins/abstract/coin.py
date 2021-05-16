@@ -378,7 +378,7 @@ class AbstractCoin(Serializable):
         self._hd_node = purpose_node.deriveChildNode(
             self._BIP0044_COIN_TYPE,
             hardened=True,
-            private=True)
+            private=purpose_node.privateKey is not None)
         return self._hd_node is not None
 
     @property

@@ -90,12 +90,13 @@ class Mnemonic:
                 lambda x: bin(self._word_list.index(x))[2:].zfill(11),
                 phrase)
             b = "".join(b)
-        except ValueError:
+
+            j = len(b)
+            d = b[: j // 33 * 32]
+            h = b[-j // 33:]
+            nd = int(d, 2).to_bytes(j // 33 * 4, "big")
+        except (ValueError, OverflowError):
             return False
-        j = len(b)
-        d = b[: j // 33 * 32]
-        h = b[-j // 33:]
-        nd = int(d, 2).to_bytes(j // 33 * 4, byteorder="big")
 
         nh = Sha256Digest().update(nd).finalize().hex()
         nh = bin(int(nh, 16))[2:].zfill(256)[: j // 33]
