@@ -415,7 +415,7 @@ class TestCoins(TestCase):
             a1 = coin.addressList[address_index]
             a2 = coin_new.addressList[address_index]
             self.assertEqual(a1.name, a2.name)
-            self.assertEqual(a1.exportPrivateKey(), a2.exportPrivateKey())
+            self.assertEqual(a1.exportKey(), a2.exportKey())
             self.assertEqual(a1.amount, a2.amount)
             self.assertEqual(a1.txCount, a2.txCount)
             self.assertEqual(a1.label, a2.label)

@@ -255,7 +255,6 @@ class AbstractAddress(Serializable):
             value = None
         return value
 
-    @serializable
     @property
     def privateKey(self) -> Optional[PrivateKey]:
         if isinstance(self._key, HdNode):
@@ -265,6 +264,11 @@ class AbstractAddress(Serializable):
         else:
             value = None
         return value
+
+    @serializable
+    @property
+    def key(self) -> Optional[HdNode, PrivateKey, PublicKey]:
+        return self._key
 
     def exportPrivateKey(self) -> str:
         if isinstance(self._private_key, HdNode):
