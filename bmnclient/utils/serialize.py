@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .meta import classproperty
-from .string import toSnakeCase
+from .string import StringUtils
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -47,7 +47,7 @@ class Serializable:
                         hasattr(v.fget, "__serializable") and
                         getattr(v.fget, "__serializable")
                 ):
-                    cls.__map[toSnakeCase(name)] = name
+                    cls.__map[StringUtils.toSnakeCase(name)] = name
         return cls.__map
 
     def serialize(self) -> DeserializedData:
