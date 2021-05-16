@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .coins.abstract.coin import AbstractCoin
-from .coins.utils import LoggerUtils
+from .coins.utils import CoinLoggerUtils
 from .logger import Logger
 
 if TYPE_CHECKING:
@@ -36,7 +36,7 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
         super().__init__(
             *args,
             coin=coin,
-            name_suffix=LoggerUtils.coinToNameSuffix(coin),
+            name_suffix=CoinLoggerUtils.coinToNameSuffix(coin),
             **kwargs)
 
     def afterSetEnabled(self) -> None:
@@ -83,7 +83,7 @@ class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
         super().__init__(
             *args,
             address=address,
-            name_suffix=LoggerUtils.addressToNameSuffix(address),
+            name_suffix=CoinLoggerUtils.addressToNameSuffix(address),
             **kwargs)
 
     def afterSetAmount(self) -> None:
@@ -126,7 +126,7 @@ class TxInterface(_AbstractInterface, AbstractCoin.Tx.Interface):
         super().__init__(
             *args,
             tx=tx,
-            name_suffix=LoggerUtils.txToNameSuffix(tx),
+            name_suffix=CoinLoggerUtils.txToNameSuffix(tx),
             **kwargs)
 
     def afterSetHeight(self) -> None:
@@ -147,7 +147,7 @@ class MutableTxInterface(_AbstractInterface, AbstractCoin.MutableTx.Interface):
         super().__init__(
             *args,
             tx=tx,
-            name_suffix=LoggerUtils.coinToNameSuffix(tx.coin),
+            name_suffix=CoinLoggerUtils.coinToNameSuffix(tx.coin),
             **kwargs)
 
     def onBroadcast(self, tx: Mtx) -> None:

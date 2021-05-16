@@ -19,7 +19,7 @@ from .parser import \
 from ..query import AbstractJsonQuery
 from ..utils import NetworkUtils
 from ...coins.hd import HdAddressIterator
-from ...coins.utils import LoggerUtils
+from ...coins.utils import CoinLoggerUtils
 from ...logger import Logger
 
 if TYPE_CHECKING:
@@ -150,11 +150,11 @@ class AbstractOffsetIteratorApiQuery(AbstractApiQuery):
             name_suffix: str,
             **kwargs) -> None:
         name_suffix += \
-            LoggerUtils.nameToSubSuffix("mode", mode.name) \
-            + LoggerUtils.nameToSubSuffix(
+            CoinLoggerUtils.nameToSubSuffix("mode", mode.name) \
+            + CoinLoggerUtils.nameToSubSuffix(
                 "first_offset",
                 first_offset or self._BEST_OFFSET_NAME) \
-            + LoggerUtils.nameToSubSuffix(
+            + CoinLoggerUtils.nameToSubSuffix(
                 "last_offset",
                 last_offset or self._BASE_OFFSET_NAME)
 
@@ -274,8 +274,9 @@ class AddressInfoApiQuery(AbstractApiQuery):
             address: AbstractCoin.Address,
             *,
             name_suffix: Optional[str] = None) -> None:
-        super().__init__(
-            name_suffix=name_suffix or LoggerUtils.addressToNameSuffix(address))
+        if name_suffix is None:
+            name_suffix = CoinLoggerUtils.addressToNameSuffix(address)
+        super().__init__(name_suffix=name_suffix)
         self._address = address
 
     def isEqualQuery(self, other: AddressInfoApiQuery) -> bool:
@@ -312,7 +313,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery):
             _current_address = next(_hd_iterator)
         super().__init__(
             _current_address,
-            name_suffix=LoggerUtils.addressToNameSuffix(
+            name_suffix=CoinLoggerUtils.addressToNameSuffix(
                 _current_address,
                 _hd_iterator.currentHdIndex))
         self._hd_iterator = _hd_iterator
@@ -374,7 +375,7 @@ class AddressTxIteratorApiQuery(
                 AbstractOffsetIteratorApiQuery.InitialData] = None):
         super().__init__(
             address,
-            name_suffix=LoggerUtils.addressToNameSuffix(address),
+            name_suffix=CoinLoggerUtils.addressToNameSuffix(address),
             mode=mode,
             first_offset=first_offset,
             last_offset=last_offset,
@@ -476,7 +477,7 @@ class AddressUtxoIteratorApiQuery(
             _utxo_list: Optional[List[AbstractCoin.Tx.Utxo]] = None) -> None:
         super().__init__(
             address,
-            name_suffix=LoggerUtils.addressToNameSuffix(address),
+            name_suffix=CoinLoggerUtils.addressToNameSuffix(address),
             mode=AbstractOffsetIteratorApiQuery.Mode.FULL,
             first_offset=first_offset,
             last_offset=last_offset)
@@ -536,7 +537,7 @@ class CoinMempoolIteratorApiQuery(AbstractApiQuery):
             coin: AbstractCoin,
             *,
             _address_list: List[Dict[str, Any]] = None) -> None:
-        super().__init__(name_suffix=LoggerUtils.coinToNameSuffix(coin))
+        super().__init__(name_suffix=CoinLoggerUtils.coinToNameSuffix(coin))
         self._coin = coin
         self._local_hash = b""
         if _address_list is None:
@@ -616,7 +617,7 @@ class TxBroadcastApiQuery(AbstractApiQuery):
     _DEFAULT_METHOD = AbstractApiQuery.Method.POST
 
     def __init__(self, tx: Mtx) -> None:
-        super().__init__(name_suffix=LoggerUtils.coinToNameSuffix(tx.coin))
+        super().__init__(name_suffix=CoinLoggerUtils.coinToNameSuffix(tx.coin))
         self._tx = tx
         self._result: Optional[BroadcastTxParser] = None
 

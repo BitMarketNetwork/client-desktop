@@ -3,12 +3,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..utils import NotImplementedInstance
+
 if TYPE_CHECKING:
     from typing import Optional, Union
     from .abstract.coin import AbstractCoin
 
 
-class LoggerUtils:
+class CoinLoggerUtils(NotImplementedInstance):
     @classmethod
     def coinToNameSuffix(cls, coin: AbstractCoin):
         return coin.name
