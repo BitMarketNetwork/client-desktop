@@ -185,7 +185,8 @@ class HdNode:
         if key_data[0] == 0x00:
             key = PrivateKey.fromSecretData(key_data[1:], is_compressed=True)
         else:
-            key = PublicKey.fromPublicData(key_data, is_compressed=True)
+            key = PublicKey.fromPublicData(key_data)
+            assert key.isCompressed
 
         node = cls(
             key=key,

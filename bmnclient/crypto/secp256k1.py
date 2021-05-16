@@ -14,8 +14,7 @@ from ecdsa.keys import \
 from ecdsa.util import sigdecode_der, sigencode_der_canonize
 
 from .base58 import Base58
-from .bech32 import Bech32
-from .digest import Hash160Digest, HashlibWrapper, Sha256Digest
+from .digest import HashlibWrapper, Sha256Digest
 from ..utils.meta import classproperty, NotImplementedInstance
 
 if TYPE_CHECKING:
@@ -90,11 +89,7 @@ class AbstractKey:
 
 class PublicKey(AbstractKey):
     @classmethod
-    def fromPublicData(
-            cls,
-            data: bytes,
-            *,
-            is_compressed: bool) -> Optional[PublicKey]:
+    def fromPublicData(cls, data: bytes) -> Optional[PublicKey]:
         try:
             key = VerifyingKey.from_string(
                 data,
@@ -104,7 +99,9 @@ class PublicKey(AbstractKey):
         except (MalformedPointError, RuntimeError):
             return None
 
-        return cls(key, is_compressed=is_compressed)
+        return cls(
+            key,
+            is_compressed=(len(data) == _CURVE.baselen + 1))
 
     @classmethod
     def fromPublicInteger(
