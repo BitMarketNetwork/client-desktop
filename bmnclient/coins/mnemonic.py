@@ -9,23 +9,24 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from ..crypto.digest import Sha256Digest
 from ..logger import Logger
+from ..utils.class_property import classproperty
 from ..version import ProductPaths
 
 if TYPE_CHECKING:
-    from typing import Final, Iterable, List, Optional, Union
+    from typing import Final, Iterable, List, Optional, Sequence, Union
 
 
 # Adapted from:
 # https://github.com/trezor/python-mnemonic/blob/faa9c607d9a4b4fb1e2b2bc79a341a60181e3381/mnemonic/mnemonic.py
 class Mnemonic:
-    ENCODING: Final = "utf-8"
-    WORD_COUNT: Final = 2048
-    SOURCE_PATH: Final = ProductPaths.RESOURCES_PATH / "wordlist"
-    PBKDF2_ROUNDS: Final = 2048
+    _ENCODING: Final = "utf-8"
+    _WORD_COUNT: Final = 2048
+    _SOURCE_PATH: Final = ProductPaths.RESOURCES_PATH / "wordlist"
+    _PBKDF2_ROUNDS: Final = 2048
 
-    DATA_LENGTH_LIST: Final = (16, 20, 24, 28, 32)
-    DEFAULT_DATA_LENGTH: Final = 24
-    PHRASE_WORD_COUNT_LIST: Final = (12, 15, 18, 21, 24)
+    _DATA_LENGTH_LIST: Final = (16, 20, 24, 28, 32)
+    _DEFAULT_DATA_LENGTH: Final = 24
+    _PHRASE_WORD_COUNT_LIST: Final = (12, 15, 18, 21, 24)
 
     def __init__(self, language: Optional[str] = None) -> None:
         self._language = language.lower() if language else "english"
@@ -33,7 +34,7 @@ class Mnemonic:
             __name__,
             self.__class__,
             self._language)
-        self._file_path = self.SOURCE_PATH / (self._language + ".txt")
+        self._file_path = self._SOURCE_PATH / (self._language + ".txt")
 
         error_message = None
         try:
@@ -41,13 +42,13 @@ class Mnemonic:
             with open(  # TODO global cache
                     self._file_path,
                     mode="rt",
-                    encoding=self.ENCODING,
+                    encoding=self._ENCODING,
                     errors="strict") as file:
                 self._word_list = [word.strip() for word in file.readlines()]
-            if len(self._word_list) != self.WORD_COUNT:
+            if len(self._word_list) != self._WORD_COUNT:
                 raise ValueError(
                     "wordlist should contain {} words, but it contains {} words"
-                    .format(self.WORD_COUNT, len(self._word_list)))
+                    .format(self._WORD_COUNT, len(self._word_list)))
         except OSError as e:
             error_message = Logger.osErrorToString(e)
         except ValueError as e:
@@ -58,16 +59,24 @@ class Mnemonic:
                 .format(self._file_path, error_message),
                 self._logger)
 
+    @classproperty
+    def dataLengthList(cls) -> Sequence:  # noqa
+        return cls._DATA_LENGTH_LIST
+
+    @classproperty
+    def defaultDataLength(cls) -> int:  # noqa
+        return cls._DEFAULT_DATA_LENGTH
+
     @property
     def language(self) -> str:
         return self._language
 
     def getPhrase(self, data: bytes) -> str:
-        if len(data) not in self.DATA_LENGTH_LIST:
+        if len(data) not in self._DATA_LENGTH_LIST:
             Logger.fatal(
                 "Data length should be one of the following: {}, but data "
                 "length {}."
-                .format(self.DATA_LENGTH_LIST, len(data)),
+                .format(self._DATA_LENGTH_LIST, len(data)),
                 self._logger)
 
         h = Sha256Digest().update(data).finalize().hex()
@@ -83,7 +92,7 @@ class Mnemonic:
 
     def isValidPhrase(self, phrase: str) -> bool:
         phrase = self.normalizePhrase(phrase).split()
-        if len(phrase) not in self.PHRASE_WORD_COUNT_LIST:
+        if len(phrase) not in self._PHRASE_WORD_COUNT_LIST:
             return False
         try:
             b = map(
@@ -113,14 +122,14 @@ class Mnemonic:
         else:
             password = cls.normalizePhrase(password)
 
-        password = ("mnemonic" + password).encode(cls.ENCODING)
-        phrase = phrase.encode(cls.ENCODING)
+        password = ("mnemonic" + password).encode(cls._ENCODING)
+        phrase = phrase.encode(cls._ENCODING)
 
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA512(),
             length=64,
             salt=password,
-            iterations=cls.PBKDF2_ROUNDS)
+            iterations=cls._PBKDF2_ROUNDS)
         seed = kdf.derive(phrase)
         assert len(seed) == 64
         return seed
@@ -154,7 +163,7 @@ class Mnemonic:
     @classmethod
     def getLanguageList(cls) -> List[str]:
         result = []
-        for f in cls.SOURCE_PATH.iterdir():
+        for f in cls._SOURCE_PATH.iterdir():
             if f.suffix == ".txt" and f.stem:
                 result.append(f.stem)
         return result

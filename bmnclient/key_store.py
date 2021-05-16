@@ -134,7 +134,7 @@ class KeyStore(QObject):
             self._mnemonic_salt_hash = Sha256Digest()
             self._mnemonic_salt_hash.update(os.urandom(64))
             result = self._mnemonic_salt_hash.copy().finalize()
-            result = result[:Mnemonic.DEFAULT_DATA_LENGTH]
+            result = result[:Mnemonic.defaultDataLength]
             return self._mnemonic.getPhrase(result)
 
     # noinspection PyTypeChecker
@@ -147,7 +147,7 @@ class KeyStore(QObject):
                         salt.encode(encoding=Product.ENCODING))
                     self._mnemonic_salt_hash.update(os.urandom(4))
                 result = self._mnemonic_salt_hash.copy().finalize()
-                result = result[:Mnemonic.DEFAULT_DATA_LENGTH]
+                result = result[:Mnemonic.defaultDataLength]
                 return self._mnemonic.getPhrase(result)
         return ""
 

@@ -68,7 +68,7 @@ class TestMnemonic(TestCase):
             mnemonic = Mnemonic(language)
             for i in range(2000):
                 phrase = mnemonic.getPhrase(
-                    os.urandom(random.choice(Mnemonic.DATA_LENGTH_LIST)))
+                    os.urandom(random.choice(Mnemonic.dataLengthList)))
                 if i == 1:
                     _logger.debug("Random phrase {}: {}".format(i, phrase))
                 self.assertTrue(mnemonic.isValidPhrase(phrase))
