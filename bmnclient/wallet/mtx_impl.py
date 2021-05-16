@@ -5,11 +5,12 @@ import logging
 from typing import TYPE_CHECKING
 
 from . import constants, util
+from ..coins.abstract.script import AbstractScript as Script  # TODO tmp
+from ..crypto.digest import Hash160Digest
 
 if TYPE_CHECKING:
     from typing import List, Tuple
     from ..coins.abstract.coin import AbstractCoin
-    from ..crypto.secp256k1 import PrivateKey
 
 log = logging.getLogger(__name__)
 
@@ -53,7 +54,7 @@ class TxInput(TxEntity):
         super().__init__(address)
 
         self.script_sig = script_sig
-        self.script_sig_len = util.int_to_varint(len(script_sig))
+        self.script_sig_len = Script.integerToVarInt(len(script_sig))
         self.tx_id = tx_id
         self.tx_index = tx_index
         self.witness = witness
@@ -93,7 +94,7 @@ class TxOutput(TxEntity):
         super().__init__(address)
         self.amount = amount
         self.script_pubkey = script_pubkey
-        self.script_pubkey_len = util.int_to_varint(len(script_pubkey))
+        self.script_pubkey_len = Script.integerToVarInt(len(script_pubkey))
 
     def __eq__(self, other: TxOutput):
         if not super().__eq__(other):
@@ -133,9 +134,9 @@ class Mtx:
         self.lock_time = lock_time
 
     def __bytes__(self) -> bytes:
-        inp = util.int_to_varint(len(self.TxIn)) + \
+        inp = Script.integerToVarInt(len(self.TxIn)) + \
             b''.join(map(bytes, self.TxIn))
-        out = util.int_to_varint(len(self.TxOut)) + \
+        out = Script.integerToVarInt(len(self.TxOut)) + \
             b''.join(map(bytes, self.TxOut))
         wit = b''.join([w.witness for w in self.TxIn])
         return b''.join([
@@ -162,9 +163,9 @@ class Mtx:
         return self._coin
 
     def legacy_repr(self) -> bytes:
-        inp = util.int_to_varint(len(self.TxIn)) + \
+        inp = Script.integerToVarInt(len(self.TxIn)) + \
             b''.join(map(bytes, self.TxIn))
-        out = util.int_to_varint(len(self.TxOut)) + \
+        out = Script.integerToVarInt(len(self.TxOut)) + \
             b''.join(map(bytes, self.TxOut))
         return b''.join([
             self.version,
@@ -309,13 +310,13 @@ class Mtx:
 
             # Providing the signature(s) to the input
             tx_in.script_sig = script_sig
-            tx_in.script_sig_len = util.int_to_varint(len(script_sig))
+            tx_in.script_sig_len = Script.integerToVarInt(len(script_sig))
             tx_in.witness = witness
         return self.to_hex()
 
     def calc_preimages(self, inputs_parameters) -> List:
-        input_count = util.int_to_varint(len(self.TxIn))
-        output_count = util.int_to_varint(len(self.TxOut))
+        input_count = Script.integerToVarInt(len(self.TxIn))
+        output_count = Script.integerToVarInt(len(self.TxOut))
         output_block = b''.join([bytes(o) for o in self.TxOut])
 
         hash_prev_outs = util.sha256d(

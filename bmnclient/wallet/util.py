@@ -24,29 +24,6 @@ def get_bytes(data: Union[str, bytes]) -> bytes:
     return data
 
 
-def int_to_varint(val: int) -> bytes:
-    if val < 253:
-        return val.to_bytes(1, 'little')
-    elif val <= 65535:
-        return b'\xfd'+val.to_bytes(2, 'little')
-    elif val <= 4294967295:
-        return b'\xfe'+val.to_bytes(4, 'little')
-    else:
-        return b'\xff'+val.to_bytes(8, 'little')
-
-
-def read_var_int(stream: bytes) -> int:
-    val = int(bytes_to_hex(stream[0:1]), base=16)
-    if val < 253:
-        return val, stream[1:]
-    return read_as_int(stream[1:], 2**(val-252))
-
-
-def read_var_string(stream: bytes) -> str:
-    size, stream = read_var_int(stream)
-    return split_bytes(stream, size)
-
-
 def read_as_int(stream: bytes, bytes_: int) -> int:
     return int(bytes_to_hex(stream[0:bytes_][::-1]), base=16), stream[bytes_:]
 
