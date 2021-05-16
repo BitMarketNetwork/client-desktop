@@ -3,6 +3,7 @@
 ## 0.12.2 (xx.05.2021)
 
 * UI: The configuration of visible coins now works correctly.
+* Reimplemented BIP32 engine.
 
 ## 0.12.1 (12.05.2021)
 
