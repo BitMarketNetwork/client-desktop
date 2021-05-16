@@ -232,7 +232,7 @@ class Database:
                 data["tx_count"],
                 data["history_first_offset"],
                 data["history_last_offset"],
-                self.__impl(address.exportPrivateKey(), True, "wallet key"),
+                self.__impl(address.exportKey(), True, "wallet key"),
             ))
             if cursor is None:
                 return False
@@ -303,7 +303,7 @@ class Database:
             address = coin.Address.deserialize(
                 coin,
                 name=str(value[1]),
-                private_key=str(value[11]),
+                key=str(value[11]),
                 amount=int(value[7]),
                 tx_count=int(value[8]),
                 label=str(value[3]),

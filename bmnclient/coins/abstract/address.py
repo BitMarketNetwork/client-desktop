@@ -186,7 +186,8 @@ class AbstractAddress(Serializable):
             key: str,
             value: Any) -> Any:
         if isinstance(value, str) and key == "key":
-            return cls.importPrivateKey(value)
+            coin: AbstractCoin = args[0]
+            return cls.importKey(coin, value)
         if isinstance(value, dict) and key == "tx_list":
             coin: AbstractCoin = args[0]
             return coin.Tx.deserialize(coin, **value)
@@ -197,7 +198,7 @@ class AbstractAddress(Serializable):
 
     def _serializeProperty(self, key: str, value: Any) -> Any:
         if key == "key":
-            return self.exportPrivateKey()
+            return self.exportKey()
         return super()._serializeProperty(key, value)
 
     @classproperty
@@ -270,23 +271,53 @@ class AbstractAddress(Serializable):
     def key(self) -> Optional[HdNode, PrivateKey, PublicKey]:
         return self._key
 
-    def exportPrivateKey(self) -> str:
-        if isinstance(self._private_key, HdNode):
-            value = self._private_key.extended_key
-        elif isinstance(self._private_key, PrivateKey):
-            value = self._private_key.to_wif
+    def exportKey(self) -> Optional[str]:
+        if isinstance(self._key, HdNode):
+            value = self._key.toExtendedKey(
+                self._coin.bip0032VersionPrivateKey,
+                private=True)
+            if value is None:
+                value = self._key.toExtendedKey(
+                    self._coin.bip0032VersionPublicKey,
+                    private=False)
+        elif isinstance(self._key, PrivateKey):
+            value = self._key.toWif(self._coin.wifVersion)
+        elif isinstance(self._key, PublicKey):
+            value = self._key.data.hex()
         else:
-            value = ""
+            value = None
+
         return value
 
     @classmethod
-    def importPrivateKey(cls, value: str) -> Optional[HdNode, PrivateKey]:
-        if value:
-            try:
-                return HDNode.from_extended_key(value)
-            except HDError:
-                return PrivateKey.from_wif(value)
-        return None
+    def importKey(
+            cls,
+            coin: AbstractCoin,
+            value: str) -> Optional[HdNode, PrivateKey, PublicKey]:
+        if not value:
+            return None
+
+        version, key = HdNode.fromExtendedKey(value)
+        if key is not None:
+            if key.privateKey is not None:
+                if version == coin.bip0032VersionPrivateKey:
+                    return key
+            else:
+                if version == coin.bip0032VersionPublicKey:
+                    return key
+            return None
+
+        version, key = PrivateKey.fromWif(value)
+        if key is not None:
+            if version == coin.wifVersion:
+                return key
+            return None
+
+        try:
+            value = bytes.fromhex(value)
+        except ValueError:
+            return None
+        return PublicKey.fromPublicData(value)
 
     @property
     def hdIndex(self) -> int:
