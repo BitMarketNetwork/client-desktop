@@ -196,6 +196,9 @@ class HdNode:
         return version, node
 
     def toExtendedKey(self, version: int, *, private: bool) -> Optional[str]:
+        if private and self.privateKey is None:
+            return None
+
         version = KeyUtils.integerToBytes(version, 4)
         depth = KeyUtils.integerToBytes(self._depth, 1)
         index = KeyUtils.integerToBytes(self._index, 4)
@@ -209,8 +212,6 @@ class HdNode:
             + index \
             + self._chain_code
         if private:
-            if self.privateKey is None:
-                return None
             result += b"\x00" + self.privateKey.data
         else:
             result += self.publicKey.data

@@ -25,10 +25,13 @@ class AbstractCoin(Serializable):
     _SHORT_NAME = ""
     _FULL_NAME = ""
     _IS_TEST_NET = False
+
     # https://github.com/satoshilabs/slips/blob/master/slip-0044.md
     _BIP0044_COIN_TYPE = -1
     _BIP0032_VERSION_PUBLIC_KEY = -1
     _BIP0032_VERSION_PRIVATE_KEY = -1
+
+    _WIF_VERSION = 0x00
 
     class Interface:
         def __init__(self, *args, coin: AbstractCoin, **kwargs) -> None:
@@ -236,6 +239,10 @@ class AbstractCoin(Serializable):
     @classproperty
     def bip0032VersionPrivateKey(cls) -> int:  # noqa
         return cls._BIP0032_VERSION_PRIVATE_KEY
+
+    @classproperty
+    def wifVersion(cls) -> int:  # noqa
+        return cls._WIF_VERSION
 
     @classproperty
     def iconPath(cls) -> str:  # noqa
