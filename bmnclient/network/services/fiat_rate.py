@@ -13,7 +13,7 @@ from ...coins.currency import \
     FiatRate, \
     UsdFiatCurrency
 from ...config import UserConfig, UserConfigStaticList
-from ...utils.meta import classproperty
+from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
     from typing import Dict, Final, Iterator, List, Optional, Type, Union

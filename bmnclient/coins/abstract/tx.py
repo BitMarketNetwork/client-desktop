@@ -4,7 +4,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from ...utils import filterNotNone
+from ...utils import Utils
 from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
@@ -236,8 +236,8 @@ class AbstractTx(Serializable):
         self._fee_amount = fee_amount
         self._coinbase = coinbase
 
-        self._input_list = list(filterNotNone(input_list))
-        self._output_list = list(filterNotNone(output_list))
+        self._input_list = list(Utils.filterNotNone(input_list))
+        self._output_list = list(Utils.filterNotNone(output_list))
 
         self._model: Optional[AbstractCoin.Tx.Interface] = \
             self._coin.model_factory(self)

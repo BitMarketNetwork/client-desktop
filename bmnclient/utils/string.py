@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .meta import NotImplementedInstance
+from . import NotImplementedInstance
 
 if TYPE_CHECKING:
     from typing import Tuple

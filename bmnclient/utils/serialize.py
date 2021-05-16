@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .meta import classproperty
+from .class_property import classproperty
 from .string import StringUtils
 
 if TYPE_CHECKING:
@@ -16,7 +16,7 @@ class DeserializationNotSupportedError(Exception):
         super().__init__("deserialization not supported")
 
 
-def serializable(func) -> Any:
+def serializable(func: property) -> property:
     assert isinstance(func, property)
     getattr(func, "fget").__serializable = True
     return func

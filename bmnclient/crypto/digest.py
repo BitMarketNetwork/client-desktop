@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from cryptography.hazmat.primitives import hashes, hmac
 
-from ..utils.meta import classproperty
+from ..utils.class_property import classproperty
 
 if TYPE_CHECKING:
     from typing import Any, Final, Optional, Tuple, Type

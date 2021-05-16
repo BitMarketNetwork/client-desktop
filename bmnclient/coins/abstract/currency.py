@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utils.meta import classproperty, NotImplementedInstance
+from ...utils import NotImplementedInstance
+from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
     from typing import Optional

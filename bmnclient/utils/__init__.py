@@ -7,7 +7,20 @@ if TYPE_CHECKING:
     from typing import Any, Iterable
 
 
-def filterNotNone(iterable: Iterable) -> Any:
-    for v in iterable:
-        if v is not None:
-            yield v
+class NotImplementedInstanceError(Exception):
+    pass
+
+
+class NotImplementedInstance:
+    def __init__(self, *args, **kwargs) -> None:
+        raise NotImplementedInstanceError(
+            "__init__ not implemented for class '{}'"
+            .format(self.__class__.__name__))
+
+
+class Utils(NotImplementedInstance):
+    @staticmethod
+    def filterNotNone(iterable: Iterable) -> Any:
+        for v in iterable:
+            if v is not None:
+                yield v

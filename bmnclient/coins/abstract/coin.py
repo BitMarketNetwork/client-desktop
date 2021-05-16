@@ -10,7 +10,7 @@ from .script import AbstractScript
 from .tx import AbstractTx
 from ..currency import FiatRate, NoneFiatCurrency
 from ...crypto.digest import Sha256Digest
-from ...utils.meta import classproperty
+from ...utils.class_property import classproperty
 from ...utils.serialize import Serializable, serializable
 from ...wallet.mutable_tx import MutableTransaction
 

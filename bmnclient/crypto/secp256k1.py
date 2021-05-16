@@ -15,7 +15,8 @@ from ecdsa.util import sigdecode_der, sigencode_der_canonize
 
 from .base58 import Base58
 from .digest import HashlibWrapper, Sha256Digest
-from ..utils.meta import classproperty, NotImplementedInstance
+from ..utils import NotImplementedInstance
+from ..utils.class_property import classproperty
 
 if TYPE_CHECKING:
     from typing import Final, Optional, Tuple, Union
