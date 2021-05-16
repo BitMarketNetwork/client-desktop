@@ -133,10 +133,17 @@ class Ripemd160Digest(AbstractDigestHashlib):
 
 
 class Sha256Digest(AbstractDigestHazmat):
-    _NAME: Final = "sha256"
+    _NAME = "sha256"
     _SIZE: Final = 256 // 8
     _BLOCK_SIZE: Final = 64
     _HAZMAT_TYPE: Final = hashes.SHA256
+
+
+class DoubleSha512Digest(Sha256Digest):
+    _NAME: Final = "sha256d"
+
+    def finalize(self) -> bytes:
+        return Sha256Digest(super().finalize()).finalize()
 
 
 class Sha512Digest(AbstractDigestHazmat):
