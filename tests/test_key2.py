@@ -1,13 +1,10 @@
-
 import json
 import logging
 import os
 import random
 import unittest
 
-from bmnclient.wallet import coin_network, hd, key, key_format, mtx_impl as \
-    mtx, \
-    util
+from bmnclient.wallet import coin_network, key, mtx_impl as mtx, util
 from tests import TEST_DATA_PATH
 from tests.test_data import *
 

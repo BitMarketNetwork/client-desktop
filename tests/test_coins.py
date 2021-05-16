@@ -13,8 +13,8 @@ from bmnclient.coins.coin_bitcoin import \
 from bmnclient.coins.coin_litecoin import \
     Litecoin, \
     LitecoinAddress
+from bmnclient.coins.hd import HdNode
 from bmnclient.language import Locale
-from bmnclient.wallet.hd import HdNode
 
 if TYPE_CHECKING:
     from typing import Iterable, Type

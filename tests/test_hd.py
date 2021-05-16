@@ -3,9 +3,7 @@ import random
 from unittest import TestCase
 
 from bmnclient.coins.coin_bitcoin import Bitcoin
-from bmnclient.coins.hd import HdAddressIterator
-from bmnclient.wallet import hd
-from bmnclient.wallet.hd import HdNode
+from bmnclient.coins.hd import HdAddressIterator, HdNode
 
 BIP32_TEST_VECTOR_1 = {
     "seed": "000102030405060708090a0b0c0d0e0f",
@@ -228,7 +226,7 @@ class TestHd(TestCase):
 
     def test_hd_address_index(self) -> None:
         coin = Bitcoin()
-        root_node = hd.HdNode.deriveRootNode(random.randbytes(64))
+        root_node = HdNode.deriveRootNode(random.randbytes(64))
         self.assertIsNotNone(root_node)
         self.assertTrue(coin.deriveHdNode(root_node))
 

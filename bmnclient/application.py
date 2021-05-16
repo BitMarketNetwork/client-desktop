@@ -16,7 +16,6 @@ from PySide2.QtCore import \
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 
-from .resources import ICON_FILE_PATH
 from .coins.currency import FiatCurrencyList, FiatRate
 from .coins.list import CoinList
 from .config import UserConfig
@@ -27,14 +26,15 @@ from .network.query_manager import NetworkQueryManager
 from .network.query_scheduler import NetworkQueryScheduler
 from .network.services.fiat_rate import FiatRateServiceList
 from .platform import PlatformPaths
+from .resources import ICON_FILE_PATH
 from .signal_handler import SignalHandler
 from .version import Product, ProductPaths
 
 if TYPE_CHECKING:
     from typing import Callable, List, Optional, Type, Union
     from PySide2.QtCore import QCoreApplication
+    from .coins.hd import HdNode
     from .language import Language
-    from .wallet.hd import HdNode
 
 
 class CommandLine:

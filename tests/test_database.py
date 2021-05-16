@@ -3,10 +3,8 @@ import os
 import pathlib
 import unittest
 
-from bmnclient import gcd
 import key_store
-from bmnclient.wallet import address, coin_network, coins, hd, key
-from bmnclient.database import db_wrapper, cipher
+from bmnclient.database import cipher, db_wrapper
 
 log = logging.getLogger(__name__)
 
@@ -93,7 +91,7 @@ class TestWorkflow(unittest.TestCase):
     def test_addresses(self):
         coin = coins.BitcoinTest(self.gcd)
         seed = os.urandom(32)
-        master_hd = hd.HdNode.deriveRootNode(seed)
+        master_hd = HdNode.deriveRootNode(seed)
         self.assertTrue(coin.deriveHdNode(master_hd))
         self.db.appendCoin(coin, True)
         self.assertEqual(0, len(coin))

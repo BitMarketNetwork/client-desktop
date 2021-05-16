@@ -4,11 +4,11 @@ from __future__ import annotations
 from enum import auto, Enum
 from typing import TYPE_CHECKING
 
+from ..hd import HdNode
 from ...crypto.secp256k1 import PrivateKey, PublicKey
 from ...utils import filterNotNone
 from ...utils.meta import classproperty
 from ...utils.serialize import Serializable, serializable
-from ...wallet.hd import HdNode
 
 if TYPE_CHECKING:
     from typing import Any, List, Optional, Tuple

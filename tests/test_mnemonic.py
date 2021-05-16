@@ -5,8 +5,8 @@ import random
 from unittest import TestCase
 
 from bmnclient.coins.coin_bitcoin import Bitcoin
+from bmnclient.coins.hd import HdNode
 from bmnclient.coins.mnemonic import Mnemonic
-from bmnclient.wallet.hd import HdNode
 from tests import getLogger, TEST_DATA_PATH
 
 _logger = getLogger(__name__)

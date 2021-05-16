@@ -12,6 +12,7 @@ from PySide2.QtCore import \
     QObject, \
     Slot as QSlot
 
+from .coins.hd import HdNode
 from .coins.mnemonic import Mnemonic
 from .config import UserConfig
 from .crypto.cipher import AeadCipher, MessageCipher
@@ -20,7 +21,6 @@ from .crypto.kdf import SecretStore
 from .crypto.password import PasswordStrength
 from .logger import Logger
 from .version import Product
-from .wallet.hd import HdNode
 
 if TYPE_CHECKING:
     from typing import Callable, Final, List, Optional, Tuple

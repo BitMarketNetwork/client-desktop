@@ -15,8 +15,8 @@ from ...wallet.mutable_tx import MutableTransaction
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+    from ..hd import HdNode
     from ...wallet.coin_network import CoinNetworkBase
-    from ...wallet.hd import HdNode
 
 
 class AbstractCoin(Serializable):
