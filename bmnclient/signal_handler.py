@@ -1,8 +1,10 @@
-# JOK++
+# JOK4
+from __future__ import annotations
+
 import signal
 import socket
 import sys
-from typing import Optional, Type
+from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
     QObject, \
@@ -13,6 +15,9 @@ from PySide2.QtNetwork import QAbstractSocket
 from .logger import Logger
 from .platform import Platform
 
+if TYPE_CHECKING:
+    from typing import Optional
+
 
 class SignalHandler(QObject):
     SIGHUP = QSignal()
@@ -20,12 +25,12 @@ class SignalHandler(QObject):
     SIGQUIT = QSignal()
     SIGTERM = QSignal()
 
-    if Platform.isWindows():
+    if Platform.isWindows:
         SIGNAL_LIST = (
             (signal.SIGINT, "SIGINT"),
             (signal.SIGTERM, "SIGTERM"),
         )
-    elif Platform.isDarwin() or Platform.isLinux():
+    elif Platform.isDarwin or Platform.isLinux:
         SIGNAL_LIST = (
             (signal.SIGHUP, "SIGHUP"),
             (signal.SIGINT, "SIGINT"),
@@ -33,7 +38,7 @@ class SignalHandler(QObject):
             (signal.SIGTERM, "SIGTERM"),
         )
     else:
-        raise RuntimeError("unsupported platform '{}'".format(Platform.TYPE))
+        raise RuntimeError("unsupported platform '{}'".format(Platform.type))
 
     def __init__(self, parent: Optional[QObject] = None) -> None:
         super().__init__(parent=parent)
@@ -101,5 +106,5 @@ class SignalHandler(QObject):
                 self._logger.debug(
                     "Unsupported signal %i received.", sig)
 
-    def _defaultHandler(self, sig: int, frame: Type) -> None:
+    def _defaultHandler(self, sig: int, frame: object) -> None:
         pass

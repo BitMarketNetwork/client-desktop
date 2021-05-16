@@ -47,10 +47,10 @@ class CommandLine:
         parser.add_argument(
             "-c",
             "--configpath",
-            default=str(PlatformPaths.USER_APPLICATION_CONFIG_PATH),
+            default=str(PlatformPaths.userApplicationConfigPath),
             type=self._expandPath,
             help="directory for configuration files; by default, it is '{}'"
-                 .format(str(PlatformPaths.USER_APPLICATION_CONFIG_PATH)),
+                 .format(str(PlatformPaths.userApplicationConfigPath)),
             metavar="PATH")
         parser.add_argument(
             "-l",

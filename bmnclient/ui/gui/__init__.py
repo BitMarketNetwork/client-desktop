@@ -18,7 +18,7 @@ from ...debug_manager import DebugManager
 from ...key_store import KeyStore
 from ...language import Language
 from ...models.coin import CoinListModel
-from ...models.factory import modelFactory
+from ...models.factory import ModelsFactory
 from ...network.access_manager import NetworkAccessManager
 from ...resources import QML_URL
 
@@ -36,7 +36,7 @@ class GuiApplication(CoreApplication):
         super().__init__(
             qt_class=QApplication,
             command_line=command_line,
-            model_factory=lambda o: modelFactory(self, o))
+            model_factory=lambda o: ModelsFactory.create(self, o))
 
         self._settings_manager = SettingsManager(self)
         self._ui_manager = UIManager(self)

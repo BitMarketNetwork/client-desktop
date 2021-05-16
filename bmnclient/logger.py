@@ -110,7 +110,7 @@ class Logger:
             #  -> PyGILState_Ensure()
             #  == deadlock
             # 2021.01.22: Now i found this deadlock on Windows...
-            if Platform.TYPE not in (
+            if Platform.type not in (
                     Platform.Type.DARWIN,
                     Platform.Type.WINDOWS):
                 QtCore.qInstallMessageHandler(_qtMessageHandler)
