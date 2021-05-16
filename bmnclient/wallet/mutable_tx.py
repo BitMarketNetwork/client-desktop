@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 from typing import TYPE_CHECKING
 
-from . import key, mtx_impl
+from . import mtx_impl
 from ..coins.abstract.mutable_tx import AbstractMutableTx
 
 if TYPE_CHECKING:
