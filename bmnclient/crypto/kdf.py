@@ -60,10 +60,11 @@ class SecretStore(KeyDerivationFunction):
             (secret_version, salt, value) = value.split(
                 Product.STRING_SEPARATOR,
                 2)
+            salt = bytes.fromhex(salt)
         except ValueError:
             return None
         if secret_version != self.SECRET_VERSION:
             return None
-        key = self.derive(bytes.fromhex(salt), self.SECRET_KEY_LENGTH)
+        key = self.derive(salt, self.SECRET_KEY_LENGTH)
         value = MessageCipher(key).decrypt(value, Product.STRING_SEPARATOR)
         return value
