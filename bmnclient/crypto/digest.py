@@ -139,7 +139,7 @@ class Sha256Digest(AbstractDigestHazmat):
     _HAZMAT_TYPE: Final = hashes.SHA256
 
 
-class DoubleSha512Digest(Sha256Digest):
+class Sha256DoubleDigest(Sha256Digest):
     _NAME: Final = "sha256d"
 
     def finalize(self) -> bytes:
