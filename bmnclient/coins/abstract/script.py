@@ -57,3 +57,11 @@ class AbstractScript:
             return None
 
         return cls.integerFromBytes(value[1:]) if value[0] == prefix else None
+
+    @classmethod
+    def addressToScript(
+            cls,
+            address: AbstractCoin.Address,
+            type_: Optional[AbstractCoin.Address.Type] = None) \
+            -> Optional[bytes]:
+        raise NotImplementedError

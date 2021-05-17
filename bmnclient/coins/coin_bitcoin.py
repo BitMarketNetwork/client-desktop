@@ -1,6 +1,7 @@
 # JOK4
 from __future__ import annotations
 
+from enum import IntEnum
 from typing import TYPE_CHECKING
 
 from .abstract.coin import AbstractCoin
@@ -55,7 +56,7 @@ class BitcoinAddress(AbstractCoin.Address):
     @classmethod
     def deriveAddressName(
             cls,
-            type_: AbstractCoin.Address.Type,
+            type_: BitcoinAddress.Type,
             public_key: PublicKey) -> Optional[str]:
         if type_.value.encoding == cls.Encoding.BASE58:
             try:
@@ -170,7 +171,7 @@ class BitcoinAddress(AbstractCoin.Address):
         return cls(coin, **kwargs)
 
     @classmethod
-    def createNullData(cls, coin: AbstractCoin, **kwargs) -> BitcoinAddress:
+    def createNullData(cls, coin: Bitcoin, **kwargs) -> BitcoinAddress:
         kwargs.setdefault("name", None)
         kwargs["type_"] = cls.Type.UNKNOWN
         return cls(coin, **kwargs)
@@ -179,6 +180,28 @@ class BitcoinAddress(AbstractCoin.Address):
     def isNullData(self) -> bool:
         return self._type == self.Type.UNKNOWN
 
+
+class BitcoinScript(AbstractCoin.Script):
+    class OpCode(IntEnum):
+        OP_0 = 0x00
+        OP_RETURN = 0x6a
+        OP_DUP = 0x76
+        OP_EQUAL = 0x87
+        OP_EQUALVERIFY = 0x88
+        OP_HASH160 = 0xa9
+        OP_CHECKSIG = 0xac
+
+    @classmethod
+    def addressToScript(
+            cls,
+            address: BitcoinAddress,
+            type_: Optional[BitcoinAddress.Type] = None) -> Optional[bytes]:
+        address_hash = address.hash
+        if not (0 < len(address_hash) < 0xff):
+            return None
+
+        if type_ is None:
+            type_ = address.type
 
 class Bitcoin(AbstractCoin):
     network = BitcoinMainNetwork  # TODO tmp

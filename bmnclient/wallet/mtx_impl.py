@@ -4,10 +4,9 @@ import itertools
 import logging
 from typing import TYPE_CHECKING
 
-from . import constants, util
+from . import constants
 from ..coins.coin_bitcoin import BitcoinScript as Script  # TODO tmp
-from ..crypto.base58 import Base58
-from ..crypto.digest import Hash160Digest, Sha256Digest, Sha256DoubleDigest
+from ..crypto.digest import Sha256Digest, Sha256DoubleDigest
 
 if TYPE_CHECKING:
     from typing import List, Tuple
@@ -17,18 +16,23 @@ log = logging.getLogger(__name__)
 
 
 class TxEntity:
-    def __init__(self, address: str):
+    def __init__(
+            self,
+            address: AbstractCoin.Address,
+            amount: bytes) -> None:
         self._address = address
-        self.amount = None
+        self._amount = amount
+
+    @property
+    def amount(self) -> bytes:
+        return self._amount
 
     @property
     def amount_int(self) -> int:
-        if isinstance(self.amount, bytes):
-            return int.from_bytes(self.amount, "little")
-        return self.amount
+        return Script.integerFromBytes(self._amount)
 
     @property
-    def address(self) -> str:
+    def address(self) -> AbstractCoin.Address:
         return self._address
 
     def __eq__(self, other: TxEntity):
@@ -39,76 +43,111 @@ class TxEntity:
 
 
 class TxInput(TxEntity):
-    __slots__ = ('script_sig', 'script_sig_len', 'tx_id', 'tx_index', 'witness',
-                 'amount', 'sequence', 'segwit_input')
-
     def __init__(
             self,
-            script_sig,
-            tx_id,
-            tx_index,
-            witness=b'',
-            amount=None,
-            sequence=constants.SEQUENCE,
-            segwit_input=False,
-            address: str = None):
-        super().__init__(address)
-
-        self.script_sig = script_sig
-        self.script_sig_len = Script.integerToVarInt(len(script_sig))
-        self.tx_id = tx_id
-        self.tx_index = tx_index
-        self.witness = witness
-        self.amount = amount
-        self.sequence = sequence
-        self.segwit_input = segwit_input
+            *,
+            address: AbstractCoin.Address,
+            amount: bytes,
+            script_sig: bytes,
+            tx_id: bytes,
+            tx_index: bytes,
+            witness: bytes = b"",
+            sequence: bytes = constants.SEQUENCE,
+            segwit_input: bool) -> None:
+        super().__init__(address, amount)
+        self._script_sig = script_sig
+        self._script_sig_len = Script.integerToVarInt(len(script_sig))
+        self._tx_id = tx_id
+        self._tx_index = tx_index
+        self._witness = witness
+        self._sequence = sequence
+        self._segwit_input = segwit_input
 
     def __eq__(self, other: TxInput):
         if not super().__eq__(other):
             return False
-        return (self.script_sig == other.script_sig and
-                self.script_sig_len == other.script_sig_len and
-                self.tx_id == other.tx_id and
-                self.tx_index == other.tx_index and
-                self.witness == other.witness and
-                self.amount == other.amount and
-                self.sequence == other.sequence and
-                self.segwit_input == other.segwit_input)
+        return (self._script_sig == other._script_sig and
+                self._script_sig_len == other._script_sig_len and
+                self._tx_id == other._tx_id and
+                self._tx_index == other._tx_index and
+                self._witness == other._witness and
+                self._amount == other._amount and
+                self._sequence == other._sequence and
+                self._segwit_input == other._segwit_input)
 
     def __bytes__(self) -> bytes:
         return b''.join([
-            self.tx_id,
-            self.tx_index,
-            self.script_sig_len,
-            self.script_sig,
-            self.sequence
+            self._tx_id,
+            self._tx_index,
+            self._script_sig_len,
+            self._script_sig,
+            self._sequence
         ])
 
+    @property
+    def script_sig(self) -> bytes:
+        return self._script_sig
+
+    @script_sig.setter
+    def script_sig(self, value: bytes) -> None:
+        self._script_sig = value
+
+    @property
+    def script_sig_len(self) -> bytes:
+        return self._script_sig_len
+
+    @script_sig_len.setter
+    def script_sig_len(self, value: bytes) -> None:
+        self._script_sig_len = value
+
+    @property
+    def tx_id(self) -> bytes:
+        return self._tx_id
+
+    @property
+    def tx_index(self) -> bytes:
+        return self._tx_index
+
+    @property
     def is_segwit(self) -> bool:
-        return self.segwit_input or self.witness
+        return self._segwit_input or self._witness
+
+    @property
+    def witness(self) -> bytes:
+        return self._witness
+
+    @witness.setter
+    def witness(self, value: bytes) -> None:
+        self._witness = value
+
+    @property
+    def sequence(self) -> bytes:
+        return self._sequence
 
 
 class TxOutput(TxEntity):
-    __slots__ = ('amount', 'script_pubkey_len', 'script_pubkey')
-
-    def __init__(self, amount, script_pubkey, address: str = None):
-        super().__init__(address)
-        self.amount = amount
-        self.script_pubkey = script_pubkey
-        self.script_pubkey_len = Script.integerToVarInt(len(script_pubkey))
+    def __init__(
+            self,
+            *,
+            address: AbstractCoin.Address,
+            amount: bytes,
+            script: bytes) -> None:
+        super().__init__(address, amount)
+        self._script = script
+        self._script_len = Script.integerToVarInt(len(self._script))
 
     def __eq__(self, other: TxOutput):
         if not super().__eq__(other):
             return False
-        return (self.amount == other.amount and
-                self.script_pubkey == other.script_pubkey and
-                self.script_pubkey_len == other.script_pubkey_len)
+        return (self._amount == other._amount and
+                self._script == other._script and
+                self._script_len == other._script_len)
 
     def __bytes__(self) -> bytes:
         return b''.join([
-            self.amount,
-            self.script_pubkey_len,
-            self.script_pubkey
+            self._amount,
+            self._script_len,
+            self._script
         ])
 
 
@@ -119,125 +158,133 @@ class NoInputsToSignError(Exception):
 class Mtx:
     def __init__(
             self,
+            *,
             coin: AbstractCoin,
             version: bytes,
+            utxo_list: List[AbstractCoin.Tx.Utxo],
             tx_in: List[TxInput],
             tx_out: List[TxOutput],
             lock_time: bytes) -> None:
         self._coin = coin
-        segwit_tx = any([i.segwit_input or i.witness for i in tx_in])
-        self.version = version
-        self.TxIn = tx_in
-        if segwit_tx:
-            for i in self.TxIn:
-                i.witness = i.witness if i.witness else b'\x00'
-        self.TxOut = tx_out
-        self.lock_time = lock_time
+        self._version = version
+        self._utxo_list = utxo_list
+        self._tx_in = tx_in
+        self._tx_out = tx_out
+        self._lock_time = lock_time
+
+        if any([i.is_segwit for i in tx_in]):
+            for i in self._tx_in:
+                if not i.witness:
+                    i.witness = b"\x00"
 
     def __bytes__(self) -> bytes:
-        inp = Script.integerToVarInt(len(self.TxIn)) + \
-            b''.join(map(bytes, self.TxIn))
-        out = Script.integerToVarInt(len(self.TxOut)) + \
-            b''.join(map(bytes, self.TxOut))
-        wit = b''.join([w.witness for w in self.TxIn])
+        input_list = \
+            Script.integerToVarInt(len(self._tx_in)) \
+            + b"".join(map(lambda v: v.__bytes__(), self._tx_in))
+
+        output_list = \
+            Script.integerToVarInt(len(self._tx_out)) \
+            + b"".join(map(lambda v: v.__bytes__(), self._tx_out))
+
+        witness_list = b"".join([w.witness for w in self._tx_in])
+
         return b''.join([
-            self.version,
-            constants.WIT_MARKER if wit else b'',
-            constants.WIT_FLAG if wit else b'',
-            inp,
-            out,
-            wit,
-            self.lock_time
+            self._version,
+            constants.WIT_MARKER if witness_list else b"",
+            constants.WIT_FLAG if witness_list else b"",
+            input_list,
+            output_list,
+            witness_list,
+            self._lock_time
         ])
 
-    def __eq__(self, other) -> bool:
-        return (self.version == other.version and
-                self.TxIn == other.TxIn and
-                self.TxOut == other.TxOut and
-                self.lock_time == other.lock_time)
+    def __eq__(self, other: Mtx) -> bool:
+        return (
+                self._version == other._version
+                and self._tx_in == other._tx_in
+                and self._tx_out == other._tx_out
+                and self._lock_time == other._lock_time
+        )
 
     def __hash__(self) -> int:
-        return hash((self.to_hex(), ))
+        return hash((bytes(self), ))
 
     @property
     def coin(self) -> AbstractCoin:
         return self._coin
 
     def legacy_repr(self) -> bytes:
-        inp = Script.integerToVarInt(len(self.TxIn)) + \
-            b''.join(map(bytes, self.TxIn))
-        out = Script.integerToVarInt(len(self.TxOut)) + \
-            b''.join(map(bytes, self.TxOut))
-        return b''.join([
-            self.version,
-            inp,
-            out,
-            self.lock_time
-        ])
+        input_list = \
+            Script.integerToVarInt(len(self._tx_in)) \
+            + b"".join(map(lambda v: v.__bytes__(), self._tx_in))
 
-    def to_hex(self) -> str:
-        return util.bytes_to_hex(bytes(self))
+        output_list = \
+            Script.integerToVarInt(len(self._tx_out)) \
+            + b"".join(map(lambda v: v.__bytes__(), self._tx_out))
+
+        return b''.join([
+            self._version,
+            input_list,
+            output_list,
+            self._lock_time
+        ])
 
     @classmethod
     def make(
             cls,
             coin: AbstractCoin,
             utxo_list: List[AbstractCoin.Tx.Utxo],
-            outputs: List[Tuple[str, int]]):
-        version = constants.VERSION_1
-        lock_time = constants.LOCK_TIME
-        outputs = construct_outputs(outputs)
+            output_list: List[Tuple[AbstractCoin.Address, int]]):
+        tx_out = []
+        for address, amount in output_list:
+            log.debug(f"destination: {address.name} amount: {amount}")
+            tx_out.append(TxOutput(
+                address=address,
+                amount=int(amount).to_bytes(8, byteorder='little'),
+                script=Script.addressToScript(address)))
 
-        # Optimize for speed, not memory, by pre-computing values.
-        inputs = []
+        tx_in = []
         for utxo in utxo_list:
-            script_sig = b''  # empty scriptSig for new unsigned transaction.
-            tx_id = util.hex_to_bytes(utxo.name)[::-1]
-            tx_index = utxo.index.to_bytes(4, byteorder='little')
-            amount = int(utxo.amount).to_bytes(8, byteorder='little')
-            assert utxo.address
-            inputs.append(TxInput(
-                script_sig,
-                tx_id,
-                tx_index,
-                amount=amount,
-                segwit_input=utxo.segwit,
-                address=utxo.address.name))
-        out = cls(coin, version, inputs, outputs, lock_time)
-        out.utxo_list = utxo_list
-        return out
+            tx_in.append(TxInput(
+                address=utxo.address,
+                amount=int(utxo.amount).to_bytes(8, byteorder='little'),
+                script_sig=b"",  # empty scriptSig for new unsigned transaction.
+                tx_id=bytes.fromhex(utxo.name)[::-1],
+                tx_index=utxo.index.to_bytes(4, byteorder='little'),
+                segwit_input=utxo.segwit))
 
-    @property
-    def in_amount(self) -> int:
-        return sum(inc.amount_int for inc in self.TxIn)
-
-    @property
-    def out_amount(self) -> int:
-        return sum(out.amount_int for out in self.TxOut)
+        return cls(
+            coin=coin,
+            version=constants.VERSION_1,
+            utxo_list=utxo_list,
+            tx_in=tx_in,
+            tx_out=tx_out,
+            lock_time=constants.LOCK_TIME)
 
     @property
     def feeAmount(self) -> int:
-        return self.in_amount - self.out_amount
+        i = sum(i.amount_int for i in self._tx_in)
+        o = sum(o.amount_int for o in self._tx_out)
+        return i - o
 
-    @classmethod
-    def is_segwit(cls, tx) -> bool:
-        if isinstance(tx, cls):
-            tx = bytes(tx)
-        elif not isinstance(tx, bytes):
-            tx = util.hex_to_bytes(tx)
-        return tx[4:6] == constants.WIT_MARKER + constants.WIT_FLAG
+    @property
+    def is_segwit(self) -> bool:
+        return bytes(self)[4:6] == (constants.WIT_MARKER + constants.WIT_FLAG)
 
     @property
     def id(self) -> str:
-        return util.bytes_to_hex(
-            Sha256DoubleDigest(self.legacy_repr()).finalize()[::-1])
+        return Sha256DoubleDigest(self.legacy_repr()).finalize()[::-1].hex()
 
-    def sign(self, private_key: PrivateKey, *, utxo_list: List = None) -> str:
+    def sign(
+            self,
+            address: AbstractCoin.Address,
+            *,
+            utxo_list: List[AbstractCoin.Tx.Utxo]) -> str:
         input_dict = {}
         try:
-            for utxo in (utxo_list or self.utxo_list):
+            for utxo in utxo_list:
                 tx_input = \
-                    util.hex_to_bytes(utxo.name)[::-1] \
+                    bytes.fromhex(utxo.name)[::-1] \
                     + utxo.index.to_bytes(4, byteorder='little')
                 input_dict[tx_input] = utxo.serialize()
                 input_dict[tx_input]["segwit"] = utxo.segwit  # TODO tmp
@@ -247,38 +294,34 @@ class Mtx:
         # Determine input indices to sign from input_dict (allows for
         # transaction batching)
         sign_inputs = [
-            j for j, i in enumerate(self.TxIn)
-            if i.tx_id + i.tx_index in input_dict
+            j for j, i in enumerate(self._tx_in)
+            if (i.tx_id + i.tx_index) in input_dict
         ]
 
-        segwit_tx = Mtx.is_segwit(self)
-        public_key = private_key.publicKey
-        public_key_push = util.script_push(len(public_key.data))
-        hash_type = constants.HASH_TYPE
+        segwit_tx = self.is_segwit
+        public_key_push = script_push(len(address.publicKey.data))
         inputs_parameters = []
         input_script_field = [
-            self.TxIn[i].script_sig for i in range(len(self.TxIn))]
+            self._tx_in[i].script_sig for i in range(len(self._tx_in))]
         if not sign_inputs:
             raise NoInputsToSignError()
         for i in sign_inputs:
-            tx_in = self.TxIn[i]
+            tx_in = self._tx_in[i]
             # Create transaction object for preimage calculation
             tx_input = tx_in.tx_id + tx_in.tx_index
-            segwit_input = input_dict[tx_input]['segwit']
+            segwit_input = input_dict[tx_input]["segwit"]
             tx_in.segwit_input = segwit_input
 
-            script_code = Script.addressToScript(
+            # Use scriptCode for preimage calculation of transaction object:
+            tx_in.script_sig = Script.addressToScript(
                 address,
                 address.Type.PUBKEY_HASH)  # TODO SCRIPT_HASH?
-            script_code_len = Script.integerToVarInt(len(script_code))
-
-            # Use scriptCode for preimage calculation of transaction object:
-            tx_in.script_sig = script_code
-            tx_in.script_sig_len = script_code_len
+            tx_in.script_sig_len = Script.integerToVarInt(
+                len(tx_in.script_sig))
 
             if segwit_input:
                 try:
-                    tx_in.script_sig += input_dict[tx_input]['amount']\
+                    tx_in.script_sig += input_dict[tx_input]["amount"] \
                         .to_bytes(8, byteorder='little')
 
                     # For partially signed Segwit transactions the signatures
@@ -291,20 +334,20 @@ class Mtx:
                         'already spent? Then please provide all inputs to sign '
                         'as `UTXO` objects to the function call')
 
-            inputs_parameters.append([i, hash_type, segwit_input])
+            inputs_parameters.append((i, constants.HASH_TYPE, segwit_input))
 
         preimages = self.calc_preimages(inputs_parameters)
 
         for hash_, (i, _, segwit_input) in zip(preimages, inputs_parameters):
-            tx_in = self.TxIn[i]
-            signature = private_key.sign(hash_) + b'\x01'
+            tx_in = self._tx_in[i]
+            signature = address.privateKey.sign(hash_) + b'\x01'
             if True:
                 witness = (
                     (b'\x02' if segwit_input else b'') +  # witness counter
                     len(signature).to_bytes(1, byteorder='little') +
                     signature +
                     public_key_push +
-                    public_key.data
+                    address.publicKey.data
                 )
 
                 script_sig = b'' if segwit_input else witness
@@ -315,17 +358,20 @@ class Mtx:
             tx_in.script_sig = script_sig
             tx_in.script_sig_len = Script.integerToVarInt(len(script_sig))
             tx_in.witness = witness
-        return self.to_hex()
+        return bytes(self).hex()
 
-    def calc_preimages(self, inputs_parameters) -> List:
-        input_count = Script.integerToVarInt(len(self.TxIn))
-        output_count = Script.integerToVarInt(len(self.TxOut))
-        output_block = b''.join([bytes(o) for o in self.TxOut])
+    def calc_preimages(
+            self,
+            inputs_parameters: List[Tuple[int, bytes, bool]]) \
+            -> List[bytes]:
+        input_count = Script.integerToVarInt(len(self._tx_in))
+        output_count = Script.integerToVarInt(len(self._tx_out))
+        output_block = b"".join([bytes(o) for o in self._tx_out])
 
         hash_prev_outs = Sha256DoubleDigest(
-            b''.join([i.tx_id+i.tx_index for i in self.TxIn])).finalize()
+            b"".join([i.tx_id + i.tx_index for i in self._tx_in])).finalize()
         hash_sequence = Sha256DoubleDigest(
-            b''.join([i.sequence for i in self.TxIn])).finalize()
+            b"".join([i.sequence for i in self._tx_in])).finalize()
         hash_outputs = Sha256DoubleDigest(output_block).finalize()
 
         preimages = []
@@ -333,48 +379,49 @@ class Mtx:
             # We can only handle hashType == 1:
             if hash_type != constants.HASH_TYPE:
                 raise ValueError('bit only support hashType of value 1')
+
             # Calculate pre hashes:
             if segwit_input:
                 # BIP-143 preimage:
                 hashed = Sha256Digest(
-                    self.version +
+                    self._version +
                     hash_prev_outs +
                     hash_sequence +
-                    self.TxIn[input_index].tx_id +
-                    self.TxIn[input_index].tx_index +
+                    self._tx_in[input_index].tx_id +
+                    self._tx_in[input_index].tx_index +
                     # scriptCode length
-                    self.TxIn[input_index].script_sig_len +
+                    self._tx_in[input_index].script_sig_len +
                     # scriptCode (includes amount)
-                    self.TxIn[input_index].script_sig +
-                    self.TxIn[input_index].sequence +
+                    self._tx_in[input_index].script_sig +
+                    self._tx_in[input_index].sequence +
                     hash_outputs +
-                    self.lock_time +
+                    self._lock_time +
                     hash_type
                 ).finalize()
             else:
                 hashed = Sha256Digest(
-                    self.version +
+                    self._version +
                     input_count +
-                    b''.join(
+                    b"".join(
                         ti.tx_id + ti.tx_index + constants.OP_0 + ti.sequence
-                        for ti in itertools.islice(self.TxIn, input_index)
+                        for ti in itertools.islice(self._tx_in, input_index)
                     ) +
-                    self.TxIn[input_index].tx_id +
-                    self.TxIn[input_index].tx_index +
+                    self._tx_in[input_index].tx_id +
+                    self._tx_in[input_index].tx_index +
                     # scriptCode length
-                    self.TxIn[input_index].script_sig_len +
-                    self.TxIn[input_index].script_sig +  # scriptCode
-                    self.TxIn[input_index].sequence +
-                    b''.join(
+                    self._tx_in[input_index].script_sig_len +
+                    self._tx_in[input_index].script_sig +  # scriptCode
+                    self._tx_in[input_index].sequence +
+                    b"".join(
                         ti.tx_id + ti.tx_index + constants.OP_0 + ti.sequence
                         for ti in itertools.islice(
-                            self.TxIn,
+                            self._tx_in,
                             input_index + 1,
                             None)
                     ) +
                     output_count +
                     output_block +
-                    self.lock_time +
+                    self._lock_time +
                     hash_type
                 ).finalize()
             preimages.append(hashed)
@@ -384,39 +431,24 @@ class Mtx:
 def estimate_tx_size(in_size: int, n_in: int, out_size: int, n_out: int) -> int:
     return (
         in_size
-        + len(util.number_to_unknown_bytes(n_in, byteorder='little'))
+        + len(number_to_unknown_bytes(n_in, byteorder='little'))
         + out_size
-        + len(util.number_to_unknown_bytes(n_out, byteorder='little'))
+        + len(number_to_unknown_bytes(n_out, byteorder='little'))
         + 8
     )
 
 
-def construct_outputs(outputs: List[Tuple[str, int]]) -> List[TxOutput]:
-    outputs_obj = []
+def number_to_unknown_bytes(num: int, byteorder: str = 'big') -> bytes:
+    """Converts an int to the least number of bytes as possible."""
+    return num.to_bytes((num.bit_length() + 7) // 8 or 1, byteorder)
 
-    for address_name, amount in outputs:
-        log.debug(f"destination: {address_name} amount: {amount}")
 
-        # P2PKH/P2SH/Bech32
-        if True:
-            script_pubkey = util.address_to_scriptpubkey(address_name)
-            amount = int(amount).to_bytes(8, byteorder='little')
-
-        # TODO Blockchain storage
-        """
-        else:
-            from .constants import OP_RETURN
-            script_pubkey = (OP_RETURN +
-                             len(address_name).to_bytes(1, byteorder='little') +
-                             address_name)
-
-            amount = b'\x00\x00\x00\x00\x00\x00\x00\x00'
-        """
-
-        assert address_name
-        outputs_obj.append(TxOutput(
-            amount,
-            script_pubkey,
-            address=address_name))
-
-    return outputs_obj
+def script_push(val: int) -> bytes:
+    if val <= 75:
+        return number_to_unknown_bytes(val)
+    elif val < 256:
+        return b'\x4c'+number_to_unknown_bytes(val)
+    elif val < 65536:
+        return b'\x4d'+val.to_bytes(2, 'little')
+    else:
+        return b'\x4e'+val.to_bytes(4, 'little')
