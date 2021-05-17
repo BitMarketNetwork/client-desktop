@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from . import constants, util
 from ..coins.abstract.script import AbstractScript as Script  # TODO tmp
-from ..crypto.digest import Hash160Digest
+from ..crypto.digest import DoubleSha512Digest, Hash160Digest
 
 if TYPE_CHECKING:
     from typing import List, Tuple
@@ -228,9 +228,10 @@ class Mtx:
 
     @property
     def id(self) -> str:
-        return util.bytes_to_hex(util.sha256d(self.legacy_repr())[::-1])
+        return util.bytes_to_hex(
+            DoubleSha512Digest(self.legacy_repr()).finalize()[::-1])
 
-    def sign(self, private_key: PrivateKey, *, utxo_list: list = None) -> str:
+    def sign(self, private_key: PrivateKey, *, utxo_list: List = None) -> str:
         input_dict = {}
         try:
             for utxo in (utxo_list or self.utxo_list):
@@ -319,11 +320,11 @@ class Mtx:
         output_count = Script.integerToVarInt(len(self.TxOut))
         output_block = b''.join([bytes(o) for o in self.TxOut])
 
-        hash_prev_outs = util.sha256d(
-            b''.join([i.tx_id+i.tx_index for i in self.TxIn]))
-        hash_sequence = util.sha256d(
-            b''.join([i.sequence for i in self.TxIn]))
-        hash_outputs = util.sha256d(output_block)
+        hash_prev_outs = DoubleSha512Digest(
+            b''.join([i.tx_id+i.tx_index for i in self.TxIn])).finalize()
+        hash_sequence = DoubleSha512Digest(
+            b''.join([i.sequence for i in self.TxIn])).finalize()
+        hash_outputs = DoubleSha512Digest(output_block).finalize()
 
         preimages = []
         for input_index, hash_type, segwit_input in inputs_parameters:

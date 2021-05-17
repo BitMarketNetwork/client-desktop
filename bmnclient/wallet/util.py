@@ -1,15 +1,10 @@
-
-import logging
-from typing import Union, Tuple, Generator
-import enum
 import binascii
-import functools
 import hashlib
-from . import coin_network
-from . import constants
-from ..crypto.bech32 import Bech32
+from typing import Union
 
-log = logging.getLogger(__name__)
+from . import coin_network, constants
+from ..crypto.base58 import Base58
+from ..crypto.bech32 import Bech32
 
 
 class ConvertionError(Exception):
@@ -24,85 +19,8 @@ def get_bytes(data: Union[str, bytes]) -> bytes:
     return data
 
 
-def read_as_int(stream: bytes, bytes_: int) -> int:
-    return int(bytes_to_hex(stream[0:bytes_][::-1]), base=16), stream[bytes_:]
-
-
-def read_segwit_string(stream: str) -> Tuple[bytes, bytes]:
-    bytes_, stream = read_var_int(stream)
-    witness, stream = split_bytes(stream, bytes_)
-    return int_to_varint(bytes_) + witness, stream
-
-
 def sha256(data: Union[str, bytes]) -> bytes:
     return bytes(hashlib.sha256(get_bytes(data)).digest())
-
-
-def sha256d(data: Union[str, bytes]) -> bytes:
-    return bytes(sha256(sha256(get_bytes(data))))
-
-
-def b58_encode(data: bytes) -> str:
-    n = int('0x0' + binascii.hexlify(data).decode('utf8'), 16)
-    res = []
-    while n > 0:
-        n, r = divmod(n, 58)
-        res.append(CKey_58.source[r])
-    res = ''.join(res[::-1])
-    pad = 0
-    for c in data:
-        if c == 0:
-            pad += 1
-        else:
-            break
-    return CKey_58.source[0] * pad + res
-
-
-def b58_decode(data: str) -> bytes:
-    if not data:
-        return b''
-    n = 0
-    for c in data:
-        n *= 58
-        if c not in CKey_58.source:
-            raise ConvertionError(
-                'character %r is not a valid base58 character' % c)
-        digit = CKey_58.source.index(c)
-        n += digit
-    h = '%x' % n
-    if len(h) % 2:
-        h = '0' + h
-    res = binascii.unhexlify(h.encode('utf8'))
-    pad = 0
-    for c in data[:-1]:
-        if c == CKey_58.source[0]:
-            pad += 1
-        else:
-            break
-    return b'\x00' * pad + res
-
-
-def b58_check_encode(data: str) -> str:
-    signed = get_bytes(data) + sha256d(data)[:4]
-    return b58_encode(signed)
-
-
-def b58_check_decode(data: bytes) -> bytes:
-    bytes_ = b58_decode(data)
-    shortened = bytes_[:-4]
-    if sha256d(shortened)[:4] == bytes_[-4:]:
-        return shortened
-    else:
-        raise ConvertionError("hash mismatch")
-
-
-def number_to_bytes(number: int, length: int) -> bytes:
-    return number.to_bytes(length=length, byteorder="big")
-
-
-def bytes_to_number(bytes_: bytes) -> int:
-    # assert isinstance(bytes_,bytes)
-    return int.from_bytes(bytes_, byteorder="big")
 
 
 def number_to_unknown_bytes(num: int, byteorder: str = 'big') -> bytes:
@@ -170,81 +88,3 @@ def hex_to_bytes(hexed: str) -> bytes:
     if len(hexed) & 1:
         hexed = '0' + hexed
     return bytes.fromhex(hexed)
-
-# Slicing
-
-
-def split_bytes(stream: bytes, index: int) -> Tuple[bytes, bytes]:
-    return stream[:index], stream[index:]
-
-
-def chunk_data(data: Union[bytes, str], size: int) -> Generator:
-    return (data[i:i + size] for i in range(0, len(data), size))
-
-
-class KeyBasis(enum.IntEnum):
-    BASE_2 = 2
-    BASE_10 = 10
-    BASE_16 = 16
-    BASE_32 = 32
-    BASE_58 = 58
-    BASE_256 = 256
-
-
-class CKey:
-    base = None
-    source = None
-
-    @classmethod
-    def make(cls, base: KeyBasis):
-        return next(val for _, val in globals().items() if isinstance(val, type) and issubclass(val, cls) and base == val.base)
-
-    @classmethod
-    def encode(cls, val: int, minlen: int = 0) -> Union[bytes, str]:
-        minlen = int(minlen)
-        indexes = []
-        while val > 0:
-            val, mod = divmod(val, cls.base)
-            indexes.append(ord(cls.source[mod]))
-        if len(indexes) < minlen:
-            if cls.base == KeyBasis.BASE_32:
-                raise NotImplementedError("what's padding on 32?")
-            indexes += [0] * (minlen - len(indexes))
-        result_bytes = bytes(indexes[::-1])
-        if cls.base == KeyBasis.BASE_256:
-            return result_bytes
-        return ''.join([chr(y) for y in result_bytes])
-
-    @classmethod
-    def decode(cls, txt: str):
-        if cls.base == KeyBasis.BASE_256:
-            if isinstance(txt, str):
-                txt = bytes(bytearray.fromhex(txt))
-
-            def ex(s, d):
-                return s*cls.base+d
-        else:
-            def ex(s, d):
-                idx = cls.source.find(d if isinstance(d, str) else chr(d))
-                if idx < 0:
-                    raise ConvertionError(f"bad symbol {d}")
-                return s * cls.base + idx
-            # ex = lambda d: cls.source.find(d)
-        if cls.base == KeyBasis.BASE_16:
-            txt = txt.lower()
-        return functools.reduce(ex, txt, 0)
-
-    @classmethod
-    def re_encode(cls, from_: type, string: str, minlen: int = 0):
-        """
-        encode one base to another
-        """
-        return cls.encode(from_.decode(string), minlen=minlen)
-
-
-class CKey_58(CKey):
-    """
-    dont use it for a while..use b58_encode
-    """
-    base = KeyBasis.BASE_58
-    source = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
