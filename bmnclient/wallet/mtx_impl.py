@@ -5,7 +5,6 @@ import logging
 from typing import TYPE_CHECKING
 
 from . import constants
-from ..coins.coin_bitcoin import BitcoinScript as Script  # TODO tmp
 from ..crypto.digest import Sha256Digest, Sha256DoubleDigest
 
 if TYPE_CHECKING:
@@ -29,7 +28,7 @@ class TxEntity:
 
     @property
     def amount_int(self) -> int:
-        return Script.integerFromBytes(self._amount)
+        return self._address.coin.Script.integerFromBytes(self._amount)
 
     @property
     def address(self) -> AbstractCoin.Address:
@@ -56,7 +55,8 @@ class TxInput(TxEntity):
             segwit_input: bool) -> None:
         super().__init__(address, amount)
         self._script_sig = script_sig
-        self._script_sig_len = Script.integerToVarInt(len(script_sig))
+        self._script_sig_len = self._address.coin.Script.integerToVarInt(
+            len(script_sig))
         self._tx_id = tx_id
         self._tx_index = tx_index
         self._witness = witness
@@ -134,7 +134,8 @@ class TxOutput(TxEntity):
             script: bytes) -> None:
         super().__init__(address, amount)
         self._script = script
-        self._script_len = Script.integerToVarInt(len(self._script))
+        self._script_len = self._address.coin.Script.integerToVarInt(
+            len(self._script))
 
     def __eq__(self, other: TxOutput):
         if not super().__eq__(other):
@@ -179,11 +180,11 @@ class Mtx:
 
     def __bytes__(self) -> bytes:
         input_list = \
-            Script.integerToVarInt(len(self._tx_in)) \
+            self._coin.Script.integerToVarInt(len(self._tx_in)) \
             + b"".join(map(lambda v: v.__bytes__(), self._tx_in))
 
         output_list = \
-            Script.integerToVarInt(len(self._tx_out)) \
+            self._coin.Script.integerToVarInt(len(self._tx_out)) \
             + b"".join(map(lambda v: v.__bytes__(), self._tx_out))
 
         witness_list = b"".join([w.witness for w in self._tx_in])
@@ -215,11 +216,11 @@ class Mtx:
 
     def legacy_repr(self) -> bytes:
         input_list = \
-            Script.integerToVarInt(len(self._tx_in)) \
+            self._coin.Script.integerToVarInt(len(self._tx_in)) \
             + b"".join(map(lambda v: v.__bytes__(), self._tx_in))
 
         output_list = \
-            Script.integerToVarInt(len(self._tx_out)) \
+            self._coin.Script.integerToVarInt(len(self._tx_out)) \
             + b"".join(map(lambda v: v.__bytes__(), self._tx_out))
 
         return b''.join([
@@ -241,7 +242,7 @@ class Mtx:
             tx_out.append(TxOutput(
                 address=address,
                 amount=int(amount).to_bytes(8, byteorder='little'),
-                script=Script.addressToScript(address)))
+                script=coin.Script.addressToScript(address)))
 
         tx_in = []
         for utxo in utxo_list:
@@ -313,10 +314,10 @@ class Mtx:
             tx_in.segwit_input = segwit_input
 
             # Use scriptCode for preimage calculation of transaction object:
-            tx_in.script_sig = Script.addressToScript(
+            tx_in.script_sig = self._coin.Script.addressToScript(
                 address,
                 address.Type.PUBKEY_HASH)  # TODO SCRIPT_HASH?
-            tx_in.script_sig_len = Script.integerToVarInt(
+            tx_in.script_sig_len = self._coin.Script.integerToVarInt(
                 len(tx_in.script_sig))
 
             if segwit_input:
@@ -356,7 +357,8 @@ class Mtx:
 
             # Providing the signature(s) to the input
             tx_in.script_sig = script_sig
-            tx_in.script_sig_len = Script.integerToVarInt(len(script_sig))
+            tx_in.script_sig_len = self._coin.Script.integerToVarInt(
+                len(script_sig))
             tx_in.witness = witness
         return bytes(self).hex()
 
@@ -364,8 +366,8 @@ class Mtx:
             self,
             inputs_parameters: List[Tuple[int, bytes, bool]]) \
             -> List[bytes]:
-        input_count = Script.integerToVarInt(len(self._tx_in))
-        output_count = Script.integerToVarInt(len(self._tx_out))
+        input_count = self._coin.Script.integerToVarInt(len(self._tx_in))
+        output_count = self._coin.Script.integerToVarInt(len(self._tx_out))
         output_block = b"".join([bytes(o) for o in self._tx_out])
 
         hash_prev_outs = Sha256DoubleDigest(

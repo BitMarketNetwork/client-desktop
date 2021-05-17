@@ -10,7 +10,6 @@ from unittest import skip
 
 from bmnclient.wallet import constants
 from bmnclient.wallet import mtx_impl as mtx
-from bmnclient.wallet import util
 
 log = logging.getLogger(__name__)
 
