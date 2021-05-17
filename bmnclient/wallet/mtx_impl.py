@@ -5,7 +5,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from . import constants, util
-from ..coins.abstract.script import AbstractScript as Script  # TODO tmp
+from ..coins.coin_bitcoin import BitcoinScript as Script  # TODO tmp
 from ..crypto.base58 import Base58
 from ..crypto.digest import Hash160Digest, Sha256Digest, Sha256DoubleDigest
 
@@ -267,9 +267,10 @@ class Mtx:
             segwit_input = input_dict[tx_input]['segwit']
             tx_in.segwit_input = segwit_input
 
-            script_code = util.address_to_scriptpubkey(
-                private_key.to_address("p2pkh"))
-            script_code_len = util.int_to_varint(len(script_code))
+            script_code = Script.addressToScript(
+                address,
+                address.Type.PUBKEY_HASH)  # TODO SCRIPT_HASH?
+            script_code_len = Script.integerToVarInt(len(script_code))
 
             # Use scriptCode for preimage calculation of transaction object:
             tx_in.script_sig = script_code

@@ -389,87 +389,87 @@ class TestAddressToScriptPubKeyReal(unittest.TestCase):
 
     def test_address_to_scriptpubkey_legacy(self):
         want = b'v\xa9\x14\x92F\x1b\xdeb\x83\xb4a\xec\xe7\xdd\xf4\xdb\xf1\xe0\xa4\x8b\xd1\x13\xd8\x88\xac'
-        self.assertEqual(util.address_to_scriptpubkey(BITCOIN_ADDRESS), want)
+        self.assertEqual(util.address_to_script(BITCOIN_ADDRESS), want)
 
         want = b'v\xa9\x14\x99\x0e\xf6\rc\xb5\xb5\x96J\x1c"\x82\x06\x1a\xf4Q#\xe9?\xcb\x88\xac'
-        self.assertEqual(util.address_to_scriptpubkey(
+        self.assertEqual(util.address_to_script(
             BITCOIN_ADDRESS_COMPRESSED), want)
 
     def test_address_to_scriptpubkey_legacy_ltc(self):
         want = 'a914271c1bad2ebfec5ed79e999b99b092881284d79587'
-        self.assertEqual(util.address_to_scriptpubkey(
+        self.assertEqual(util.address_to_script(
             LITECOIN_ADDRESS).hex(), want)
 
     def test_address_to_scriptpubkey_legacy_p2sh(self):
         want = b'\xa9\x14U\x13\x1e\xfbz\x0e\xddLv\xcc;\xbe\x83;\xfcY\xa6\xf7<k\x87'
-        self.assertEqual(util.address_to_scriptpubkey(
+        self.assertEqual(util.address_to_script(
             BITCOIN_ADDRESS_PAY2SH), want)
 
     def test_address_to_scriptpubkey_bech32(self):
         want = b'\x00\x14\xe8\xdf\x01\x8c~2l\xc2S\xfa\xac~F\xcd\xc5\x1ehT,B'
-        self.assertEqual(util.address_to_scriptpubkey(
+        self.assertEqual(util.address_to_script(
             BITCOIN_SEGWIT_ADDRESS), want)
 
     def test_address_to_scriptpubkey_bech32_p2sh(self):
         want = b'\x00 \xc7\xa1\xf1\xa4\xd6\xb4\xc1\x80*Yc\x19f\xa1\x83Y\xdew\x9e\x8aje\x9775\xa3\xcc\xdf\xda\xbc@}'
-        self.assertEqual(util.address_to_scriptpubkey(
+        self.assertEqual(util.address_to_script(
             BITCOIN_SEGWIT_ADDRESS_PAY2SH), want)
 
     def test_address_to_scriptpubkey_legacy_test(self):
         want = b'v\xa9\x14\x92F\x1b\xdeb\x83\xb4a\xec\xe7\xdd\xf4\xdb\xf1\xe0\xa4\x8b\xd1\x13\xd8\x88\xac'
-        self.assertEqual(util.address_to_scriptpubkey(
+        self.assertEqual(util.address_to_script(
             BITCOIN_ADDRESS_TEST), want)
 
         want = b'v\xa9\x14\x99\x0e\xf6\rc\xb5\xb5\x96J\x1c"\x82\x06\x1a\xf4Q#\xe9?\xcb\x88\xac'
-        self.assertEqual(util.address_to_scriptpubkey(
+        self.assertEqual(util.address_to_script(
             BITCOIN_ADDRESS_TEST_COMPRESSED), want)
 
     def test_address_to_scriptpubkey_legacy_p2sh_test(self):
         want = b'\xa9\x14\xf2&\x1e\x95d\xc9\xdf\xff\xa8\x15\x05\xc1S\xfb\x95\xbf\x93\x99C\x08\x87'
-        self.assertEqual(util.address_to_scriptpubkey(
+        self.assertEqual(util.address_to_script(
             BITCOIN_ADDRESS_TEST_PAY2SH), want)
 
     def test_address_to_scriptpubkey_bech32_test(self):
         want = b'\x00\x14u\x1ev\xe8\x19\x91\x96\xd4T\x94\x1cE\xd1\xb3\xa3#\xf1C;\xd6'
-        self.assertEqual(util.address_to_scriptpubkey(
+        self.assertEqual(util.address_to_script(
             BITCOIN_SEGWIT_ADDRESS_TEST.lower()), want)
-        self.assertEqual(util.address_to_scriptpubkey(
+        self.assertEqual(util.address_to_script(
             BITCOIN_SEGWIT_ADDRESS_TEST.upper()), want)
 
     def test_address_to_scriptpubkey_bech32_p2sh_test(self):
         want = b"\x00 \x18c\x14<\x14\xc5\x16h\x04\xbd\x19 3V\xda\x13l\x98Vx\xcdM'\xa1\xb8\xc62\x96\x04\x902b"
-        self.assertEqual(util.address_to_scriptpubkey(
+        self.assertEqual(util.address_to_script(
             BITCOIN_SEGWIT_ADDRESS_TEST_PAY2SH.lower()), want)
-        self.assertEqual(util.address_to_scriptpubkey(
+        self.assertEqual(util.address_to_script(
             BITCOIN_SEGWIT_ADDRESS_TEST_PAY2SH.upper()), want)
 
     def test_address_to_scriptpubkey_invalid_checksum(self):
         address_invalid = BITCOIN_ADDRESS[:6] + "error" + BITCOIN_ADDRESS[11:]
         with self.assertRaises(util.ConvertionError):
-            util.address_to_scriptpubkey(address_invalid)
+            util.address_to_script(address_invalid)
 
         address_invalid = BITCOIN_ADDRESS_PAY2SH[:6] + \
             "error" + BITCOIN_ADDRESS_PAY2SH[11:]
         with self.assertRaises(util.ConvertionError):
-            util.address_to_scriptpubkey(address_invalid)
+            util.address_to_script(address_invalid)
 
         address_invalid = BITCOIN_SEGWIT_ADDRESS[:6] + \
             "error" + BITCOIN_SEGWIT_ADDRESS[11:]
         with self.assertRaises(util.ConvertionError):
-            util.address_to_scriptpubkey(address_invalid)
+            util.address_to_script(address_invalid)
 
     def test_address_to_scriptpubkey_invalid_address(self):
         address_invalid = "X" + BITCOIN_ADDRESS[1:]
         with self.assertRaises(util.ConvertionError):
-            util.address_to_scriptpubkey(address_invalid)
+            util.address_to_script(address_invalid)
 
         address_invalid = "X" + BITCOIN_ADDRESS_PAY2SH[1:]
         with self.assertRaises(util.ConvertionError):
-            util.address_to_scriptpubkey(address_invalid)
+            util.address_to_script(address_invalid)
 
         address_invalid = "X" + BITCOIN_SEGWIT_ADDRESS[1:]
         with self.assertRaises(util.ConvertionError):
-            util.address_to_scriptpubkey(address_invalid)
+            util.address_to_script(address_invalid)
 
 
 @unittest.skip

@@ -246,19 +246,19 @@ class TestLitecoin(unittest.TestCase):
         self.assertEqual(key_.P2PKH, self.ADDR2)
 
     def test_scriptaddress(self):
-        script1 = util.address_to_scriptpubkey(self.ADDR1)
+        script1 = util.address_to_script(self.ADDR1)
         self.assertEqual(
             script1, b'v\xa9\x14tmy\xc1\xf7\xc4n\xd5[K#\\&\xb6O$+F\xb6\x1a\x88\xac')
-        script2 = util.address_to_scriptpubkey(self.ADDR2)
+        script2 = util.address_to_script(self.ADDR2)
         self.assertEqual(
             script2, b'v\xa9\x14y\t\x19r\x18lD\x9e\xb1\xde\xd2+x\xe4\r\x00\x9b\xdf\x00\x89\x88\xac')
-        script3 = util.address_to_scriptpubkey(LITECOIN_ADDRESS).hex()
+        script3 = util.address_to_script(LITECOIN_ADDRESS).hex()
         self.assertEqual(
             script3, 'a914271c1bad2ebfec5ed79e999b99b092881284d79587')
         # real !!! https://blockchair.com/litecoin/transaction/d8a31d2768b295d4c5428d4bb168f76d68d44591d5be6cd19ea5995514a630be
-        self.assertEqual(util.address_to_scriptpubkey('LQLno78Wtcme98eJ8YVii9u8eVvFbKeKUi').hex(
+        self.assertEqual(util.address_to_script('LQLno78Wtcme98eJ8YVii9u8eVvFbKeKUi').hex(
         ), '76a9143823a340794324b7ffee1d74a9ef663618b481ab88ac')
 
         # real !!! https://blockchair.com/litecoin/transaction/0f082a5eec8a3b33bac17c310de1885430f182510889f5172e110ff643a6ee4e
-        self.assertEqual(util.address_to_scriptpubkey('MFQnMo3gaDcyoZ5trmcFUrjXMktM4NHzAd').hex(
+        self.assertEqual(util.address_to_script('MFQnMo3gaDcyoZ5trmcFUrjXMktM4NHzAd').hex(
         ), 'a914526319c4b9f519b194c175d508b48952467ac36087')
