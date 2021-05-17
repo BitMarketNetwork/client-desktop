@@ -11,6 +11,17 @@ class AbstractScript:
     _BYTE_ORDER = "little"
 
     @classmethod
+    def scriptToBytes(
+            cls,
+            opcode_list: Iterable[int, bytes]) -> Optional[bytes]:
+        try:
+            return b"".join(map(
+                lambda v: cls.integerToBytes(v, 1) if isinstance(v, int) else v,
+                opcode_list))
+        except TypeError:
+            return None
+
+    @classmethod
     def integerToBytes(cls, value: int, length) -> Optional[bytes]:
         try:
             return value.to_bytes(length, cls._BYTE_ORDER)

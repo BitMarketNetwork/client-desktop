@@ -4,7 +4,6 @@ import os
 import random
 import unittest
 
-from bmnclient.wallet import coin_network
 from tests import TEST_DATA_PATH
 from tests.test_data import *
 

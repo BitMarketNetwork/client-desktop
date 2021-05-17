@@ -17,12 +17,9 @@ from ...wallet.mutable_tx import MutableTransaction
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
     from ..hd import HdNode
-    from ...wallet.coin_network import CoinNetworkBase
 
 
 class AbstractCoin(Serializable):
-    network: Optional[Type[CoinNetworkBase]] = None  # TODO tmp
-
     _SHORT_NAME = ""
     _FULL_NAME = ""
     _IS_TEST_NET = False

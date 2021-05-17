@@ -8,7 +8,6 @@ from .abstract.coin import AbstractCoin
 from ..crypto.base58 import Base58
 from ..crypto.bech32 import Bech32
 from ..crypto.digest import Hash160Digest, Sha256Digest
-from ..wallet.coin_network import BitcoinMainNetwork, BitcoinTestNetwork
 
 if TYPE_CHECKING:
     from typing import Final, Optional
@@ -203,9 +202,42 @@ class BitcoinScript(AbstractCoin.Script):
         if type_ is None:
             type_ = address.type
 
-class Bitcoin(AbstractCoin):
-    network = BitcoinMainNetwork  # TODO tmp
+        if type_ == address.Type.PUBKEY_HASH:
+            if len(address_hash) != 0x14:
+                return None
+            script = (
+                cls.OpCode.OP_DUP,
+                cls.OpCode.OP_HASH160,
+                len(address_hash),
+                address_hash,
+                cls.OpCode.OP_EQUALVERIFY,
+                cls.OpCode.OP_CHECKSIG
+            )
+        elif type_ == address.Type.SCRIPT_HASH:
+            if len(address_hash) != 0x14:
+                return None
+            script = (
+                cls.OpCode.OP_HASH160,
+                len(address_hash),
+                address_hash,
+                cls.OpCode.OP_EQUAL
+            )
+        elif type_ in (
+                address.Type.WITNESS_V0_KEY_HASH,
+                address.Type.WITNESS_V0_SCRIPT_HASH
+        ):
+            script = (
+                cls.OpCode.OP_0,
+                len(address_hash),
+                address_hash
+            )
+        else:
+            return None
 
+        return cls.scriptToBytes(script)
+
+
+class Bitcoin(AbstractCoin):
     _SHORT_NAME = "btc"
     _FULL_NAME = "Bitcoin"
     _BIP0044_COIN_TYPE = 0
@@ -220,6 +252,12 @@ class Bitcoin(AbstractCoin):
 
     class Address(BitcoinAddress):
         pass
+
+    class Script(BitcoinScript):
+        pass
+
+
+################################################################################
 
 
 class BitcoinTestAddress(BitcoinAddress):
@@ -250,8 +288,6 @@ class BitcoinTestAddress(BitcoinAddress):
 
 
 class BitcoinTest(Bitcoin):
-    network = BitcoinTestNetwork  # TODO tmp
-
     _SHORT_NAME = "btctest"
     _FULL_NAME = "Bitcoin Testnet"
     _IS_TEST_NET = True
