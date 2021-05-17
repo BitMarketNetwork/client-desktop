@@ -6,11 +6,12 @@ from typing import TYPE_CHECKING
 from .abstract.coin import AbstractCoin
 from ..crypto.base58 import Base58
 from ..crypto.bech32 import Bech32
-from ..crypto.digest import Ripemd160Digest, Sha256Digest
+from ..crypto.digest import Hash160Digest, Sha256Digest
 from ..wallet.coin_network import BitcoinMainNetwork, BitcoinTestNetwork
 
 if TYPE_CHECKING:
     from typing import Final, Optional
+    from ..crypto.secp256k1 import PublicKey
 
 
 class BitcoinAddress(AbstractCoin.Address):
@@ -27,17 +28,17 @@ class BitcoinAddress(AbstractCoin.Address):
         PUBKEY_HASH: Final = AbstractCoin.Address.TypeValue(
             name="p2pkh",
             version=0x00,
-            size=Ripemd160Digest.size,
+            size=Hash160Digest.size,
             encoding=AbstractCoin.Address.Encoding.BASE58)
         SCRIPT_HASH: Final = AbstractCoin.Address.TypeValue(
             name="p2sh",
             version=0x05,
-            size=Ripemd160Digest.size,
+            size=Hash160Digest.size,
             encoding=AbstractCoin.Address.Encoding.BASE58)
         WITNESS_V0_KEY_HASH: Final = AbstractCoin.Address.TypeValue(
             name="p2wpkh",
             version=0x00,
-            size=Ripemd160Digest.size,
+            size=Hash160Digest.size,
             encoding=AbstractCoin.Address.Encoding.BECH32)
         WITNESS_V0_SCRIPT_HASH: Final = AbstractCoin.Address.TypeValue(
             name="p2wsh",
@@ -50,6 +51,48 @@ class BitcoinAddress(AbstractCoin.Address):
             size=-40,
             encoding=AbstractCoin.Address.Encoding.BECH32)
         DEFAULT = WITNESS_V0_KEY_HASH
+
+    @classmethod
+    def deriveAddressName(
+            cls,
+            type_: AbstractCoin.Address.Type,
+            public_key: PublicKey) -> Optional[str]:
+        if type_.value.encoding == cls.Encoding.BASE58:
+            try:
+                version = type_.value.version.to_bytes(1, "big")
+            except OverflowError:
+                return None
+            name = Hash160Digest(public_key.data).finalize()
+            return Base58.encode(version + name)
+
+        if type_.value.encoding == cls.Encoding.BECH32:
+            if not public_key.isCompressed:
+                return None
+            name = Hash160Digest(public_key.data).finalize()
+            return Bech32.encode(cls._HRP, type_.value.version, name)
+
+        return None
+
+    def _deriveHash(self) -> bytes:
+        if self._type not in (
+                self.Type.PUBKEY_HASH,
+                self.Type.SCRIPT_HASH,
+                self.Type.WITNESS_V0_KEY_HASH,
+                self.Type.WITNESS_V0_SCRIPT_HASH):
+            return b""
+
+        if self._type.value.encoding == self.Encoding.BASE58:
+            result = Base58.decode(self._name)
+            result = result[1:] if result is not None else None
+        elif self._type.value.encoding == self.Encoding.BECH32:
+            _,  _, result = Bech32.decode(self._name)
+        else:
+            result = None
+
+        if result is None or len(result) != self._type.value.size:
+            return b""
+
+        return result
 
     @classmethod
     def decode(

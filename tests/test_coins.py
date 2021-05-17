@@ -130,6 +130,8 @@ class TestCoins(TestCase):
             coin: AbstractCoin,
             address_cls: Type[AbstractCoin.Address],
             address_list: Iterable[tuple]) -> None:
+        hash_check_count = 0
+
         # noinspection PyUnusedLocal
         for (address, type_, version, hash_) in address_list:
             address = address_cls.decode(coin, name=address)
@@ -138,6 +140,12 @@ class TestCoins(TestCase):
             else:
                 self.assertIsNotNone(address)
                 self.assertEqual(type_, address.type)
+                if hash_ and len(hash_) == type_.value.size * 2:
+                    self.assertEqual(hash_, address.hash.hex())
+                    hash_check_count += 1
+                else:
+                    self.assertEqual(b"", address.hash)
+        self.assertTrue(hash_check_count > 0)
 
     def test_address_decode(self) -> None:
         self._test_address_decode(

@@ -283,21 +283,9 @@ class HdNode:
             coin: AbstractCoin,
             type_: AbstractCoin.Address.Type,
             **kwargs) -> Optional[AbstractCoin.Address]:
-        if type_.value.encoding == coin.Address.Encoding.BASE58:
-            try:
-                version = type_.value.version.to_bytes(1, "big")
-            except OverflowError:
-                return None
-            name = Hash160Digest(self.publicKey.data).finalize()
-            name = Base58.encode(version + name)
-        elif type_.value.encoding == coin.Address.Encoding.BECH32:
-            if not self.publicKey.isCompressed:
-                return None
-            name = Hash160Digest(self.publicKey.data).finalize()
-            name = Bech32.encode(coin.Address.hrp, type_.value.version, name)
-        else:
+        name = coin.Address.deriveAddressName(type_, self.publicKey)
+        if not name:
             return None
-
         return coin.Address(
             coin,
             name=name,

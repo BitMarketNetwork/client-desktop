@@ -134,6 +134,7 @@ class AbstractAddress(Serializable):
 
         self._coin = coin
         self._name = name or self._NULLDATA_NAME
+        self.__hash: Optional[bytes] = None
         self._type = type_
         self._data = data
         self._key = key
@@ -213,10 +214,26 @@ class AbstractAddress(Serializable):
     def coin(self) -> AbstractCoin:
         return self._coin
 
+    @classmethod
+    def deriveAddressName(
+            cls,
+            type_: AbstractCoin.Address.Type,
+            public_key: PublicKey) -> Optional[str]:
+        raise NotImplementedError
+
     @serializable
     @property
     def name(self) -> str:
         return self._name
+
+    def _deriveHash(self) -> bytes:
+        raise NotImplementedError
+
+    @property
+    def hash(self) -> bytes:
+        if self.__hash is None:
+            self.__hash = self._deriveHash()
+        return self.__hash
 
     @property
     def type(self) -> AbstractCoin.Address.Type:
