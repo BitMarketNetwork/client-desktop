@@ -7,20 +7,12 @@ from ..crypto.base58 import Base58
 from ..crypto.bech32 import Bech32
 
 
-class ConvertionError(Exception):
-    pass
-
-
 def get_bytes(data: Union[str, bytes]) -> bytes:
     if isinstance(data, str):
         return data.encode('utf-8')
     if not isinstance(data, (bytes, bytearray)):
         raise TypeError(f"{type(data)} are not bytes")
     return data
-
-
-def sha256(data: Union[str, bytes]) -> bytes:
-    return bytes(hashlib.sha256(get_bytes(data)).digest())
 
 
 def number_to_unknown_bytes(num: int, byteorder: str = 'big') -> bytes:
@@ -65,18 +57,12 @@ def address_to_scriptpubkey(address: str) -> str:
 
     if version in coin_network.PUBLIC_HASH_LIST:
         return (constants.OP_DUP + constants.OP_HASH160 + constants.OP_PUSH_20 +
-                address_to_public_key_hash(address) +
+                address_data[1:] +
                 constants.OP_EQUALVERIFY + constants.OP_CHECKSIG)
     elif version in coin_network.SCRIPT_HASH_LIST:
         return (constants.OP_HASH160 + constants.OP_PUSH_20 +
-                address_to_public_key_hash(address) +
+                address_data[1:] +
                 constants.OP_EQUAL)
-
-
-def address_to_public_key_hash(address) -> str:
-    # Raise ConvertionError if we cannot identify the address.
-    get_version(address)
-    return b58_check_decode(address)[1:]
 
 
 def bytes_to_hex(data: bytes, upper: bool = False) -> str:

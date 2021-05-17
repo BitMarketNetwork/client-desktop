@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING
 
 from . import constants, util
 from ..coins.abstract.script import AbstractScript as Script  # TODO tmp
-from ..crypto.digest import DoubleSha512Digest, Hash160Digest
+from ..crypto.base58 import Base58
+from ..crypto.digest import Hash160Digest, Sha256Digest, Sha256DoubleDigest
 
 if TYPE_CHECKING:
     from typing import List, Tuple
@@ -229,7 +230,7 @@ class Mtx:
     @property
     def id(self) -> str:
         return util.bytes_to_hex(
-            DoubleSha512Digest(self.legacy_repr()).finalize()[::-1])
+            Sha256DoubleDigest(self.legacy_repr()).finalize()[::-1])
 
     def sign(self, private_key: PrivateKey, *, utxo_list: List = None) -> str:
         input_dict = {}
@@ -320,11 +321,11 @@ class Mtx:
         output_count = Script.integerToVarInt(len(self.TxOut))
         output_block = b''.join([bytes(o) for o in self.TxOut])
 
-        hash_prev_outs = DoubleSha512Digest(
+        hash_prev_outs = Sha256DoubleDigest(
             b''.join([i.tx_id+i.tx_index for i in self.TxIn])).finalize()
-        hash_sequence = DoubleSha512Digest(
+        hash_sequence = Sha256DoubleDigest(
             b''.join([i.sequence for i in self.TxIn])).finalize()
-        hash_outputs = DoubleSha512Digest(output_block).finalize()
+        hash_outputs = Sha256DoubleDigest(output_block).finalize()
 
         preimages = []
         for input_index, hash_type, segwit_input in inputs_parameters:
@@ -334,7 +335,7 @@ class Mtx:
             # Calculate pre hashes:
             if segwit_input:
                 # BIP-143 preimage:
-                hashed = util.sha256(
+                hashed = Sha256Digest(
                     self.version +
                     hash_prev_outs +
                     hash_sequence +
@@ -348,9 +349,9 @@ class Mtx:
                     hash_outputs +
                     self.lock_time +
                     hash_type
-                )
+                ).finalize()
             else:
-                hashed = util.sha256(
+                hashed = Sha256Digest(
                     self.version +
                     input_count +
                     b''.join(
@@ -374,7 +375,7 @@ class Mtx:
                     output_block +
                     self.lock_time +
                     hash_type
-                )
+                ).finalize()
             preimages.append(hashed)
         return preimages
 
