@@ -40,7 +40,7 @@ class _AbstractTxIo(Serializable):
                     name=address_name or "UNKNOWN",
                     amount=amount)
 
-    def __eq__(self, other: _AbstractTxIo) -> bool:
+    def __eq__(self, other: AbstractCoin.Tx.Io) -> bool:
         return (
                 isinstance(other, self.__class__)
                 and self._coin == other._coin
@@ -124,7 +124,7 @@ class _AbstractUtxo(Serializable):
         self._index = index
         self._amount = amount
 
-    def __eq__(self, other: _AbstractUtxo) -> bool:
+    def __eq__(self, other: AbstractCoin.Tx.Utxo) -> bool:
         return (
                 isinstance(other, self.__class__)
                 and self._coin == other._coin
@@ -186,32 +186,31 @@ class _AbstractUtxo(Serializable):
         return self._amount
 
 
-class AbstractTx(Serializable):
+class _AbstractTxInterface:
+    def __init__(
+            self,
+            *args,
+            tx: AbstractCoin.Tx,
+            **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._tx = tx
+
+    def afterSetHeight(self) -> None:
+        raise NotImplementedError
+
+    def afterSetTime(self) -> None:
+        raise NotImplementedError
+
+
+class _AbstractTx(Serializable):
     class Status(Enum):
         PENDING = 0
         CONFIRMED = 1
         COMPLETE = 2
 
-    class Interface:
-        def __init__(
-                self,
-                *args,
-                tx: AbstractCoin.Tx,
-                **kwargs) -> None:
-            super().__init__(*args, **kwargs)
-            self._tx = tx
-
-        def afterSetHeight(self) -> None:
-            raise NotImplementedError
-
-        def afterSetTime(self) -> None:
-            raise NotImplementedError
-
-    class Io(_AbstractTxIo):
-        pass
-
-    class Utxo(_AbstractUtxo):
-        pass
+    Interface = _AbstractTxInterface
+    Io = _AbstractTxIo
+    Utxo = _AbstractUtxo
 
     def __init__(
             self,
