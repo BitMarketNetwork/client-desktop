@@ -115,7 +115,7 @@ class _AbstractAddressInterface:
         raise NotImplementedError
 
 
-class AbstractAddress(Serializable):
+class _AbstractAddress(Serializable):
     _NULLDATA_NAME = "NULL_DATA"
     _HRP = "hrp"
 
