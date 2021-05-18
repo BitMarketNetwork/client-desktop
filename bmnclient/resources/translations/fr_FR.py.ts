@@ -21,12 +21,12 @@
 <context>
     <name>KeyStore</name>
     <message>
-        <location filename="key_store.py" line="212"/>
+        <location filename="key_store.py" line="213"/>
         <source>Wrong password.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="key_store.py" line="215"/>
+        <location filename="key_store.py" line="216"/>
         <source>Seed phrase not found.</source>
         <translation type="unfinished"></translation>
     </message>
