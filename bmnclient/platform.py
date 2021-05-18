@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import sys
 from enum import auto, Enum
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import TYPE_CHECKING
 
 from .utils import NotImplementedInstance
@@ -13,7 +13,6 @@ from .version import Product
 
 if TYPE_CHECKING:
     from typing import Final
-    from pathlib import PurePath
 
 
 class Platform(NotImplementedInstance):
