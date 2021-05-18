@@ -17,11 +17,11 @@ from .base58 import Base58
 from .digest import HashlibWrapper, Sha256Digest
 from ..utils import NotImplementedInstance
 from ..utils.class_property import classproperty
+from ..utils.integer import BigOrderIntegerConverter
 
 if TYPE_CHECKING:
     from typing import Final, Optional, Tuple, Union
 
-_BYTE_ORDER: Final = "big"
 _CURVE: Final = SECP256k1
 
 
@@ -29,21 +29,10 @@ def _hashHelper(data: Optional[bytes] = None):
     return HashlibWrapper(Sha256Digest(data))
 
 
-class KeyUtils(NotImplementedInstance):
+class KeyUtils(NotImplementedInstance, BigOrderIntegerConverter):
     @classproperty
     def n(cls) -> int:  # noqa
         return _CURVE.order
-
-    @staticmethod
-    def integerToBytes(value: int, length) -> Optional[bytes]:
-        try:
-            return value.to_bytes(length, _BYTE_ORDER)
-        except OverflowError:
-            return None
-
-    @staticmethod
-    def integerFromBytes(value: bytes) -> int:
-        return int.from_bytes(value, _BYTE_ORDER)
 
 
 class AbstractKey:

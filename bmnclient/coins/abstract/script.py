@@ -4,16 +4,15 @@ from __future__ import annotations
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
+from ...utils.integer import LittleOrderIntegerConverter
+
 if TYPE_CHECKING:
     from typing import Iterable, Optional
     from .coin import AbstractCoin
 
 
-class _AbstractScript:
-    _BYTE_ORDER = "little"
-
-    class OpCode(IntEnum):
-        pass
+class _AbstractScript(LittleOrderIntegerConverter):
+    OpCode = IntEnum
 
     @classmethod
     def scriptToBytes(
@@ -25,17 +24,6 @@ class _AbstractScript:
                 opcode_list))
         except TypeError:
             return None
-
-    @classmethod
-    def integerToBytes(cls, value: int, length) -> Optional[bytes]:
-        try:
-            return value.to_bytes(length, cls._BYTE_ORDER)
-        except OverflowError:
-            return None
-
-    @classmethod
-    def integerFromBytes(cls, value: bytes) -> int:
-        return int.from_bytes(value, cls._BYTE_ORDER)
 
     @classmethod
     def integerToVarInt(cls, value: int) -> Optional[bytes]:
