@@ -1,6 +1,6 @@
 # BitMarket Network Client Change Log
 
-## 0.12.2 (xx.05.2021)
+## 0.12.2 (18.05.2021)
 
 * UI: The configuration of visible coins now works correctly.
 * Reimplemented BIP32 engine.
