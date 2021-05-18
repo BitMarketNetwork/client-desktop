@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class _AbstractAddressTypeValue:
-    __slots__ = ("_name", "_version", "_size", "_encoding")
+    __slots__ = ("_name", "_version", "_size", "_encoding", "_is_segwit")
 
     def __init__(
             self,
@@ -24,13 +24,15 @@ class _AbstractAddressTypeValue:
             name: str,
             version: int,
             size: int,
-            encoding: AbstractCoin.Address.Encoding) -> None:
+            encoding: AbstractCoin.Address.Encoding,
+            is_segwit: bool) -> None:
         self._name = name
         self._version = version
         self._size = size
         self._encoding = encoding
+        self._is_segwit = is_segwit
 
-    def __eq__(self, other: _AbstractAddressTypeValue) -> bool:
+    def __eq__(self, other: AbstractCoin.Address.TypeValue) -> bool:
         return (
                 isinstance(other, self.__class__)
                 and self._name == other._name
@@ -45,6 +47,15 @@ class _AbstractAddressTypeValue:
             self._version,
             self._size,
             self._encoding))
+
+    def copy(self, **kwargs) -> AbstractCoin.Address.TypeValue:
+        return self.__class__(
+            name=kwargs.get("name", self._name),
+            version=kwargs.get("version", self._version),
+            size=kwargs.get("size", self._size),
+            encoding=kwargs.get("encoding", self._encoding),
+            is_segwit=kwargs.get("is_segwit", self._is_segwit)
+        )
 
     @property
     def name(self) -> str:
@@ -62,57 +73,60 @@ class _AbstractAddressTypeValue:
     def encoding(self) -> AbstractCoin.Address.Encoding:
         return self._encoding
 
+    @property
+    def isSegwit(self) -> bool:
+        return self._is_segwit
+
+
+class _AbstractAddressInterface:
+    def __init__(
+            self,
+            *args,
+            address: AbstractCoin.Address,
+            **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._address = address
+
+    def afterSetAmount(self) -> None:
+        raise NotImplementedError
+
+    def afterSetLabel(self) -> None:
+        raise NotImplementedError
+
+    def afterSetComment(self) -> None:
+        raise NotImplementedError
+
+    def afterSetTxCount(self) -> None:
+        raise NotImplementedError
+
+    def beforeAppendTx(self, tx: AbstractCoin.Tx) -> None:
+        raise NotImplementedError
+
+    def afterAppendTx(self, tx: AbstractCoin.Tx) -> None:
+        raise NotImplementedError
+
+    def afterSetUtxoList(self) -> None:
+        raise NotImplementedError
+
+    def afterSetHistoryFirstOffset(self) -> None:
+        raise NotImplementedError
+
+    def afterSetHistoryLastOffset(self) -> None:
+        raise NotImplementedError
+
 
 class AbstractAddress(Serializable):
     _NULLDATA_NAME = "NULL_DATA"
     _HRP = "hrp"
-
-    class Interface:
-        def __init__(
-                self,
-                *args,
-                address: AbstractCoin.Address,
-                **kwargs) -> None:
-            super().__init__(*args, **kwargs)
-            self._address = address
-
-        def afterSetAmount(self) -> None:
-            raise NotImplementedError
-
-        def afterSetLabel(self) -> None:
-            raise NotImplementedError
-
-        def afterSetComment(self) -> None:
-            raise NotImplementedError
-
-        def afterSetTxCount(self) -> None:
-            raise NotImplementedError
-
-        def beforeAppendTx(self, tx: AbstractCoin.Tx) -> None:
-            raise NotImplementedError
-
-        def afterAppendTx(self, tx: AbstractCoin.Tx) -> None:
-            raise NotImplementedError
-
-        def afterSetUtxoList(self) -> None:
-            raise NotImplementedError
-
-        def afterSetHistoryFirstOffset(self) -> None:
-            raise NotImplementedError
-
-        def afterSetHistoryLastOffset(self) -> None:
-            raise NotImplementedError
 
     class Encoding(Enum):
         NONE = auto()
         BASE58 = auto()
         BECH32 = auto()
 
-    class TypeValue(_AbstractAddressTypeValue):
-        pass
-
-    class Type(Enum):
-        pass
+    Interface = _AbstractAddressInterface
+    TypeValue = _AbstractAddressTypeValue
+    Type = Enum
 
     def __init__(
             self,
