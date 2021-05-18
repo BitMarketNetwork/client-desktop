@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from ..crypto.secp256k1 import PublicKey
 
 
-class BitcoinAddress(AbstractCoin.Address):
+class _BitcoinAddress(AbstractCoin.Address):
     _PUBKEY_HASH_PREFIX_LIST = ("1",)
     _SCRIPT_HASH_PREFIX_LIST = ("3",)
     _HRP = "bc"
@@ -23,38 +23,44 @@ class BitcoinAddress(AbstractCoin.Address):
             name="unknown",
             version=0xff,
             size=0,
-            encoding=AbstractCoin.Address.Encoding.NONE)
+            encoding=AbstractCoin.Address.Encoding.NONE,
+            is_segwit=False)
         PUBKEY_HASH: Final = AbstractCoin.Address.TypeValue(
             name="p2pkh",
             version=0x00,
             size=Hash160Digest.size,
-            encoding=AbstractCoin.Address.Encoding.BASE58)
+            encoding=AbstractCoin.Address.Encoding.BASE58,
+            is_segwit=False)
         SCRIPT_HASH: Final = AbstractCoin.Address.TypeValue(
             name="p2sh",
             version=0x05,
             size=Hash160Digest.size,
-            encoding=AbstractCoin.Address.Encoding.BASE58)
+            encoding=AbstractCoin.Address.Encoding.BASE58,
+            is_segwit=False)
         WITNESS_V0_KEY_HASH: Final = AbstractCoin.Address.TypeValue(
             name="p2wpkh",
             version=0x00,
             size=Hash160Digest.size,
-            encoding=AbstractCoin.Address.Encoding.BECH32)
+            encoding=AbstractCoin.Address.Encoding.BECH32,
+            is_segwit=True)
         WITNESS_V0_SCRIPT_HASH: Final = AbstractCoin.Address.TypeValue(
             name="p2wsh",
             version=0x00,
             size=Sha256Digest.size,
-            encoding=AbstractCoin.Address.Encoding.BECH32)
+            encoding=AbstractCoin.Address.Encoding.BECH32,
+            is_segwit=True)
         WITNESS_UNKNOWN: Final = AbstractCoin.Address.TypeValue(
             name="witness_unknown",
             version=0x00,
             size=-40,
-            encoding=AbstractCoin.Address.Encoding.BECH32)
+            encoding=AbstractCoin.Address.Encoding.BECH32,
+            is_segwit=True)
         DEFAULT = WITNESS_V0_KEY_HASH
 
     @classmethod
     def deriveAddressName(
             cls,
-            type_: BitcoinAddress.Type,
+            type_: Bitcoin.Address.Type,
             public_key: PublicKey) -> Optional[str]:
         if type_.value.encoding == cls.Encoding.BASE58:
             try:
@@ -97,7 +103,7 @@ class BitcoinAddress(AbstractCoin.Address):
     def decode(
             cls,
             coin: Bitcoin,
-            **kwargs) -> Optional[BitcoinAddress]:
+            **kwargs) -> Optional[Bitcoin.Address]:
         name = kwargs.get("name")
         if not name or len(name) <= len(cls._HRP) + 1:
             return None
@@ -122,7 +128,7 @@ class BitcoinAddress(AbstractCoin.Address):
             cls,
             coin: Bitcoin,
             address_type: Type,
-            **kwargs) -> Optional[BitcoinAddress]:
+            **kwargs) -> Optional[Bitcoin.Address]:
         if not address_type.value:
             return None
         name = kwargs["name"]
@@ -169,7 +175,7 @@ class BitcoinAddress(AbstractCoin.Address):
         return cls(coin, **kwargs)
 
     @classmethod
-    def createNullData(cls, coin: Bitcoin, **kwargs) -> BitcoinAddress:
+    def createNullData(cls, coin: Bitcoin, **kwargs) -> Bitcoin.Address:
         kwargs.setdefault("name", None)
         kwargs["type_"] = cls.Type.UNKNOWN
         return cls(coin, **kwargs)
@@ -179,7 +185,7 @@ class BitcoinAddress(AbstractCoin.Address):
         return self._type == self.Type.UNKNOWN
 
 
-class BitcoinScript(AbstractCoin.Script):
+class _BitcoinScript(AbstractCoin.Script):
     class OpCode(AbstractCoin.Script.OpCode):
         OP_0 = 0x00
         OP_RETURN = 0x6a
@@ -192,8 +198,8 @@ class BitcoinScript(AbstractCoin.Script):
     @classmethod
     def addressToScript(
             cls,
-            address: BitcoinAddress,
-            type_: Optional[BitcoinAddress.Type] = None) -> Optional[bytes]:
+            address: Bitcoin.Address,
+            type_: Optional[Bitcoin.Address.Type] = None) -> Optional[bytes]:
         address_hash = address.hash
         if not (0 < len(address_hash) < 0xff):
             return None
@@ -249,40 +255,31 @@ class Bitcoin(AbstractCoin):
         _DECIMAL_SIZE = (0, 8)
         _UNIT = "BTC"
 
-    class Address(BitcoinAddress):
-        pass
-
-    class Script(BitcoinScript):
-        pass
+    Address = _BitcoinAddress
+    Script = _BitcoinScript
 
 
 ################################################################################
 
 
-class BitcoinTestAddress(BitcoinAddress):
+class _BitcoinTestAddress(Bitcoin.Address):
     _PUBKEY_HASH_PREFIX_LIST = ("m", "n")
     _SCRIPT_HASH_PREFIX_LIST = ("2",)
     _HRP = "tb"
 
     class Type(AbstractCoin.Address.Type):
         UNKNOWN: Final = \
-            BitcoinAddress.Type.UNKNOWN.value
-        PUBKEY_HASH: Final = AbstractCoin.Address.TypeValue(
-            name=BitcoinAddress.Type.PUBKEY_HASH.value.name,
-            version=0x6f,
-            size=BitcoinAddress.Type.PUBKEY_HASH.value.size,
-            encoding=BitcoinAddress.Type.PUBKEY_HASH.value.encoding)
-        SCRIPT_HASH: Final = AbstractCoin.Address.TypeValue(
-            name=BitcoinAddress.Type.SCRIPT_HASH.value.name,
-            version=0xc4,
-            size=BitcoinAddress.Type.SCRIPT_HASH.value.size,
-            encoding=BitcoinAddress.Type.SCRIPT_HASH.value.encoding)
+            Bitcoin.Address.Type.UNKNOWN.value
+        PUBKEY_HASH: Final = \
+            Bitcoin.Address.Type.PUBKEY_HASH.value.copy(version=0x6f)
+        SCRIPT_HASH: Final = \
+            Bitcoin.Address.Type.SCRIPT_HASH.value.copy(version=0xc4)
         WITNESS_V0_KEY_HASH: Final = \
-            BitcoinAddress.Type.WITNESS_V0_KEY_HASH.value
+            Bitcoin.Address.Type.WITNESS_V0_KEY_HASH.value
         WITNESS_V0_SCRIPT_HASH: Final = \
-            BitcoinAddress.Type.WITNESS_V0_SCRIPT_HASH.value
+            Bitcoin.Address.Type.WITNESS_V0_SCRIPT_HASH.value
         WITNESS_UNKNOWN: Final = \
-            BitcoinAddress.Type.WITNESS_UNKNOWN.value
+            Bitcoin.Address.Type.WITNESS_UNKNOWN.value
         DEFAULT = WITNESS_V0_KEY_HASH
 
 
@@ -295,5 +292,4 @@ class BitcoinTest(Bitcoin):
     _BIP0032_VERSION_PRIVATE_KEY = 0x04358394
     _WIF_VERSION = 0xef
 
-    class Address(BitcoinTestAddress):
-        pass
+    Address = _BitcoinTestAddress
