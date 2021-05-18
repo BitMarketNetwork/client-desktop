@@ -118,6 +118,7 @@ class TestNetworkQuery(TestCase):
         manager = NetworkAccessManager()
 
         request = query.createRequest()
+        request.setSslConfiguration(manager.tlsConfiguration)
         if query.method == AbstractQuery.Method.GET:
             response = manager.get(request)
         elif query.method == AbstractQuery.Method.POST:

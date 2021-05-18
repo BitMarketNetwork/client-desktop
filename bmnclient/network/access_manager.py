@@ -18,6 +18,7 @@ from PySide2.QtNetwork import \
 
 from .utils import NetworkUtils
 from ..logger import Logger
+from ..platform import Platform
 from ..version import Timer
 
 if TYPE_CHECKING:
@@ -147,21 +148,33 @@ class NetworkAccessManager(QNetworkAccessManager):
         # return self._http2_config
 
     def _createTlsConfiguration(self) -> QSslConfiguration:
-        self._logger.debug(
-            "TLS information:"
-            "\n\tSupports: %s"
-            "\n\tVersion:  %s (0x%08x)",
-            "YES" if QSslSocket.supportsSsl() else "NO",
-            QSslSocket.sslLibraryVersionString(),
-            QSslSocket.sslLibraryVersionNumber())
+        if self._logger.isEnabledFor(logging.DEBUG):
+            version_string = QSslSocket.sslLibraryVersionString()
+            version_number = QSslSocket.sslLibraryVersionNumber()
+            if version_number > 0:
+                version_number = " (0x{:08x})".format(version_number)
+            else:
+                version_number = ""
+            self._logger.debug(
+                "TLS information:"
+                "\n\tSupports: %s"
+                "\n\tVersion:  %s%s",
+                "YES" if QSslSocket.supportsSsl() else "NO",
+                version_string,
+                version_number)
         if not QSslSocket.supportsSsl():
             Logger.fatal("Platform doesn't support TLS.", self._logger)
 
         tls = QSslConfiguration()
         tls.setOcspStaplingEnabled(False)
         tls.setPeerVerifyDepth(0)  # whole certificate chain should be checked
-        tls.setPeerVerifyMode(QSslSocket.VerifyPeer)
-        tls.setProtocol(QSsl.TlsV1_2OrLater)
+        # TODO: Qt 5.15 + macOS, recheck after moving to Qt6
+        if Platform.isDarwin:
+            tls.setPeerVerifyMode(QSslSocket.AutoVerifyPeer)
+            tls.setProtocol(QSsl.SecureProtocols)
+        else:
+            tls.setPeerVerifyMode(QSslSocket.VerifyPeer)
+            tls.setProtocol(QSsl.TlsV1_2OrLater)
         tls.setSslOption(QSsl.SslOptionDisableEmptyFragments, True)
         tls.setSslOption(QSsl.SslOptionDisableSessionTickets, False)
         tls.setSslOption(QSsl.SslOptionDisableCompression, True)
@@ -185,7 +198,7 @@ class NetworkAccessManager(QNetworkAccessManager):
     def __onAuthenticationRequired(
             self,
             reply: QNetworkReply,
-            authenticator: QAuthenticator) -> None:
+            _: QAuthenticator) -> None:
         self._logger.warning(
             "%sAuthentication required for URL: %s",
             self._loggerReplyPrefix(reply),
@@ -194,7 +207,7 @@ class NetworkAccessManager(QNetworkAccessManager):
     def __onProxyAuthenticationRequired(
             self,
             proxy: QNetworkProxy,
-            authenticator: QAuthenticator) -> None:
+            _: QAuthenticator) -> None:
         self._logger.warning(
             "Authentication required for proxy %s.",
             NetworkUtils.hostPortToString(proxy.hostName(), proxy.port()))
@@ -202,10 +215,17 @@ class NetworkAccessManager(QNetworkAccessManager):
     def __onEncrypted(self, reply: QNetworkReply) -> None:
         if self._logger.isEnabledFor(logging.DEBUG):
             tls_config = reply.sslConfiguration()
-            self._logger.debug(
-                "%s New TLS session, cipher: %s",
-                self._loggerReplyPrefix(reply),
-                tls_config.sessionCipher().name())
+            cipher_name = tls_config.sessionCipher().name()
+            # TODO empty for http2, recheck after moving to Qt6
+            if cipher_name:
+                self._logger.debug(
+                    "%s New TLS session, cipher: %s",
+                    self._loggerReplyPrefix(reply),
+                    cipher_name)
+            else:
+                self._logger.debug(
+                    "%s New TLS session.",
+                    self._loggerReplyPrefix(reply))
 
     def __onFinished(self, reply: QNetworkReply) -> None:
         status_code = reply.error()
