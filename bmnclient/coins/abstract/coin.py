@@ -4,10 +4,10 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
-from .address import AbstractAddress
+from .address import _AbstractAddress
 from .currency import AbstractCurrency
-from .script import AbstractScript
-from .tx import AbstractTx
+from .script import _AbstractScript
+from .tx import _AbstractTx
 from ..currency import FiatRate, NoneFiatCurrency
 from ...crypto.digest import Sha256Digest
 from ...utils.class_property import classproperty
@@ -15,8 +15,47 @@ from ...utils.serialize import Serializable, serializable
 from ...wallet.mutable_tx import MutableTransaction
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+    from typing import Any, Callable, Dict, List, Optional, Tuple, Union
     from ..hd import HdNode
+
+
+class _AbstractCoinInterface:
+    def __init__(self, *args, coin: AbstractCoin, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._coin = coin
+
+    def afterSetEnabled(self) -> None:
+        raise NotImplementedError
+
+    def afterSetHeight(self) -> None:
+        raise NotImplementedError
+
+    def afterSetOffset(self) -> None:
+        raise NotImplementedError
+
+    def afterSetStatus(self) -> None:
+        raise NotImplementedError
+
+    def afterSetFiatRate(self) -> None:
+        raise NotImplementedError
+
+    def afterRefreshAmount(self) -> None:
+        raise NotImplementedError
+
+    def afterRefreshUtxoList(self) -> None:
+        raise NotImplementedError
+
+    def beforeAppendAddress(self, address: AbstractCoin.Address) -> None:
+        raise NotImplementedError
+
+    def afterAppendAddress(self, address: AbstractCoin.Address) -> None:
+        raise NotImplementedError
+
+    def afterSetServerData(self) -> None:
+        raise NotImplementedError
+
+    def afterStateChanged(self) -> None:
+        raise NotImplementedError
 
 
 class AbstractCoin(Serializable):
@@ -31,60 +70,12 @@ class AbstractCoin(Serializable):
 
     _WIF_VERSION = 0x00
 
-    class Interface:
-        def __init__(self, *args, coin: AbstractCoin, **kwargs) -> None:
-            super().__init__(*args, **kwargs)
-            self._coin = coin
-
-        def afterSetEnabled(self) -> None:
-            raise NotImplementedError
-
-        def afterSetHeight(self) -> None:
-            raise NotImplementedError
-
-        def afterSetOffset(self) -> None:
-            raise NotImplementedError
-
-        def afterSetStatus(self) -> None:
-            raise NotImplementedError
-
-        def afterSetFiatRate(self) -> None:
-            raise NotImplementedError
-
-        def afterRefreshAmount(self) -> None:
-            raise NotImplementedError
-
-        def afterRefreshUtxoList(self) -> None:
-            raise NotImplementedError
-
-        def beforeAppendAddress(self, address: AbstractCoin.Address) -> None:
-            raise NotImplementedError
-
-        def afterAppendAddress(self, address: AbstractCoin.Address) -> None:
-            raise NotImplementedError
-
-        def afterSetServerData(self) -> None:
-            raise NotImplementedError
-
-        def afterStateChanged(self) -> None:
-            raise NotImplementedError
-
-    class Currency(AbstractCurrency):
-        pass
-
-    # noinspection PyAbstractClass
-    class Address(AbstractAddress):
-        pass
-
-    class Tx(AbstractTx):
-        pass
-
-    class MutableTx(MutableTransaction):  # TODO AbstractMutableTx
-        pass
-
-    # noinspection PyAbstractClass
-    class Script(AbstractScript):
-        pass
+    Interface = _AbstractCoinInterface
+    Currency = AbstractCurrency
+    Address = _AbstractAddress
+    Tx = _AbstractTx
+    MutableTx = MutableTransaction  # TODO AbstractMutableTx
+    Script = _AbstractScript
 
     class MempoolCacheItem:
         __slots__ = ("remote_hash", "access_count")
