@@ -306,7 +306,7 @@ class Mtx:
         ]
 
         segwit_tx = self.is_segwit
-        public_key_push = script_push(len(address.publicKey.data))
+        public_key_push = self.script_push(len(address.publicKey.data))
         inputs_parameters = []
         input_script_field = [
             self._tx_in[i].script_sig for i in range(len(self._tx_in))]
@@ -437,28 +437,12 @@ class Mtx:
             preimages.append(hashed)
         return preimages
 
-
-def estimate_tx_size(in_size: int, n_in: int, out_size: int, n_out: int) -> int:
-    return (
-        in_size
-        + len(number_to_unknown_bytes(n_in, byteorder='little'))
-        + out_size
-        + len(number_to_unknown_bytes(n_out, byteorder='little'))
-        + 8
-    )
-
-
-def number_to_unknown_bytes(num: int, byteorder: str = 'big') -> bytes:
-    """Converts an int to the least number of bytes as possible."""
-    return num.to_bytes((num.bit_length() + 7) // 8 or 1, byteorder)
-
-
-def script_push(val: int) -> bytes:
-    if val <= 75:
-        return number_to_unknown_bytes(val)
-    elif val < 256:
-        return b'\x4c'+number_to_unknown_bytes(val)
-    elif val < 65536:
-        return b'\x4d'+val.to_bytes(2, 'little')
-    else:
-        return b'\x4e'+val.to_bytes(4, 'little')
+    def script_push(self, val: int) -> bytes:
+        if val <= 75:
+            return self._coin.Script.integerToAutoBytes(val)
+        elif val < 256:
+            return b'\x4c' + self._coin.Script.integerToAutoBytes(val)
+        elif val < 65536:
+            return b'\x4d' + self._coin.Script.integerToBytes(2)
+        else:
+            return b'\x4e' + self._coin.Script.integerToBytes(4)

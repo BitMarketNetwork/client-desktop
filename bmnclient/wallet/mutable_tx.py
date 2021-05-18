@@ -4,18 +4,14 @@ import itertools
 from typing import TYPE_CHECKING
 
 from . import mtx_impl
-from ..coins.abstract.mutable_tx import AbstractMutableTx
+from ..coins.abstract.mutable_tx import _AbstractMutableTx
 
 if TYPE_CHECKING:
     from typing import Tuple
     from ..coins.abstract.coin import AbstractCoin
 
 
-class MutableTransaction(AbstractMutableTx):
-    MAX_SPB_FEE = 200
-    MIN_SPB_FEE = 1
-    MAX_TX_SIZE = 1024
-
+class MutableTransaction(_AbstractMutableTx):
     def __init__(self, coin: AbstractCoin):
         super().__init__(coin)
         self.__raw__mtx = None
@@ -85,23 +81,37 @@ class MutableTransaction(AbstractMutableTx):
                 self._amount + (0 if self._subtract_fee else self.feeAmount),
                 getter=lambda a: a.amount)
 
-    @ property
+    @property
     def tx_size(self):
         if not self._source_list:
-            return self.MAX_TX_SIZE
-        return mtx_impl.estimate_tx_size(
+            return 1024
+        return self.estimate_tx_size(
             150,
             max(1, len(self._selected_utxo_list)),
             70,
             2 if self._selected_utxo_amount > self._amount else 1,
         )
 
+    def estimate_tx_size(
+            self,
+            in_size: int,
+            n_in: int,
+            out_size: int,
+            n_out: int) -> int:
+        return (
+                in_size
+                + len(self._coin.Script.integerToAutoBytes(n_in))
+                + out_size
+                + len(self._coin.Script.integerToAutoBytes(n_out))
+                + 8
+        )
+
     def estimate_confirm_time(self) -> int:
         spb = self._fee_amount_per_byte
         # https://bitcoinfees.net
-        if key.AddressString.is_segwit(self._receiver_address.name):
+        if self._receiver_address.type.value.isSegwit:
             spb *= 0.6  # ??
-        if spb < self.MIN_SPB_FEE:
+        if spb < 1:
             return -1
         minutes = self._fee_manager.get_minutes(spb)
         return minutes

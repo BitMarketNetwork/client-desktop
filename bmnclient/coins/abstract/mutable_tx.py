@@ -259,9 +259,9 @@ class _AbstractMutableTx:
                         utxo.name,
                         utxo.index,
                         utxo.amount)
-            self.__mtx.sign(address.privateKey, utxo_list=utxo_list)
+            self.__mtx.sign(address, utxo_list=utxo_list)
 
-        self.__mtx_result = self.__mtx.to_hex()
+        self.__mtx_result = bytes(self.__mtx).hex()
         if self.__mtx_result is None or len(self.__mtx_result) <= 0:
             return False
         self._logger.debug(f"Signed transaction: %s", self.__mtx_result)
