@@ -1,7 +1,8 @@
 # JOK4
 from __future__ import annotations
 
-from random import randbytes, randint
+from os import urandom
+from random import randint
 from typing import TYPE_CHECKING
 from unittest import TestCase
 
@@ -11,7 +12,7 @@ from bmnclient.coins.hd import HdNode
 from bmnclient.language import Locale
 
 if TYPE_CHECKING:
-    from typing import Iterable, Type
+    from typing import Iterable
     from bmnclient.coins.abstract.coin import AbstractCoin
 
 
@@ -319,7 +320,7 @@ class TestCoins(TestCase):
                 self.assertEqual(len(coin._mempool_cache), len(mempool_list))
 
     def test_serialization(self) -> None:
-        root_node = HdNode.deriveRootNode(randbytes(64))
+        root_node = HdNode.deriveRootNode(urandom(64))
         self.assertIsNotNone(root_node)
 
         purpose_node = root_node.deriveChildNode(

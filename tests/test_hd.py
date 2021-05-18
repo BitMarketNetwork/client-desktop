@@ -1,5 +1,6 @@
 # JOK4
-import random
+from os import urandom
+from random import randint
 from unittest import TestCase
 
 from bmnclient.coins.coin_bitcoin import Bitcoin
@@ -226,7 +227,7 @@ class TestHd(TestCase):
 
     def test_hd_address_index(self) -> None:
         coin = Bitcoin()
-        root_node = HdNode.deriveRootNode(random.randbytes(64))
+        root_node = HdNode.deriveRootNode(urandom(64))
         self.assertIsNotNone(root_node)
         self.assertTrue(coin.deriveHdNode(root_node))
 
@@ -240,7 +241,7 @@ class TestHd(TestCase):
 
 class TestHdAddressIterator(TestCase):
     def setUp(self) -> None:
-        root_node = HdNode.deriveRootNode(random.randbytes(64))
+        root_node = HdNode.deriveRootNode(urandom(64))
         self.assertIsNotNone(root_node)
         self._purpose_node = root_node.deriveChildNode(
             44,
@@ -261,7 +262,7 @@ class TestHdAddressIterator(TestCase):
             append = 0
 
             for address in it:
-                if random.randint(0, 2) != 1:
+                if randint(0, 2) != 1:
                     flush += 1
                     it.markLastAddress(True)
                     # noinspection PyProtectedMember
