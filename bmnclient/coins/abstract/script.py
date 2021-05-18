@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from .coin import AbstractCoin
 
 
-class AbstractScript:
+class _AbstractScript:
     _BYTE_ORDER = "little"
 
     class OpCode(IntEnum):
