@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Optional
+    from typing import Final, Optional
 
 
 class AbstractIntegerConverter:
@@ -26,3 +26,11 @@ class AbstractIntegerConverter:
     @classmethod
     def integerFromBytes(cls, value: bytes) -> int:
         return int.from_bytes(value, cls._BYTE_ORDER)
+
+
+class LittleOrderIntegerConverter(AbstractIntegerConverter):
+    _BYTE_ORDER: Final = "little"
+
+
+class BigOrderIntegerConverter(AbstractIntegerConverter):
+    _BYTE_ORDER: Final = "big"
