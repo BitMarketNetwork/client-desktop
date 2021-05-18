@@ -74,7 +74,7 @@ class AbstractCoin(Serializable):
     Currency = AbstractCurrency
     Address = _AbstractAddress
     Tx = _AbstractTx
-    MutableTx = MutableTransaction  # TODO AbstractMutableTx
+    MutableTx = MutableTransaction  # TODO _AbstractMutableTx
     Script = _AbstractScript
 
     class MempoolCacheItem:

@@ -12,14 +12,17 @@ if TYPE_CHECKING:
     from ...wallet.mtx_impl import Mtx
 
 
-class AbstractMutableTx:
-    class Interface:
-        def __init__(self, *args, tx: AbstractCoin.MutableTx, **kwargs) -> None:
-            super().__init__(*args, **kwargs)
-            self._tx = tx
+class _AbstractMutableTxInterface:
+    def __init__(self, *args, tx: AbstractCoin.MutableTx, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._tx = tx
 
-        def onBroadcast(self, tx: Mtx) -> None:
-            raise NotImplementedError
+    def onBroadcast(self, tx: Mtx) -> None:
+        raise NotImplementedError
+
+
+class _AbstractMutableTx:
+    Interface = _AbstractMutableTxInterface
 
     def __init__(self, coin: AbstractCoin) -> None:
         self._logger = Logger.getClassLogger(
@@ -44,11 +47,11 @@ class AbstractMutableTx:
         self.__mtx = None  # TODO tmp
         self.__mtx_result: Optional[str] = None  # TODO tmp
 
-        self._model: Optional[AbstractMutableTx.Interface] = \
+        self._model: Optional[AbstractCoin.MutableTx.Interface] = \
             self._coin.model_factory(self)
 
     @property
-    def model(self) -> Optional[AbstractMutableTx.Interface]:
+    def model(self) -> Optional[AbstractCoin.MutableTx.Interface]:
         return self._model
 
     @property
