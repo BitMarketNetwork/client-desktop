@@ -258,7 +258,7 @@ class Mtx:
                 script_sig=b"",  # empty scriptSig for new unsigned transaction.
                 tx_id=bytes.fromhex(utxo.name)[::-1],
                 tx_index=utxo.index.to_bytes(4, byteorder='little'),
-                segwit_input=utxo.segwit))
+                segwit_input=utxo.address.type.value.isSegwit))
 
         return cls(
             coin=coin,
@@ -294,7 +294,7 @@ class Mtx:
                     bytes.fromhex(utxo.name)[::-1] \
                     + utxo.index.to_bytes(4, byteorder='little')
                 input_dict[tx_input] = utxo.serialize()
-                input_dict[tx_input]["segwit"] = utxo.segwit  # TODO tmp
+                input_dict[tx_input]["segwit"] = utxo.address.type.value.isSegwit  # TODO tmp
         except TypeError:
             raise TypeError('please provide as unspent at least all inputs to '
                             'be signed with the function call in a list')
