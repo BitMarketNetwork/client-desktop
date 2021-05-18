@@ -1,8 +1,15 @@
 # JOK4
+from __future__ import annotations
+
 import logging
+import os
 import sys
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Final
 
 _logger_configured = False
 
@@ -28,12 +35,16 @@ def getLogger(name: str) -> logging.Logger:
 
         kwargs = {
             "level": logging.DEBUG,
-            "handlers": (handler,)
+            "handlers": (handler, )
         }
         logging.basicConfig(**kwargs)
         _logger_configured = True
 
+        # Disable when running from Makefile
+        if "MAKELEVEL" in os.environ:
+            logging.disable()
+
     return logging.getLogger(name)
 
 
-TEST_DATA_PATH = Path(__file__).parent.resolve() / "data"
+TEST_DATA_PATH: Final = Path(__file__).parent.resolve() / "data"

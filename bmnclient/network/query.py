@@ -26,7 +26,7 @@ class AbstractQuery:
     _ENCODING = Product.ENCODING
     _DEFAULT_BASE_URL: Optional[str] = None
     _DEFAULT_METHOD = Method.GET
-    _DEFAULT_CONTENT_TYPE = ""
+    _DEFAULT_CONTENT_TYPE = "application/x-www-form-urlencoded"
 
     _REQUEST_ATTRIBUTE_LIST = (
         (

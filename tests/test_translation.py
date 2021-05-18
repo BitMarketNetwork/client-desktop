@@ -1,5 +1,5 @@
 import logging
-from unittest import TestCase
+from unittest import skip, TestCase
 
 import PySide2.QtCore as qt_core
 
@@ -8,8 +8,9 @@ from bmnclient.ui.gui import settings_manager
 log = logging.getLogger(__name__)
 
 
+@skip
 class TestLanguage(TestCase):
-    def test_loading(self):
+    def test_loading(self) -> None:
         app = qt_core.QCoreApplication()
         sett = settings_manager.SettingsManager(None)
         for lang in sett.languageModel:
