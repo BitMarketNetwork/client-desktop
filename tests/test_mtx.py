@@ -8,7 +8,6 @@ from tests import TEST_DATA_PATH
 from tests.test_data import *
 from unittest import skip
 
-from bmnclient.wallet import constants
 from bmnclient.wallet import mtx_impl as mtx
 
 log = logging.getLogger(__name__)

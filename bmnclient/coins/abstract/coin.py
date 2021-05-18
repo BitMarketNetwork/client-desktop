@@ -82,6 +82,7 @@ class AbstractCoin(Serializable):
     class MutableTx(MutableTransaction):  # TODO AbstractMutableTx
         pass
 
+    # noinspection PyAbstractClass
     class Script(AbstractScript):
         pass
 

@@ -1,7 +1,6 @@
 # JOK4
 from __future__ import annotations
 
-from enum import IntEnum
 from typing import TYPE_CHECKING
 
 from .abstract.coin import AbstractCoin
@@ -181,7 +180,7 @@ class BitcoinAddress(AbstractCoin.Address):
 
 
 class BitcoinScript(AbstractCoin.Script):
-    class OpCode(IntEnum):
+    class OpCode(AbstractCoin.Script.OpCode):
         OP_0 = 0x00
         OP_RETURN = 0x6a
         OP_DUP = 0x76

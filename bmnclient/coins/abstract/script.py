@@ -1,5 +1,7 @@
+# JOK4
 from __future__ import annotations
 
+from enum import IntEnum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -9,6 +11,9 @@ if TYPE_CHECKING:
 
 class AbstractScript:
     _BYTE_ORDER = "little"
+
+    class OpCode(IntEnum):
+        pass
 
     @classmethod
     def scriptToBytes(

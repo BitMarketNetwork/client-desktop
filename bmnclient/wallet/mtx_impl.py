@@ -4,7 +4,6 @@ import itertools
 import logging
 from typing import TYPE_CHECKING
 
-from . import constants
 from ..crypto.digest import Sha256Digest, Sha256DoubleDigest
 
 if TYPE_CHECKING:
@@ -12,6 +11,13 @@ if TYPE_CHECKING:
     from ..coins.abstract.coin import AbstractCoin
 
 log = logging.getLogger(__name__)
+
+SEQUENCE = 0xffffffff.to_bytes(4, byteorder='little')
+VERSION_1 = 0x01.to_bytes(4, byteorder='little')
+LOCK_TIME = 0x00.to_bytes(4, byteorder='little')
+HASH_TYPE = 0x01.to_bytes(4, byteorder='little')
+WIT_MARKER = b'\x00'
+WIT_FLAG = b'\x01'
 
 
 class TxEntity:
@@ -51,7 +57,7 @@ class TxInput(TxEntity):
             tx_id: bytes,
             tx_index: bytes,
             witness: bytes = b"",
-            sequence: bytes = constants.SEQUENCE,
+            sequence: bytes = SEQUENCE,
             segwit_input: bool) -> None:
         super().__init__(address, amount)
         self._script_sig = script_sig
@@ -191,8 +197,8 @@ class Mtx:
 
         return b''.join([
             self._version,
-            constants.WIT_MARKER if witness_list else b"",
-            constants.WIT_FLAG if witness_list else b"",
+            WIT_MARKER if witness_list else b"",
+            WIT_FLAG if witness_list else b"",
             input_list,
             output_list,
             witness_list,
@@ -256,11 +262,11 @@ class Mtx:
 
         return cls(
             coin=coin,
-            version=constants.VERSION_1,
+            version=VERSION_1,
             utxo_list=utxo_list,
             tx_in=tx_in,
             tx_out=tx_out,
-            lock_time=constants.LOCK_TIME)
+            lock_time=LOCK_TIME)
 
     @property
     def feeAmount(self) -> int:
@@ -270,7 +276,7 @@ class Mtx:
 
     @property
     def is_segwit(self) -> bool:
-        return bytes(self)[4:6] == (constants.WIT_MARKER + constants.WIT_FLAG)
+        return bytes(self)[4:6] == (WIT_MARKER + WIT_FLAG)
 
     @property
     def id(self) -> str:
@@ -335,7 +341,7 @@ class Mtx:
                         'already spent? Then please provide all inputs to sign '
                         'as `UTXO` objects to the function call')
 
-            inputs_parameters.append((i, constants.HASH_TYPE, segwit_input))
+            inputs_parameters.append((i, HASH_TYPE, segwit_input))
 
         preimages = self.calc_preimages(inputs_parameters)
 
@@ -379,7 +385,7 @@ class Mtx:
         preimages = []
         for input_index, hash_type, segwit_input in inputs_parameters:
             # We can only handle hashType == 1:
-            if hash_type != constants.HASH_TYPE:
+            if hash_type != HASH_TYPE:
                 raise ValueError('bit only support hashType of value 1')
 
             # Calculate pre hashes:
@@ -405,7 +411,8 @@ class Mtx:
                     self._version +
                     input_count +
                     b"".join(
-                        ti.tx_id + ti.tx_index + constants.OP_0 + ti.sequence
+                        # TODO self._coin.Script.OpCode.OP_0
+                        ti.tx_id + ti.tx_index + b"\0" + ti.sequence
                         for ti in itertools.islice(self._tx_in, input_index)
                     ) +
                     self._tx_in[input_index].tx_id +
@@ -415,7 +422,8 @@ class Mtx:
                     self._tx_in[input_index].script_sig +  # scriptCode
                     self._tx_in[input_index].sequence +
                     b"".join(
-                        ti.tx_id + ti.tx_index + constants.OP_0 + ti.sequence
+                        # TODO self._coin.Script.OpCode.OP_0
+                        ti.tx_id + ti.tx_index + b"\0" + ti.sequence
                         for ti in itertools.islice(
                             self._tx_in,
                             input_index + 1,
