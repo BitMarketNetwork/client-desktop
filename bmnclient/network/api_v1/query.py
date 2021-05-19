@@ -1,7 +1,7 @@
 # JOK4
 from __future__ import annotations
 
-import itertools
+from itertools import chain
 from enum import auto, Enum
 from typing import TYPE_CHECKING
 
@@ -572,7 +572,7 @@ class CoinMempoolIteratorApiQuery(AbstractApiQuery):
         return "unconfirmed", data
 
     def _processTx(self, tx: DeserializedData) -> None:
-        for tx_io in itertools.chain(tx["input_list"], tx["output_list"]):
+        for tx_io in chain(tx["input_list"], tx["output_list"]):
             address = self._coin.findAddressByName(tx_io["address_name"])
             if address is None:
                 continue

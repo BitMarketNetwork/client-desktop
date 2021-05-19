@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from ...utils.integer import LittleOrderIntegerConverter
 
 if TYPE_CHECKING:
-    from typing import Iterable, Optional
+    from typing import Optional, Sequence
     from .coin import AbstractCoin
 
 
@@ -17,7 +17,7 @@ class _AbstractScript(LittleOrderIntegerConverter):
     @classmethod
     def scriptToBytes(
             cls,
-            opcode_list: Iterable[int, bytes]) -> Optional[bytes]:
+            opcode_list: Sequence[int, bytes]) -> Optional[bytes]:
         try:
             return b"".join(map(
                 lambda v: cls.integerToBytes(v, 1) if isinstance(v, int) else v,

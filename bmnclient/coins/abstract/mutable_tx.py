@@ -362,3 +362,25 @@ class _AbstractMutableTx:
                 break
 
         return best_utxo_list, best_utxo_amount
+
+    @classmethod
+    def createOptimalUtxoList(
+            cls,
+            address_list: Sequence[AbstractCoin.Address],
+            target_amount: int) -> SelectedUtxoList:
+        if target_amount <= 0:
+            return [], 0
+
+        best_utxo = None
+        for address in address_list:
+            utxo = cls._findExactUtxo(address.utxoList, target_amount)
+            if utxo is not None:
+                if cls._newUtxoIsBest(best_utxo, utxo):
+                    best_utxo = utxo
+        if best_utxo is not None:
+            assert best_utxo.amount == target_amount
+            return [best_utxo], best_utxo.amount
+
+        return cls._findOptimalUtxoList(
+            list(chain.from_iterable(map(lambda a: a.utxoList, address_list))),
+            target_amount)

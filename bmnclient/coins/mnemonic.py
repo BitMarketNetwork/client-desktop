@@ -13,7 +13,7 @@ from ..utils.class_property import classproperty
 from ..version import ProductPaths
 
 if TYPE_CHECKING:
-    from typing import Final, Iterable, List, Optional, Sequence, Union
+    from typing import Final, List, Optional, Sequence, Union
 
 
 # Adapted from:
@@ -150,7 +150,7 @@ class Mnemonic:
     def friendlyPhrase(
             cls,
             language: str,
-            phrase: Union[str, Iterable[str]]) -> str:
+            phrase: Union[str, Sequence[str]]) -> str:
         if isinstance(phrase, str):
             phrase = cls.normalizePhrase(phrase).split()
             # phrase = filter(None, phrase)

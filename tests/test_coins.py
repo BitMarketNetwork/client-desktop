@@ -12,7 +12,7 @@ from bmnclient.coins.hd import HdNode
 from bmnclient.language import Locale
 
 if TYPE_CHECKING:
-    from typing import Iterable
+    from typing import Sequence
     from bmnclient.coins.abstract.coin import AbstractCoin
 
 
@@ -123,7 +123,7 @@ class TestCoins(TestCase):
     def _test_address_decode(
             self,
             coin: AbstractCoin,
-            address_list: Iterable[tuple]) -> None:
+            address_list: Sequence[tuple]) -> None:
         hash_check_count = 0
 
         # noinspection PyUnusedLocal
