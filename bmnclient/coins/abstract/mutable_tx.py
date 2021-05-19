@@ -2,14 +2,16 @@
 from __future__ import annotations
 
 import logging
+from itertools import chain
 from typing import TYPE_CHECKING
 
 from ...logger import Logger
 
 if TYPE_CHECKING:
-    from typing import Dict, List, Optional
+    from typing import Dict, List, Optional, Sequence, Tuple
     from .coin import AbstractCoin
     from ...wallet.mtx_impl import Mtx
+    SelectedUtxoList = Tuple[List[AbstractCoin.Tx.Utxo], int]
 
 
 class _AbstractMutableTxInterface:
@@ -277,3 +279,86 @@ class _AbstractMutableTx:
         if self._model:
             self._model.onBroadcast(mtx)
         return True
+
+    @staticmethod
+    def _newUtxoIsBest(
+            old_utxo: Optional[AbstractCoin.Tx.Utxo],
+            new_utxo: AbstractCoin.Tx.Utxo) -> bool:
+        return old_utxo is None or new_utxo.height < old_utxo.height
+
+    @classmethod
+    def _findExactUtxo(
+            cls,
+            utxo_list: Sequence[AbstractCoin.Tx.Utxo],
+            target_amount: int) -> Optional[AbstractCoin.Tx.Utxo]:
+        best_utxo = None
+        for utxo in utxo_list:
+            if utxo.amount == target_amount:
+                if cls._newUtxoIsBest(best_utxo, utxo):
+                    best_utxo = utxo
+        return best_utxo
+
+    @classmethod
+    def _findOptimalUtxoList(
+            cls,
+            utxo_list: Sequence[AbstractCoin.Tx.Utxo],
+            target_amount: int) -> SelectedUtxoList:
+        # single utxo
+        best_utxo = None
+        for utxo in utxo_list:
+            if utxo.amount >= target_amount:
+                if (
+                        best_utxo is None
+                        or (utxo.amount < best_utxo.amount)
+                        or (
+                            best_utxo.amount == utxo.amount
+                            and cls._newUtxoIsBest(best_utxo, utxo)
+                        )
+                ):
+                    best_utxo = utxo
+        if best_utxo is not None:
+            return [best_utxo], best_utxo.amount
+
+        return cls._findOptimalUtxoListStrategy1(utxo_list, target_amount)
+
+    @classmethod
+    def _findOptimalUtxoListStrategy1(
+            cls,
+            utxo_list: Sequence[AbstractCoin.Tx.Utxo],
+            target_amount: int) -> SelectedUtxoList:
+        if len(utxo_list) < 2:
+            return [], 0
+
+        best_utxo_list = []
+        best_utxo_amount = 0
+        utxo_list_offset = 0
+        utxo_list = sorted(
+            utxo_list,
+            key=lambda u: (u.amount, u.height),
+            reverse=True)
+
+        for limit in range(2, len(utxo_list) + 1):
+            exact_found = False
+            while utxo_list_offset + limit <= len(utxo_list):
+                current_list = []
+                current_amount = 0
+                for i in range(limit):
+                    utxo = utxo_list[utxo_list_offset + i]
+                    current_list.append(utxo)
+                    current_amount += utxo.amount
+
+                if current_amount < target_amount:
+                    break
+                if current_amount == target_amount:
+                    exact_found = True
+                elif exact_found:
+                    break
+
+                best_utxo_list = current_list
+                best_utxo_amount = current_amount
+                utxo_list_offset += 1
+
+            if best_utxo_list:
+                break
+
+        return best_utxo_list, best_utxo_amount

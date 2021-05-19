@@ -101,18 +101,18 @@ class _AbstractUtxo(Serializable):
                 isinstance(other, self.__class__)
                 and self._coin == other._coin
                 and self._name == other._name
-                # and self._height == other._height
+                and self._height == other._height
                 and self._index == other._index
-                # and self._amount == other._amount
+                and self._amount == other._amount
         )
 
     def __hash__(self) -> int:
         return hash((
             self._coin,
             self._name,
-            # self._height
+            self._height,
             self._index,
-            # self._amount
+            self._amount
         ))
 
     @property

@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import itertools
 from typing import TYPE_CHECKING
 
 from ..coins.abstract.mutable_tx import _AbstractMutableTx
 
 if TYPE_CHECKING:
-    from typing import Tuple
     from ..coins.abstract.coin import AbstractCoin
 
 
@@ -15,63 +13,6 @@ class MutableTransaction(_AbstractMutableTx):
         super().__init__(coin)
         self.__raw__mtx = None
         self.refreshSourceList()
-
-    @classmethod
-    def perms(cls, src: list, getter: callable):
-        for i in range(len(src)):
-            for pack in itertools.combinations(src, r=i + 1):
-                yield pack, sum(map(getter, pack))
-
-    @classmethod
-    def select_sources(
-            cls,
-            source_list: list,
-            target_amount: int,
-            getter: callable) -> Tuple[list, int]:
-        if not source_list or target_amount <= 0:
-            return [], 0
-
-        def src_len_select(src):
-            return max(src, key=lambda s: len(s[0]))
-
-        # try simple cases
-        summ = sum(map(getter, source_list))
-        # self._logger.warning(f"sum:{summ} t:{target_amount}")
-        if summ < target_amount:
-            return [], summ
-        if summ == target_amount:
-            return source_list, target_amount
-
-        # try exact products
-        res = ((s, c) for s, c in cls.perms(source_list, getter) if c == target_amount)
-        # there's no way to test generator
-        try:
-            return src_len_select(res)
-        except ValueError:
-            pass
-
-        res = [(s, c) for s, c in cls.perms(source_list, getter) if c > target_amount]
-        # two loops :-\
-        if res:
-            _, min_ = min(res, key=lambda r: r[1])
-            return src_len_select(r for r in res if r[1] == min_)
-
-        # # fallback to the silliest algo
-        sorted_list = sorted(source_list, key=getter, reverse=True)
-        result_list = []
-        amount = 0
-        prev = None
-        for src in sorted_list:
-            if getter(src) > target_amount:
-                prev = src
-                continue
-            if prev and getter(src) < target_amount:
-                src = prev
-            amount += getter(src)
-            result_list.append(src)
-            if amount >= target_amount:
-                return result_list, amount
-        return [], 0
 
     def filter_sources(self) -> None:
         self._selected_utxo_list, self._selected_utxo_amount = \

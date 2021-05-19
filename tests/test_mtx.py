@@ -1,16 +1,192 @@
+from __future__ import annotations
 
 import copy
 import json
 import logging
-from typing import List, Tuple
 import unittest
+from os import urandom
+from random import shuffle
+from typing import TYPE_CHECKING
+from unittest import skip, TestCase
+
+from bmnclient.coins.coin_bitcoin import Bitcoin
+from bmnclient.coins.hd import HdNode
+from bmnclient.wallet import mtx_impl as mtx
 from tests import TEST_DATA_PATH
 from tests.test_data import *
-from unittest import skip
 
-from bmnclient.wallet import mtx_impl as mtx
+if TYPE_CHECKING:
+    from typing import List, Sequence, Tuple
 
 log = logging.getLogger(__name__)
+
+
+class TestSelectUtxo(TestCase):
+    def setUp(self) -> None:
+        self._coin = Bitcoin()
+        root_node = HdNode.deriveRootNode(urandom(64))
+        self.assertIsNotNone(root_node)
+        self.assertTrue(self._coin.deriveHdNode(root_node))
+
+    def _createUtxoList(
+            self,
+            address: Bitcoin.Address,
+            amount_list: Sequence[int]) -> None:
+        utxo_list: List[Bitcoin.Tx.Utxo] = []
+        for i in range(len(amount_list)):
+            utxo_list.append(Bitcoin.Tx.Utxo(
+                self._coin,
+                name=i.to_bytes(32, "big").hex(),
+                height=100 + i,
+                index=0,
+                amount=amount_list[i]))
+        address.utxoList = utxo_list
+
+    @classmethod
+    def _isLowHeightUtxo(
+            cls,
+            utxo_list: List[Bitcoin.Tx.Utxo],
+            utxo):
+        result = False
+        for far_utxo in utxo_list:
+            if far_utxo.amount == utxo.amount:
+                if far_utxo is not utxo and far_utxo.height > utxo.height:
+                    result = True
+        return result
+
+    def test_find_ideal_utxo(self) -> None:
+        address = self._coin.deriveHdAddress(account=0, is_change=False)
+        self.assertIsNotNone(address)
+
+        # no utxo
+        for r in range(100):
+            # noinspection PyProtectedMember
+            utxo = self._coin.MutableTx._findExactUtxo(address.utxoList, r)
+            self.assertIsNone(utxo)
+
+        # single utxo with amount 0, 1
+        if True:
+            for amount in (0, 1):
+                self._createUtxoList(address, (amount, ))
+                # noinspection PyProtectedMember
+                utxo = self._coin.MutableTx._findExactUtxo(address.utxoList, 0)
+                if not amount:
+                    self.assertIsNotNone(utxo)
+                    self.assertEqual(amount, utxo.amount)
+                else:
+                    self.assertIsNone(utxo)
+
+                # noinspection PyProtectedMember
+                utxo = self._coin.MutableTx._findExactUtxo(address.utxoList, 1)
+                if not amount:
+                    self.assertIsNone(utxo)
+                else:
+                    self.assertIsNotNone(utxo)
+                    self.assertEqual(amount, utxo.amount)
+
+                # noinspection PyProtectedMember
+                utxo = self._coin.MutableTx._findExactUtxo(address.utxoList, 2)
+                self.assertIsNone(utxo)
+
+        # multiple utxo
+        if True:
+            self._createUtxoList(address, (0, 1, 2, 3, 4, 5, 6, 6))
+
+            # noinspection PyProtectedMember
+            utxo = self._coin.MutableTx._findExactUtxo(address.utxoList, 7)
+            self.assertIsNone(utxo)
+
+            # noinspection PyProtectedMember
+            utxo = self._coin.MutableTx._findExactUtxo(address.utxoList, 6)
+            self.assertIsNotNone(utxo)
+            self.assertEqual(6, utxo.amount)
+            self.assertTrue(self._isLowHeightUtxo(address.utxoList, utxo))
+
+            # noinspection PyProtectedMember
+            utxo = self._coin.MutableTx._findExactUtxo(address.utxoList, 4)
+            self.assertIsNotNone(utxo)
+            self.assertEqual(4, utxo.amount)
+
+    def test_find_single_address_single_utxo(self) -> None:
+        address = self._coin.deriveHdAddress(account=0, is_change=False)
+        self.assertIsNotNone(address)
+
+        # find same amount
+        if True:
+            amount_list = [x for x in range(1000)]
+            shuffle(amount_list)
+            self._createUtxoList(address, amount_list)
+            self.assertEqual(1000, len(address.utxoList))
+            for i in range(len(address.utxoList)):
+                # noinspection PyProtectedMember
+                l, a = self._coin.MutableTx._findOptimalUtxoList(
+                    address.utxoList,
+                    i)
+                self.assertEqual(1, len(l))
+                self.assertEqual(i, a)
+
+        # find nearest amount + height test
+        if True:
+            amount_list = list(range(1, 1000, 2)) + list(range(1, 1000, 2))
+            shuffle(amount_list)
+            self._createUtxoList(address, amount_list)
+            self.assertEqual(500 * 2, len(address.utxoList))
+            for i in range(0, 1000, 2):
+                # noinspection PyProtectedMember
+                l, a = self._coin.MutableTx._findOptimalUtxoList(
+                    address.utxoList,
+                    i)
+                self.assertEqual(1, len(l))
+                self.assertEqual(i + 1, a)
+                self.assertTrue(self._isLowHeightUtxo(address.utxoList, l[0]))
+
+    def test_find_single_address_multiple_utxo(self) -> None:
+        address = self._coin.deriveHdAddress(account=0, is_change=False)
+        self.assertIsNotNone(address)
+
+        amount_list = list(range(0, 10)) * 4
+        shuffle(amount_list)
+        self._createUtxoList(address, amount_list)
+        self.assertEqual(40, len(address.utxoList))
+
+        test_list = (
+            (9, 9, 1),
+            (10, 10, 2),
+            (21, 21, 3),
+            (28, 28, 4),
+            (29, 29, 4),
+            (100, 102, 13),
+            (200, 0, 0),
+        )
+
+        for (amount, result_amount, utxo_count) in test_list:
+            # noinspection PyProtectedMember
+            l, a = self._coin.MutableTx._findOptimalUtxoList(
+                address.utxoList,
+                amount)
+            self.assertEqual(utxo_count, len(l))
+            self.assertEqual(result_amount, a)
+
+        amount_list = list(range(1, 10))
+        shuffle(amount_list)
+        self._createUtxoList(address, amount_list)
+        self.assertEqual(9, len(address.utxoList))
+
+        test_list = (
+            (9, 9, 1),
+            (10, 11, 2),
+            (20, 21, 3),
+            (45, 45, 9),
+        )
+
+        for (amount, result_amount, utxo_count) in test_list:
+            # noinspection PyProtectedMember
+            l, a = self._coin.MutableTx._findOptimalUtxoList(
+                address.utxoList,
+                amount)
+            self.assertEqual(utxo_count, len(l))
+            self.assertEqual(result_amount, a)
+
 
 """
 OUTPUTS = [
@@ -61,6 +237,7 @@ UNSPENTS = [
              1)
 ]
 """
+
 
 @unittest.skip
 class TestInput(unittest.TestCase):
