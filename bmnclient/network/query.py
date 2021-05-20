@@ -12,10 +12,12 @@ from PySide2.QtNetwork import QNetworkReply, QNetworkRequest
 
 from .utils import NetworkUtils
 from ..logger import Logger
+from ..utils.string import StringUtils
 from ..version import Product, Timer
 
 if TYPE_CHECKING:
-    from typing import Callable, Dict, List, Optional, Union
+    from typing import Callable, Dict, List, Optional, Tuple, Union
+    from ..utils.string import ClassStringKeyTuple
 
 
 class AbstractQuery:
@@ -74,13 +76,14 @@ class AbstractQuery:
         )
     )
 
-    def __init__(self, *args, name_suffix: Optional[str], **kwargs) -> None:
+    def __init__(
+            self,
+            *args,
+            name_key_list: Tuple[ClassStringKeyTuple, ...],
+            **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.__name_suffix = name_suffix
-        self._logger = Logger.getClassLogger(
-            __name__,
-            self.__class__,
-            self.__name_suffix)
+        self.__name_key_list = name_key_list
+        self._logger = Logger.classLogger(self.__class__, *name_key_list)
         self.__status_code: Optional[int] = None
         self.__response: Optional[QNetworkReply] = None
         self.__is_success = False
@@ -92,7 +95,7 @@ class AbstractQuery:
             None
 
     def __str__(self) -> str:
-        return self.__class__.__name__ + Logger.nameSuffix(self.__name_suffix)
+        return StringUtils.classString(self.__class__, *self.__name_key_list)
 
     def isEqualQuery(self, other: AbstractQuery) -> bool:
         return (
@@ -339,7 +342,7 @@ class AbstractJsonQuery(AbstractQuery):
             except UnicodeError as e:
                 error_message = str(e)
             except JSONDecodeError as e:
-                error_message = Logger.jsonDecodeErrorToString(e)
+                error_message = Logger.jsonDecodeErrorString(e)
 
             if error_message is not None:
                 response = None

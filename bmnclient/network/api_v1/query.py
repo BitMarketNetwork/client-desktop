@@ -1,8 +1,8 @@
 # JOK4
 from __future__ import annotations
 
-from itertools import chain
 from enum import auto, Enum
+from itertools import chain
 from typing import TYPE_CHECKING
 
 from .parser import \
@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from ...coins.abstract.coin import AbstractCoin
     from ...coins.list import CoinList
     from ...utils.serialize import DeserializedData
+    from ...utils.string import ClassStringKeyTuple
     from ...wallet.mtx_impl import Mtx
 
 
@@ -87,7 +88,7 @@ class AbstractApiQuery(AbstractJsonQuery):
     def _processError(self, error: int, message: str) -> None:
         self._logger.error(
             "Server error: %s",
-            Logger.errorToString(error, message))
+            Logger.errorString(error, message))
 
     def _processData(
             self,

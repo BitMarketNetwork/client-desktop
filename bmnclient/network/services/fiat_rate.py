@@ -38,7 +38,7 @@ class AbstractFiatRateService(AbstractJsonQuery):
             self,
             coin_list: CoinList,
             currency_type: Type[FiatCurrency] = UsdFiatCurrency) -> None:
-        super().__init__(name_suffix=currency_type.unit)
+        super().__init__(name_key_list=((None, currency_type.unit), ))
         self._buffer = BytesIO()
 
         self._coin_list = coin_list
