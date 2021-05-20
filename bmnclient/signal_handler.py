@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 import signal
-import socket
 import sys
+from socket import SOCK_STREAM, socketpair
 from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
@@ -42,10 +42,9 @@ class SignalHandler(QObject):
 
     def __init__(self, parent: Optional[QObject] = None) -> None:
         super().__init__(parent=parent)
-        self._logger = Logger.getClassLogger(__name__, self.__class__)
+        self._logger = Logger.classLogger(self.__class__)
 
-        read_socket, self._write_socket = socket.socketpair(
-            type=socket.SOCK_STREAM)
+        read_socket, self._write_socket = socketpair(type=SOCK_STREAM)
         read_socket.setblocking(False)
         self._write_socket.setblocking(False)
 

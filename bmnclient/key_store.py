@@ -40,7 +40,7 @@ class KeyStore(QObject):
             open_callback: Callable[[HdNode], None],
             reset_callback: Callable[[], None]) -> None:
         super().__init__()
-        self._logger = Logger.getClassLogger(__name__, self.__class__)
+        self._logger = Logger.classLogger(self.__class__)
         self._lock = RLock()
 
         self._user_config = user_config

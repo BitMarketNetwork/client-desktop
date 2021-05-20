@@ -55,13 +55,10 @@ class Language:
     PRIMARY_NAME = "en_US"
 
     def __init__(self, name: str = PRIMARY_NAME) -> None:
-        self._logger = Logger.getClassLogger(__name__, self.__class__, name)
-
-        if name is None:
-            self._locale = Locale()
-        else:
-            self._locale = Locale(name)
-
+        self._locale = Locale() if name is None else Locale(name)
+        self._logger = Logger.classLogger(
+            self.__class__,
+            (None, self._locale.name()))
         self._translator_list = []
         if name != self.PRIMARY_NAME:
             for suffix in self.SUFFIX_LIST:
@@ -141,7 +138,7 @@ class Language:
             suffix)
 
         if not result:
-            Logger.getClassLogger(__name__, cls).error(
+            Logger.classLogger(cls).error(
                 "Failed to load translator: locale '{}', suffix '{}'."
                 .format(locale.name(), suffix))
             return None

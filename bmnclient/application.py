@@ -107,7 +107,7 @@ class CoreApplication(QObject):
         super().__init__()
 
         self._command_line = command_line
-        self._logger = Logger.getClassLogger(__name__, self.__class__)
+        self._logger = Logger.classLogger(self.__class__)
         self._title = "{} {}".format(Product.NAME, Product.VERSION_STRING)
         self._icon = QIcon(str(ICON_FILE_PATH))
         self._language: Optional[Language] = None

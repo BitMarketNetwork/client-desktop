@@ -97,10 +97,7 @@ class NetworkAccessManager(QNetworkAccessManager):
         super().__init__(parent)
 
         self._name = name if name else "default"
-        self._logger = Logger.getClassLogger(
-            __name__,
-            self.__class__,
-            self._name)
+        self._logger = Logger.classLogger(self.__class__, (None, self._name))
 
         self._cache = NullNetworkCache()
         self._cookie_jar = NullNetworkCookieJar()
@@ -130,13 +127,14 @@ class NetworkAccessManager(QNetworkAccessManager):
 
         if parent:
             self._logger.debug(
-                "'%s' network access manager was created for '%s'.",
-                self._name,
+                "Network access manager was created for '%s'.",
                 parent.objectName())
         else:
-            self._logger.debug(
-                "'%s' network access manager was created.",
-                self._name)
+            self._logger.debug("Network access manager was created.")
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     @property
     def tlsConfiguration(self) -> QSslConfiguration:
@@ -237,7 +235,7 @@ class NetworkAccessManager(QNetworkAccessManager):
                 self._logger.warning(
                     "%s Connection error: %s",
                     self._loggerReplyPrefix(reply),
-                    Logger.errorToString(
+                    Logger.errorString(
                         int(status_code),
                         reply.errorString()))
 
@@ -258,7 +256,7 @@ class NetworkAccessManager(QNetworkAccessManager):
             self._logger.error(
                 "%s %s",
                 self._loggerReplyPrefix(reply),
-                Logger.errorToString(int(e.error()), e.errorString()))
+                Logger.errorString(int(e.error()), e.errorString()))
 
     def _loggerReplyPrefix(self, reply: QNetworkReply) -> str:
         return "[{} {}]".format(

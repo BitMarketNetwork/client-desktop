@@ -31,7 +31,7 @@ class SystemTrayIcon(QObject):
     def __init__(self, application: GuiApplication) -> None:
         super().__init__()
         self._application = application
-        self._logger = Logger.getClassLogger(__name__, self.__class__)
+        self._logger = Logger.classLogger(self.__class__)
 
         if not QSystemTrayIcon.isSystemTrayAvailable():
             self._logger.warning("System tray is not available.")

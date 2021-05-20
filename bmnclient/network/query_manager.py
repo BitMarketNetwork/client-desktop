@@ -24,14 +24,14 @@ class NetworkQueryManager:
         ERROR_NOT_UNIQUE = auto()
 
     def __init__(self, name: str) -> None:
-        self._logger = Logger.getClassLogger(
-            __name__,
-            self.__class__,
-            name)
-
+        self._logger = Logger.classLogger(self.__class__, (None, name))
         self._manager = NetworkAccessManager(name)
         self._queue: List[AbstractQuery] = []
         self._current_query: Optional[AbstractQuery] = None
+
+    @property
+    def name(self) -> str:
+        return self._manager.name
 
     @property
     def currentQuery(self) -> Optional[AbstractQuery]:

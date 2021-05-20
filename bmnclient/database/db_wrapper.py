@@ -26,7 +26,9 @@ class Database:
             file_path: PurePath) -> None:
         super().__init__()
         self._application = application
-        self._logger = Logger.getClassLogger(__name__, self.__class__)
+        self._logger = Logger.classLogger(
+            self.__class__,
+            (None, file_path.name))
         self._logger.debug("SQLite version: %s", sqlite3.sqlite_version)
         self._file_path = file_path
         self.__db_name = None

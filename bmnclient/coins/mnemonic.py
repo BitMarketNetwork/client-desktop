@@ -30,10 +30,9 @@ class Mnemonic:
 
     def __init__(self, language: Optional[str] = None) -> None:
         self._language = language.lower() if language else "english"
-        self._logger = Logger.getClassLogger(
-            __name__,
+        self._logger = Logger.classLogger(
             self.__class__,
-            self._language)
+            (None, self._language))
         self._file_path = self._SOURCE_PATH / (self._language + ".txt")
 
         error_message = None
@@ -50,9 +49,9 @@ class Mnemonic:
                     "wordlist should contain {} words, but it contains {} words"
                     .format(self._WORD_COUNT, len(self._word_list)))
         except OSError as e:
-            error_message = Logger.osErrorToString(e)
+            error_message = Logger.osErrorString(e)
         except ValueError as e:
-            error_message = Logger.exceptionToString(e)
+            error_message = Logger.exceptionString(e)
         if error_message is not None:
             Logger.fatal(
                 "Failed to read file '{}'. {}"

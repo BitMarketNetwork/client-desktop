@@ -92,7 +92,7 @@ class NetworkQueryScheduler:
             application: CoreApplication,
             manager: NetworkQueryManager) -> None:
         self._application = application
-        self._logger = Logger.getClassLogger(__name__, self.__class__)
+        self._logger = Logger.classLogger(self.__class__, (None, manager.name))
         self._manager = manager
         self._timer_list: Dict[str, NetworkQueryTimer] = {}
 

@@ -33,7 +33,9 @@ class UserConfig:
     KEY_SERVICES_FIAT_CURRENCY: Final = "services.fiat_currency"
 
     def __init__(self, file_path: PurePath) -> None:
-        self._logger = Logger.getClassLogger(__name__, self.__class__)
+        self._logger = Logger.classLogger(
+            self.__class__,
+            (None, file_path.name))
         self._file_path = file_path
         self._config = dict()
         self._lock = RLock()
@@ -54,11 +56,11 @@ class UserConfig:
                 self._updateVersion()
                 return True
             except OSError as e:
-                error_message = Logger.osErrorToString(e)
+                error_message = Logger.osErrorString(e)
             except JSONDecodeError as e:
-                error_message = Logger.jsonDecodeErrorToString(e)
+                error_message = Logger.jsonDecodeErrorString(e)
             except ValueError as e:
-                error_message = Logger.exceptionToString(e)
+                error_message = Logger.exceptionString(e)
 
             self._logger.warning(
                 "Failed to read file '%s'. %s",
@@ -86,9 +88,9 @@ class UserConfig:
                     file.flush()
                 return True
             except OSError as e:
-                error_message = Logger.osErrorToString(e)
+                error_message = Logger.osErrorString(e)
             except ValueError as e:
-                error_message = Logger.exceptionToString(e)
+                error_message = Logger.exceptionString(e)
             self._logger.warning(
                 "Failed to write file '%s'. %s",
                 self._file_path,
@@ -152,7 +154,7 @@ class UserConfigStaticList(StaticList):
             default_index: int,
             item_property: str) -> None:
         super().__init__(source_list, item_property=item_property)
-        self._logger = Logger.getClassLogger(__name__, self.__class__)
+        self._logger = Logger.classLogger(self.__class__)
 
         self._user_config = user_config
         self._user_config_key = user_config_key
