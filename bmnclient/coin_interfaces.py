@@ -4,14 +4,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .coins.abstract.coin import AbstractCoin
-from .coins.utils import CoinLoggerUtils
+from .coins.utils import CoinUtils
 from .logger import Logger
 
 if TYPE_CHECKING:
-    from typing import Optional
-    from .wallet.mtx_impl import Mtx
-    from .network.query_scheduler import NetworkQueryScheduler
+    from typing import Tuple
     from .database.db_wrapper import Database
+    from .network.query_scheduler import NetworkQueryScheduler
+    from .utils.string import ClassStringKeyTuple
+    from .wallet.mtx_impl import Mtx
 
 
 class _AbstractInterface:
@@ -20,13 +21,10 @@ class _AbstractInterface:
             *args,
             query_scheduler: NetworkQueryScheduler,
             database: Database,
-            name_suffix: Optional[str] = None,
+            name_key_list: Tuple[ClassStringKeyTuple, ...],
             **kwargs):
         super().__init__(*args, **kwargs)
-        self._logger = Logger.getClassLogger(
-            __name__,
-            self.__class__,
-            name_suffix)
+        self._logger = Logger.classLogger(self.__class__, *name_key_list)
         self._query_scheduler = query_scheduler
         self._database = database
 
@@ -36,7 +34,7 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
         super().__init__(
             *args,
             coin=coin,
-            name_suffix=CoinLoggerUtils.coinToNameSuffix(coin),
+            name_key_list=CoinUtils.coinToNameKeyTuple(coin),
             **kwargs)
 
     def afterSetEnabled(self) -> None:
@@ -83,7 +81,7 @@ class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
         super().__init__(
             *args,
             address=address,
-            name_suffix=CoinLoggerUtils.addressToNameSuffix(address),
+            name_key_list=CoinUtils.addressToNameKeyTuple(address),
             **kwargs)
 
     def afterSetAmount(self) -> None:
@@ -126,7 +124,7 @@ class TxInterface(_AbstractInterface, AbstractCoin.Tx.Interface):
         super().__init__(
             *args,
             tx=tx,
-            name_suffix=CoinLoggerUtils.txToNameSuffix(tx),
+            name_key_list=CoinUtils.txToNameKeyTuple(tx),
             **kwargs)
 
     def afterSetHeight(self) -> None:
@@ -147,7 +145,7 @@ class MutableTxInterface(_AbstractInterface, AbstractCoin.MutableTx.Interface):
         super().__init__(
             *args,
             tx=tx,
-            name_suffix=CoinLoggerUtils.coinToNameSuffix(tx.coin),
+            name_key_list=CoinUtils.coinToNameKeyTuple(tx.coin),
             **kwargs)
 
     def onBroadcast(self, tx: Mtx) -> None:

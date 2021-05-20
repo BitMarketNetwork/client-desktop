@@ -6,31 +6,33 @@ from typing import TYPE_CHECKING
 from ..utils import NotImplementedInstance
 
 if TYPE_CHECKING:
-    from typing import Optional, Union
+    from typing import Optional, Tuple
     from .abstract.coin import AbstractCoin
+    from ..utils.string import ClassStringKeyTuple
 
 
-class CoinLoggerUtils(NotImplementedInstance):
+class CoinUtils(NotImplementedInstance):
     @classmethod
-    def coinToNameSuffix(cls, coin: AbstractCoin):
-        return coin.name
+    def coinToNameKeyTuple(
+            cls,
+            coin: AbstractCoin) -> Tuple[ClassStringKeyTuple]:
+        return (None, coin.name),
 
     @classmethod
-    def addressToNameSuffix(
+    def addressToNameKeyTuple(
             cls,
             address: AbstractCoin.Address,
-            hd_index: Optional[int] = None):
-        value = "{}:{}".format(address.coin.name, address.name)
+            hd_index: Optional[int] = None) -> Tuple[ClassStringKeyTuple]:
+        result = cls.coinToNameKeyTuple(address.coin)
+        result += (None, address.name),
         if hd_index is not None:
-            value += cls.nameToSubSuffix("hd_index", hd_index)
-        return value
+            result += ("index", hd_index),
+        return result
 
     @classmethod
-    def txToNameSuffix(cls, tx: AbstractCoin.Tx):
-        return "{}:{}".format(tx.coin.name, tx.name)
-
-    @classmethod
-    def nameToSubSuffix(cls, key: str, value: Union[str, int]) -> str:
-        if key:
-            return ":{}={}".format(key, value)
-        return ":{}".format(value)
+    def txToNameKeyTuple(
+            cls,
+            tx: AbstractCoin.Tx) -> Tuple[ClassStringKeyTuple]:
+        result = cls.coinToNameKeyTuple(tx.coin)
+        result += (None, tx.name),
+        return result
