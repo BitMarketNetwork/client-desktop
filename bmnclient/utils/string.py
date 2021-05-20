@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING
 from . import NotImplementedInstance
 
 if TYPE_CHECKING:
-    from typing import Tuple
+    from typing import Optional, Tuple, Type
+    ClassStringKeyTuple = Tuple[Optional[str], Optional[str, int]]
 
 
 class StringUtils(NotImplementedInstance):
@@ -70,3 +71,23 @@ class StringUtils(NotImplementedInstance):
             source[0] = source[0].lower()
 
         return symbol * l_offset + "".join(source) + symbol * r_offset
+
+    @staticmethod
+    def classString(
+            cls_: Type,
+            *key_list: ClassStringKeyTuple) -> str:
+        result = []
+        for name, value in key_list:
+            if name:
+                result.append(str(name) + "=" + str(value))
+            else:
+                result.append(str(value))
+
+        class_name = cls_.__name__.lstrip("_")  # remove private marker
+        if class_name.startswith("Abstract"):
+            class_name = class_name[8:]
+
+        if result:
+            return class_name + "[" + ":".join(result) + "]"
+        else:
+            return class_name
