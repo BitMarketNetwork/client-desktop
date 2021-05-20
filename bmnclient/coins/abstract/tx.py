@@ -4,8 +4,10 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
+from ..utils import CoinUtils
 from ...utils import Utils
 from ...utils.serialize import Serializable, serializable
+from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
     from typing import Any, List, Optional, Tuple
@@ -114,6 +116,11 @@ class _AbstractUtxo(Serializable):
             self._index,
             self._amount
         ))
+
+    def __str__(self) -> str:
+        return StringUtils.classString(
+            self.__class__,
+            *CoinUtils.utxoToNameKeyTuple(self))
 
     @property
     def address(self) -> Optional[AbstractCoin.Address]:

@@ -16,17 +16,17 @@ class CoinUtils(NotImplementedInstance):
     @classmethod
     def coinToNameKeyTuple(
             cls,
-            coin: AbstractCoin) -> Tuple[ClassStringKeyTuple, ...]:
-        return (None, coin.name),
+            coin: Optional[AbstractCoin]) -> Tuple[ClassStringKeyTuple, ...]:
+        return (None, "no_coin" if coin is None else coin.name),
 
     @classmethod
     def addressToNameKeyTuple(
             cls,
-            address: AbstractCoin.Address,
+            address: Optional[AbstractCoin.Address],
             hd_index: Optional[int] = None) -> Tuple[ClassStringKeyTuple, ...]:
         result = (
-            *cls.coinToNameKeyTuple(address.coin),
-            (None, address.name)
+            *cls.coinToNameKeyTuple(None if address is None else address.coin),
+            (None, "no_address" if address is None else address.name)
         )
         if hd_index is not None:
             result += ("index", hd_index),
@@ -54,4 +54,15 @@ class CoinUtils(NotImplementedInstance):
         return (
             *cls.coinToNameKeyTuple(tx.coin),
             (None, tx.name)
+        )
+
+    @classmethod
+    def utxoToNameKeyTuple(
+            cls,
+            utxo: AbstractCoin.Tx.Utxo) -> Tuple[ClassStringKeyTuple, ...]:
+        return (
+            *cls.addressToNameKeyTuple(utxo.address),
+            (None, utxo.name),
+            (None, utxo.index),
+            ("amount", utxo.amount)
         )
