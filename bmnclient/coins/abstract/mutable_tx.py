@@ -27,10 +27,9 @@ class _AbstractMutableTx:
     Interface = _AbstractMutableTxInterface
 
     def __init__(self, coin: AbstractCoin) -> None:
-        self._logger = Logger.getClassLogger(
-            __name__,
+        self._logger = Logger.classLogger(
             self.__class__,
-            coin.name)
+            *CoinUtils.coinToNameKeyTuple(coin))
         self._coin = coin
         self._receiver_address: Optional[AbstractCoin.Address] = None
         self._change_address: Optional[AbstractCoin.Address] = None

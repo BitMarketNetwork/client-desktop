@@ -9,22 +9,25 @@ if TYPE_CHECKING:
     from typing import Optional, Tuple
     from .abstract.coin import AbstractCoin
     from ..utils.string import ClassStringKeyTuple
+    from ..wallet.mtx_impl import Mtx
 
 
 class CoinUtils(NotImplementedInstance):
     @classmethod
     def coinToNameKeyTuple(
             cls,
-            coin: AbstractCoin) -> Tuple[ClassStringKeyTuple]:
+            coin: AbstractCoin) -> Tuple[ClassStringKeyTuple, ...]:
         return (None, coin.name),
 
     @classmethod
     def addressToNameKeyTuple(
             cls,
             address: AbstractCoin.Address,
-            hd_index: Optional[int] = None) -> Tuple[ClassStringKeyTuple]:
-        result = cls.coinToNameKeyTuple(address.coin)
-        result += (None, address.name),
+            hd_index: Optional[int] = None) -> Tuple[ClassStringKeyTuple, ...]:
+        result = (
+            *cls.coinToNameKeyTuple(address.coin),
+            (None, address.name)
+        )
         if hd_index is not None:
             result += ("index", hd_index),
         return result
@@ -32,7 +35,23 @@ class CoinUtils(NotImplementedInstance):
     @classmethod
     def txToNameKeyTuple(
             cls,
-            tx: AbstractCoin.Tx) -> Tuple[ClassStringKeyTuple]:
-        result = cls.coinToNameKeyTuple(tx.coin)
-        result += (None, tx.name),
-        return result
+            tx: AbstractCoin.Tx) -> Tuple[ClassStringKeyTuple, ...]:
+        return (
+            *cls.coinToNameKeyTuple(tx.coin),
+            (None, tx.name)
+        )
+
+    @classmethod
+    def mutableTxToNameKeyTuple(
+            cls,
+            tx: AbstractCoin.MutableTx) -> Tuple[ClassStringKeyTuple, ...]:
+        return cls.coinToNameKeyTuple(tx.coin)
+
+    @classmethod
+    def mtxToNameKeyTuple(
+            cls,
+            tx: Mtx) -> Tuple[ClassStringKeyTuple, ...]:
+        return (
+            *cls.coinToNameKeyTuple(tx.coin),
+            (None, tx.name)
+        )

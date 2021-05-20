@@ -220,6 +220,10 @@ class Mtx:
     def coin(self) -> AbstractCoin:
         return self._coin
 
+    @property
+    def name(self) -> str:
+        return self.id
+
     def legacy_repr(self) -> bytes:
         input_list = \
             self._coin.Script.integerToVarInt(len(self._tx_in)) \

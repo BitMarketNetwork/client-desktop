@@ -166,5 +166,4 @@ class Logger:
             cls_: Type,
             *key_list: ClassStringKeyTuple) \
             -> logging.Logger:
-        print("LOGGER:", StringUtils.classString(cls_, *key_list))
         return logging.getLogger(StringUtils.classString(cls_, *key_list))

@@ -145,7 +145,7 @@ class MutableTxInterface(_AbstractInterface, AbstractCoin.MutableTx.Interface):
         super().__init__(
             *args,
             tx=tx,
-            name_key_tuple=CoinUtils.coinToNameKeyTuple(tx.coin),
+            name_key_tuple=CoinUtils.mutableTxToNameKeyTuple(tx),
             **kwargs)
 
     def onBroadcast(self, tx: Mtx) -> None:

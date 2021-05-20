@@ -148,20 +148,16 @@ class AbstractOffsetIteratorApiQuery(AbstractApiQuery):
             first_offset: Optional[str] = None,
             last_offset: Optional[str] = None,
             _initial_data: Optional[InitialData] = None,
-            name_suffix: str,
+            name_key_tuple: Tuple[ClassStringKeyTuple, ...],
             **kwargs) -> None:
-        name_suffix += \
-            CoinLoggerUtils.nameToSubSuffix("mode", mode.name) \
-            + CoinLoggerUtils.nameToSubSuffix(
-                "first_offset",
-                first_offset or self._BEST_OFFSET_NAME) \
-            + CoinLoggerUtils.nameToSubSuffix(
-                "last_offset",
-                last_offset or self._BASE_OFFSET_NAME)
-
+        name_key_tuple += (
+            ("mode", mode.name),
+            ("first_offset", first_offset or self._BEST_OFFSET_NAME),
+            ("last_offset", last_offset or self._BASE_OFFSET_NAME)
+        )
         super().__init__(
             *args,
-            name_suffix=name_suffix,
+            name_key_tuple=name_key_tuple,
             **kwargs)
         self._mode = mode
         self._first_offset = first_offset or self._BEST_OFFSET_NAME
@@ -205,7 +201,7 @@ class SysinfoApiQuery(AbstractApiQuery):
     _ACTION = ("sysinfo", )
 
     def __init__(self, coin_list: CoinList) -> None:
-        super().__init__(name_suffix=None)
+        super().__init__(name_key_tuple=())
         self._coin_list = coin_list
 
     def _processData(
@@ -236,7 +232,7 @@ class CoinsInfoApiQuery(AbstractApiQuery):
     _ACTION = ("coins", )
 
     def __init__(self, coin_list: CoinList) -> None:
-        super().__init__(name_suffix=None)
+        super().__init__(name_key_tuple=())
         self._coin_list = coin_list
 
     def _processData(
@@ -274,10 +270,10 @@ class AddressInfoApiQuery(AbstractApiQuery):
             self,
             address: AbstractCoin.Address,
             *,
-            name_suffix: Optional[str] = None) -> None:
-        if name_suffix is None:
-            name_suffix = CoinLoggerUtils.addressToNameSuffix(address)
-        super().__init__(name_suffix=name_suffix)
+            name_key_tuple: Tuple[ClassStringKeyTuple, ...] = ()) -> None:
+        if not name_key_tuple:
+            name_key_tuple = CoinUtils.addressToNameKeyTuple(address)
+        super().__init__(name_key_tuple=name_key_tuple)
         self._address = address
 
     def isEqualQuery(self, other: AddressInfoApiQuery) -> bool:
@@ -314,7 +310,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery):
             _current_address = next(_hd_iterator)
         super().__init__(
             _current_address,
-            name_suffix=CoinLoggerUtils.addressToNameSuffix(
+            name_key_tuple=CoinUtils.addressToNameKeyTuple(
                 _current_address,
                 _hd_iterator.currentHdIndex))
         self._hd_iterator = _hd_iterator
@@ -376,7 +372,7 @@ class AddressTxIteratorApiQuery(
                 AbstractOffsetIteratorApiQuery.InitialData] = None):
         super().__init__(
             address,
-            name_suffix=CoinLoggerUtils.addressToNameSuffix(address),
+            name_key_tuple=CoinUtils.addressToNameKeyTuple(address),
             mode=mode,
             first_offset=first_offset,
             last_offset=last_offset,
@@ -478,7 +474,7 @@ class AddressUtxoIteratorApiQuery(
             _utxo_list: Optional[List[AbstractCoin.Tx.Utxo]] = None) -> None:
         super().__init__(
             address,
-            name_suffix=CoinLoggerUtils.addressToNameSuffix(address),
+            name_key_tuple=CoinUtils.addressToNameKeyTuple(address),
             mode=AbstractOffsetIteratorApiQuery.Mode.FULL,
             first_offset=first_offset,
             last_offset=last_offset)
@@ -538,7 +534,7 @@ class CoinMempoolIteratorApiQuery(AbstractApiQuery):
             coin: AbstractCoin,
             *,
             _address_list: List[Dict[str, Any]] = None) -> None:
-        super().__init__(name_suffix=CoinLoggerUtils.coinToNameSuffix(coin))
+        super().__init__(name_key_tuple=CoinUtils.coinToNameKeyTuple(coin))
         self._coin = coin
         self._local_hash = b""
         if _address_list is None:
@@ -618,7 +614,7 @@ class TxBroadcastApiQuery(AbstractApiQuery):
     _DEFAULT_METHOD = AbstractApiQuery.Method.POST
 
     def __init__(self, tx: Mtx) -> None:
-        super().__init__(name_suffix=CoinLoggerUtils.coinToNameSuffix(tx.coin))
+        super().__init__(name_key_tuple=CoinUtils.mtxToNameKeyTuple(tx))
         self._tx = tx
         self._result: Optional[BroadcastTxParser] = None
 
