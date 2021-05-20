@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING
 
 from .address import _AbstractAddress
 from .currency import AbstractCurrency
+from .mutable_tx import _AbstractMutableTx
 from .script import _AbstractScript
 from .tx import _AbstractTx
 from ..currency import FiatRate, NoneFiatCurrency
 from ...crypto.digest import Sha256Digest
 from ...utils.class_property import classproperty
 from ...utils.serialize import Serializable, serializable
-from ...wallet.mutable_tx import MutableTransaction
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -74,7 +74,7 @@ class AbstractCoin(Serializable):
     Currency = AbstractCurrency
     Address = _AbstractAddress
     Tx = _AbstractTx
-    MutableTx = MutableTransaction  # TODO _AbstractMutableTx
+    MutableTx = _AbstractMutableTx
     Script = _AbstractScript
 
     class MempoolCacheItem:
@@ -520,5 +520,5 @@ class AbstractCoin(Serializable):
         return False
 
     @property
-    def mutableTx(self) -> MutableTransaction:
+    def mutableTx(self) -> MutableTx:
         return self._mutable_tx
