@@ -21,10 +21,10 @@ class _AbstractInterface:
             *args,
             query_scheduler: NetworkQueryScheduler,
             database: Database,
-            name_key_list: Tuple[ClassStringKeyTuple, ...],
+            name_key_tuple: Tuple[ClassStringKeyTuple, ...],
             **kwargs):
         super().__init__(*args, **kwargs)
-        self._logger = Logger.classLogger(self.__class__, *name_key_list)
+        self._logger = Logger.classLogger(self.__class__, *name_key_tuple)
         self._query_scheduler = query_scheduler
         self._database = database
 
@@ -34,7 +34,7 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
         super().__init__(
             *args,
             coin=coin,
-            name_key_list=CoinUtils.coinToNameKeyTuple(coin),
+            name_key_tuple=CoinUtils.coinToNameKeyTuple(coin),
             **kwargs)
 
     def afterSetEnabled(self) -> None:
@@ -81,7 +81,7 @@ class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
         super().__init__(
             *args,
             address=address,
-            name_key_list=CoinUtils.addressToNameKeyTuple(address),
+            name_key_tuple=CoinUtils.addressToNameKeyTuple(address),
             **kwargs)
 
     def afterSetAmount(self) -> None:
@@ -124,7 +124,7 @@ class TxInterface(_AbstractInterface, AbstractCoin.Tx.Interface):
         super().__init__(
             *args,
             tx=tx,
-            name_key_list=CoinUtils.txToNameKeyTuple(tx),
+            name_key_tuple=CoinUtils.txToNameKeyTuple(tx),
             **kwargs)
 
     def afterSetHeight(self) -> None:
@@ -145,7 +145,7 @@ class MutableTxInterface(_AbstractInterface, AbstractCoin.MutableTx.Interface):
         super().__init__(
             *args,
             tx=tx,
-            name_key_list=CoinUtils.coinToNameKeyTuple(tx.coin),
+            name_key_tuple=CoinUtils.coinToNameKeyTuple(tx.coin),
             **kwargs)
 
     def onBroadcast(self, tx: Mtx) -> None:

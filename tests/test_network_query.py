@@ -33,7 +33,7 @@ class DefaultGetQuery(AbstractQuery, QueryHelper):
     _DEFAULT_BASE_URL = "https://bitmarket.network/"
 
     def __init__(self) -> None:
-        AbstractQuery.__init__(self, name_key_list=())
+        AbstractQuery.__init__(self, name_key_tuple=())
         QueryHelper.__init__(self)
 
     @property
@@ -79,7 +79,7 @@ class DummyQuery(AbstractQuery, QueryHelper):
     _DEFAULT_BASE_URL = None
 
     def __init__(self) -> None:
-        AbstractQuery.__init__(self, name_key_list=())
+        AbstractQuery.__init__(self, name_key_tuple=())
         QueryHelper.__init__(self)
 
     def _onResponseData(self, data: bytes) -> bool:
@@ -95,7 +95,7 @@ class DefaultJsonGetQuery(AbstractJsonQuery, QueryHelper):
     _DEFAULT_CONTENT_TYPE = "application/vnd.api+json"
 
     def __init__(self) -> None:
-        AbstractJsonQuery.__init__(self, name_key_list=())
+        AbstractJsonQuery.__init__(self, name_key_tuple=())
         QueryHelper.__init__(self)
 
     @property

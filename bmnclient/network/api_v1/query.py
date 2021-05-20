@@ -19,7 +19,7 @@ from .parser import \
 from ..query import AbstractJsonQuery
 from ..utils import NetworkUtils
 from ...coins.hd import HdAddressIterator
-from ...coins.utils import CoinLoggerUtils
+from ...coins.utils import CoinUtils
 from ...logger import Logger
 
 if TYPE_CHECKING:

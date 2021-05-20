@@ -79,11 +79,11 @@ class AbstractQuery:
     def __init__(
             self,
             *args,
-            name_key_list: Tuple[ClassStringKeyTuple, ...],
+            name_key_tuple: Tuple[ClassStringKeyTuple, ...],
             **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.__name_key_list = name_key_list
-        self._logger = Logger.classLogger(self.__class__, *name_key_list)
+        self.__name_key_list = name_key_tuple
+        self._logger = Logger.classLogger(self.__class__, *name_key_tuple)
         self.__status_code: Optional[int] = None
         self.__response: Optional[QNetworkReply] = None
         self.__is_success = False
