@@ -145,7 +145,7 @@ class AbstractQuery:
         for c in self.__finished_callback_list:
             c(self)
 
-    def __prepareNextQuery(self) -> None:
+    def _prepareNextQuery(self) -> None:
         if self._next_query is None:
             return
         for f in self.__finished_callback_list:
@@ -160,7 +160,7 @@ class AbstractQuery:
         assert self.skip and self.__response is None
         self.__is_success = False
         self.__callFinishedCallbackList()
-        self.__prepareNextQuery()
+        self._prepareNextQuery()
 
     @property
     def isDummyRequest(self) -> bool:
@@ -172,12 +172,12 @@ class AbstractQuery:
         self.__is_success = True
         self._onResponseFinished()
         self.__callFinishedCallbackList()
-        self.__prepareNextQuery()
+        self._prepareNextQuery()
 
     def finishInvalidRequest(self) -> None:
         self.__is_success = False
         self.__callFinishedCallbackList()
-        self.__prepareNextQuery()
+        self._prepareNextQuery()
 
     def createRequest(self) -> Optional[QNetworkRequest]:
         # prepare full url
@@ -280,7 +280,7 @@ class AbstractQuery:
         # self._response.deleteLater()
         self.__response = None
         self.__callFinishedCallbackList()
-        self.__prepareNextQuery()
+        self._prepareNextQuery()
 
         if self.__close_callback is not None:
             self.__close_callback(self)
