@@ -1,5 +1,12 @@
 # BitMarket Network Client Change Log
 
+## 0.12.3 (xx.05.2021)
+
+* Fixed TLS connections on macOS.
+* New algorithm for choosing UTXO`s for a transaction.
+* New logger output format.
+* New command line arguments: "--server-url", "--server-insecure".
+
 ## 0.12.2 (18.05.2021)
 
 * UI: The configuration of visible coins now works correctly.
