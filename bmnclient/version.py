@@ -46,7 +46,6 @@ class Timer:
 
 
 class Server:
-    API_VERSION: Final = "v1"
     DEFAULT_URL_LIST: Final = (
         "https://d1.bitmarket.network:30110/",
     )

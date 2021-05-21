@@ -33,7 +33,6 @@ if TYPE_CHECKING:
 
 class AbstractApiQuery(AbstractJsonQuery):
     _DEFAULT_CONTENT_TYPE = "application/vnd.api+json"
-    _DEFAULT_BASE_URL = "https://d1.bitmarket.network:30110/"  # TODO dynamic
     _VERSION = "v1"
     _ACTION: Tuple[Union[str, Callable]] = ("", )
 
