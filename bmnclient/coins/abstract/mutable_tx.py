@@ -20,6 +20,9 @@ class _AbstractMutableTxInterface:
         super().__init__(*args, **kwargs)
         self._tx = tx
 
+    def afterUpdateAvailableAmount(self) -> None:
+        raise NotImplementedError
+
     def onBroadcast(self, tx: Mtx) -> None:
         raise NotImplementedError
 
@@ -32,15 +35,16 @@ class _AbstractMutableTx:
             self.__class__,
             *CoinUtils.coinToNameKeyTuple(coin))
         self._coin = coin
+
         self._receiver_address: Optional[AbstractCoin.Address] = None
+        self._receiver_amount = 0
         self._change_address: Optional[AbstractCoin.Address] = None
-        self._address_list: List[AbstractCoin.Address] = []
-        self._address_list_amount = 0
+
+        self._available_amount = 0
+        self._subtract_fee = False
+
         self._selected_utxo_list: List[AbstractCoin.Tx.Utxo] = []
         self._selected_utxo_list_amount = 0
-
-        self._amount = 0
-        self._subtract_fee = False
 
         from ...wallet.fee_manager import FeeManager
         self._fee_manager = FeeManager()  # TODO
