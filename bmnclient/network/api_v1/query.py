@@ -36,8 +36,26 @@ class AbstractApiQuery(AbstractJsonQuery):
     _VERSION = "v1"
     _ACTION: Tuple[Union[str, Callable]] = ("", )
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._server_url: Optional[str] = None
+        self._server_insecure = False
+
+    def setServer(self, url: Optional[str], insecure: bool):
+        assert self._server_url is None
+        self._server_url = url
+        self._server_insecure = insecure
+
+    def _prepareNextQuery(self) -> None:
+        super()._prepareNextQuery()
+        if isinstance(self._next_query, AbstractApiQuery):
+            self._next_query.setServer(self._server_url, self._server_insecure)
+
     @property
     def url(self) -> Optional[str]:
+        if self._server_url is None:
+            self._logger.warning("No server selected for this query.")
+            return None
         path_list = []
         for v in self._ACTION:
             if isinstance(v, str):
@@ -46,7 +64,10 @@ class AbstractApiQuery(AbstractJsonQuery):
                 path_list.append(v(self))
             else:
                 assert ValueError
-        return NetworkUtils.urlJoin(super().url, self._VERSION, *path_list)
+        return NetworkUtils.urlJoin(
+            self._server_url,
+            self._VERSION,
+            *path_list)
 
     @property
     def jsonContent(self) -> Optional[dict]:
@@ -212,7 +233,7 @@ class SysinfoApiQuery(AbstractApiQuery):
             return
 
         parser = SysinfoParser()
-        parser(value, self._DEFAULT_BASE_URL)
+        parser(value, self._server_url)
 
         self._logger.info(
             "Server version: %s %s (0x%08x).",
