@@ -4,6 +4,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from urllib.parse import quote, quote_plus
 
+from PySide2.QtCore import QUrl
+
 from ..utils import NotImplementedInstance
 
 if TYPE_CHECKING:
@@ -24,6 +26,12 @@ class NetworkUtils(NotImplementedInstance):
                 errors="strict")
         except UnicodeError:
             return None
+
+    @staticmethod
+    def isValidUrl(url: str) -> bool:
+        if url and QUrl(url, QUrl.StrictMode).isValid():
+            return True
+        return False
 
     @staticmethod
     def urlJoin(base: str, *args: str) -> Optional[str]:
