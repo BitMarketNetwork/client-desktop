@@ -93,28 +93,7 @@ class _AbstractMutableTx:
         return self._change_address
 
     def refreshUtxoList(self) -> None:
-        self._address_list.clear()
-        self._address_list_amount = 0
-
-        for address in self._coin.addressList:
-            if address.isReadOnly:
-                continue
-
-            append = False
-            for utxo in address.utxoList:
-                if utxo.amount > 0:
-                    append = True
-                    self._address_list_amount += utxo.amount
-
-            if append:
-                self._address_list.append(address)
-                self._logger.debug(
-                    "Address '%s' appended to source list.",
-                    address.name)
-
-        # TODO check,filter unique
-
-        self.filter_sources()
+        self.updateUtxoList()
 
     @property
     def sourceAmount(self) -> int:
@@ -367,14 +346,32 @@ class _AbstractMutableTx:
 
         return best_utxo_list, best_utxo_amount
 
-    @classmethod
-    def createOptimalUtxoList(
-            cls,
-            address_list: Sequence[AbstractCoin.Address],
-            target_amount: int) -> SelectedUtxoList:
-        if target_amount <= 0:
-            return [], 0
+    def updateUtxoList(self) -> None:
+        address_filter = dict(is_read_only=False, with_utxo=True)
 
+        # calc available amount
+        available_amount = 0
+        for address in self._coin.filterAddressList(**address_filter):
+            for utxo in address.utxoList:
+                available_amount += utxo.amount
+        if self._available_amount != available_amount:
+            self._available_amount = available_amount
+            if self._model:
+                self._model.afterUpdateAvailableAmount()
+
+        # clean selected utxo's
+        self._selected_utxo_list = []
+        self._selected_utxo_list_amount = 0
+
+        target_amount = self._receiver_amount
+        if not self._subtract_fee:
+            target_amount += self.feeAmount
+        if target_amount <= 0:
+            if target_amount < 0:
+                self._logger.warning("Amount is negative (%i).", target_amount)
+            return
+
+        # try find exact utxo
         exact_utxo = None
         for address in address_list:
             utxo = cls._findExactUtxo(address.utxoList, target_amount)
