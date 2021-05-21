@@ -96,35 +96,35 @@ class _AbstractMutableTx:
         self.updateUtxoList()
 
     @property
-    def sourceAmount(self) -> int:
-        return self._address_list_amount
+    def availableAmount(self) -> int:
+        return self._available_amount
 
     @property
-    def amount(self) -> int:
-        return self._amount
+    def receiverAmount(self) -> int:
+        return self._receiver_amount
 
-    @amount.setter
-    def amount(self, value: int) -> None:
-        if self._amount != value:
-            self._amount = value
-            self.filter_sources()
+    @receiverAmount.setter
+    def receiverAmount(self, value: int) -> None:
+        if self._receiver_amount != value:
+            self._receiver_amount = value
+            self.updateUtxoList()
 
             self._logger.debug(
-                "Amount: %i, available: %i, change %i",
-                value,
-                self._address_list_amount,
+                "Receiver amount: %i, available: %i, change %i",
+                self._receiver_amount,
+                self._available_amount,
                 self.changeAmount)
 
     @property
     def maxAmount(self) -> int:
-        amount = self._address_list_amount
+        amount = self._available_amount
         if not self._subtract_fee:
             amount -= self.feeAmount
         return max(amount, 0)
 
     @property
     def isValidAmount(self) -> bool:
-        if 0 <= self._amount <= self.maxAmount and self.changeAmount >= 0:
+        if 0 <= self._receiver_amount <= self.maxAmount and self.changeAmount >= 0:
             return True
         return False
 
@@ -136,7 +136,7 @@ class _AbstractMutableTx:
     def subtractFee(self, value: bool) -> None:
         if self._subtract_fee != value:
             self._subtract_fee = value
-            self.filter_sources()
+            self.updateUtxoList()
 
     @property
     def feeAmountPerByteDefault(self) -> int:
@@ -150,7 +150,7 @@ class _AbstractMutableTx:
     def feeAmountPerByte(self, value: int) -> None:
         if self._fee_amount_per_byte != value:
             self._fee_amount_per_byte = value
-            self.filter_sources()
+            self.updateUtxoList()
 
     @property
     def feeAmountDefault(self) -> int:
@@ -169,13 +169,13 @@ class _AbstractMutableTx:
         fee_amount = self.feeAmount
         if fee_amount < 0:
             return False
-        if self._subtract_fee and fee_amount > self._amount:
+        if self._subtract_fee and fee_amount > self._receiver_amount:
             return False
         return self.changeAmount >= 0
 
     @property
     def changeAmount(self) -> int:
-        change_amount = self._selected_utxo_amount - self._amount
+        change_amount = self._selected_utxo_list_amount - self._receiver_amount
         if not self._subtract_fee:
             change_amount -= self.feeAmount
         return change_amount
@@ -186,7 +186,7 @@ class _AbstractMutableTx:
 
     def prepare(self) -> bool:
         if not self.isValidAmount:
-            self._logger.error("Invalid amount: %i", self._amount)
+            self._logger.error("Invalid receiver amount: %i", self._receiver_amount)
             return False
 
         if not self.isValidFeeAmount:
@@ -194,12 +194,12 @@ class _AbstractMutableTx:
             return False
 
         if not self._selected_utxo_list:
-            self._logger.error("No source inputs selected.")
+            self._logger.error("No input UTXO's selected.")
             return False
 
         fee_amount = self.feeAmount
         change_amount = self.changeAmount
-        receiver_amount = self._amount
+        receiver_amount = self._receiver_amount
         if self._subtract_fee:
             receiver_amount -= fee_amount
 
