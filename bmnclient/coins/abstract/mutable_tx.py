@@ -33,8 +33,8 @@ class _AbstractMutableTx:
         self._coin = coin
         self._receiver_address: Optional[AbstractCoin.Address] = None
         self._change_address: Optional[AbstractCoin.Address] = None
-        self._source_list: List[AbstractCoin.Address] = []
-        self._source_amount = 0
+        self._address_list: List[AbstractCoin.Address] = []
+        self._address_list_amount = 0
         self._amount = 0
 
         self._subtract_fee = False
@@ -88,8 +88,8 @@ class _AbstractMutableTx:
         return self._change_address
 
     def refreshSourceList(self) -> None:
-        self._source_list.clear()
-        self._source_amount = 0
+        self._address_list.clear()
+        self._address_list_amount = 0
 
         for address in self._coin.addressList:
             if address.isReadOnly:
@@ -99,10 +99,10 @@ class _AbstractMutableTx:
             for utxo in address.utxoList:
                 if utxo.amount > 0:
                     append = True
-                    self._source_amount += utxo.amount
+                    self._address_list_amount += utxo.amount
 
             if append:
-                self._source_list.append(address)
+                self._address_list.append(address)
                 self._logger.debug(
                     "Address '%s' appended to source list.",
                     address.name)
@@ -113,7 +113,7 @@ class _AbstractMutableTx:
 
     @property
     def sourceAmount(self) -> int:
-        return self._source_amount
+        return self._address_list_amount
 
     @property
     def amount(self) -> int:
@@ -128,12 +128,12 @@ class _AbstractMutableTx:
             self._logger.debug(
                 "Amount: %i, available: %i, change %i",
                 value,
-                self._source_amount,
+                self._address_list_amount,
                 self.changeAmount)
 
     @property
     def maxAmount(self) -> int:
-        amount = self._source_amount
+        amount = self._address_list_amount
         if not self._subtract_fee:
             amount -= self.feeAmount
         return max(amount, 0)
