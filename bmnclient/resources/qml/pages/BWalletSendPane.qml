@@ -44,7 +44,7 @@ BPane {
             BLayout.columnSpan: parent.columns - 1
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _base.coin.mutableTx.sourceAmount
+            amount: _base.coin.mutableTx.availableAmount
         }
 
         BDialogPromptLabel {
@@ -53,10 +53,10 @@ BPane {
         BAmountInput {
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _base.coin.mutableTx.amount
+            amount: _base.coin.mutableTx.receiverAmount
         }
         BDialogValidLabel {
-            status: _base.coin.mutableTx.amount.validStatus
+            status: _base.coin.mutableTx.receiverAmount.validStatus
         }
 
         BDialogSeparator {}

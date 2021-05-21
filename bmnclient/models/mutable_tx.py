@@ -60,28 +60,28 @@ class AbstractMutableTxAmountInputModel(AbstractAmountInputModel):
         raise NotImplementedError
 
 
-class MutableTxSourceAmountModel(AbstractMutableTxAmountModel):
+class MutableTxAvailableAmountModel(AbstractMutableTxAmountModel):
     def _getValue(self) -> Optional[int]:
-        return self._tx.sourceAmount
+        return self._tx.availableAmount
 
 
-class MutableTxAmountModel(AbstractMutableTxAmountInputModel):
+class MutableTxReceiverAmountModel(AbstractMutableTxAmountInputModel):
     def _getValue(self) -> Optional[int]:
-        amount = self._tx.amount
+        amount = self._tx.receiverAmount
         return None if amount < 0 else amount
 
     def _setValue(self, value: Optional[int]) -> bool:
         if value is None or value < 0:
-            self._tx.amount = -1
+            self._tx.receiverAmount = -1
             return False
-        self._tx.amount = value
+        self._tx.receiverAmount = value
         return True
 
     def _getDefaultValue(self) -> Optional[int]:
-        return self._tx.maxAmount
+        return self._tx.maxReceiverAmount
 
     def _getValidStatus(self) -> ValidStatus:
-        if self._tx.isValidAmount:
+        if self._tx.isValidReceiverAmount:
             return super()._getValidStatus()
         return ValidStatus.Reject
 
@@ -223,15 +223,15 @@ class MutableTxModel(MutableTxInterface, AbstractModel):
             database=application.database,
             tx=tx)
 
-        self._source_amount = MutableTxSourceAmountModel(
+        self._available_amount = MutableTxAvailableAmountModel(
             self._application,
             self._tx)
-        self.connectModelRefresh(self._source_amount)
+        self.connectModelRefresh(self._available_amount)
 
-        self._amount = MutableTxAmountModel(
+        self._receiver_amount = MutableTxReceiverAmountModel(
             self._application,
             self._tx)
-        self.connectModelRefresh(self._amount)
+        self.connectModelRefresh(self._receiver_amount)
 
         self._fee_amount = MutableTxFeeAmountModel(
             self._application,
@@ -263,12 +263,12 @@ class MutableTxModel(MutableTxInterface, AbstractModel):
         return "" if name is None else name
 
     @QProperty(QObject, constant=True)
-    def sourceAmount(self) -> MutableTxSourceAmountModel:
-        return self._source_amount
+    def availableAmount(self) -> MutableTxAvailableAmountModel:
+        return self._available_amount
 
     @QProperty(QObject, constant=True)
-    def amount(self) -> MutableTxAmountModel:
-        return self._amount
+    def receiverAmount(self) -> MutableTxReceiverAmountModel:
+        return self._receiver_amount
 
     @QProperty(QObject, constant=True)
     def feeAmount(self) -> MutableTxFeeAmountModel:
@@ -305,6 +305,10 @@ class MutableTxModel(MutableTxInterface, AbstractModel):
     @QSlot(result=bool)
     def broadcast(self) -> bool:
         return self._tx.broadcast()
+
+    def afterUpdateAvailableAmount(self) -> None:
+        super().afterUpdateAvailableAmount()
+        # TODO
 
     def onBroadcast(self, tx: Mtx) -> None:
         super().onBroadcast(tx)

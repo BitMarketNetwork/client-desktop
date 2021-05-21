@@ -427,6 +427,20 @@ class AbstractCoin(Serializable):
     def addressList(self) -> List[Address]:
         return self._address_list
 
+    def filterAddressList(
+            self,
+            *,
+            is_read_only: Optional[bool] = None,
+            with_utxo: Optional[bool] = None) -> Address:
+        for address in self._address_list:
+            if is_read_only is not None:
+                if is_read_only != address.isReadOnly:
+                    continue
+            if with_utxo is not None:
+                if (len(address.utxoList) > 0) != with_utxo:
+                    continue
+            yield address
+
     def findAddressByName(self, name: str) -> Optional[Address]:
         if not name:
             return None

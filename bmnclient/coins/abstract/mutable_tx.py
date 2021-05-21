@@ -408,3 +408,17 @@ class _AbstractMutableTx:
         self._selected_utxo_list = utxo_list
         self._selected_utxo_list_amount = utxo_amount
 
+    # TODO wrong code
+    # https://murchandamus.medium.com/psa-wrong-fee-rates-on-block-explorers-48390cbfcc74
+    # https://jlopp.github.io/bitcoin-transaction-size-calculator/
+    @property
+    def tx_size(self) -> int:
+        n_in = max(1, len(self._selected_utxo_list))
+        n_out = 2 if self._selected_utxo_list_amount > self._receiver_amount else 1
+        return (
+                150
+                + len(self._coin.Script.integerToAutoBytes(n_in))
+                + 70
+                + len(self._coin.Script.integerToAutoBytes(n_out))
+                + 8
+        )

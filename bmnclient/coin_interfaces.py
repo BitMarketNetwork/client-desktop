@@ -148,6 +148,9 @@ class MutableTxInterface(_AbstractInterface, AbstractCoin.MutableTx.Interface):
             name_key_tuple=CoinUtils.mutableTxToNameKeyTuple(tx),
             **kwargs)
 
+    def afterUpdateAvailableAmount(self) -> None:
+        pass
+
     def onBroadcast(self, tx: Mtx) -> None:
         self._query_scheduler.broadcastTx(tx, self.onBroadcastFinished)
 
