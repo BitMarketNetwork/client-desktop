@@ -127,7 +127,7 @@ class AbstractFiatRateService(AbstractJsonQuery):
 class NoneFiatRateService(AbstractFiatRateService):
     _SHORT_NAME: Final = "none"
     _FULL_NAME: Final = QObject().tr("-- None --")
-    _DEFAULT_BASE_URL: Final = None
+    _DEFAULT_URL: Final = None
 
     def _getFiatRate(self, coin_name: str, data: dict) -> Optional[int]:
         return 0
@@ -136,7 +136,7 @@ class NoneFiatRateService(AbstractFiatRateService):
 class RandomFiatRateService(AbstractFiatRateService):
     _SHORT_NAME: Final = "random"
     _FULL_NAME: Final = "-- random value --"
-    _DEFAULT_BASE_URL: Final = None
+    _DEFAULT_URL: Final = None
 
     def _getFiatRate(self, coin_name: str, data: dict) -> Optional[int]:
         from random import randrange
@@ -146,7 +146,7 @@ class RandomFiatRateService(AbstractFiatRateService):
 class CoinGeckoFiatRateService(AbstractFiatRateService):
     _SHORT_NAME: Final = "coingecko"
     _FULL_NAME: Final = "CoinGecko"
-    _DEFAULT_BASE_URL: Final = "https://api.coingecko.com/api/v3/simple/price"
+    _DEFAULT_URL: Final = "https://api.coingecko.com/api/v3/simple/price"
 
     @property
     def arguments(self) -> Dict[str, Union[int, str]]:

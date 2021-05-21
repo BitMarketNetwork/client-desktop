@@ -30,7 +30,7 @@ class QueryHelper:
 
 
 class DefaultGetQuery(AbstractQuery, QueryHelper):
-    _DEFAULT_BASE_URL = "https://bitmarket.network/"
+    _DEFAULT_URL = "https://bitmarket.network/"
 
     def __init__(self) -> None:
         AbstractQuery.__init__(self, name_key_tuple=())
@@ -68,15 +68,15 @@ class DefaultGetQuery(AbstractQuery, QueryHelper):
 
 class DefaultPostQuery(DefaultGetQuery):
     _DEFAULT_METHOD = AbstractQuery.Method.POST
-    _DEFAULT_BASE_URL = "https://bitmarket.network/_not_found_"
+    _DEFAULT_URL = "https://bitmarket.network/_not_found_"
 
 
 class BadTlsQuery(DefaultGetQuery):
-    _DEFAULT_BASE_URL = "https://expired.badssl.com/"
+    _DEFAULT_URL = "https://expired.badssl.com/"
 
 
 class DummyQuery(AbstractQuery, QueryHelper):
-    _DEFAULT_BASE_URL = None
+    _DEFAULT_URL = None
 
     def __init__(self) -> None:
         AbstractQuery.__init__(self, name_key_tuple=())
@@ -91,7 +91,7 @@ class DummyQuery(AbstractQuery, QueryHelper):
 
 
 class DefaultJsonGetQuery(AbstractJsonQuery, QueryHelper):
-    _DEFAULT_BASE_URL = "https://d1.bitmarket.network:30110/v1/sysinfo"
+    _DEFAULT_URL = "https://d1.bitmarket.network:30110/v1/sysinfo"
     _DEFAULT_CONTENT_TYPE = "application/vnd.api+json"
 
     def __init__(self) -> None:
