@@ -24,11 +24,12 @@ from .key_store import KeyStore
 from .logger import Logger
 from .network.query_manager import NetworkQueryManager
 from .network.query_scheduler import NetworkQueryScheduler
+from .network.server_list import ServerList
 from .network.services.fiat_rate import FiatRateServiceList
 from .platform import PlatformPaths
 from .resources import ICON_FILE_PATH
 from .signal_handler import SignalHandler
-from .version import Product, ProductPaths
+from .version import Product, ProductPaths, Server
 
 if TYPE_CHECKING:
     from typing import Callable, List, Optional, Type, Union
@@ -49,28 +50,48 @@ class CommandLine:
             "--configpath",
             default=str(PlatformPaths.userApplicationConfigPath),
             type=self._expandPath,
-            help="directory for configuration files; by default, it is '{}'"
-                 .format(str(PlatformPaths.userApplicationConfigPath)),
+            help=
+            "directory for configuration files; by default, it is '{}'"
+            .format(str(PlatformPaths.userApplicationConfigPath)),
             metavar="PATH")
         parser.add_argument(
             "-l",
             "--logfile",
             default="stderr",
             type=self._expandPath,
-            help="file that will store the log; can be one of the following "
-                 "special values: stdout, stderr; by default, it is 'stderr'",
+            help=
+            "file that will store the log; can be one of the following "
+            "special values: stdout, stderr; by default, it is 'stderr'",
             metavar="FILE")
         parser.add_argument(
             '-d',
             '--debug',
             action='store_true',
             default=False,
-            help='run the application in debug mode')
+            help="run the application in debug mode")
+
+        parser.add_argument(
+            "-s",
+            "--server-url",
+            default=Server.DEFAULT_URL_LIST[0],
+            type=str,
+            help=
+            "alternative server URL; by default, it is '{}'"
+            .format(Server.DEFAULT_URL_LIST[0]),
+            metavar="URL")
+        parser.add_argument(
+            "--server-insecure",
+            action='store_true',
+            default=False,
+            help=
+            "do not check the validity of server certificates")
 
         self._arguments = parser.parse_args(self._argv[1:])
         assert isinstance(self._arguments.configpath, PurePath)
         assert isinstance(self._arguments.logfile, PurePath)
         assert isinstance(self._arguments.debug, bool)
+        assert isinstance(self._arguments.server_url, str)
+        assert isinstance(self._arguments.server_insecure, bool)
 
     @property
     def argv(self) -> List[str]:
@@ -91,6 +112,14 @@ class CommandLine:
     @property
     def isDebugMode(self) -> bool:
         return self._arguments.debug
+
+    @property
+    def serverUrl(self) -> str:
+        return self._arguments.server_url
+
+    @property
+    def allowServerInsecure(self) -> bool:
+        return self._arguments.server_insecure
 
     @classmethod
     def _expandPath(cls, path: str) -> PurePath:
@@ -138,7 +167,7 @@ class CoreApplication(QObject):
 
         # QCoreApplication
         # noinspection PyArgumentList
-        self._qt_application = qt_class(command_line.argv)
+        self._qt_application = qt_class(self._command_line.argv)
 
         if issubclass(qt_class, QApplication):
             qt_class.setWindowIcon(self._icon)
@@ -170,6 +199,14 @@ class CoreApplication(QObject):
 
         self._fiat_currency_list = FiatCurrencyList(self)
         self._fiat_rate_service_list = FiatRateServiceList(self)
+
+        self._server_list = ServerList(
+            self._command_line.allowServerInsecure)
+        if self._command_line.serverUrl:
+            self._server_list.appendServer(self._command_line.serverUrl)
+        else:
+            for url in Server.DEFAULT_URL_LIST:
+                self._server_list.appendServer(url)
 
         self._network_query_manager = NetworkQueryManager("Default")
         self._network_query_scheduler = NetworkQueryScheduler(
@@ -222,6 +259,10 @@ class CoreApplication(QObject):
     @property
     def database(self) -> Database:
         return self._database
+
+    @property
+    def serverList(self) -> ServerList:
+        return self._server_list
 
     @property
     def networkQueryManager(self) -> NetworkQueryManager:

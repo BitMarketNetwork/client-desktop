@@ -43,3 +43,10 @@ class Timer:
     UPDATE_COINS_INFO_DELAY: Final = 20 * 1000
     UPDATE_COIN_HD_ADDRESS_LIST_DELAY: Final = 30 * 60 * 1000
     UPDATE_COIN_MEMPOOL_DELAY: Final = 15 * 1000
+
+
+class Server:
+    API_VERSION: Final = "v1"
+    DEFAULT_URL_LIST: Final = (
+        "https://d1.bitmarket.network:30110/",
+    )
