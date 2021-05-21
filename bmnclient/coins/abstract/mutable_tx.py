@@ -116,15 +116,18 @@ class _AbstractMutableTx:
                 self.changeAmount)
 
     @property
-    def maxAmount(self) -> int:
+    def maxReceiverAmount(self) -> int:
         amount = self._available_amount
         if not self._subtract_fee:
             amount -= self.feeAmount
         return max(amount, 0)
 
     @property
-    def isValidAmount(self) -> bool:
-        if 0 <= self._receiver_amount <= self.maxAmount and self.changeAmount >= 0:
+    def isValidReceiverAmount(self) -> bool:
+        if (
+                0 <= self._receiver_amount <= self.maxReceiverAmount
+                and self.changeAmount >= 0
+        ):
             return True
         return False
 
@@ -185,8 +188,10 @@ class _AbstractMutableTx:
         pass
 
     def prepare(self) -> bool:
-        if not self.isValidAmount:
-            self._logger.error("Invalid receiver amount: %i", self._receiver_amount)
+        if not self.isValidReceiverAmount:
+            self._logger.error(
+                "Invalid receiver amount: %i",
+                self._receiver_amount)
             return False
 
         if not self.isValidFeeAmount:
