@@ -5,6 +5,7 @@ import logging
 from itertools import chain
 from typing import TYPE_CHECKING
 
+from ..utils import CoinUtils
 from ...logger import Logger
 
 if TYPE_CHECKING:
@@ -35,15 +36,15 @@ class _AbstractMutableTx:
         self._change_address: Optional[AbstractCoin.Address] = None
         self._address_list: List[AbstractCoin.Address] = []
         self._address_list_amount = 0
-        self._amount = 0
+        self._selected_utxo_list: List[AbstractCoin.Tx.Utxo] = []
+        self._selected_utxo_list_amount = 0
 
+        self._amount = 0
         self._subtract_fee = False
+
         from ...wallet.fee_manager import FeeManager
         self._fee_manager = FeeManager()  # TODO
         self._fee_amount_per_byte = self._fee_manager.max_spb
-
-        self._selected_utxo_list: List[AbstractCoin.Tx.Utxo] = []
-        self._selected_utxo_amount = 0
 
         self.__mtx = None  # TODO tmp
         self.__mtx_result: Optional[str] = None  # TODO tmp
@@ -87,7 +88,7 @@ class _AbstractMutableTx:
     def changeAddress(self) -> Optional[AbstractCoin.Address]:
         return self._change_address
 
-    def refreshSourceList(self) -> None:
+    def refreshUtxoList(self) -> None:
         self._address_list.clear()
         self._address_list_amount = 0
 
@@ -290,12 +291,12 @@ class _AbstractMutableTx:
             cls,
             utxo_list: Sequence[AbstractCoin.Tx.Utxo],
             target_amount: int) -> Optional[AbstractCoin.Tx.Utxo]:
-        best_utxo = None
+        exact_utxo = None
         for utxo in utxo_list:
             if utxo.amount == target_amount:
-                if cls._newUtxoIsBest(best_utxo, utxo):
-                    best_utxo = utxo
-        return best_utxo
+                if cls._newUtxoIsBest(exact_utxo, utxo):
+                    exact_utxo = utxo
+        return exact_utxo
 
     @classmethod
     def _findOptimalUtxoList(
@@ -303,20 +304,20 @@ class _AbstractMutableTx:
             utxo_list: Sequence[AbstractCoin.Tx.Utxo],
             target_amount: int) -> SelectedUtxoList:
         # single utxo
-        best_utxo = None
+        exact_utxo = None
         for utxo in utxo_list:
             if utxo.amount >= target_amount:
                 if (
-                        best_utxo is None
-                        or (utxo.amount < best_utxo.amount)
+                        exact_utxo is None
+                        or (utxo.amount < exact_utxo.amount)
                         or (
-                            best_utxo.amount == utxo.amount
-                            and cls._newUtxoIsBest(best_utxo, utxo)
+                            exact_utxo.amount == utxo.amount
+                            and cls._newUtxoIsBest(exact_utxo, utxo)
                         )
                 ):
-                    best_utxo = utxo
-        if best_utxo is not None:
-            return [best_utxo], best_utxo.amount
+                    exact_utxo = utxo
+        if exact_utxo is not None:
+            return [exact_utxo], exact_utxo.amount
 
         return cls._findOptimalUtxoListStrategy1(utxo_list, target_amount)
 
@@ -370,14 +371,14 @@ class _AbstractMutableTx:
         if target_amount <= 0:
             return [], 0
 
-        best_utxo = None
+        exact_utxo = None
         for address in address_list:
             utxo = cls._findExactUtxo(address.utxoList, target_amount)
             if utxo is not None:
-                if cls._newUtxoIsBest(best_utxo, utxo):
-                    best_utxo = utxo
-        if best_utxo is not None:
-            assert best_utxo.amount == target_amount
+                if cls._newUtxoIsBest(exact_utxo, utxo):
+                    exact_utxo = utxo
+        if exact_utxo is not None:
+            assert exact_utxo.amount == target_amount
             return [best_utxo], best_utxo.amount
 
         return cls._findOptimalUtxoList(

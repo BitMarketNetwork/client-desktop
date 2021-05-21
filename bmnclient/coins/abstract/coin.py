@@ -362,7 +362,7 @@ class AbstractCoin(Serializable):
             self._model.afterRefreshAmount()
 
     def refreshUtxoList(self) -> None:
-        self._mutable_tx.refreshSourceList()
+        self._mutable_tx.refreshUtxoList()
         if self._model:
             self._model.afterRefreshUtxoList()
 
