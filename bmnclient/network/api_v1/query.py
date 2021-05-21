@@ -24,6 +24,7 @@ from ...logger import Logger
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, Final, List, Optional, Tuple, Union
+    from PySide2.QtNetwork import QSslError
     from ...coins.abstract.coin import AbstractCoin
     from ...coins.list import CoinList
     from ...utils.serialize import DeserializedData
@@ -50,6 +51,9 @@ class AbstractApiQuery(AbstractJsonQuery):
         super()._prepareNextQuery()
         if isinstance(self._next_query, AbstractApiQuery):
             self._next_query.setServer(self._server_url, self._server_insecure)
+
+    def _onTlsError(self, error: QSslError) -> bool:
+        return self._server_insecure
 
     @property
     def url(self) -> Optional[str]:

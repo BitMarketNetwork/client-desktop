@@ -17,6 +17,7 @@ from ..version import Product, Timer
 
 if TYPE_CHECKING:
     from typing import Callable, Dict, List, Optional, Tuple, Union
+    from PySide2.QtNetwork import QSslError
     from ..utils.string import ClassStringKeyTuple
 
 
@@ -245,6 +246,7 @@ class AbstractQuery:
         response.readyRead.connect(self.__onResponseRead)
         response.finished.connect(self.__onResponseFinished)
         response.redirected.connect(self.__onResponseRedirected)
+        response.sslErrors.connect(self.__onTlsErrors)
 
     def __setStatusCode(self, status_code: Optional[int] = None) -> None:
         if self.__status_code is not None:
@@ -290,6 +292,15 @@ class AbstractQuery:
             "Redirect to '{}' detected, but redirects was disabled."
             .format(url.toString()),
             self._logger)
+
+    def __onTlsErrors(self, error_list: List[QSslError]) -> None:
+        for e in error_list:
+            if self._onTlsError(e):
+                self.__response.ignoreSslErrors()
+                break
+
+    def _onTlsError(self, error: QSslError) -> bool:
+        return False
 
     def _onResponseData(self, data: bytes) -> bool:
         raise NotImplementedError

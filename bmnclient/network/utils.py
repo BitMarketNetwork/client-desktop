@@ -36,8 +36,8 @@ class NetworkUtils(NotImplementedInstance):
             not url.isValid()
             # or url.isEmpty()
             or url.isRelative()
-            or url.scheme().isEmpty()
-            or url.host().isEmpty()
+            or not url.scheme()
+            or not url.host()
         ):
             return False
         return True
