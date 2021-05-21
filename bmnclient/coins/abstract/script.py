@@ -69,3 +69,7 @@ class _AbstractScript(LittleOrderIntegerConverter):
             type_: Optional[AbstractCoin.Address.Type] = None) \
             -> Optional[bytes]:
         raise NotImplementedError
+
+    @classmethod
+    def pushData(cls, data: bytes) -> None:
+        raise NotImplementedError

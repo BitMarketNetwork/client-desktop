@@ -310,7 +310,6 @@ class Mtx:
         ]
 
         segwit_tx = self.is_segwit
-        public_key_push = self.script_push(len(address.publicKey.data))
         inputs_parameters = []
         input_script_field = [
             self._tx_in[i].script_sig for i in range(len(self._tx_in))]
@@ -357,8 +356,7 @@ class Mtx:
                     (b'\x02' if segwit_input else b'') +  # witness counter
                     len(signature).to_bytes(1, byteorder='little') +
                     signature +
-                    public_key_push +
-                    address.publicKey.data
+                    self._coin.Script.pushData(address.publicKey.data)
                 )
 
                 script_sig = b'' if segwit_input else witness
@@ -440,13 +438,3 @@ class Mtx:
                 ).finalize()
             preimages.append(hashed)
         return preimages
-
-    def script_push(self, val: int) -> bytes:
-        if val <= 75:
-            return self._coin.Script.integerToAutoBytes(val)
-        elif val < 256:
-            return b'\x4c' + self._coin.Script.integerToAutoBytes(val)
-        elif val < 65536:
-            return b'\x4d' + self._coin.Script.integerToBytes(2)
-        else:
-            return b'\x4e' + self._coin.Script.integerToBytes(4)

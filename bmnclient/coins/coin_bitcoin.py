@@ -187,13 +187,16 @@ class _BitcoinAddress(AbstractCoin.Address):
 
 class _BitcoinScript(AbstractCoin.Script):
     class OpCode(AbstractCoin.Script.OpCode):
-        OP_0 = 0x00
-        OP_RETURN = 0x6a
-        OP_DUP = 0x76
-        OP_EQUAL = 0x87
-        OP_EQUALVERIFY = 0x88
-        OP_HASH160 = 0xa9
-        OP_CHECKSIG = 0xac
+        OP_0: Final = 0x00
+        OP_PUSHDATA1: Final = 0x4c
+        OP_PUSHDATA2: Final = 0x4d
+        OP_PUSHDATA4: Final = 0x4e
+        OP_RETURN: Final = 0x6a
+        OP_DUP: Final = 0x76
+        OP_EQUAL: Final = 0x87
+        OP_EQUALVERIFY: Final = 0x88
+        OP_HASH160: Final = 0xa9
+        OP_CHECKSIG: Final = 0xac
 
     @classmethod
     def addressToScript(
@@ -239,6 +242,32 @@ class _BitcoinScript(AbstractCoin.Script):
         else:
             return None
 
+        return cls.scriptToBytes(script)
+
+    @classmethod
+    def pushData(cls, data: bytes) -> Optional[bytes]:
+        length = len(data)
+        if length <= 0x4b:
+            script = (
+                cls.integerToBytes(length, 1),
+                data)
+        elif length <= 0xff:
+            script = (
+                cls.OpCode.OP_PUSHDATA1,
+                cls.integerToBytes(length, 1),
+                data)
+        elif length <= 0xffff:
+            script = (
+                cls.OpCode.OP_PUSHDATA2,
+                cls.integerToBytes(length, 2),
+                data)
+        elif length <= 0xffffffff:
+            script = (
+                cls.OpCode.OP_PUSHDATA4,
+                cls.integerToBytes(length, 4),
+                data)
+        else:
+            return None
         return cls.scriptToBytes(script)
 
 
