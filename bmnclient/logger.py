@@ -60,8 +60,8 @@ class _StreamHandler(logging.StreamHandler):
 class _Formatter(logging.Formatter):
     def __init__(self) -> None:
         super().__init__(
-            fmt='%(asctime)s (%(levelname)s) %(thread)016x %(name)s: '
-                '%(message)s',
+            fmt="%(asctime)s (%(levelname)s) %(thread)016x %(name)s: "
+                "%(message)s",
             datefmt=None)
 
     def formatTime(self, record, datefmt=None) -> str:

@@ -20,9 +20,9 @@ def getLogger(name: str) -> logging.Logger:
         class Formatter(logging.Formatter):
             def __init__(self) -> None:
                 super().__init__(
-                    fmt='%(asctime)s (%(levelname)s) '
-                        '%(name)s[%(funcName)s:%(lineno)s]-%(threadName)s: ' # noqa
-                        '%(message)s',
+                    fmt="%(asctime)s (%(levelname)s) %(thread)016x "
+                        "%(name)s[%(funcName)s:%(lineno)s]: " # noqa
+                        "%(message)s",
                     datefmt=None)
 
             def formatTime(self, record, datefmt=None) -> str:
