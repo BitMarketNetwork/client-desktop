@@ -29,9 +29,18 @@ class NetworkUtils(NotImplementedInstance):
 
     @staticmethod
     def isValidUrl(url: str) -> bool:
-        if url and QUrl(url, QUrl.StrictMode).isValid():
-            return True
-        return False
+        if not url:
+            return False
+        url = QUrl(url, QUrl.StrictMode)
+        if (
+            not url.isValid()
+            # or url.isEmpty()
+            or url.isRelative()
+            or url.scheme().isEmpty()
+            or url.host().isEmpty()
+        ):
+            return False
+        return True
 
     @staticmethod
     def urlJoin(base: str, *args: str) -> Optional[str]:
