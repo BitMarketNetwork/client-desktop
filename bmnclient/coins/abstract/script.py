@@ -31,13 +31,13 @@ class _AbstractScript(LittleOrderIntegerConverter):
             prefix = b''
             length = 1
         elif value <= 0xffff:
-            prefix = b'\xfd'
+            prefix = b"\xfd"
             length = 2
         elif value <= 0xffffffff:
-            prefix = b'\xfe'
+            prefix = b"\xfe"
             length = 4
         elif value <= 0xffffffffffffffff:
-            prefix = b'\xff'
+            prefix = b"\xff"
             length = 8
         else:
             return None
@@ -52,11 +52,11 @@ class _AbstractScript(LittleOrderIntegerConverter):
             return value if value < 0xfd else None
 
         if len(value) == 3:
-            prefix = b'\xfd'
+            prefix = b"\xfd"
         elif len(value) == 5:
-            prefix = b'\xfe'
+            prefix = b"\xfe"
         elif len(value) == 9:
-            prefix = b'\xff'
+            prefix = b"\xff"
         else:
             return None
 
