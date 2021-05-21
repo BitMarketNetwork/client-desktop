@@ -8,6 +8,7 @@ from PySide2.QtCore import \
     QObject
 
 from .api_v1.query import \
+    AbstractApiQuery, \
     AddressInfoApiQuery, \
     AddressTxIteratorApiQuery, \
     AddressUtxoIteratorApiQuery, \
@@ -140,6 +141,15 @@ class NetworkQueryScheduler:
                 str(query),
                 timer.delay)
 
+    def _putQuery(
+            self,
+            query: AbstractQuery, **kwargs) -> NetworkQueryManager.PutStatus:
+        if isinstance(query, AbstractApiQuery):
+            query.setServer(
+                self._application.serverList.currentServerUrl,
+                self._application.serverList.allowInsecure)
+        return self._manager.put(query, **kwargs)
+
     def _createRepeatingQuery(
             self,
             query: AbstractQuery,
@@ -148,7 +158,7 @@ class NetworkQueryScheduler:
         timer = self._prepareTimer(*timer_name)
         query.appendFinishedCallback(
             lambda q: self.__queryFinishedCallback(timer, q))
-        status = self._manager.put(
+        status = self._putQuery(
             query,
             unique=True,
             high_priority=high_priority)
@@ -212,7 +222,7 @@ class NetworkQueryScheduler:
         query.appendFinishedCallback(
             lambda q: self.__pendingUpdateCoinAddress(q, address))
 
-        status = self._manager.put(query, unique=True)
+        status = self._putQuery(query, unique=True)
 
         # this AddressTxIteratorApiQuery already in queue, wait...
         # will be process by
@@ -221,9 +231,9 @@ class NetworkQueryScheduler:
             if address not in queue:
                 queue.append(address)
         else:
-            self._manager.put(AddressInfoApiQuery(address))
+            self._putQuery(AddressInfoApiQuery(address))
             # TODO run if balance
-            self._manager.put(AddressUtxoIteratorApiQuery(address))
+            self._putQuery(AddressUtxoIteratorApiQuery(address))
 
     def __pendingUpdateCoinAddress(
             self,
@@ -243,7 +253,7 @@ class NetworkQueryScheduler:
         query = TxBroadcastApiQuery(tx)
         query.appendFinishedCallback(
             lambda q: self.__onBroadcastTxFinished(q, tx, finished_callback))
-        status = self._manager.put(query, high_priority=True, unique=True)
+        status = self._putQuery(query, high_priority=True, unique=True)
         if status == NetworkQueryManager.PutStatus.SUCCESS:
             return True
         finished_callback(-1, tx)  # TODO correct error code
