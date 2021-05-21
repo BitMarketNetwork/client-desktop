@@ -192,10 +192,10 @@ class SysinfoParser(AbstractParser):
     def serverCoinList(self) -> dict:
         return self._server_coin_list
 
-    def __call__(self, value: dict, server_url: str) -> None:
+    def __call__(self, value: dict, server_url: Optional[str]) -> None:
         server_version = self.parseKey(value, "version", list)
         self._server_data = {
-            "server_url": server_url,
+            "server_url": server_url or "",
             "server_name": self.parseKey(value, "name", str),
             "server_version_string": self.parseKey(server_version, 0, str),
             "server_version": self.parseKey(server_version, 1, int)

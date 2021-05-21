@@ -46,15 +46,15 @@ class CoinServerDataModel(AbstractStateModel):
 
     @QProperty(str, notify=__stateChanged)
     def serverUrl(self) -> str:
-        return self._coin.serverData.get("server_url", "-")
+        return self._coin.serverData.get("server_url") or "-"
 
     @QProperty(str, notify=__stateChanged)
     def serverName(self) -> str:
-        return self._coin.serverData.get("server_name", "-")
+        return self._coin.serverData.get("server_name") or "-"
 
     @QProperty(int, notify=__stateChanged)
     def serverVersion(self) -> int:
-        return self._coin.serverData.get("server_version", -1)
+        return self._coin.serverData.get("server_version") or -1
 
     @QProperty(str, notify=__stateChanged)
     def serverVersionHex(self) -> str:
@@ -64,11 +64,11 @@ class CoinServerDataModel(AbstractStateModel):
 
     @QProperty(str, notify=__stateChanged)
     def serverVersionHuman(self) -> str:
-        return self._coin.serverData.get("server_version_string", "-")
+        return self._coin.serverData.get("server_version_string") or "-"
 
     @QProperty(int, notify=__stateChanged)
     def version(self) -> int:
-        return self._coin.serverData.get("version", -1)
+        return self._coin.serverData.get("version") or -1
 
     @QProperty(str, notify=__stateChanged)
     def versionHex(self) -> str:
@@ -78,21 +78,21 @@ class CoinServerDataModel(AbstractStateModel):
 
     @QProperty(str, notify=__stateChanged)
     def versionHuman(self) -> str:
-        return self._coin.serverData.get("version_string", "-")
+        return self._coin.serverData.get("version_string") or "-"
 
     @QProperty(int, notify=__stateChanged)
     def status(self) -> int:
-        return self._coin.serverData.get("status", -1)
+        return self._coin.serverData.get("status") or -1
 
     @QProperty(int, notify=__stateChanged)
     def height(self) -> int:
-        return self._coin.serverData.get("height", -1)
+        return self._coin.serverData.get("height") or -1
 
     @QProperty(str, notify=__stateChanged)
     def heightHuman(self) -> str:
         height = self.height
         # noinspection PyTypeChecker
-        return "-" if height < 0 else self.locale.integerToString(height)
+        return self.locale.integerToString(height) if height >= 0 else "-"
 
 
 class CoinAmountModel(AbstractAmountModel):

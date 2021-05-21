@@ -141,7 +141,7 @@ class MutableTxChangeAmountModel(AbstractMutableTxAmountModel):
     @QProperty(str, notify=__stateChanged)
     def addressName(self) -> str:
         address = self._tx.changeAddress
-        return "-" if address is None else address.name
+        return address.name if address is not None else "-"
 
 
 class MutableTxReceiverModel(AbstractMutableTxStateModel):

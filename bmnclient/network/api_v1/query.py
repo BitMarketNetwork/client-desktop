@@ -47,14 +47,6 @@ class AbstractApiQuery(AbstractJsonQuery):
         self._server_url = url
         self._server_insecure = insecure
 
-    def _prepareNextQuery(self) -> None:
-        super()._prepareNextQuery()
-        if isinstance(self._next_query, AbstractApiQuery):
-            self._next_query.setServer(self._server_url, self._server_insecure)
-
-    def _onTlsError(self, error: QSslError) -> bool:
-        return self._server_insecure
-
     @property
     def url(self) -> Optional[str]:
         if self._server_url is None:
@@ -72,6 +64,14 @@ class AbstractApiQuery(AbstractJsonQuery):
             self._server_url,
             self._VERSION,
             *path_list)
+
+    def _prepareNextQuery(self) -> None:
+        super()._prepareNextQuery()
+        if isinstance(self._next_query, AbstractApiQuery):
+            self._next_query.setServer(self._server_url, self._server_insecure)
+
+    def _onTlsError(self, error: QSslError) -> bool:
+        return self._server_insecure
 
     @property
     def jsonContent(self) -> Optional[dict]:
@@ -241,9 +241,9 @@ class SysinfoApiQuery(AbstractApiQuery):
 
         self._logger.info(
             "Server version: %s %s (0x%08x).",
-            parser.serverData.get("server_name", "UNKNOWN"),
-            parser.serverData.get("server_version_string", "UNKNOWN"),
-            parser.serverData.get("server_version", 0xffffffff))
+            parser.serverData.get("server_name") or "UNKNOWN",
+            parser.serverData.get("server_version_string") or "UNKNOWN",
+            parser.serverData.get("server_version") or 0xffffffff)
 
         for coin in self._coin_list:
             coin.serverData = {
