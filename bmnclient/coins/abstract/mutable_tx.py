@@ -373,15 +373,33 @@ class _AbstractMutableTx:
 
         # try find exact utxo
         exact_utxo = None
-        for address in address_list:
-            utxo = cls._findExactUtxo(address.utxoList, target_amount)
+        for address in self._coin.filterAddressList(**address_filter):
+            utxo = self._findExactUtxo(address.utxoList, target_amount)
             if utxo is not None:
-                if cls._newUtxoIsBest(exact_utxo, utxo):
+                if self._newUtxoIsBest(exact_utxo, utxo):
                     exact_utxo = utxo
         if exact_utxo is not None:
             assert exact_utxo.amount == target_amount
-            return [best_utxo], best_utxo.amount
+            self._logger.debug("Selected exact UTXO '%s'", str(exact_utxo))
+            self._selected_utxo_list = [exact_utxo]
+            self._selected_utxo_list_amount = exact_utxo.amount
+            return
 
-        return cls._findOptimalUtxoList(
-            list(chain.from_iterable(map(lambda a: a.utxoList, address_list))),
+        # combine all utxo's
+        utxo_list = list(chain.from_iterable(map(
+            lambda a: a.utxoList,
+            self._coin.filterAddressList(**address_filter))))
+        if self._logger.isEnabledFor(logging.DEBUG):
+            s = "".join(map(lambda u: "\n\t" + str(u), utxo_list))
+            self._logger.debug("Available UTXO's:%s", s if s else " None")
+
+        utxo_list, utxo_amount = self._findOptimalUtxoList(
+            utxo_list,
             target_amount)
+        if self._logger.isEnabledFor(logging.DEBUG):
+            s = "".join(map(lambda u: "\n\t" + str(u), utxo_list))
+            self._logger.debug("Selected UTXO's:%s", s if s else " None")
+
+        self._selected_utxo_list = utxo_list
+        self._selected_utxo_list_amount = utxo_amount
+
