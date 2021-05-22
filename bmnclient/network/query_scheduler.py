@@ -265,11 +265,11 @@ class NetworkQueryScheduler:
             tx: Mtx,
             finished_callback: Callable[[int, Mtx], None]) -> None:
         if query.isSuccess and query.result is not None:
-            if query.result.txName != tx.id:
+            if query.result.txName != tx.name:
                 self._logger.warning(
                     "Server gives transaction: '%s', but was sent '%s'.",
                     query.result.txName,
-                    tx.id)
+                    tx.name)
             self.updateCoinMempool(tx.coin)
             finished_callback(0, tx)
         else:

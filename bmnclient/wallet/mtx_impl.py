@@ -39,8 +39,7 @@ class TxInput(TxEntity):
             script_sig: bytes,
             tx_id: bytes,
             tx_index: bytes,
-            witness: bytes = b"",
-            segwit_input: bool) -> None:
+            witness: bytes = b"") -> None:
         super().__init__(address, amount)
         self._script_sig = script_sig
         self._script_sig_len = self._address.coin.Script.integerToVarInt(
@@ -49,7 +48,7 @@ class TxInput(TxEntity):
         self._tx_index = tx_index
         self._witness = witness
         self._sequence = self._address.coin.Script.integerToBytes(0xffffffff, 4)
-        self._segwit_input = segwit_input
+        self._is_segwit = self._address.type.value.isSegwit
 
     def __eq__(self, other: TxInput):
         return (
@@ -61,7 +60,7 @@ class TxInput(TxEntity):
                 self._witness == other._witness and
                 self._amount == other._amount and
                 self._sequence == other._sequence and
-                self._segwit_input == other._segwit_input
+                self._is_segwit == other._is_segwit
         )
 
     def __bytes__(self) -> bytes:
@@ -99,7 +98,7 @@ class TxInput(TxEntity):
 
     @property
     def is_segwit(self) -> bool:
-        return self._segwit_input or self._witness
+        return self._is_segwit or self._witness
 
     @property
     def witness(self) -> bytes:
@@ -182,7 +181,8 @@ class Mtx:
 
     @property
     def name(self) -> str:
-        return self.id
+        v = Sha256DoubleDigest(self.legacy_repr(with_segwit=False)).finalize()
+        return v[::-1].hex()
 
     def legacy_repr(self, *, with_segwit: bool) -> bytes:
         if with_segwit:
@@ -214,7 +214,7 @@ class Mtx:
         for address, amount in output_list:
             tx_out.append(TxOutput(
                 address=address,
-                amount=int(amount).to_bytes(8, byteorder='little'),
+                amount=amount.to_bytes(8, byteorder='little'),
                 script=coin.Script.addressToScript(address)))
 
         tx_in = []
@@ -224,22 +224,13 @@ class Mtx:
                 amount=utxo.amount.to_bytes(8, byteorder='little'),
                 script_sig=b"",  # empty scriptSig for new unsigned transaction.
                 tx_id=bytes.fromhex(utxo.name)[::-1],
-                tx_index=utxo.index.to_bytes(4, byteorder='little'),
-                segwit_input=utxo.address.type.value.isSegwit))
+                tx_index=utxo.index.to_bytes(4, byteorder='little')))
 
-        return cls(
-            coin=coin,
-            utxo_list=utxo_list,
-            tx_in=tx_in,
-            tx_out=tx_out)
+        return cls(coin=coin, utxo_list=utxo_list, tx_in=tx_in, tx_out=tx_out)
 
     @property
     def is_segwit(self) -> bool:
         return bytes(self)[4:6] == self._WITNESS_FLAG
-
-    @property
-    def id(self) -> str:
-        return Sha256DoubleDigest(self.legacy_repr(with_segwit=False)).finalize()[::-1].hex()
 
     def sign(
             self,

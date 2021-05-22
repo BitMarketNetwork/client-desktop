@@ -71,7 +71,7 @@ class _AbstractTxFactory:
     @property
     def name(self) -> Optional[str]:
         if self.__mtx is not None:
-            return self.__mtx.id
+            return self.__mtx.name
         return None
 
     def setReceiverAddressName(self, name: str) -> bool:

@@ -159,4 +159,4 @@ class TxFactoryInterface(_AbstractInterface, AbstractCoin.TxFactory.Interface):
         self._query_scheduler.broadcastTx(tx, self.onBroadcastFinished)
 
     def onBroadcastFinished(self, error_code: int, tx: Mtx) -> None:
-        self._logger.debug("Result: error_code=%i, tx=%s", error_code, tx.id)
+        self._logger.debug("Result: error_code=%i, tx=%s", error_code, tx.name)
