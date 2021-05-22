@@ -28,11 +28,11 @@ BPane {
         BDialogInputTextField {
             text: ""
             onTextEdited: {
-                _base.coin.mutableTx.receiver.addressName = text
+                _base.coin.txFactory.receiver.addressName = text
             }
         }
         BDialogValidLabel {
-            status: _base.coin.mutableTx.receiver.validStatus
+            status: _base.coin.txFactory.receiver.validStatus
         }
 
         BDialogSeparator {}
@@ -44,7 +44,7 @@ BPane {
             BLayout.columnSpan: parent.columns - 1
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _base.coin.mutableTx.availableAmount
+            amount: _base.coin.txFactory.availableAmount
         }
 
         BDialogPromptLabel {
@@ -53,10 +53,10 @@ BPane {
         BAmountInput {
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _base.coin.mutableTx.receiverAmount
+            amount: _base.coin.txFactory.receiverAmount
         }
         BDialogValidLabel {
-            status: _base.coin.mutableTx.receiverAmount.validStatus
+            status: _base.coin.txFactory.receiverAmount.validStatus
         }
 
         BDialogSeparator {}
@@ -68,7 +68,7 @@ BPane {
             BLayout.columnSpan: parent.columns - 1
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _base.coin.mutableTx.feeAmount
+            amount: _base.coin.txFactory.feeAmount
         }
 
         BDialogPromptLabel {
@@ -77,11 +77,11 @@ BPane {
         BAmountInput {
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _base.coin.mutableTx.kibFeeAmount
+            amount: _base.coin.txFactory.kibFeeAmount
             defaultButtonText: qsTr("Recommended")
         }
         BDialogValidLabel {
-            status: _base.coin.mutableTx.kibFeeAmount.validStatus
+            status: _base.coin.txFactory.kibFeeAmount.validStatus
         }
 
         BDialogPromptLabel {
@@ -89,9 +89,9 @@ BPane {
         }
         BDialogInputSwitch {
             BLayout.columnSpan: parent.columns - 1
-            checked: _base.coin.mutableTx.feeAmount.subtractFromAmount
+            checked: _base.coin.txFactory.feeAmount.subtractFromAmount
             onCheckedChanged: {
-                _base.coin.mutableTx.feeAmount.subtractFromAmount = checked
+                _base.coin.txFactory.feeAmount.subtractFromAmount = checked
             }
         }
 
@@ -104,7 +104,7 @@ BPane {
             BLayout.columnSpan: parent.columns - 1
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
-            amount: _base.coin.mutableTx.changeAmount
+            amount: _base.coin.txFactory.changeAmount
         }
 
         // TODO temporary disabled
@@ -113,9 +113,9 @@ BPane {
         }
         BDialogInputSwitch {
             BLayout.columnSpan: parent.columns - 1
-            checked: _base.coin.mutableTx.changeAmount.toNewAddress
+            checked: _base.coin.txFactory.changeAmount.toNewAddress
             onCheckedChanged: {
-                _base.coin.mutableTx.changeAmount.toNewAddress = checked
+                _base.coin.txFactory.changeAmount.toNewAddress = checked
             }
         }
 
@@ -134,7 +134,7 @@ BPane {
             BButton {
                 BDialogButtonBox.buttonRole: BDialogButtonBox.AcceptRole
                 text: qsTr("Prepare...")
-                enabled: _base.coin.mutableTx.isValid
+                enabled: _base.coin.txFactory.isValid
             }
             BButton {
                 BDialogButtonBox.buttonRole: BDialogButtonBox.ResetRole
@@ -144,15 +144,15 @@ BPane {
                 // TODO
             }
             onAccepted: {
-                if (_base.coin.mutableTx.isValid && _base.coin.mutableTx.prepare()) {
+                if (_base.coin.txFactory.isValid && _base.coin.txFactory.prepare()) {
                     let dialog = _applicationManager.createDialog(
                                 "BTxApproveDialog", {
                                     "type": BTxApproveDialog.Type.Prepare,
                                     "coin": _base.coin
                                 })
                     dialog.onAccepted.connect(function () {
-                        if (_base.coin.mutableTx.sign()) {
-                            _base.coin.mutableTx.broadcast() // TODO error?
+                        if (_base.coin.txFactory.sign()) {
+                            _base.coin.txFactory.broadcast() // TODO error?
                         } else {
                             // TODO error?
                         }
@@ -165,9 +165,9 @@ BPane {
 
     BTxSourceListDialog {
         id: _inputListDialog
-        sourceList: _base.coin.mutableTx.sourceList
+        sourceList: _base.coin.txFactory.sourceList
         onClosed: {
-            // TODO _base.coin.mutableTx.recalcSources()
+            // TODO _base.coin.txFactory.recalcSources()
         }
     }
 }

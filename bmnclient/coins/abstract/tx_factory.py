@@ -19,7 +19,7 @@ class _AbstractTxFactoryInterface:
     def __init__(
             self,
             *args,
-            factory: AbstractCoin.MutableTx,
+            factory: AbstractCoin.TxFactory,
             **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._factory = factory
@@ -57,11 +57,11 @@ class _AbstractTxFactory:
         self.__mtx = None  # TODO tmp
         self.__mtx_result: Optional[str] = None  # TODO tmp
 
-        self._model: Optional[AbstractCoin.MutableTx.Interface] = \
+        self._model: Optional[AbstractCoin.TxFactory.Interface] = \
             self._coin.model_factory(self)
 
     @property
-    def model(self) -> Optional[AbstractCoin.MutableTx.Interface]:
+    def model(self) -> Optional[AbstractCoin.TxFactory.Interface]:
         return self._model
 
     @property

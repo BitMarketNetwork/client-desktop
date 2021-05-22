@@ -42,10 +42,10 @@ class CoinUtils(NotImplementedInstance):
         )
 
     @classmethod
-    def mutableTxToNameKeyTuple(
+    def txFactoryToNameKeyTuple(
             cls,
-            tx: AbstractCoin.MutableTx) -> Tuple[ClassStringKeyTuple, ...]:
-        return cls.coinToNameKeyTuple(tx.coin)
+            factory: AbstractCoin.TxFactory) -> Tuple[ClassStringKeyTuple, ...]:
+        return cls.coinToNameKeyTuple(factory.coin)
 
     @classmethod
     def mtxToNameKeyTuple(

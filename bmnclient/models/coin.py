@@ -304,7 +304,7 @@ class CoinModel(CoinInterface, AbstractModel):
 
     def afterSetFiatRate(self) -> None:
         self._amount_model.refresh()
-        self._coin.mutableTx.model.refresh()
+        self._coin.txFactory.model.refresh()
         super().afterSetFiatRate()
 
     def afterRefreshAmount(self) -> None:
@@ -312,7 +312,7 @@ class CoinModel(CoinInterface, AbstractModel):
         super().afterRefreshAmount()
 
     def afterRefreshUtxoList(self) -> None:
-        self._coin.mutableTx.model.refresh()
+        self._coin.txFactory.model.refresh()
         super().afterRefreshUtxoList()
 
     def beforeAppendAddress(self, address: AbstractCoin.Address) -> None:
@@ -340,7 +340,7 @@ class CoinListModel(AbstractListModel):
         SERVER_DATA: Final = auto()
         ADDRESS_LIST: Final = auto()
         TX_LIST: Final = auto()
-        MUTABLE_TX: Final = auto()
+        TX_FACTORY: Final = auto()
         RECEIVE_MANAGER: Final = auto()
         MANAGER: Final = auto()
 
@@ -369,9 +369,9 @@ class CoinListModel(AbstractListModel):
         Role.TX_LIST: (
             b"txList",
             lambda c: c.model.txListSorted()),
-        Role.MUTABLE_TX: (
-            b"mutableTx",
-            lambda c: c.mutableTx.model),
+        Role.TX_FACTORY: (
+            b"txFactory",
+            lambda c: c.txFactory.model),
         Role.RECEIVE_MANAGER: (
             b"receiveManager",
             lambda c: c.model.receiveManager),

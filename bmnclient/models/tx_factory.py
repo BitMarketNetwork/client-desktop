@@ -12,7 +12,7 @@ from PySide2.QtCore import \
 from . import AbstractModel, AbstractStateModel, ValidStatus
 from .amount import AbstractAmountInputModel, AbstractAmountModel
 from .tx import TxIoListModel
-from ..coin_interfaces import MutableTxInterface
+from ..coin_interfaces import TxFactoryInterface
 
 if TYPE_CHECKING:
     from typing import Optional, Sequence
@@ -21,34 +21,34 @@ if TYPE_CHECKING:
     from ..ui.gui import GuiApplication
 
 
-class AbstractMutableTxStateModel(AbstractStateModel):
+class AbstractTxFactoryStateModel(AbstractStateModel):
     def __init__(
             self,
             application: GuiApplication,
-            tx: AbstractCoin.MutableTx) -> None:
-        super().__init__(application, tx.coin)
-        self._tx = tx
+            factory: AbstractCoin.TxFactory) -> None:
+        super().__init__(application, factory.coin)
+        self._factory = factory
 
 
-class AbstractMutableTxAmountModel(AbstractAmountModel):
+class AbstractTxFactoryAmountModel(AbstractAmountModel):
     def __init__(
             self,
             application: GuiApplication,
-            tx: AbstractCoin.MutableTx) -> None:
-        super().__init__(application, tx.coin)
-        self._tx = tx
+            factory: AbstractCoin.TxFactory) -> None:
+        super().__init__(application, factory.coin)
+        self._factory = factory
 
     def _getValue(self) -> Optional[int]:
         raise NotImplementedError
 
 
-class AbstractMutableTxAmountInputModel(AbstractAmountInputModel):
+class AbstractTxFactoryAmountInputModel(AbstractAmountInputModel):
     def __init__(
             self,
             application: GuiApplication,
-            tx: AbstractCoin.MutableTx) -> None:
-        super().__init__(application, tx.coin)
-        self._tx = tx
+            factory: AbstractCoin.TxFactory) -> None:
+        super().__init__(application, factory.coin)
+        self._factory = factory
 
     def _getValue(self) -> Optional[int]:
         raise NotImplementedError
@@ -60,75 +60,75 @@ class AbstractMutableTxAmountInputModel(AbstractAmountInputModel):
         raise NotImplementedError
 
 
-class MutableTxAvailableAmountModel(AbstractMutableTxAmountModel):
+class TxFactoryAvailableAmountModel(AbstractTxFactoryAmountModel):
     def _getValue(self) -> Optional[int]:
-        return self._tx.availableAmount
+        return self._factory.availableAmount
 
 
-class MutableTxReceiverAmountModel(AbstractMutableTxAmountInputModel):
+class TxFactoryReceiverAmountModel(AbstractTxFactoryAmountInputModel):
     def _getValue(self) -> Optional[int]:
-        amount = self._tx.receiverAmount
+        amount = self._factory.receiverAmount
         return None if amount < 0 else amount
 
     def _setValue(self, value: Optional[int]) -> bool:
         if value is None or value < 0:
-            self._tx.receiverAmount = -1
+            self._factory.receiverAmount = -1
             return False
-        self._tx.receiverAmount = value
+        self._factory.receiverAmount = value
         return True
 
     def _getDefaultValue(self) -> Optional[int]:
-        return self._tx.maxReceiverAmount
+        return self._factory.maxReceiverAmount
 
     def _getValidStatus(self) -> ValidStatus:
-        if self._tx.isValidReceiverAmount:
+        if self._factory.isValidReceiverAmount:
             return super()._getValidStatus()
         return ValidStatus.Reject
 
 
-class MutableTxFeeAmountModel(AbstractMutableTxAmountModel):
+class TxFactoryFeeAmountModel(AbstractTxFactoryAmountModel):
     __stateChanged = QSignal()
 
     def _getValue(self) -> Optional[int]:
-        amount = self._tx.feeAmount
+        amount = self._factory.feeAmount
         return None if amount < 0 else amount
 
     @QProperty(bool, notify=__stateChanged)
     def subtractFromAmount(self) -> bool:
-        return self._tx.subtractFee
+        return self._factory.subtractFee
 
     @subtractFromAmount.setter
     def _setSubtractFromAmount(self, value: bool) -> None:
-        self._tx.subtractFee = value
+        self._factory.subtractFee = value
         self.refresh()  # TODO kill
 
 
-class MutableTxKibFeeAmountModel(AbstractMutableTxAmountInputModel):
+class TxFactoryKibFeeAmountModel(AbstractTxFactoryAmountInputModel):
     def _getValue(self) -> Optional[int]:
-        amount = self._tx.feeAmountPerByte
+        amount = self._factory.feeAmountPerByte
         return None if amount < 0 else (amount * 1024)
 
     def _setValue(self, value: Optional[int]) -> bool:
         if value is None or value < 0:
-            self._tx.feeAmountPerByte = -1
+            self._factory.feeAmountPerByte = -1
             return False
-        self._tx.feeAmountPerByte = value // 1024
+        self._factory.feeAmountPerByte = value // 1024
         return True
 
     def _getDefaultValue(self) -> Optional[int]:
-        return self._tx.feeAmountPerByteDefault * 1024
+        return self._factory.feeAmountPerByteDefault * 1024
 
     def _getValidStatus(self) -> ValidStatus:
-        if self._tx.isValidFeeAmount:
+        if self._factory.isValidFeeAmount:
             return super()._getValidStatus()
         return ValidStatus.Reject
 
 
-class MutableTxChangeAmountModel(AbstractMutableTxAmountModel):
+class TxFactoryChangeAmountModel(AbstractTxFactoryAmountModel):
     __stateChanged = QSignal()
 
     def _getValue(self) -> Optional[int]:
-        return self._tx.changeAmount
+        return self._factory.changeAmount
 
     @QProperty(bool, notify=__stateChanged)
     def toNewAddress(self) -> bool:
@@ -140,35 +140,35 @@ class MutableTxChangeAmountModel(AbstractMutableTxAmountModel):
 
     @QProperty(str, notify=__stateChanged)
     def addressName(self) -> str:
-        address = self._tx.changeAddress
+        address = self._factory.changeAddress
         return address.name if address is not None else "-"
 
 
-class MutableTxReceiverModel(AbstractMutableTxStateModel):
+class TxFactoryReceiverModel(AbstractTxFactoryStateModel):
     __stateChanged = QSignal()
 
     def __init__(
             self,
             application: GuiApplication,
-            tx: AbstractCoin.MutableTx) -> None:
-        super().__init__(application, tx)
+            factory: AbstractCoin.TxFactory) -> None:
+        super().__init__(application, factory)
         self._first_use = True
 
     @QProperty(str, notify=__stateChanged)
     def addressName(self) -> str:
-        if self._tx.receiverAddress is not None:
-            return self._tx.receiverAddress.name
+        if self._factory.receiverAddress is not None:
+            return self._factory.receiverAddress.name
         else:
             return ""
 
     @addressName.setter
     def _setAddressName(self, value: str) -> None:
-        self._tx.setReceiverAddressName(value)
+        self._factory.setReceiverAddressName(value)
         self._first_use = False
         self.refresh()
 
     def _getValidStatus(self) -> ValidStatus:
-        if self._tx.receiverAddress is not None:
+        if self._factory.receiverAddress is not None:
             return super()._getValidStatus()
         elif self._first_use:
             return ValidStatus.Unset
@@ -176,7 +176,7 @@ class MutableTxReceiverModel(AbstractMutableTxStateModel):
 
 
 # TODO
-class MutableTxSourceListModel(TxIoListModel):
+class TxFactorySourceListModel(TxIoListModel):
     __stateChanged = QSignal()
 
     def __init__(
@@ -210,101 +210,101 @@ class MutableTxSourceListModel(TxIoListModel):
             self.__stateChanged.emit()
 
 
-class MutableTxModel(MutableTxInterface, AbstractModel):
+class TxFactoryModel(TxFactoryInterface, AbstractModel):
     __stateChanged = QSignal()
 
     def __init__(
             self,
             application: GuiApplication,
-            tx: AbstractCoin.MutableTx) -> None:
+            factory: AbstractCoin.TxFactory) -> None:
         super().__init__(
             application,
             query_scheduler=application.networkQueryScheduler,
             database=application.database,
-            tx=tx)
+            factory=factory)
 
-        self._available_amount = MutableTxAvailableAmountModel(
+        self._available_amount = TxFactoryAvailableAmountModel(
             self._application,
-            self._tx)
+            self._factory)
         self.connectModelRefresh(self._available_amount)
 
-        self._receiver_amount = MutableTxReceiverAmountModel(
+        self._receiver_amount = TxFactoryReceiverAmountModel(
             self._application,
-            self._tx)
+            self._factory)
         self.connectModelRefresh(self._receiver_amount)
 
-        self._fee_amount = MutableTxFeeAmountModel(
+        self._fee_amount = TxFactoryFeeAmountModel(
             self._application,
-            self._tx)
+            self._factory)
         self.connectModelRefresh(self._fee_amount)
 
-        self._kib_fee_amount = MutableTxKibFeeAmountModel(
+        self._kib_fee_amount = TxFactoryKibFeeAmountModel(
             self._application,
-            self._tx)
+            self._factory)
         self.connectModelRefresh(self._kib_fee_amount)
 
-        self._change_amount = MutableTxChangeAmountModel(
+        self._change_amount = TxFactoryChangeAmountModel(
             self._application,
-            self._tx)
+            self._factory)
         self.connectModelRefresh(self._change_amount)
 
-        self._receiver = MutableTxReceiverModel(
+        self._receiver = TxFactoryReceiverModel(
             self._application,
-            self._tx)
+            self._factory)
         self.connectModelRefresh(self._receiver)
 
-        self._source_list = MutableTxSourceListModel(  # TODO
+        self._source_list = TxFactorySourceListModel(  # TODO
             self._application,
             [])
 
     @QProperty(str, notify=__stateChanged)
     def name(self) -> str:
-        name = self._tx.name
+        name = self._factory.name
         return "" if name is None else name
 
     @QProperty(QObject, constant=True)
-    def availableAmount(self) -> MutableTxAvailableAmountModel:
+    def availableAmount(self) -> TxFactoryAvailableAmountModel:
         return self._available_amount
 
     @QProperty(QObject, constant=True)
-    def receiverAmount(self) -> MutableTxReceiverAmountModel:
+    def receiverAmount(self) -> TxFactoryReceiverAmountModel:
         return self._receiver_amount
 
     @QProperty(QObject, constant=True)
-    def feeAmount(self) -> MutableTxFeeAmountModel:
+    def feeAmount(self) -> TxFactoryFeeAmountModel:
         return self._fee_amount
 
     @QProperty(QObject, constant=True)
-    def kibFeeAmount(self) -> MutableTxKibFeeAmountModel:
+    def kibFeeAmount(self) -> TxFactoryKibFeeAmountModel:
         return self._kib_fee_amount
 
     @QProperty(QObject, constant=True)
-    def changeAmount(self) -> MutableTxChangeAmountModel:
+    def changeAmount(self) -> TxFactoryChangeAmountModel:
         return self._change_amount
 
     @QProperty(QObject, constant=True)
-    def receiver(self) -> MutableTxReceiverModel:
+    def receiver(self) -> TxFactoryReceiverModel:
         return self._receiver
 
     @QProperty(QObject, constant=True)
-    def sourceList(self) -> MutableTxSourceListModel:
+    def sourceList(self) -> TxFactorySourceListModel:
         return self._source_list
 
     # noinspection PyTypeChecker
     @QSlot(result=bool)
     def prepare(self) -> bool:
-        return self._tx.prepare()
+        return self._factory.prepare()
 
     # noinspection PyTypeChecker
     @QSlot(result=bool)
     def sign(self) -> bool:
         # TODO ask password
-        return self._tx.sign()
+        return self._factory.sign()
 
     # noinspection PyTypeChecker
     @QSlot(result=bool)
     def broadcast(self) -> bool:
-        return self._tx.broadcast()
+        return self._factory.broadcast()
 
     def afterUpdateAvailableAmount(self) -> None:
         super().afterUpdateAvailableAmount()

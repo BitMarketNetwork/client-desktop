@@ -118,7 +118,7 @@ class AbstractCoin(Serializable):
         self._server_data: Dict[str, Union[int, str]] = {}
         self._mempool_cache: Dict[bytes, AbstractCoin.MempoolCacheItem] = {}
         self._mempool_cache_access_counter = 0
-        self._mutable_tx = self.MutableTx(self)
+        self._tx_factory = self.TxFactory(self)
 
         self._model: Optional[AbstractCoin.Interface] = self.model_factory(self)
 
@@ -362,7 +362,7 @@ class AbstractCoin(Serializable):
             self._model.afterRefreshAmount()
 
     def refreshUtxoList(self) -> None:
-        self._mutable_tx.refreshUtxoList()
+        self._tx_factory.refreshUtxoList()
         if self._model:
             self._model.afterRefreshUtxoList()
 
@@ -534,5 +534,5 @@ class AbstractCoin(Serializable):
         return False
 
     @property
-    def mutableTx(self) -> MutableTx:
-        return self._mutable_tx
+    def txFactory(self) -> TxFactory:
+        return self._tx_factory

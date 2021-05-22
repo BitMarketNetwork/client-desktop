@@ -38,7 +38,7 @@ BDialog {
         }
         BInfoValue {
             placeholderText: qsTr("None")
-            text: _base.coin.mutableTx.name
+            text: _base.coin.txFactory.name
         }
         BInfoSeparator {}
 
@@ -50,7 +50,7 @@ BDialog {
             text: qsTr("Recipient address:")
         }
         BInfoValue {
-            text: _base.coin.mutableTx.receiver.addressName
+            text: _base.coin.txFactory.receiver.addressName
         }
         BInfoSeparator {}
 
@@ -58,7 +58,7 @@ BDialog {
             text: qsTr("Amount:")
         }
         BAmountInfoValue {
-            amount: _base.coin.mutableTx.amount
+            amount: _base.coin.txFactory.amount
         }
         BInfoSeparator {}
 
@@ -66,7 +66,7 @@ BDialog {
             text: qsTr("Fee:")
         }
         BAmountInfoValue {
-            amount: _base.coin.mutableTx.feeAmount
+            amount: _base.coin.txFactory.feeAmount
         }
         BInfoSeparator {}
 
@@ -78,7 +78,7 @@ BDialog {
             text: qsTr("Send change to:")
         }
         BInfoValue {
-            text: _base.coin.mutableTx.changeAmount.addressName
+            text: _base.coin.txFactory.changeAmount.addressName
         }
         BInfoSeparator {}
 
@@ -86,7 +86,7 @@ BDialog {
             text: qsTr("Change:")
         }
         BAmountInfoValue {
-            amount: _base.coin.mutableTx.changeAmount
+            amount: _base.coin.txFactory.changeAmount
         }
         BInfoSeparator {}
     }

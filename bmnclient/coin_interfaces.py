@@ -140,12 +140,16 @@ class TxInterface(_AbstractInterface, AbstractCoin.Tx.Interface):
                 self._database.updateCoinAddressTx(address, self._tx)
 
 
-class MutableTxInterface(_AbstractInterface, AbstractCoin.MutableTx.Interface):
-    def __init__(self, *args, tx: AbstractCoin.MutableTx, **kwargs) -> None:
+class TxFactoryInterface(_AbstractInterface, AbstractCoin.TxFactory.Interface):
+    def __init__(
+            self,
+            *args,
+            factory: AbstractCoin.TxFactory,
+            **kwargs) -> None:
         super().__init__(
             *args,
-            tx=tx,
-            name_key_tuple=CoinUtils.mutableTxToNameKeyTuple(tx),
+            factory=factory,
+            name_key_tuple=CoinUtils.txFactoryToNameKeyTuple(factory),
             **kwargs)
 
     def afterUpdateAvailableAmount(self) -> None:

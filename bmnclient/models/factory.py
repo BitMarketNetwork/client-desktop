@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from .address import AddressModel
 from .coin import CoinModel
 from .tx import TxModel
-from .tx_factory import MutableTxModel
+from .tx_factory import TxFactoryModel
 from ..coins.abstract.coin import AbstractCoin
 from ..utils import NotImplementedInstance
 
@@ -29,7 +29,7 @@ class ModelsFactory(NotImplementedInstance):
         if isinstance(owner, AbstractCoin.Tx):
             return TxModel(application, owner)
 
-        if isinstance(owner, AbstractCoin.MutableTx):
-            return MutableTxModel(application, owner)
+        if isinstance(owner, AbstractCoin.TxFactory):
+            return TxFactoryModel(application, owner)
 
         return None
