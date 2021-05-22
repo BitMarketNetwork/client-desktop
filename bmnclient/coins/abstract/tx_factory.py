@@ -15,10 +15,14 @@ if TYPE_CHECKING:
     SelectedUtxoList = Tuple[List[AbstractCoin.Tx.Utxo], int]
 
 
-class _AbstractMutableTxInterface:
-    def __init__(self, *args, tx: AbstractCoin.MutableTx, **kwargs) -> None:
+class _AbstractTxFactoryInterface:
+    def __init__(
+            self,
+            *args,
+            factory: AbstractCoin.MutableTx,
+            **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._tx = tx
+        self._factory = factory
 
     def afterUpdateAvailableAmount(self) -> None:
         raise NotImplementedError
@@ -27,8 +31,8 @@ class _AbstractMutableTxInterface:
         raise NotImplementedError
 
 
-class _AbstractMutableTx:
-    Interface = _AbstractMutableTxInterface
+class _AbstractTxFactory:
+    Interface = _AbstractTxFactoryInterface
 
     def __init__(self, coin: AbstractCoin) -> None:
         self._logger = Logger.classLogger(

@@ -8,7 +8,7 @@ from .address import _AbstractAddress
 from .currency import AbstractCurrency
 from .script import _AbstractScript
 from .tx import _AbstractTx
-from .tx_factory import _AbstractMutableTx
+from .tx_factory import _AbstractTxFactory
 from ..currency import FiatRate, NoneFiatCurrency
 from ...crypto.digest import Sha256Digest
 from ...utils.class_property import classproperty
@@ -74,7 +74,7 @@ class AbstractCoin(Serializable):
     Currency = AbstractCurrency
     Address = _AbstractAddress
     Tx = _AbstractTx
-    MutableTx = _AbstractMutableTx
+    TxFactory = _AbstractTxFactory
     Script = _AbstractScript
 
     class MempoolCacheItem:

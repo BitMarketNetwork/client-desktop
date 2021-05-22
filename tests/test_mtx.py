@@ -61,7 +61,7 @@ class TestSelectUtxo(TestCase):
         # no utxo
         for r in range(100):
             # noinspection PyProtectedMember
-            utxo = self._coin.MutableTx._findExactUtxo(address.utxoList, r)
+            utxo = self._coin.TxFactory._findExactUtxo(address.utxoList, r)
             self.assertIsNone(utxo)
 
         # single utxo with amount 0, 1
@@ -69,7 +69,7 @@ class TestSelectUtxo(TestCase):
             for amount in (0, 1):
                 self._createUtxoList(address, (amount, ))
                 # noinspection PyProtectedMember
-                utxo = self._coin.MutableTx._findExactUtxo(address.utxoList, 0)
+                utxo = self._coin.TxFactory._findExactUtxo(address.utxoList, 0)
                 if not amount:
                     self.assertIsNotNone(utxo)
                     self.assertEqual(amount, utxo.amount)
@@ -77,7 +77,7 @@ class TestSelectUtxo(TestCase):
                     self.assertIsNone(utxo)
 
                 # noinspection PyProtectedMember
-                utxo = self._coin.MutableTx._findExactUtxo(address.utxoList, 1)
+                utxo = self._coin.TxFactory._findExactUtxo(address.utxoList, 1)
                 if not amount:
                     self.assertIsNone(utxo)
                 else:
@@ -85,7 +85,7 @@ class TestSelectUtxo(TestCase):
                     self.assertEqual(amount, utxo.amount)
 
                 # noinspection PyProtectedMember
-                utxo = self._coin.MutableTx._findExactUtxo(address.utxoList, 2)
+                utxo = self._coin.TxFactory._findExactUtxo(address.utxoList, 2)
                 self.assertIsNone(utxo)
 
         # multiple utxo
@@ -93,17 +93,17 @@ class TestSelectUtxo(TestCase):
             self._createUtxoList(address, (0, 1, 2, 3, 4, 5, 6, 6))
 
             # noinspection PyProtectedMember
-            utxo = self._coin.MutableTx._findExactUtxo(address.utxoList, 7)
+            utxo = self._coin.TxFactory._findExactUtxo(address.utxoList, 7)
             self.assertIsNone(utxo)
 
             # noinspection PyProtectedMember
-            utxo = self._coin.MutableTx._findExactUtxo(address.utxoList, 6)
+            utxo = self._coin.TxFactory._findExactUtxo(address.utxoList, 6)
             self.assertIsNotNone(utxo)
             self.assertEqual(6, utxo.amount)
             self.assertTrue(self._isLowHeightUtxo(address.utxoList, utxo))
 
             # noinspection PyProtectedMember
-            utxo = self._coin.MutableTx._findExactUtxo(address.utxoList, 4)
+            utxo = self._coin.TxFactory._findExactUtxo(address.utxoList, 4)
             self.assertIsNotNone(utxo)
             self.assertEqual(4, utxo.amount)
 
@@ -119,7 +119,7 @@ class TestSelectUtxo(TestCase):
             self.assertEqual(1000, len(address.utxoList))
             for i in range(len(address.utxoList)):
                 # noinspection PyProtectedMember
-                l, a = self._coin.MutableTx._findOptimalUtxoList(
+                l, a = self._coin.TxFactory._findOptimalUtxoList(
                     address.utxoList,
                     i)
                 self.assertEqual(1, len(l))
@@ -133,7 +133,7 @@ class TestSelectUtxo(TestCase):
             self.assertEqual(500 * 2, len(address.utxoList))
             for i in range(0, 1000, 2):
                 # noinspection PyProtectedMember
-                l, a = self._coin.MutableTx._findOptimalUtxoList(
+                l, a = self._coin.TxFactory._findOptimalUtxoList(
                     address.utxoList,
                     i)
                 self.assertEqual(1, len(l))
@@ -161,7 +161,7 @@ class TestSelectUtxo(TestCase):
 
         for (amount, result_amount, utxo_count) in test_list:
             # noinspection PyProtectedMember
-            l, a = self._coin.MutableTx._findOptimalUtxoList(
+            l, a = self._coin.TxFactory._findOptimalUtxoList(
                 address.utxoList,
                 amount)
             self.assertEqual(utxo_count, len(l))
@@ -181,7 +181,7 @@ class TestSelectUtxo(TestCase):
 
         for (amount, result_amount, utxo_count) in test_list:
             # noinspection PyProtectedMember
-            l, a = self._coin.MutableTx._findOptimalUtxoList(
+            l, a = self._coin.TxFactory._findOptimalUtxoList(
                 address.utxoList,
                 amount)
             self.assertEqual(utxo_count, len(l))
