@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING
 
 from .address import _AbstractAddress
 from .currency import AbstractCurrency
-from .mutable_tx import _AbstractMutableTx
 from .script import _AbstractScript
 from .tx import _AbstractTx
+from .tx_factory import _AbstractMutableTx
 from ..currency import FiatRate, NoneFiatCurrency
 from ...crypto.digest import Sha256Digest
 from ...utils.class_property import classproperty

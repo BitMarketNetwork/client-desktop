@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 
 from .address import AddressModel
 from .coin import CoinModel
-from .mutable_tx import MutableTxModel
 from .tx import TxModel
+from .tx_factory import MutableTxModel
 from ..coins.abstract.coin import AbstractCoin
 from ..utils import NotImplementedInstance
 
