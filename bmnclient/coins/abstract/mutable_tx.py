@@ -223,12 +223,6 @@ class _AbstractMutableTx:
         # TODO extend self with Mtx for every coin
         from ...wallet.mtx_impl import Mtx
         self.__mtx = Mtx.make(self._coin, self._selected_utxo_list, output_list)
-        if self.__mtx.feeAmount != fee_amount:
-            self._logger.error(
-                "Fee failure, should be %i but has %i.",
-                fee_amount,
-                self.__mtx.feeAmount)
-            return False
         return True
 
     def sign(self) -> bool:
