@@ -36,17 +36,14 @@ class TxInput(TxEntity):
             *,
             address: AbstractCoin.Address,
             amount: bytes,
-            script_sig: bytes,
             tx_id: bytes,
-            tx_index: bytes,
-            witness: bytes = b"") -> None:
+            tx_index: bytes) -> None:
         super().__init__(address, amount)
-        self._script_sig = script_sig
-        self._script_sig_len = self._address.coin.Script.integerToVarInt(
-            len(script_sig))
+        self._script_sig = b""
+        self._script_sig_len = self._address.coin.Script.integerToVarInt(0)
         self._tx_id = tx_id
         self._tx_index = tx_index
-        self._witness = witness
+        self._witness = b""
         self._sequence = self._address.coin.Script.integerToBytes(0xffffffff, 4)
         self._is_segwit = self._address.type.value.isSegwit
 
@@ -216,7 +213,6 @@ class Mtx:
             tx_in.append(TxInput(
                 address=utxo.address,
                 amount=utxo.amount.to_bytes(8, byteorder='little'),
-                script_sig=b"",  # empty scriptSig for new unsigned transaction.
                 tx_id=bytes.fromhex(utxo.name)[::-1],
                 tx_index=utxo.index.to_bytes(4, byteorder='little')))
 
@@ -232,16 +228,13 @@ class Mtx:
             *,
             utxo_list: List[AbstractCoin.Tx.Utxo]) -> bool:
         input_dict = {}
-        try:
-            for utxo in utxo_list:
-                tx_input = \
-                    bytes.fromhex(utxo.name)[::-1] \
-                    + utxo.index.to_bytes(4, byteorder='little')
-                input_dict[tx_input] = utxo.serialize()
-                input_dict[tx_input]["segwit"] = utxo.address.type.value.isSegwit  # TODO tmp
-        except TypeError:
-            raise TypeError('please provide as unspent at least all inputs to '
-                            'be signed with the function call in a list')
+        for utxo in utxo_list:
+            tx_input = \
+                bytes.fromhex(utxo.name)[::-1] \
+                + utxo.index.to_bytes(4, byteorder='little')
+            input_dict[tx_input] = utxo.serialize()
+            input_dict[tx_input]["segwit"] = utxo.address.type.value.isSegwit
+
         # Determine input indices to sign from input_dict (allows for
         # transaction batching)
         sign_inputs = [
@@ -251,8 +244,6 @@ class Mtx:
 
         segwit_tx = self.is_segwit
         inputs_parameters = []
-        input_script_field = [
-            self._tx_in[i].script_sig for i in range(len(self._tx_in))]
         if not sign_inputs:
             raise Exception
         for i in sign_inputs:
@@ -270,19 +261,8 @@ class Mtx:
                 len(tx_in.script_sig))
 
             if segwit_input:
-                try:
-                    tx_in.script_sig += input_dict[tx_input]["amount"] \
-                        .to_bytes(8, byteorder='little')
-
-                    # For partially signed Segwit transactions the signatures
-                    # must be extracted from the witnessScript field:
-                    input_script_field[i] = tx_in.witness
-                except AttributeError:
-                    raise ValueError(
-                        'cannot sign a segwit input when the input\'s amount is'
-                        ' unknown. Maybe no network connection or the input is '
-                        'already spent? Then please provide all inputs to sign '
-                        'as `UTXO` objects to the function call')
+                tx_in.script_sig += input_dict[tx_input]["amount"] \
+                    .to_bytes(8, byteorder='little')
 
             inputs_parameters.append((i, self._HASH_TYPE, segwit_input))
 
