@@ -63,7 +63,7 @@ class TxInput(TxEntity):
                 self._is_segwit == other._is_segwit
         )
 
-    def __bytes__(self) -> bytes:
+    def serialize(self) -> bytes:
         return b"".join([
             self._tx_id,
             self._tx_index,
@@ -130,7 +130,7 @@ class TxOutput(TxEntity):
                 self._script == other._script
         )
 
-    def __bytes__(self) -> bytes:
+    def serialize(self) -> bytes:
         return b"".join([
             self._amount,
             self._address.coin.Script.integerToVarInt(len(self._script)),
@@ -161,9 +161,6 @@ class Mtx:
                 if not i.witness:
                     i.witness = b"\x00"
 
-    def __bytes__(self) -> bytes:
-        return self.legacy_repr(with_segwit=True)
-
     def __eq__(self, other: Mtx) -> bool:
         return (
                 self._version == other._version
@@ -172,19 +169,16 @@ class Mtx:
                 and self._lock_time == other._lock_time
         )
 
-    def __hash__(self) -> int:
-        return hash((bytes(self), ))
-
     @property
     def coin(self) -> AbstractCoin:
         return self._coin
 
     @property
     def name(self) -> str:
-        v = Sha256DoubleDigest(self.legacy_repr(with_segwit=False)).finalize()
+        v = Sha256DoubleDigest(self.serialize(with_segwit=False)).finalize()
         return v[::-1].hex()
 
-    def legacy_repr(self, *, with_segwit: bool) -> bytes:
+    def serialize(self, *, with_segwit: bool = True) -> bytes:
         if with_segwit:
             witness_list = b"".join([w.witness for w in self._tx_in])
         else:
@@ -195,10 +189,10 @@ class Mtx:
             self._WITNESS_FLAG if witness_list else b"",
 
             self._coin.Script.integerToVarInt(len(self._tx_in)),
-            b"".join(map(lambda i: bytes(i), self._tx_in)),
+            b"".join(map(lambda i: i.serialize(), self._tx_in)),
 
             self._coin.Script.integerToVarInt(len(self._tx_out)),
-            b"".join(map(lambda o: bytes(o), self._tx_out)),
+            b"".join(map(lambda o: o.serialize(), self._tx_out)),
 
             witness_list,
             self._lock_time
@@ -230,7 +224,7 @@ class Mtx:
 
     @property
     def is_segwit(self) -> bool:
-        return bytes(self)[4:6] == self._WITNESS_FLAG
+        return self.serialize()[4:6] == self._WITNESS_FLAG
 
     def sign(
             self,
@@ -320,7 +314,7 @@ class Mtx:
             -> List[bytes]:
         input_count = self._coin.Script.integerToVarInt(len(self._tx_in))
         output_count = self._coin.Script.integerToVarInt(len(self._tx_out))
-        output_block = b"".join([bytes(o) for o in self._tx_out])
+        output_block = b"".join([o.serialize() for o in self._tx_out])
 
         hash_prev_outs = Sha256DoubleDigest(
             b"".join([i.tx_id + i.tx_index for i in self._tx_in])).finalize()

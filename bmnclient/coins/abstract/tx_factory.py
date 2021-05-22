@@ -249,8 +249,8 @@ class _AbstractTxFactory:
                         utxo.amount)
             self.__mtx.sign(address, utxo_list=utxo_list)
 
-        self.__mtx_result = bytes(self.__mtx).hex()
-        if self.__mtx_result is None or len(self.__mtx_result) <= 0:
+        self.__mtx_result = self.__mtx.serialize().hex()
+        if not self.__mtx_result:
             return False
         self._logger.debug(f"Signed transaction: %s", self.__mtx_result)
         if self._change_address is not None:

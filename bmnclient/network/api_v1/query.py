@@ -650,12 +650,12 @@ class TxBroadcastApiQuery(AbstractApiQuery):
         return (
                 isinstance(other, self.__class__)
                 and self._tx.coin.name == other._tx.coin.name
-                and bytes(self._tx) == bytes(other._tx)
+                and self._tx == other._tx
         )
 
     def _createData(self) -> Tuple[str, Any]:
         return "tx_broadcast", {
-            "data": bytes(self._tx).hex()
+            "data": self._tx.serialize().hex()
         }
 
     def _processData(
