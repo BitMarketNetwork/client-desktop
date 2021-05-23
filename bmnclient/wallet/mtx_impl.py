@@ -4,7 +4,7 @@ import itertools
 from typing import TYPE_CHECKING
 
 from ..crypto.digest import Sha256Digest, Sha256DoubleDigest
-from ..coins.abstract.tx_factory import _AbstractMutableTxOutput, _AbstractMutableTxInput
+from ..coins.abstract.tx_factory import _AbstractMutableTxOutput, _AbstractMutableTxInput, _AbstractMutableTx
 
 if TYPE_CHECKING:
     from typing import List, Tuple
@@ -100,7 +100,7 @@ class TxInput(TxEntity):
         return self._sequence
 
 
-class Mtx:
+class Mtx(_AbstractMutableTx):
     _HASH_TYPE = 0x01.to_bytes(4, byteorder='little')
     _WITNESS_FLAG = b"\x00\x01"
 
@@ -160,15 +160,10 @@ class Mtx:
             coin: AbstractCoin,
             utxo_list: List[AbstractCoin.Tx.Utxo],
             output_list: List[Tuple[AbstractCoin.Address, int]]):
-        tx_out = []
-        for address, amount in output_list:
-            tx_out.append(cls.TxOutput(address, amount))
-
-        tx_in = []
-        for utxo in utxo_list:
-            tx_in.append(TxInput(utxo))
-
-        return cls(coin=coin, utxo_list=utxo_list, tx_in=tx_in, tx_out=tx_out)
+        return cls(
+            coin,
+            [TxInput(utxo) for utxo in utxo_list],
+            [cls.Output(a, v) for a, v in output_list])
 
     @property
     def is_segwit(self) -> bool:

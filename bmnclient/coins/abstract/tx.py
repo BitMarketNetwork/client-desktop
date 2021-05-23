@@ -123,6 +123,10 @@ class _AbstractUtxo(Serializable):
             *CoinUtils.utxoToNameKeyTuple(self))
 
     @property
+    def coin(self) -> AbstractCoin:
+        return self._coin
+
+    @property
     def address(self) -> Optional[AbstractCoin.Address]:
         return self._address
 
