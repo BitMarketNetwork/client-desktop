@@ -15,6 +15,50 @@ if TYPE_CHECKING:
     SelectedUtxoList = Tuple[List[AbstractCoin.Tx.Utxo], int]
 
 
+class _AbstractMutableTxIo:
+    def __init__(self, coin: AbstractCoin, amount: int):
+        assert amount >= 0
+        self._coin = coin
+        self._amount = amount
+
+    def serialize(self) -> bytes:
+        raise NotImplementedError
+
+
+class _AbstractMutableTxInput(_AbstractMutableTxIo):
+    def __init__(
+            self,
+            utxo: AbstractCoin.Tx.Utxo) -> None:
+        super().__init__(utxo.coin, utxo.amount)
+        # TODO exception
+        self._utxo_id = \
+            bytes.fromhex(utxo.name)[::-1] \
+            + self._coin.Script.integerToBytes(utxo.index, 4)
+
+    @property
+    def utxoId(self) -> bytes:
+        return self._utxo_id
+
+    def serialize(self) -> bytes:
+        raise NotImplementedError
+
+
+class _AbstractMutableTxOutput(_AbstractMutableTxIo):
+    def __init__(
+            self,
+            address: AbstractCoin.Address,
+            amount: int) -> None:
+        super().__init__(address.coin, amount)
+        self._script = self._coin.Script.addressToScript(address)
+
+    def serialize(self) -> bytes:
+        return b"".join([  # TODO move to Bitcoin
+            self._coin.Script.integerToBytes(self._amount, 8),
+            self._coin.Script.integerToVarInt(len(self._script)),
+            self._script
+        ])
+
+
 class _AbstractTxFactoryInterface:
     def __init__(
             self,
