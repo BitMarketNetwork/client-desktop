@@ -3,14 +3,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .abstract.coin import AbstractCoin
-from ..crypto.base58 import Base58
-from ..crypto.bech32 import Bech32
-from ..crypto.digest import Hash160Digest, Sha256Digest
+from ..abstract.coin import AbstractCoin
+from ...crypto.base58 import Base58
+from ...crypto.bech32 import Bech32
+from ...crypto.digest import Hash160Digest, Sha256Digest
 
 if TYPE_CHECKING:
     from typing import Final, Optional
-    from ..crypto.secp256k1 import PublicKey
+    from . import Bitcoin
+    from ...crypto.secp256k1 import PublicKey
 
 
 class _BitcoinAddress(AbstractCoin.Address):
@@ -80,6 +81,7 @@ class _BitcoinAddress(AbstractCoin.Address):
 
     def _deriveHash(self) -> bytes:
         if self._type not in (
+                self.Type.PUBKEY,
                 self.Type.PUBKEY_HASH,
                 self.Type.SCRIPT_HASH,
                 self.Type.WITNESS_V0_KEY_HASH,
@@ -185,140 +187,22 @@ class _BitcoinAddress(AbstractCoin.Address):
         return self._type == self.Type.UNKNOWN
 
 
-class _BitcoinScript(AbstractCoin.Script):
-    class OpCode(AbstractCoin.Script.OpCode):
-        OP_0: Final = 0x00
-        OP_PUSHDATA1: Final = 0x4c
-        OP_PUSHDATA2: Final = 0x4d
-        OP_PUSHDATA4: Final = 0x4e
-        OP_RETURN: Final = 0x6a
-        OP_DUP: Final = 0x76
-        OP_EQUAL: Final = 0x87
-        OP_EQUALVERIFY: Final = 0x88
-        OP_HASH160: Final = 0xa9
-        OP_CHECKSIG: Final = 0xac
-
-    @classmethod
-    def addressToScript(
-            cls,
-            address: Bitcoin.Address,
-            type_: Optional[Bitcoin.Address.Type] = None) -> Optional[bytes]:
-        address_hash = address.hash
-        if not (0 < len(address_hash) < 0xff):
-            return None
-
-        if type_ is None:
-            type_ = address.type
-
-        if type_ == address.Type.PUBKEY_HASH:
-            if len(address_hash) != 0x14:
-                return None
-            script = (
-                cls.OpCode.OP_DUP,
-                cls.OpCode.OP_HASH160,
-                len(address_hash),
-                address_hash,
-                cls.OpCode.OP_EQUALVERIFY,
-                cls.OpCode.OP_CHECKSIG
-            )
-        elif type_ == address.Type.SCRIPT_HASH:
-            if len(address_hash) != 0x14:
-                return None
-            script = (
-                cls.OpCode.OP_HASH160,
-                len(address_hash),
-                address_hash,
-                cls.OpCode.OP_EQUAL
-            )
-        elif type_ in (
-                address.Type.WITNESS_V0_KEY_HASH,
-                address.Type.WITNESS_V0_SCRIPT_HASH
-        ):
-            script = (
-                cls.OpCode.OP_0,
-                len(address_hash),
-                address_hash
-            )
-        else:
-            return None
-
-        return cls.scriptToBytes(script)
-
-    @classmethod
-    def pushData(cls, data: bytes) -> Optional[bytes]:
-        length = len(data)
-        if length <= 0x4b:
-            script = (
-                cls.integerToBytes(length, 1),
-                data)
-        elif length <= 0xff:
-            script = (
-                cls.OpCode.OP_PUSHDATA1,
-                cls.integerToBytes(length, 1),
-                data)
-        elif length <= 0xffff:
-            script = (
-                cls.OpCode.OP_PUSHDATA2,
-                cls.integerToBytes(length, 2),
-                data)
-        elif length <= 0xffffffff:
-            script = (
-                cls.OpCode.OP_PUSHDATA4,
-                cls.integerToBytes(length, 4),
-                data)
-        else:
-            return None
-        return cls.scriptToBytes(script)
-
-
-class Bitcoin(AbstractCoin):
-    _SHORT_NAME = "btc"
-    _FULL_NAME = "Bitcoin"
-    _BIP0044_COIN_TYPE = 0
-    # https://github.com/bitcoin/bitcoin/blob/master/src/chainparams.cpp
-    _BIP0032_VERSION_PUBLIC_KEY = 0x0488b21e
-    _BIP0032_VERSION_PRIVATE_KEY = 0x0488ade4
-    _WIF_VERSION = 0x80
-
-    class Currency(AbstractCoin.Currency):
-        _DECIMAL_SIZE = (0, 8)
-        _UNIT = "BTC"
-
-    Address = _BitcoinAddress
-    Script = _BitcoinScript
-
-
-################################################################################
-
-
-class _BitcoinTestAddress(Bitcoin.Address):
+class _BitcoinTestAddress(_BitcoinAddress):
     _PUBKEY_HASH_PREFIX_LIST = ("m", "n")
     _SCRIPT_HASH_PREFIX_LIST = ("2",)
     _HRP = "tb"
 
     class Type(AbstractCoin.Address.Type):
         UNKNOWN: Final = \
-            Bitcoin.Address.Type.UNKNOWN.value
+            _BitcoinAddress.Type.UNKNOWN.value
         PUBKEY_HASH: Final = \
-            Bitcoin.Address.Type.PUBKEY_HASH.value.copy(version=0x6f)
+            _BitcoinAddress.Type.PUBKEY_HASH.value.copy(version=0x6f)
         SCRIPT_HASH: Final = \
-            Bitcoin.Address.Type.SCRIPT_HASH.value.copy(version=0xc4)
+            _BitcoinAddress.Type.SCRIPT_HASH.value.copy(version=0xc4)
         WITNESS_V0_KEY_HASH: Final = \
-            Bitcoin.Address.Type.WITNESS_V0_KEY_HASH.value
+            _BitcoinAddress.Type.WITNESS_V0_KEY_HASH.value
         WITNESS_V0_SCRIPT_HASH: Final = \
-            Bitcoin.Address.Type.WITNESS_V0_SCRIPT_HASH.value
+            _BitcoinAddress.Type.WITNESS_V0_SCRIPT_HASH.value
         WITNESS_UNKNOWN: Final = \
-            Bitcoin.Address.Type.WITNESS_UNKNOWN.value
+            _BitcoinAddress.Type.WITNESS_UNKNOWN.value
         DEFAULT = WITNESS_V0_KEY_HASH
-
-
-class BitcoinTest(Bitcoin):
-    _SHORT_NAME = "btctest"
-    _FULL_NAME = "Bitcoin Testnet"
-    _IS_TEST_NET = True
-    _BIP0044_COIN_TYPE = 1
-    _BIP0032_VERSION_PUBLIC_KEY = 0x043587cf
-    _BIP0032_VERSION_PRIVATE_KEY = 0x04358394
-    _WIF_VERSION = 0xef
-
-    Address = _BitcoinTestAddress
