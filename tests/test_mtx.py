@@ -11,12 +11,13 @@ from unittest import skip, TestCase
 
 from bmnclient.coins.coin_bitcoin import Bitcoin
 from bmnclient.coins.hd import HdNode
-from bmnclient.wallet import mtx_impl as mtx
+from bmnclient.wallet.mtx_impl import Mtx
 from tests import TEST_DATA_PATH
 from tests.test_data import *
 
 if TYPE_CHECKING:
     from typing import List, Sequence, Tuple
+    from bmnclient.coins.abstract.coin import AbstractCoin
 
 log = logging.getLogger(__name__)
 
@@ -188,6 +189,153 @@ class TestSelectUtxo(TestCase):
             self.assertEqual(result_amount, a)
 
 
+class TestMutableTx(TestCase):
+    def setUp(self) -> None:
+        self._coin = Bitcoin()
+        root_node = HdNode.deriveRootNode(urandom(64))
+        self.assertIsNotNone(root_node)
+        self.assertTrue(self._coin.deriveHdNode(root_node))
+
+    def _createInput(
+            self,
+            coin: AbstractCoin,
+            *,
+            name: str,
+            index: int,
+            private_key: str,
+            address_type: AbstractCoin.Address.Type,
+            script_type: AbstractCoin.Script.Type,
+            amount: int,
+            sequence: int) -> Mtx.TxInput:
+        private_key = coin.Address.importKey(coin, private_key)
+        self.assertIsNotNone(private_key)
+
+        address = coin.Address.createAddress(
+            self._coin,
+            type_=address_type,
+            key=private_key)
+        self.assertIsNotNone(address)
+
+        utxo = coin.Tx.Utxo(
+            coin,
+            name=bytes.fromhex(name)[::-1].hex(),
+            height=1,
+            index=index,
+            amount=amount,
+            script_type=script_type)
+        utxo.address = address
+        return Mtx.TxInput(utxo, sequence)
+
+    @classmethod
+    def _createOutput(
+            cls,
+            coin: AbstractCoin,
+            *,
+            address_name: str,
+            address_type: AbstractCoin.Address.Type,
+            amount: int) -> Mtx.Output:
+        address = coin.Address(
+            coin,
+            name=address_name,
+            type_=address_type)
+        return Mtx.Output(address, amount)
+
+    # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#native-p2wpkh
+    def test_native_p2wpkh(self) -> None:
+        input_list = [
+            self._createInput(
+                self._coin,
+                name="fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f",  # noqa
+                index=0,
+                private_key="bbc27228ddcb9209d7fd6f36b02f7dfa6252af40bb2f1cbc7a557da8027ff866",  # noqa
+                address_type=self._coin.Address.Type.PUBKEY_HASH,
+                script_type=self._coin.Script.Type.P2PK,
+                amount=625000000,
+                sequence=0xffffffee),
+            self._createInput(
+                self._coin,
+                name="ef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a",  # noqa
+                index=1,
+                private_key="619c335025c7f4012e556c2a58b2506e30b8511b53ade95ea316fd8c3286feb9",  # noqa
+                address_type=self._coin.Address.Type.WITNESS_V0_KEY_HASH,
+                script_type=self._coin.Script.Type.P2WPKH,
+                amount=600000000,
+                sequence=0xffffffff),
+        ]
+        output_list = [
+            self._createOutput(
+                self._coin,
+                address_name="1Cu32FVupVCgHkMMRJdYJugxwo2Aprgk7H",  # noqa
+                address_type=self._coin.Address.Type.PUBKEY_HASH,
+                amount=112340000
+            ),
+            self._createOutput(
+                self._coin,
+                address_name="16TZ8J6Q5iZKBWizWzFAYnrsaox5Z5aBRV",  # noqa
+                address_type=self._coin.Address.Type.PUBKEY_HASH,
+                amount=223450000)
+        ]
+
+        mtx = Mtx(self._coin, input_list, output_list, lock_time=0x11)
+        for i in input_list:
+            mtx.sign(i.utxo.address, utxo_list=[i.utxo])
+
+        self.assertEqual(
+            "01000000000102fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf43354"  # noqa
+            "1db4e4ad969f00000000494830450221008b9d1dc26ba6a9cb62127b02742fa9d7"  # noqa
+            "54cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a99f2b1c0a19c"  # noqa
+            "0489bc22ede944ccf4ecbab4cc618ef3ed01eeffffffef51e1b804cc89d182d279"  # noqa
+            "655c3aa89e815b1b309fe287d9b2b55d57b90ec68a0100000000ffffffff02202c"  # noqa
+            "b206000000001976a9148280b37df378db99f66f85c95a783a76ac7a6d5988ac90"  # noqa
+            "93510d000000001976a9143bde42dbee7e4dbe6a21b2d50ce2f0167faa815988ac"  # noqa
+            "000247304402203609e17b84f6a7d30c80bfa610b5b4542f32a8a0d5447a12fb13"  # noqa
+            "66d7f01cc44a0220573a954c4518331561406f90300e8f3358f51928d43c212a8c"  # noqa
+            "aed02de67eebee0121025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253"  # noqa
+            "f62fc70f07aeee635711000000",  # noqa
+            mtx.serialize().hex())
+
+    # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#p2sh-p2wpkh
+    def test_p2sh_p2wpkh(self) -> None:
+        input_list = [
+            self._createInput(
+                self._coin,
+                name="db6b1b20aa0fd7b23880be2ecbd4a98130974cf4748fb66092ac4d3ceb1a5477",  # noqa
+                index=1,
+                private_key="eb696a065ef48a2192da5b28b694f87544b30fae8327c4510137a922f32c6dcf",  # noqa
+                address_type=self._coin.Address.Type.WITNESS_V0_KEY_HASH,
+                script_type=self._coin.Script.Type.P2SH_P2WPKH,
+                amount=1000000000,
+                sequence=0xfffffffe),
+        ]
+        output_list = [
+            self._createOutput(
+                self._coin,
+                address_name="1Fyxts6r24DpEieygQiNnWxUdb18ANa5p7",  # noqa
+                address_type=self._coin.Address.Type.PUBKEY_HASH,
+                amount=199996600),
+            self._createOutput(
+                self._coin,
+                address_name="1Q5YjKVj5yQWHBBsyEBamkfph3cA6G9KK8",  # noqa
+                address_type=self._coin.Address.Type.PUBKEY_HASH,
+                amount=800000000)
+        ]
+
+        mtx = Mtx(self._coin, input_list, output_list, lock_time=0x492)
+        for i in input_list:
+            mtx.sign(i.utxo.address, utxo_list=[i.utxo])
+
+        self.assertEqual(
+            "01000000000101db6b1b20aa0fd7b23880be2ecbd4a98130974cf4748fb66092ac"  # noqa
+            "4d3ceb1a5477010000001716001479091972186c449eb1ded22b78e40d009bdf00"  # noqa
+            "89feffffff02b8b4eb0b000000001976a914a457b684d7f0d539a46a45bbc043f3"  # noqa
+            "5b59d0d96388ac0008af2f000000001976a914fd270b1ee6abcaea97fea7ad0402"  # noqa
+            "e8bd8ad6d77c88ac02473044022047ac8e878352d3ebbde1c94ce3a10d057c2417"  # noqa
+            "5747116f8288e5d794d12d482f0220217f36a485cae903c713331d877c1f64677e"  # noqa
+            "3622ad4010726870540656fe9dcb012103ad1d8e89212f0b92c74d23bb710c0066"  # noqa
+            "2ad1470198ac48c43f7d6f93a2a2687392040000",
+            mtx.serialize().hex())
+
+
 """
 OUTPUTS = [
     ('n2eMqTT929pb1RDNuqEnxdaLau1rxy3efi', 50000),
@@ -237,71 +385,6 @@ UNSPENTS = [
              1)
 ]
 """
-
-
-@unittest.skip
-class TestInput(unittest.TestCase):
-
-    def test_init(self):
-        txin = mtx.TxInput(b'script', b'txid', b'\x04',
-                           sequence=b'\xff\xff\xff\xff')
-        self.assertEqual(txin.script_sig, b'script')
-        self.assertEqual(txin.script_sig_len, b'\x06')
-        self.assertEqual(txin.txid, b'txid')
-        self.assertEqual(txin.txindex, b'\x04')
-        self.assertEqual(txin.witness, b'')
-        self.assertEqual(txin.sequence, b'\xff\xff\xff\xff')
-
-    def test_init_segwit(self):
-        txin = mtx.TxInput(b'script', b'txid', b'\x04',
-                           b'witness', sequence=b'\xff\xff\xff\xff')
-        self.assertEqual(txin.script_sig, b'script')
-        self.assertEqual(txin.script_sig_len, b'\x06')
-        self.assertEqual(txin.txid, b'txid')
-        self.assertEqual(txin.txindex, b'\x04')
-        self.assertEqual(txin.witness, b'witness')
-        self.assertIsNone(txin.amount)
-        self.assertEqual(txin.sequence, b'\xff\xff\xff\xff')
-
-    def test_equality(self):
-        txin1 = mtx.TxInput(b'script', b'txid', b'\x04',
-                            sequence=b'\xff\xff\xff\xff')
-        txin2 = mtx.TxInput(b'script', b'txid', b'\x04',
-                            sequence=b'\xff\xff\xff\xff')
-        txin3 = mtx.TxInput(b'script', b'txi', b'\x03',
-                            sequence=b'\xff\xff\xff\xff')
-        self.assertEqual(txin1, txin2)
-        self.assertNotEqual(txin1, txin3)
-
-    def test_bytes_repr(self):
-        txin = mtx.TxInput(b'script', b'txid', b'\x04',
-                           sequence=b'\xff\xff\xff\xff')
-        self.assertEqual(bytes(txin), b''.join(
-            [b'txid', b'\x04', b'\x06', b'script', b'\xff\xff\xff\xff']))
-
-
-@unittest.skip
-class TestOutput(unittest.TestCase):
-
-    def test_init(self):
-        txout = mtx.TxOutput(
-            b'\x88\x13\x00\x00\x00\x00\x00\x00', b'script_pubkey')
-        self.assertEqual(txout.amount, b'\x88\x13\x00\x00\x00\x00\x00\x00')
-        self.assertEqual(txout.script_pubkey_len, b'\r')
-        self.assertEqual(txout.script_pubkey, b'script_pubkey')
-
-    def test_equality(self):
-        txout1 = mtx.TxOutput(
-            b'\x88\x13\x00\x00\x00\x00\x00\x00', b'script_pubkey')
-        txout2 = mtx.TxOutput(
-            b'\x88\x13\x00\x00\x00\x00\x00\x00', b'script_pubkey')
-        txout3 = mtx.TxOutput(
-            b'\x88\x14\x00\x00\x00\x00\x00\x00', b'script_pubkey')
-        txout4 = mtx.TxOutput(
-            b'\x88\x14\x00\x00\x00\x00\x00\x00', b'script_pub')
-        self.assertEqual(txout1, txout2)
-        self.assertNotEqual(txout1, txout3)
-        self.assertNotEqual(txout3, txout4)
 
 
 @unittest.skip
