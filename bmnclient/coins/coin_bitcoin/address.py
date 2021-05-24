@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .script import _BitcoinScript
 from ..abstract.coin import AbstractCoin
 from ...crypto.base58 import Base58
 from ...crypto.bech32 import Bech32
@@ -25,37 +26,43 @@ class _BitcoinAddress(AbstractCoin.Address):
             version=0xff,
             size=0,
             encoding=AbstractCoin.Address.Encoding.NONE,
-            is_segwit=False)
+            is_segwit=False,
+            script_type=_BitcoinScript.Type.NONE)
         PUBKEY_HASH: Final = AbstractCoin.Address.TypeValue(
             name="p2pkh",
             version=0x00,
             size=Hash160Digest.size,
             encoding=AbstractCoin.Address.Encoding.BASE58,
-            is_segwit=False)
+            is_segwit=False,
+            script_type=_BitcoinScript.Type.P2PKH)
         SCRIPT_HASH: Final = AbstractCoin.Address.TypeValue(
             name="p2sh",
             version=0x05,
             size=Hash160Digest.size,
             encoding=AbstractCoin.Address.Encoding.BASE58,
-            is_segwit=False)
+            is_segwit=False,
+            script_type=_BitcoinScript.Type.P2SH)
         WITNESS_V0_KEY_HASH: Final = AbstractCoin.Address.TypeValue(
             name="p2wpkh",
             version=0x00,
             size=Hash160Digest.size,
             encoding=AbstractCoin.Address.Encoding.BECH32,
-            is_segwit=True)
+            is_segwit=True,
+            script_type=_BitcoinScript.Type.P2WPKH)
         WITNESS_V0_SCRIPT_HASH: Final = AbstractCoin.Address.TypeValue(
             name="p2wsh",
             version=0x00,
             size=Sha256Digest.size,
             encoding=AbstractCoin.Address.Encoding.BECH32,
-            is_segwit=True)
+            is_segwit=True,
+            script_type=_BitcoinScript.Type.P2WSH)
         WITNESS_UNKNOWN: Final = AbstractCoin.Address.TypeValue(
             name="witness_unknown",
             version=0x00,
             size=-40,
             encoding=AbstractCoin.Address.Encoding.BECH32,
-            is_segwit=True)
+            is_segwit=True,
+            script_type=_BitcoinScript.Type.NONE)
         DEFAULT = WITNESS_V0_KEY_HASH
 
     @classmethod

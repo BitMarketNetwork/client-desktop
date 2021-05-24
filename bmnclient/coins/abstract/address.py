@@ -16,7 +16,14 @@ if TYPE_CHECKING:
 
 
 class _AbstractAddressTypeValue:
-    __slots__ = ("_name", "_version", "_size", "_encoding", "_is_segwit")
+    __slots__ = (
+        "_name",
+        "_version",
+        "_size",
+        "_encoding",
+        "_is_segwit",
+        "_script_type"
+    )
 
     def __init__(
             self,
@@ -25,12 +32,14 @@ class _AbstractAddressTypeValue:
             version: int,
             size: int,
             encoding: AbstractCoin.Address.Encoding,
-            is_segwit: bool) -> None:
+            is_segwit: bool,
+            script_type: AbstractCoin.Script.Type) -> None:
         self._name = name
         self._version = version
         self._size = size
         self._encoding = encoding
         self._is_segwit = is_segwit
+        self._script_type = script_type
 
     def __eq__(self, other: AbstractCoin.Address.TypeValue) -> bool:
         return (
@@ -39,6 +48,7 @@ class _AbstractAddressTypeValue:
                 and self._version == other._version
                 and self._size == other._size
                 and self._encoding == other._encoding
+                and self._script_type == other._script_type
         )
 
     def __hash__(self) -> int:
@@ -46,7 +56,8 @@ class _AbstractAddressTypeValue:
             self._name,
             self._version,
             self._size,
-            self._encoding))
+            self._encoding,
+            self._script_type))
 
     def copy(self, **kwargs) -> AbstractCoin.Address.TypeValue:
         return self.__class__(
@@ -54,7 +65,8 @@ class _AbstractAddressTypeValue:
             version=kwargs.get("version", self._version),
             size=kwargs.get("size", self._size),
             encoding=kwargs.get("encoding", self._encoding),
-            is_segwit=kwargs.get("is_segwit", self._is_segwit)
+            is_segwit=kwargs.get("is_segwit", self._is_segwit),
+            script_type=kwargs.get("script_type", self._script_type)
         )
 
     @property
@@ -76,6 +88,10 @@ class _AbstractAddressTypeValue:
     @property
     def isSegwit(self) -> bool:
         return self._is_segwit
+
+    @property
+    def scriptType(self) -> AbstractCoin.Script.Type:
+        return self._script_type
 
 
 class _AbstractAddressInterface:

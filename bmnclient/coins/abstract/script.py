@@ -1,7 +1,7 @@
 # JOK4
 from __future__ import annotations
 
-from enum import IntEnum
+from enum import Enum, IntEnum
 from typing import TYPE_CHECKING
 
 from ...utils.integer import LittleOrderIntegerConverter
@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 
 class _AbstractScript(LittleOrderIntegerConverter):
+    Type = Enum
     OpCode = IntEnum
 
     @classmethod

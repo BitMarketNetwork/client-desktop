@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 class _BitcoinScript(AbstractCoin.Script):
     class Type(AbstractCoin.Script.Type):
+        NONE = auto()
         P2PK = auto()
         P2PKH = auto()
         P2SH = auto()
