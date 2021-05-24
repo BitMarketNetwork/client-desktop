@@ -89,7 +89,8 @@ class _AbstractUtxo(Serializable):
             name: str,
             height: int,
             index: int,
-            amount: int) -> None:
+            amount: int,
+            script_type: Optional[AbstractCoin.Script.Type] = None) -> None:
         super().__init__()
         self._coin = coin
         self._address: Optional[AbstractCoin.Address] = None
@@ -97,6 +98,7 @@ class _AbstractUtxo(Serializable):
         self._height = height
         self._index = index
         self._amount = amount
+        self._script_type = script_type
 
     def __eq__(self, other: AbstractCoin.Tx.Utxo) -> bool:
         return (
@@ -137,6 +139,8 @@ class _AbstractUtxo(Serializable):
                 "already associated with address '{}'"
                 .format(self._address.name))
         self._address = address
+        if self._script_type is None:
+            self._script_type = self._address.type.value.scriptType
 
     @serializable
     @property
@@ -157,6 +161,10 @@ class _AbstractUtxo(Serializable):
     @property
     def amount(self) -> int:
         return self._amount
+
+    @property
+    def scriptType(self) -> Optional[AbstractCoin.Script.Type]:
+        return self._script_type
 
 
 class _AbstractTxInterface:

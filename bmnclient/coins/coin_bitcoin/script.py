@@ -36,49 +36,36 @@ class _BitcoinScript(AbstractCoin.Script):
     def addressToScript(
             cls,
             address: Bitcoin.Address,
-            type_: Optional[Bitcoin.Address.Type] = None) -> Optional[bytes]:
-        address_hash = address.hash
-        if not (0 < len(address_hash) < 0xff):
-            return None
-
+            type_: Optional[Bitcoin.Script.Type] = None) -> Optional[bytes]:
         if type_ is None:
-            type_ = address.type
+            type_ = address.type.value.scriptType
 
-        if type_ == address.Type.PUBKEY:
-            print("JJJJJ")
+        if type_ == cls.Type.P2PK:
+            public_key = address.publicKey
+            if public_key is None:
+                return None
             script = (
-                len(address.publicKey.data),
-                address.publicKey.data,
+                cls.pushData(public_key.data),
                 cls.OpCode.OP_CHECKSIG
             )
-        elif type_ == address.Type.PUBKEY_HASH:
-            if len(address_hash) != 0x14:
-                return None
+        elif type_ == cls.Type.P2PKH:
             script = (
                 cls.OpCode.OP_DUP,
                 cls.OpCode.OP_HASH160,
-                len(address_hash),
-                address_hash,
+                cls.pushData(address.hash),
                 cls.OpCode.OP_EQUALVERIFY,
                 cls.OpCode.OP_CHECKSIG
             )
-        elif type_ == address.Type.SCRIPT_HASH:
-            if len(address_hash) != 0x14:
-                return None
+        elif type_ == cls.Type.P2SH:
             script = (
                 cls.OpCode.OP_HASH160,
-                len(address_hash),
-                address_hash,
+                cls.pushData(address.hash),
                 cls.OpCode.OP_EQUAL
             )
-        elif type_ in (
-                address.Type.WITNESS_V0_KEY_HASH,
-                address.Type.WITNESS_V0_SCRIPT_HASH
-        ):
+        elif type_ in (cls.Type.P2SH_P2WPKH, cls.Type.P2WPKH, cls.Type.P2WSH):
             script = (
                 cls.OpCode.OP_0,
-                len(address_hash),
-                address_hash
+                cls.pushData(address.hash),
             )
         else:
             return None

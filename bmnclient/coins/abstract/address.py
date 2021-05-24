@@ -363,6 +363,11 @@ class _AbstractAddress(Serializable):
             value = bytes.fromhex(value)
         except ValueError:
             return None
+
+        key = PrivateKey.fromSecretData(value, is_compressed=True)
+        if key is not None:
+            return key
+
         return PublicKey.fromPublicData(value)
 
     @property
