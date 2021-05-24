@@ -67,7 +67,7 @@ class _AbstractScript(LittleOrderIntegerConverter):
     def addressToScript(
             cls,
             address: AbstractCoin.Address,
-            type_: Optional[AbstractCoin.Address.Type] = None) \
+            type_: Optional[AbstractCoin.Script.Type] = None) \
             -> Optional[bytes]:
         raise NotImplementedError
 

@@ -25,9 +25,9 @@ class _BitcoinAddress(AbstractCoin.Address):
             name="unknown",
             version=0xff,
             size=0,
-            encoding=AbstractCoin.Address.Encoding.NONE,
+            encoding=None,
             is_segwit=False,
-            script_type=_BitcoinScript.Type.NONE)
+            script_type=None)
         PUBKEY_HASH: Final = AbstractCoin.Address.TypeValue(
             name="p2pkh",
             version=0x00,
@@ -62,7 +62,7 @@ class _BitcoinAddress(AbstractCoin.Address):
             size=-40,
             encoding=AbstractCoin.Address.Encoding.BECH32,
             is_segwit=True,
-            script_type=_BitcoinScript.Type.NONE)
+            script_type=None)
         DEFAULT = WITNESS_V0_KEY_HASH
 
     @classmethod
@@ -88,7 +88,6 @@ class _BitcoinAddress(AbstractCoin.Address):
 
     def _deriveHash(self) -> bytes:
         if self._type not in (
-                self.Type.PUBKEY,
                 self.Type.PUBKEY_HASH,
                 self.Type.SCRIPT_HASH,
                 self.Type.WITNESS_V0_KEY_HASH,

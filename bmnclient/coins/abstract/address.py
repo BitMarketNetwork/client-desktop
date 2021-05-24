@@ -31,9 +31,9 @@ class _AbstractAddressTypeValue:
             name: str,
             version: int,
             size: int,
-            encoding: AbstractCoin.Address.Encoding,
+            encoding: Optional[AbstractCoin.Address.Encoding],
             is_segwit: bool,
-            script_type: AbstractCoin.Script.Type) -> None:
+            script_type: Optional[AbstractCoin.Script.Type]) -> None:
         self._name = name
         self._version = version
         self._size = size
@@ -82,7 +82,7 @@ class _AbstractAddressTypeValue:
         return self._size
 
     @property
-    def encoding(self) -> AbstractCoin.Address.Encoding:
+    def encoding(self) -> Optional[AbstractCoin.Address.Encoding]:
         return self._encoding
 
     @property
@@ -90,7 +90,7 @@ class _AbstractAddressTypeValue:
         return self._is_segwit
 
     @property
-    def scriptType(self) -> AbstractCoin.Script.Type:
+    def scriptType(self) -> Optional[AbstractCoin.Script.Type]:
         return self._script_type
 
 
@@ -136,7 +136,6 @@ class _AbstractAddress(Serializable):
     _HRP = "hrp"
 
     class Encoding(Enum):
-        NONE = auto()
         BASE58 = auto()
         BECH32 = auto()
 
