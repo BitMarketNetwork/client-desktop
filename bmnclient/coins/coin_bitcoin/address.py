@@ -12,7 +12,6 @@ from ...crypto.digest import Hash160Digest, Sha256Digest
 if TYPE_CHECKING:
     from typing import Final, Optional
     from . import Bitcoin
-    from ...crypto.secp256k1 import PublicKey
 
 
 class _BitcoinAddress(AbstractCoin.Address):
@@ -66,25 +65,38 @@ class _BitcoinAddress(AbstractCoin.Address):
         DEFAULT = WITNESS_V0_KEY_HASH
 
     @classmethod
-    def deriveAddressName(
+    def createAddress(
             cls,
+            coin: Bitcoin,
+            *,
             type_: Bitcoin.Address.Type,
-            public_key: PublicKey) -> Optional[str]:
+            key: Bitcoin.Address.KeyType,
+            **kwargs) -> Optional[Bitcoin.Address]:
+        public_key = cls._publicKey(key)
         if type_.value.encoding == cls.Encoding.BASE58:
             try:
-                version = type_.value.version.to_bytes(1, "big")
+                version = type_.value.version.to_bytes(1, "little")
             except OverflowError:
                 return None
             name = Hash160Digest(public_key.data).finalize()
-            return Base58.encode(version + name)
-
-        if type_.value.encoding == cls.Encoding.BECH32:
+            name = Base58.encode(version + name)
+        elif type_.value.encoding == cls.Encoding.BECH32:
             if not public_key.isCompressed:
                 return None
             name = Hash160Digest(public_key.data).finalize()
-            return Bech32.encode(cls._HRP, type_.value.version, name)
+            name = Bech32.encode(cls._HRP, type_.value.version, name)
+        else:
+            name = None
 
-        return None
+        if name is None:
+            return None
+
+        return coin.Address(
+            coin,
+            name=name,
+            type_=type_,
+            key=key,
+            **kwargs)
 
     def _deriveHash(self) -> bytes:
         if self._type not in (

@@ -11,7 +11,7 @@ from ...utils.class_property import classproperty
 from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
-    from typing import Any, List, Optional, Tuple
+    from typing import Any, List, Optional, Tuple, Union
     from .coin import AbstractCoin
 
 
@@ -135,6 +135,9 @@ class _AbstractAddress(Serializable):
     _NULLDATA_NAME = "NULL_DATA"
     _HRP = "hrp"
 
+    if TYPE_CHECKING:
+        KeyType = Union[HdNode, PrivateKey, PublicKey]
+
     class Encoding(Enum):
         BASE58 = auto()
         BECH32 = auto()
@@ -150,7 +153,7 @@ class _AbstractAddress(Serializable):
             name: Optional[str],
             type_: AbstractCoin.Address.Type,
             data: bytes = b"",
-            key: Optional[HdNode, PrivateKey, PublicKey] = None,
+            key: Optional[KeyType] = None,
             amount: int = 0,
             tx_count: int = 0,
             label: str = "",
@@ -244,10 +247,13 @@ class _AbstractAddress(Serializable):
         return self._coin
 
     @classmethod
-    def deriveAddressName(
+    def createAddress(
             cls,
+            coin: AbstractCoin,
+            *,
             type_: AbstractCoin.Address.Type,
-            public_key: PublicKey) -> Optional[str]:
+            key: KeyType,
+            **kwargs) -> Optional[AbstractCoin.Address]:
         raise NotImplementedError
 
     @serializable
@@ -290,17 +296,19 @@ class _AbstractAddress(Serializable):
     def data(self) -> bytes:
         return self._data
 
+    @classmethod
+    def _publicKey(cls, key: Optional[KeyType]) -> Optional[PublicKey]:
+        if isinstance(key, HdNode):
+            return key.publicKey
+        if isinstance(key, PrivateKey):
+            return key.publicKey
+        if isinstance(key, PublicKey):
+            return key
+        return None
+
     @property
     def publicKey(self) -> Optional[PublicKey]:
-        if isinstance(self._key, HdNode):
-            value = self._key.publicKey
-        elif isinstance(self._key, PrivateKey):
-            value = self._key.publicKey
-        elif isinstance(self._key, PublicKey):
-            value = self._key
-        else:
-            value = None
-        return value
+        return self._publicKey(self._key)
 
     @property
     def privateKey(self) -> Optional[PrivateKey]:
@@ -314,7 +322,7 @@ class _AbstractAddress(Serializable):
 
     @serializable
     @property
-    def key(self) -> Optional[HdNode, PrivateKey, PublicKey]:
+    def key(self) -> Optional[KeyType]:
         return self._key
 
     def exportKey(self) -> Optional[str]:
@@ -336,10 +344,7 @@ class _AbstractAddress(Serializable):
         return value
 
     @classmethod
-    def importKey(
-            cls,
-            coin: AbstractCoin,
-            value: str) -> Optional[HdNode, PrivateKey, PublicKey]:
+    def importKey(cls, coin: AbstractCoin, value: str) -> Optional[KeyType]:
         if not value:
             return None
 

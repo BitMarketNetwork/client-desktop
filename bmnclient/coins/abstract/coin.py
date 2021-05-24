@@ -420,7 +420,11 @@ class AbstractCoin(Serializable):
                 return None
             current_index += 1  # BIP0032
 
-        return address_node.createAddress(self, type_, **kwargs)
+        return self.Address.createAddress(
+            self,
+            type_=type_,
+            key=address_node,
+            **kwargs)
 
     @serializable
     @property

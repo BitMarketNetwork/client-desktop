@@ -278,21 +278,6 @@ class HdNode:
                 return None
         return node
 
-    def createAddress(
-            self,
-            coin: AbstractCoin,
-            type_: AbstractCoin.Address.Type,
-            **kwargs) -> Optional[AbstractCoin.Address]:
-        name = coin.Address.deriveAddressName(type_, self.publicKey)
-        if not name:
-            return None
-        return coin.Address(
-            coin,
-            name=name,
-            type_=type_,
-            key=self,
-            **kwargs)
-
 
 class HdAddressIterator(Iterator):
     _EMPTY_ADDRESS_LIMIT = 6
