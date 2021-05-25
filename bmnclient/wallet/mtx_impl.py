@@ -26,14 +26,11 @@ class Mtx(Bitcoin.TxFactory.MutableTx):
         self._tx_out = tx_out
         self._lock_time = self._coin.Script.integerToBytes(lock_time, 4)
 
-        if any([i.is_segwit for i in tx_in]):
-            for i in self._tx_in:
-                if not i.witness:
-                    i.witness = b"\x00"
-
-    @property
-    def coin(self) -> AbstractCoin:
-        return self._coin
+        self._is_segwit = False
+        for i in tx_in:
+            if i.isSegwit:
+                self._is_segwit = True
+                break
 
     @property
     def name(self) -> str:
@@ -41,153 +38,69 @@ class Mtx(Bitcoin.TxFactory.MutableTx):
         return v[::-1].hex()
 
     def serialize(self, *, with_segwit: bool = True) -> bytes:
-        if with_segwit:
-            witness_list = b"".join([w.witness for w in self._tx_in])
+        if with_segwit and self._is_segwit:
+            witness_list = b"".join([w.witnessBytes for w in self._tx_in])
         else:
             witness_list = b""
+
+        input_list = b"".join([
+            i.utxoIdBytes + i.scriptSigBytes + i.sequenceBytes
+            for i in self._tx_in])
 
         return b"".join([
             self._version,
             self._WITNESS_FLAG if witness_list else b"",
 
             self._coin.Script.integerToVarInt(len(self._tx_in)),
-            b"".join(map(lambda i: i.serialize(), self._tx_in)),
+            input_list,
 
             self._coin.Script.integerToVarInt(len(self._tx_out)),
-            b"".join(map(lambda o: o.serialize(), self._tx_out)),
+            b"".join(map(lambda o: o.amountBytes + o.scriptBytes, self._tx_out)),
 
             witness_list,
             self._lock_time
         ])
 
-    def sign(
-            self,
-            address: Bitcoin.Address,
-            *,
-            utxo_list: List[Bitcoin.Tx.Utxo]) -> bool:
-        input_dict = {}
-        for utxo in utxo_list:
-            tx_input = \
-                bytes.fromhex(utxo.name)[::-1] \
-                + utxo.index.to_bytes(4, byteorder='little')
-            input_dict[tx_input] = utxo.serialize()
-            input_dict[tx_input]["segwit"] = utxo.address.type.value.isSegwit
-
-        # Determine input indices to sign from input_dict (allows for
-        # transaction batching)
-        sign_inputs = [
-            j for j, i in enumerate(self._tx_in) if i.utxoId in input_dict
-        ]
-
-        segwit_tx = self.is_segwit
-        inputs_parameters = []
-        if not sign_inputs:
-            raise Exception
-        for i in sign_inputs:
-            tx_in = self._tx_in[i]
-            # Create transaction object for preimage calculation
-            tx_input = tx_in.utxoId
-            segwit_input = input_dict[tx_input]["segwit"]
-            tx_in.segwit_input = segwit_input
-
-            # Use scriptCode for preimage calculation of transaction object:
-            tx_in.script_sig = self._coin.Script.addressToScript(
-                address,
-                address.Type.PUBKEY_HASH)  # TODO SCRIPT_HASH?
-            tx_in.script_sig_len = self._coin.Script.integerToVarInt(
-                len(tx_in.script_sig))
-
-            if segwit_input:
-                tx_in.script_sig += input_dict[tx_input]["amount"] \
-                    .to_bytes(8, byteorder='little')
-
-            inputs_parameters.append((i, self._HASH_TYPE, segwit_input))
-
-        preimages = self.calc_preimages(inputs_parameters)
-
-        for hash_, (i, _, segwit_input) in zip(preimages, inputs_parameters):
-            tx_in = self._tx_in[i]
-            signature = address.privateKey.sign(hash_) + b'\x01'
-            witness = (
-                (b'\x02' if segwit_input else b'') +  # witness counter
-                len(signature).to_bytes(1, byteorder='little') +
-                signature +
-                self._coin.Script.pushData(address.publicKey.data)
-            )
-
-            if segwit_input:
-                tx_in.script_sig = b""
-                tx_in.witness = witness
-            else:
-                tx_in.script_sig = witness
-                tx_in.witness = b'\x00' if segwit_tx else b""
-            tx_in.script_sig_len = self._coin.Script.integerToVarInt(
-                len(tx_in.script_sig))
+    def sign(self) -> bool:
+        for hash_, tx_in in self.calc_preimages():
+            tx_in.sign(hash_, 1)
         return True
 
-    def calc_preimages(
-            self,
-            inputs_parameters: List[Tuple[int, bytes, bool]]) \
-            -> List[bytes]:
-        input_count = self._coin.Script.integerToVarInt(len(self._tx_in))
-        output_count = self._coin.Script.integerToVarInt(len(self._tx_out))
-        output_block = b"".join([o.serialize() for o in self._tx_out])
-
-        hash_prev_outs = Sha256DoubleDigest(
-            b"".join([i.utxoId for i in self._tx_in])).finalize()
-        hash_sequence = Sha256DoubleDigest(
-            b"".join([i.sequence for i in self._tx_in])).finalize()
-        hash_outputs = Sha256DoubleDigest(output_block).finalize()
+    def calc_preimages(self) -> List[Tuple[bytes, Mtx.Input]]:
+        output_block = b"".join([o.amountBytes + o.scriptBytes for o in self._tx_out])
 
         preimages = []
-        for input_index, hash_type, segwit_input in inputs_parameters:
-            # We can only handle hashType == 1:
-            if hash_type != self._HASH_TYPE:
-                raise ValueError('bit only support hashType of value 1')
+        for index, tx_in in enumerate(self._tx_in):
+            hash = Sha256Digest()
+            hash.update(self._version)
 
-            # Calculate pre hashes:
-            if segwit_input:
-                # BIP-143 preimage:
-                hashed = Sha256Digest(
-                    self._version +
-                    hash_prev_outs +
-                    hash_sequence +
-                    self._tx_in[input_index].utxoId +
-                    # scriptCode length
-                    self._tx_in[input_index].script_sig_len +
-                    # scriptCode (includes amount)
-                    self._tx_in[input_index].script_sig +
-                    self._tx_in[input_index].sequence +
-                    hash_outputs +
-                    self._lock_time +
-                    hash_type
-                ).finalize()
+            if tx_in.isSegwit:
+                hash.update(Sha256DoubleDigest(
+                    b"".join([i.utxoIdBytes for i in self._tx_in])).finalize())
+                hash.update(Sha256DoubleDigest(
+                    b"".join([i.sequenceBytes for i in self._tx_in])).finalize())
+                hash.update(
+                    tx_in.utxoIdBytes +
+                    tx_in.scriptBytes +
+                    tx_in.amountBytes +
+                    tx_in.sequenceBytes +
+                    Sha256DoubleDigest(output_block).finalize()
+                )
             else:
-                hashed = Sha256Digest(
-                    self._version +
-                    input_count +
-                    b"".join(
-                        # TODO self._coin.Script.OpCode.OP_0
-                        ti.utxoId + b"\0" + ti.sequence
-                        for ti in itertools.islice(self._tx_in, input_index)
-                    ) +
-                    self._tx_in[input_index].utxoId +
-                    # scriptCode length
-                    self._tx_in[input_index].script_sig_len +
-                    self._tx_in[input_index].script_sig +  # scriptCode
-                    self._tx_in[input_index].sequence +
-                    b"".join(
-                        # TODO self._coin.Script.OpCode.OP_0
-                        ti.utxoId + b"\0" + ti.sequence
-                        for ti in itertools.islice(
-                            self._tx_in,
-                            input_index + 1,
-                            None)
-                    ) +
-                    output_count +
-                    output_block +
-                    self._lock_time +
-                    hash_type
-                ).finalize()
-            preimages.append(hashed)
+                hash.update(self._coin.Script.integerToVarInt(len(self._tx_in)))
+                for i, tx_in2 in enumerate(self._tx_in):
+                    hash.update(tx_in2.utxoIdBytes)
+                    if i != index:
+                        hash.update(self._coin.Script.integerToVarInt(0))
+                    else:
+                        hash.update(tx_in2.scriptBytes)
+                    hash.update(tx_in2.sequenceBytes)
+                hash.update(self._coin.Script.integerToVarInt(len(self._tx_out)))
+                hash.update(output_block)
+
+            hash.update(self._lock_time)
+            hash.update(self._HASH_TYPE)
+            hash = hash.finalize()
+            print(Sha256Digest(hash).finalize().hex())
+            preimages.append((hash, tx_in))
         return preimages

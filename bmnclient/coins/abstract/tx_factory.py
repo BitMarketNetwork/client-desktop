@@ -16,10 +16,13 @@ if TYPE_CHECKING:
 
 
 class _AbstractMutableTxIo:
+    _AMOUNT_LENGTH = 0
+
     def __init__(self, coin: AbstractCoin, amount: int):
         assert amount >= 0
         self._coin = coin
         self._amount = amount
+        self._script_bytes = b""
 
     @property
     def amount(self) -> int:
@@ -27,44 +30,53 @@ class _AbstractMutableTxIo:
 
     @property
     def amountBytes(self) -> bytes:
-        raise NotImplementedError
+        v = self._coin.Script.integerToBytes(
+            self._amount,
+            self._AMOUNT_LENGTH)
+        return v if not None else (b"\x00" * self._AMOUNT_LENGTH)
 
-    def serialize(self) -> bytes:
-        raise NotImplementedError
+    @property
+    def scriptBytes(self) -> bytes:
+        return self._script_bytes
 
 
 class _AbstractMutableTxInput(_AbstractMutableTxIo):
+    _SEQUENCE_LENGTH = 0
+
     def __init__(
             self,
             utxo: AbstractCoin.Tx.Utxo,
-            utxo_id: bytes,
             *,
+            utxo_id_bytes: bytes,
             sequence: int) -> None:
         super().__init__(utxo.coin, utxo.amount)
         self._utxo = utxo
-        self._utxo_id = utxo_id
+        self._utxo_id_bytes = utxo_id_bytes
         self._sequence = sequence
+
+        self._script_sig_bytes = b""
+        self._witness_bytes = b""
 
     def __eq__(self, other: AbstractCoin.TxFactory.MutableTx.Input):
         return (
                 isinstance(other, self.__class__)
-                and self._utxo_id == other._utxo_id
+                and self._utxo_id_bytes == other._utxo_id_bytes
         )
 
     def __hash__(self) -> int:
-        return hash((self._utxo_id, ))
+        return hash((self._utxo_id_bytes, ))
 
     @property
-    def amountBytes(self) -> bytes:
-        raise NotImplementedError
+    def isSegwit(self) -> bool:
+        return self._utxo.address.type.value.isSegwit
 
     @property
     def utxo(self) -> AbstractCoin.Tx.Utxo:
         return self._utxo
 
     @property
-    def utxoId(self) -> bytes:
-        return self._utxo_id
+    def utxoIdBytes(self) -> bytes:
+        return self._utxo_id_bytes
 
     @property
     def sequence(self) -> int:
@@ -72,13 +84,20 @@ class _AbstractMutableTxInput(_AbstractMutableTxIo):
 
     @property
     def sequenceBytes(self) -> bytes:
-        raise NotImplementedError
+        v = self._coin.Script.integerToBytes(
+            self._sequence,
+            self._SEQUENCE_LENGTH)
+        return v if not None else (b"\x00" * self._SEQUENCE_LENGTH)
 
     @property
-    def isSegwit(self) -> bool:
-        return self._utxo.address.type.value.isSegwit
+    def scriptSigBytes(self) -> bytes:
+        return self._script_sig_bytes
 
-    def serialize(self) -> bytes:
+    @property
+    def witnessBytes(self) -> bytes:
+        return self._witness_bytes
+
+    def sign(self, hash_: bytes, hash_type: int) -> bool:
         raise NotImplementedError
 
 
@@ -86,20 +105,6 @@ class _AbstractMutableTxOutput(_AbstractMutableTxIo):
     def __init__(self, address: AbstractCoin.Address, amount: int) -> None:
         super().__init__(address.coin, amount)
         self._address = address
-        self._serialized_data: Optional[bytes] = None
-
-    @property
-    def amountBytes(self) -> bytes:
-        raise NotImplementedError
-
-    def _createSerializedData(self) -> bytes:
-        raise NotImplementedError
-
-    def serialize(self) -> bytes:
-        if self._serialized_data is None:
-            self._serialized_data = self._createSerializedData()
-            assert self._serialized_data
-        return self._serialized_data
 
 
 class _AbstractMutableTx:

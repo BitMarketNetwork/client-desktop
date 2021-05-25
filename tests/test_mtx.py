@@ -277,8 +277,7 @@ class TestMutableTx(TestCase):
         ]
 
         mtx = Mtx(self._coin, input_list, output_list, lock_time=0x11)
-        for i in input_list:
-            mtx.sign(i.utxo.address, utxo_list=[i.utxo])
+        self.assertTrue(mtx.sign())
 
         self.assertEqual(
             "01000000000102fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf43354"  # noqa
@@ -321,8 +320,7 @@ class TestMutableTx(TestCase):
         ]
 
         mtx = Mtx(self._coin, input_list, output_list, lock_time=0x492)
-        for i in input_list:
-            mtx.sign(i.utxo.address, utxo_list=[i.utxo])
+        self.assertTrue(mtx.sign())
 
         self.assertEqual(
             "01000000000101db6b1b20aa0fd7b23880be2ecbd4a98130974cf4748fb66092ac"  # noqa
