@@ -44,19 +44,31 @@ class _AbstractMutableTxInput(_AbstractMutableTxIo):
 
 
 class _AbstractMutableTxOutput(_AbstractMutableTxIo):
-    def __init__(
-            self,
-            address: AbstractCoin.Address,
-            amount: int) -> None:
+    def __init__(self, address: AbstractCoin.Address, amount: int) -> None:
         super().__init__(address.coin, amount)
-        self._script = self._coin.Script.addressToScript(address)
+        self._address = address
+        self._data: Optional[bytes] = None
+
+    def _createSerializedData(self) -> bytes:
+        raise NotImplementedError
 
     def serialize(self) -> bytes:
-        return b"".join([  # TODO move to Bitcoin
-            self._coin.Script.integerToBytes(self._amount, 8),
-            self._coin.Script.integerToVarInt(len(self._script)),
-            self._script
-        ])
+        if self._data is None:
+            self._data = self._createSerializedData()
+            assert self._data
+        return self._data
+
+
+class _AbstractMutableTx:
+    Input = _AbstractMutableTxInput
+    Output = _AbstractMutableTxOutput
+
+    def __init__(self, coin: AbstractCoin):
+        self._coin = coin
+
+    @property
+    def coin(self) -> AbstractCoin:
+        return self._coin
 
 
 class _AbstractTxFactoryInterface:

@@ -3,107 +3,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..crypto.digest import Sha256Digest, Sha256DoubleDigest
-from ..coins.abstract.tx_factory import _AbstractMutableTxOutput, _AbstractMutableTxInput, _AbstractMutableTx
+from ..coins.coin_bitcoin import Bitcoin
 
 if TYPE_CHECKING:
     from typing import List, Tuple
-    from ..coins.abstract.coin import AbstractCoin
 
 
-class TxEntity:
-    def __init__(self, address: AbstractCoin.Address, amount: bytes) -> None:
-        self._address = address
-        self._amount = amount
-
-    @property
-    def amount(self) -> bytes:
-        return self._amount
-
-    @property
-    def address(self) -> AbstractCoin.Address:
-        return self._address
-
-    def __eq__(self, other: TxEntity):
-        return (
-                isinstance(other, self.__class__)
-                and self._address == other._address
-        )
-
-
-class TxInput(TxEntity):
-    def __init__(
-            self,
-            *,
-            address: AbstractCoin.Address,
-            amount: bytes,
-            tx_id: bytes,
-            tx_index: bytes) -> None:
-        super().__init__(address, amount)
-        self._script_sig = b""
-        self._script_sig_len = self._address.coin.Script.integerToVarInt(0)
-        self._tx_id = tx_id
-        self._tx_index = tx_index
-        self._witness = b""
-        self._sequence = self._address.coin.Script.integerToBytes(0xffffffff, 4)
-        self._is_segwit = self._address.type.value.isSegwit
-
-    def __eq__(self, other: TxInput):
-        return (
-                super().__eq__(other) and
-                self._script_sig == other._script_sig and
-                self._script_sig_len == other._script_sig_len and
-                self._utxo_id == other._utxo_id and
-                self._witness == other._witness and
-                self._sequence == other._sequence and
-                self._is_segwit == other._is_segwit
-        )
-
-    def serialize(self) -> bytes:
-        return b"".join([
-            self._utxo_id,
-            self._script_sig_len,
-            self._script_sig,
-            self._sequence
-        ])
-
-    @property
-    def script_sig(self) -> bytes:
-        return self._script_sig
-
-    @script_sig.setter
-    def script_sig(self, value: bytes) -> None:
-        self._script_sig = value
-
-    @property
-    def script_sig_len(self) -> bytes:
-        return self._script_sig_len
-
-    @script_sig_len.setter
-    def script_sig_len(self, value: bytes) -> None:
-        self._script_sig_len = value
-
-    @property
-    def is_segwit(self) -> bool:
-        return self._is_segwit or self._witness
-
-    @property
-    def witness(self) -> bytes:
-        return self._witness
-
-    @witness.setter
-    def witness(self, value: bytes) -> None:
-        self._witness = value
-
-    @property
-    def sequence(self) -> bytes:
-        return self._sequence
-
-
-class Mtx(_AbstractMutableTx):
+class Mtx(Bitcoin.TxFactory.MutableTx):
     _HASH_TYPE = 0x01.to_bytes(4, byteorder='little')
     _WITNESS_FLAG = b"\x00\x01"
-
-    TxOutput = _AbstractMutableTxOutput
 
     def __init__(
             self,
@@ -114,7 +22,6 @@ class Mtx(_AbstractMutableTx):
             tx_out: List[TxOutput]) -> None:
         self._coin = coin
         self._version = coin.Script.integerToBytes(0x01, 4)
-        self._utxo_list = utxo_list
         self._tx_in = tx_in
         self._tx_out = tx_out
         self._lock_time = self._coin.Script.integerToBytes(0, 4)
@@ -153,26 +60,11 @@ class Mtx(_AbstractMutableTx):
             self._lock_time
         ])
 
-    @classmethod
-    def make(
-            cls,
-            coin: AbstractCoin,
-            utxo_list: List[AbstractCoin.Tx.Utxo],
-            output_list: List[Tuple[AbstractCoin.Address, int]]):
-        return cls(
-            coin,
-            [TxInput(utxo) for utxo in utxo_list],
-            [cls.Output(a, v) for a, v in output_list])
-
-    @property
-    def is_segwit(self) -> bool:
-        return self.serialize()[4:6] == self._WITNESS_FLAG
-
     def sign(
             self,
-            address: AbstractCoin.Address,
+            address: Bitcoin.Address,
             *,
-            utxo_list: List[AbstractCoin.Tx.Utxo]) -> bool:
+            utxo_list: List[Bitcoin.Tx.Utxo]) -> bool:
         input_dict = {}
         for utxo in utxo_list:
             tx_input = \
