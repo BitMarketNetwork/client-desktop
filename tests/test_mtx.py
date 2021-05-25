@@ -224,7 +224,7 @@ class TestMutableTx(TestCase):
             amount=amount,
             script_type=script_type)
         utxo.address = address
-        return Mtx.TxInput(utxo, sequence)
+        return coin.TxFactory.MutableTx.Input(utxo, sequence=sequence)
 
     @classmethod
     def _createOutput(
@@ -238,7 +238,7 @@ class TestMutableTx(TestCase):
             coin,
             name=address_name,
             type_=address_type)
-        return Mtx.Output(address, amount)
+        return coin.TxFactory.MutableTx.Output(address, amount)
 
     # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#native-p2wpkh
     def test_native_p2wpkh(self) -> None:
