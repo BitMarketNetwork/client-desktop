@@ -15,16 +15,16 @@ class Mtx(Bitcoin.TxFactory.MutableTx):
 
     def __init__(
             self,
+            coin: Bitcoin,
+            tx_in: List[Mtx.Input],
+            tx_out: List[Mtx.Output],
             *,
-            coin: AbstractCoin,
-            utxo_list: List[AbstractCoin.Tx.Utxo],
-            tx_in: List[TxInput],
-            tx_out: List[TxOutput]) -> None:
-        self._coin = coin
+            lock_time: int = 0) -> None:
+        super().__init__(coin)
         self._version = coin.Script.integerToBytes(0x01, 4)
         self._tx_in = tx_in
         self._tx_out = tx_out
-        self._lock_time = self._coin.Script.integerToBytes(0, 4)
+        self._lock_time = self._coin.Script.integerToBytes(lock_time, 4)
 
         if any([i.is_segwit for i in tx_in]):
             for i in self._tx_in:

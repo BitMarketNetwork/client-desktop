@@ -28,16 +28,43 @@ class _AbstractMutableTxIo:
 class _AbstractMutableTxInput(_AbstractMutableTxIo):
     def __init__(
             self,
-            utxo: AbstractCoin.Tx.Utxo) -> None:
+            utxo: AbstractCoin.Tx.Utxo,
+            utxo_id: bytes,
+            *,
+            sequence: int) -> None:
         super().__init__(utxo.coin, utxo.amount)
-        # TODO exception
-        self._utxo_id = \
-            bytes.fromhex(utxo.name)[::-1] \
-            + self._coin.Script.integerToBytes(utxo.index, 4)
+        self._utxo = utxo
+        self._utxo_id = utxo_id
+        self._sequence = sequence
+
+    def __eq__(self, other: AbstractCoin.TxFactory.MutableTx.Input):
+        return (
+                isinstance(other, self.__class__)
+                and self._utxo_id == other._utxo_id
+        )
+
+    def __hash__(self) -> int:
+        return hash((self._utxo_id, ))
+
+    @property
+    def utxo(self) -> AbstractCoin.Tx.Utxo:
+        return self._utxo
 
     @property
     def utxoId(self) -> bytes:
         return self._utxo_id
+
+    @property
+    def sequence(self) -> int:
+        return self._sequence
+
+    @property
+    def sequenceBytes(self) -> bytes:
+        raise NotImplementedError
+
+    @property
+    def isSegwit(self) -> bool:
+        return self._utxo.address.type.value.isSegwit
 
     def serialize(self) -> bytes:
         raise NotImplementedError
@@ -89,6 +116,7 @@ class _AbstractTxFactoryInterface:
 
 class _AbstractTxFactory:
     Interface = _AbstractTxFactoryInterface
+    MutableTx = _AbstractMutableTx
 
     def __init__(self, coin: AbstractCoin) -> None:
         self._logger = Logger.classLogger(
