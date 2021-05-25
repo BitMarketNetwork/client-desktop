@@ -41,6 +41,7 @@ class _AbstractMutableTxIo:
 
 
 class _AbstractMutableTxInput(_AbstractMutableTxIo):
+    _HASH_TYPE_LENGTH = 0
     _SEQUENCE_LENGTH = 0
 
     def __init__(
@@ -48,10 +49,12 @@ class _AbstractMutableTxInput(_AbstractMutableTxIo):
             utxo: AbstractCoin.Tx.Utxo,
             *,
             utxo_id_bytes: bytes,
+            hash_type: int,
             sequence: int) -> None:
         super().__init__(utxo.coin, utxo.amount)
         self._utxo = utxo
         self._utxo_id_bytes = utxo_id_bytes
+        self._hash_type = hash_type
         self._sequence = sequence
 
         self._script_sig_bytes = b""
@@ -79,6 +82,17 @@ class _AbstractMutableTxInput(_AbstractMutableTxIo):
         return self._utxo_id_bytes
 
     @property
+    def hashType(self) -> int:
+        return self._hash_type
+
+    @property
+    def hashTypeBytes(self) -> bytes:
+        v = self._coin.Script.integerToBytes(
+            self._hash_type,
+            self._HASH_TYPE_LENGTH)
+        return v if not None else (b"\x00" * self._HASH_TYPE_LENGTH)
+
+    @property
     def sequence(self) -> int:
         return self._sequence
 
@@ -97,7 +111,7 @@ class _AbstractMutableTxInput(_AbstractMutableTxIo):
     def witnessBytes(self) -> bytes:
         return self._witness_bytes
 
-    def sign(self, hash_: bytes, hash_type: int) -> bool:
+    def sign(self, hash_: bytes) -> bool:
         raise NotImplementedError
 
 

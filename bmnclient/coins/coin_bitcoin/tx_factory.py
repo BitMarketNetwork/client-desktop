@@ -6,11 +6,13 @@ from typing import TYPE_CHECKING
 from ..abstract.coin import AbstractCoin
 
 if TYPE_CHECKING:
+    from typing import Sequence
     from . import Bitcoin
 
 
 class _BitcoinMutableTxInput(AbstractCoin.TxFactory.MutableTx.Input):
     _AMOUNT_LENGTH = 8
+    _HASH_TYPE_LENGTH = 4
     _SEQUENCE_LENGTH = 4
 
     def __init__(
@@ -21,7 +23,11 @@ class _BitcoinMutableTxInput(AbstractCoin.TxFactory.MutableTx.Input):
         utxo_id_bytes = \
             bytes.fromhex(utxo.name)[::-1] \
             + (utxo.coin.Script.integerToBytes(utxo.index, 4) or b"\x00" * 4)
-        super().__init__(utxo, utxo_id_bytes=utxo_id_bytes, sequence=sequence)
+        super().__init__(
+            utxo,
+            utxo_id_bytes=utxo_id_bytes,
+            hash_type=1,  # SIGHASH_ALL
+            sequence=sequence)
 
         # For P2WPKH witness program, the scriptCode is
         # 0x1976a914{20-byte-pubkey-hash}88ac.
@@ -43,15 +49,15 @@ class _BitcoinMutableTxInput(AbstractCoin.TxFactory.MutableTx.Input):
         except TypeError:
             self._script_bytes = self._coin.Script.integerToVarInt(0)
 
-    def sign(self, hash_: bytes, hash_type: int) -> bool:
+    def sign(self, hash_: bytes) -> bool:
         private_key = self._utxo.address.privateKey
-        if not private_key or not (1 <= hash_type < 0xfd):
+        if not private_key or not (1 <= self._hash_type < 0xfd):
             return False
         public_key_data = private_key.publicKey.data
 
         try:
             signature = private_key.sign(hash_)
-            signature += self._coin.Script.integerToVarInt(hash_type)
+            signature += self._coin.Script.integerToVarInt(self._hash_type)
 
             if self.isSegwit:
                 if self.utxo.scriptType == self._coin.Script.Type.P2SH_P2WPKH:
