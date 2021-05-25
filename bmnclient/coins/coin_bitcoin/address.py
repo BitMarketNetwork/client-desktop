@@ -99,25 +99,17 @@ class _BitcoinAddress(AbstractCoin.Address):
             **kwargs)
 
     def _deriveHash(self) -> bytes:
-        if self._type not in (
-                self.Type.PUBKEY_HASH,
-                self.Type.SCRIPT_HASH,
-                self.Type.WITNESS_V0_KEY_HASH,
-                self.Type.WITNESS_V0_SCRIPT_HASH):
-            return b""
-
         if self._type.value.encoding == self.Encoding.BASE58:
-            result = Base58.decode(self._name)
-            result = result[1:] if result is not None else None
+            data = Base58.decode(self._name)
+            data = data[1:] if data is not None else None
         elif self._type.value.encoding == self.Encoding.BECH32:
-            _,  _, result = Bech32.decode(self._name)
+            _,  _, data = Bech32.decode(self._name)
         else:
-            result = None
+            data = None
 
-        if result is None or len(result) != self._type.value.size:
+        if data is None or not self._type.value.isValidSize(len(data)):
             return b""
-
-        return result
+        return data
 
     @classmethod
     def decode(
@@ -183,12 +175,8 @@ class _BitcoinAddress(AbstractCoin.Address):
         else:
             return None
 
-        if address_type.value.size > 0:
-            if address_type.value.size != len(data):
-                return None
-        elif address_type.value.size < 0:
-            if len(data) <= 0 or len(data) > abs(address_type.value.size):
-                return None
+        if not address_type.value.isValidSize(len(data)):
+            return None
 
         kwargs["name"] = name
         kwargs["type_"] = address_type

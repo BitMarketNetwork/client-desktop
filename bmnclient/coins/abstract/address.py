@@ -69,6 +69,15 @@ class _AbstractAddressTypeValue:
             script_type=kwargs.get("script_type", self._script_type)
         )
 
+    def isValidSize(self, size: int) -> bool:
+        if self._size > 0:
+            if self._size == size:
+                return True
+        elif self._size < 0:
+            if 0 < size <= abs(self._size):
+                return True
+        return False
+
     @property
     def name(self) -> str:
         return self._name

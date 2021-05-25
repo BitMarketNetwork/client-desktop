@@ -134,7 +134,7 @@ class TestCoins(TestCase):
             else:
                 self.assertIsNotNone(address)
                 self.assertEqual(type_, address.type)
-                if hash_ and len(hash_) == type_.value.size * 2:
+                if hash_:
                     self.assertEqual(hash_, address.hash.hex())
                     hash_check_count += 1
                 else:
