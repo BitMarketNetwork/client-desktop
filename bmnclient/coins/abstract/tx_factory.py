@@ -9,10 +9,18 @@ from ..utils import CoinUtils
 from ...logger import Logger
 
 if TYPE_CHECKING:
-    from typing import Dict, List, Optional, Sequence, Tuple
+    from typing import Dict, List, Optional, Sequence, Tuple, Type
     from .coin import AbstractCoin
     from ...wallet.mtx_impl import Mtx
     SelectedUtxoList = Tuple[List[AbstractCoin.Tx.Utxo], int]
+
+
+def _safeScriptIntegerToBytes(
+        script_type: Type[AbstractCoin.Script],
+        value: int,
+        length: int) -> bytes:
+    value = script_type.integerToBytes(value, length)
+    return value if not None else (b"\x00" * length)
 
 
 class _AbstractMutableTxIo:
@@ -30,10 +38,10 @@ class _AbstractMutableTxIo:
 
     @property
     def amountBytes(self) -> bytes:
-        v = self._coin.Script.integerToBytes(
+        return _safeScriptIntegerToBytes(
+            self._coin.Script,
             self._amount,
             self._AMOUNT_LENGTH)
-        return v if not None else (b"\x00" * self._AMOUNT_LENGTH)
 
     @property
     def scriptBytes(self) -> bytes:
@@ -87,10 +95,10 @@ class _AbstractMutableTxInput(_AbstractMutableTxIo):
 
     @property
     def hashTypeBytes(self) -> bytes:
-        v = self._coin.Script.integerToBytes(
+        return _safeScriptIntegerToBytes(
+            self._coin.Script,
             self._hash_type,
             self._HASH_TYPE_LENGTH)
-        return v if not None else (b"\x00" * self._HASH_TYPE_LENGTH)
 
     @property
     def sequence(self) -> int:
@@ -98,10 +106,10 @@ class _AbstractMutableTxInput(_AbstractMutableTxIo):
 
     @property
     def sequenceBytes(self) -> bytes:
-        v = self._coin.Script.integerToBytes(
+        return _safeScriptIntegerToBytes(
+            self._coin.Script,
             self._sequence,
             self._SEQUENCE_LENGTH)
-        return v if not None else (b"\x00" * self._SEQUENCE_LENGTH)
 
     @property
     def scriptSigBytes(self) -> bytes:
