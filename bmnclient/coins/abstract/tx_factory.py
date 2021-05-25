@@ -21,6 +21,14 @@ class _AbstractMutableTxIo:
         self._coin = coin
         self._amount = amount
 
+    @property
+    def amount(self) -> int:
+        return self._amount
+
+    @property
+    def amountBytes(self) -> bytes:
+        raise NotImplementedError
+
     def serialize(self) -> bytes:
         raise NotImplementedError
 
@@ -45,6 +53,10 @@ class _AbstractMutableTxInput(_AbstractMutableTxIo):
 
     def __hash__(self) -> int:
         return hash((self._utxo_id, ))
+
+    @property
+    def amountBytes(self) -> bytes:
+        raise NotImplementedError
 
     @property
     def utxo(self) -> AbstractCoin.Tx.Utxo:
@@ -74,16 +86,20 @@ class _AbstractMutableTxOutput(_AbstractMutableTxIo):
     def __init__(self, address: AbstractCoin.Address, amount: int) -> None:
         super().__init__(address.coin, amount)
         self._address = address
-        self._data: Optional[bytes] = None
+        self._serialized_data: Optional[bytes] = None
+
+    @property
+    def amountBytes(self) -> bytes:
+        raise NotImplementedError
 
     def _createSerializedData(self) -> bytes:
         raise NotImplementedError
 
     def serialize(self) -> bytes:
-        if self._data is None:
-            self._data = self._createSerializedData()
-            assert self._data
-        return self._data
+        if self._serialized_data is None:
+            self._serialized_data = self._createSerializedData()
+            assert self._serialized_data
+        return self._serialized_data
 
 
 class _AbstractMutableTx:

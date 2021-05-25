@@ -22,12 +22,16 @@ class _BitcoinMutableTxInput(AbstractCoin.TxFactory.MutableTx.Input):
         super().__init__(utxo, utxo_id, sequence=sequence)
 
 class _BitcoinMutableTxOutput(AbstractCoin.TxFactory.MutableTx.Output):
+    @property
+    def amountBytes(self) -> bytes:
+        return self._coin.Script.integerToBytes(self._amount, 8) or b"\x00" * 8
+
     def _createSerializedData(self) -> bytes:
-        amount = self._coin.Script.integerToBytes(self._amount, 8)
         script = self._coin.Script.addressToScript(self._address)
-        script_length = self._coin.Script.integerToVarInt(len(script))
-        if amount and script and script_length:
-            return amount + script_length + script
+        if script:
+            script_length = self._coin.Script.integerToVarInt(len(script))
+            if script_length:
+                return self.amountBytes + script_length + script
         return b""
 
 
