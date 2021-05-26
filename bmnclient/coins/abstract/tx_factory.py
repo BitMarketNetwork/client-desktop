@@ -223,13 +223,10 @@ class _AbstractTxFactory:
 
         self._available_amount = 0
         self._subtract_fee = False
+        self._fee_amount_per_byte = 103  # TODO
 
         self._selected_utxo_list: List[AbstractCoin.Tx.Utxo] = []
         self._selected_utxo_list_amount = 0
-
-        from ...wallet.fee_manager import FeeManager
-        self._fee_manager = FeeManager()  # TODO
-        self._fee_amount_per_byte = self._fee_manager.max_spb
 
         self.__mtx = None  # TODO tmp
         self.__mtx_result: Optional[str] = None  # TODO tmp
@@ -324,7 +321,7 @@ class _AbstractTxFactory:
 
     @property
     def feeAmountPerByteDefault(self) -> int:
-        return self._fee_manager.max_spb
+        return 103  # TODO
 
     @property
     def feeAmountPerByte(self) -> int:
