@@ -29,7 +29,6 @@ if TYPE_CHECKING:
     from ...coins.list import CoinList
     from ...utils.serialize import DeserializedData
     from ...utils.string import ClassStringKeyTuple
-    from ...wallet.mtx_impl import Mtx
 
 
 class AbstractApiQuery(AbstractJsonQuery):
@@ -632,14 +631,14 @@ class CoinMempoolIteratorApiQuery(AbstractApiQuery):
 class TxBroadcastApiQuery(AbstractApiQuery):
     _ACTION = (
         "coins",
-        lambda self: self._tx.coin.name,
+        lambda self: self._mtx.coin.name,
         "tx"
     )
     _DEFAULT_METHOD = AbstractApiQuery.Method.POST
 
-    def __init__(self, tx: Mtx) -> None:
-        super().__init__(name_key_tuple=CoinUtils.mtxToNameKeyTuple(tx))
-        self._tx = tx
+    def __init__(self, mtx: AbstractCoin.TxFactory.MutableTx) -> None:
+        super().__init__(name_key_tuple=CoinUtils.mutableTxToNameKeyTuple(mtx))
+        self._mtx = mtx
         self._result: Optional[BroadcastTxParser] = None
 
     @property
@@ -649,13 +648,13 @@ class TxBroadcastApiQuery(AbstractApiQuery):
     def isEqualQuery(self, other: TxBroadcastApiQuery) -> bool:
         return (
                 isinstance(other, self.__class__)
-                and self._tx.coin.name == other._tx.coin.name
-                and self._tx == other._tx
+                and self._mtx.coin.name == other._mtx.coin.name
+                and self._mtx == other._mtx
         )
 
     def _createData(self) -> Tuple[str, Any]:
         return "tx_broadcast", {
-            "data": self._tx.serialize().hex()
+            "data": self._mtx.serialize().hex()
         }
 
     def _processData(

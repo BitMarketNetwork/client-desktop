@@ -9,7 +9,6 @@ if TYPE_CHECKING:
     from typing import Optional, Tuple
     from .abstract.coin import AbstractCoin
     from ..utils.string import ClassStringKeyTuple
-    from ..wallet.mtx_impl import Mtx
 
 
 class CoinUtils(NotImplementedInstance):
@@ -48,12 +47,13 @@ class CoinUtils(NotImplementedInstance):
         return cls.coinToNameKeyTuple(factory.coin)
 
     @classmethod
-    def mtxToNameKeyTuple(
+    def mutableTxToNameKeyTuple(
             cls,
-            tx: Mtx) -> Tuple[ClassStringKeyTuple, ...]:
+            mtx: AbstractCoin.TxFactory.MutableTx) \
+            -> Tuple[ClassStringKeyTuple, ...]:
         return (
-            *cls.coinToNameKeyTuple(tx.coin),
-            (None, tx.name)
+            *cls.coinToNameKeyTuple(mtx.coin),
+            (None, mtx.name)
         )
 
     @classmethod

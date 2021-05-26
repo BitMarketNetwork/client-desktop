@@ -17,7 +17,6 @@ from ..coin_interfaces import TxFactoryInterface
 if TYPE_CHECKING:
     from typing import Optional, Sequence
     from ..coins.abstract.coin import AbstractCoin
-    from ..wallet.mtx_impl import Mtx
     from ..ui.gui import GuiApplication
 
 
@@ -310,10 +309,13 @@ class TxFactoryModel(TxFactoryInterface, AbstractModel):
         super().afterUpdateAvailableAmount()
         # TODO
 
-    def onBroadcast(self, tx: Mtx) -> None:
-        super().onBroadcast(tx)
+    def onBroadcast(self, mtx: AbstractCoin.TxFactory.MutableTx) -> None:
+        super().onBroadcast(mtx)
         # TODO show pending dialog
 
-    def onBroadcastFinished(self, error_code: int, tx: Mtx) -> None:
-        super().onBroadcastFinished(error_code, tx)
+    def onBroadcastFinished(
+            self,
+            error_code: int,
+            mtx: AbstractCoin.TxFactory.MutableTx) -> None:
+        super().onBroadcastFinished(error_code, mtx)
         # TODO show finished message

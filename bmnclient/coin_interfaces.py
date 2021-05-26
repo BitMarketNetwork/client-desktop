@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from .database.db_wrapper import Database
     from .network.query_scheduler import NetworkQueryScheduler
     from .utils.string import ClassStringKeyTuple
-    from .wallet.mtx_impl import Mtx
 
 
 class _AbstractInterface:
@@ -155,8 +154,11 @@ class TxFactoryInterface(_AbstractInterface, AbstractCoin.TxFactory.Interface):
     def afterUpdateAvailableAmount(self) -> None:
         pass
 
-    def onBroadcast(self, tx: Mtx) -> None:
-        self._query_scheduler.broadcastTx(tx, self.onBroadcastFinished)
+    def onBroadcast(self, mtx: AbstractCoin.TxFactory.MutableTx) -> None:
+        self._query_scheduler.broadcastTx(mtx, self.onBroadcastFinished)
 
-    def onBroadcastFinished(self, error_code: int, tx: Mtx) -> None:
-        self._logger.debug("Result: error_code=%i, tx=%s", error_code, tx.name)
+    def onBroadcastFinished(
+            self,
+            error_code: int,
+            mtx: AbstractCoin.TxFactory.MutableTx) -> None:
+        self._logger.debug("Result: error_code=%i, tx=%s", error_code, mtx.name)

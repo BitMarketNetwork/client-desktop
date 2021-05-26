@@ -11,7 +11,6 @@ from ...logger import Logger
 if TYPE_CHECKING:
     from typing import Dict, List, Optional, Sequence, Tuple, Type
     from .coin import AbstractCoin
-    from ...wallet.mtx_impl import Mtx
     SelectedUtxoList = Tuple[List[AbstractCoin.Tx.Utxo], int]
 
 
@@ -204,7 +203,7 @@ class _AbstractTxFactoryInterface:
     def afterUpdateAvailableAmount(self) -> None:
         raise NotImplementedError
 
-    def onBroadcast(self, tx: Mtx) -> None:
+    def onBroadcast(self, mtx: AbstractCoin.TxFactory.MutableTx) -> None:
         raise NotImplementedError
 
 
@@ -403,7 +402,6 @@ class _AbstractTxFactory:
             self._change_address = None
 
         # TODO extend self with Mtx for every coin
-        from ...wallet.mtx_impl import Mtx
         self.__mtx = Mtx.make(self._coin, self._selected_utxo_list, output_list)
         return True
 

@@ -27,7 +27,6 @@ if TYPE_CHECKING:
     from .query import AbstractQuery
     from ..application import CoreApplication
     from ..coins.abstract.coin import AbstractCoin
-    from ..wallet.mtx_impl import Mtx
 
 
 class NetworkQueryTimer(QObject):
@@ -248,30 +247,33 @@ class NetworkQueryScheduler:
 
     def broadcastTx(
             self,
-            tx: Mtx,
-            finished_callback: Callable[[int, Mtx], None]) -> bool:
-        query = TxBroadcastApiQuery(tx)
+            mtx: AbstractCoin.TxFactory.MutableTx,
+            finished_callback: Callable[
+                [int, AbstractCoin.TxFactory.MutableTx],
+                None]) -> bool:
+        query = TxBroadcastApiQuery(mtx)
         query.appendFinishedCallback(
-            lambda q: self.__onBroadcastTxFinished(q, tx, finished_callback))
+            lambda q: self.__onBroadcastTxFinished(q, mtx, finished_callback))
         status = self._putQuery(query, high_priority=True, unique=True)
         if status == NetworkQueryManager.PutStatus.SUCCESS:
             return True
-        finished_callback(-1, tx)  # TODO correct error code
+        finished_callback(-1, mtx)  # TODO correct error code
         return False
 
     def __onBroadcastTxFinished(
             self,
             query: TxBroadcastApiQuery,
-            tx: Mtx,
-            finished_callback: Callable[[int, Mtx], None]) -> None:
+            mtx: AbstractCoin.TxFactory.MutableTx,
+            finished_callback: Callable[
+                [int, AbstractCoin.TxFactory.MutableTx],
+                None]) -> None:
         if query.isSuccess and query.result is not None:
-            if query.result.txName != tx.name:
+            if query.result.txName != mtx.name:
                 self._logger.warning(
                     "Server gives transaction: '%s', but was sent '%s'.",
                     query.result.txName,
-                    tx.name)
-            self.updateCoinMempool(tx.coin)
-            finished_callback(0, tx)
+                    mtx.name)
+            self.updateCoinMempool(mtx.coin)
+            finished_callback(0, mtx)
         else:
-            finished_callback(2005, tx)  # TODO convert error code from response
-
+            finished_callback(2005, mtx)  # TODO convert error code from response
