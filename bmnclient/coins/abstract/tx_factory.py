@@ -130,15 +130,66 @@ class _AbstractMutableTxOutput(_AbstractMutableTxIo):
 
 
 class _AbstractMutableTx:
+    _VERSION_LENGTH = 0
+    _LOCK_TIME_LENGTH = 0
+
     Input = _AbstractMutableTxInput
     Output = _AbstractMutableTxOutput
 
-    def __init__(self, coin: AbstractCoin):
+    def __init__(
+            self,
+            coin: AbstractCoin,
+            input_list: Sequence[Input],
+            output_list: Sequence[Output],
+            *,
+            version: int,
+            lock_time: int):
         self._coin = coin
+        self._input_list = input_list
+        self._output_list = output_list
+        self._version = version
+        self._lock_time = lock_time
+        self._is_segwit = any(i.isSegwit for i in self._input_list)
+
+    @property
+    def name(self) -> str:
+        raise NotImplementedError
 
     @property
     def coin(self) -> AbstractCoin:
         return self._coin
+
+    @property
+    def version(self) -> int:
+        return self._version
+
+    @property
+    def versionBytes(self) -> bytes:
+        return _safeScriptIntegerToBytes(
+            self._coin.Script,
+            self._version,
+            self._VERSION_LENGTH)
+
+    @property
+    def lockTime(self) -> int:
+        return self._lock_time
+
+    @property
+    def lockTimeBytes(self) -> bytes:
+        return _safeScriptIntegerToBytes(
+            self._coin.Script,
+            self._lock_time,
+            self._LOCK_TIME_LENGTH)
+
+    @property
+    def isSegwit(self) -> bool:
+        return self._is_segwit
+
+    def sign(self) -> bool:
+        raise NotImplementedError
+
+    def serialize(self, *, with_segwit: bool = True) -> bytes:
+        raise NotImplementedError
 
 
 class _AbstractTxFactoryInterface:

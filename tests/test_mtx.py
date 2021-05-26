@@ -11,7 +11,6 @@ from unittest import skip, TestCase
 
 from bmnclient.coins.coin_bitcoin import Bitcoin
 from bmnclient.coins.hd import HdNode
-from bmnclient.wallet.mtx_impl import Mtx
 from tests import TEST_DATA_PATH
 from tests.test_data import *
 
@@ -206,7 +205,7 @@ class TestMutableTx(TestCase):
             address_type: AbstractCoin.Address.Type,
             script_type: AbstractCoin.Script.Type,
             amount: int,
-            sequence: int) -> Mtx.TxInput:
+            sequence: int) -> AbstractCoin.TxFactory.MutableTx.Input:
         private_key = coin.Address.importKey(coin, private_key)
         self.assertIsNotNone(private_key)
 
@@ -233,7 +232,7 @@ class TestMutableTx(TestCase):
             *,
             address_name: str,
             address_type: AbstractCoin.Address.Type,
-            amount: int) -> Mtx.Output:
+            amount: int) -> AbstractCoin.TxFactory.MutableTx.Output:
         address = coin.Address(
             coin,
             name=address_name,
@@ -276,8 +275,15 @@ class TestMutableTx(TestCase):
                 amount=223450000)
         ]
 
-        mtx = Mtx(self._coin, input_list, output_list, lock_time=0x11)
+        mtx = self._coin.TxFactory.MutableTx(
+            self._coin,
+            input_list,
+            output_list,
+            lock_time=0x11)
         self.assertTrue(mtx.sign())
+        self.assertEqual(
+            "e8151a2af31c368a35053ddd4bdb285a8595c769a3ad83e0fa02314a602d4609",  # noqa
+            mtx.name)
 
         self.assertEqual(
             "01000000000102fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf43354"  # noqa
@@ -319,8 +325,15 @@ class TestMutableTx(TestCase):
                 amount=800000000)
         ]
 
-        mtx = Mtx(self._coin, input_list, output_list, lock_time=0x492)
+        mtx = self._coin.TxFactory.MutableTx(
+            self._coin,
+            input_list,
+            output_list,
+            lock_time=0x492)
         self.assertTrue(mtx.sign())
+        self.assertEqual(
+            "ef48d9d0f595052e0f8cdcf825f7a5e50b6a388a81f206f3f4846e5ecd7a0c23",  # noqa
+            mtx.name)
 
         self.assertEqual(
             "01000000000101db6b1b20aa0fd7b23880be2ecbd4a98130974cf4748fb66092ac"  # noqa

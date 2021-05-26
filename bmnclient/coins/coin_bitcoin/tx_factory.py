@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..abstract.coin import AbstractCoin
+from ...crypto.digest import Sha256Digest, Sha256DoubleDigest
 
 if TYPE_CHECKING:
     from typing import Sequence
@@ -122,8 +123,122 @@ class _BitcoinMutableTxOutput(AbstractCoin.TxFactory.MutableTx.Output):
 
 
 class _BitcoinMutableTx(AbstractCoin.TxFactory.MutableTx):
+    _VERSION_LENGTH = 4
+    _LOCK_TIME_LENGTH = 4
+    _WITNESS_HEADER = b"\x00\x01"
+
     Input = _BitcoinMutableTxInput
     Output = _BitcoinMutableTxOutput
+
+    def __init__(
+            self,
+            coin: Bitcoin,
+            input_list: Sequence[Input],
+            output_list: Sequence[Output],
+            *,
+            lock_time: int = 0) -> None:
+        super().__init__(
+            coin,
+            input_list,
+            output_list,
+            lock_time=lock_time,
+            version=1)
+
+    @property
+    def name(self) -> str:
+        v = Sha256DoubleDigest(self.serialize(with_segwit=False)).finalize()
+        return v[::-1].hex()
+
+    def sign(self) -> bool:
+        input_count = self._coin.Script.integerToVarInt(
+            len(self._input_list))
+        output_count = self._coin.Script.integerToVarInt(
+            len(self._output_list))
+        if not input_count or not output_count:
+            return False
+
+        output_list = b"".join(
+            o.amountBytes + o.scriptBytes
+            for o in self._output_list)
+
+        if self._is_segwit:
+            output_list_hash = Sha256DoubleDigest(output_list).finalize()
+
+            hash_prevouts = b"".join(
+                i.utxoIdBytes
+                for i in self._input_list)
+            hash_prevouts = Sha256DoubleDigest(hash_prevouts).finalize()
+
+            hash_sequence = b"".join(
+                i.sequenceBytes
+                for i in self._input_list)
+            hash_sequence = Sha256DoubleDigest(hash_sequence).finalize()
+        else:
+            output_list_hash = b""
+            hash_prevouts = b""
+            hash_sequence = b""
+
+        for current_index, current_input in enumerate(self._input_list):
+            digest = Sha256Digest()
+            digest.update(self.versionBytes)
+
+            if current_input.isSegwit:
+                digest.update(hash_prevouts)
+                digest.update(hash_sequence)
+                digest.update(current_input.utxoIdBytes)
+                digest.update(current_input.scriptBytes)
+                digest.update(current_input.amountBytes)
+                digest.update(current_input.sequenceBytes)
+                digest.update(output_list_hash)
+            else:
+                digest.update(input_count)
+                for other_index, other_input in enumerate(self._input_list):
+                    digest.update(other_input.utxoIdBytes)
+                    if current_index == other_index:
+                        digest.update(other_input.scriptBytes)
+                    else:
+                        digest.update(self._coin.Script.integerToVarInt(0))
+                    digest.update(other_input.sequenceBytes)
+                digest.update(output_count)
+                digest.update(output_list)
+
+            digest.update(self.lockTimeBytes)
+            digest.update(current_input.hashTypeBytes)
+
+            if not current_input.sign(digest.finalize()):
+                return False
+        return True
+
+    def serialize(self, *, with_segwit: bool = True) -> bytes:
+        try:
+            input_list = \
+                self._coin.Script.integerToVarInt(len(self._input_list)) \
+                + b"".join(
+                    i.utxoIdBytes + i.scriptSigBytes + i.sequenceBytes
+                    for i in self._input_list)
+
+            output_list = \
+                self._coin.Script.integerToVarInt(len(self._output_list)) \
+                + b"".join(
+                    o.amountBytes + o.scriptBytes
+                    for o in self._output_list)
+
+            if with_segwit and self._is_segwit:
+                witness_list = b"".join(
+                    i.witnessBytes
+                    for i in self._input_list)
+            else:
+                witness_list = b""
+
+            return (
+                self.versionBytes
+                + (self._WITNESS_HEADER if witness_list else b"")
+                + input_list
+                + output_list
+                + witness_list
+                + self.lockTimeBytes)
+        except TypeError:
+            return b""
 
 
 class _BitcoinTxFactory(AbstractCoin.TxFactory):
