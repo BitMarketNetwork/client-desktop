@@ -401,7 +401,6 @@ class _AbstractTxFactory:
         else:
             self._change_address = None
 
-        # TODO extend self with Mtx for every coin
         self.__mtx = Mtx.make(self._coin, self._selected_utxo_list, output_list)
         return True
 
@@ -569,14 +568,14 @@ class _AbstractTxFactory:
             lambda a: a.utxoList,
             self._coin.filterAddressList(**address_filter))))
         if self._logger.isEnabledFor(logging.DEBUG):
-            s = "".join(map(lambda u: "\n\t" + str(u), utxo_list))
+            s = "".join("\n\t" + str(u) for u in utxo_list)
             self._logger.debug("Available UTXO's:%s", s if s else " None")
 
         utxo_list, utxo_amount = self._findOptimalUtxoList(
             utxo_list,
             target_amount)
         if self._logger.isEnabledFor(logging.DEBUG):
-            s = "".join(map(lambda u: "\n\t" + str(u), utxo_list))
+            s = "".join("\n\t" + str(u) for u in utxo_list)
             self._logger.debug("Selected UTXO's:%s", s if s else " None")
 
         self._selected_utxo_list = utxo_list

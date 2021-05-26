@@ -20,9 +20,9 @@ class _AbstractScript(LittleOrderIntegerConverter):
             cls,
             opcode_list: Sequence[int, bytes]) -> Optional[bytes]:
         try:
-            return b"".join(map(
-                lambda v: cls.integerToBytes(v, 1) if isinstance(v, int) else v,
-                opcode_list))
+            return b"".join(
+                cls.integerToBytes(c, 1) if isinstance(c, int) else c
+                for c in opcode_list)
         except TypeError:
             return None
 

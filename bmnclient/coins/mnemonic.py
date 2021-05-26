@@ -94,10 +94,9 @@ class Mnemonic:
         if len(phrase) not in self._PHRASE_WORD_COUNT_LIST:
             return False
         try:
-            b = map(
-                lambda x: bin(self._word_list.index(x))[2:].zfill(11),
-                phrase)
-            b = "".join(b)
+            b = "".join(
+                bin(self._word_list.index(p))[2:].zfill(11)
+                for p in phrase)
 
             j = len(b)
             d = b[: j // 33 * 32]

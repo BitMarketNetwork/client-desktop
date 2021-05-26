@@ -486,7 +486,7 @@ class _AbstractAddress(Serializable):
             self._model.afterSetUtxoList()
         self._coin.refreshUtxoList()
 
-        self.amount = sum(map(lambda u: u.amount, self._utxo_list))
+        self.amount = sum(u.amount for u in self._utxo_list)
 
     @serializable
     @property

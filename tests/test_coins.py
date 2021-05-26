@@ -686,7 +686,6 @@ class TestMutableTx(TestCase):
                 name="8878399d83ec25c627cfbf753ff9ca3602373eac437ab2676154a3c2da23adf3", # noqa
                 index=1,
                 private_key="L3jsepcttyuJK3HKezD4qqRKGtwc8d2d1Nw6vsoPDX9cMcUxqqMv", # noqa
-                # noqa
                 address_type=self._coin.Address.Type.PUBKEY_HASH,
                 script_type=self._coin.Script.Type.P2PKH,
                 amount=83727960,
@@ -722,6 +721,44 @@ class TestMutableTx(TestCase):
             "cb13396b163d039b1d9327824891804334feffffff0250c30000000000001976a9"  # noqa
             "14e7c1345fc8f87c68170b3aa798a956c2fe6a9eff88ac0888fc04000000001976"  # noqa
             "a91492461bde6283b461ece7ddf4dbf1e0a48bd113d888ac00000000",  # noqa
+            mtx.serialize().hex())
+
+    def test_p2pkh_uncompressed(self) -> None:
+        input_list = [
+            self._createInput(
+                self._coin,
+                name="01" * 32,
+                index=2,
+                private_key="5KHxtARu5yr1JECrYGEA2YpCPdh1i9ciEgQayAF8kcqApkGzT9s", # noqa
+                address_type=self._coin.Address.Type.PUBKEY_HASH,
+                script_type=self._coin.Script.Type.P2PKH,
+                amount=1,
+                sequence=0xfffffffe),
+        ]
+        output_list = [
+            self._createOutput(
+                self._coin,
+                address_name="1ExJJsNLQDNVVM1s1sdyt1o5P3GC5r32UG",  # noqa
+                address_type=self._coin.Address.Type.PUBKEY_HASH,
+                amount=1
+            )
+        ]
+        mtx = self._coin.TxFactory.MutableTx(
+            self._coin,
+            input_list,
+            output_list)
+        self.assertTrue(mtx.sign())
+        self.assertEqual(
+            "5ea24fd0d01dda1994d4357efe38bb527279983e45cd6ad50dd0626b64234f83",  # noqa
+            mtx.name)
+        self.assertEqual(
+            "010000000101010101010101010101010101010101010101010101010101010101"  # noqa
+            "01010101020000008a473044022038b2497feeb5fb77c0f78594519040c5400a10"  # noqa
+            "8031596a607a96a2775a2ea79e02200b4b210ea49c6f222feadf21a9f0bdc8b820"  # noqa
+            "b04ac60cf0ef8b62439d50c1c1690141043d5c2875c9bd116875a71a5db64cffcb"  # noqa
+            "13396b163d039b1d932782489180433476a4352a2add00ebb0d5c94c515b72eb10"  # noqa
+            "f1fd8f3f03b42f4a2b255bfc9aa9e3feffffff0101000000000000001976a91499"  # noqa
+            "0ef60d63b5b5964a1c2282061af45123e93fcb88ac00000000",  # noqa
             mtx.serialize().hex())
 
     # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#native-p2wpkh
