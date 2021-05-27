@@ -88,8 +88,8 @@ class _AbstractMutableTxInput(_AbstractMutableTxIo):
         return hash((self._utxo_id_bytes, ))
 
     @property
-    def isSegwit(self) -> bool:
-        return self._utxo.address.type.value.isSegwit
+    def isWitness(self) -> bool:
+        return self._utxo.address.type.value.isWitness
 
     @property
     def utxo(self) -> AbstractCoin.Tx.Utxo:
@@ -165,7 +165,7 @@ class _AbstractMutableTx:
         self._output_list = output_list
         self._version = version
         self._lock_time = lock_time
-        self._is_segwit = any(i.isSegwit for i in self._input_list)
+        self._is_witness = any(i.isWitness for i in self._input_list)
         self._is_signed = False
 
     @property
@@ -203,8 +203,8 @@ class _AbstractMutableTx:
             self._LOCK_TIME_LENGTH)
 
     @property
-    def isSegwit(self) -> bool:
-        return self._is_segwit
+    def isWitness(self) -> bool:
+        return self._is_witness
 
     @property
     def isSigned(self) -> bool:
@@ -219,7 +219,7 @@ class _AbstractMutableTx:
             return True
         return False
 
-    def serialize(self, *, with_segwit: bool = True) -> bytes:
+    def serialize(self, *, with_witness: bool = True) -> bytes:
         raise NotImplementedError
 
 

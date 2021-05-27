@@ -21,7 +21,7 @@ class _AbstractAddressTypeValue:
         "_version",
         "_size",
         "_encoding",
-        "_is_segwit",
+        "_is_witness",
         "_script_type"
     )
 
@@ -32,13 +32,13 @@ class _AbstractAddressTypeValue:
             version: int,
             size: int,
             encoding: Optional[AbstractCoin.Address.Encoding],
-            is_segwit: bool,
+            is_witness: bool,
             script_type: Optional[AbstractCoin.Script.Type]) -> None:
         self._name = name
         self._version = version
         self._size = size
         self._encoding = encoding
-        self._is_segwit = is_segwit
+        self._is_witness = is_witness
         self._script_type = script_type
 
     def __eq__(self, other: AbstractCoin.Address.TypeValue) -> bool:
@@ -65,7 +65,7 @@ class _AbstractAddressTypeValue:
             version=kwargs.get("version", self._version),
             size=kwargs.get("size", self._size),
             encoding=kwargs.get("encoding", self._encoding),
-            is_segwit=kwargs.get("is_segwit", self._is_segwit),
+            is_witness=kwargs.get("is_witness", self._is_witness),
             script_type=kwargs.get("script_type", self._script_type)
         )
 
@@ -95,8 +95,8 @@ class _AbstractAddressTypeValue:
         return self._encoding
 
     @property
-    def isSegwit(self) -> bool:
-        return self._is_segwit
+    def isWitness(self) -> bool:
+        return self._is_witness
 
     @property
     def scriptType(self) -> Optional[AbstractCoin.Script.Type]:

@@ -130,13 +130,13 @@ class CoinReceiveManagerModel(AbstractStateModel):
         return "" if self._address is None else self._address.comment
 
     @QProperty(bool, notify=__stateChanged)
-    def isSegwit(self) -> bool:
+    def isWitness(self) -> bool:
         return True if self._address is None else True  # TODO
 
     # noinspection PyTypeChecker
     @QSlot(bool, str, str, result=bool)
-    def create(self, is_segwit: bool, label: str, comment: str) -> bool:
-        if is_segwit:
+    def create(self, is_witness: bool, label: str, comment: str) -> bool:
+        if is_witness:
             address_type = self._coin.Address.Type.WITNESS_V0_KEY_HASH
         else:
             address_type = self._coin.Address.Type.PUBKEY_HASH
@@ -166,13 +166,13 @@ class CoinManagerModel(AbstractStateModel):
     @QSlot(bool, str, str, result=str)
     def createAddress(
             self,
-            is_segwit: bool,
+            is_witness: bool,
             label: str,
             comment: str) -> str:
         receive_manager = CoinReceiveManagerModel(
             self._application,
             self._coin)
-        if receive_manager.create(is_segwit, label, comment):
+        if receive_manager.create(is_witness, label, comment):
             return receive_manager.name
         return ""
 

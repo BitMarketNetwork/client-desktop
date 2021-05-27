@@ -62,7 +62,7 @@ class _BitcoinMutableTxInput(AbstractCoin.TxFactory.MutableTx.Input):
             signature = private_key.sign(hash_)
             signature += self._coin.Script.integerToVarInt(self._hash_type)
 
-            if self.isSegwit:
+            if self.isWitness:
                 if self.utxo.scriptType == self._coin.Script.Type.P2SH_P2WPKH:
                     script_sig = self._coin.Script.addressToScript(
                         self.utxo.address,
@@ -154,7 +154,7 @@ class _BitcoinMutableTx(AbstractCoin.TxFactory.MutableTx):
 
     @property
     def name(self) -> str:
-        v = Sha256DoubleDigest(self.serialize(with_segwit=False)).finalize()
+        v = Sha256DoubleDigest(self.serialize(with_witness=False)).finalize()
         return v[::-1].hex()
 
     def _sign(self) -> bool:
@@ -169,7 +169,7 @@ class _BitcoinMutableTx(AbstractCoin.TxFactory.MutableTx):
             o.amountBytes + o.scriptBytes
             for o in self._output_list)
 
-        if self._is_segwit:
+        if self._is_witness:
             output_list_hash = Sha256DoubleDigest(output_list).finalize()
 
             hash_prevouts = b"".join(
@@ -190,7 +190,7 @@ class _BitcoinMutableTx(AbstractCoin.TxFactory.MutableTx):
             digest = Sha256Digest()
             digest.update(self.versionBytes)
 
-            if current_input.isSegwit:
+            if current_input.isWitness:
                 digest.update(hash_prevouts)
                 digest.update(hash_sequence)
                 digest.update(current_input.utxoIdBytes)
@@ -217,7 +217,7 @@ class _BitcoinMutableTx(AbstractCoin.TxFactory.MutableTx):
                 return False
         return True
 
-    def serialize(self, *, with_segwit: bool = True) -> bytes:
+    def serialize(self, *, with_witness: bool = True) -> bytes:
         if not self._is_signed:
             return b""
         try:
@@ -233,7 +233,7 @@ class _BitcoinMutableTx(AbstractCoin.TxFactory.MutableTx):
                     o.amountBytes + o.scriptBytes
                     for o in self._output_list)
 
-            if with_segwit and self._is_segwit:
+            if with_witness and self._is_witness:
                 witness_list = b"".join(
                     i.witnessBytes
                     for i in self._input_list)
