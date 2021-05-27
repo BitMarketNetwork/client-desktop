@@ -256,7 +256,7 @@ class _AbstractAddress(Serializable):
         return self._coin
 
     @classmethod
-    def createAddress(
+    def create(
             cls,
             coin: AbstractCoin,
             *,

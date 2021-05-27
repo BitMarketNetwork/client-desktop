@@ -650,7 +650,7 @@ class TestMutableTx(TestCase):
         private_key = coin.Address.importKey(coin, private_key)
         self.assertIsNotNone(private_key)
 
-        address = coin.Address.createAddress(
+        address = coin.Address.create(
             self._coin,
             type_=address_type,
             key=private_key)

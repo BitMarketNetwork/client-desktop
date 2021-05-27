@@ -5,7 +5,6 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 from ..crypto.base58 import Base58
-from ..crypto.bech32 import Bech32
 from ..crypto.digest import Hash160Digest, Hmac, Sha512Digest
 from ..crypto.secp256k1 import KeyUtils, PrivateKey, PublicKey
 

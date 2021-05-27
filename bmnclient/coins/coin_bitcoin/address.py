@@ -65,7 +65,7 @@ class _BitcoinAddress(AbstractCoin.Address):
         DEFAULT = WITNESS_V0_KEY_HASH
 
     @classmethod
-    def createAddress(
+    def create(
             cls,
             coin: Bitcoin,
             *,
@@ -73,6 +73,8 @@ class _BitcoinAddress(AbstractCoin.Address):
             key: Bitcoin.Address.KeyType,
             **kwargs) -> Optional[Bitcoin.Address]:
         public_key = cls._publicKey(key)
+        if not public_key:
+            return None
         if type_.value.encoding == cls.Encoding.BASE58:
             try:
                 version = type_.value.version.to_bytes(1, "little")
