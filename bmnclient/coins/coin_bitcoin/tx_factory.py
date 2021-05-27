@@ -168,10 +168,7 @@ class _BitcoinMutableTx(AbstractCoin.TxFactory.MutableTx):
             version=1,
             **kwargs)
 
-    @property
-    def name(self) -> Optional[str]:
-        if not self._is_signed or self._is_dummy:
-            return None
+    def _deriveName(self) -> Optional[str]:
         v = Sha256DoubleDigest(self.serialize(with_witness=False)).finalize()
         return v[::-1].hex()
 
@@ -283,3 +280,20 @@ class _BitcoinMutableTx(AbstractCoin.TxFactory.MutableTx):
 
 class _BitcoinTxFactory(AbstractCoin.TxFactory):
     MutableTx = _BitcoinMutableTx
+
+    def _prepare(
+            self,
+            input_list: Sequence[Bitcoin.Tx.Utxo],
+            output_list: Sequence[Tuple[Bitcoin.Address, int]],
+            *,
+            is_dummy: bool) \
+            -> Optional[Bitcoin.TxFactory.MutableTx]:
+        return self.MutableTx(
+            self._coin,
+            [
+                self.MutableTx.Input(u, is_dummy=is_dummy)
+                for u in input_list],
+            [
+                self.MutableTx.Output(a, v, is_dummy=is_dummy)
+                for a, v in output_list],
+            is_dummy=is_dummy)

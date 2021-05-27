@@ -7,6 +7,7 @@ from itertools import chain
 from typing import TYPE_CHECKING
 
 from ..utils import CoinUtils
+from ...crypto.secp256k1 import PublicKey
 from ...logger import Logger
 
 if TYPE_CHECKING:
@@ -173,9 +174,15 @@ class _AbstractMutableTx:
     def isDummy(self) -> bool:
         return self._is_dummy
 
-    @property
-    def name(self) -> Optional[str]:
+    def _deriveName(self) -> Optional[str]:
         raise NotImplementedError
+
+    @property
+    @lru_cache
+    def name(self) -> Optional[str]:
+        if not self._is_signed or self._is_dummy:
+            return None
+        return self._deriveName()
 
     @property
     def coin(self) -> AbstractCoin:
@@ -215,7 +222,8 @@ class _AbstractMutableTx:
         raise NotImplementedError
 
     def sign(self) -> bool:
-        self.serialize.cache_clear()
+        self.__class__.serialize.cache_clear()
+        self.__class__.name.fget.cache_clear()
         if not self._is_signed and self._sign():
             self._is_signed = True
             return True
@@ -268,6 +276,7 @@ class _AbstractTxFactory:
         self._receiver_address: Optional[AbstractCoin.Address] = None
         self._receiver_amount = 0
         self._change_address: Optional[AbstractCoin.Address] = None
+        self._dummy_change_address = self._createDummyChangeAddress()
 
         self._available_amount = 0
         self._subtract_fee = False
@@ -280,6 +289,25 @@ class _AbstractTxFactory:
 
         self._model: Optional[AbstractCoin.TxFactory.Interface] = \
             self._coin.model_factory(self)
+
+    def _createDummyChangeAddress(self) -> Optional[AbstractCoin.Address]:
+        public_key = PublicKey.fromPublicInteger(
+            1,
+            None,
+            is_compressed=True)
+        if public_key is None:
+            self._logger.error("Failed to derive dummy change public key.")
+            return None
+
+        address = self._coin.Address.create(
+                self._coin,
+                type_=self._coin.Address.Type.DEFAULT,
+                key=public_key
+            )
+        if address is None:
+            self._logger.error("Failed to derive dummy change address.")
+        else:
+            self._logger.error("Dummy change address: %s", address.name)
 
     @property
     def model(self) -> Optional[AbstractCoin.TxFactory.Interface]:
@@ -382,15 +410,15 @@ class _AbstractTxFactory:
 
     @property
     def feeAmountDefault(self) -> int:
-        return self.feeAmountPerByteDefault * self.tx_size
+        return self.feeAmountPerByteDefault * self.estimatedSize[1]
 
     @property
     def feeAmount(self) -> int:
-        return self.feeAmountPerByte * self.tx_size
+        return self.feeAmountPerByte * self.estimatedSize[1]
 
     @feeAmount.setter
     def feeAmount(self, value: int):
-        self.feeAmountPerByte = value // self.tx_size
+        self.feeAmountPerByte = value // self.estimatedSize[1]
 
     @property
     def isValidFeeAmount(self) -> bool:
@@ -408,9 +436,40 @@ class _AbstractTxFactory:
             change_amount -= self.feeAmount
         return change_amount
 
+    @property
+    def estimatedSize(self) -> Tuple[int, int]:  # raw_size, virtual_size
+        if not self._selected_utxo_list or not self._receiver_address:
+            return 0, 0
+
+        output_list = [(self._receiver_address, self._receiver_amount)]
+        if (
+                self._selected_utxo_list_amount != self._receiver_amount
+                or not self._subtract_fee
+        ):
+            if self._dummy_change_address is not None:
+                output_list.append((self._dummy_change_address, 0))
+
+        mtx = self._prepare(
+            self._selected_utxo_list,
+            output_list,
+            is_dummy=True)
+        if mtx is None or not mtx.sign():
+            return 0, 0
+        return mtx.rawSize, mtx.virtualSize
+
     def clear(self) -> None:
         # TODO
-        pass
+        self._change_address = None
+        self._mtx = None
+
+    def _prepare(
+            self,
+            input_list: Sequence[AbstractCoin.Tx.Utxo],
+            output_list: Sequence[Tuple[AbstractCoin.Address, int]],
+            *,
+            is_dummy: bool) \
+            -> Optional[AbstractCoin.TxFactory.MutableTx]:
+        raise NotImplementedError
 
     def prepare(self) -> bool:
         if not self.isValidReceiverAmount:
@@ -438,47 +497,35 @@ class _AbstractTxFactory:
             self._change_address = self._coin.deriveHdAddress(
                 account=0,
                 is_change=True)
-            # TODO validate hd node private key
-            assert self._change_address is not None
+            if self._change_address is None:
+                self._logger.error("Failed to derive change address.")
+                return False
             output_list.append((self._change_address, change_amount))
         else:
             self._change_address = None
 
-        self.__mtx = Mtx.make(self._coin, self._selected_utxo_list, output_list)
-        return True
+        self._mtx = self._prepare(
+            self._selected_utxo_list,
+            output_list,
+            is_dummy=False)
+        return self._mtx is not None
 
     def sign(self) -> bool:
-        if self.__mtx is None:
+        if self._mtx is None or not self._mtx.sign():
             return False
-
-        # TODO Dict[str, ...]?
-        source_list: Dict[AbstractCoin.Address, List[AbstractCoin.Tx.Utxo]] = {}
-        for utxo in self._selected_utxo_list:
-            source_list.setdefault(utxo.address, []).append(utxo)
-
-        for address, utxo_list in source_list.items():
-            if self._logger.isEnabledFor(logging.DEBUG):
-                for utxo in utxo_list:
-                    self._logger.debug(
-                        "Input: %s, UTXO '%s':%i, amount %i.",
-                        address.name,
-                        utxo.name,
-                        utxo.index,
-                        utxo.amount)
-            self.__mtx.sign(address, utxo_list=utxo_list)
-
-        self.__mtx_result = self.__mtx.serialize().hex()
-        if not self.__mtx_result:
-            return False
-        self._logger.debug(f"Signed transaction: %s", self.__mtx_result)
-        if self._change_address is not None:
-            self._coin.appendAddress(self._change_address)
+        if self._logger.isEnabledFor(logging.DEBUG):
+            self._logger.debug(
+                "Signed transaction: %s",
+                self._mtx.serialize().hex())
         return True
 
     def broadcast(self) -> bool:
         if self._mtx is None or not self._mtx.isSigned:
             return False
+        if self._change_address is not None:
+            self._coin.appendAddress(self._change_address)
         mtx = self._mtx
+
         self.clear()
         if self._model:
             self._model.onBroadcast(mtx)
@@ -607,9 +654,9 @@ class _AbstractTxFactory:
             return
 
         # combine all utxo's
-        utxo_list = list(chain.from_iterable(map(
-            lambda a: a.utxoList,
-            self._coin.filterAddressList(**address_filter))))
+        utxo_list = list(chain.from_iterable(
+            a.utxoList
+            for a in self._coin.filterAddressList(**address_filter)))
         if self._logger.isEnabledFor(logging.DEBUG):
             s = "".join("\n\t" + str(u) for u in utxo_list)
             self._logger.debug("Available UTXO's:%s", s if s else " None")
@@ -623,18 +670,3 @@ class _AbstractTxFactory:
 
         self._selected_utxo_list = utxo_list
         self._selected_utxo_list_amount = utxo_amount
-
-    # TODO wrong code
-    # https://murchandamus.medium.com/psa-wrong-fee-rates-on-block-explorers-48390cbfcc74
-    # https://jlopp.github.io/bitcoin-transaction-size-calculator/
-    @property
-    def tx_size(self) -> int:
-        n_in = max(1, len(self._selected_utxo_list))
-        n_out = 2 if self._selected_utxo_list_amount > self._receiver_amount else 1
-        return (
-                150
-                + len(self._coin.Script.integerToAutoBytes(n_in))
-                + 70
-                + len(self._coin.Script.integerToAutoBytes(n_out))
-                + 8
-        )
