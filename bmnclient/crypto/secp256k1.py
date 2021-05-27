@@ -78,6 +78,14 @@ class AbstractKey:
 
 
 class PublicKey(AbstractKey):
+    @classproperty
+    def compressedSize(cls) -> int:  # noqa
+        return cls._SIZE + 1
+
+    @classproperty
+    def uncompressedSize(cls) -> int:  # noqa
+        return cls._SIZE * 2 + 1
+
     @classmethod
     def fromPublicData(cls, data: bytes) -> Optional[PublicKey]:
         try:
@@ -145,6 +153,8 @@ class PublicKey(AbstractKey):
 
 
 class PrivateKey(AbstractKey):
+    _SIGNATURE_MAX_SIZE = 1 + 70  # DER
+
     def __init__(
             self,
             key: SigningKey,
@@ -228,6 +238,10 @@ class PrivateKey(AbstractKey):
     @property
     def publicKey(self) -> PublicKey:
         return self._public_key
+
+    @classproperty
+    def signatureMaxSize(cls) -> int:  # noqa
+        return cls._SIGNATURE_MAX_SIZE
 
     def sign(self, data: bytes) -> Optional[bytes]:
         data = Sha256Digest(data).finalize()

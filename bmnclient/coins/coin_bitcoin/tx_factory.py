@@ -1,10 +1,12 @@
 # JOK4
 from __future__ import annotations
 
+from math import ceil
 from typing import TYPE_CHECKING
 
 from ..abstract.coin import AbstractCoin
 from ...crypto.digest import Sha256Digest, Sha256DoubleDigest
+from ...crypto.secp256k1 import PrivateKey, PublicKey
 
 if TYPE_CHECKING:
     from typing import Optional, Sequence, Tuple
@@ -53,13 +55,27 @@ class _BitcoinMutableTxInput(AbstractCoin.TxFactory.MutableTx.Input):
             self._script_bytes = self._coin.Script.integerToVarInt(0)
 
     def sign(self, hash_: bytes) -> bool:
-        private_key = self._utxo.address.privateKey
-        if not private_key or not (1 <= self._hash_type < 0xfd):
-            return False
-        public_key_data = private_key.publicKey.data
+        if not self._is_dummy:
+            private_key = self._utxo.address.privateKey
+            if not private_key or not (1 <= self._hash_type < 0xfd):
+                return False
+            public_key_data = private_key.publicKey.data
+        else:
+            private_key = None
+            if (
+                    self._utxo.address.publicKey
+                    and not self._utxo.address.publicKey.isCompressed
+            ):
+                # rare case
+                public_key_data = b"\x00" * PublicKey.uncompressedSize
+            else:
+                public_key_data = b"\x00" * PublicKey.compressedSize
 
         try:
-            signature = private_key.sign(hash_)
+            if not self._is_dummy:
+                signature = private_key.sign(hash_)
+            else:
+                signature = b"\x00" * PrivateKey.signatureMaxSize
             signature += self._coin.Script.integerToVarInt(self._hash_type)
 
             if self.isWitness:
@@ -153,11 +169,20 @@ class _BitcoinMutableTx(AbstractCoin.TxFactory.MutableTx):
             **kwargs)
 
     @property
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
+        if not self._is_signed or self._is_dummy:
+            return None
         v = Sha256DoubleDigest(self.serialize(with_witness=False)).finalize()
         return v[::-1].hex()
 
     def _sign(self) -> bool:
+        if self._is_dummy:
+            hash_ = b"\x00" * Sha256Digest.size
+            for current_input in self._input_list:
+                if not current_input.sign(hash_):
+                    return False
+            return True
+
         input_count = self._coin.Script.integerToVarInt(
             len(self._input_list))
         output_count = self._coin.Script.integerToVarInt(
@@ -217,9 +242,7 @@ class _BitcoinMutableTx(AbstractCoin.TxFactory.MutableTx):
                 return False
         return True
 
-    def serialize(self, *, with_witness: bool = True) -> bytes:
-        if not self._is_signed:
-            return b""
+    def _serialize(self, *, with_witness: bool = True) -> bytes:
         try:
             input_list = \
                 self._coin.Script.integerToVarInt(len(self._input_list)) \
@@ -249,6 +272,13 @@ class _BitcoinMutableTx(AbstractCoin.TxFactory.MutableTx):
                 + self.lockTimeBytes)
         except TypeError:
             return b""
+
+    @property
+    def virtualSize(self) -> int:
+        if self.isWitness:
+            non_witness_size = len(self.serialize(with_witness=False))
+            return ceil((3 * non_witness_size + self.rawSize) / 4)
+        return self.rawSize
 
 
 class _BitcoinTxFactory(AbstractCoin.TxFactory):

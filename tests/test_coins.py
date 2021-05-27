@@ -12,7 +12,7 @@ from bmnclient.coins.hd import HdNode
 from bmnclient.language import Locale
 
 if TYPE_CHECKING:
-    from typing import List, Sequence
+    from typing import List, Optional, Sequence
     from bmnclient.coins.abstract.coin import AbstractCoin
 
 
@@ -638,14 +638,15 @@ class TestMutableTx(TestCase):
     def _createInput(
             self,
             coin: AbstractCoin,
-            *,
             name: str,
             index: int,
+            *,
             private_key: str,
             address_type: AbstractCoin.Address.Type,
             script_type: AbstractCoin.Script.Type,
             amount: int,
-            sequence: int) -> AbstractCoin.TxFactory.MutableTx.Input:
+            sequence: int,
+            is_dummy: bool = False) -> AbstractCoin.TxFactory.MutableTx.Input:
         private_key = coin.Address.importKey(coin, private_key)
         self.assertIsNotNone(private_key)
 
@@ -663,7 +664,10 @@ class TestMutableTx(TestCase):
             amount=amount,
             script_type=script_type)
         utxo.address = address
-        return coin.TxFactory.MutableTx.Input(utxo, sequence=sequence)
+        return coin.TxFactory.MutableTx.Input(
+            utxo,
+            sequence=sequence,
+            is_dummy=is_dummy)
 
     @classmethod
     def _createOutput(
@@ -672,198 +676,323 @@ class TestMutableTx(TestCase):
             *,
             address_name: str,
             address_type: AbstractCoin.Address.Type,
-            amount: int) -> AbstractCoin.TxFactory.MutableTx.Output:
+            amount: int,
+            is_dummy: bool = False) -> AbstractCoin.TxFactory.MutableTx.Output:
         address = coin.Address(
             coin,
             name=address_name,
             type_=address_type)
-        return coin.TxFactory.MutableTx.Output(address, amount)
+        return coin.TxFactory.MutableTx.Output(
+            address,
+            amount,
+            is_dummy=is_dummy)
+
+    def _test_mtx(
+            self,
+            input_list: List[AbstractCoin.TxFactory.MutableTx.Input],
+            output_list: List[AbstractCoin.TxFactory.MutableTx.Output],
+            *,
+            lock_time: int,
+            is_dummy: bool,
+            expected_name: Optional[str],
+            expected_data: str,
+            excepted_raw_size: int,
+            excepted_virtual_size: int) -> AbstractCoin.TxFactory.MutableTx:
+        mtx = self._coin.TxFactory.MutableTx(
+            self._coin,
+            input_list,
+            output_list,
+            lock_time=lock_time,
+            is_dummy=is_dummy)
+        self.assertEqual(is_dummy, mtx.isDummy)
+        self.assertEqual(b"", mtx.serialize())
+        self.assertTrue(mtx.sign())
+        self.assertEqual(expected_name, mtx.name)
+        self.assertEqual(expected_data, mtx.serialize().hex())
+        self.assertEqual(excepted_raw_size, mtx.rawSize)
+        self.assertEqual(excepted_virtual_size, mtx.virtualSize)
+        return mtx
 
     def test_p2pkh(self) -> None:
-        input_list = [
-            self._createInput(
-                self._coin,
-                name="8878399d83ec25c627cfbf753ff9ca3602373eac437ab2676154a3c2da23adf3", # noqa
-                index=1,
-                private_key="L3jsepcttyuJK3HKezD4qqRKGtwc8d2d1Nw6vsoPDX9cMcUxqqMv", # noqa
-                address_type=self._coin.Address.Type.PUBKEY_HASH,
-                script_type=self._coin.Script.Type.P2PKH,
-                amount=83727960,
-                sequence=0xfffffffe),
-        ]
-        output_list = [
-            self._createOutput(
-                self._coin,
-                address_name="1N8QYQNAD8PLEJjmCGGR8iN1iuR9yXtY1x",  # noqa
-                address_type=self._coin.Address.Type.PUBKEY_HASH,
-                amount=50000
-            ),
-            self._createOutput(
-                self._coin,
-                address_name="1ELReFsTCUY2mfaDTy32qxYiT49z786eFg",  # noqa
-                address_type=self._coin.Address.Type.PUBKEY_HASH,
-                amount=83658760
-            )
-        ]
-        mtx = self._coin.TxFactory.MutableTx(
-            self._coin,
-            input_list,
-            output_list)
-        self.assertTrue(mtx.sign())
-        self.assertEqual(
-            "b8eab75158fc3f3bd8479005a02eef5a13c5d80e364ab155a4ebdb19d418b331",  # noqa
-            mtx.name)
-        self.assertEqual(
-            "01000000018878399d83ec25c627cfbf753ff9ca3602373eac437ab2676154a3c2"  # noqa
-            "da23adf3010000006b483045022100b167dd5c560454a8c7e6425aebde64723311"  # noqa
-            "0158acf84b1b81a9ed98b2c613a20220551d562999009596a0c1c12b2a77861cc9"  # noqa
-            "150bc77c025ed5309ff77d39bc889f0121033d5c2875c9bd116875a71a5db64cff"  # noqa
-            "cb13396b163d039b1d9327824891804334feffffff0250c30000000000001976a9"  # noqa
-            "14e7c1345fc8f87c68170b3aa798a956c2fe6a9eff88ac0888fc04000000001976"  # noqa
-            "a91492461bde6283b461ece7ddf4dbf1e0a48bd113d888ac00000000",  # noqa
-            mtx.serialize().hex())
+        def input_list(*, is_dummy: bool) -> List:
+            return [
+                self._createInput(
+                    self._coin,
+                    "8878399d83ec25c627cfbf753ff9ca3602373eac437ab2676154a3c2da23adf3", # noqa
+                    1,
+                    private_key="L3jsepcttyuJK3HKezD4qqRKGtwc8d2d1Nw6vsoPDX9cMcUxqqMv", # noqa
+                    address_type=self._coin.Address.Type.PUBKEY_HASH,
+                    script_type=self._coin.Script.Type.P2PKH,
+                    amount=83727960,
+                    sequence=0xfffffffe,
+                    is_dummy=is_dummy)
+            ]
+
+        def output_list(*, is_dummy: bool) -> List:
+            return [
+                self._createOutput(
+                    self._coin,
+                    address_name="1N8QYQNAD8PLEJjmCGGR8iN1iuR9yXtY1x",  # noqa
+                    address_type=self._coin.Address.Type.PUBKEY_HASH,
+                    amount=50000,
+                    is_dummy=is_dummy),
+                self._createOutput(
+                    self._coin,
+                    address_name="1ELReFsTCUY2mfaDTy32qxYiT49z786eFg",  # noqa
+                    address_type=self._coin.Address.Type.PUBKEY_HASH,
+                    amount=83658760,
+                    is_dummy=is_dummy)
+            ]
+
+        self._test_mtx(
+            input_list(is_dummy=False),
+            output_list(is_dummy=False),
+            lock_time=0,
+            is_dummy=False,
+            expected_name="b8eab75158fc3f3bd8479005a02eef5a13c5d80e364ab155a4ebdb19d418b331",  # noqa
+            expected_data=""
+                "01000000018878399d83ec25c627cfbf753ff9ca3602373eac437ab2676154"  # noqa
+                "a3c2da23adf3010000006b483045022100b167dd5c560454a8c7e6425aebde"  # noqa
+                "647233110158acf84b1b81a9ed98b2c613a20220551d562999009596a0c1c1"  # noqa
+                "2b2a77861cc9150bc77c025ed5309ff77d39bc889f0121033d5c2875c9bd11"  # noqa
+                "6875a71a5db64cffcb13396b163d039b1d9327824891804334feffffff0250"  # noqa
+                "c30000000000001976a914e7c1345fc8f87c68170b3aa798a956c2fe6a9eff"  # noqa
+                "88ac0888fc04000000001976a91492461bde6283b461ece7ddf4dbf1e0a48b"  # noqa
+                "d113d888ac00000000",  # noqa
+            excepted_raw_size=226,
+            excepted_virtual_size=226)
+
+        self._test_mtx(
+            input_list(is_dummy=True),
+            output_list(is_dummy=True),
+            lock_time=0,
+            is_dummy=True,
+            expected_name=None,
+            expected_data=""
+                "01000000018878399d83ec25c627cfbf753ff9ca3602373eac437ab2676154"  # noqa
+                "a3c2da23adf3010000006b4800000000000000000000000000000000000000"  # noqa
+                "00000000000000000000000000000000000000000000000000000000000000"  # noqa
+                "00000000000000000000000000000000000000000001210000000000000000"  # noqa
+                "00000000000000000000000000000000000000000000000000feffffff0250"  # noqa
+                "c30000000000001976a914e7c1345fc8f87c68170b3aa798a956c2fe6a9eff"  # noqa
+                "88ac0888fc04000000001976a91492461bde6283b461ece7ddf4dbf1e0a48b"  # noqa
+                "d113d888ac00000000",  # noqa
+            excepted_raw_size=226,
+            excepted_virtual_size=226)
 
     def test_p2pkh_uncompressed(self) -> None:
-        input_list = [
-            self._createInput(
-                self._coin,
-                name="01" * 32,
-                index=2,
-                private_key="5KHxtARu5yr1JECrYGEA2YpCPdh1i9ciEgQayAF8kcqApkGzT9s", # noqa
-                address_type=self._coin.Address.Type.PUBKEY_HASH,
-                script_type=self._coin.Script.Type.P2PKH,
-                amount=1,
-                sequence=0xfffffffe),
-        ]
-        output_list = [
-            self._createOutput(
-                self._coin,
-                address_name="1ExJJsNLQDNVVM1s1sdyt1o5P3GC5r32UG",  # noqa
-                address_type=self._coin.Address.Type.PUBKEY_HASH,
-                amount=1
-            )
-        ]
-        mtx = self._coin.TxFactory.MutableTx(
-            self._coin,
-            input_list,
-            output_list)
-        self.assertTrue(mtx.sign())
-        self.assertEqual(
-            "5ea24fd0d01dda1994d4357efe38bb527279983e45cd6ad50dd0626b64234f83",  # noqa
-            mtx.name)
-        self.assertEqual(
-            "010000000101010101010101010101010101010101010101010101010101010101"  # noqa
-            "01010101020000008a473044022038b2497feeb5fb77c0f78594519040c5400a10"  # noqa
-            "8031596a607a96a2775a2ea79e02200b4b210ea49c6f222feadf21a9f0bdc8b820"  # noqa
-            "b04ac60cf0ef8b62439d50c1c1690141043d5c2875c9bd116875a71a5db64cffcb"  # noqa
-            "13396b163d039b1d932782489180433476a4352a2add00ebb0d5c94c515b72eb10"  # noqa
-            "f1fd8f3f03b42f4a2b255bfc9aa9e3feffffff0101000000000000001976a91499"  # noqa
-            "0ef60d63b5b5964a1c2282061af45123e93fcb88ac00000000",  # noqa
-            mtx.serialize().hex())
+        def input_list(*, is_dummy: bool) -> List:
+            return [
+                self._createInput(
+                    self._coin,
+                    "01" * 32,
+                    2,
+                    private_key="5KHxtARu5yr1JECrYGEA2YpCPdh1i9ciEgQayAF8kcqApkGzT9s", # noqa
+                    address_type=self._coin.Address.Type.PUBKEY_HASH,
+                    script_type=self._coin.Script.Type.P2PKH,
+                    amount=1,
+                    sequence=0xfffffffe,
+                    is_dummy=is_dummy)
+            ]
+
+        def output_list(*, is_dummy: bool) -> List:
+            return [
+                self._createOutput(
+                    self._coin,
+                    address_name="1ExJJsNLQDNVVM1s1sdyt1o5P3GC5r32UG",  # noqa
+                    address_type=self._coin.Address.Type.PUBKEY_HASH,
+                    amount=1,
+                    is_dummy=is_dummy)
+            ]
+
+        self._test_mtx(
+            input_list(is_dummy=False),
+            output_list(is_dummy=False),
+            lock_time=0,
+            is_dummy=False,
+            expected_name="5ea24fd0d01dda1994d4357efe38bb527279983e45cd6ad50dd0626b64234f83",  # noqa
+            expected_data=""
+                "01000000010101010101010101010101010101010101010101010101010101"  # noqa
+                "010101010101020000008a473044022038b2497feeb5fb77c0f78594519040"  # noqa
+                "c5400a108031596a607a96a2775a2ea79e02200b4b210ea49c6f222feadf21"  # noqa
+                "a9f0bdc8b820b04ac60cf0ef8b62439d50c1c1690141043d5c2875c9bd1168"  # noqa
+                "75a71a5db64cffcb13396b163d039b1d932782489180433476a4352a2add00"  # noqa
+                "ebb0d5c94c515b72eb10f1fd8f3f03b42f4a2b255bfc9aa9e3feffffff0101"  # noqa
+                "000000000000001976a914990ef60d63b5b5964a1c2282061af45123e93fcb"  # noqa
+                "88ac00000000",  # noqa
+            excepted_raw_size=223,
+            excepted_virtual_size=223)
+
+        self._test_mtx(
+            input_list(is_dummy=True),
+            output_list(is_dummy=True),
+            lock_time=0,
+            is_dummy=True,
+            expected_name=None,
+            expected_data=""
+                "01000000010101010101010101010101010101010101010101010101010101"  # noqa
+                "010101010101020000008b4800000000000000000000000000000000000000"  # noqa
+                "00000000000000000000000000000000000000000000000000000000000000"  # noqa
+                "00000000000000000000000000000000000000000001410000000000000000"  # noqa
+                "00000000000000000000000000000000000000000000000000000000000000"  # noqa
+                "0000000000000000000000000000000000000000000000000000feffffff01"  # noqa
+                "01000000000000001976a914990ef60d63b5b5964a1c2282061af45123e93f"  # noqa
+                "cb88ac00000000",  # noqa
+            excepted_raw_size=224,
+            excepted_virtual_size=224)
 
     # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#native-p2wpkh
     def test_native_p2wpkh(self) -> None:
-        input_list = [
-            self._createInput(
-                self._coin,
-                name="fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f",  # noqa
-                index=0,
-                private_key="bbc27228ddcb9209d7fd6f36b02f7dfa6252af40bb2f1cbc7a557da8027ff866",  # noqa
-                address_type=self._coin.Address.Type.PUBKEY_HASH,
-                script_type=self._coin.Script.Type.P2PK,
-                amount=625000000,
-                sequence=0xffffffee),
-            self._createInput(
-                self._coin,
-                name="ef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a",  # noqa
-                index=1,
-                private_key="619c335025c7f4012e556c2a58b2506e30b8511b53ade95ea316fd8c3286feb9",  # noqa
-                address_type=self._coin.Address.Type.WITNESS_V0_KEY_HASH,
-                script_type=self._coin.Script.Type.P2WPKH,
-                amount=600000000,
-                sequence=0xffffffff),
-        ]
-        output_list = [
-            self._createOutput(
-                self._coin,
-                address_name="1Cu32FVupVCgHkMMRJdYJugxwo2Aprgk7H",  # noqa
-                address_type=self._coin.Address.Type.PUBKEY_HASH,
-                amount=112340000
-            ),
-            self._createOutput(
-                self._coin,
-                address_name="16TZ8J6Q5iZKBWizWzFAYnrsaox5Z5aBRV",  # noqa
-                address_type=self._coin.Address.Type.PUBKEY_HASH,
-                amount=223450000)
-        ]
+        def input_list(*, is_dummy: bool) -> List:
+            return [
+                self._createInput(
+                    self._coin,
+                    "fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f",  # noqa
+                    0,
+                    private_key="bbc27228ddcb9209d7fd6f36b02f7dfa6252af40bb2f1cbc7a557da8027ff866",  # noqa
+                    address_type=self._coin.Address.Type.PUBKEY_HASH,
+                    script_type=self._coin.Script.Type.P2PK,
+                    amount=625000000,
+                    sequence=0xffffffee,
+                    is_dummy=is_dummy),
+                self._createInput(
+                    self._coin,
+                    "ef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a",  # noqa
+                    1,
+                    private_key="619c335025c7f4012e556c2a58b2506e30b8511b53ade95ea316fd8c3286feb9",  # noqa
+                    address_type=self._coin.Address.Type.WITNESS_V0_KEY_HASH,
+                    script_type=self._coin.Script.Type.P2WPKH,
+                    amount=600000000,
+                    sequence=0xffffffff,
+                    is_dummy=is_dummy),
+            ]
 
-        mtx = self._coin.TxFactory.MutableTx(
-            self._coin,
-            input_list,
-            output_list,
-            lock_time=0x11)
-        self.assertTrue(mtx.sign())
-        self.assertEqual(
-            "e8151a2af31c368a35053ddd4bdb285a8595c769a3ad83e0fa02314a602d4609",  # noqa
-            mtx.name)
+        def output_list(*, is_dummy: bool) -> List:
+            return [
+                self._createOutput(
+                    self._coin,
+                    address_name="1Cu32FVupVCgHkMMRJdYJugxwo2Aprgk7H",  # noqa
+                    address_type=self._coin.Address.Type.PUBKEY_HASH,
+                    amount=112340000,
+                    is_dummy=is_dummy),
+                self._createOutput(
+                    self._coin,
+                    address_name="16TZ8J6Q5iZKBWizWzFAYnrsaox5Z5aBRV",  # noqa
+                    address_type=self._coin.Address.Type.PUBKEY_HASH,
+                    amount=223450000,
+                    is_dummy=is_dummy)
+            ]
 
-        self.assertEqual(
-            "01000000000102fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf43354"  # noqa
-            "1db4e4ad969f00000000494830450221008b9d1dc26ba6a9cb62127b02742fa9d7"  # noqa
-            "54cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a99f2b1c0a19c"  # noqa
-            "0489bc22ede944ccf4ecbab4cc618ef3ed01eeffffffef51e1b804cc89d182d279"  # noqa
-            "655c3aa89e815b1b309fe287d9b2b55d57b90ec68a0100000000ffffffff02202c"  # noqa
-            "b206000000001976a9148280b37df378db99f66f85c95a783a76ac7a6d5988ac90"  # noqa
-            "93510d000000001976a9143bde42dbee7e4dbe6a21b2d50ce2f0167faa815988ac"  # noqa
-            "000247304402203609e17b84f6a7d30c80bfa610b5b4542f32a8a0d5447a12fb13"  # noqa
-            "66d7f01cc44a0220573a954c4518331561406f90300e8f3358f51928d43c212a8c"  # noqa
-            "aed02de67eebee0121025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253"  # noqa
-            "f62fc70f07aeee635711000000",  # noqa
-            mtx.serialize().hex())
+        self._test_mtx(
+            input_list(is_dummy=False),
+            output_list(is_dummy=False),
+            lock_time=0x11,
+            is_dummy=False,
+            expected_name="e8151a2af31c368a35053ddd4bdb285a8595c769a3ad83e0fa02314a602d4609",  # noqa
+            expected_data=""
+                "01000000000102fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf4"  # noqa
+                "33541db4e4ad969f00000000494830450221008b9d1dc26ba6a9cb62127b02"  # noqa
+                "742fa9d754cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a"  # noqa
+                "99f2b1c0a19c0489bc22ede944ccf4ecbab4cc618ef3ed01eeffffffef51e1"  # noqa
+                "b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a0100"  # noqa
+                "000000ffffffff02202cb206000000001976a9148280b37df378db99f66f85"  # noqa
+                "c95a783a76ac7a6d5988ac9093510d000000001976a9143bde42dbee7e4dbe"  # noqa
+                "6a21b2d50ce2f0167faa815988ac000247304402203609e17b84f6a7d30c80"  # noqa
+                "bfa610b5b4542f32a8a0d5447a12fb1366d7f01cc44a0220573a954c451833"  # noqa
+                "1561406f90300e8f3358f51928d43c212a8caed02de67eebee0121025476c2"  # noqa
+                "e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee63571100"  # noqa
+                "0000",  # noqa
+            excepted_raw_size=343,
+            excepted_virtual_size=261)
+
+        self._test_mtx(
+            input_list(is_dummy=True),
+            output_list(is_dummy=True),
+            lock_time=0x11,
+            is_dummy=True,
+            expected_name=None,
+            expected_data=""
+                "01000000000102fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf4"  # noqa
+                "33541db4e4ad969f0000000049480000000000000000000000000000000000"  # noqa
+                "00000000000000000000000000000000000000000000000000000000000000"  # noqa
+                "000000000000000000000000000000000000000000000001eeffffffef51e1"  # noqa
+                "b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a0100"  # noqa
+                "000000ffffffff02202cb206000000001976a9148280b37df378db99f66f85"  # noqa
+                "c95a783a76ac7a6d5988ac9093510d000000001976a9143bde42dbee7e4dbe"  # noqa
+                "6a21b2d50ce2f0167faa815988ac0002480000000000000000000000000000"  # noqa
+                "00000000000000000000000000000000000000000000000000000000000000"  # noqa
+                "00000000000000000000000000000000000000000000000000000121000000"  # noqa
+                "00000000000000000000000000000000000000000000000000000000000011"  # noqa
+                "000000",  # noqa
+            excepted_raw_size=344,
+            excepted_virtual_size=261)
 
     # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#p2sh-p2wpkh
     def test_p2sh_p2wpkh(self) -> None:
-        input_list = [
-            self._createInput(
-                self._coin,
-                name="db6b1b20aa0fd7b23880be2ecbd4a98130974cf4748fb66092ac4d3ceb1a5477",  # noqa
-                index=1,
-                private_key="eb696a065ef48a2192da5b28b694f87544b30fae8327c4510137a922f32c6dcf",  # noqa
-                address_type=self._coin.Address.Type.WITNESS_V0_KEY_HASH,
-                script_type=self._coin.Script.Type.P2SH_P2WPKH,
-                amount=1000000000,
-                sequence=0xfffffffe),
-        ]
-        output_list = [
-            self._createOutput(
-                self._coin,
-                address_name="1Fyxts6r24DpEieygQiNnWxUdb18ANa5p7",  # noqa
-                address_type=self._coin.Address.Type.PUBKEY_HASH,
-                amount=199996600),
-            self._createOutput(
-                self._coin,
-                address_name="1Q5YjKVj5yQWHBBsyEBamkfph3cA6G9KK8",  # noqa
-                address_type=self._coin.Address.Type.PUBKEY_HASH,
-                amount=800000000)
-        ]
+        def input_list(*, is_dummy: bool) -> List:
+            return [
+                self._createInput(
+                    self._coin,
+                    "db6b1b20aa0fd7b23880be2ecbd4a98130974cf4748fb66092ac4d3ceb1a5477",  # noqa
+                    1,
+                    private_key="eb696a065ef48a2192da5b28b694f87544b30fae8327c4510137a922f32c6dcf",  # noqa
+                    address_type=self._coin.Address.Type.WITNESS_V0_KEY_HASH,
+                    script_type=self._coin.Script.Type.P2SH_P2WPKH,
+                    amount=1000000000,
+                    sequence=0xfffffffe,
+                    is_dummy=is_dummy)
+                ]
 
-        mtx = self._coin.TxFactory.MutableTx(
-            self._coin,
-            input_list,
-            output_list,
-            lock_time=0x492)
-        self.assertTrue(mtx.sign())
-        self.assertEqual(
-            "ef48d9d0f595052e0f8cdcf825f7a5e50b6a388a81f206f3f4846e5ecd7a0c23",  # noqa
-            mtx.name)
+        def output_list(*, is_dummy: bool) -> List:
+            return [
+                self._createOutput(
+                    self._coin,
+                    address_name="1Fyxts6r24DpEieygQiNnWxUdb18ANa5p7",  # noqa
+                    address_type=self._coin.Address.Type.PUBKEY_HASH,
+                    amount=199996600,
+                    is_dummy=is_dummy),
+                self._createOutput(
+                    self._coin,
+                    address_name="1Q5YjKVj5yQWHBBsyEBamkfph3cA6G9KK8",  # noqa
+                    address_type=self._coin.Address.Type.PUBKEY_HASH,
+                    amount=800000000,
+                    is_dummy=is_dummy)
+            ]
 
-        self.assertEqual(
-            "01000000000101db6b1b20aa0fd7b23880be2ecbd4a98130974cf4748fb66092ac"  # noqa
-            "4d3ceb1a5477010000001716001479091972186c449eb1ded22b78e40d009bdf00"  # noqa
-            "89feffffff02b8b4eb0b000000001976a914a457b684d7f0d539a46a45bbc043f3"  # noqa
-            "5b59d0d96388ac0008af2f000000001976a914fd270b1ee6abcaea97fea7ad0402"  # noqa
-            "e8bd8ad6d77c88ac02473044022047ac8e878352d3ebbde1c94ce3a10d057c2417"  # noqa
-            "5747116f8288e5d794d12d482f0220217f36a485cae903c713331d877c1f64677e"  # noqa
-            "3622ad4010726870540656fe9dcb012103ad1d8e89212f0b92c74d23bb710c0066"  # noqa
-            "2ad1470198ac48c43f7d6f93a2a2687392040000",
-            mtx.serialize().hex())
+        self._test_mtx(
+            input_list(is_dummy=False),
+            output_list(is_dummy=False),
+            lock_time=0x492,
+            is_dummy=False,
+            expected_name="ef48d9d0f595052e0f8cdcf825f7a5e50b6a388a81f206f3f4846e5ecd7a0c23",  # noqa
+            expected_data=""
+                "01000000000101db6b1b20aa0fd7b23880be2ecbd4a98130974cf4748fb660"  # noqa
+                "92ac4d3ceb1a5477010000001716001479091972186c449eb1ded22b78e40d"  # noqa
+                "009bdf0089feffffff02b8b4eb0b000000001976a914a457b684d7f0d539a4"  # noqa
+                "6a45bbc043f35b59d0d96388ac0008af2f000000001976a914fd270b1ee6ab"  # noqa
+                "caea97fea7ad0402e8bd8ad6d77c88ac02473044022047ac8e878352d3ebbd"  # noqa
+                "e1c94ce3a10d057c24175747116f8288e5d794d12d482f0220217f36a485ca"  # noqa
+                "e903c713331d877c1f64677e3622ad4010726870540656fe9dcb012103ad1d"  # noqa
+                "8e89212f0b92c74d23bb710c00662ad1470198ac48c43f7d6f93a2a2687392"  # noqa
+                "040000",  # noqa
+            excepted_raw_size=251,
+            excepted_virtual_size=170)
+
+        self._test_mtx(
+            input_list(is_dummy=True),
+            output_list(is_dummy=True),
+            lock_time=0x492,
+            is_dummy=True,
+            expected_name=None,
+            expected_data=""
+                "01000000000101db6b1b20aa0fd7b23880be2ecbd4a98130974cf4748fb660"  # noqa
+                "92ac4d3ceb1a5477010000001716001479091972186c449eb1ded22b78e40d"  # noqa
+                "009bdf0089feffffff02b8b4eb0b000000001976a914a457b684d7f0d539a4"  # noqa
+                "6a45bbc043f35b59d0d96388ac0008af2f000000001976a914fd270b1ee6ab"  # noqa
+                "caea97fea7ad0402e8bd8ad6d77c88ac024800000000000000000000000000"  # noqa
+                "00000000000000000000000000000000000000000000000000000000000000"  # noqa
+                "00000000000000000000000000000000000000000000000000000001210000"  # noqa
+                "00000000000000000000000000000000000000000000000000000000000000"  # noqa
+                "92040000",  # noqa
+            excepted_raw_size=252,
+            excepted_virtual_size=170)

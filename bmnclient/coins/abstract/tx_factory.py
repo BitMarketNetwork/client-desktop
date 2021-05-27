@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from functools import lru_cache
 from itertools import chain
 from typing import TYPE_CHECKING
 
@@ -214,12 +215,27 @@ class _AbstractMutableTx:
         raise NotImplementedError
 
     def sign(self) -> bool:
+        self.serialize.cache_clear()
         if not self._is_signed and self._sign():
             self._is_signed = True
             return True
         return False
 
-    def serialize(self, *, with_witness: bool = True) -> bytes:
+    def _serialize(self, *, with_witness: bool = True, **kwargs) -> bytes:
+        raise NotImplementedError
+
+    @lru_cache
+    def serialize(self, *, with_witness: bool = True, **kwargs) -> bytes:
+        if not self._is_signed:
+            return b""
+        return self._serialize(with_witness=with_witness, **kwargs)
+
+    @property
+    def rawSize(self) -> int:
+        return len(self.serialize(with_witness=True))
+
+    @property
+    def virtualSize(self) -> int:
         raise NotImplementedError
 
 
