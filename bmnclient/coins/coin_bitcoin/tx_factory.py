@@ -7,7 +7,7 @@ from ..abstract.coin import AbstractCoin
 from ...crypto.digest import Sha256Digest, Sha256DoubleDigest
 
 if TYPE_CHECKING:
-    from typing import Sequence
+    from typing import Optional, Sequence, Tuple
     from . import Bitcoin
 
 
@@ -20,7 +20,8 @@ class _BitcoinMutableTxInput(AbstractCoin.TxFactory.MutableTx.Input):
             self,
             utxo: Bitcoin.Tx.Utxo,
             *,
-            sequence: int = 0xffffffff) -> None:
+            sequence: int = 0xffffffff,
+            **kwargs) -> None:
         utxo_id_bytes = \
             bytes.fromhex(utxo.name)[::-1] \
             + (utxo.coin.Script.integerToBytes(utxo.index, 4) or b"\x00" * 4)
@@ -28,7 +29,8 @@ class _BitcoinMutableTxInput(AbstractCoin.TxFactory.MutableTx.Input):
             utxo,
             utxo_id_bytes=utxo_id_bytes,
             hash_type=1,  # SIGHASH_ALL
-            sequence=sequence)
+            sequence=sequence,
+            **kwargs)
 
         # For P2WPKH witness program, the scriptCode is
         # 0x1976a914{20-byte-pubkey-hash}88ac.
@@ -111,8 +113,12 @@ class _BitcoinMutableTxInput(AbstractCoin.TxFactory.MutableTx.Input):
 class _BitcoinMutableTxOutput(AbstractCoin.TxFactory.MutableTx.Output):
     _AMOUNT_LENGTH = 8
 
-    def __init__(self, address: Bitcoin.Address, amount: int) -> None:
-        super().__init__(address, amount)
+    def __init__(
+            self,
+            address: Bitcoin.Address,
+            amount: int,
+            **kwargs) -> None:
+        super().__init__(address, amount, **kwargs)
         try:
             script = self._coin.Script.addressToScript(self._address)
             self._script_bytes = \
@@ -136,20 +142,22 @@ class _BitcoinMutableTx(AbstractCoin.TxFactory.MutableTx):
             input_list: Sequence[Input],
             output_list: Sequence[Output],
             *,
-            lock_time: int = 0) -> None:
+            lock_time: int = 0,
+            **kwargs) -> None:
         super().__init__(
             coin,
             input_list,
             output_list,
             lock_time=lock_time,
-            version=1)
+            version=1,
+            **kwargs)
 
     @property
     def name(self) -> str:
         v = Sha256DoubleDigest(self.serialize(with_segwit=False)).finalize()
         return v[::-1].hex()
 
-    def sign(self) -> bool:
+    def _sign(self) -> bool:
         input_count = self._coin.Script.integerToVarInt(
             len(self._input_list))
         output_count = self._coin.Script.integerToVarInt(
@@ -210,6 +218,8 @@ class _BitcoinMutableTx(AbstractCoin.TxFactory.MutableTx):
         return True
 
     def serialize(self, *, with_segwit: bool = True) -> bytes:
+        if not self._is_signed:
+            return b""
         try:
             input_list = \
                 self._coin.Script.integerToVarInt(len(self._input_list)) \

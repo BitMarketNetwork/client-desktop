@@ -9,7 +9,7 @@ from ..utils import CoinUtils
 from ...logger import Logger
 
 if TYPE_CHECKING:
-    from typing import Dict, List, Optional, Sequence, Tuple, Type
+    from typing import List, Optional, Sequence, Tuple, Type
     from .coin import AbstractCoin
     SelectedUtxoList = Tuple[List[AbstractCoin.Tx.Utxo], int]
 
@@ -25,11 +25,21 @@ def _safeScriptIntegerToBytes(
 class _AbstractMutableTxIo:
     _AMOUNT_LENGTH = 0
 
-    def __init__(self, coin: AbstractCoin, amount: int):
+    def __init__(
+            self,
+            coin: AbstractCoin,
+            amount: int,
+            *,
+            is_dummy: bool = False):
         assert amount >= 0
+        self._is_dummy = is_dummy
         self._coin = coin
         self._amount = amount
         self._script_bytes = b""
+
+    @property
+    def isDummy(self) -> bool:
+        return self._is_dummy
 
     @property
     def amount(self) -> int:
@@ -57,8 +67,9 @@ class _AbstractMutableTxInput(_AbstractMutableTxIo):
             *,
             utxo_id_bytes: bytes,
             hash_type: int,
-            sequence: int) -> None:
-        super().__init__(utxo.coin, utxo.amount)
+            sequence: int,
+            **kwargs) -> None:
+        super().__init__(utxo.coin, utxo.amount, **kwargs)
         self._utxo = utxo
         self._utxo_id_bytes = utxo_id_bytes
         self._hash_type = hash_type
@@ -123,8 +134,12 @@ class _AbstractMutableTxInput(_AbstractMutableTxIo):
 
 
 class _AbstractMutableTxOutput(_AbstractMutableTxIo):
-    def __init__(self, address: AbstractCoin.Address, amount: int) -> None:
-        super().__init__(address.coin, amount)
+    def __init__(
+            self,
+            address: AbstractCoin.Address,
+            amount: int,
+            **kwargs) -> None:
+        super().__init__(address.coin, amount, **kwargs)
         self._address = address
 
 
@@ -142,13 +157,20 @@ class _AbstractMutableTx:
             output_list: Sequence[Output],
             *,
             version: int,
-            lock_time: int):
+            lock_time: int,
+            is_dummy: bool = False):
+        self._is_dummy = is_dummy
         self._coin = coin
         self._input_list = input_list
         self._output_list = output_list
         self._version = version
         self._lock_time = lock_time
         self._is_segwit = any(i.isSegwit for i in self._input_list)
+        self._is_signed = False
+
+    @property
+    def isDummy(self) -> bool:
+        return self._is_dummy
 
     @property
     def name(self) -> str:
@@ -184,8 +206,18 @@ class _AbstractMutableTx:
     def isSegwit(self) -> bool:
         return self._is_segwit
 
-    def sign(self) -> bool:
+    @property
+    def isSigned(self) -> bool:
+        return self._is_signed
+
+    def _sign(self) -> bool:
         raise NotImplementedError
+
+    def sign(self) -> bool:
+        if not self._is_signed and self._sign():
+            self._is_signed = True
+            return True
+        return False
 
     def serialize(self, *, with_segwit: bool = True) -> bytes:
         raise NotImplementedError
@@ -228,8 +260,7 @@ class _AbstractTxFactory:
         self._selected_utxo_list: List[AbstractCoin.Tx.Utxo] = []
         self._selected_utxo_list_amount = 0
 
-        self.__mtx = None  # TODO tmp
-        self.__mtx_result: Optional[str] = None  # TODO tmp
+        self._mtx: Optional[AbstractCoin.TxFactory.MutableTx] = None
 
         self._model: Optional[AbstractCoin.TxFactory.Interface] = \
             self._coin.model_factory(self)
@@ -380,11 +411,10 @@ class _AbstractTxFactory:
             self._logger.error("No input UTXO's selected.")
             return False
 
-        fee_amount = self.feeAmount
         change_amount = self.changeAmount
         receiver_amount = self._receiver_amount
         if self._subtract_fee:
-            receiver_amount -= fee_amount
+            receiver_amount -= self.feeAmount
 
         output_list = [(self._receiver_address, receiver_amount)]
 
@@ -430,9 +460,9 @@ class _AbstractTxFactory:
         return True
 
     def broadcast(self) -> bool:
-        if self.__mtx_result is None or len(self.__mtx_result) <= 0:
+        if self._mtx is None or not self._mtx.isSigned:
             return False
-        mtx = self.__mtx
+        mtx = self._mtx
         self.clear()
         if self._model:
             self._model.onBroadcast(mtx)
