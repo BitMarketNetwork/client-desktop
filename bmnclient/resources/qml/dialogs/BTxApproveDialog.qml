@@ -58,7 +58,7 @@ BDialog {
             text: qsTr("Amount:")
         }
         BAmountInfoValue {
-            amount: _base.coin.txFactory.amount
+            amount: _base.coin.txFactory.receiverAmount
         }
         BInfoSeparator {}
 
