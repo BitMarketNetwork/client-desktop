@@ -53,7 +53,7 @@ class CoinUtils(NotImplementedInstance):
             -> Tuple[ClassStringKeyTuple, ...]:
         return (
             *cls.coinToNameKeyTuple(mtx.coin),
-            (None, mtx.name)
+            (None, mtx.name or "no_name")
         )
 
     @classmethod

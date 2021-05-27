@@ -39,10 +39,10 @@ class _AbstractCoinInterface:
     def afterSetFiatRate(self) -> None:
         raise NotImplementedError
 
-    def afterRefreshAmount(self) -> None:
+    def afterUpdateAmount(self) -> None:
         raise NotImplementedError
 
-    def afterRefreshUtxoList(self) -> None:
+    def afterUpdateUtxoList(self) -> None:
         raise NotImplementedError
 
     def beforeAppendAddress(self, address: AbstractCoin.Address) -> None:
@@ -355,16 +355,16 @@ class AbstractCoin(Serializable):
     def amount(self) -> int:
         return self._amount
 
-    def refreshAmount(self) -> None:
+    def updateAmount(self) -> None:
         a = sum(a.amount for a in self._address_list if not a.isReadOnly)
         self._amount = a
         if self._model:
-            self._model.afterRefreshAmount()
+            self._model.afterUpdateAmount()
 
-    def refreshUtxoList(self) -> None:
-        self._tx_factory.refreshUtxoList()
+    def updateUtxoList(self) -> None:
+        self._tx_factory.updateUtxoList()
         if self._model:
-            self._model.afterRefreshUtxoList()
+            self._model.afterUpdateUtxoList()
 
     def deriveHdNode(self, purpose_node: HdNode) -> bool:
         assert self._hd_node is None
@@ -467,7 +467,7 @@ class AbstractCoin(Serializable):
         if self._model:
             self._model.afterAppendAddress(address)
 
-        self.refreshAmount()
+        self.updateAmount()
         return True
 
     @property

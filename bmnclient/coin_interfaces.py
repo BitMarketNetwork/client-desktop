@@ -53,10 +53,10 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
     def afterSetFiatRate(self) -> None:
         pass
 
-    def afterRefreshAmount(self) -> None:
+    def afterUpdateAmount(self) -> None:
         pass
 
-    def afterRefreshUtxoList(self) -> None:
+    def afterUpdateUtxoList(self) -> None:
         pass
 
     def beforeAppendAddress(self, address: AbstractCoin.Address) -> None:

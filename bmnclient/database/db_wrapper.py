@@ -318,7 +318,7 @@ class Database:
                 address_list.append(address)
 
         for coin in coin_list:
-            coin.refreshAmount()
+            coin.updateAmount()
         return address_list
 
     def updateCoinAddressTx(

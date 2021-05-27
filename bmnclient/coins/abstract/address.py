@@ -403,7 +403,7 @@ class _AbstractAddress(Serializable):
             self._amount = value
             if self._model:
                 self._model.afterSetAmount()
-            self._coin.refreshAmount()
+            self._coin.updateAmount()
 
     @serializable
     @property
@@ -484,7 +484,7 @@ class _AbstractAddress(Serializable):
 
         if self._model:
             self._model.afterSetUtxoList()
-        self._coin.refreshUtxoList()
+        self._coin.updateUtxoList()
 
         self.amount = sum(u.amount for u in self._utxo_list)
 

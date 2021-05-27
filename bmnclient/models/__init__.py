@@ -32,7 +32,7 @@ class AbstractStateModel(QObject):
         self._application = application
         self._coin = coin
 
-    def refresh(self) -> None:
+    def update(self) -> None:
         for a in dir(self):
             if a.endswith("__stateChanged"):
                 a = getattr(self, a)
@@ -64,7 +64,7 @@ class AbstractModel(QObject):
     def __init__(self, application: GuiApplication, *args, **kwargs) -> None:
         super().__init__()
         self._application = application
-        self._refresh_lock = Lock()
+        self._update_lock = Lock()
 
     def iterateStateModels(self) -> Iterable[AbstractStateModel]:
         for a in dir(self):
@@ -78,16 +78,16 @@ class AbstractModel(QObject):
         return self._application.language.locale
 
     # TODO check usage
-    def refresh(self, initiator: Optional[QObject] = None) -> None:
-        if self._refresh_lock.acquire(False):
+    def update(self, initiator: Optional[QObject] = None) -> None:
+        if self._update_lock.acquire(False):
             for a in self.iterateStateModels():
                 if a is not initiator:
-                    a.refresh()
-            self._refresh_lock.release()
+                    a.update()
+            self._update_lock.release()
             self.stateChanged.emit()
 
-    def connectModelRefresh(self, model: QObject) -> None:
-        model.stateChanged.connect(lambda: self.refresh(model))
+    def connectModelUpdate(self, model: QObject) -> None:
+        model.stateChanged.connect(lambda: self.update(model))
 
     # TODO check usage
     @QProperty(int, notify=stateChanged)

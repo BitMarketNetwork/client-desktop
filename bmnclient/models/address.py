@@ -72,18 +72,18 @@ class AddressStateModel(AbstractAddressStateModel):
         # TODO
         # if self._address.useAsSource != value:
         #     self._address.useAsSource = value
-        #     self.refresh()
+        #     self.update()
         pass
 
 
 class AddressAmountModel(AbstractAddressAmountModel):
-    def refresh(self) -> None:
-        super().refresh()
+    def update(self) -> None:
+        super().update()
         for tx in self._address.txList:
             # noinspection PyUnresolvedReferences
-            tx.model.amount.refresh()
+            tx.model.amount.update()
             # noinspection PyUnresolvedReferences
-            tx.model.feeAmount.refresh()
+            tx.model.feeAmount.update()
 
     def _getValue(self) -> Optional[int]:
         return self._address.amount
@@ -103,12 +103,12 @@ class AddressModel(AddressInterface, AbstractModel):
         self._amount_model = AddressAmountModel(
             self._application,
             self._address)
-        self.connectModelRefresh(self._amount_model)
+        self.connectModelUpdate(self._amount_model)
 
         self._state_model = AddressStateModel(
             self._application,
             self._address)
-        self.connectModelRefresh(self._state_model)
+        self.connectModelUpdate(self._state_model)
 
         from .tx import TxListModel
         self._tx_list_model = TxListModel(
@@ -140,15 +140,15 @@ class AddressModel(AddressInterface, AbstractModel):
             self._tx_list_model)
 
     def afterSetAmount(self) -> None:
-        self._amount_model.refresh()
+        self._amount_model.update()
         super().afterSetAmount()
 
     def afterSetLabel(self) -> None:
-        self._state_model.refresh()
+        self._state_model.update()
         super().afterSetLabel()
 
     def afterSetComment(self) -> None:
-        self._state_model.refresh()
+        self._state_model.update()
         super().afterSetComment()
 
     def afterSetTxCount(self) -> None:

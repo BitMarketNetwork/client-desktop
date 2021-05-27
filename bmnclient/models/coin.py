@@ -96,10 +96,10 @@ class CoinServerDataModel(AbstractStateModel):
 
 
 class CoinAmountModel(AbstractAmountModel):
-    def refresh(self) -> None:
-        super().refresh()
+    def update(self) -> None:
+        super().update()
         for address in self._coin.addressList:
-            address.model.amount.refresh()
+            address.model.amount.update()
 
     def _getValue(self) -> Optional[int]:
         return self._coin.amount
@@ -148,17 +148,17 @@ class CoinReceiveManagerModel(AbstractStateModel):
             label=label,
             comment=comment)
         if self._address is None:
-            self.refresh()
+            self.update()
             return False
 
         self._coin.appendAddress(self._address)
-        self.refresh()
+        self.update()
         return True
 
     @QSlot()
     def clear(self) -> None:
         self._address = None
-        self.refresh()
+        self.update()
 
 
 class CoinManagerModel(AbstractStateModel):
@@ -212,17 +212,17 @@ class CoinModel(CoinInterface, AbstractModel):
         self._amount_model = CoinAmountModel(
             self._application,
             self._coin)
-        self.connectModelRefresh(self._amount_model)
+        self.connectModelUpdate(self._amount_model)
 
         self._state_model = CoinStateModel(
             self._application,
             self._coin)
-        self.connectModelRefresh(self._state_model)
+        self.connectModelUpdate(self._state_model)
 
         self._server_data_model = CoinServerDataModel(
             self._application,
             self._coin)
-        self.connectModelRefresh(self._server_data_model)
+        self.connectModelUpdate(self._server_data_model)
 
         self._address_list_model = AddressListModel(
             self._application,
@@ -232,12 +232,12 @@ class CoinModel(CoinInterface, AbstractModel):
         self._receive_manager = CoinReceiveManagerModel(
             self._application,
             self._coin)
-        self.connectModelRefresh(self._receive_manager)
+        self.connectModelUpdate(self._receive_manager)
 
         self._manager = CoinManagerModel(
             self._application,
             self._coin)
-        self.connectModelRefresh(self._manager)
+        self.connectModelUpdate(self._manager)
 
     @QProperty(str, constant=True)
     def name(self) -> str:
@@ -292,28 +292,28 @@ class CoinModel(CoinInterface, AbstractModel):
         return self._manager
 
     def afterSetEnabled(self) -> None:
-        self._state_model.refresh()
+        self._state_model.update()
         super().afterSetEnabled()
 
     def afterSetHeight(self) -> None:
-        self._state_model.refresh()
+        self._state_model.update()
         super().afterSetHeight()
 
     def afterSetStatus(self) -> None:
         super().afterSetStatus()
 
     def afterSetFiatRate(self) -> None:
-        self._amount_model.refresh()
-        self._coin.txFactory.model.refresh()
+        self._amount_model.update()
+        self._coin.txFactory.model.update()
         super().afterSetFiatRate()
 
-    def afterRefreshAmount(self) -> None:
-        self._amount_model.refresh()
-        super().afterRefreshAmount()
+    def afterUpdateAmount(self) -> None:
+        self._amount_model.update()
+        super().afterUpdateAmount()
 
-    def afterRefreshUtxoList(self) -> None:
-        self._coin.txFactory.model.refresh()
-        super().afterRefreshUtxoList()
+    def afterUpdateUtxoList(self) -> None:
+        self._coin.txFactory.model.update()
+        super().afterUpdateUtxoList()
 
     def beforeAppendAddress(self, address: AbstractCoin.Address) -> None:
         self._address_list_model.lock(self._address_list_model.lockInsertRows())
@@ -326,7 +326,7 @@ class CoinModel(CoinInterface, AbstractModel):
         super().afterAppendAddress(address)
 
     def afterSetServerData(self) -> None:
-        self._server_data_model.refresh()
+        self._server_data_model.update()
         super().afterSetServerData()
 
 

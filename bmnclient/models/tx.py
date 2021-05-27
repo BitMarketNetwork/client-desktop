@@ -85,12 +85,12 @@ class TxStateModel(AbstractTxStateModel):
 
 
 class TxAmountModel(AbstractTxAmountModel):
-    def refresh(self) -> None:
-        super().refresh()
+    def update(self) -> None:
+        super().update()
         for io in self._tx.inputList:
-            io.address.model.amount.refresh()
+            io.address.model.amount.update()
         for io in self._tx.outputList:
-            io.address.model.amount.refresh()
+            io.address.model.amount.update()
 
     def _getValue(self) -> Optional[int]:
         return self._tx.amount
@@ -126,17 +126,17 @@ class TxModel(TxInterface, AbstractModel):
         self._amount_model = TxAmountModel(
             self._application,
             self._tx)
-        self.connectModelRefresh(self._amount_model)
+        self.connectModelUpdate(self._amount_model)
 
         self._fee_amount_model = TxFeeAmountModel(
             self._application,
             self._tx)
-        self.connectModelRefresh(self._fee_amount_model)
+        self.connectModelUpdate(self._fee_amount_model)
 
         self._state_model = TxStateModel(
             self._application,
             self._tx)
-        self.connectModelRefresh(self._state_model)
+        self.connectModelUpdate(self._state_model)
 
         self._input_list_model = TxIoListModel(
             self._application,
@@ -170,11 +170,11 @@ class TxModel(TxInterface, AbstractModel):
         return self._output_list_model
 
     def afterSetHeight(self) -> None:
-        self._state_model.refresh()
+        self._state_model.update()
         super().afterSetHeight()
 
     def afterSetTime(self) -> None:
-        self._state_model.refresh()
+        self._state_model.update()
         super().afterSetTime()
 
 

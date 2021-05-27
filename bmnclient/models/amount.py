@@ -159,7 +159,7 @@ class AbstractAmountInputModel(AbstractAmountModel):
                 self._setValue(None)
             else:
                 result = self._setValue(value)
-            self.refresh()
+            self.update()
         return result
 
     @QProperty(QValidator, constant=True)

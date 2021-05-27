@@ -99,7 +99,7 @@ class TxFactoryFeeAmountModel(AbstractTxFactoryAmountModel):
     @subtractFromAmount.setter
     def _setSubtractFromAmount(self, value: bool) -> None:
         self._factory.subtractFee = value
-        self.refresh()  # TODO kill
+        self.update()  # TODO kill
 
 
 class TxFactoryKibFeeAmountModel(AbstractTxFactoryAmountInputModel):
@@ -164,7 +164,7 @@ class TxFactoryReceiverModel(AbstractTxFactoryStateModel):
     def _setAddressName(self, value: str) -> None:
         self._factory.setReceiverAddressName(value)
         self._first_use = False
-        self.refresh()
+        self.update()
 
     def _getValidStatus(self) -> ValidStatus:
         if self._factory.receiverAddress is not None:
@@ -225,32 +225,32 @@ class TxFactoryModel(TxFactoryInterface, AbstractModel):
         self._available_amount = TxFactoryAvailableAmountModel(
             self._application,
             self._factory)
-        self.connectModelRefresh(self._available_amount)
+        self.connectModelUpdate(self._available_amount)
 
         self._receiver_amount = TxFactoryReceiverAmountModel(
             self._application,
             self._factory)
-        self.connectModelRefresh(self._receiver_amount)
+        self.connectModelUpdate(self._receiver_amount)
 
         self._fee_amount = TxFactoryFeeAmountModel(
             self._application,
             self._factory)
-        self.connectModelRefresh(self._fee_amount)
+        self.connectModelUpdate(self._fee_amount)
 
         self._kib_fee_amount = TxFactoryKibFeeAmountModel(
             self._application,
             self._factory)
-        self.connectModelRefresh(self._kib_fee_amount)
+        self.connectModelUpdate(self._kib_fee_amount)
 
         self._change_amount = TxFactoryChangeAmountModel(
             self._application,
             self._factory)
-        self.connectModelRefresh(self._change_amount)
+        self.connectModelUpdate(self._change_amount)
 
         self._receiver = TxFactoryReceiverModel(
             self._application,
             self._factory)
-        self.connectModelRefresh(self._receiver)
+        self.connectModelUpdate(self._receiver)
 
         self._source_list = TxFactorySourceListModel(  # TODO
             self._application,

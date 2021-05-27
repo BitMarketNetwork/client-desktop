@@ -174,7 +174,7 @@ class _AbstractMutableTx:
         return self._is_dummy
 
     @property
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         raise NotImplementedError
 
     @property
@@ -291,11 +291,14 @@ class _AbstractTxFactory:
 
     @property
     def name(self) -> Optional[str]:
-        if self.__mtx is not None:
-            return self.__mtx.name
+        if self._mtx is not None:
+            return self._mtx.name
         return None
 
     def setReceiverAddressName(self, name: str) -> bool:
+        if not name:
+            self._receiver_address = None
+            return False
         self._receiver_address = self._coin.Address.decode(
             self._coin,
             name=name)
@@ -316,9 +319,6 @@ class _AbstractTxFactory:
     @property
     def changeAddress(self) -> Optional[AbstractCoin.Address]:
         return self._change_address
-
-    def refreshUtxoList(self) -> None:
-        self.updateUtxoList()
 
     @property
     def availableAmount(self) -> int:
