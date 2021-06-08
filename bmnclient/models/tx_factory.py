@@ -55,7 +55,7 @@ class AbstractTxFactoryAmountInputModel(AbstractAmountInputModel):
     def _setValue(self, value: Optional[int]) -> bool:
         raise NotImplementedError
 
-    def _getDefaultValue(self) -> Optional[int]:
+    def _setDefaultValue(self) -> bool:
         raise NotImplementedError
 
 
@@ -76,8 +76,9 @@ class TxFactoryReceiverAmountModel(AbstractTxFactoryAmountInputModel):
         self._factory.receiverAmount = value
         return True
 
-    def _getDefaultValue(self) -> Optional[int]:
-        return self._factory.maxReceiverAmount
+    def _setDefaultValue(self) -> bool:
+        self._factory.setReceiverMaxAmount()
+        return True
 
     def _getValidStatus(self) -> ValidStatus:
         if self._factory.isValidReceiverAmount:
@@ -114,8 +115,9 @@ class TxFactoryKibFeeAmountModel(AbstractTxFactoryAmountInputModel):
         self._factory.feeAmountPerByte = value // 1024
         return True
 
-    def _getDefaultValue(self) -> Optional[int]:
-        return self._factory.feeAmountPerByteDefault * 1024
+    def _setDefaultValue(self) -> bool:
+        self._factory.feeAmountPerByte = self._factory.feeAmountPerByteDefault
+        return True
 
     def _getValidStatus(self) -> ValidStatus:
         if self._factory.isValidFeeAmount:
@@ -305,8 +307,8 @@ class TxFactoryModel(TxFactoryInterface, AbstractModel):
     def broadcast(self) -> bool:
         return self._factory.broadcast()
 
-    def afterUpdateAvailableAmount(self) -> None:
-        super().afterUpdateAvailableAmount()
+    def afterUpdateState(self) -> None:
+        super().afterUpdateState()
         # TODO
 
     def onBroadcast(self, mtx: AbstractCoin.TxFactory.MutableTx) -> None:

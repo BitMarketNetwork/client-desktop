@@ -122,7 +122,7 @@ class AbstractAmountInputModel(AbstractAmountModel):
     def _setValue(self, value: Optional[int]) -> bool:
         raise NotImplementedError
 
-    def _getDefaultValue(self) -> Optional[int]:
+    def _setDefaultValue(self) -> bool:
         raise NotImplementedError
 
     def _fromHumanValue(
@@ -194,6 +194,7 @@ class AbstractAmountInputModel(AbstractAmountModel):
     # noinspection PyTypeChecker
     @QSlot(result=bool)
     def setDefaultValue(self) -> bool:
-        return self._setValueHelper(
-            self._getDefaultValue(),
-            self._coin.Currency)
+        if self._setDefaultValue():
+            self.update()
+            return True
+        return False
