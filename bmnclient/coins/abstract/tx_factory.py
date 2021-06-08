@@ -256,7 +256,13 @@ class _AbstractTxFactoryInterface:
         super().__init__(*args, **kwargs)
         self._factory = factory
 
-    def afterUpdateAvailableAmount(self) -> None:
+    def afterUpdateReceiverAmount(self) -> None:
+        raise NotImplementedError
+
+    def afterUpdateChangeAmount(self) -> None:
+        raise NotImplementedError
+
+    def afterUpdateFeeAmount(self) -> None:
         raise NotImplementedError
 
     def onBroadcast(self, mtx: AbstractCoin.TxFactory.MutableTx) -> None:
@@ -267,23 +273,34 @@ class _AbstractTxFactory:
     Interface = _AbstractTxFactoryInterface
     MutableTx = _AbstractMutableTx
 
+    class _SelectedUtxoData:
+        __slots__ = ("list", "amount", "raw_size", "virtual_size")
+
+        def __init__(self) -> None:
+            self.list: List[AbstractCoin.Tx.Utxo] = []
+            self.amount = 0
+            self.raw_size = -1
+            self.virtual_size = -1
+
     def __init__(self, coin: AbstractCoin) -> None:
         self._logger = Logger.classLogger(
             self.__class__,
             *CoinUtils.coinToNameKeyTuple(coin))
         self._coin = coin
 
+        self._utxo_list: List[AbstractCoin.Tx.Utxo] = []
+        self._utxo_amount = 0
+        self._selected_utxo_data = self._SelectedUtxoData()
+
         self._receiver_address: Optional[AbstractCoin.Address] = None
         self._receiver_amount = 0
-        self._change_address: Optional[AbstractCoin.Address] = None
-        self._dummy_change_address = self._createDummyChangeAddress()
 
-        self._available_amount = 0
+        self._change_address: Optional[AbstractCoin.Address] = None
+
         self._subtract_fee = False
         self._fee_amount_per_byte = 103  # TODO
 
-        self._selected_utxo_list: List[AbstractCoin.Tx.Utxo] = []
-        self._selected_utxo_list_amount = 0
+        self._dummy_change_address = self._createDummyChangeAddress()
 
         self._mtx: Optional[AbstractCoin.TxFactory.MutableTx] = None
 
@@ -308,6 +325,7 @@ class _AbstractTxFactory:
             self._logger.error("Failed to derive dummy change address.")
         else:
             self._logger.error("Dummy change address: %s", address.name)
+        return address
 
     @property
     def model(self) -> Optional[AbstractCoin.TxFactory.Interface]:
@@ -326,19 +344,22 @@ class _AbstractTxFactory:
     def setReceiverAddressName(self, name: str) -> bool:
         if not name:
             self._receiver_address = None
-            return False
-        self._receiver_address = self._coin.Address.decode(
-            self._coin,
-            name=name)
+        else:
+            self._receiver_address = self._coin.Address.decode(
+                self._coin,
+                name=name)
+        self._selectUtxoList()
+
         if self._receiver_address is None:
             self._logger.warning(
                 "Receiver address '%s' is invalid.",
                 name)
             return False
-        self._logger.debug(
-            "Receiver address: %s",
-            self._receiver_address.name)
-        return True
+        else:
+            self._logger.debug(
+                "Receiver address: %s",
+                self._receiver_address.name)
+            return True
 
     @property
     def receiverAddress(self) -> Optional[AbstractCoin.Address]:
@@ -350,7 +371,7 @@ class _AbstractTxFactory:
 
     @property
     def availableAmount(self) -> int:
-        return self._available_amount
+        return self._utxo_amount
 
     @property
     def receiverAmount(self) -> int:
@@ -360,29 +381,29 @@ class _AbstractTxFactory:
     def receiverAmount(self, value: int) -> None:
         if self._receiver_amount != value:
             self._receiver_amount = value
-            self.updateUtxoList()
+            self._selectUtxoList()
+            if self._model:
+                self._model.afterUpdateReceiverAmount()
 
-            self._logger.debug(
-                "Receiver amount: %i, available: %i, change %i",
-                self._receiver_amount,
-                self._available_amount,
-                self.changeAmount)
+    def setReceiverMaxAmount(self) -> int:
+        if self._selectUtxoList(select_all=True):
+            value = self._selected_utxo_data.amount
+            if not self._subtract_fee:
+                value -= self.feeAmount
+            value = max(value, 0)
+        else:
+            value = 0
 
-    @property
-    def maxReceiverAmount(self) -> int:
-        amount = self._available_amount
-        if not self._subtract_fee:
-            amount -= self.feeAmount
-        return max(amount, 0)
+        if self._receiver_amount != value:
+            self._receiver_amount = value
+            if self._model:
+                self._model.afterUpdateReceiverAmount()
+
+        return value
 
     @property
     def isValidReceiverAmount(self) -> bool:
-        if (
-                0 <= self._receiver_amount <= self.maxReceiverAmount
-                and self.changeAmount >= 0
-        ):
-            return True
-        return False
+        return 0 <= self._receiver_amount and self.changeAmount >= 0
 
     @property
     def subtractFee(self) -> bool:
@@ -392,11 +413,12 @@ class _AbstractTxFactory:
     def subtractFee(self, value: bool) -> None:
         if self._subtract_fee != value:
             self._subtract_fee = value
-            self.updateUtxoList()
+            self._selectUtxoList()
 
     @property
     def feeAmountPerByteDefault(self) -> int:
-        return 103  # TODO
+        # TODO
+        return 103
 
     @property
     def feeAmountPerByte(self) -> int:
@@ -406,19 +428,21 @@ class _AbstractTxFactory:
     def feeAmountPerByte(self, value: int) -> None:
         if self._fee_amount_per_byte != value:
             self._fee_amount_per_byte = value
-            self.updateUtxoList()
+            self._selectUtxoList()
 
     @property
     def feeAmountDefault(self) -> int:
-        return self.feeAmountPerByteDefault * self.estimatedSize[1]
+        return self._feeAmount(
+            self.feeAmountPerByteDefault,
+            self._selected_utxo_data.raw_size,
+            self._selected_utxo_data.virtual_size)
 
     @property
     def feeAmount(self) -> int:
-        return self.feeAmountPerByte * self.estimatedSize[1]
-
-    @feeAmount.setter
-    def feeAmount(self, value: int):
-        self.feeAmountPerByte = value // self.estimatedSize[1]
+        return self._feeAmount(
+            self._fee_amount_per_byte,
+            self._selected_utxo_data.raw_size,
+            self._selected_utxo_data.virtual_size)
 
     @property
     def isValidFeeAmount(self) -> bool:
@@ -431,36 +455,24 @@ class _AbstractTxFactory:
 
     @property
     def changeAmount(self) -> int:
-        change_amount = self._selected_utxo_list_amount - self._receiver_amount
+        change_amount = self._selected_utxo_data.amount - self._receiver_amount
         if not self._subtract_fee:
             change_amount -= self.feeAmount
         return change_amount
 
-    @property
-    def estimatedSize(self) -> Tuple[int, int]:  # raw_size, virtual_size
-        if not self._selected_utxo_list or not self._receiver_address:
-            return 0, 0
-
-        output_list = [(self._receiver_address, self._receiver_amount)]
-        if (
-                self._selected_utxo_list_amount != self._receiver_amount
-                or not self._subtract_fee
-        ):
-            if self._dummy_change_address is not None:
-                output_list.append((self._dummy_change_address, 0))
-
-        mtx = self._prepare(
-            self._selected_utxo_list,
-            output_list,
-            is_dummy=True)
-        if mtx is None or not mtx.sign():
-            return 0, 0
-        return mtx.rawSize, mtx.virtualSize
-
     def clear(self) -> None:
-        # TODO
         self._change_address = None
         self._mtx = None
+
+    @classmethod
+    def _feeAmount(
+            cls,
+            amount_per_byte: int,
+            raw_size: int,  # noqa
+            virtual_size: int) -> int:
+        if virtual_size > 0:
+            return amount_per_byte * virtual_size
+        return 0
 
     def _prepare(
             self,
@@ -482,7 +494,7 @@ class _AbstractTxFactory:
             self._logger.error("Invalid fee amount: %i", self.feeAmount)
             return False
 
-        if not self._selected_utxo_list:
+        if not self._selected_utxo_data.list:
             self._logger.error("No input UTXO's selected.")
             return False
 
@@ -505,7 +517,7 @@ class _AbstractTxFactory:
             self._change_address = None
 
         self._mtx = self._prepare(
-            self._selected_utxo_list,
+            self._selected_utxo_data.list,
             output_list,
             is_dummy=False)
         return self._mtx is not None
@@ -572,9 +584,8 @@ class _AbstractTxFactory:
 
         return cls._findOptimalUtxoListStrategy1(utxo_list, target_amount)
 
-    @classmethod
+    @staticmethod
     def _findOptimalUtxoListStrategy1(
-            cls,
             utxo_list: Sequence[AbstractCoin.Tx.Utxo],
             target_amount: int) -> SelectedUtxoList:
         if len(utxo_list) < 2:
@@ -614,59 +625,102 @@ class _AbstractTxFactory:
 
         return best_utxo_list, best_utxo_amount
 
+    @classmethod
+    def _findUtxoList(
+            cls,
+            utxo_list: Sequence[AbstractCoin.Tx.Utxo],
+            target_amount: int) -> SelectedUtxoList:
+        if target_amount <= 0:
+            return [], 0
+
+        exact_utxo = cls._findExactUtxo(utxo_list, target_amount)
+        if exact_utxo is not None:
+            return [exact_utxo], exact_utxo.amount
+        else:
+            return cls._findOptimalUtxoList(utxo_list, target_amount)
+
+    def _calcEstimatedSizes(
+            self,
+            utxo_list: Sequence[AbstractCoin.Tx.Utxo],
+            utxo_amount: int) -> Tuple[int, int]:
+        if not utxo_list or self._receiver_address is None:
+            print("E1")
+            return -1, -1
+
+        max_amount = self._coin.Currency.maxValue
+        output_list = [(self._receiver_address, max_amount)]
+        if utxo_amount != self._receiver_amount or not self._subtract_fee:
+            if self._dummy_change_address is not None:
+                output_list.append((self._dummy_change_address, max_amount))
+
+        mtx = self._prepare(utxo_list, output_list, is_dummy=True)
+        if mtx is None or not mtx.sign():
+            print("E2")
+            return -1, -1
+        else:
+            return mtx.rawSize, mtx.virtualSize
+
+    def _selectUtxoList(self, *, select_all: bool = False) -> bool:
+        self._selected_utxo_data = self._SelectedUtxoData()
+
+        if select_all:
+            raw_size, virtual_size = self._calcEstimatedSizes(
+                self._utxo_list,
+                self._utxo_amount)
+            self._selected_utxo_data.list = self._utxo_list
+            self._selected_utxo_data.amount = self._utxo_amount
+            self._selected_utxo_data.raw_size = raw_size
+            self._selected_utxo_data.virtual_size = virtual_size
+            return raw_size >= 0
+
+        fee_amount = 0
+        while True:
+            full_amount = self._receiver_amount + fee_amount
+            if not full_amount:
+                full_amount = 1
+            utxo_list, utxo_amount = self._findUtxoList(
+                self._utxo_list,
+                full_amount)
+            raw_size, virtual_size = self._calcEstimatedSizes(
+                utxo_list,
+                utxo_amount)
+            if raw_size <= 0:
+                print("SSS INVALID", raw_size, virtual_size)
+                assert raw_size == virtual_size
+                break
+            if self._subtract_fee:
+                print("SSS SUB")
+                break
+
+            new_fee_amount = self._feeAmount(
+                self._fee_amount_per_byte,
+                raw_size,
+                virtual_size)
+            if fee_amount == new_fee_amount:
+                print("SSS OK", fee_amount, new_fee_amount)
+                break
+            print("SSS NEXT", fee_amount, new_fee_amount)
+            fee_amount = new_fee_amount
+
+        self._selected_utxo_data.list = utxo_list
+        self._selected_utxo_data.amount = utxo_amount
+        self._selected_utxo_data.raw_size = raw_size
+        self._selected_utxo_data.virtual_size = virtual_size
+        return raw_size >= 0
+
     def updateUtxoList(self) -> None:
         address_filter = dict(is_read_only=False, with_utxo=True)
 
-        # calc available amount
-        available_amount = 0
-        for address in self._coin.filterAddressList(**address_filter):
-            for utxo in address.utxoList:
-                available_amount += utxo.amount
-        if self._available_amount != available_amount:
-            self._available_amount = available_amount
-            if self._model:
-                self._model.afterUpdateAvailableAmount()
-
-        # clean selected utxo's
-        self._selected_utxo_list = []
-        self._selected_utxo_list_amount = 0
-
-        target_amount = self._receiver_amount
-        if not self._subtract_fee:
-            target_amount += self.feeAmount
-        if target_amount <= 0:
-            if target_amount < 0:
-                self._logger.warning("Amount is negative (%i).", target_amount)
-            return
-
-        # try find exact utxo
-        exact_utxo = None
-        for address in self._coin.filterAddressList(**address_filter):
-            utxo = self._findExactUtxo(address.utxoList, target_amount)
-            if utxo is not None:
-                if self._newUtxoIsBest(exact_utxo, utxo):
-                    exact_utxo = utxo
-        if exact_utxo is not None:
-            assert exact_utxo.amount == target_amount
-            self._logger.debug("Selected exact UTXO '%s'", str(exact_utxo))
-            self._selected_utxo_list = [exact_utxo]
-            self._selected_utxo_list_amount = exact_utxo.amount
-            return
-
-        # combine all utxo's
-        utxo_list = list(chain.from_iterable(
+        self._utxo_list = list(chain.from_iterable(
             a.utxoList
             for a in self._coin.filterAddressList(**address_filter)))
-        if self._logger.isEnabledFor(logging.DEBUG):
-            s = "".join("\n\t" + str(u) for u in utxo_list)
-            self._logger.debug("Available UTXO's:%s", s if s else " None")
+        self._utxo_amount = sum(u.amount for u in self._utxo_list)
 
-        utxo_list, utxo_amount = self._findOptimalUtxoList(
-            utxo_list,
-            target_amount)
         if self._logger.isEnabledFor(logging.DEBUG):
-            s = "".join("\n\t" + str(u) for u in utxo_list)
-            self._logger.debug("Selected UTXO's:%s", s if s else " None")
+            s = "".join("\n\t" + str(u) for u in self._utxo_list)
+            self._logger.debug(
+                "Available UTXO's:%s\n\ttotal amount: %i",
+                s if s else "\n\tNone",
+                self._utxo_amount)
 
-        self._selected_utxo_list = utxo_list
-        self._selected_utxo_list_amount = utxo_amount
+        self._selectUtxoList()

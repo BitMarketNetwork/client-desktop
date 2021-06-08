@@ -35,17 +35,24 @@ class AbstractCurrency(NotImplementedInstance):
         return 10 ** cls._DECIMAL_SIZE[1]
 
     @classproperty
+    def maxValue(cls) -> int:  # noqa
+        return (2 ** cls._VALUE_BITS) - 1
+
+    @classproperty
+    def minValue(cls) -> int:  # noqa
+        return -(2 ** cls._VALUE_BITS)
+
+    @classmethod
+    def isValidValue(cls, value: int) -> bool:
+        return cls.minValue <= value <= cls.maxValue
+
+    @classproperty
     def stringTemplate(cls) -> str: # noqa
         if not cls.__string_template:
             v = len(cls.toString(2 ** cls._VALUE_BITS - 1))
             assert v > 2
             cls.__string_template = "8" * (v + v // 3 - 1)
         return cls.__string_template
-
-    @classmethod
-    def isValidValue(cls, value: int) -> bool:
-        b = 2 ** cls._VALUE_BITS
-        return -b <= value <= (b - 1)
 
     @classmethod
     def fromString(

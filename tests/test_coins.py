@@ -461,7 +461,7 @@ class TestCoins(TestCase):
                 self.assertEqual(u1.amount, u2.amount)
 
 
-class TestSelectUtxo(TestCase):
+class TestTxFactory(TestCase):
     def setUp(self) -> None:
         self._coin = Bitcoin()
         root_node = HdNode.deriveRootNode(urandom(64))
@@ -474,7 +474,7 @@ class TestSelectUtxo(TestCase):
             amount_list: Sequence[int]) -> None:
         utxo_list: List[Bitcoin.Tx.Utxo] = []
         for i in range(len(amount_list)):
-            utxo_list.append(Bitcoin.Tx.Utxo(
+            utxo_list.append(self._coin.Tx.Utxo(
                 self._coin,
                 name=i.to_bytes(32, "big").hex(),
                 height=100 + i,
@@ -494,7 +494,7 @@ class TestSelectUtxo(TestCase):
                     result = True
         return result
 
-    def test_find_ideal_utxo(self) -> None:
+    def test_find_exact_utxo(self) -> None:
         address = self._coin.deriveHdAddress(account=0, is_change=False)
         self.assertIsNotNone(address)
 
@@ -626,6 +626,117 @@ class TestSelectUtxo(TestCase):
                 amount)
             self.assertEqual(utxo_count, len(l))
             self.assertEqual(result_amount, a)
+
+    def test(self) -> None:
+        amount_list = list(range(100000, 100100))
+        address = self._coin.deriveHdAddress(
+            account=0,
+            is_change=False,
+            index=1000)
+        self.assertIsNotNone(address)
+        receiver_address = self._coin.deriveHdAddress(
+            account=0,
+            is_change=False,
+            index=1001)
+        self.assertIsNotNone(receiver_address)
+
+        self._createUtxoList(address, amount_list)
+        self._coin.appendAddress(address)
+        self.assertEqual(1, len(self._coin.addressList))
+
+        txf = self._coin.txFactory
+        txf.updateUtxoList()
+        self.assertIsNone(txf.name)
+        self.assertIsNone(txf.receiverAddress)
+        self.assertIsNone(txf.changeAddress)
+        self.assertFalse(txf.subtractFee)
+        self.assertEqual(sum(amount_list), txf.availableAmount)
+        self.assertEqual(0, txf.receiverAmount)
+
+        self.assertEqual(0, txf.setReceiverMaxAmount())
+        self.assertTrue(txf.isValidReceiverAmount)
+        self.assertTrue(txf.isValidFeeAmount)
+        self.assertFalse(txf.setReceiverAddressName("BAD_NAME"))
+        self.assertTrue(txf.setReceiverAddressName(receiver_address.name))
+        self.assertEqual(txf.receiverAddress, receiver_address)
+
+        address_count = len(self._coin.addressList)
+        self.assertEqual(1, address_count)
+
+        for subtract_fee in (False, True):
+            txf.subtractFee = subtract_fee
+            self.assertEqual(subtract_fee, txf.subtractFee)
+
+            if True:
+                receiver_amount = txf.setReceiverMaxAmount()
+                self.assertEqual(receiver_amount, txf.receiverAmount)
+                self.assertTrue(txf.isValidReceiverAmount)
+                self.assertTrue(txf.isValidFeeAmount)
+                self.assertEqual(0, txf.changeAmount)
+
+                if subtract_fee:
+                    self.assertEqual(sum(amount_list), receiver_amount)
+                    self.assertEqual(receiver_amount, txf.availableAmount)
+                else:
+                    self.assertLess(1, receiver_amount)
+                    self.assertGreater(sum(amount_list), receiver_amount)
+                    self.assertLess(receiver_amount, txf.availableAmount)
+                    self.assertEqual(
+                        txf.availableAmount - receiver_amount,
+                        txf.feeAmount)
+
+                self.assertTrue(txf.prepare())
+                self.assertIsNone(txf.name)
+                self.assertIsNone(txf.changeAddress)
+                self.assertTrue(txf.sign())
+                self.assertIsNotNone(txf.name)
+                self.assertTrue(txf.broadcast())
+                self.assertIsNone(txf.name)
+                self.assertEqual(address_count, len(self._coin.addressList))
+                txf.clear()
+
+            if True:
+                receiver_amount = sum(amount_list)
+                if subtract_fee:
+                    receiver_amount += 1
+                txf.receiverAmount = receiver_amount
+                self.assertEqual(receiver_amount, txf.receiverAmount)
+                self.assertFalse(txf.isValidReceiverAmount)
+                self.assertFalse(txf.isValidFeeAmount)
+                self.assertGreater(0, txf.changeAmount)
+                self.assertFalse(txf.prepare())
+                self.assertIsNone(txf.name)
+                self.assertIsNone(txf.changeAddress)
+                self.assertFalse(txf.sign())
+                self.assertIsNone(txf.name)
+                self.assertFalse(txf.broadcast())
+                txf.clear()
+
+            if True:
+                receiver_amount = randint(
+                    sum(amount_list) // 9,
+                    sum(amount_list) // 3)
+
+                txf.receiverAmount = receiver_amount
+                self.assertEqual(receiver_amount, txf.receiverAmount)
+                self.assertTrue(txf.isValidReceiverAmount)
+                self.assertTrue(txf.isValidFeeAmount)
+                self.assertLess(1, txf.feeAmount)
+                self.assertLessEqual(0, txf.changeAmount)
+
+                self.assertTrue(txf.prepare())
+                self.assertIsNone(txf.name)
+                if txf.changeAmount > 0:
+                    self.assertIsNotNone(txf.changeAddress)
+                else:
+                    self.assertIsNone(txf.changeAddress)
+                self.assertTrue(txf.sign())
+                self.assertIsNotNone(txf.name)
+                self.assertTrue(txf.broadcast())
+                self.assertIsNone(txf.name)
+                address_count += 1
+                self.assertEqual(address_count, len(self._coin.addressList))
+                txf.clear()
 
 
 class TestMutableTx(TestCase):
