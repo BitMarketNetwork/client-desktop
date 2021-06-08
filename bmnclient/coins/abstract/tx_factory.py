@@ -256,13 +256,7 @@ class _AbstractTxFactoryInterface:
         super().__init__(*args, **kwargs)
         self._factory = factory
 
-    def afterUpdateReceiverAmount(self) -> None:
-        raise NotImplementedError
-
-    def afterUpdateChangeAmount(self) -> None:
-        raise NotImplementedError
-
-    def afterUpdateFeeAmount(self) -> None:
+    def afterUpdateState(self) -> None:
         raise NotImplementedError
 
     def onBroadcast(self, mtx: AbstractCoin.TxFactory.MutableTx) -> None:
@@ -288,7 +282,7 @@ class _AbstractTxFactory:
             *CoinUtils.coinToNameKeyTuple(coin))
         self._coin = coin
 
-        self._utxo_list: List[AbstractCoin.Tx.Utxo] = []
+        self._utxo_list: Sequence[AbstractCoin.Tx.Utxo] = []
         self._utxo_amount = 0
         self._selected_utxo_data = self._SelectedUtxoData()
 
@@ -343,23 +337,20 @@ class _AbstractTxFactory:
 
     def setReceiverAddressName(self, name: str) -> bool:
         if not name:
-            self._receiver_address = None
+            address = None
         else:
-            self._receiver_address = self._coin.Address.decode(
-                self._coin,
-                name=name)
-        self._selectUtxoList()
+            address = self._coin.Address.decode(self._coin, name=name)
 
-        if self._receiver_address is None:
-            self._logger.warning(
-                "Receiver address '%s' is invalid.",
-                name)
-            return False
+        if address is None:
+            self._logger.warning("Receiver address '%s' is invalid.", name)
         else:
-            self._logger.debug(
-                "Receiver address: %s",
-                self._receiver_address.name)
-            return True
+            self._logger.debug("Receiver address: %s", address.name)
+
+        if self._receiver_address != address:
+            self._receiver_address = address
+            self._selectUtxoList()
+
+        return address is not None
 
     @property
     def receiverAddress(self) -> Optional[AbstractCoin.Address]:
@@ -382,11 +373,9 @@ class _AbstractTxFactory:
         if self._receiver_amount != value:
             self._receiver_amount = value
             self._selectUtxoList()
-            if self._model:
-                self._model.afterUpdateReceiverAmount()
 
     def setReceiverMaxAmount(self) -> int:
-        if self._selectUtxoList(select_all=True):
+        if self._selectUtxoList(select_all=True, skip_model_update=True):
             value = self._selected_utxo_data.amount
             if not self._subtract_fee:
                 value -= self.feeAmount
@@ -394,11 +383,9 @@ class _AbstractTxFactory:
         else:
             value = 0
 
-        if self._receiver_amount != value:
-            self._receiver_amount = value
-            if self._model:
-                self._model.afterUpdateReceiverAmount()
-
+        self._receiver_amount = value
+        if self._model:
+            self._model.afterUpdateState()
         return value
 
     @property
@@ -660,7 +647,11 @@ class _AbstractTxFactory:
         else:
             return mtx.rawSize, mtx.virtualSize
 
-    def _selectUtxoList(self, *, select_all: bool = False) -> bool:
+    def _selectUtxoList(
+            self,
+            *,
+            select_all: bool = False,
+            skip_model_update: bool = False) -> bool:
         self._selected_utxo_data = self._SelectedUtxoData()
 
         if select_all:
@@ -671,6 +662,13 @@ class _AbstractTxFactory:
             self._selected_utxo_data.amount = self._utxo_amount
             self._selected_utxo_data.raw_size = raw_size
             self._selected_utxo_data.virtual_size = virtual_size
+
+            self.__logUtxoList(
+                "Selected UTXO's",
+                self._utxo_list,
+                self._utxo_amount)
+            if not skip_model_update and self._model:
+                self._model.afterUpdateState()
             return raw_size >= 0
 
         fee_amount = 0
@@ -706,6 +704,13 @@ class _AbstractTxFactory:
         self._selected_utxo_data.amount = utxo_amount
         self._selected_utxo_data.raw_size = raw_size
         self._selected_utxo_data.virtual_size = virtual_size
+
+        self.__logUtxoList(
+            "Selected UTXO's",
+            utxo_list,
+            utxo_amount)
+        if not skip_model_update and self._model:
+            self._model.afterUpdateState()
         return raw_size >= 0
 
     def updateUtxoList(self) -> None:
@@ -716,11 +721,22 @@ class _AbstractTxFactory:
             for a in self._coin.filterAddressList(**address_filter)))
         self._utxo_amount = sum(u.amount for u in self._utxo_list)
 
-        if self._logger.isEnabledFor(logging.DEBUG):
-            s = "".join("\n\t" + str(u) for u in self._utxo_list)
-            self._logger.debug(
-                "Available UTXO's:%s\n\ttotal amount: %i",
-                s if s else "\n\tNone",
-                self._utxo_amount)
-
+        self.__logUtxoList(
+            "Available UTXO's",
+            self._utxo_list,
+            self._utxo_amount)
         self._selectUtxoList()
+
+    def __logUtxoList(
+            self,
+            title: str,
+            utxo_list: Sequence[AbstractCoin.Tx.Utxo],
+            utxo_amount: int) -> None:
+        if not self._logger.isEnabledFor(logging.DEBUG):
+            return
+        s = "".join("\n\t" + str(u) for u in utxo_list)
+        self._logger.debug(
+            "%s:%s\n\ttotal amount: %i",
+            title,
+            s if s else "\n\tNone",
+            utxo_amount)

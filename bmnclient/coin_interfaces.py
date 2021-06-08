@@ -151,7 +151,7 @@ class TxFactoryInterface(_AbstractInterface, AbstractCoin.TxFactory.Interface):
             name_key_tuple=CoinUtils.txFactoryToNameKeyTuple(factory),
             **kwargs)
 
-    def afterUpdateAvailableAmount(self) -> None:
+    def afterUpdateState(self) -> None:
         pass
 
     def onBroadcast(self, mtx: AbstractCoin.TxFactory.MutableTx) -> None:
