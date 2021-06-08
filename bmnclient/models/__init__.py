@@ -12,7 +12,7 @@ from PySide2.QtCore import \
     SignalInstance as QSignalInstance
 
 if TYPE_CHECKING:
-    from typing import Iterable, Optional
+    from typing import Final, Iterable, Optional
     from ..coins.abstract.coin import AbstractCoin
     from ..language import Locale
     from ..ui.gui import GuiApplication
@@ -25,6 +25,7 @@ class ValidStatus(IntEnum):
 
 
 class AbstractStateModel(QObject):
+    _NONE_STRING: Final = "-"
     stateChanged = QSignal()
 
     def __init__(self, application: GuiApplication, coin: AbstractCoin) -> None:

@@ -47,7 +47,7 @@ class AbstractAmountModel(AbstractStateModel):
     @QProperty(str, notify=__stateChanged)
     def fiatValueHuman(self) -> str:
         if self._coin.fiatRate.value <= 0:
-            return "-"
+            return self._NONE_STRING
 
         # noinspection PyTypeChecker
         fiat_amount = self._coin.toFiatAmount(self.value)

@@ -72,7 +72,7 @@ class TxStateModel(AbstractTxStateModel):
     @QProperty(str, notify=__stateChanged)
     def heightHuman(self) -> str:
         if self._tx.height < 0:
-            return "-"
+            return self._NONE_STRING
         return self.locale.integerToString(self._tx.height)
 
     @QProperty(int, notify=__stateChanged)

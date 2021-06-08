@@ -44,17 +44,25 @@ class CoinStateModel(AbstractStateModel):
 class CoinServerDataModel(AbstractStateModel):
     __stateChanged = QSignal()
 
+    def _serverDataString(self, name: str) -> str:
+        v = self._coin.serverData.get(name)
+        return str(v) if v else self._NONE_STRING
+
+    def _serverDataInteger(self, name: str) -> int:
+        v = self._coin.serverData.get(name)
+        return v if isinstance(v, int) else -1
+
     @QProperty(str, notify=__stateChanged)
     def serverUrl(self) -> str:
-        return self._coin.serverData.get("server_url") or "-"
+        return self._serverDataString("server_url")
 
     @QProperty(str, notify=__stateChanged)
     def serverName(self) -> str:
-        return self._coin.serverData.get("server_name") or "-"
+        return self._serverDataString("server_name")
 
     @QProperty(int, notify=__stateChanged)
     def serverVersion(self) -> int:
-        return self._coin.serverData.get("server_version") or -1
+        return self._serverDataInteger("server_version")
 
     @QProperty(str, notify=__stateChanged)
     def serverVersionHex(self) -> str:
@@ -64,35 +72,35 @@ class CoinServerDataModel(AbstractStateModel):
 
     @QProperty(str, notify=__stateChanged)
     def serverVersionHuman(self) -> str:
-        return self._coin.serverData.get("server_version_string") or "-"
+        return self._serverDataString("server_version_string")
 
     @QProperty(int, notify=__stateChanged)
     def version(self) -> int:
-        return self._coin.serverData.get("version") or -1
+        return self._serverDataInteger("version")
 
     @QProperty(str, notify=__stateChanged)
     def versionHex(self) -> str:
-        version = self.version
-        # noinspection PyTypeChecker
+        version = self._serverDataInteger("version")
         return "0x{:08x}".format(0 if version < 0 else version)
 
     @QProperty(str, notify=__stateChanged)
     def versionHuman(self) -> str:
-        return self._coin.serverData.get("version_string") or "-"
+        return self._serverDataString("version_string")
 
     @QProperty(int, notify=__stateChanged)
     def status(self) -> int:
-        return self._coin.serverData.get("status") or -1
+        return self._serverDataInteger("status")
 
     @QProperty(int, notify=__stateChanged)
     def height(self) -> int:
-        return self._coin.serverData.get("height") or -1
+        return self._serverDataInteger("height")
 
     @QProperty(str, notify=__stateChanged)
     def heightHuman(self) -> str:
-        height = self.height
-        # noinspection PyTypeChecker
-        return self.locale.integerToString(height) if height >= 0 else "-"
+        height = self._serverDataInteger("height")
+        if height < 0:
+            return self._NONE_STRING
+        return self.locale.integerToString(height)
 
 
 class CoinAmountModel(AbstractAmountModel):

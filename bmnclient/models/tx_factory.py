@@ -142,7 +142,7 @@ class TxFactoryChangeAmountModel(AbstractTxFactoryAmountModel):
     @QProperty(str, notify=__stateChanged)
     def addressName(self) -> str:
         address = self._factory.changeAddress
-        return address.name if address is not None else "-"
+        return address.name if address is not None else self._NONE_STRING
 
 
 class TxFactoryReceiverModel(AbstractTxFactoryStateModel):
