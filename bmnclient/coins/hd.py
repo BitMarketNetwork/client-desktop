@@ -222,16 +222,21 @@ class HdNode:
         return Base58.encode(result)
 
     @classmethod
-    def levelsPathFromString(cls, path: str) -> Optional[Sequence[int]]:
+    def levelsPathFromString(
+            cls,
+            path: str) -> Tuple[Optional[Sequence[int]], bool]:
         path = path.split("/")
         if not path:
-            return []
+            return [], False
 
         try:
+            result = []
             if path[0] == "m":
                 path = path[1:]
+                is_full_path = True
+            else:
+                is_full_path = False
 
-            result = []
             for level in path:
                 if not level:
                     continue
@@ -243,7 +248,7 @@ class HdNode:
 
                 if level.startswith("-"):
                     if hardened:
-                        return None
+                        return None, False
                     hardened = True
 
                 level = abs(int(level))
@@ -251,20 +256,22 @@ class HdNode:
                     level |= cls._HARDENED_MASK
 
                 if level > 0xffffffff:
-                    return None
+                    return None, False
                 result.append(level)
-            return result
+            return result, is_full_path
         except (ValueError, IndexError):
-            return None
+            return None, False
 
     def fromLevelsPath(
             self,
-            path: Union[str, Sequence],
+            path: Union[str, Sequence[int]],
             *,
             private: bool) -> Optional[HdNode]:
         if isinstance(path, str):
-            path = self.levelsPathFromString(path)
+            path, is_full_path = self.levelsPathFromString(path)
             if path is None:
+                return None
+            if is_full_path and self.depth != 0:
                 return None
 
         node = self

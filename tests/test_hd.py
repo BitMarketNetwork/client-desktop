@@ -1,12 +1,18 @@
 # JOK4
+from __future__ import annotations
+
 from os import urandom
 from random import randint
+from typing import TYPE_CHECKING
 from unittest import TestCase
 
 from bmnclient.coins.coin_bitcoin import Bitcoin
 from bmnclient.coins.hd import HdAddressIterator, HdNode
 
-BIP32_TEST_VECTOR_1 = {
+if TYPE_CHECKING:
+    from typing import Final
+
+BIP32_TEST_VECTOR_1: Final = {
     "seed": "000102030405060708090a0b0c0d0e0f",
     "m": (
         "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8",  # noqa
@@ -34,7 +40,7 @@ BIP32_TEST_VECTOR_1 = {
     )
 }
 
-BIP32_TEST_VECTOR_2 = {
+BIP32_TEST_VECTOR_2: Final = {
     "seed": "fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542",  # noqa
     "m": (
         "xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB",  # noqa
@@ -62,7 +68,7 @@ BIP32_TEST_VECTOR_2 = {
     )
 }
 
-BIP32_TEST_VECTOR_3 = {
+BIP32_TEST_VECTOR_3: Final = {
     "seed": "4b381541583be4423346c643850da4b320e46a87ae3d2a4e6da11eba819cd4acba45d239319ac14f863b8d5ab5a0d0c64d2e8a1e7d1457df2e5a3c51c73235be",  # noqa
     "m": (
         "xpub661MyMwAqRbcEZVB4dScxMAdx6d4nFc9nvyvH3v4gJL378CSRZiYmhRoP7mBy6gSPSCYk6SzXPTf3ND1cZAceL7SfJ1Z3GC8vBgp2epUt13",  # noqa
@@ -74,33 +80,35 @@ BIP32_TEST_VECTOR_3 = {
     )
 }
 
-LEVELS_PATH_LIST = (
-    ("", []),
-    ("m", []),
-    ("m/", []),
-    ("m//", []),
+HARDENED: Final = 0x80000000
 
-    ("m/1/", [1]),
-    ("/1/", [1]),
-    ("1", [1]),
-    ("m/1/2", [1, 2]),
-    ("m/////1/////2////", [1, 2]),
-    ("m/-1/2", [1 | 0x80000000, 2]),
-    ("m/-1/2h", [1 | 0x80000000, 2 | 0x80000000]),
-    ("m/-1/2h/3H", [1 | 0x80000000, 2 | 0x80000000, 3 | 0x80000000]),
-    ("m/-1/2h/3H/4", [1 | 0x80000000, 2 | 0x80000000, 3 | 0x80000000, 4]),
-    ("-1/2h/3H/4", [1 | 0x80000000, 2 | 0x80000000, 3 | 0x80000000, 4]),
-    ("-1/2'/3H/4", [1 | 0x80000000, 2 | 0x80000000, 3 | 0x80000000, 4]),
+LEVELS_PATH_LIST: Final = (
+    ("", ([], False)),
+    ("m", ([], True)),
+    ("m/", ([], True)),
+    ("m//", ([], True)),
 
-    ("m/-1h/2h/3H/4", None),
-    ("m/d", None),
-    ("m/4294967295", [4294967295]),
-    ("m/4294967296", None),
+    ("m/1/", ([1], True)),
+    ("/1/", ([1], False)),
+    ("1", ([1], False)),
+    ("m/1/2", ([1, 2], True)),
+    ("m/////1/////2////", ([1, 2], True)),
+    ("m/-1/2", ([1 | HARDENED, 2], True)),
+    ("m/-1/2h", ([1 | HARDENED, 2 | HARDENED], True)),
+    ("m/-1/2h/3H", ([1 | HARDENED, 2 | HARDENED, 3 | HARDENED], True)),
+    ("m/-1/2h/3H/4", ([1 | HARDENED, 2 | HARDENED, 3 | HARDENED, 4], True)),
+    ("-1/2h/3H/4", ([1 | HARDENED, 2 | HARDENED, 3 | HARDENED, 4], False)),
+    ("-1/2'/3H/4", ([1 | HARDENED, 2 | HARDENED, 3 | HARDENED, 4], False)),
+
+    ("m/-1h/2h/3H/4", (None, False)),
+    ("m/d", (None, False)),
+    ("m/4294967295", ([4294967295], True)),
+    ("m/4294967296", (None, False)),
 )
 
 # data from https://iancoleman.io/bip39/
-PUBLIC_KEY_ROOT_SEED = "a7d4b121dd7240b4122509060da1acdcd55d85ab09d5c6249e8d2cf530142ab8b0b99b511c8ab3778a6e62f8c7fdf3524eb7fddab29aa49a5329bf1aa3d403e6"  # noqa
-PUBLIC_KEY_PATH_LIST = {
+PUBLIC_KEY_ROOT_SEED: Final = "a7d4b121dd7240b4122509060da1acdcd55d85ab09d5c6249e8d2cf530142ab8b0b99b511c8ab3778a6e62f8c7fdf3524eb7fddab29aa49a5329bf1aa3d403e6"  # noqa
+PUBLIC_KEY_PATH_LIST: Final = {
     "m/0": "xpub69PLnHQACW9e7DpECfkdGpqk7h4Z9M8MdGgYSQEjVYHFRzpYqshxRTAZWrKGt8XJhqrfYbYC1JURDjevFUNpk51mta38EbMbN4qDHm26f61",  # noqa
     "m/0/1": "xpub6AUip5vufjmgE6oDSoAXswSKsHG8ABr5AxNedpnBiuJW64xrurc7CaY1gwGLJ4PMds2VnssFFexPnT1GvxE5YEeC5oR6Cag9bMNMphBJxPM",  # noqa
     "m/0/1/2": "xpub6CRz7SMHQTHEgHFq5whoNpvs9Rf3gTfCsoFtFB8Nipjf3ATPdGJ6GvqNthbRyp8iqnPEWZUfWiFtiUk6wGduCW3zEcGFtkCqYS21hqwM6Au", # noqa
@@ -179,16 +187,17 @@ class TestHd(TestCase):
                 self.assertEqual(Bitcoin.bip0032VersionPrivateKey, version)
                 self._assertKeys(node, keys[0], keys[1])
 
-                path = HdNode.levelsPathFromString(path)
+                path, is_full_path = HdNode.levelsPathFromString(path)
                 self.assertIsNotNone(path)
+                self.assertTrue(is_full_path)
                 if not path:
                     continue
                 node = root_node.fromLevelsPath(path[:-1], private=True)
                 self.assertIsNotNone(node)
                 self.assertIsNotNone(node.privateKey)
                 node = node.deriveChildNode(
-                    path[-1] & ~0x80000000,
-                    hardened=(path[-1] & 0x80000000) == 0x80000000,
+                    path[-1] & ~HARDENED,
+                    hardened=(path[-1] & HARDENED) == HARDENED,
                     private=False)
                 self._assertKeys(node, keys[0], keys[1])
 
@@ -209,7 +218,7 @@ class TestHd(TestCase):
 
         # private -> public
         for (path, value) in PUBLIC_KEY_PATH_LIST.items():
-            path = HdNode.levelsPathFromString(path)
+            path, _ = HdNode.levelsPathFromString(path)
             self.assertIsNotNone(path)
             for i in range(2, 10):
                 if len(path) < i:
