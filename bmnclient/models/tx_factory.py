@@ -90,8 +90,7 @@ class TxFactoryFeeAmountModel(AbstractTxFactoryAmountModel):
     __stateChanged = QSignal()
 
     def _getValue(self) -> Optional[int]:
-        amount = self._factory.feeAmount
-        return None if amount < 0 else amount
+        return self._factory.feeAmount
 
     @QProperty(bool, notify=__stateChanged)
     def subtractFromAmount(self) -> bool:

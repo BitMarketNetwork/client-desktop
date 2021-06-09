@@ -378,7 +378,9 @@ class _AbstractTxFactory:
         if self._selectUtxoList(select_all=True, skip_model_update=True):
             value = self._selected_utxo_data.amount
             if not self._subtract_fee:
-                value -= self.feeAmount
+                fee_amount = self.feeAmount
+                if fee_amount is not None:
+                    value -= fee_amount
             value = max(value, 0)
         else:
             value = 0
@@ -390,7 +392,7 @@ class _AbstractTxFactory:
 
     @property
     def isValidReceiverAmount(self) -> bool:
-        return 0 <= self._receiver_amount and self.changeAmount >= 0
+        return self._receiver_amount >= 0 and self.isValidChangeAmount
 
     @property
     def subtractFee(self) -> bool:
@@ -418,14 +420,7 @@ class _AbstractTxFactory:
             self._selectUtxoList()
 
     @property
-    def feeAmountDefault(self) -> int:
-        return self._feeAmount(
-            self.feeAmountPerByteDefault,
-            self._selected_utxo_data.raw_size,
-            self._selected_utxo_data.virtual_size)
-
-    @property
-    def feeAmount(self) -> int:
+    def feeAmount(self) -> Optional[int]:
         return self._feeAmount(
             self._fee_amount_per_byte,
             self._selected_utxo_data.raw_size,
@@ -434,18 +429,33 @@ class _AbstractTxFactory:
     @property
     def isValidFeeAmount(self) -> bool:
         fee_amount = self.feeAmount
-        if fee_amount < 0:
+        if fee_amount is None or fee_amount < 0:
             return False
         if self._subtract_fee and fee_amount > self._receiver_amount:
             return False
-        return self.changeAmount >= 0
+        return self.isValidChangeAmount
 
     @property
-    def changeAmount(self) -> int:
+    def changeAmount(self) -> Optional[int]:
         change_amount = self._selected_utxo_data.amount - self._receiver_amount
         if not self._subtract_fee:
-            change_amount -= self.feeAmount
-        return change_amount
+            fee_amount = self.feeAmount
+            if fee_amount is None:
+                return None
+            change_amount -= fee_amount
+        return change_amount if change_amount >= 0 else None
+
+    @property
+    def isValidChangeAmount(self) -> bool:
+        return self.changeAmount is not None
+
+    @property
+    def estimatedRawSize(self) -> int:
+        return self._selected_utxo_data.raw_size
+
+    @property
+    def estimatedVirtualSize(self) -> int:
+        return self._selected_utxo_data.virtual_size
 
     def clear(self) -> None:
         self._change_address = None
@@ -456,10 +466,10 @@ class _AbstractTxFactory:
             cls,
             amount_per_byte: int,
             raw_size: int,  # noqa
-            virtual_size: int) -> int:
-        if virtual_size > 0:
-            return amount_per_byte * virtual_size
-        return 0
+            virtual_size: int) -> Optional[int]:
+        if virtual_size <= 0:
+            return None
+        return amount_per_byte * virtual_size
 
     def _prepare(
             self,
@@ -471,22 +481,29 @@ class _AbstractTxFactory:
         raise NotImplementedError
 
     def prepare(self) -> bool:
-        if not self.isValidReceiverAmount:
-            self._logger.error(
-                "Invalid receiver amount: %i",
-                self._receiver_amount)
-            return False
-
-        if not self.isValidFeeAmount:
-            self._logger.error("Invalid fee amount: %i", self.feeAmount)
-            return False
-
         if not self._selected_utxo_data.list:
             self._logger.error("No input UTXO's selected.")
             return False
 
+        if not self.isValidChangeAmount:
+            self._logger.error(
+                "Invalid change amount: %s",
+                str(self.changeAmount))
+            return False
         change_amount = self.changeAmount
-        receiver_amount = self._receiver_amount
+
+        if not self.isValidReceiverAmount:
+            self._logger.error(
+                "Invalid receiver amount: %s",
+                str(self.receiverAmount))
+            return False
+        receiver_amount = self.receiverAmount
+
+        if not self.isValidFeeAmount:
+            self._logger.error(
+                "Invalid fee amount: %s",
+                str(self.feeAmount))
+            return False
         if self._subtract_fee:
             receiver_amount -= self.feeAmount
 
@@ -691,6 +708,8 @@ class _AbstractTxFactory:
                 self._fee_amount_per_byte,
                 raw_size,
                 virtual_size)
+            if new_fee_amount is None:
+                break
             if fee_amount == new_fee_amount:
                 break
             fee_amount = new_fee_amount
