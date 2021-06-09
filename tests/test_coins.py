@@ -485,7 +485,7 @@ class TestTxFactory(TestCase):
     @classmethod
     def _isLowHeightUtxo(
             cls,
-            utxo_list: List[Bitcoin.Tx.Utxo],
+            utxo_list: Sequence[Bitcoin.Tx.Utxo],
             utxo):
         result = False
         for far_utxo in utxo_list:
@@ -800,8 +800,8 @@ class TestMutableTx(TestCase):
 
     def _test_mtx(
             self,
-            input_list: List[AbstractCoin.TxFactory.MutableTx.Input],
-            output_list: List[AbstractCoin.TxFactory.MutableTx.Output],
+            input_list: Sequence[AbstractCoin.TxFactory.MutableTx.Input],
+            output_list: Sequence[AbstractCoin.TxFactory.MutableTx.Output],
             *,
             lock_time: int,
             is_dummy: bool,
@@ -825,7 +825,7 @@ class TestMutableTx(TestCase):
         return mtx
 
     def test_p2pkh(self) -> None:
-        def input_list(*, is_dummy: bool) -> List:
+        def input_list(*, is_dummy: bool) -> Sequence:
             return [
                 self._createInput(
                     self._coin,
@@ -839,7 +839,7 @@ class TestMutableTx(TestCase):
                     is_dummy=is_dummy)
             ]
 
-        def output_list(*, is_dummy: bool) -> List:
+        def output_list(*, is_dummy: bool) -> Sequence:
             return [
                 self._createOutput(
                     self._coin,
@@ -892,7 +892,7 @@ class TestMutableTx(TestCase):
             excepted_virtual_size=226)
 
     def test_p2pkh_uncompressed(self) -> None:
-        def input_list(*, is_dummy: bool) -> List:
+        def input_list(*, is_dummy: bool) -> Sequence:
             return [
                 self._createInput(
                     self._coin,
@@ -906,7 +906,7 @@ class TestMutableTx(TestCase):
                     is_dummy=is_dummy)
             ]
 
-        def output_list(*, is_dummy: bool) -> List:
+        def output_list(*, is_dummy: bool) -> Sequence:
             return [
                 self._createOutput(
                     self._coin,
@@ -954,7 +954,7 @@ class TestMutableTx(TestCase):
 
     # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#native-p2wpkh
     def test_native_p2wpkh(self) -> None:
-        def input_list(*, is_dummy: bool) -> List:
+        def input_list(*, is_dummy: bool) -> Sequence:
             return [
                 self._createInput(
                     self._coin,
@@ -978,7 +978,7 @@ class TestMutableTx(TestCase):
                     is_dummy=is_dummy),
             ]
 
-        def output_list(*, is_dummy: bool) -> List:
+        def output_list(*, is_dummy: bool) -> Sequence:
             return [
                 self._createOutput(
                     self._coin,
@@ -1040,7 +1040,7 @@ class TestMutableTx(TestCase):
 
     # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#p2sh-p2wpkh
     def test_p2sh_p2wpkh(self) -> None:
-        def input_list(*, is_dummy: bool) -> List:
+        def input_list(*, is_dummy: bool) -> Sequence:
             return [
                 self._createInput(
                     self._coin,
@@ -1054,7 +1054,7 @@ class TestMutableTx(TestCase):
                     is_dummy=is_dummy)
                 ]
 
-        def output_list(*, is_dummy: bool) -> List:
+        def output_list(*, is_dummy: bool) -> Sequence:
             return [
                 self._createOutput(
                     self._coin,

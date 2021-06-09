@@ -10,7 +10,7 @@ from .ui.gui import GuiApplication
 from .version import Product
 
 if TYPE_CHECKING:
-    from typing import List
+    from typing import Sequence
 
 if sys.version_info[:3] < Product.PYTHON_MINIMAL_VERSION:
     raise RuntimeError(
@@ -26,7 +26,7 @@ if sys.version_info[:3] < Product.PYTHON_MINIMAL_VERSION:
             sys.version_info[2]))
 
 
-def main(argv: List[str]) -> int:
+def main(argv: Sequence[str]) -> int:
     try:
         command_line = CommandLine(argv)
         Logger.configure(command_line.logFilePath, command_line.logLevel)

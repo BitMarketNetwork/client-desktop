@@ -13,7 +13,7 @@ from ..utils.class_property import classproperty
 from ..version import ProductPaths
 
 if TYPE_CHECKING:
-    from typing import Final, List, Optional, Sequence, Union
+    from typing import Final, Optional, Sequence, Union
 
 
 # Adapted from:
@@ -159,7 +159,7 @@ class Mnemonic:
         return phrase
 
     @classmethod
-    def getLanguageList(cls) -> List[str]:
+    def getLanguageList(cls) -> Sequence[str]:
         result = []
         for f in cls._SOURCE_PATH.iterdir():
             if f.suffix == ".txt" and f.stem:

@@ -9,7 +9,7 @@ from ..crypto.digest import Hash160Digest, Hmac, Sha512Digest
 from ..crypto.secp256k1 import KeyUtils, PrivateKey, PublicKey
 
 if TYPE_CHECKING:
-    from typing import Dict, Final, List, Optional, Sequence, Tuple, Union
+    from typing import Dict, Final, Optional, Sequence, Tuple, Union
     from .abstract.coin import AbstractCoin
 
 
@@ -222,7 +222,7 @@ class HdNode:
         return Base58.encode(result)
 
     @classmethod
-    def levelsPathFromString(cls, path: str) -> Optional[List[int]]:
+    def levelsPathFromString(cls, path: str) -> Optional[Sequence[int]]:
         path = path.split("/")
         if not path:
             return []

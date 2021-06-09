@@ -32,14 +32,14 @@ from .signal_handler import SignalHandler
 from .version import Product, ProductPaths, Server
 
 if TYPE_CHECKING:
-    from typing import Callable, List, Optional, Type, Union
+    from typing import Callable, Optional, Sequence, Type, Union
     from PySide2.QtCore import QCoreApplication
     from .coins.hd import HdNode
     from .language import Language
 
 
 class CommandLine:
-    def __init__(self, argv: List[str]) -> None:
+    def __init__(self, argv: Sequence[str]) -> None:
         self._argv = argv
 
         parser = ArgumentParser(
@@ -50,8 +50,7 @@ class CommandLine:
             "--configpath",
             default=str(PlatformPaths.userApplicationConfigPath),
             type=self._expandPath,
-            help=
-            "directory for configuration files; by default, it is '{}'"
+            help="directory for configuration files; by default, it is '{}'"
             .format(str(PlatformPaths.userApplicationConfigPath)),
             metavar="PATH")
         parser.add_argument(
@@ -59,8 +58,7 @@ class CommandLine:
             "--logfile",
             default="stderr",
             type=self._expandPath,
-            help=
-            "file that will store the log; can be one of the following "
+            help="file that will store the log; can be one of the following "
             "special values: stdout, stderr; by default, it is 'stderr'",
             metavar="FILE")
         parser.add_argument(
@@ -75,16 +73,14 @@ class CommandLine:
             "--server-url",
             default=Server.DEFAULT_URL_LIST[0],
             type=str,
-            help=
-            "alternative server URL; by default, it is '{}'"
+            help="alternative server URL; by default, it is '{}'"
             .format(Server.DEFAULT_URL_LIST[0]),
             metavar="URL")
         parser.add_argument(
             "--server-insecure",
             action='store_true',
             default=False,
-            help=
-            "do not check the validity of server certificates")
+            help="do not check the validity of server certificates")
 
         self._arguments = parser.parse_args(self._argv[1:])
         assert isinstance(self._arguments.configpath, PurePath)
@@ -94,7 +90,7 @@ class CommandLine:
         assert isinstance(self._arguments.server_insecure, bool)
 
     @property
-    def argv(self) -> List[str]:
+    def argv(self) -> Sequence[str]:
         return self._argv
 
     @property
