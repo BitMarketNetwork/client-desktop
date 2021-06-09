@@ -45,12 +45,12 @@ class CoinServerDataModel(AbstractStateModel):
     __stateChanged = QSignal()
 
     def _serverDataString(self, name: str) -> str:
-        v = self._coin.serverData.get(name)
-        return str(v) if v else self._NONE_STRING
+        value = self._coin.serverData.get(name)
+        return str(value) if value else self._NONE_STRING
 
     def _serverDataInteger(self, name: str) -> int:
-        v = self._coin.serverData.get(name)
-        return v if isinstance(v, int) else -1
+        value = self._coin.serverData.get(name)
+        return value if isinstance(value, int) else -1
 
     @QProperty(str, notify=__stateChanged)
     def serverUrl(self) -> str:

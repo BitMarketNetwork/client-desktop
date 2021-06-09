@@ -61,9 +61,9 @@ class TxStateModel(AbstractTxStateModel):
 
     @QProperty(str, notify=__stateChanged)
     def timeHuman(self) -> str:
-        v = QDateTime()
-        v.setSecsSinceEpoch(self._tx.time)
-        return self.locale.toString(v, self.locale.LongFormat)
+        value = QDateTime()
+        value.setSecsSinceEpoch(self._tx.time)
+        return self.locale.toString(value, self.locale.LongFormat)
 
     @QProperty(int, notify=__stateChanged)
     def height(self) -> int:

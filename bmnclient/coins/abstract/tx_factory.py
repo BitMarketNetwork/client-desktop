@@ -631,18 +631,17 @@ class _AbstractTxFactory:
             utxo_list: Sequence[AbstractCoin.Tx.Utxo],
             utxo_amount: int) -> Tuple[int, int]:
         if not utxo_list or self._receiver_address is None:
-            print("E1")
             return -1, -1
 
-        max_amount = self._coin.Currency.maxValue
-        output_list = [(self._receiver_address, max_amount)]
+        output_list = [(self._receiver_address, self._receiver_amount)]
         if utxo_amount != self._receiver_amount or not self._subtract_fee:
             if self._dummy_change_address is not None:
-                output_list.append((self._dummy_change_address, max_amount))
+                output_list.append((
+                    self._dummy_change_address,
+                    self._coin.Currency.maxValue))
 
         mtx = self._prepare(utxo_list, output_list, is_dummy=True)
         if mtx is None or not mtx.sign():
-            print("E2")
             return -1, -1
         else:
             return mtx.rawSize, mtx.virtualSize
@@ -683,11 +682,9 @@ class _AbstractTxFactory:
                 utxo_list,
                 utxo_amount)
             if raw_size <= 0:
-                print("SSS INVALID", raw_size, virtual_size)
                 assert raw_size == virtual_size
                 break
             if self._subtract_fee:
-                print("SSS SUB")
                 break
 
             new_fee_amount = self._feeAmount(
@@ -695,9 +692,7 @@ class _AbstractTxFactory:
                 raw_size,
                 virtual_size)
             if fee_amount == new_fee_amount:
-                print("SSS OK", fee_amount, new_fee_amount)
                 break
-            print("SSS NEXT", fee_amount, new_fee_amount)
             fee_amount = new_fee_amount
 
         self._selected_utxo_data.list = utxo_list
