@@ -82,27 +82,27 @@ BIP32_TEST_VECTOR_3: Final = {
 
 HARDENED: Final = 0x80000000
 
-LEVELS_PATH_LIST: Final = (
-    ("", ([], False)),
-    ("m", ([], True)),
-    ("m/", ([], True)),
-    ("m//", ([], True)),
+PATH_LIST: Final = (
+    ("", (tuple(), False)),
+    ("m", (tuple(), True)),
+    ("m/", (tuple(), True)),
+    ("m//", (tuple(), True)),
 
-    ("m/1/", ([1], True)),
-    ("/1/", ([1], False)),
-    ("1", ([1], False)),
-    ("m/1/2", ([1, 2], True)),
-    ("m/////1/////2////", ([1, 2], True)),
-    ("m/-1/2", ([1 | HARDENED, 2], True)),
-    ("m/-1/2h", ([1 | HARDENED, 2 | HARDENED], True)),
-    ("m/-1/2h/3H", ([1 | HARDENED, 2 | HARDENED, 3 | HARDENED], True)),
-    ("m/-1/2h/3H/4", ([1 | HARDENED, 2 | HARDENED, 3 | HARDENED, 4], True)),
-    ("-1/2h/3H/4", ([1 | HARDENED, 2 | HARDENED, 3 | HARDENED, 4], False)),
-    ("-1/2'/3H/4", ([1 | HARDENED, 2 | HARDENED, 3 | HARDENED, 4], False)),
+    ("m/1/", ((1, ), True)),
+    ("/1/", ((1, ), False)),
+    ("1", ((1, ), False)),
+    ("m/1/2", ((1, 2), True)),
+    ("m/////1/////2////", ((1, 2), True)),
+    ("m/-1/2", ((1 | HARDENED, 2), True)),
+    ("m/-1/2h", ((1 | HARDENED, 2 | HARDENED), True)),
+    ("m/-1/2h/3H", ((1 | HARDENED, 2 | HARDENED, 3 | HARDENED), True)),
+    ("m/-1/2h/3H/4", ((1 | HARDENED, 2 | HARDENED, 3 | HARDENED, 4), True)),
+    ("-1/2h/3H/4", ((1 | HARDENED, 2 | HARDENED, 3 | HARDENED, 4), False)),
+    ("-1/2'/3H/4", ((1 | HARDENED, 2 | HARDENED, 3 | HARDENED, 4), False)),
 
     ("m/-1h/2h/3H/4", (None, False)),
     ("m/d", (None, False)),
-    ("m/4294967295", ([4294967295], True)),
+    ("m/4294967295", ((4294967295, ), True)),
     ("m/4294967296", (None, False)),
 )
 
@@ -124,9 +124,9 @@ PUBLIC_KEY_PATH_LIST: Final = {
 
 
 class TestHd(TestCase):
-    def test_levels_path(self) -> None:
-        for (s, r) in LEVELS_PATH_LIST:
-            self.assertEqual(r, HdNode.levelsPathFromString(s))
+    def test_path(self) -> None:
+        for (s, r) in PATH_LIST:
+            self.assertEqual(r, HdNode.pathFromString(s))
 
     def _assertKeys(
             self,
@@ -143,11 +143,23 @@ class TestHd(TestCase):
         version, node2 = HdNode.fromExtendedKey(excepted_public_key)
         self.assertEqual(Bitcoin.bip0032VersionPublicKey, version)
         self.assertIsNotNone(node2)
+        self.assertEqual(node.depth, node2.depth)
+        self.assertEqual(node.index, node2.index)
         self.assertEqual(
             excepted_public_key,
             node2.toExtendedKey(
                 Bitcoin.bip0032VersionPublicKey,
                 private=False))
+
+        if not node.depth:
+            self.assertEqual(0, node2.index)
+            self.assertEqual("m", node2.pathToString())
+        elif node.depth == 1:
+            self.assertTrue(node2.pathToString().startswith("m/"))
+            self.assertEqual(2, len(node2.pathToString().split("/")))
+        else:
+            self.assertFalse(node2.pathToString().startswith("m"))
+            self.assertEqual(1, len(node2.pathToString().split("/")))
 
         if node.privateKey is None:
             return
@@ -180,19 +192,20 @@ class TestHd(TestCase):
             for (path, keys) in t.items():
                 if not path.startswith("m"):
                     continue
-                node = root_node.fromLevelsPath(path, private=True)
+                node = root_node.fromPath(path, private=True)
                 self._assertKeys(node, keys[0], keys[1])
+                self.assertEqual(path, node.pathToString())
 
                 version, node = HdNode.fromExtendedKey(keys[1])
                 self.assertEqual(Bitcoin.bip0032VersionPrivateKey, version)
                 self._assertKeys(node, keys[0], keys[1])
 
-                path, is_full_path = HdNode.levelsPathFromString(path)
+                path, is_full_path = HdNode.pathFromString(path)
                 self.assertIsNotNone(path)
                 self.assertTrue(is_full_path)
                 if not path:
                     continue
-                node = root_node.fromLevelsPath(path[:-1], private=True)
+                node = root_node.fromPath(path[:-1], private=True)
                 self.assertIsNotNone(node)
                 self.assertIsNotNone(node.privateKey)
                 node = node.deriveChildNode(
@@ -208,8 +221,9 @@ class TestHd(TestCase):
 
         # public -> public
         for (path, value) in PUBLIC_KEY_PATH_LIST.items():
-            node = root_node.fromLevelsPath(path, private=False)
+            node = root_node.fromPath(path, private=False)
             self.assertIsNotNone(node)
+            self.assertEqual(path, node.pathToString())
             self.assertEqual(
                 value,
                 node.toExtendedKey(
@@ -218,15 +232,15 @@ class TestHd(TestCase):
 
         # private -> public
         for (path, value) in PUBLIC_KEY_PATH_LIST.items():
-            path, _ = HdNode.levelsPathFromString(path)
+            path, _ = HdNode.pathFromString(path)
             self.assertIsNotNone(path)
             for i in range(2, 10):
                 if len(path) < i:
                     continue
-                node = root_node.fromLevelsPath(path[:-i], private=True)
+                node = root_node.fromPath(path[:-i], private=True)
                 self.assertIsNotNone(node)
 
-                node = node.fromLevelsPath(path[-i:], private=False)
+                node = node.fromPath(path[-i:], private=False)
                 self.assertIsNotNone(node)
                 self.assertEqual(
                     value,

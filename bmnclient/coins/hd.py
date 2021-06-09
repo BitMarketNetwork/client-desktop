@@ -26,6 +26,7 @@ class HdNode:
             chain_code: bytes,
             depth: int,
             index: int,
+            path: Tuple[int, ...],
             parent_fingerprint: bytes):
         super().__init__()
         self.__key = key
@@ -33,6 +34,7 @@ class HdNode:
         self._chain_code = chain_code
         self._depth = depth
         self._index = index
+        self._path = path
         self._parent_fingerprint = parent_fingerprint
         self.__identifier: Optional[bytes] = None
 
@@ -101,6 +103,7 @@ class HdNode:
             chain_code=key_i_r,
             depth=0,
             index=0,
+            path=tuple(),
             parent_fingerprint=b"\0" * 4)
 
     def deriveChildNode(
@@ -157,6 +160,7 @@ class HdNode:
             chain_code=key_i_r,
             depth=self._depth + 1,
             index=index,
+            path=self._path + (index, ),
             parent_fingerprint=self.fingerprint)
 
     @classmethod
@@ -188,11 +192,16 @@ class HdNode:
             key = PublicKey.fromPublicData(key_data)
             assert key.isCompressed
 
+        if not depth:
+            if index or parent_fingerprint != b"\x00" * 4:
+                return 0, None
+
         node = cls(
             key=key,
             chain_code=chain_code,
             depth=depth,
             index=index,
+            path=(index, ) if depth else tuple(),
             parent_fingerprint=parent_fingerprint)
         return version, node
 
@@ -221,13 +230,17 @@ class HdNode:
             return None
         return Base58.encode(result)
 
+    @property
+    def path(self) -> Tuple[int, ...]:
+        return self._path
+
     @classmethod
-    def levelsPathFromString(
+    def pathFromString(
             cls,
-            path: str) -> Tuple[Optional[Sequence[int]], bool]:
+            path: str) -> Tuple[Optional[Tuple[int, ...]], bool]:
         path = path.split("/")
         if not path:
-            return [], False
+            return tuple(), False
 
         try:
             result = []
@@ -258,20 +271,34 @@ class HdNode:
                 if level > 0xffffffff:
                     return None, False
                 result.append(level)
-            return result, is_full_path
+            return tuple(result), is_full_path
         except (ValueError, IndexError):
             return None, False
 
-    def fromLevelsPath(
+    def pathToString(self, *, hardened_char: str = "H") -> Optional[str]:
+        result = []
+        if len(self._path) == self._depth:
+            result.append("m")
+        for level in self._path:
+            if level > 0xffffffff:
+                return None
+            if (level & self._HARDENED_MASK) == self._HARDENED_MASK:
+                level &= ~self._HARDENED_MASK
+                result.append(str(level) + hardened_char[0])
+            else:
+                result.append(str(level))
+        return "/".join(result)
+
+    def fromPath(
             self,
             path: Union[str, Sequence[int]],
             *,
             private: bool) -> Optional[HdNode]:
         if isinstance(path, str):
-            path, is_full_path = self.levelsPathFromString(path)
+            path, is_full_path = self.pathFromString(path)
             if path is None:
                 return None
-            if is_full_path and self.depth != 0:
+            if is_full_path and self._depth != 0:
                 return None
 
         node = self
