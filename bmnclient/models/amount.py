@@ -32,13 +32,15 @@ class AbstractAmountModel(AbstractStateModel):
 
     @QProperty(str, notify=__stateChanged)
     def value(self) -> int:
-        v = self._getValue()
-        return 0 if v is None else v
+        value = self._getValue()
+        return 0 if value is None else value
 
     @QProperty(str, notify=__stateChanged)
     def valueHuman(self) -> str:
-        # noinspection PyTypeChecker
-        return self._toHumanValue(self.value, self._coin.Currency)
+        value = self._getValue()
+        if value is None:
+            return self._NONE_STRING
+        return self._toHumanValue(value, self._coin.Currency)
 
     @QProperty(str, constant=True)
     def unit(self) -> str:
@@ -48,9 +50,10 @@ class AbstractAmountModel(AbstractStateModel):
     def fiatValueHuman(self) -> str:
         if self._coin.fiatRate.value <= 0:
             return self._NONE_STRING
-
-        # noinspection PyTypeChecker
-        fiat_amount = self._coin.toFiatAmount(self.value)
+        value = self._getValue()
+        if value is None:
+            return self._NONE_STRING
+        fiat_amount = self._coin.toFiatAmount(value)
         return self._toHumanValue(fiat_amount, self._coin.fiatRate.currencyType)
 
     @QProperty(str, notify=__stateChanged)
