@@ -29,6 +29,24 @@ class AbstractTxFactoryStateModel(AbstractStateModel):
         self._factory = factory
 
 
+class TxFactoryStateModel(AbstractTxFactoryStateModel):
+    __stateChanged = QSignal()
+
+    @QProperty(str, notify=__stateChanged)
+    def estimatedRawSizeHuman(self) -> str:
+        s = self._factory.estimatedRawSize
+        if s < 0:
+            return self._NONE_STRING
+        return "~" + self.locale.integerToString(s)
+
+    @QProperty(str, notify=__stateChanged)
+    def estimatedVirtualSizeHuman(self) -> str:
+        s = self._factory.estimatedVirtualSize
+        if s < 0:
+            return self._NONE_STRING
+        return "~" + self.locale.integerToString(s)
+
+
 class AbstractTxFactoryAmountModel(AbstractAmountModel):
     def __init__(
             self,
@@ -223,6 +241,11 @@ class TxFactoryModel(TxFactoryInterface, AbstractModel):
             database=application.database,
             factory=factory)
 
+        self._state = TxFactoryStateModel(
+            self._application,
+            self._factory)
+        self.connectModelUpdate(self._state)
+
         self._available_amount = TxFactoryAvailableAmountModel(
             self._application,
             self._factory)
@@ -261,6 +284,10 @@ class TxFactoryModel(TxFactoryInterface, AbstractModel):
     def name(self) -> str:
         name = self._factory.name
         return "" if name is None else name
+
+    @QProperty(QObject, constant=True)
+    def state(self) -> TxFactoryStateModel:
+        return self._state
 
     @QProperty(QObject, constant=True)
     def availableAmount(self) -> TxFactoryAvailableAmountModel:

@@ -83,6 +83,16 @@ BDialog {
         BInfoSeparator {}
 
         BInfoLabel {
+            text: qsTr("Raw size / Virtual size:")
+        }
+        BInfoValue {
+            text: qsTr("%1 / %2 bytes")
+                    .arg(_base.coin.txFactory.state.estimatedRawSizeHuman)
+                    .arg(_base.coin.txFactory.state.estimatedVirtualSizeHuman)
+        }
+        BInfoSeparator {}
+
+        BInfoLabel {
             text: qsTr("Change:")
         }
         BAmountInfoValue {

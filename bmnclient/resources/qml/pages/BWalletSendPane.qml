@@ -98,6 +98,16 @@ BPane {
         BDialogSeparator {}
 
         BDialogPromptLabel {
+            text: qsTr("Raw size / Virtual size:")
+        }
+        BDialogInputLabel {
+            BLayout.columnSpan: parent.columns - 1
+            text: qsTr("%1 / %2 bytes")
+                    .arg(_base.coin.txFactory.state.estimatedRawSizeHuman)
+                    .arg(_base.coin.txFactory.state.estimatedVirtualSizeHuman)
+        }
+
+        BDialogPromptLabel {
             text: qsTr("Change:")
         }
         BAmountLabel {
