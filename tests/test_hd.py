@@ -209,8 +209,8 @@ class TestHd(TestCase):
                 self.assertIsNotNone(node)
                 self.assertIsNotNone(node.privateKey)
                 node = node.deriveChildNode(
-                    path[-1] & ~HARDENED,
-                    hardened=(path[-1] & HARDENED) == HARDENED,
+                    HdNode.fromHardenedLevel(path[-1]),
+                    hardened=HdNode.isHardenedLevel(path[-1]),
                     private=False)
                 self._assertKeys(node, keys[0], keys[1])
 

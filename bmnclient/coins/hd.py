@@ -118,7 +118,7 @@ class HdNode:
         if hardened:
             if self.privateKey is None:
                 return None
-            index |= self._HARDENED_MASK
+            index = self.toHardenedLevel(index)
             data = b"\x00" + self.privateKey.data
         else:
             data = self.publicKey.data
@@ -230,6 +230,18 @@ class HdNode:
             return None
         return Base58.encode(result)
 
+    @classmethod
+    def toHardenedLevel(cls, value: int) -> int:
+        return (value | cls._HARDENED_MASK) & 0xffffffff
+
+    @classmethod
+    def fromHardenedLevel(cls, value: int) -> int:
+        return (value & ~cls._HARDENED_MASK) & 0xffffffff
+
+    @classmethod
+    def isHardenedLevel(cls, value: int) -> bool:
+        return (value & cls._HARDENED_MASK) == cls._HARDENED_MASK
+
     @property
     def path(self) -> Tuple[int, ...]:
         return self._path
@@ -269,11 +281,11 @@ class HdNode:
                     hardened = True
 
                 level = abs(int(level))
-                if hardened:
-                    level |= cls._HARDENED_MASK
-
                 if level > 0xffffffff:
                     return None, False
+                if hardened:
+                    level = cls.toHardenedLevel(level)
+
                 result.append(level)
             return tuple(result), is_full_path
         except (ValueError, IndexError):
@@ -286,8 +298,8 @@ class HdNode:
         for level in self._path:
             if level > 0xffffffff:
                 return None
-            if (level & self._HARDENED_MASK) == self._HARDENED_MASK:
-                level &= ~self._HARDENED_MASK
+            if self.isHardenedLevel(level):
+                level = self.fromHardenedLevel(level)
                 result.append(str(level) + hardened_char[0])
             else:
                 result.append(str(level))
@@ -308,8 +320,8 @@ class HdNode:
         node = self
         for index in path:
             node = node.deriveChildNode(
-                index & ~self._HARDENED_MASK,
-                hardened=(index & self._HARDENED_MASK) == self._HARDENED_MASK,
+                self.fromHardenedLevel(index),
+                hardened=self.isHardenedLevel(index),
                 private=private)
             if node is None:
                 return None
