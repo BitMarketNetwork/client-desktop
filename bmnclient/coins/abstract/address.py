@@ -334,11 +334,18 @@ class _AbstractAddress(Serializable):
     def key(self) -> Optional[KeyType]:
         return self._key
 
-    def exportKey(self) -> Optional[str]:
+    def exportKey(self, *, allow_hd_path: bool = False) -> Optional[str]:
         if isinstance(self._key, HdNode):
-            value = self._key.toExtendedKey(
-                self._coin.bip0032VersionPrivateKey,
-                private=True)
+            if allow_hd_path and self._key.isFullPath:
+                value = self._key.pathToString()
+            else:
+                value = None
+
+            if value is None:
+                value = self._key.toExtendedKey(
+                    self._coin.bip0032VersionPrivateKey,
+                    private=True)
+
             if value is None:
                 value = self._key.toExtendedKey(
                     self._coin.bip0032VersionPublicKey,
@@ -356,6 +363,21 @@ class _AbstractAddress(Serializable):
     def importKey(cls, coin: AbstractCoin, value: str) -> Optional[KeyType]:
         if not value:
             return None
+
+        if coin.hdNode is not None and coin.hdNode.isFullPath:
+            path, is_full_path = HdNode.pathFromString(value)
+            if path is not None:
+                coin_path_length = len(coin.hdNode.path)
+                if not is_full_path or len(path) <= coin_path_length:
+                    return None
+                if path[:coin_path_length] != coin.hdNode.path:
+                    return None
+
+                path = path[coin_path_length:]
+                key = coin.hdNode.fromPath(path, private=True)
+                if key is None:
+                    key = coin.hdNode.fromPath(path, private=False)
+                return key
 
         version, key = HdNode.fromExtendedKey(value)
         if key is not None:
@@ -375,7 +397,7 @@ class _AbstractAddress(Serializable):
 
         try:
             value = bytes.fromhex(value)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
 
         key = PrivateKey.fromSecretData(value, is_compressed=True)
@@ -383,14 +405,6 @@ class _AbstractAddress(Serializable):
             return key
 
         return PublicKey.fromPublicData(value)
-
-    @property
-    def hdIndex(self) -> int:
-        if isinstance(self._key, HdNode):
-            index = self._key.index
-            if index >= 0:
-                return index
-        return -1
 
     @serializable
     @property

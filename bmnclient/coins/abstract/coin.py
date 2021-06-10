@@ -10,13 +10,13 @@ from .script import _AbstractScript
 from .tx import _AbstractTx
 from .tx_factory import _AbstractTxFactory
 from ..currency import FiatRate, NoneFiatCurrency
+from ..hd import HdNode
 from ...crypto.digest import Sha256Digest
 from ...utils.class_property import classproperty
 from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-    from ..hd import HdNode
 
 
 class _AbstractCoinInterface:
@@ -382,9 +382,9 @@ class AbstractCoin(Serializable):
         # FIXME broken path!
         index = 0
         for address in self._address_list:
-            address_index = address.hdIndex
-            if address_index >= index:
-                index = address_index + 1
+            if isinstance(address.key, HdNode):
+                if address.key.index >= index:
+                    index = address.key.index + 1
         return index
 
     def deriveHdAddress(

@@ -234,6 +234,10 @@ class HdNode:
     def path(self) -> Tuple[int, ...]:
         return self._path
 
+    @property
+    def isFullPath(self) -> bool:
+        return len(self._path) == self._depth
+
     @classmethod
     def pathFromString(
             cls,

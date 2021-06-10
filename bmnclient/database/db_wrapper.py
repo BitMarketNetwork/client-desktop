@@ -234,7 +234,10 @@ class Database:
                 data["tx_count"],
                 data["history_first_offset"],
                 data["history_last_offset"],
-                self.__impl(address.exportKey(), True, "wallet key"),
+                self.__impl(
+                    address.exportKey(allow_hd_path=True),
+                    True,
+                    "wallet key"),
             ))
             if cursor is None:
                 return False
