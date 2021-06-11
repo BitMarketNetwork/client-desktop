@@ -364,23 +364,23 @@ class HdAddressIterator:
         if self._coin.hdNode is None:
             return
 
-        invalid_address_limit = self._EMPTY_ADDRESS_LIMIT
-        empty_address_limit = self._EMPTY_ADDRESS_LIMIT
-
-        type_iterator = chain(
+        type_list = list(chain(
             filter(
                 lambda t: t.value.hdSupport and t.value.isWitness,
                 self._coin.Address.Type),
             filter(
                 lambda t: t.value.hdSupport and not t.value.isWitness,
                 self._coin.Address.Type),
-        )
+        ))
+
+        invalid_address_limit = self._EMPTY_ADDRESS_LIMIT
+        empty_address_limit = self._EMPTY_ADDRESS_LIMIT * len(type_list)
 
         if self.broken_mode:
-            for type_ in type_iterator:
-                self._empty_address_count = 0
-                invalid_address_count = 0
-                for address_index in count(0):
+            self._empty_address_count = 0
+            invalid_address_count = 0
+            for address_index in count(0):
+                for type_ in type_list:
                     address = self._coin.deriveHdAddress(
                         account=-1,
                         is_change=False,
@@ -388,24 +388,24 @@ class HdAddressIterator:
                         type_=type_)
                     if address is None:
                         invalid_address_count += 1
-                        if invalid_address_count >= invalid_address_limit:
-                            break
-                    else:
-                        invalid_address_count = 0
-                        yield address
-                        if self._empty_address_count >= empty_address_limit:
-                            break
+                        break
+                    invalid_address_count = 0
+                    yield address
+                if invalid_address_count >= invalid_address_limit:
+                    break
+                if self._empty_address_count >= empty_address_limit:
+                    break
             return
 
-        for type_ in type_iterator:
-            empty_account_count = 0
-            for account in count(0):
-                self._is_empty_account = True
+        empty_account_count = 0
+        for account in count(0):
+            self._is_empty_account = True
 
-                for change in range(0, 2):
-                    self._empty_address_count = 0
-                    invalid_address_count = 0
-                    for address_index in count(0):
+            for change in range(0, 2):
+                self._empty_address_count = 0
+                invalid_address_count = 0
+                for address_index in count(0):
+                    for type_ in type_list:
                         address = self._coin.deriveHdAddress(
                             account=account,
                             is_change=change > 0,
@@ -414,17 +414,17 @@ class HdAddressIterator:
                         if address is None:
                             # invalid hd path protection, BIP-0032
                             invalid_address_count += 1
-                            if invalid_address_count >= invalid_address_limit:
-                                break
-                        else:
-                            invalid_address_count = 0
-                            yield address
-                            # controlled by self.markCurrentAddress()
-                            if self._empty_address_count >= empty_address_limit:
-                                break
-
-                # controlled by self.markCurrentAddress()
-                if self._is_empty_account:
-                    empty_account_count += 1
-                    if empty_account_count >= self._EMPTY_ACCOUNT_LIMIT:
+                            break
+                        invalid_address_count = 0
+                        yield address
+                    if invalid_address_count >= invalid_address_limit:
                         break
+                    # controlled by self.markCurrentAddress()
+                    if self._empty_address_count >= empty_address_limit:
+                        break
+
+            # controlled by self.markCurrentAddress()
+            if self._is_empty_account:
+                empty_account_count += 1
+                if empty_account_count >= self._EMPTY_ACCOUNT_LIMIT:
+                    break

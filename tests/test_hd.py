@@ -291,7 +291,7 @@ class TestHdAddressIterator(TestCase):
             append = 0
 
             for _ in it:
-                if not 0 < randint(0, 10) <= 3:
+                if not 0 < randint(0, 10) < 2:
                     flush += 1
                     it.markCurrentAddress(True)
                     # noinspection PyProtectedMember
