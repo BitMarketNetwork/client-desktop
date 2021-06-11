@@ -15,7 +15,7 @@ class Product:
     MAINTAINER_URL: Final = "https://" + MAINTAINER_DOMAIN + "/"
     NAME: Final = "BitMarket Network Client"
     SHORT_NAME: Final = "bmn-client"
-    VERSION: Final = (0, 12, 3)
+    VERSION: Final = (0, 12, 4)
     VERSION_STRING: Final = ".".join(map(str, VERSION))
     ENCODING: Final = "utf-8"
     STRING_SEPARATOR: Final = ":"

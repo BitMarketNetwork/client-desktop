@@ -699,11 +699,21 @@ Continue?</source>
     </message>
     <message>
         <location filename="../qml/dialogs/BTxApproveDialog.qml" line="86"/>
+        <source>Raw size / Virtual size:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BTxApproveDialog.qml" line="89"/>
+        <source>%1 / %2 bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BTxApproveDialog.qml" line="96"/>
         <source>Change:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/dialogs/BTxApproveDialog.qml" line="101"/>
+        <location filename="../qml/dialogs/BTxApproveDialog.qml" line="111"/>
         <source>Broadcast</source>
         <translation type="unfinished"></translation>
     </message>
@@ -883,11 +893,21 @@ Continue?</source>
     </message>
     <message>
         <location filename="../qml/pages/BWalletSendPane.qml" line="101"/>
+        <source>Raw size / Virtual size:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="105"/>
+        <source>%1 / %2 bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="111"/>
         <source>Change:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="136"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="146"/>
         <source>Prepare...</source>
         <translation type="unfinished"></translation>
     </message>
