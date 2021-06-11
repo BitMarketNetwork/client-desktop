@@ -378,13 +378,32 @@ class AbstractCoin(Serializable):
     def hdNode(self) -> Optional[HdNode]:
         return self._hd_node
 
-    def nextHdIndex(self, account: int, is_change: bool) -> int:
-        # FIXME broken path!
+    def nextHdIndex(self, account: int, change: int) -> int:
         index = 0
+        if account == -1:  # TODO remove in summer 2022
+            broken_mode = True
+        else:
+            broken_mode = False
+            account = HdNode.toHardenedLevel(account)
+
         for address in self._address_list:
-            if isinstance(address.key, HdNode):
-                if address.key.index >= index:
-                    index = address.key.index + 1
+            if not isinstance(address.key, HdNode):
+                continue
+
+            path = address.key.path[2:]  # skip "m/purpose/coin_type"
+            address_index = None
+
+            if broken_mode:
+                if len(path) == 1:
+                    assert path[0] == address.key.index
+                    address_index = address.key.index
+            elif len(path) == 3 and path[0] == account and path[1] == change:
+                assert path[2] == address.key.index
+                address_index = address.key.index
+
+            if address_index is not None and address_index >= index:
+                index = address_index + 1
+
         return index
 
     def deriveHdAddress(
@@ -398,27 +417,43 @@ class AbstractCoin(Serializable):
         if self._hd_node is None:
             return None
 
-        if type_ is None:
-            type_ = self.Address.Type.DEFAULT
+        broken_mode = account == -1  # TODO remove in summer 2022
+        change = 1 if is_change else 0
+        type_ = type_ if type_ is not None else self.Address.Type.DEFAULT
+        private = self._hd_node.privateKey is not None
 
         if index < 0:
-            # TODO fail if coin in "updating" mode
-            current_index = self.nextHdIndex(account, is_change)
-            assert current_index >= 0
+            # TODO should fail if coin in "updating" mode
+            current_index = self.nextHdIndex(account, change)
         else:
             current_index = index
 
+        if broken_mode:
+            change_node = self._hd_node
+        else:
+            account_node = self._hd_node.deriveChildNode(
+                account,
+                hardened=True,
+                private=private)
+            if account_node is None:
+                return None
+            change_node = account_node.deriveChildNode(
+                change,
+                hardened=False,
+                private=private)
+            if change_node is None:
+                return None
+
         while True:
-            # TODO broken bip0044 path!
-            address_node = self._hd_node.deriveChildNode(
+            address_node = change_node.deriveChildNode(
                 current_index,
                 hardened=False,
-                private=self._hd_node.privateKey is not None)
+                private=private)
             if address_node is not None:
                 break
             if index >= 0:
                 return None
-            current_index += 1  # BIP0032
+            current_index += 1  # BIP-0032
 
         return self.Address.create(
             self,

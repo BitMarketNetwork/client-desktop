@@ -466,7 +466,9 @@ class TestTxFactory(TestCase):
         self._coin = Bitcoin()
         root_node = HdNode.deriveRootNode(urandom(64))
         self.assertIsNotNone(root_node)
-        self.assertTrue(self._coin.deriveHdNode(root_node))
+        purpose_node = root_node.deriveChildNode(3, hardened=True, private=True)
+        self.assertIsNotNone(purpose_node)
+        self.assertTrue(self._coin.deriveHdNode(purpose_node))
 
     def _createUtxoList(
             self,
@@ -734,8 +736,9 @@ class TestTxFactory(TestCase):
                 self.assertIsNotNone(txf.name)
                 self.assertTrue(txf.broadcast())
                 self.assertIsNone(txf.name)
-                address_count += 1
-                self.assertEqual(address_count, len(self._coin.addressList))
+                if txf.changeAmount > 0:
+                    address_count += 1
+                    self.assertEqual(address_count, len(self._coin.addressList))
                 txf.clear()
 
 

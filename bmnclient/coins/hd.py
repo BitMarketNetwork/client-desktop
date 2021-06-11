@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from itertools import chain, count
 from typing import TYPE_CHECKING
 
 from ..crypto.base58 import Base58
@@ -9,7 +10,7 @@ from ..crypto.digest import Hash160Digest, Hmac, Sha512Digest
 from ..crypto.secp256k1 import KeyUtils, PrivateKey, PublicKey
 
 if TYPE_CHECKING:
-    from typing import Dict, Final, Optional, Sequence, Tuple, Union
+    from typing import Final, Optional, Sequence, Tuple, Union
     from .abstract.coin import AbstractCoin
 
 
@@ -328,78 +329,74 @@ class HdNode:
         return node
 
 
-class HdAddressIterator(Iterator):
+class HdAddressIterator:
+    _EMPTY_ACCOUNT_LIMIT = 2
     _EMPTY_ADDRESS_LIMIT = 6
 
-    def __init__(self, coin: AbstractCoin, hd_index: int = 0) -> None:
+    def __init__(self, coin: AbstractCoin) -> None:
         self._coin = coin
-        self._type_index = -1
-        self._last_address: Optional[AbstractCoin.Address] = None
-        self._hd_index = hd_index
-        self._stop = False
+        self._it = self._iterator()
+        self._is_empty_account = True
+        self._empty_address_count = 0
 
-        self._empty_address_counter: Dict[AbstractCoin.Address.Type, int] = {}
-        for address_type in self._coin.Address.Type:
-            if self.isSupportedAddressType(address_type):
-                self._empty_address_counter[address_type] = 0
-        assert len(self._empty_address_counter) > 0
-
-    def __iter__(self) -> HdAddressIterator:
-        return self
-
-    def __next__(self) -> AbstractCoin.Address:
-        if self._coin.hdNode is None or self._stop:
-            raise StopIteration
-
-        while True:
-            for type_index, address_type in enumerate(self._coin.Address.Type):
-                if type_index <= self._type_index:
-                    continue
-
-                if not self.isSupportedAddressType(address_type):
-                    continue
-
-                address = self._coin.deriveHdAddress(
-                    account=0,
-                    is_change=False,
-                    index=self._hd_index,
-                    type_=address_type)
-                if address is None:
-                    continue
-
-                self._type_index = type_index
-                self._last_address = address
-                return self._last_address
-
-            self._type_index = -1
-            self._hd_index += 1
+    def __iter__(self) -> Iterator[AbstractCoin.Address]:
+        return self._it
 
     @property
     def coin(self) -> AbstractCoin:
         return self._coin
 
-    @property
-    def currentHdIndex(self) -> int:
-        return self._hd_index
-
-    @classmethod
-    def isSupportedAddressType(
-            cls,
-            address_type: AbstractCoin.Address.Type) -> bool:
-        # TODO move to Address
-        if address_type.value.size > 0:
-            if address_type.value.name == "p2pkh":
-                return True
-            if address_type.value.name == "p2wpkh":
-                return True
-        return False
-
-    def markLastAddress(self, empty: bool) -> None:
-        if not empty:
-            self._empty_address_counter[self._last_address.type] = 0
+    def markCurrentAddress(self, is_empty: bool) -> None:
+        if is_empty:
+            self._empty_address_count += 1
         else:
-            self._empty_address_counter[self._last_address.type] += 1
-            for count in self._empty_address_counter.values():
-                if count <= self._EMPTY_ADDRESS_LIMIT:
-                    return
-            self._stop = True
+            self._empty_address_count = 0
+            self._is_empty_account = False
+
+    def _iterator(self) -> AbstractCoin.Address:
+        if self._coin.hdNode is None:
+            return
+
+        invalid_address_limit = self._EMPTY_ADDRESS_LIMIT
+        empty_address_limit = self._EMPTY_ADDRESS_LIMIT
+
+        type_iterator = chain(
+            filter(
+                lambda t: t.value.hdSupport and t.value.isWitness,
+                self._coin.Address.Type),
+            filter(
+                lambda t: t.value.hdSupport and not t.value.isWitness,
+                self._coin.Address.Type),
+        )
+
+        for type_ in type_iterator:
+            empty_account_count = 0
+            for account in count(0):
+                self._is_empty_account = True
+
+                for change in range(0, 2):
+                    self._empty_address_count = 0
+                    invalid_address_count = 0
+                    for address_index in count(0):
+                        address = self._coin.deriveHdAddress(
+                            account=account,
+                            is_change=change > 0,
+                            index=address_index,
+                            type_=type_)
+                        if address is None:
+                            # invalid hd path protection, BIP-0032
+                            invalid_address_count += 1
+                            if invalid_address_count >= invalid_address_limit:
+                                break
+                        else:
+                            invalid_address_count = 0
+                            yield address
+                            # controlled by self.markCurrentAddress()
+                            if self._empty_address_count >= empty_address_limit:
+                                break
+
+                # controlled by self.markCurrentAddress()
+                if self._is_empty_account:
+                    empty_account_count += 1
+                    if empty_account_count >= self._EMPTY_ACCOUNT_LIMIT:
+                        break

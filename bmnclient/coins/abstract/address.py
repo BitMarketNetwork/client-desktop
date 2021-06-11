@@ -22,7 +22,8 @@ class _AbstractAddressTypeValue:
         "_size",
         "_encoding",
         "_is_witness",
-        "_script_type"
+        "_script_type",
+        "_hd_support"
     )
 
     def __init__(
@@ -33,13 +34,15 @@ class _AbstractAddressTypeValue:
             size: int,
             encoding: Optional[AbstractCoin.Address.Encoding],
             is_witness: bool,
-            script_type: Optional[AbstractCoin.Script.Type]) -> None:
+            script_type: Optional[AbstractCoin.Script.Type],
+            hd_support: bool) -> None:
         self._name = name
         self._version = version
         self._size = size
         self._encoding = encoding
         self._is_witness = is_witness
         self._script_type = script_type
+        self._hd_support = hd_support
 
     def __eq__(self, other: AbstractCoin.Address.TypeValue) -> bool:
         return (
@@ -49,6 +52,7 @@ class _AbstractAddressTypeValue:
                 and self._size == other._size
                 and self._encoding == other._encoding
                 and self._script_type == other._script_type
+                and self._hd_support == other._hd_support
         )
 
     def __hash__(self) -> int:
@@ -57,7 +61,8 @@ class _AbstractAddressTypeValue:
             self._version,
             self._size,
             self._encoding,
-            self._script_type))
+            self._script_type,
+            self._hd_support))
 
     def copy(self, **kwargs) -> AbstractCoin.Address.TypeValue:
         return self.__class__(
@@ -66,7 +71,8 @@ class _AbstractAddressTypeValue:
             size=kwargs.get("size", self._size),
             encoding=kwargs.get("encoding", self._encoding),
             is_witness=kwargs.get("is_witness", self._is_witness),
-            script_type=kwargs.get("script_type", self._script_type)
+            script_type=kwargs.get("script_type", self._script_type),
+            hd_support=kwargs.get("hd_support", self._hd_support),
         )
 
     def isValidSize(self, size: int) -> bool:
@@ -101,6 +107,10 @@ class _AbstractAddressTypeValue:
     @property
     def scriptType(self) -> Optional[AbstractCoin.Script.Type]:
         return self._script_type
+
+    @property
+    def hdSupport(self) -> bool:
+        return self._hd_support
 
 
 class _AbstractAddressInterface:

@@ -252,14 +252,21 @@ class TestHd(TestCase):
         coin = Bitcoin()
         root_node = HdNode.deriveRootNode(urandom(64))
         self.assertIsNotNone(root_node)
-        self.assertTrue(coin.deriveHdNode(root_node))
+        purpose_node = root_node.deriveChildNode(3, hardened=True, private=True)
+        self.assertIsNotNone(purpose_node)
+        self.assertTrue(coin.deriveHdNode(purpose_node))
 
-        for i in range(10):
-            self.assertEqual(coin.nextHdIndex(0, False), i)
-            address = coin.deriveHdAddress(account=0, is_change=False)
-            self.assertIsNotNone(address)
-            coin.appendAddress(address)
-            self.assertEqual(coin.nextHdIndex(0, False), i + 1)
+        for account in range(0, 10):
+            for is_change in (False, True):
+                for i in range(10):
+                    change = 1 if is_change else 0
+                    self.assertEqual(coin.nextHdIndex(account, change), i)
+                    address = coin.deriveHdAddress(
+                        account=account,
+                        is_change=is_change)
+                    self.assertIsNotNone(address)
+                    coin.appendAddress(address)
+                    self.assertEqual(coin.nextHdIndex(account, change), i + 1)
 
 
 class TestHdAddressIterator(TestCase):
@@ -278,34 +285,19 @@ class TestHdAddressIterator(TestCase):
 
         flush = 0
         append = 0
-        it = None
-        while flush < 1 or append < 0:
+        while flush < 1 or append < 1:
             it = HdAddressIterator(coin)
             flush = 0
             append = 0
 
-            for address in it:
-                if randint(0, 2) != 1:
+            for _ in it:
+                if not 0 < randint(0, 10) <= 3:
                     flush += 1
-                    it.markLastAddress(True)
+                    it.markCurrentAddress(True)
                     # noinspection PyProtectedMember
-                    self.assertGreater(
-                        it._empty_address_counter[address.type],
-                        0)
+                    self.assertLess(0, it._empty_address_count)
                 else:
                     append += 1
-                    it.markLastAddress(False)
+                    it.markCurrentAddress(False)
                     # noinspection PyProtectedMember
-                    self.assertEqual(
-                        it._empty_address_counter[address.type],
-                        0)
-            self.assertRaises(StopIteration, next, it)
-
-        self.assertIsNotNone(it)
-        # noinspection PyProtectedMember
-        self.assertEqual(len(it._empty_address_counter), 2)
-
-        # noinspection PyProtectedMember
-        for count in it._empty_address_counter.values():
-            # noinspection PyProtectedMember
-            self.assertGreater(count, it._EMPTY_ADDRESS_LIMIT)
+                    self.assertEqual(0, it._empty_address_count)
