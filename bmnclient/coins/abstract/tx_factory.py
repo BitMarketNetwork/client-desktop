@@ -178,7 +178,7 @@ class _AbstractMutableTx:
         raise NotImplementedError
 
     @property
-    @lru_cache
+    @lru_cache()
     def name(self) -> Optional[str]:
         if not self._is_signed or self._is_dummy:
             return None
@@ -232,7 +232,7 @@ class _AbstractMutableTx:
     def _serialize(self, *, with_witness: bool = True, **kwargs) -> bytes:
         raise NotImplementedError
 
-    @lru_cache
+    @lru_cache()
     def serialize(self, *, with_witness: bool = True, **kwargs) -> bytes:
         if not self._is_signed:
             return b""
