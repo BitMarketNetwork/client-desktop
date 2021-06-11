@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .hd import HdNode
 from ..utils import NotImplementedInstance
 
 if TYPE_CHECKING:
@@ -21,14 +22,14 @@ class CoinUtils(NotImplementedInstance):
     @classmethod
     def addressToNameKeyTuple(
             cls,
-            address: Optional[AbstractCoin.Address],
-            hd_index: Optional[int] = None) -> Tuple[ClassStringKeyTuple, ...]:
+            address: Optional[AbstractCoin.Address]) \
+            -> Tuple[ClassStringKeyTuple, ...]:
         result = (
             *cls.coinToNameKeyTuple(None if address is None else address.coin),
             (None, "no_address" if address is None else address.name)
         )
-        if hd_index is not None:
-            result += ("index", hd_index),
+        if isinstance(address.key, HdNode):
+            result += (None, address.key.pathToString()),
         return result
 
     @classmethod

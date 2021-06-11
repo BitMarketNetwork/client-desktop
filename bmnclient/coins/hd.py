@@ -1,7 +1,6 @@
 # JOK4
 from __future__ import annotations
 
-from collections.abc import Iterator
 from itertools import chain, count
 from typing import TYPE_CHECKING
 
@@ -10,7 +9,7 @@ from ..crypto.digest import Hash160Digest, Hmac, Sha512Digest
 from ..crypto.secp256k1 import KeyUtils, PrivateKey, PublicKey
 
 if TYPE_CHECKING:
-    from typing import Final, Optional, Sequence, Tuple, Union
+    from typing import Final, Iterator, Optional, Sequence, Tuple, Union
     from .abstract.coin import AbstractCoin
 
 
@@ -333,14 +332,22 @@ class HdAddressIterator:
     _EMPTY_ACCOUNT_LIMIT = 2
     _EMPTY_ADDRESS_LIMIT = 6
 
-    def __init__(self, coin: AbstractCoin) -> None:
+    def __init__(
+            self,
+            coin: AbstractCoin,
+            *,
+            broken_mode: bool = False) -> None:
         self._coin = coin
-        self._it = self._iterator()
         self._is_empty_account = True
         self._empty_address_count = 0
+        self.broken_mode = broken_mode  # TODO remove in summer 2022
+        self._it = self._iterator()
 
     def __iter__(self) -> Iterator[AbstractCoin.Address]:
         return self._it
+
+    def __next__(self) -> AbstractCoin.Address:
+        return next(self._it)
 
     @property
     def coin(self) -> AbstractCoin:
@@ -368,6 +375,27 @@ class HdAddressIterator:
                 lambda t: t.value.hdSupport and not t.value.isWitness,
                 self._coin.Address.Type),
         )
+
+        if self.broken_mode:
+            for type_ in type_iterator:
+                self._empty_address_count = 0
+                invalid_address_count = 0
+                for address_index in count(0):
+                    address = self._coin.deriveHdAddress(
+                        account=-1,
+                        is_change=False,
+                        index=address_index,
+                        type_=type_)
+                    if address is None:
+                        invalid_address_count += 1
+                        if invalid_address_count >= invalid_address_limit:
+                            break
+                    else:
+                        invalid_address_count = 0
+                        yield address
+                        if self._empty_address_count >= empty_address_limit:
+                            break
+            return
 
         for type_ in type_iterator:
             empty_account_count = 0

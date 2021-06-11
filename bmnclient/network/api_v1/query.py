@@ -333,9 +333,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery):
             _current_address = next(_hd_iterator)
         super().__init__(
             _current_address,
-            name_key_tuple=CoinUtils.addressToNameKeyTuple(
-                _current_address,
-                _hd_iterator.currentHdIndex))
+            name_key_tuple=CoinUtils.addressToNameKeyTuple(_current_address))
         self._hd_iterator = _hd_iterator
 
     def isEqualQuery(self, other: HdAddressIteratorApiQuery) -> bool:
@@ -360,14 +358,22 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery):
             return
 
         if self._address.txCount == 0 and self._address.amount == 0:
-            self._hd_iterator.markLastAddress(True)
+            self._hd_iterator.markCurrentAddress(True)
         else:
-            self._hd_iterator.markLastAddress(False)
+            self._hd_iterator.markCurrentAddress(False)
             self._address.coin.appendAddress(self._address)
 
         try:
             next_address = next(self._hd_iterator)
         except StopIteration:
+            if not self._hd_iterator.broken_mode:
+                self._next_query = self.__class__(
+                    self._address.coin,
+                    _hd_iterator=HdAddressIterator(
+                        self._address.coin,
+                        broken_mode=True))
+                return
+
             self._logger.debug(
                 "HD iteration was finished for coin '%s'.",
                 self._address.coin.name)
