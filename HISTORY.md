@@ -5,7 +5,7 @@
 * Fixed calculation of the estimated transaction size on the "Send" page.
 * The "Send" page now displays the estimated original size and virtual size of the transaction.
 * Database: Private keys of HD addresses have been replaced on HD paths.
-* Fixed iteration and generation of "broken" HD addresses (BIP-0044). **The "broken" iteration is maintained until the summer of 2022.**
+* Fixed iteration and generation of "broken" HD addresses (BIP-0044, BIP-0084). **The "broken" iteration is maintained until the summer of 2022.**
 
 ## 0.12.3 (22.05.2021)
 
