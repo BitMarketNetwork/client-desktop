@@ -244,6 +244,7 @@ class HdNode:
 
     @property
     def path(self) -> Tuple[int, ...]:
+        assert isinstance(self._path, tuple)
         return self._path
 
     @property
@@ -361,22 +362,25 @@ class HdAddressIterator:
             self._is_empty_account = False
 
     def _iterator(self) -> AbstractCoin.Address:
-        if self._coin.hdNode is None:
+        if not self._coin.hdNodeList:
             return
 
         type_list = list(chain(
             filter(
-                lambda t: t.value.hdSupport and t.value.isWitness,
+                lambda t:
+                    t.value.hdPurpose is not None and t.value.isWitness,
                 self._coin.Address.Type),
             filter(
-                lambda t: t.value.hdSupport and not t.value.isWitness,
+                lambda t:
+                    t.value.hdPurpose is not None and not t.value.isWitness,
                 self._coin.Address.Type),
         ))
 
         invalid_address_limit = self._EMPTY_ADDRESS_LIMIT
-        empty_address_limit = self._EMPTY_ADDRESS_LIMIT * len(type_list)
+        empty_address_limit = self._EMPTY_ADDRESS_LIMIT
 
         if self.broken_mode:
+            empty_address_limit *= len(type_list)
             self._empty_address_count = 0
             invalid_address_count = 0
             for address_index in count(0):
@@ -397,15 +401,15 @@ class HdAddressIterator:
                     break
             return
 
-        empty_account_count = 0
-        for account in count(0):
-            self._is_empty_account = True
+        for type_ in type_list:
+            empty_account_count = 0
+            for account in count(0):
+                self._is_empty_account = True
 
-            for change in range(0, 2):
-                self._empty_address_count = 0
-                invalid_address_count = 0
-                for address_index in count(0):
-                    for type_ in type_list:
+                for change in range(0, 2):
+                    self._empty_address_count = 0
+                    invalid_address_count = 0
+                    for address_index in count(0):
                         address = self._coin.deriveHdAddress(
                             account=account,
                             is_change=change > 0,
@@ -414,17 +418,17 @@ class HdAddressIterator:
                         if address is None:
                             # invalid hd path protection, BIP-0032
                             invalid_address_count += 1
-                            break
-                        invalid_address_count = 0
-                        yield address
-                    if invalid_address_count >= invalid_address_limit:
-                        break
-                    # controlled by self.markCurrentAddress()
-                    if self._empty_address_count >= empty_address_limit:
-                        break
+                            if invalid_address_count >= invalid_address_limit:
+                                break
+                        else:
+                            invalid_address_count = 0
+                            yield address
+                            # controlled by self.markCurrentAddress()
+                            if self._empty_address_count >= empty_address_limit:
+                                break
 
-            # controlled by self.markCurrentAddress()
-            if self._is_empty_account:
-                empty_account_count += 1
-                if empty_account_count >= self._EMPTY_ACCOUNT_LIMIT:
-                    break
+                # controlled by self.markCurrentAddress()
+                if self._is_empty_account:
+                    empty_account_count += 1
+                    if empty_account_count >= self._EMPTY_ACCOUNT_LIMIT:
+                        break

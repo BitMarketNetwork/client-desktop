@@ -288,11 +288,11 @@ class CoreApplication(QObject):
     def icon(self) -> QIcon:
         return self._icon
 
-    def _onKeyStoreOpen(self, purpose_node: HdNode) -> None:
+    def _onKeyStoreOpen(self, root_node: HdNode) -> None:
         assert not self._database.isLoaded
 
         for coin in self._coin_list:
-            if not coin.deriveHdNode(purpose_node):
+            if not coin.deriveHdNode(root_node):
                 # TODO show message, force user to regenerate seed?
                 pass
 

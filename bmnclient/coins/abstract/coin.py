@@ -112,7 +112,7 @@ class AbstractCoin(Serializable):
         self._fiat_rate = FiatRate(0, NoneFiatCurrency)
         self._amount = 0
 
-        self._hd_node: Optional[HdNode] = None
+        self._hd_node_list: Dict[int, HdNode] = {}
 
         self._address_list: List[AbstractCoin.Address] = []
         self._server_data: Dict[str, Union[int, str]] = {}
@@ -366,43 +366,52 @@ class AbstractCoin(Serializable):
         if self._model:
             self._model.afterUpdateUtxoList()
 
-    def deriveHdNode(self, purpose_node: HdNode) -> bool:
-        assert self._hd_node is None
-        self._hd_node = purpose_node.deriveChildNode(
-            self._BIP0044_COIN_TYPE,
-            hardened=True,
-            private=purpose_node.privateKey is not None)
-        return self._hd_node is not None
+    def deriveHdNode(self, root_node: HdNode) -> bool:
+        private = root_node.privateKey is not None
+
+        for type_ in self.Address.Type:
+            purpose = type_.value.hdPurpose
+            if purpose is None:
+                continue
+            hd_node = root_node.deriveChildNode(
+                purpose,
+                hardened=True,
+                private=private)
+            if hd_node is None:
+                return False
+
+            hd_node = hd_node.deriveChildNode(
+                self._BIP0044_COIN_TYPE,
+                hardened=True,
+                private=private)
+            if hd_node is None:
+                return False
+
+            self._hd_node_list[type_.value.hdPurpose] = hd_node
+
+        return True
 
     @property
-    def hdNode(self) -> Optional[HdNode]:
-        return self._hd_node
+    def hdNodeList(self) -> Dict[int, HdNode]:
+        return self._hd_node_list
 
-    def nextHdIndex(self, account: int, change: int) -> int:
+    def nextHdIndex(self, purpose: int, account: int, change: int) -> int:
         index = 0
-        if account == -1:  # TODO remove in summer 2022
-            broken_mode = True
-        else:
-            broken_mode = False
-            account = HdNode.toHardenedLevel(account)
+        parent_path = (
+            HdNode.toHardenedLevel(purpose),
+            HdNode.toHardenedLevel(self._BIP0044_COIN_TYPE),
+            HdNode.toHardenedLevel(account),
+            change)
 
         for address in self._address_list:
             if not isinstance(address.key, HdNode):
                 continue
+            if address.key.path[:-1] != parent_path:
+                continue
 
-            path = address.key.path[2:]  # skip "m/purpose/coin_type"
-            address_index = None
-
-            if broken_mode:
-                if len(path) == 1:
-                    assert path[0] == address.key.index
-                    address_index = address.key.index
-            elif len(path) == 3 and path[0] == account and path[1] == change:
-                assert path[2] == address.key.index
-                address_index = address.key.index
-
-            if address_index is not None and address_index >= index:
-                index = address_index + 1
+            assert address.key.path[4] == address.key.index
+            if address.key.index >= index:
+                index = address.key.index + 1
 
         return index
 
@@ -414,24 +423,37 @@ class AbstractCoin(Serializable):
             index: int = -1,
             type_: Optional[Address.Type] = None,
             **kwargs) -> Optional[Address]:
-        if self._hd_node is None:
+        type_ = type_ if type_ is not None else self.Address.Type.DEFAULT
+        if type_.value.hdPurpose is None:
             return None
 
         broken_mode = account == -1  # TODO remove in summer 2022
+
+        if broken_mode:
+            hd_node = self._hd_node_list.get(44)
+        else:
+            hd_node = self._hd_node_list.get(type_.value.hdPurpose)
+        if hd_node is None:
+            return None
+
         change = 1 if is_change else 0
-        type_ = type_ if type_ is not None else self.Address.Type.DEFAULT
-        private = self._hd_node.privateKey is not None
+        private = hd_node.privateKey is not None
 
         if index < 0:
+            if broken_mode:
+                return None
             # TODO should fail if coin in "updating" mode
-            current_index = self.nextHdIndex(account, change)
+            current_index = self.nextHdIndex(
+                type_.value.hdPurpose,
+                account,
+                change)
         else:
             current_index = index
 
         if broken_mode:
-            change_node = self._hd_node
+            change_node = hd_node
         else:
-            account_node = self._hd_node.deriveChildNode(
+            account_node = hd_node.deriveChildNode(
                 account,
                 hardened=True,
                 private=private)

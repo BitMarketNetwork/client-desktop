@@ -166,11 +166,11 @@ class KeyStore(QObject):
                 return False
             if not self._saveSeedWithPhrase(self._mnemonic.language, phrase):
                 return False
-            purpose_node = self._loadSeed()
-            if purpose_node is None:
+            root_node = self._loadSeed()
+            if root_node is None:
                 return False
 
-        self._open_callback(purpose_node)
+        self._open_callback(root_node)
         return True
 
     # noinspection PyTypeChecker
@@ -197,11 +197,11 @@ class KeyStore(QObject):
                 return False
             if not self._saveSeedWithPhrase(self._mnemonic.language, phrase):
                 return False
-            purpose_node = self._loadSeed()
-            if purpose_node is None:
+            root_node = self._loadSeed()
+            if root_node is None:
                 return False
 
-        self._open_callback(purpose_node)
+        self._open_callback(root_node)
         return True
 
     # noinspection PyTypeChecker
@@ -277,17 +277,8 @@ class KeyStore(QObject):
         if root_node is None:
             # TODO show message, this has probability lower than 1 in 2 ** 127.
             return None
-
-        purpose_node = root_node.deriveChildNode(
-            44,  # BIP-0044
-            hardened=True,
-            private=True)
-        if purpose_node is None:
-            # TODO show message, this has probability lower than 1 in 2 ** 127.
-            return None
-
-        self._has_seed = purpose_node is not None
-        return purpose_node
+        self._has_seed = True
+        return root_node
 
     ############################################################################
 
@@ -316,10 +307,10 @@ class KeyStore(QObject):
             value = SecretStore(password).decryptValue(value)
             if not value or not self._loadSecretStoreValue(value):
                 return False
-            purpose_node = self._loadSeed()
+            root_node = self._loadSeed()
 
-        if purpose_node is not None:
-            self._open_callback(purpose_node)
+        if root_node is not None:
+            self._open_callback(root_node)
         return True
 
     # noinspection PyTypeChecker

@@ -252,36 +252,277 @@ class TestHd(TestCase):
         coin = Bitcoin()
         root_node = HdNode.deriveRootNode(urandom(64))
         self.assertIsNotNone(root_node)
-        purpose_node = root_node.deriveChildNode(3, hardened=True, private=True)
-        self.assertIsNotNone(purpose_node)
-        self.assertTrue(coin.deriveHdNode(purpose_node))
+        self.assertTrue(coin.deriveHdNode(root_node))
 
+        purpose = coin.Address.Type.DEFAULT.value.hdPurpose
         for account in range(0, 10):
             for is_change in (False, True):
                 for i in range(10):
                     change = 1 if is_change else 0
-                    self.assertEqual(coin.nextHdIndex(account, change), i)
+                    self.assertEqual(
+                        i,
+                        coin.nextHdIndex(purpose, account, change))
                     address = coin.deriveHdAddress(
                         account=account,
                         is_change=is_change)
                     self.assertIsNotNone(address)
                     coin.appendAddress(address)
-                    self.assertEqual(coin.nextHdIndex(account, change), i + 1)
+                    self.assertEqual(
+                        i + 1,
+                        coin.nextHdIndex(purpose, account, change))
+
+
+# https://iancoleman.io/bip39/
+HD_ADDRESS_LIST = (
+    {
+        "seed": "123be674f6d2074e37b6621795a33a2bc967ffcf24a40c2a87a1410d4bff08777520d13d8fe6ae3c41dc7bd722e3dfbbbf5c0c5a39340d68642006a324ccec6f",  # noqa
+
+        # m/84'/0'/0'/0
+        "m/84'/0'/0'/0/0": (
+            "bc1qv2eet9m0py0g7aftpzx44fcwtww78nh4npcdtj",  # noqa
+            "0263bd2afff941b8a3276b5ac550e9b6c80728014e97a5aee16e7ac3a67969a04a"  # noqa
+        ),
+        "m/84'/0'/0'/0/1": (
+            "bc1qclhl7jknfrkxrfjpcdkw2f8wvdkw8h66dyd55g",  # noqa
+            "02f471d882da3debb7a814c4296b0466ee783b063a4095171073c85b53607615db"  # noqa
+        ),
+        "m/84'/0'/0'/0/2": (
+            "bc1qd5m7kjscvd6vf3exk24nzgrt7py0ygxx9ysf6g",  # noqa
+            "02807d91da39216ea9918c54859e8ed43cad1802311f32ac521d6412e99783ed24"  # noqa
+        ),
+        "m/84'/0'/0'/0/3": (
+            "bc1ql6l4vy6utwp4ug0uzu05c2050mlg9f6dgwg8cg",  # noqa
+            "0352891de10dd1516914c6e006f1234f7aeb528894c1b1777e60a2fe09a972b36e"  # noqa
+        ),
+        "m/84'/0'/0'/0/4": (
+            "bc1qcegxwka86gws9kussnqemjr843h7jkd6q6zvnw",  # noqa
+            "02d6d564271215a074b329df7c13671bbbe4acc5b12f6dedd6e743c32569fd6dce"  # noqa
+        ),
+        "m/84'/0'/0'/0/5": (
+            "bc1qwylqm0vp5rnxvwnq7394n2j82kx4h3809pn489",  # noqa
+            "02f7a5ef8aa3cee31c1c0011f2252990fb46aa6125ba8b436891670399107e2333"  # noqa
+        ),
+
+        # m/84'/0'/1'/0
+        "m/84'/0'/1'/0/0": (
+            "bc1q2t845rff2hzx66nhdjmsxryxpaflh68tk7rzx5",  # noqa
+            "02f97d5f119afae3ac9b5c53313e368de7dc6fb0e8e125cfe3dca76ee9a1f21df6"  # noqa
+        ),
+        "m/84'/0'/1'/0/1": (
+            "bc1qzdunnmmpahvnfpe6lkhyehvplm2td0k8h6t9e7",  # noqa
+            "033b5bd0f2521f3e4db045e9e307cd77bbf1f5162cfd6cc0da7aa542b845a4475b"  # noqa
+        ),
+        "m/84'/0'/1'/0/2": (
+            "bc1qkssyf2mjyd5cnsdjm9cqsyg5f2jplxg8a2da02",  # noqa
+            "03ac0fe46c0b412b24ec3e2e711d071dc59782b8d02a84c223f46dbdcc2060cf50"  # noqa
+        ),
+        "m/84'/0'/1'/0/3": (
+            "bc1q7rmezld3dvj0mq9m5gpxcwrsnflqq0w43a7psq",  # noqa
+            "02ea9727ad6d577f513400eb41a8513c94bb71dc6d2c5e7c53cd0af10d5afe1976"  # noqa
+        ),
+        "m/84'/0'/1'/0/4": (
+            "bc1qtd0qg4mawund5dckusa08nq564xvhtt4e92r6j",  # noqa
+            "021c7f2ae27027d87d76bf604b8e82f19625bb5d17224ffabe63ceea6e8d931bdd"  # noqa
+        ),
+        "m/84'/0'/1'/0/5": (
+            "bc1qwfdhqxecdz2uy7z5rrcmtfrn3gywqljug0fm8d",  # noqa
+            "03f410f4f2352d0d73ef4d6ac4bc99badbccfd046b047243b46e268adf785d6ff2"  # noqa
+        ),
+
+        # m/84'/0'/0'/1
+        "m/84'/0'/0'/1/0": (
+            "bc1qvqhg5un7rvnt88y87h4yvnl7u95fsmxdh3qf7x",  # noqa
+            "0205cf834e36521b19c730e9ad3ed085cc3091c5bb567730370e9db896ba48fed5"  # noqa
+        ),
+        "m/84'/0'/0'/1/1": (
+            "bc1qxlhywz2aeds6qs8wqdlvhfw0wkqhvfnmkld7q8",  # noqa
+            "022c429045a000c56229b1388c2cc9a285d9d4c411bc0714cf12cdcfdd0bc9d06f"  # noqa
+        ),
+        "m/84'/0'/0'/1/2": (
+            "bc1qghxtqx9dkjj0phezkcrgely5nu4tan0ek89p8v",  # noqa
+            "02664a5144bfaab44ea382747a8baf8b24e1532bcfe01658039071e8d75d63beaf"  # noqa
+        ),
+        "m/84'/0'/0'/1/3": (
+            "bc1q9zsuy253mc30hlf8z77kx6gp9e3n5ntqy9ufmx",  # noqa
+            "03b68113faa1f283bb58766dd4c3a142f159a0686cf45b4c0c6c0b4ac401649fa0"  # noqa
+        ),
+        "m/84'/0'/0'/1/4": (
+            "bc1qmqk7my37w87c3x9hg36d2q4u2pr9vrm8tnw7gd",  # noqa
+            "03550081113163fdb19672d77178654345a84f866012176a50533b69c5d214fd4f"  # noqa
+        ),
+        "m/84'/0'/0'/1/5": (
+            "bc1qed05594uqd0eec5ww9fyaexkhlxl396xh002qp",  # noqa
+            "031e52fc136d0fe767c0f8cf134ca629234ee28229b48f522c38fdfe99d8a93125"  # noqa
+        ),
+
+        # m/84'/0'/1'/1
+        "m/84'/0'/1'/1/0": (
+            "bc1qlys8dctlyuk34rv3q2dtrnjfczwrfhrfy6nqcu",  # noqa
+            "024f743ba82d63b4e49a6c869767949f0074fbcf7729f566a83cc0123e467296f2"  # noqa
+        ),
+        "m/84'/0'/1'/1/1": (
+            "bc1q5ehpjy8mxxf33mnpx73ut46dhjljff4g8m7h4g",  # noqa
+            "03da025913e5571b80747f6a2ae752c7826fae8ff96faac6746f1b40f0e33b9c96"  # noqa
+        ),
+        "m/84'/0'/1'/1/2": (
+            "bc1q8wfcrjg04xdgx4auxkg89u6dllf2rppkuwh5ka",  # noqa
+            "03afcae7dd33ed4ca93d37586fed028fb35771526807f0b97d195d793c999c34b2"  # noqa
+        ),
+        "m/84'/0'/1'/1/3": (
+            "bc1qqzdvv2ywxn89l3x7qvuc26033v8yfn93qklgu4",  # noqa
+            "0376fa5fca39eed1edc5511e82c1db142c338c55ec1e0822a3517d3be53bfb6f76"  # noqa
+        ),
+        "m/84'/0'/1'/1/4": (
+            "bc1qsctyenjtvaq59glgkxf8q0zvaa6luw82yfahxm",  # noqa
+            "0361c058cfe49c0d6e77efa3292aa5f4ae04d08b621d40e3c16be471462dce7be9"  # noqa
+        ),
+        "m/84'/0'/1'/1/5": (
+            "bc1qkt5gr08jhl6rxpemsmhu77vkmftxxes30dfe5h",  # noqa
+            "032db8487d7ca46dd907807e7f19a8580f5e9ff5e22509f7664b84e0fd841d17d7"  # noqa
+        ),
+
+        # m/44'/0'/0'/0
+        "m/44'/0'/0'/0/0": (
+            "1PtRP5nQWPAFFYWHs5Q2h94wM9n5P63t19",  # noqa
+            "03bf80699f17f18c5d1c62bac4047a3cb0ced7cda315be89ff9ac2b50d6204558c"  # noqa
+        ),
+        "m/44'/0'/0'/0/1": (
+            "19sVkPzjGhGFg8A6ehoNSCKj8JHfA3YHUg",  # noqa
+            "03ebb3ac9b223de9206ea32a861f60648166964a671eca7d1b88f6b7d05d2e6bc7"  # noqa
+        ),
+        "m/44'/0'/0'/0/2": (
+            "1EJYTo9ju5kfY6DiLkAXKsFRqidVe66U67",  # noqa
+            "03e295e0c7375e0e52b08d9c588152f650337512d2a262f9a0f8f9d772b24bdb77"  # noqa
+        ),
+        "m/44'/0'/0'/0/3": (
+            "1EjbW4y17YJdxS24rbDCi9PU9EiJKq4euX",  # noqa
+            "0360b2214d3a9ff1008857985d3921f84d8cc7fe7a824fa45f6d7d576dc9b43842"  # noqa
+        ),
+        "m/44'/0'/0'/0/4": (
+            "16WRz9bqYTMkEAvvED4d4vMiXtHXfgp6Gm",  # noqa
+            "027c08b788e61fdcb308cc7b4687559a2fa3c5d75a2bb09988d440b39acce83042"  # noqa
+        ),
+        "m/44'/0'/0'/0/5": (
+            "1P4eqAbpcozUQK8B1Kioodu2meS69mjg4B",  # noqa
+            "0322252e2780be00350d99b3f2daecc06dd36e642abe6e1c81b630d61b1d9e9211"  # noqa
+        ),
+
+        # m/44'/0'/1'/0
+        "m/44'/0'/1'/0/0": (
+            "1Mb3R3Pm1To6i77px3oZF7ZrPW4KvCR65b",  # noqa
+            "02a8e2ea462653d0646460fe5db57ed6248a4411e4a5d7fa72cf2b910b27ec40a1"  # noqa
+        ),
+        "m/44'/0'/1'/0/1": (
+            "1inLbRfuMiaviwXjL8tfARNuhdsFtYsfN",  # noqa
+            "021bbb3ad8f52de427ec0557972a614c0af785986738e942efa09dfc8f92c3892d"  # noqa
+        ),
+        "m/44'/0'/1'/0/2": (
+            "13gZmE6YggsM1PXDdpuJGVzvub8sWfTXaz",  # noqa
+            "03f7459e1db4ca1820e797ec0a163b6cd92ca185ab26819afe007c024804921810"  # noqa
+        ),
+        "m/44'/0'/1'/0/3": (
+            "17NjYyZN8UXXmPb9bYxcoFsS1zLMdtnbNA",  # noqa
+            "037524656ca20b8f2526c46795523aa812e086f322a0d58ac442ff65f3fa960dd8"  # noqa
+        ),
+        "m/44'/0'/1'/0/4": (
+            "1BPFub9RSKiZ9uovRCYhxwr6DH4jDWeNQR",  # noqa
+            "034fcb0980b73a1edd50b1340def1449227a889a080440ac121de0604beacca894"  # noqa
+        ),
+        "m/44'/0'/1'/0/5": (
+            "18tNKZ35f4kjEDaoramjuraXqAfmMFpG7u",  # noqa
+            "02970f6105191add12604c737566f2c46140bb611c417e2091ed27127c33a327da"  # noqa
+        ),
+
+        # m/44'/0'/0'/1
+        "m/44'/0'/0'/1/0": (
+            "1BRT3zJr63Hu4jAnRqzaJgFTLJGatmG4Xz",  # noqa
+            "03c3beae5512516db9f1b0f1776c7df2b9b7885c02a505ed3e59b826614f9d051b"  # noqa
+        ),
+        "m/44'/0'/0'/1/1": (
+            "1MjNrcs89p4zmFpg52XNoFWihr1ivCdkbB",  # noqa
+            "031c2f0d9a3553abff33cb9308c90051c02903ba6bbbb9acce4d26f262023591e8"  # noqa
+        ),
+        "m/44'/0'/0'/1/2": (
+            "18uKAmWRSjdCK5RhcNpF8VaMAbTxeJsLks",  # noqa
+            "032e3abf065a0569f0a21ede1f91bbc280d6a8383a79f9d75fea9500e790731ca9"  # noqa
+        ),
+        "m/44'/0'/0'/1/3": (
+            "1KwZpc9tWWjKqJ9mK9p5ntZvyky7NgCqqG",  # noqa
+            "03e6ab8946dabe5c4cc2534c65c554588639e89ea03ac0ffa32e0ce10c1fd960a5"  # noqa
+        ),
+        "m/44'/0'/0'/1/4": (
+            "19vnqkMsss2MsSvjo3NxjShvcb5Ma7pAkg",  # noqa
+            "039c04ee5f599309a1230f67547f37cd7542aa5da74f7b0759d540fa065adb1bb1"  # noqa
+        ),
+        "m/44'/0'/0'/1/5": (
+            "1JprMNW16gUVfa6q53JWMxUd2rD5QQbQ6k",  # noqa
+            "02fa07361b0ef3fffda0d896155a4c666f00d462d32fd94a44e1ca8cbf64ee9730"  # noqa
+        ),
+
+        # m/44'/0'/1'/1
+        "m/44'/0'/1'/1/0": (
+            "1N5rErvwUF2JSnrrfWKPQRkdzwi418WPTv",  # noqa
+            "0225bf6018b3ddf3fb0158aa0b450c256f8218e2dd1ac002c29c5bb836a8550918"  # noqa
+        ),
+        "m/44'/0'/1'/1/1": (
+            "16SCgCy1p6FGU9ER4AEBo7QYiDPw7RwVRG",  # noqa
+            "02701cefb54958340a21e3389359bfba70c1a5dfefcdd0703692a0a5ba76d61131"  # noqa
+        ),
+        "m/44'/0'/1'/1/2": (
+            "1GrEuCC3qHE3DexW1Bq71qkagB8w9HkVJq",  # noqa
+            "0358152e62878dc3e0d3ce53abc2fa18d0035ec3ef51ddb84e67661d44e9ff7219"  # noqa
+        ),
+        "m/44'/0'/1'/1/3": (
+            "1FmbdJzwC5z47Y3ax4dQR5AnH8ssGjXpiE",  # noqa
+            "02616274975cef0d5858fb4eda4b9db1287255b3c12c5d922cce31d1f04fe00300"  # noqa
+        ),
+        "m/44'/0'/1'/1/4": (
+            "1DtbYzZSbq8TYmrUbF2sci1etD3unPqAk7",  # noqa
+            "02a123755a3df913667ee82847a523ca678a6720e33d16554852b32d22b005629e"  # noqa
+        ),
+        "m/44'/0'/1'/1/5": (
+            "1JJUmoG9ZHHHQoA8pW9VRfhQfA3Z4HCNzQ",  # noqa
+            "02deb663dc194d54ded17cdbf039d517785f061c53bdf997328747aa17f50f92d1"  # noqa
+        ),
+    },
+)
 
 
 class TestHdAddressIterator(TestCase):
-    def setUp(self) -> None:
-        root_node = HdNode.deriveRootNode(urandom(64))
-        self.assertIsNotNone(root_node)
-        self._purpose_node = root_node.deriveChildNode(
-            44,
-            hardened=True,
-            private=True)
-        self.assertIsNotNone(self._purpose_node)
+    def test_hd_list(self) -> None:
+        for hd_list in HD_ADDRESS_LIST:
+            count = 0
+            root_node = HdNode.deriveRootNode(bytes.fromhex(hd_list["seed"]))
+            self.assertIsNotNone(root_node)
+
+            coin = Bitcoin()
+            self.assertTrue(coin.deriveHdNode(root_node))
+
+            it = HdAddressIterator(coin)
+            for address in it:
+                it.markCurrentAddress(True)
+                path = address.key.pathToString(hardened_char="'")
+                if path in hd_list:
+                    count += 1
+                    self.assertEqual(
+                        hd_list[path][0],
+                        address.name)
+                    self.assertEqual(
+                        hd_list[path][1],
+                        address.publicKey.data.hex())
+                    key = coin.Address.importKey(coin, path)
+                    self.assertIsNotNone(key)
+                    self.assertEqual(
+                        hd_list[path][1],
+                        key.publicKey.data.hex())
+            self.assertEqual(48, count)
 
     def test(self) -> None:
+        root_node = HdNode.deriveRootNode(urandom(64))
+        self.assertIsNotNone(root_node)
+
         coin = Bitcoin()
-        self.assertTrue(coin.deriveHdNode(self._purpose_node))
+        self.assertTrue(coin.deriveHdNode(root_node))
 
         flush = 0
         append = 0
@@ -291,7 +532,7 @@ class TestHdAddressIterator(TestCase):
             append = 0
 
             for _ in it:
-                if not 0 < randint(0, 10) < 2:
+                if not 0 < randint(0, 10) <= 3:
                     flush += 1
                     it.markCurrentAddress(True)
                     # noinspection PyProtectedMember

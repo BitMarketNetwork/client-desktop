@@ -323,14 +323,8 @@ class TestCoins(TestCase):
         root_node = HdNode.deriveRootNode(urandom(64))
         self.assertIsNotNone(root_node)
 
-        purpose_node = root_node.deriveChildNode(
-            44,
-            hardened=True,
-            private=True)
-        self.assertIsNotNone(purpose_node)
-
         coin = Bitcoin()
-        self.assertTrue(coin.deriveHdNode(purpose_node))
+        self.assertTrue(coin.deriveHdNode(root_node))
         coin.height = randint(1000, 100000)
         coin.offset = "offset" + str(randint(1000, 100000))
         coin.unverifiedOffset = "u_offset" + str(randint(1000, 100000))
@@ -466,9 +460,7 @@ class TestTxFactory(TestCase):
         self._coin = Bitcoin()
         root_node = HdNode.deriveRootNode(urandom(64))
         self.assertIsNotNone(root_node)
-        purpose_node = root_node.deriveChildNode(3, hardened=True, private=True)
-        self.assertIsNotNone(purpose_node)
-        self.assertTrue(self._coin.deriveHdNode(purpose_node))
+        self.assertTrue(self._coin.deriveHdNode(root_node))
 
     def _createUtxoList(
             self,

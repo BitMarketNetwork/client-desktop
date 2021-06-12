@@ -23,7 +23,7 @@ class _AbstractAddressTypeValue:
         "_encoding",
         "_is_witness",
         "_script_type",
-        "_hd_support"
+        "_hd_purpose"
     )
 
     def __init__(
@@ -35,14 +35,14 @@ class _AbstractAddressTypeValue:
             encoding: Optional[AbstractCoin.Address.Encoding],
             is_witness: bool,
             script_type: Optional[AbstractCoin.Script.Type],
-            hd_support: bool) -> None:
+            hd_purpose: Optional[int]) -> None:
         self._name = name
         self._version = version
         self._size = size
         self._encoding = encoding
         self._is_witness = is_witness
         self._script_type = script_type
-        self._hd_support = hd_support
+        self._hd_purpose = hd_purpose
 
     def __eq__(self, other: AbstractCoin.Address.TypeValue) -> bool:
         return (
@@ -52,7 +52,7 @@ class _AbstractAddressTypeValue:
                 and self._size == other._size
                 and self._encoding == other._encoding
                 and self._script_type == other._script_type
-                and self._hd_support == other._hd_support
+                and self._hd_purpose == other._hd_purpose
         )
 
     def __hash__(self) -> int:
@@ -62,7 +62,7 @@ class _AbstractAddressTypeValue:
             self._size,
             self._encoding,
             self._script_type,
-            self._hd_support))
+            self._hd_purpose))
 
     def copy(self, **kwargs) -> AbstractCoin.Address.TypeValue:
         return self.__class__(
@@ -72,7 +72,7 @@ class _AbstractAddressTypeValue:
             encoding=kwargs.get("encoding", self._encoding),
             is_witness=kwargs.get("is_witness", self._is_witness),
             script_type=kwargs.get("script_type", self._script_type),
-            hd_support=kwargs.get("hd_support", self._hd_support),
+            hd_purpose=kwargs.get("hd_purpose", self._hd_purpose),
         )
 
     def isValidSize(self, size: int) -> bool:
@@ -109,8 +109,8 @@ class _AbstractAddressTypeValue:
         return self._script_type
 
     @property
-    def hdSupport(self) -> bool:
-        return self._hd_support
+    def hdPurpose(self) -> Optional[int]:
+        return self._hd_purpose
 
 
 class _AbstractAddressInterface:
@@ -374,20 +374,19 @@ class _AbstractAddress(Serializable):
         if not value:
             return None
 
-        if coin.hdNode is not None and coin.hdNode.isFullPath:
-            path, is_full_path = HdNode.pathFromString(value)
-            if path is not None:
-                coin_path_length = len(coin.hdNode.path)
-                if not is_full_path or len(path) <= coin_path_length:
-                    return None
-                if path[:coin_path_length] != coin.hdNode.path:
-                    return None
-
-                path = path[coin_path_length:]
-                key = coin.hdNode.fromPath(path, private=True)
-                if key is None:
-                    key = coin.hdNode.fromPath(path, private=False)
-                return key
+        hd_path, is_full_hd_path = HdNode.pathFromString(value)
+        if hd_path is not None:
+            if is_full_hd_path and len(hd_path):
+                for coin_hd_node in coin.hdNodeList.values():
+                    if len(hd_path) <= len(coin_hd_node.path):
+                        continue
+                    if hd_path[:len(coin_hd_node.path)] != coin_hd_node.path:
+                        continue
+                    key = coin_hd_node.fromPath(
+                        hd_path[len(coin_hd_node.path):],
+                        private=coin_hd_node.privateKey is not None)
+                    return key
+            return None
 
         version, key = HdNode.fromExtendedKey(value)
         if key is not None:

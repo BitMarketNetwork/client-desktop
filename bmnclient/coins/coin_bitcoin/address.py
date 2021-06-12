@@ -27,7 +27,7 @@ class _BitcoinAddress(AbstractCoin.Address):
             encoding=None,
             is_witness=False,
             script_type=None,
-            hd_support=False)
+            hd_purpose=None)
         PUBKEY_HASH: Final = AbstractCoin.Address.TypeValue(
             name="p2pkh",
             version=0x00,
@@ -35,7 +35,7 @@ class _BitcoinAddress(AbstractCoin.Address):
             encoding=AbstractCoin.Address.Encoding.BASE58,
             is_witness=False,
             script_type=_BitcoinScript.Type.P2PKH,
-            hd_support=True)
+            hd_purpose=44)  # BIP-0044
         SCRIPT_HASH: Final = AbstractCoin.Address.TypeValue(
             name="p2sh",
             version=0x05,
@@ -43,7 +43,7 @@ class _BitcoinAddress(AbstractCoin.Address):
             encoding=AbstractCoin.Address.Encoding.BASE58,
             is_witness=False,
             script_type=_BitcoinScript.Type.P2SH,
-            hd_support=False)
+            hd_purpose=None)
         WITNESS_V0_KEY_HASH: Final = AbstractCoin.Address.TypeValue(
             name="p2wpkh",
             version=0x00,
@@ -51,7 +51,7 @@ class _BitcoinAddress(AbstractCoin.Address):
             encoding=AbstractCoin.Address.Encoding.BECH32,
             is_witness=True,
             script_type=_BitcoinScript.Type.P2WPKH,
-            hd_support=True)
+            hd_purpose=84)  # BIP-0084
         WITNESS_V0_SCRIPT_HASH: Final = AbstractCoin.Address.TypeValue(
             name="p2wsh",
             version=0x00,
@@ -59,7 +59,7 @@ class _BitcoinAddress(AbstractCoin.Address):
             encoding=AbstractCoin.Address.Encoding.BECH32,
             is_witness=True,
             script_type=_BitcoinScript.Type.P2WSH,
-            hd_support=False)
+            hd_purpose=None)
         WITNESS_UNKNOWN: Final = AbstractCoin.Address.TypeValue(
             name="witness_unknown",
             version=0x00,
@@ -67,7 +67,7 @@ class _BitcoinAddress(AbstractCoin.Address):
             encoding=AbstractCoin.Address.Encoding.BECH32,
             is_witness=True,
             script_type=None,
-            hd_support=False)
+            hd_purpose=None)
         DEFAULT = WITNESS_V0_KEY_HASH
 
     @classmethod
