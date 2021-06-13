@@ -1,5 +1,11 @@
-# JOK++
+# JOK4
+from __future__ import annotations
+
 import re
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Dict
 
 
 class PasswordStrength:
@@ -22,10 +28,10 @@ class PasswordStrength:
 
         return result
 
-    def _getCharGroups(self) -> dict:
+    def _getCharGroups(self) -> Dict[str, bool]:
         result = dict.fromkeys(
-            ["upper", "lower", "numbers", "special"],
-            0)
+            ("upper", "lower", "numbers", "special"),
+            False)
 
         if self._unique.lower() != self._unique:
             result["upper"] = True

@@ -1,8 +1,8 @@
-# JOK++
+# JOK4
 from __future__ import annotations
 
 import os
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers import aead
@@ -10,46 +10,45 @@ from cryptography.hazmat.primitives.ciphers import aead
 from ..version import Product
 
 if TYPE_CHECKING:
-    from typing import Final
+    from typing import Final, Optional
 
 
 class AeadCipher:
-    CIPHER: Final = aead.AESGCM
-    NONCE_LENGTH: Final = 96 // 8  # NIST recommends
-    KEY_LENGTH: Final = 128 // 8
-    ASSOCIATED_DATA: Final = Product.SHORT_NAME.encode(
-        encoding=Product.ENCODING)
+    _CIPHER: Final = aead.AESGCM
+    _NONCE_LENGTH: Final = 96 // 8  # NIST recommends
+    _KEY_LENGTH: Final = 128 // 8
+    _ASSOCIATED_DATA: Final = Product.SHORT_NAME.encode(Product.ENCODING)
 
     def __init__(self, key: bytes, nonce: Optional[bytes] = None) -> None:
-        self._cipher = self.CIPHER(key)
+        self._cipher = self._CIPHER(key)
         self._nonce = nonce
 
     @classmethod
     def generateNonce(cls) -> bytes:
-        return os.urandom(cls.NONCE_LENGTH)
+        return os.urandom(cls._NONCE_LENGTH)
 
     @classmethod
     def generateKey(cls) -> bytes:
-        return cls.CIPHER.generate_key(cls.KEY_LENGTH * 8)
+        return cls._CIPHER.generate_key(cls._KEY_LENGTH * 8)
 
     def encrypt(self, nonce: Optional[bytes], data: bytes) -> bytes:
         return self._cipher.encrypt(
             nonce or self._nonce,
             data,
-            self.ASSOCIATED_DATA)
+            self._ASSOCIATED_DATA)
 
     def decrypt(self, nonce: Optional[bytes], data: bytes) -> Optional[bytes]:
         try:
             return self._cipher.decrypt(
                 nonce or self._nonce,
                 data,
-                self.ASSOCIATED_DATA)
+                self._ASSOCIATED_DATA)
         except InvalidTag:
             return None
 
 
 class MessageCipher(AeadCipher):
-    def __init(self, key: bytes):
+    def __init(self, key: bytes) -> None:
         super().__init__(key, None)
 
     def encrypt(
@@ -71,7 +70,3 @@ class MessageCipher(AeadCipher):
                 bytes.fromhex(data))
         except (ValueError, TypeError):
             return None
-
-
-class StreamCipher:
-    pass

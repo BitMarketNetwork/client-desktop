@@ -1,17 +1,23 @@
-# JOK++
+# JOK4
 from __future__ import annotations
 
-from typing import Optional, Tuple, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
+
+from ..utils.class_property import classproperty
 
 if TYPE_CHECKING:
-    from typing import Final
+    from typing import Final, Optional, Tuple, Union
 
 
 class Bech32:
-    CHAR_LIST: Final = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"  # noqa
-    CHECKSUM_SIZE: Final = 6
-    MAX_SIZE: Final = 90
-    SEPARATOR: Final = "1"
+    _CHAR_LIST: Final = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"  # noqa
+    _CHECKSUM_SIZE: Final = 6
+    _MAX_SIZE: Final = 90
+    _SEPARATOR: Final = "1"
+
+    @classproperty
+    def separator(cls) -> str:  # noqa
+        return cls._SEPARATOR
 
     @classmethod
     def encode(
@@ -25,13 +31,13 @@ class Bech32:
         data = cls._convertBits(data, 8, 5)
         if data is None:
             return None
-        result_size = len(hrp) + 1 + 1 + len(data) + cls.CHECKSUM_SIZE
-        if result_size > cls.MAX_SIZE:
+        result_size = len(hrp) + 1 + 1 + len(data) + cls._CHECKSUM_SIZE
+        if result_size > cls._MAX_SIZE:
             return None
 
         data = bytes([version]) + data
         data += cls._createChecksum(hrp, data)
-        data = hrp + cls.SEPARATOR + "".join(cls.CHAR_LIST[i] for i in data)
+        data = hrp + cls._SEPARATOR + "".join(cls._CHAR_LIST[i] for i in data)
         assert result_size == len(data)
         return data
 
@@ -41,12 +47,12 @@ class Bech32:
             source: str) \
             -> Union[Tuple[None, None, None], Tuple[str, int, bytes]]:
         result_none = (None, None, None)
-        if len(source) > cls.MAX_SIZE:
+        if len(source) > cls._MAX_SIZE:
             return result_none
 
         source = source.lower()
-        separator = source.rfind(cls.SEPARATOR)
-        if separator < 1 or separator + 1 + cls.CHECKSUM_SIZE >= len(source):
+        separator = source.rfind(cls._SEPARATOR)
+        if separator < 1 or separator + 1 + cls._CHECKSUM_SIZE >= len(source):
             return result_none
 
         for c in source[:separator]:
@@ -55,7 +61,7 @@ class Bech32:
 
         data = []
         for c in source[separator + 1:]:
-            c = cls.CHAR_LIST.find(c)
+            c = cls._CHAR_LIST.find(c)
             if c < 0:
                 return result_none
             data.append(c)
@@ -67,14 +73,14 @@ class Bech32:
         if not cls._verifyChecksum(hrp, data):
             return result_none
 
-        data = cls._convertBits(data[1:-cls.CHECKSUM_SIZE], 5, 8, False)
+        data = cls._convertBits(data[1:-cls._CHECKSUM_SIZE], 5, 8, False)
         if data is None or not 0 <= version <= 16:
             return result_none
 
         return hrp, version, data
 
-    @classmethod
-    def _hrpExpand(cls, hrp: str) -> bytes:
+    @staticmethod
+    def _hrpExpand(hrp: str) -> bytes:
         high = [ord(c) >> 5 for c in hrp]
         low = [ord(c) & 31 for c in hrp]
         return bytes(high + [0] + low)
@@ -83,10 +89,10 @@ class Bech32:
     def _createChecksum(cls, hrp: str, data: bytes) -> bytes:
         checksum = cls._polyMod(cls._hrpExpand(hrp), 1)
         checksum = cls._polyMod(data, checksum)
-        checksum = cls._polyMod(b"\0" * cls.CHECKSUM_SIZE, checksum)
+        checksum = cls._polyMod(b"\0" * cls._CHECKSUM_SIZE, checksum)
         checksum ^= 1
         return bytes(
-            (checksum >> 5 * (5 - i)) & 31 for i in range(cls.CHECKSUM_SIZE))
+            (checksum >> 5 * (5 - i)) & 31 for i in range(cls._CHECKSUM_SIZE))
 
     @classmethod
     def _verifyChecksum(cls, hrp: str, data: bytes) -> bool:
@@ -94,9 +100,8 @@ class Bech32:
         checksum = cls._polyMod(data, checksum)
         return checksum == 1
 
-    @classmethod
+    @staticmethod
     def _convertBits(
-            cls,
             data: bytes,
             from_bits: int,
             to_bits: int,
@@ -122,8 +127,8 @@ class Bech32:
             return None
         return bytes(result)
 
-    @classmethod
-    def _polyMod(cls, data: bytes, checksum) -> int:
+    @staticmethod
+    def _polyMod(data: bytes, checksum) -> int:
         for v in data:
             checksum0 = checksum >> 25
             checksum = (checksum & 0x1ffffff) << 5 ^ v
