@@ -1,6 +1,6 @@
 # JOK+
 from pathlib import PurePath
-from typing import List, Optional
+from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
     QCoreApplication, \
@@ -10,12 +10,16 @@ from PySide2.QtCore import \
     QTranslator
 
 from .logger import Logger
+from .utils.class_property import classproperty
 from .version import ProductPaths
+
+if TYPE_CHECKING:
+    from typing import Final, List, Optional
 
 
 # QLocale: problems with negative numbers
 class Locale(QLocale):
-    def floatToString(self, value: float, precision=2):
+    def floatToString(self, value: float, precision: int = 2) -> str:
         if value < 0:
             value = abs(value)
             result = self.negativeSign()
@@ -24,7 +28,11 @@ class Locale(QLocale):
         # noinspection PyTypeChecker
         return result + self.toString(value, "f", precision)
 
-    def stringToFloat(self, value: str, *, strict=True) -> Optional[float]:
+    def stringToFloat(
+            self,
+            value: str,
+            *,
+            strict: bool = True) -> Optional[float]:
         if strict:
             s = (self.groupSeparator(), self.decimalPoint())
             for v in value:
@@ -33,13 +41,17 @@ class Locale(QLocale):
         (value, ok) = self.toDouble(value)
         return value if ok else None
 
-    def integerToString(self, value: int):
+    def integerToString(self, value: int) -> str:
         if value < 0:
             value = abs(value)
             return self.negativeSign() + self.toString(value)
         return self.toString(value)
 
-    def stringToInteger(self, value: str, *, strict=True) -> Optional[int]:
+    def stringToInteger(
+            self,
+            value: str,
+            *,
+            strict: bool = True) -> Optional[int]:
         if strict:
             s = self.groupSeparator()
             for v in value:
@@ -50,21 +62,25 @@ class Locale(QLocale):
 
 
 class Language:
-    SUFFIX_LIST = (".qml.qm", ".py.qm",)
-    FILE_MATH = "*.qml.qm"
-    PRIMARY_NAME = "en_US"
+    _SUFFIX_LIST: Final = (".qml.qm", ".py.qm",)
+    _FILE_MATH: Final = "*.qml.qm"
+    _PRIMARY_NAME: Final = "en_US"
 
-    def __init__(self, name: str = PRIMARY_NAME) -> None:
+    def __init__(self, name: str = _PRIMARY_NAME) -> None:
         self._locale = Locale() if name is None else Locale(name)
         self._logger = Logger.classLogger(
             self.__class__,
             (None, self._locale.name()))
         self._translator_list = []
-        if name != self.PRIMARY_NAME:
-            for suffix in self.SUFFIX_LIST:
+        if name != self._PRIMARY_NAME:
+            for suffix in self._SUFFIX_LIST:
                 translator = self._createTranslator(self._locale, suffix)
                 if translator is not None:
                     self._translator_list.append(translator)
+
+    @classproperty
+    def primaryName(cls) -> str:  # noqa
+        return cls._PRIMARY_NAME
 
     @property
     def translatorList(self) -> List[QTranslator]:
@@ -101,11 +117,11 @@ class Language:
     @classmethod
     def createTranslationList(cls) -> List[dict]:
         result = [
-            cls._createAvailableTranslationItem(cls.PRIMARY_NAME)
+            cls._createAvailableTranslationItem(cls._PRIMARY_NAME)
         ]
         it = QDirIterator(
             str(ProductPaths.TRANSLATIONS_PATH),
-            (cls.FILE_MATH,),
+            (cls._FILE_MATH, ),
             QDir.Files)
         while it.next():
             name = PurePath(it.fileName()).with_suffix('').with_suffix('').stem

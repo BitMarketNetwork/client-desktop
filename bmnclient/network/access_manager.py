@@ -1,4 +1,4 @@
-# JOK+++
+# JOK4
 from __future__ import annotations
 
 import logging
@@ -58,7 +58,7 @@ class NullNetworkCache(AbstractNetworkCache):
 
 
 class AbstractNetworkCookieJar(QNetworkCookieJar):
-    def cookiesForUrl(self, url) -> List[QNetworkCookie]:
+    def cookiesForUrl(self, url: QUrl) -> List[QNetworkCookie]:
         return []
 
     def deleteCookie(self, cookie: QNetworkCookie) -> bool:
@@ -82,7 +82,7 @@ class NullNetworkCookieJar(AbstractNetworkCookieJar):
 
 
 class NetworkAccessManager(QNetworkAccessManager):
-    OPERATION_MAP: Final = {
+    _OPERATION_MAP: Final = {
         QNetworkAccessManager.HeadOperation: "HEAD",
         QNetworkAccessManager.GetOperation: "GET",
         QNetworkAccessManager.PutOperation: "PUT",
@@ -189,7 +189,7 @@ class NetworkAccessManager(QNetworkAccessManager):
             outgoing_data: Optional[QIODevice] = None) -> QNetworkReply:
         self._logger.debug(
             "New request: %s %s",
-            self.OPERATION_MAP.get(op, "UNKNOWN"),
+            self._OPERATION_MAP.get(op, "UNKNOWN"),
             request.url().toString())
         return super().createRequest(op, request, outgoing_data)
 
@@ -260,5 +260,5 @@ class NetworkAccessManager(QNetworkAccessManager):
 
     def _loggerReplyPrefix(self, reply: QNetworkReply) -> str:
         return "[{} {}]".format(
-            self.OPERATION_MAP.get(reply.operation(), "UNKNOWN"),
+            self._OPERATION_MAP.get(reply.operation(), "UNKNOWN"),
             reply.url().toString())
