@@ -27,7 +27,7 @@ from .network.query_scheduler import NetworkQueryScheduler
 from .network.server_list import ServerList
 from .network.services.fiat_rate import FiatRateServiceList
 from .platform import PlatformPaths
-from .resources import ICON_FILE_PATH
+from .resources import Resources
 from .signal_handler import SignalHandler
 from .version import Product, ProductPaths, Server
 
@@ -134,7 +134,7 @@ class CoreApplication(QObject):
         self._command_line = command_line
         self._logger = Logger.classLogger(self.__class__)
         self._title = "{} {}".format(Product.NAME, Product.VERSION_STRING)
-        self._icon = QIcon(str(ICON_FILE_PATH))
+        self._icon = QIcon(Resources.iconFilePath)
         self._language: Optional[Language] = None
         self._exit_code = 0
         self._on_exit_called = False

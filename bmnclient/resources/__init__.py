@@ -1,9 +1,17 @@
-# JOK
+# JOK4
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING
 
 from PySide2.QtCore import QFile, QUrl
 
+from ..utils import NotImplementedInstance
+from ..utils.class_property import classproperty
 from ..version import ProductPaths
+
+if TYPE_CHECKING:
+    from typing import Final
 
 try:
     from . import qrc
@@ -11,17 +19,27 @@ except ImportError:
     pass
 
 
-def exists(path) -> bool:
+def _resource_exists(path) -> bool:
     return QFile.exists(path)
 
 
-if exists(":/images"):
-    ICON_FILE_PATH = ":/images/icon-logo.svg"
-else:
-    ICON_FILE_PATH = ProductPaths.RESOURCES_PATH / "images" / "icon-logo.svg"
+class Resources(NotImplementedInstance):
+    if _resource_exists(":/images"):
+        _ICON_FILE_PATH: Final = ":/images/icon-logo.svg"
+    else:
+        _ICON_FILE_PATH: Final = str(
+            ProductPaths.RESOURCES_PATH / "images" / "icon-logo.svg")
 
-if exists(":/qml"):
-    QML_URL = QUrl("qrc:///qml/")
-else:
-    QML_URL = QUrl.fromLocalFile(
-        str(ProductPaths.RESOURCES_PATH / "qml") + os.sep)
+    if _resource_exists(":/qml"):
+        _QML_URL: Final = QUrl("qrc:///qml/")
+    else:
+        _QML_URL: Final = QUrl.fromLocalFile(
+            str(ProductPaths.RESOURCES_PATH / "qml") + os.sep)
+
+    @classproperty
+    def iconFilePath(cls) -> str:  # noqa
+        return cls._ICON_FILE_PATH
+
+    @classproperty
+    def qmlUrl(cls) -> QUrl:  # noqa
+        return cls._QML_URL

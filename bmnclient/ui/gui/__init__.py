@@ -20,7 +20,7 @@ from ...debug_manager import DebugManager
 from ...key_store import KeyStore
 from ...language import Language
 from ...network.access_manager import NetworkAccessManager
-from ...resources import QML_URL
+from ...resources import Resources
 
 QML_STYLE = "Material"
 QML_FILE = "main.qml"
@@ -50,21 +50,21 @@ class GuiApplication(CoreApplication):
 
     def _initializeQml(self) -> None:
         QQuickStyle.setStyle(QML_STYLE)
-        self._logger.debug("QML Base URL: %s", QML_URL.toString())
+        self._logger.debug("QML Base URL: %s", Resources.qmlUrl.toString())
 
         self._qml_network_access_manager_factory = \
             self.QmlNetworkAccessManagerFactory()
         self._qml_engine = QQmlApplicationEngine(self)
 
         # TODO self._engine.offlineStoragePath
-        self._qml_engine.setBaseUrl(QML_URL)
+        self._qml_engine.setBaseUrl(Resources.qmlUrl)
         self._qml_engine.setNetworkAccessManagerFactory(
             self._qml_network_access_manager_factory)
         # TODO replace with self._engine.warnings
         self._qml_engine.setOutputWarningsToStandardError(True)
 
         qml_root_context = self._qml_engine.rootContext()
-        qml_root_context.setBaseUrl(QML_URL)
+        qml_root_context.setBaseUrl(Resources.qmlUrl)
         qml_root_context.setContextProperty(
             QML_CONTEXT_NAME,
             self._backend_context)
