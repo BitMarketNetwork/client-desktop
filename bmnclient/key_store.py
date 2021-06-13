@@ -108,11 +108,11 @@ class KeyStore(QObject):
             "key_{:d}".format(KeyIndex.SEED.value):
                 MessageCipher.generateKey().hex()
         }
-        return json.dumps(value).encode(encoding=Product.ENCODING)
+        return json.dumps(value).encode(Product.ENCODING)
 
     def _loadSecretStoreValue(self, value: bytes) -> bool:
         try:
-            value = json.loads(value.decode(encoding=Product.ENCODING))
+            value = json.loads(value.decode(Product.ENCODING))
             for k, v in value.items():
                 if k.startswith("nonce_"):
                     k = int(k[6:])
@@ -144,7 +144,7 @@ class KeyStore(QObject):
             if self._mnemonic and self._mnemonic_salt_hash:
                 if salt:
                     self._mnemonic_salt_hash.update(
-                        salt.encode(encoding=Product.ENCODING))
+                        salt.encode(Product.ENCODING))
                     self._mnemonic_salt_hash.update(os.urandom(4))
                 result = self._mnemonic_salt_hash.copy().finalize()
                 result = result[:Mnemonic.defaultDataLength]
@@ -236,7 +236,7 @@ class KeyStore(QObject):
             if not self._user_config.set(
                     UserConfig.KEY_KEY_STORE_SEED_PHRASE,
                     self.deriveMessageCipher(KeyIndex.SEED).encrypt(
-                        phrase.encode(encoding=Product.ENCODING)),
+                        phrase.encode(Product.ENCODING)),
                     save=False):
                 return False
             if not self._user_config.save():
@@ -255,7 +255,7 @@ class KeyStore(QObject):
             return None
         value = self.deriveMessageCipher(KeyIndex.SEED).decrypt(value)
         try:
-            value = value.decode(encoding=Product.ENCODING)
+            value = value.decode(Product.ENCODING)
             (language, phrase) = value.split(Product.STRING_SEPARATOR, 1)
         except (UnicodeError, ValueError):
             return None

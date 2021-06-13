@@ -47,7 +47,7 @@ class TestKeyStore(TestCase):
         value = KeyStore._generateSecretStoreValue()
         self.assertIsInstance(value, bytes)
 
-        json_value = json.loads(value.decode(encoding=Product.ENCODING))
+        json_value = json.loads(value.decode(Product.ENCODING))
         self.assertIsInstance(json_value, dict)
 
         # noinspection PyProtectedMember

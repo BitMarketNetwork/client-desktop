@@ -323,7 +323,7 @@ class AbstractJsonQuery(AbstractQuery):
             try:
                 value = json.dumps(value)
                 self._logger.debug("JSON Request: %s", value)
-                return value.encode(encoding=self._ENCODING)
+                return value.encode(self._ENCODING)
             except UnicodeError as e:
                 self._logger.error(
                     "Failed to encode JSON request: %s",
@@ -347,7 +347,7 @@ class AbstractJsonQuery(AbstractQuery):
         if response:
             error_message = None
             try:
-                response = response.decode(encoding=self._ENCODING)
+                response = response.decode(self._ENCODING)
                 self._logger.debug("Response: %s", response)
                 response = json.loads(response)
             except UnicodeError as e:

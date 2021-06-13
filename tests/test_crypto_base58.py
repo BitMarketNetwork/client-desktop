@@ -16,7 +16,7 @@ TEST_LIST = (
         ""
     ), (
         "2NEpo7TZRhna7vSvL", # noqa
-        "Hello world!".encode(encoding=Product.ENCODING).hex()
+        "Hello world!".encode(Product.ENCODING).hex()
     ), (
         "BAD_",
         None

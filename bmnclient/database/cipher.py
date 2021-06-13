@@ -100,4 +100,4 @@ class Cipher:
         raise TypeError(f"{value} => {type(value)}")
 
     def make_hash(self, value: str) -> str:
-        return self._cipher.encrypt(None, value.encode(encoding="utf-8")).hex()
+        return self._cipher.encrypt(None, value.encode("utf-8")).hex()

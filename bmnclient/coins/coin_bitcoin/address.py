@@ -133,7 +133,7 @@ class _BitcoinAddress(AbstractCoin.Address):
         if name[0] in cls._SCRIPT_HASH_PREFIX_LIST:
             return cls._decode(coin, cls.Type.SCRIPT_HASH, **kwargs)
 
-        if name[len(cls._HRP)] != Bech32.SEPARATOR:
+        if name[len(cls._HRP)] != Bech32.separator:
             return None
 
         if len(name) == len(cls._HRP) + 1 + 39:
