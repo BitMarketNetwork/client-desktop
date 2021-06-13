@@ -11,7 +11,7 @@ from PySide2.QtCore import \
     Slot as QSlot
 
 from . import dialogs
-from ...models.tx import TxModel
+from .models.tx import TxModel
 from ...ui.gui.system_tray import MessageIcon, SystemTrayIcon
 
 if TYPE_CHECKING:
