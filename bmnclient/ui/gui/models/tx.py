@@ -19,12 +19,12 @@ from .list import \
     AbstractListModel, \
     AbstractListSortedModel, \
     RoleEnum
-from ..coin_interfaces import TxInterface
+from ....coin_interfaces import TxInterface
 
 if TYPE_CHECKING:
     from typing import Final, Optional
-    from ..coins.abstract.coin import AbstractCoin
-    from ..ui.gui import GuiApplication
+    from .. import GuiApplication
+    from ....coins.abstract.coin import AbstractCoin
 
 
 class AbstractTxStateModel(AbstractStateModel):

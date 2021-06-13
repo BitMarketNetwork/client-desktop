@@ -7,19 +7,23 @@ from .address import AddressModel
 from .coin import CoinModel
 from .tx import TxModel
 from .tx_factory import TxFactoryModel
-from ..coins.abstract.coin import AbstractCoin
-from ..utils import NotImplementedInstance
+from ....coins.abstract.coin import AbstractCoin
+from ....utils import NotImplementedInstance
 
 if TYPE_CHECKING:
-    from typing import Optional, TYPE_CHECKING
-    from ..ui.gui import GuiApplication
+    from typing import Optional, Union
+    from .. import GuiApplication
 
 
 class ModelsFactory(NotImplementedInstance):
     @staticmethod
     def create(
             application: GuiApplication,
-            owner: object) -> Optional[object]:
+            owner: Union[
+                AbstractCoin,
+                AbstractCoin.Address,
+                AbstractCoin.Tx,
+                AbstractCoin.TxFactory]) -> Optional[object]:
         if isinstance(owner, AbstractCoin):
             return CoinModel(application, owner)
 

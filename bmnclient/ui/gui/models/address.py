@@ -16,13 +16,13 @@ from .list import \
     AbstractListModel, \
     AbstractListSortedModel, \
     RoleEnum
-from ..coin_interfaces import AddressInterface
+from ....coin_interfaces import AddressInterface
 
 if TYPE_CHECKING:
     from typing import Final, Optional
     from .tx import TxListModel, TxListSortedModel
-    from ..coins.abstract.coin import AbstractCoin
-    from ..ui.gui import GuiApplication
+    from .. import GuiApplication
+    from ....coins.abstract.coin import AbstractCoin
 
 
 class AbstractAddressStateModel(AbstractStateModel):

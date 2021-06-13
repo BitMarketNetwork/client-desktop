@@ -12,12 +12,12 @@ from PySide2.QtCore import \
 from . import AbstractModel, AbstractStateModel, ValidStatus
 from .amount import AbstractAmountInputModel, AbstractAmountModel
 from .tx import TxIoListModel
-from ..coin_interfaces import TxFactoryInterface
+from ....coin_interfaces import TxFactoryInterface
 
 if TYPE_CHECKING:
     from typing import Optional, Sequence
-    from ..coins.abstract.coin import AbstractCoin
-    from ..ui.gui import GuiApplication
+    from .. import GuiApplication
+    from ....coins.abstract.coin import AbstractCoin
 
 
 class AbstractTxFactoryStateModel(AbstractStateModel):

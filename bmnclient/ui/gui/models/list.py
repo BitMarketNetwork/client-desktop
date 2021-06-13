@@ -17,7 +17,7 @@ from PySide2.QtCore import \
 
 if TYPE_CHECKING:
     from typing import Any, List, Optional, Sequence
-    from ..ui.gui import GuiApplication
+    from .. import GuiApplication
 
 
 class RoleEnum(IntEnum):

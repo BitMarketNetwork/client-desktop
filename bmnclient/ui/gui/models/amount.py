@@ -13,9 +13,9 @@ from . import AbstractStateModel
 
 if TYPE_CHECKING:
     from typing import Callable, Optional, Type, Union
-    from ..coins.abstract.coin import AbstractCoin
-    from ..coins.abstract.currency import AbstractCurrency
-    from ..ui.gui import GuiApplication
+    from .. import GuiApplication
+    from ....coins.abstract.coin import AbstractCoin
+    from ....coins.abstract.currency import AbstractCurrency
 
 
 class AbstractAmountModel(AbstractStateModel):

@@ -13,9 +13,9 @@ from PySide2.QtCore import \
 
 if TYPE_CHECKING:
     from typing import Final, Iterable, Optional
-    from ..coins.abstract.coin import AbstractCoin
-    from ..language import Locale
-    from ..ui.gui import GuiApplication
+    from .. import GuiApplication
+    from ....coins.abstract.coin import AbstractCoin
+    from ....language import Locale
 
 
 class ValidStatus(IntEnum):
