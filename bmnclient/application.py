@@ -26,7 +26,7 @@ from .network.query_manager import NetworkQueryManager
 from .network.query_scheduler import NetworkQueryScheduler
 from .network.server_list import ServerList
 from .network.services.fiat_rate import FiatRateServiceList
-from .platform import PlatformPaths
+from .os_environment import PlatformPaths
 from .resources import Resources
 from .signal_handler import SignalHandler
 from .version import Product, ProductPaths, Server

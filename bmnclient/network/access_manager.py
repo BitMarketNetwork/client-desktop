@@ -18,7 +18,7 @@ from PySide2.QtNetwork import \
 
 from .utils import NetworkUtils
 from ..logger import Logger
-from ..platform import Platform
+from ..os_environment import Platform
 from ..version import Timer
 
 if TYPE_CHECKING:

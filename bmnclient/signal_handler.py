@@ -13,7 +13,7 @@ from PySide2.QtCore import \
 from PySide2.QtNetwork import QAbstractSocket
 
 from .logger import Logger
-from .platform import Platform
+from .os_environment import Platform
 
 if TYPE_CHECKING:
     from typing import Optional
