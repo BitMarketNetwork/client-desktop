@@ -1,20 +1,30 @@
-import logging
-from unittest import skip, TestCase
+# JOK4
+from random import shuffle
+from unittest import TestCase
 
-import PySide2.QtCore as qt_core
-
-from bmnclient.ui.gui import settings_manager
-
-log = logging.getLogger(__name__)
+from bmnclient.language import Language
+from . import TestApplication
 
 
-@skip
 class TestLanguage(TestCase):
-    def test_loading(self) -> None:
-        app = qt_core.QCoreApplication()
-        sett = settings_manager.SettingsManager(None)
-        for lang in sett.languageModel:
-            self.assertTrue(app.installTranslator(
-                lang.py_translator), f"==> PY {lang}")
-            self.assertTrue(app.installTranslator(
-                lang.qml_translator), f"==> QML {lang}")
+    def setUp(self) -> None:
+        self._application = TestApplication()
+
+    def tearDown(self) -> None:
+        self._application.setExitEvent()
+
+    def test(self) -> None:
+        translation_list = list(Language.translationList())
+        shuffle(translation_list)
+
+        self.assertLessEqual(2, len(translation_list))
+        for translation in translation_list:
+            language = Language(translation["name"])
+            if language.name == language.primaryName:
+                self.assertEqual(0, len(language.translatorList))
+                self.assertFalse(language.install())
+                language.uninstall()
+            else:
+                self.assertEqual(2, len(language.translatorList))
+                self.assertTrue(language.install())
+                language.uninstall()

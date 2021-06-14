@@ -1,4 +1,7 @@
-# JOK+
+# JOK4
+from __future__ import annotations
+
+from functools import lru_cache
 from pathlib import PurePath
 from typing import TYPE_CHECKING
 
@@ -14,7 +17,7 @@ from .utils.class_property import classproperty
 from .version import ProductPaths
 
 if TYPE_CHECKING:
-    from typing import Final, List, Optional
+    from typing import Dict, Final, List, Optional, Tuple
 
 
 # QLocale: problems with negative numbers
@@ -71,7 +74,7 @@ class Language:
         self._logger = Logger.classLogger(
             self.__class__,
             (None, self._locale.name()))
-        self._translator_list = []
+        self._translator_list: List[QTranslator] = []
         if name != self._PRIMARY_NAME:
             for suffix in self._SUFFIX_LIST:
                 translator = self._createTranslator(self._locale, suffix)
@@ -101,6 +104,7 @@ class Language:
                 self._logger.warning(
                     "Translator file '%s' is empty.",
                     translator.filePath())
+                translated = True
             elif not QCoreApplication.installTranslator(translator):
                 self._logger.error(
                     "Can't install translator file '%s'.",
@@ -115,22 +119,21 @@ class Language:
                 QCoreApplication.removeTranslator(translator)
 
     @classmethod
-    def createTranslationList(cls) -> List[dict]:
-        result = [
-            cls._createAvailableTranslationItem(cls._PRIMARY_NAME)
-        ]
+    @lru_cache()
+    def translationList(cls) -> Tuple[Dict[str, str], ...]:
+        result = [cls._appendTranslationItem(cls._PRIMARY_NAME)]
         it = QDirIterator(
             str(ProductPaths.TRANSLATIONS_PATH),
             (cls._FILE_MATH, ),
             QDir.Files)
         while it.next():
             name = PurePath(it.fileName()).with_suffix('').with_suffix('').stem
-            result.append(cls._createAvailableTranslationItem(name))
+            result.append(cls._appendTranslationItem(name))
         result.sort(key=lambda x: x["name"])
-        return result
+        return tuple(result)
 
-    @classmethod
-    def _createAvailableTranslationItem(cls, name: str) -> dict:
+    @staticmethod
+    def _appendTranslationItem(name: str) -> Dict[str, str]:
         locale = Locale(name)
         assert locale.name() == name
         return {
