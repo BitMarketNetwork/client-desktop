@@ -9,7 +9,7 @@ from PySide2.QtCore import \
     Signal as QSignal, \
     Slot as QSlot
 
-from . import AbstractModel, AbstractStateModel, ValidStatus
+from . import AbstractCoinStateModel, AbstractModel, ValidStatus
 from .amount import AbstractAmountInputModel, AbstractAmountModel
 from .tx import TxIoListModel
 from ....coin_interfaces import TxFactoryInterface
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from ....coins.abstract.coin import AbstractCoin
 
 
-class AbstractTxFactoryStateModel(AbstractStateModel):
+class AbstractTxFactoryStateModel(AbstractCoinStateModel):
     def __init__(
             self,
             application: GuiApplication,

@@ -28,10 +28,9 @@ class AbstractStateModel(QObject):
     _NONE_STRING: Final = "-"
     stateChanged = QSignal()
 
-    def __init__(self, application: GuiApplication, coin: AbstractCoin) -> None:
+    def __init__(self, application: GuiApplication) -> None:
         super().__init__()
         self._application = application
-        self._coin = coin
 
     def update(self) -> None:
         for a in dir(self):
@@ -46,7 +45,6 @@ class AbstractStateModel(QObject):
     def locale(self) -> Locale:
         return self._application.language.locale
 
-    # noinspection PyMethodMayBeStatic
     def _getValidStatus(self) -> ValidStatus:
         return ValidStatus.Accept
 
@@ -57,6 +55,12 @@ class AbstractStateModel(QObject):
     @QProperty(bool, notify=stateChanged)
     def isValid(self) -> bool:
         return self._getValidStatus() == ValidStatus.Accept
+
+
+class AbstractCoinStateModel(AbstractStateModel):
+    def __init__(self, application: GuiApplication, coin: AbstractCoin) -> None:
+        super().__init__(application)
+        self._coin = coin
 
 
 class AbstractModel(QObject):
@@ -85,6 +89,7 @@ class AbstractModel(QObject):
                 if a is not initiator:
                     a.update()
             self._update_lock.release()
+            # noinspection PyUnresolvedReferences
             self.stateChanged.emit()
 
     def connectModelUpdate(self, model: QObject) -> None:
@@ -96,7 +101,8 @@ class AbstractModel(QObject):
         result = ValidStatus.Accept
         for a in self.iterateStateModels():
             a = a.validStatus
-            if a < result:
+            # noinspection PyTypeChecker
+            if int(a) < int(result):
                 result = a
         if result == ValidStatus.Unset:
             result = ValidStatus.Reject

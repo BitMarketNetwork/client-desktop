@@ -10,7 +10,7 @@ from PySide2.QtCore import \
     Signal as QSignal, \
     Slot as QSlot
 
-from . import AbstractModel, AbstractStateModel, ValidStatus
+from . import AbstractCoinStateModel, AbstractModel, ValidStatus
 from .address import \
     AddressListModel, \
     AddressListSortedModel
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from ....coins.abstract.coin import AbstractCoin
 
 
-class CoinStateModel(AbstractStateModel):
+class CoinStateModel(AbstractCoinStateModel):
     __stateChanged = QSignal()
 
     @QProperty(bool, notify=__stateChanged)
@@ -41,7 +41,7 @@ class CoinStateModel(AbstractStateModel):
         self._coin.enabled = value
 
 
-class CoinServerDataModel(AbstractStateModel):
+class CoinServerDataModel(AbstractCoinStateModel):
     __stateChanged = QSignal()
 
     def _serverDataString(self, name: str) -> str:
@@ -113,7 +113,7 @@ class CoinAmountModel(AbstractAmountModel):
         return self._coin.amount
 
 
-class CoinReceiveManagerModel(AbstractStateModel):
+class CoinReceiveManagerModel(AbstractCoinStateModel):
     __stateChanged = QSignal()
 
     def __init__(self, application: GuiApplication, coin: AbstractCoin) -> None:
@@ -169,7 +169,7 @@ class CoinReceiveManagerModel(AbstractStateModel):
         self.update()
 
 
-class CoinManagerModel(AbstractStateModel):
+class CoinManagerModel(AbstractCoinStateModel):
     # noinspection PyTypeChecker
     @QSlot(bool, str, str, result=str)
     def createAddress(

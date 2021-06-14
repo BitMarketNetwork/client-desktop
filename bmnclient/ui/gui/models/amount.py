@@ -9,7 +9,7 @@ from PySide2.QtCore import \
     Slot as QSlot
 from PySide2.QtGui import QValidator
 
-from . import AbstractStateModel
+from . import AbstractCoinStateModel
 
 if TYPE_CHECKING:
     from typing import Callable, Optional, Type, Union
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from ....coins.abstract.currency import AbstractCurrency
 
 
-class AbstractAmountModel(AbstractStateModel):
+class AbstractAmountModel(AbstractCoinStateModel):
     __stateChanged = QSignal()
 
     def _getValue(self) -> Optional[int]:

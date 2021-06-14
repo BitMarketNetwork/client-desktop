@@ -12,7 +12,7 @@ from PySide2.QtCore import \
     Qt, \
     Signal as QSignal
 
-from . import AbstractModel, AbstractStateModel
+from . import AbstractCoinStateModel, AbstractModel
 from .amount import AbstractAmountModel
 from .list import \
     AbstractConcatenateModel, \
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from ....coins.abstract.coin import AbstractCoin
 
 
-class AbstractTxStateModel(AbstractStateModel):
+class AbstractTxStateModel(AbstractCoinStateModel):
     def __init__(
             self,
             application: GuiApplication,
