@@ -318,7 +318,7 @@ class _AbstractTxFactory:
         if address is None:
             self._logger.error("Failed to derive dummy change address.")
         else:
-            self._logger.error("Dummy change address: %s", address.name)
+            self._logger.debug("Dummy change address: %s", address.name)
         return address
 
     @property

@@ -108,11 +108,11 @@ class SettingsManager(QObject):
             name = self._application.userConfig.get(
                 UserConfig.KEY_UI_LANGUAGE,
                 str,
-                Language.PRIMARY_NAME)
+                Language.primaryName)
             if self._isValidLanguageName(name):
                 self._current_language_name = name
             else:
-                self._current_language_name = Language.PRIMARY_NAME
+                self._current_language_name = Language.primaryName
         assert type(self._current_language_name) is str
         return self._current_language_name
 

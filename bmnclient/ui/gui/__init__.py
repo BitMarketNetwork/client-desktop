@@ -11,12 +11,12 @@ from PySide2.QtQuickControls2 import QQuickStyle
 from PySide2.QtWidgets import QApplication
 
 from . import settings_manager, ui_manager
+from .debug_manager import DebugManager
 from .models.coin import CoinListModel
 from .models.factory import ModelsFactory
 from .settings_manager import SettingsManager, SettingsManager
 from .ui_manager import UIManager, UIManager
 from ...application import CommandLine, CoreApplication
-from ...debug_manager import DebugManager
 from ...key_store import KeyStore
 from ...language import Language
 from ...network.access_manager import NetworkAccessManager

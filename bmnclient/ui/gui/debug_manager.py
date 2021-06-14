@@ -22,10 +22,10 @@ class DebugManager(QObject):
             coin.height += value
 
     @QSlot(int)
-    def kill(self, sig: int):
-        os.kill(os.getpid(), sig)
+    def kill(self, signal: int) -> None:
+        os.kill(os.getpid(), signal)
 
     @QSlot(int, int)
     def undoTransaction(self, coin: int, count: int) -> None:
-        # self._run_cmd(debug_cmd.UndoTransactionCommand(coin, count, self))
+        # TODO
         pass
