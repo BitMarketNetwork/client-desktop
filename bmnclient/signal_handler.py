@@ -16,22 +16,22 @@ from .logger import Logger
 from .os_environment import Platform
 
 if TYPE_CHECKING:
-    from typing import Optional
+    from typing import Final, Optional
 
 
 class SignalHandler(QObject):
-    SIGHUP = QSignal()
-    SIGINT = QSignal()
-    SIGQUIT = QSignal()
-    SIGTERM = QSignal()
+    SIGHUP: Final = QSignal()
+    SIGINT: Final = QSignal()
+    SIGQUIT: Final = QSignal()
+    SIGTERM: Final = QSignal()
 
     if Platform.isWindows:
-        SIGNAL_LIST = (
+        _SIGNAL_LIST: Final = (
             (signal.SIGINT, "SIGINT"),
             (signal.SIGTERM, "SIGTERM"),
         )
     elif Platform.isDarwin or Platform.isLinux:
-        SIGNAL_LIST = (
+        _SIGNAL_LIST: Final = (
             (signal.SIGHUP, "SIGHUP"),
             (signal.SIGINT, "SIGINT"),
             (signal.SIGQUIT, "SIGQUIT"),
@@ -56,10 +56,10 @@ class SignalHandler(QObject):
 
         self._old_wakeup_fd = signal.set_wakeup_fd(self._write_socket.fileno())
 
-        self._old_signal_list = [-1] * len(self.SIGNAL_LIST)
-        for i in range(len(self.SIGNAL_LIST)):
+        self._old_signal_list = [-1] * len(self._SIGNAL_LIST)
+        for i in range(len(self._SIGNAL_LIST)):
             self._old_signal_list[i] = signal.signal(
-                self.SIGNAL_LIST[i][0],
+                self._SIGNAL_LIST[i][0],
                 self._defaultHandler)
             assert self._old_signal_list[i] != -1
 
@@ -68,10 +68,10 @@ class SignalHandler(QObject):
 
     def close(self) -> None:
         if self._old_signal_list is not None:
-            for i in range(len(self.SIGNAL_LIST)):
+            for i in range(len(self._SIGNAL_LIST)):
                 if self._old_signal_list[i] != -1:
                     signal.signal(
-                        self.SIGNAL_LIST[i][0],
+                        self._SIGNAL_LIST[i][0],
                         self._old_signal_list[i])
             self._old_signal_list = None
 
@@ -95,7 +95,7 @@ class SignalHandler(QObject):
                 break
             sig = int.from_bytes(sig.encode("ascii"), sys.byteorder)
             found = False
-            for known_signal in self.SIGNAL_LIST:
+            for known_signal in self._SIGNAL_LIST:
                 if sig == known_signal[0]:
                     self._logger.debug("%s", known_signal[1])
                     getattr(self, known_signal[1]).emit()
