@@ -6,9 +6,9 @@ from unittest import TestCase
 from bmnclient.crypto.cipher import MessageCipher
 from bmnclient.crypto.kdf import KeyDerivationFunction, SecretStore
 from bmnclient.crypto.password import PasswordStrength
-from tests import getLogger
+from . import TestApplication
 
-_logger = getLogger(__name__)
+_logger = TestApplication.getLogger(__name__)
 
 
 class TestMessageCipher(TestCase):

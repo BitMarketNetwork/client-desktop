@@ -9,9 +9,9 @@ from bmnclient.coins.mnemonic import Mnemonic
 from bmnclient.config import UserConfig
 from bmnclient.key_store import KeyIndex, KeyStore
 from bmnclient.version import Product
-from tests import getLogger
+from . import TestApplication
 
-_logger = getLogger(__name__)
+_logger = TestApplication.getLogger(__name__)
 
 
 class TestKeyStore(TestCase):

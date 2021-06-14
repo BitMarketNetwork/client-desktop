@@ -32,14 +32,14 @@ from .signal_handler import SignalHandler
 from .version import Product, ProductPaths, Server
 
 if TYPE_CHECKING:
-    from typing import Callable, Optional, Sequence, Type, Union
+    from typing import Callable, List, Optional, Type, Union
     from PySide2.QtCore import QCoreApplication
     from .coins.hd import HdNode
     from .language import Language
 
 
 class CommandLine:
-    def __init__(self, argv: Sequence[str]) -> None:
+    def __init__(self, argv: List[str]) -> None:
         self._argv = argv
 
         parser = ArgumentParser(
@@ -90,7 +90,7 @@ class CommandLine:
         assert isinstance(self._arguments.server_insecure, bool)
 
     @property
-    def argv(self) -> Sequence[str]:
+    def argv(self) -> List[str]:
         return self._argv
 
     @property
@@ -138,6 +138,7 @@ class CoreApplication(QObject):
         self._language: Optional[Language] = None
         self._exit_code = 0
         self._on_exit_called = False
+        self._run_called = False
 
         self._user_config = UserConfig(
             self._command_line.configPath / ProductPaths.CONFIG_FILE_NAME)
@@ -148,22 +149,26 @@ class CoreApplication(QObject):
             open_callback=self._onKeyStoreOpen,
             reset_callback=self._onKeyStoreReset)
 
-        # Prepare QCoreApplication
-        QLocale.setDefault(QLocale.c())
+        if qt_class.instance() is not None:
+            self._logger.warning("Qt Application has already been created.")
+            self._qt_application = qt_class.instance()
+            assert type(self._qt_application) == qt_class
+        else:
+            # Prepare QCoreApplication
+            QLocale.setDefault(QLocale.c())
 
-        qt_class.setAttribute(Qt.AA_EnableHighDpiScaling)
-        qt_class.setAttribute(Qt.AA_UseHighDpiPixmaps)
-        qt_class.setAttribute(Qt.AA_DisableShaderDiskCache)
-        qt_class.setAttribute(Qt.AA_DisableWindowContextHelpButton)
+            qt_class.setAttribute(Qt.AA_EnableHighDpiScaling)
+            qt_class.setAttribute(Qt.AA_UseHighDpiPixmaps)
+            qt_class.setAttribute(Qt.AA_DisableShaderDiskCache)
+            qt_class.setAttribute(Qt.AA_DisableWindowContextHelpButton)
 
-        qt_class.setApplicationName(Product.NAME)
-        qt_class.setApplicationVersion(Product.VERSION_STRING)
-        qt_class.setOrganizationName(Product.MAINTAINER)
-        qt_class.setOrganizationDomain(Product.MAINTAINER_DOMAIN)
+            qt_class.setApplicationName(Product.NAME)
+            qt_class.setApplicationVersion(Product.VERSION_STRING)
+            qt_class.setOrganizationName(Product.MAINTAINER)
+            qt_class.setOrganizationDomain(Product.MAINTAINER_DOMAIN)
 
-        # QCoreApplication
-        # noinspection PyArgumentList
-        self._qt_application = qt_class(self._command_line.argv)
+            # QCoreApplication
+            self._qt_application = qt_class(self._command_line.argv)
 
         if issubclass(qt_class, QApplication):
             qt_class.setWindowIcon(self._icon)
@@ -214,27 +219,25 @@ class CoreApplication(QObject):
         for coin in self._coin_list:
             coin.fiatRate = FiatRate(0, self._fiat_currency_list.current)
 
+    def __del__(self) -> None:
+        assert self._on_exit_called
+
     def run(self) -> int:
         # noinspection PyTypeChecker
         QMetaObject.invokeMethod(self, "_onRunPrivate", Qt.QueuedConnection)
 
         assert not self._on_exit_called
+        self._run_called = True
         self._exit_code = self._qt_application.exec_()
         assert self._on_exit_called
-
-        # noinspection PySimplifyBooleanCheck
-        if self._exit_code == 0:
-            self._logger.info(
-                "%s terminated successfully.",
-                Product.NAME)
-        else:
-            self._logger.warning(
-                "%s terminated with error.",
-                Product.NAME)
         return self._exit_code
 
     def setExitEvent(self, code: int = 0) -> None:
-        self._qt_application.exit(code)
+        if self._run_called:
+            self._qt_application.exit(code)
+        elif not self._on_exit_called:
+            self._exit_code = code
+            self._onExit()
 
     @property
     def isDebugMode(self) -> bool:
@@ -322,3 +325,13 @@ class CoreApplication(QObject):
         self._on_exit_called = True
         self.database.close()
         self._signal_handler.close()
+
+        if not self._exit_code:
+            self._logger.info(
+                "%s terminated successfully.",
+                Product.NAME)
+        else:
+            self._logger.warning(
+                "%s terminated with error %i.",
+                Product.NAME,
+                self._exit_code)

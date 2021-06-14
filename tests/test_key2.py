@@ -4,8 +4,8 @@ import os
 import random
 import unittest
 
-from tests import TEST_DATA_PATH
-from tests.test_data import *
+from . import TestApplication
+from .test_data import *
 
 log = logging.getLogger(__name__)
 
@@ -180,8 +180,8 @@ class TestPrivateKey(unittest.TestCase):
 @unittest.skip
 class TestBtcCore(unittest.TestCase):
 
-    def test_valid(self):
-        body = json.loads(TEST_DATA_PATH.joinpath(
+    def test_valid(self) -> None:
+        body = json.loads(TestApplication.dataPath.joinpath(
             "key_io_valid.json").read_text())
         for idx, group in enumerate(body):
             props = group[2]
@@ -193,7 +193,7 @@ class TestBtcCore(unittest.TestCase):
                 self.assertIn(prv.network.TITLE, props['chain'], (idx, group))
 
     def test_invalid(self):
-        body = json.loads(TEST_DATA_PATH.joinpath(
+        body = json.loads(TestApplication.dataPath.joinpath(
             "key_io_invalid.json").read_text())
         for idx, group in enumerate(body):
             with self.assertRaises(key.KeyError, msg=idx):

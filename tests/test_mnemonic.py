@@ -7,9 +7,9 @@ from unittest import TestCase
 from bmnclient.coins.coin_bitcoin import Bitcoin
 from bmnclient.coins.hd import HdNode
 from bmnclient.coins.mnemonic import Mnemonic
-from tests import getLogger, TEST_DATA_PATH
+from . import TestApplication
 
-_logger = getLogger(__name__)
+_logger = TestApplication.getLogger(__name__)
 
 
 class TestMnemonic(TestCase):
@@ -41,7 +41,7 @@ class TestMnemonic(TestCase):
 
     def test_seed_en(self) -> None:
         test_list = json.loads(
-            (TEST_DATA_PATH / "bip-0039.json").read_text("utf-8"))
+            (TestApplication.dataPath / "bip-0039.json").read_text("utf-8"))
         for item in test_list["english"]:
             self._test_seed(
                 "english",
@@ -53,7 +53,7 @@ class TestMnemonic(TestCase):
 
     def test_seed_jp(self) -> None:
         test_list = json.loads(
-            (TEST_DATA_PATH / "bip-0039_jp.json").read_text("utf-8"))
+            (TestApplication.dataPath / "bip-0039_jp.json").read_text("utf-8"))
         for item in test_list:
             self._test_seed(
                 "japanese",
