@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+from enum import Enum
 from json.decoder import JSONDecodeError
 from threading import RLock
 from typing import TYPE_CHECKING
@@ -17,20 +18,21 @@ if TYPE_CHECKING:
 
 
 class UserConfig:
-    KEY_VERSION: Final = "version"
+    class Key(Enum):
+        VERSION: Final = "version"
 
-    KEY_UI_LANGUAGE: Final = "ui.language"
-    KEY_UI_THEME: Final = "ui.theme"
-    KEY_UI_HIDE_TO_TRAY: Final = "ui.hide_to_tray"
-    KEY_UI_FONT_FAMILY: Final = "ui.font.family"
-    KEY_UI_FONT_SIZE: Final = "ui.font.size"
+        UI_LANGUAGE: Final = "ui.language"
+        UI_THEME: Final = "ui.theme"
+        UI_HIDE_TO_TRAY: Final = "ui.hide_to_tray"
+        UI_FONT_FAMILY: Final = "ui.font.family"
+        UI_FONT_SIZE: Final = "ui.font.size"
 
-    KEY_KEY_STORE_VALUE: Final = "key_store.value"
-    KEY_KEY_STORE_SEED: Final = "key_store.seed"
-    KEY_KEY_STORE_SEED_PHRASE: Final = "key_store.seed_phrase"
+        KEY_STORE_VALUE: Final = "key_store.value"
+        KEY_STORE_SEED: Final = "key_store.seed"
+        KEY_STORE_SEED_PHRASE: Final = "key_store.seed_phrase"
 
-    KEY_SERVICES_FIAT_RATE: Final = "services.fiat_rate"
-    KEY_SERVICES_FIAT_CURRENCY: Final = "services.fiat_currency"
+        SERVICES_FIAT_RATE: Final = "services.fiat_rate"
+        SERVICES_FIAT_CURRENCY: Final = "services.fiat_currency"
 
     def __init__(self, file_path: PurePath) -> None:
         self._logger = Logger.classLogger(
@@ -99,10 +101,10 @@ class UserConfig:
 
     def get(
             self,
-            key: str,
+            key: Key,
             value_type: Type = str,
             default_value: Any = None) -> Any:
-        key_list = key.split('.')
+        key_list = key.value.split('.')
         with self._lock:
             current_config = self._config
             for i in range(len(key_list)):
@@ -117,11 +119,11 @@ class UserConfig:
                 current_config = current_value
         return default_value
 
-    def exists(self, key: str, value_type: Type = str) -> bool:
+    def exists(self, key: Key, value_type: Type = str) -> bool:
         return self.get(key, value_type, None) is not None
 
-    def set(self, key: str, value: Any, *, save: bool = True) -> bool:
-        key_list = key.split('.')
+    def set(self, key: Key, value: Any, *, save: bool = True) -> bool:
+        key_list = key.value.split('.')
         with self._lock:
             current_config = self._config
             for i in range(len(key_list)):
@@ -140,15 +142,15 @@ class UserConfig:
         return False
 
     def _updateVersion(self) -> None:
-        if not self.get(self.KEY_VERSION, str):
-            self.set(self.KEY_VERSION, Product.VERSION_STRING, save=False)
+        if not self.get(self.Key.VERSION, str):
+            self.set(self.Key.VERSION, Product.VERSION_STRING, save=False)
 
 
 class UserConfigStaticList(StaticList):
     def __init__(
             self,
             user_config: UserConfig,
-            user_config_key: str,
+            user_config_key: UserConfig.Key,
             source_list: Union[list, tuple],
             *,
             default_index: int,

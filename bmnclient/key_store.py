@@ -65,9 +65,9 @@ class KeyStore(QObject):
         if hard:
             with self._user_config.lock:
                 for key in (
-                        UserConfig.KEY_KEY_STORE_VALUE,
-                        UserConfig.KEY_KEY_STORE_SEED,
-                        UserConfig.KEY_KEY_STORE_SEED_PHRASE):
+                        self._user_config.Key.KEY_STORE_VALUE,
+                        self._user_config.Key.KEY_STORE_SEED,
+                        self._user_config.Key.KEY_STORE_SEED_PHRASE):
                     self._user_config.set(key, None, save=False)
                     self._user_config.save()
 
@@ -229,12 +229,12 @@ class KeyStore(QObject):
 
         with self._user_config.lock:
             if not self._user_config.set(
-                    UserConfig.KEY_KEY_STORE_SEED,
+                    self._user_config.Key.KEY_STORE_SEED,
                     self.deriveMessageCipher(KeyIndex.SEED).encrypt(seed),
                     save=False):
                 return False
             if not self._user_config.set(
-                    UserConfig.KEY_KEY_STORE_SEED_PHRASE,
+                    self._user_config.Key.KEY_STORE_SEED_PHRASE,
                     self.deriveMessageCipher(KeyIndex.SEED).encrypt(
                         phrase.encode(Product.ENCODING)),
                     save=False):
@@ -244,13 +244,15 @@ class KeyStore(QObject):
         return True
 
     def _getSeed(self) -> Optional[bytes]:
-        value = self._user_config.get(UserConfig.KEY_KEY_STORE_SEED, str)
+        value = self._user_config.get(self._user_config.Key.KEY_STORE_SEED, str)
         if not value:
             return None
         return self.deriveMessageCipher(KeyIndex.SEED).decrypt(value)
 
     def _getSeedPhrase(self) -> Optional[Tuple[str, str]]:
-        value = self._user_config.get(UserConfig.KEY_KEY_STORE_SEED_PHRASE, str)
+        value = self._user_config.get(
+            self._user_config.Key.KEY_STORE_SEED_PHRASE,
+            str)
         if not value:
             return None
         value = self.deriveMessageCipher(KeyIndex.SEED).decrypt(value)
@@ -294,14 +296,18 @@ class KeyStore(QObject):
         value = SecretStore(password).encryptValue(value)
         with self._lock:
             self._reset(hard=True)
-            return self._user_config.set(UserConfig.KEY_KEY_STORE_VALUE, value)
+            return self._user_config.set(
+                self._user_config.Key.KEY_STORE_VALUE,
+                value)
 
     # noinspection PyTypeChecker
     @QSlot(str, result=bool)
     def applyPassword(self, password: str) -> bool:
         with self._lock:
             self._reset(hard=False)
-            value = self._user_config.get(UserConfig.KEY_KEY_STORE_VALUE, str)
+            value = self._user_config.get(
+                self._user_config.Key.KEY_STORE_VALUE,
+                str)
             if not value:
                 return False
             value = SecretStore(password).decryptValue(value)
@@ -317,7 +323,9 @@ class KeyStore(QObject):
     @QSlot(str, result=bool)
     def verifyPassword(self, password: str) -> bool:
         with self._lock:
-            value = self._user_config.get(UserConfig.KEY_KEY_STORE_VALUE, str)
+            value = self._user_config.get(
+                self._user_config.Key.KEY_STORE_VALUE,
+                str)
             if value and SecretStore(password).decryptValue(value):
                 return True
         return False
@@ -333,6 +341,8 @@ class KeyStore(QObject):
     @QProperty(bool, constant=True)
     def hasPassword(self) -> bool:
         with self._lock:
-            if self._user_config.get(UserConfig.KEY_KEY_STORE_VALUE, str):
+            if self._user_config.get(
+                    self._user_config.Key.KEY_STORE_VALUE,
+                    str):
                 return True
         return False

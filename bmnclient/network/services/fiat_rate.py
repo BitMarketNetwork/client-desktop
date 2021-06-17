@@ -175,7 +175,7 @@ class FiatRateServiceList(UserConfigStaticList):
 
         super().__init__(
             application.userConfig,
-            UserConfig.KEY_SERVICES_FIAT_RATE,
+            application.userConfig.Key.SERVICES_FIAT_RATE,
             service_list,
             default_index=1,
             item_property="name")

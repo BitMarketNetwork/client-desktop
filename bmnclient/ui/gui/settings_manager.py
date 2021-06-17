@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import math
 from typing import List, Optional, Tuple, TYPE_CHECKING
 
 from PySide2.QtCore import \
@@ -10,7 +9,6 @@ from PySide2.QtCore import \
     Signal as QSignal, \
     Slot as QSlot
 
-from ...config import UserConfig
 from ...language import Language
 
 if TYPE_CHECKING:
