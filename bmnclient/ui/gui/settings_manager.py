@@ -29,7 +29,6 @@ class SettingsManager(QObject):
         self._use_new_address = True
         self._language_list: Optional[List[str]] = None
         self._current_language_name: Optional[str] = None
-        self._current_theme_name: Optional[str] = None
         self._hide_to_tray: Optional[bool] = None
         self._font: Optional[Tuple] = None
         self._default_font = self._application.defaultFont
@@ -134,31 +133,6 @@ class SettingsManager(QObject):
                 return i
         assert False
         return -1
-
-    ############################################################################
-    # Theme
-    ############################################################################
-
-    currentThemeNameChanged = QSignal()
-
-    @QProperty(str, notify=currentThemeNameChanged)
-    def currentThemeName(self) -> str:
-        if self._current_theme_name is None:
-            self._current_theme_name = self._application.userConfig.get(
-                UserConfig.KEY_UI_THEME,
-                str,
-                ""  # QML controlled
-            )
-        assert type(self._current_theme_name) is str
-        return self._current_theme_name
-
-    @currentThemeName.setter
-    def _setCurrentThemeName(self, name: str) -> None:
-        assert type(name) is str
-        self._application.userConfig.set(UserConfig.KEY_UI_THEME, name)
-        if self._current_theme_name != name:
-            self._current_theme_name = name
-            self.currentThemeNameChanged.emit()
 
     ############################################################################
     # HideToTray

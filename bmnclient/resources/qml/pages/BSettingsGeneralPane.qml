@@ -34,7 +34,7 @@ BPane {
                 currentIndex = _applicationStyle.currentThemeIndex
             }
             onActivated: {
-                BBackend.settingsManager.currentThemeName = model[index]['name']
+                BBackend.settings.theme.currentName = model[index]['name']
                 currentIndex = _applicationStyle.currentThemeIndex
             }
         }

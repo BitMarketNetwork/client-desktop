@@ -10,11 +10,10 @@ from PySide2.QtQml import QQmlApplicationEngine, QQmlNetworkAccessManagerFactory
 from PySide2.QtQuickControls2 import QQuickStyle
 from PySide2.QtWidgets import QApplication
 
-from . import settings_manager, ui_manager
 from .debug_manager import DebugManager
 from .models.coin import CoinListModel
 from .models.factory import ModelsFactory
-from .settings_manager import SettingsManager, SettingsManager
+from .models.settings import SettingsModel
 from .ui_manager import UIManager, UIManager
 from ...application import CommandLine, CoreApplication
 from ...key_store import KeyStore
@@ -38,13 +37,9 @@ class GuiApplication(CoreApplication):
             command_line=command_line,
             model_factory=lambda o: ModelsFactory.create(self, o))
 
-        self._settings_manager = SettingsManager(self)
         self._ui_manager = UIManager(self)
         self._debug_manager = DebugManager(self)
         self._backend_context = BackendContext(self)
-
-        self._settings_manager.currentLanguageNameChanged.connect(
-            self._updateLanguage)
 
         self._initializeQml()
 
@@ -77,10 +72,6 @@ class GuiApplication(CoreApplication):
     @property
     def defaultFont(self) -> QFont:
         return self._qt_application.font()
-
-    @property
-    def settingsManager(self) -> SettingsManager:
-        return self._settings_manager
 
     @property
     def uiManager(self) -> UIManager:
@@ -149,9 +140,12 @@ class BackendContext(QObject):
     def __init__(self, application: GuiApplication) -> None:
         super().__init__()
         self._application = application
-        self._coin_list = CoinListModel(
+
+        self._coin_list_model = CoinListModel(
             self._application,
             self._application.coinList)
+        self._settings_model = SettingsModel(self._application)
+
 
     @QProperty(bool, constant=True)
     def isDebugMode(self) -> bool:
@@ -166,8 +160,8 @@ class BackendContext(QObject):
         return self._application.keyStore
 
     @QProperty(QObject, constant=True)
-    def settingsManager(self) -> SettingsManager:
-        return self._application.settingsManager
+    def settings(self) -> SettingsModel:
+        return self._settings_model
 
     @QProperty(QObject, constant=True)
     def uiManager(self) -> UIManager:
@@ -175,4 +169,4 @@ class BackendContext(QObject):
 
     @QProperty(QObject, constant=True)
     def coinList(self) -> CoinListModel:
-        return self._coin_list
+        return self._coin_list_model

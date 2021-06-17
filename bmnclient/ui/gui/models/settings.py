@@ -11,6 +11,7 @@ from PySide2.QtCore import \
 from . import AbstractModel, AbstractStateModel
 
 if TYPE_CHECKING:
+    from typing import Optional
     from .. import GuiApplication
 
 
@@ -27,7 +28,31 @@ class LanguageModel(AbstractStateModel):
 
 
 class ThemeModel(AbstractStateModel):
-    pass
+    __stateChanged = QSignal()
+
+    def __init__(self, application: GuiApplication) -> None:
+        super().__init__(application)
+        self._current_name: Optional[str] = None
+
+    @QProperty(str, notify=__stateChanged)
+    def currentName(self) -> str:
+        if self._current_name is None:
+            self._current_name = self._application.userConfig.get(
+                self._application.userConfig.Key.UI_THEME,
+                str,
+                ""  # QML controlled
+            )
+        return self._current_name
+
+    @currentName.setter
+    def setCurrentName(self, value: str) -> None:
+        value = str(value)
+        self._application.userConfig.set(
+            self._application.userConfig.Key.UI_THEME,
+            value)
+        if self._current_name != value:
+            self._current_name = value
+            self.update()
 
 
 class FontModel(AbstractStateModel):

@@ -23,7 +23,7 @@ QtObject {
             "accent": Material.Blue
         }]
     readonly property int currentThemeIndex: {
-        let name = BBackend.settingsManager.currentThemeName
+        let name = BBackend.settings.theme.currentName
         for (let i in themeList) {
             if (themeList[i].name === name) {
                 return i
