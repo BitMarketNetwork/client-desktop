@@ -48,7 +48,7 @@ BApplicationWindow {
     }
 
     onClosing: {
-        if (BBackend.settingsManager.hideToTray) {
+        if (BBackend.settings.systemTray.closeToTray) {
             close.accepted = false
             showMinimized()
             hide()

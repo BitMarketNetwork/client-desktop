@@ -22,11 +22,6 @@ BApplicationPage {
             }
         }
 
-        hideToTray: BBackend.settingsManager.hideToTray
-        onHideToTrayChanged: {
-            BBackend.settingsManager.hideToTray = hideToTray
-        }
-
         useChangeAddress: BBackend.settingsManager.newAddressFroLeftover
         onUseChangeAddressChanged: {
             BBackend.settingsManager.newAddressFroLeftover = useChangeAddress

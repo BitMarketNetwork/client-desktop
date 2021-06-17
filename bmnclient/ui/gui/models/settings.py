@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+
 from PySide2.QtCore import \
     Property as QProperty, \
     QObject, \
@@ -9,10 +10,12 @@ from PySide2.QtCore import \
     Slot as QSlot
 
 from . import AbstractModel, AbstractStateModel
+from ....language import Language
 
 if TYPE_CHECKING:
     from typing import Optional
     from .. import GuiApplication
+    from ....language import TranslationList
 
 
 class FiatRateServiceModel(AbstractStateModel):
@@ -95,7 +98,28 @@ class FontModel(AbstractStateModel):
 
 
 class SystemTrayModel(AbstractStateModel):
-    pass
+    __stateChanged = QSignal()
+
+    def __init__(self, application: GuiApplication) -> None:
+        super().__init__(application)
+        self._close_to_tray = self._application.userConfig.get(
+            self._application.userConfig.Key.UI_CLOSE_TO_TRAY,
+            bool,
+            False)
+
+    @QProperty(bool, notify=__stateChanged)
+    def closeToTray(self) -> bool:
+        return self._close_to_tray
+
+    @closeToTray.setter
+    def _setCloseToTray(self, value: bool) -> None:
+        value = bool(value)
+        self._application.userConfig.set(
+            self._application.userConfig.Key.UI_CLOSE_TO_TRAY,
+            value)
+        if self._close_to_tray != value:
+            self._close_to_tray = value
+            self.update()
 
 
 class SettingsModel(AbstractModel):

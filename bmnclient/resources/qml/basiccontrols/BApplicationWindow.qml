@@ -20,7 +20,7 @@ ApplicationWindow {
     Material.primary: _applicationStyle.currentTheme["primary"]
     Material.accent: _applicationStyle.currentTheme["accent"]
 
-    locale: Qt.locale(BBackend.settingsManager.currentLanguageName)
+    locale: Qt.locale(BBackend.settings.language.currentName)
     font: Qt.font(BBackend.settingsManager.font)
 
     onSceneGraphError: {

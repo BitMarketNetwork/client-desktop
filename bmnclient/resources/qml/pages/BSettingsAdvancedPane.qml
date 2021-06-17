@@ -9,8 +9,6 @@ BPane {
     property string iconPath: _applicationManager.imagePath("icon-tools.svg")
 
     property alias applicationFont: _fontDialog.font
-    property alias hideToTray: _hideToTray.checked
-
     property alias useChangeAddress: _useChangeAddress.checked
 
     signal backupWallet
@@ -39,7 +37,10 @@ BPane {
             text: qsTr("Hide to tray on closing:")
         }
         BDialogInputSwitch {
-            id: _hideToTray
+            checked: BBackend.settings.systemTray.closeToTray
+            onCheckedChanged: {
+                BBackend.settings.systemTray.closeToTray = checked
+            }
         }
 
         BDialogSeparator {}

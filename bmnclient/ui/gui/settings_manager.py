@@ -77,30 +77,6 @@ class SettingsManager(QObject):
             self._application.networkQueryScheduler.updateCurrentFiatCurrency()
 
     ############################################################################
-    # HideToTray
-    ############################################################################
-
-    hideToTrayChanged = QSignal()
-
-    @QProperty(bool, notify=hideToTrayChanged)
-    def hideToTray(self) -> bool:
-        if self._hide_to_tray is None:
-            self._hide_to_tray = self._application.userConfig.get(
-                UserConfig.KEY_UI_HIDE_TO_TRAY,
-                bool,
-                False)
-        assert type(self._hide_to_tray) is bool
-        return self._hide_to_tray
-
-    @hideToTray.setter
-    def _setHideToTray(self, value) -> None:
-        assert type(value) is bool
-        self._application.userConfig.set(UserConfig.KEY_UI_HIDE_TO_TRAY, value)
-        if value != self._hide_to_tray:
-            self._hide_to_tray = value
-            self.hideToTrayChanged.emit()
-
-    ############################################################################
     # Font
     ############################################################################
 
