@@ -18,22 +18,8 @@ log = logging.getLogger(__name__)
 
 
 class SettingsManager(QObject):
-    DEFAULT_FONT_SIZE = 10
     newAddressChanged = QSignal()
     fiatCurrencyChanged = QSignal()
-
-    def __init__(self, application: GuiApplication) -> None:
-        super().__init__()
-        self._application = application
-
-        self._use_new_address = True
-        self._hide_to_tray: Optional[bool] = None
-        self._font: Optional[Tuple] = None
-        self._default_font = self._application.defaultFont
-
-    ############################################################################
-    # AbstractFiatRateService
-    ############################################################################
 
     fiatRateServiceChanged = QSignal()
 
@@ -75,97 +61,3 @@ class SettingsManager(QObject):
             # noinspection PyUnresolvedReferences
             self.fiatCurrencyChanged.emit()
             self._application.networkQueryScheduler.updateCurrentFiatCurrency()
-
-    ############################################################################
-    # Font
-    ############################################################################
-
-    fontChanged = QSignal()
-
-    @QProperty("QVariantMap", notify=fontChanged)
-    def font(self) -> dict:
-        if self._font is None:
-            with self._application.userConfig.lock:
-                family = self._application.userConfig.get(
-                    UserConfig.KEY_UI_FONT_FAMILY,
-                    str,
-                    None)
-                size = self._application.userConfig.get(
-                    UserConfig.KEY_UI_FONT_SIZE,
-                    int,
-                    0)
-            if not family:
-                family = self._default_font.family()
-            if not size:
-                size = self._default_font.pointSize()
-            if size <= 0:
-                size = self.DEFAULT_FONT_SIZE
-            self._font = (family, size)
-
-        # QML Qt.font() comfortable
-        return {
-            "family": self._font[0],
-            "pointSize": self._font[1]
-        }
-
-    @font.setter
-    def _setFont(self, font: dict) -> None:
-        # QML Qt.font() comfortable
-        if "family" in font:
-            family = str(font["family"])
-        else:
-            family = self._default_font.family()
-        if "pointSize" in font:
-            size = int(font["pointSize"])
-            size = self.DEFAULT_FONT_SIZE if size <= 0 else size
-        else:
-            size = self.DEFAULT_FONT_SIZE
-
-        with self._application.userConfig.lock:
-            self._application.userConfig.set(
-                UserConfig.KEY_UI_FONT_FAMILY,
-                family,
-                save=False)
-            self._application.userConfig.set(
-                UserConfig.KEY_UI_FONT_SIZE,
-                size,
-                save=False)
-            self._application.userConfig.save()
-
-        if (family, size) != self._font:
-            self._font = (family, size)
-            self.fontChanged.emit()
-
-    ############################################################################
-    # TODO
-    ############################################################################
-
-    @QSlot(float, result=str)
-    def coinBalance(self, amount: float) -> str:
-        assert isinstance(amount, (int, float)), amount
-        if math.isnan(amount):
-            return "0"
-        # log.debug(f"balance calcaultaion")
-        try:
-            res = amount / pow(10, 8)
-            if res == 0.0:
-                return "0"
-            res = format(round(res, max(0, 3 - int(math.log10(res)))), 'f')
-            if '.' in res:
-                return res.rstrip("0.") or "0"
-        except ValueError as ve:
-            raise ValueError(f"{ve} for {amount} and {res}") from ve
-        except OverflowError as oe:
-            log.error(f"Overflow {amount}")
-            raise OverflowError(f"{oe} for {res}") from oe
-
-    @QProperty(bool, notify=newAddressChanged)
-    def newAddressFroLeftover(self) -> bool:
-        return self._use_new_address
-
-    @newAddressFroLeftover.setter
-    def _set_use_new_address(self, on: bool) -> None:
-        if on == self._use_new_address:
-            return
-        self._use_new_address = on
-        self.newAddressChanged.emit()

@@ -6,14 +6,14 @@ from typing import TYPE_CHECKING
 from PySide2.QtCore import \
     Property as QProperty, \
     QObject, \
-    Signal as QSignal, \
-    Slot as QSlot
+    Signal as QSignal
 
 from . import AbstractModel, AbstractStateModel
 from ....language import Language
+from ....version import Gui
 
 if TYPE_CHECKING:
-    from typing import Optional
+    from typing import Any, Dict, TypedDict
     from .. import GuiApplication
     from ....language import TranslationList
 
@@ -94,7 +94,72 @@ class ThemeModel(AbstractStateModel):
 
 
 class FontModel(AbstractStateModel):
-    pass
+    __stateChanged = QSignal()
+
+    if TYPE_CHECKING:
+        # QML Qt.font() comfortable
+        class FontDict(TypedDict):
+            family: str
+            pointSize: int
+
+    def __init__(self, application: GuiApplication) -> None:
+        super().__init__(application)
+        self._default_font = self.__defaultFont()
+        self._font = self.__currentFont()
+
+    def __defaultFont(self) -> FontDict:
+        font = self._application.defaultFont
+        family = font.family()
+        point_size = font.pointSize()
+        if point_size <= 0:
+            point_size = Gui.DEFAULT_FONT_POINT_SIZE
+        return dict(family=family, pointSize=point_size)
+
+    def __currentFont(self) -> FontDict:
+        with self._application.userConfig.lock:
+            family = self._application.userConfig.get(
+                self._application.userConfig.Key.UI_FONT_FAMILY,
+                str,
+                "")
+            if not family:
+                family = self._default_font["family"]
+            point_size = self._application.userConfig.get(
+                self._application.userConfig.Key.UI_FONT_SIZE,
+                int,
+                0)
+            if point_size <= 0:
+                point_size = self._default_font["pointSize"]
+        return dict(family=family, pointSize=point_size)
+
+    # noinspection PyTypeChecker
+    @QProperty("QVariantMap", notify=__stateChanged)
+    def current(self) -> FontDict:
+        return self._font
+
+    @current.setter
+    def _setCurrent(self, value: Dict[str, Any]) -> None:
+        family = str(value.get("family", ""))
+        if not family:
+            family = self._default_font["family"]
+        point_size = int(value.get("pointSize", 0))
+        if point_size <= 0:
+            point_size = self._default_font["pointSize"]
+
+        with self._application.userConfig.lock:
+            self._application.userConfig.set(
+                self._application.userConfig.Key.UI_FONT_FAMILY,
+                family,
+                save=False)
+            self._application.userConfig.set(
+                self._application.userConfig.Key.UI_FONT_SIZE,
+                point_size,
+                save=False)
+            self._application.userConfig.save()
+
+        value: FontModel.FontDict = dict(family=family, pointSize=point_size)
+        if self._font != value:
+            self._font = value
+            self.update()
 
 
 class SystemTrayModel(AbstractStateModel):

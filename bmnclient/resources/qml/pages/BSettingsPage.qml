@@ -14,14 +14,6 @@ BApplicationPage {
     BSettingsCoinsPane {}
 
     BSettingsAdvancedPane {
-        applicationFont: Qt.font(BBackend.settingsManager.font)
-        onApplicationFontChanged: {
-            BBackend.settingsManager.font = {
-                "family": applicationFont.family,
-                "pointSize": applicationFont.pointSize,
-            }
-        }
-
         useChangeAddress: BBackend.settingsManager.newAddressFroLeftover
         onUseChangeAddressChanged: {
             BBackend.settingsManager.newAddressFroLeftover = useChangeAddress

@@ -8,7 +8,6 @@ BPane {
     property string title: qsTr("Advanced")
     property string iconPath: _applicationManager.imagePath("icon-tools.svg")
 
-    property alias applicationFont: _fontDialog.font
     property alias useChangeAddress: _useChangeAddress.checked
 
     signal backupWallet
@@ -22,12 +21,9 @@ BPane {
         }
         BDialogInputButton {
             id: _fontDialogButton
-            text: {
-                return (
-                            _fontDialog.font.family
-                            + ", "
-                            + Math.round(_fontDialog.font.pointSize))
-            }
+            text: qsTr("%1, %2")
+                    .arg(_fontDialog.font.family)
+                    .arg(Math.round(_fontDialog.font.pointSize))
             onClicked: {
                 _fontDialog.open()
             }
@@ -144,5 +140,12 @@ BPane {
         id: _fontDialog
         modality: Qt.WindowModal
         title: qsTr("Select a preferable font")
+        font: Qt.font(BBackend.settings.font.current)
+        onFontChanged: {
+            BBackend.settings.font.current = {
+                "family": font.family,
+                "pointSize": font.pointSize,
+            }
+        }
     }
 }

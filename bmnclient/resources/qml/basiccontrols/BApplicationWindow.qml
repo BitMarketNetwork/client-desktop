@@ -21,7 +21,7 @@ ApplicationWindow {
     Material.accent: _applicationStyle.currentTheme["accent"]
 
     locale: Qt.locale(BBackend.settings.language.currentName)
-    font: Qt.font(BBackend.settingsManager.font)
+    font: Qt.font(BBackend.settings.font.current)
 
     onSceneGraphError: {
         console.error("QML rendering error %1: %2".arg(error).arg(message))

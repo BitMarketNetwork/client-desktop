@@ -49,3 +49,7 @@ class Server:
     DEFAULT_URL_LIST: Final = (
         "https://d1.bitmarket.network:30110/",
     )
+
+
+class Gui:
+    DEFAULT_FONT_POINT_SIZE: Final = 10
