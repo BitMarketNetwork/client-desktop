@@ -1,7 +1,7 @@
 import QtQuick 2.15
 
 BComboBox {
-    property var stateModel: null
+    property var stateModel: null // AbstractTupleStateModel
 
     BLayout.alignment: _applicationStyle.dialogInputAlignment
     BLayout.minimumWidth: _applicationStyle.dialogInputWidth

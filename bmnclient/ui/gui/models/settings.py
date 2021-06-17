@@ -8,88 +8,74 @@ from PySide2.QtCore import \
     QObject, \
     Signal as QSignal
 
-from . import AbstractModel, AbstractStateModel
+from . import AbstractModel, AbstractStateModel, AbstractTupleStateModel
 from ....language import Language
 from ....version import Gui
 
 if TYPE_CHECKING:
     from typing import Any, Dict, TypedDict
     from .. import GuiApplication
-    from ....language import TranslationList
 
 
-class FiatRateServiceModel(AbstractStateModel):
-    pass
-
-
-class FiatCurrencyModel(AbstractStateModel):
-    pass
-
-
-class LanguageModel(AbstractStateModel):
-    __stateChanged = QSignal()
-
+class FiatRateServiceModel(AbstractTupleStateModel):
     def __init__(self, application: GuiApplication) -> None:
-        super().__init__(application)
-        self._list = Language.translationList()
-        self._current_name = self._application.userConfig.get(
-            self._application.userConfig.Key.UI_LANGUAGE,
-            str,
-            Language.primaryName)
-        if not self._isValidName(self._current_name):
-            self._current_name = Language.primaryName
+        super().__init__(
+            application,
+            tuple(
+                {"name": v.name, "fullName": v.fullName}
+                for v in application.fiatRateServiceList
+            ))
 
-    @QProperty(list, constant=True)
-    def list(self) -> TranslationList:
-        return self._list
+    def _getCurrentItemName(self) -> str:
+        return self._application.fiatRateServiceList.current.name
 
-    def _isValidName(self, name) -> bool:
-        if name:
-            for language in self._list:
-                if name == language["name"]:
-                    return True
+    def _setCurrentItemName(self, value: str) -> bool:
+        if self._application.fiatRateServiceList.setCurrent(value):
+            self._application.networkQueryScheduler.updateCurrentFiatCurrency()
+            return True
         return False
 
-    @QProperty(str, notify=__stateChanged)
-    def currentName(self) -> str:
-        return self._current_name
 
-    @currentName.setter
-    def _setCurrentName(self, value: str) -> None:
-        if not self._isValidName(value):
-            return
-        self._application.userConfig.set(
-            self._application.userConfig.Key.UI_LANGUAGE,
-            value)
-        if self._current_name != value:
-            self._current_name = value
-            self.update()
-
-
-class ThemeModel(AbstractStateModel):
-    __stateChanged = QSignal()
-
+class FiatCurrencyModel(AbstractTupleStateModel):
     def __init__(self, application: GuiApplication) -> None:
-        super().__init__(application)
-        self._current_name = self._application.userConfig.get(
-            self._application.userConfig.Key.UI_THEME,
-            str,
-            "")  # QML controlled
+        super().__init__(
+            application,
+            tuple(
+                {
+                    "name": v.unit,
+                    "fullName": "{} ({})".format(v.fullName, v.unit)
+                } for v in application.fiatCurrencyList
+            ))
 
-    @QProperty(str, notify=__stateChanged)
-    def currentName(self) -> str:
-        return self._current_name
+    def _getCurrentItemName(self) -> str:
+        return self._application.fiatCurrencyList.current.unit
 
-    @currentName.setter
-    def _setCurrentName(self, value: str) -> None:
-        if not value:
-            return
-        self._application.userConfig.set(
-            self._application.userConfig.Key.UI_THEME,
-            value)
-        if self._current_name != value:
-            self._current_name = value
-            self.update()
+    def _setCurrentItemName(self, value: str) -> bool:
+        if self._application.fiatCurrencyList.setCurrent(value):
+            self._application.networkQueryScheduler.updateCurrentFiatCurrency()
+            return True
+        return False
+
+
+class LanguageModel(AbstractTupleStateModel):
+    def __init__(self, application: GuiApplication) -> None:
+        super().__init__(
+            application,
+            Language.translationList(),
+            user_config_key=application.userConfig.Key.UI_LANGUAGE,
+            default_name=Language.primaryName)
+
+
+class ThemeModel(AbstractTupleStateModel):
+    def __init__(self, application: GuiApplication) -> None:
+        super().__init__(
+            application,
+            tuple(),  # QML controlled
+            user_config_key=application.userConfig.Key.UI_THEME,
+            default_name=Gui.DEFAULT_THEME_NAME)
+
+    def _isValidName(self, name) -> bool:
+        return True if name else False
 
 
 class FontModel(AbstractStateModel):
@@ -191,22 +177,11 @@ class SettingsModel(AbstractModel):
         super().__init__(application)
 
         self._fiat_rate_service_model = FiatRateServiceModel(self._application)
-        self.connectModelUpdate(self._fiat_rate_service_model)
-
         self._fiat_currency_service_model = FiatCurrencyModel(self._application)
-        self.connectModelUpdate(self._fiat_currency_service_model)
-
         self._language_model = LanguageModel(self._application)
-        self.connectModelUpdate(self._language_model)
-
         self._theme_model = ThemeModel(self._application)
-        self.connectModelUpdate(self._theme_model)
-
         self._font_model = FontModel(self._application)
-        self.connectModelUpdate(self._font_model)
-
         self._system_tray_model = SystemTrayModel(self._application)
-        self.connectModelUpdate(self._system_tray_model)
 
     @QProperty(QObject, constant=True)
     def fiatRateService(self) -> FiatRateServiceModel:

@@ -52,4 +52,5 @@ class Server:
 
 
 class Gui:
+    DEFAULT_THEME_NAME: Final = "light"
     DEFAULT_FONT_POINT_SIZE: Final = 10
