@@ -8,8 +8,6 @@ BPane {
     property string title: qsTr("Advanced")
     property string iconPath: _applicationManager.imagePath("icon-tools.svg")
 
-    property alias useChangeAddress: _useChangeAddress.checked
-
     signal backupWallet
     signal restoreWallet
     signal clearWallet
@@ -45,32 +43,14 @@ BPane {
             text: qsTr("Fiat rate service:")
         }
         BDialogInputComboBox {
-            model: BBackend.settingsManager.fiatRateServiceList
-            currentIndex: BBackend.settingsManager.currentFiatRateServiceIndex
-            onCurrentIndexChanged: {
-                BBackend.settingsManager.currentFiatRateServiceIndex = currentIndex
-            }
+            stateModel: BBackend.settings.fiatRateService
         }
 
         BDialogPromptLabel {
             text: qsTr("Fiat currency:")
         }
         BDialogInputComboBox {
-            model: BBackend.settingsManager.fiatCurrencyList
-            currentIndex: BBackend.settingsManager.currentFiatCurrencyIndex
-            onCurrentIndexChanged: {
-                BBackend.settingsManager.currentFiatCurrencyIndex = currentIndex
-            }
-        }
-
-        BDialogSeparator {}
-
-        BDialogPromptLabel {
-
-            text: qsTr("Always send change to a new address:")
-        }
-        BDialogInputSwitch {
-            id: _useChangeAddress
+            stateModel: BBackend.settings.fiatCurrency
         }
 
         BDialogSeparator {}

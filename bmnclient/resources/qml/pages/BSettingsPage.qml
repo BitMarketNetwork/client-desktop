@@ -14,11 +14,6 @@ BApplicationPage {
     BSettingsCoinsPane {}
 
     BSettingsAdvancedPane {
-        useChangeAddress: BBackend.settingsManager.newAddressFroLeftover
-        onUseChangeAddressChanged: {
-            BBackend.settingsManager.newAddressFroLeftover = useChangeAddress
-        }
-
         onBackupWallet: {
         }
         onRestoreWallet: {

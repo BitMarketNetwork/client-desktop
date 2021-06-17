@@ -11,32 +11,15 @@ BPane {
             text: qsTr("Application language:")
         }
         BDialogInputComboBox {
-            model: BBackend.settings.language.list
-            textRole: "fullName"
-            valueRole: "name"
-            Component.onCompleted: {
-                currentIndex = indexOfValue(BBackend.settings.language.currentName)
-            }
-            onActivated: {
-                BBackend.settings.language.currentName = currentValue
-                currentIndex = indexOfValue(BBackend.settings.language.currentName)
-            }
+            stateModel: BBackend.settings.language
         }
 
         BDialogPromptLabel {
             text: qsTr("Theme:")
         }
         BDialogInputComboBox {
+            stateModel: BBackend.settings.theme
             model: _applicationStyle.themeList
-            textRole: "fullName"
-            valueRole: "name"
-            Component.onCompleted: {
-                currentIndex = indexOfValue(BBackend.settings.theme.currentName)
-            }
-            onActivated: {
-                BBackend.settings.theme.currentName = currentValue
-                currentIndex = indexOfValue(BBackend.settings.theme.currentName)
-            }
         }
     }
 }
