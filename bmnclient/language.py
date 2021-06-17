@@ -18,6 +18,7 @@ from .version import ProductPaths
 
 if TYPE_CHECKING:
     from typing import Dict, Final, List, Optional, Tuple
+    TranslationList = Tuple[Dict[str, str], ...]
 
 
 # QLocale: problems with negative numbers
@@ -120,7 +121,7 @@ class Language:
 
     @classmethod
     @lru_cache()
-    def translationList(cls) -> Tuple[Dict[str, str], ...]:
+    def translationList(cls) -> TranslationList:
         result = [cls._appendTranslationItem(cls._PRIMARY_NAME)]
         it = QDirIterator(
             str(ProductPaths.TRANSLATIONS_PATH),

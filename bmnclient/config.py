@@ -23,7 +23,7 @@ class UserConfig:
 
         UI_LANGUAGE: Final = "ui.language"
         UI_THEME: Final = "ui.theme"
-        UI_HIDE_TO_TRAY: Final = "ui.hide_to_tray"
+        UI_CLOSE_TO_TRAY: Final = "ui.close_to_tray"
         UI_FONT_FAMILY: Final = "ui.font.family"
         UI_FONT_SIZE: Final = "ui.font.size"
 
