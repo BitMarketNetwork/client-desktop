@@ -7,7 +7,7 @@ from unittest import TestCase
 from bmnclient.coins.coin_bitcoin import Bitcoin
 from bmnclient.coins.hd import HdNode
 from bmnclient.coins.mnemonic import Mnemonic
-from . import TestApplication
+from tests import TestApplication
 
 _logger = TestApplication.getLogger(__name__)
 

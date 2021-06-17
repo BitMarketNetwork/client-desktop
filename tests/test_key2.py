@@ -4,8 +4,8 @@ import os
 import random
 import unittest
 
-from . import TestApplication
-from .test_data import *
+from tests import TestApplication
+from tests.test_data import *
 
 log = logging.getLogger(__name__)
 

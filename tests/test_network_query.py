@@ -9,7 +9,7 @@ from PySide2.QtNetwork import QNetworkReply, QNetworkRequest
 
 from bmnclient.network.access_manager import NetworkAccessManager
 from bmnclient.network.query import AbstractJsonQuery, AbstractQuery
-from . import TestApplication
+from tests import TestApplication
 
 if TYPE_CHECKING:
     from typing import Dict, Optional, Union
