@@ -32,21 +32,19 @@ class ThemeModel(AbstractStateModel):
 
     def __init__(self, application: GuiApplication) -> None:
         super().__init__(application)
-        self._current_name: Optional[str] = None
+        self._current_name = self._application.userConfig.get(
+            self._application.userConfig.Key.UI_THEME,
+            str,
+            "")  # QML controlled
 
     @QProperty(str, notify=__stateChanged)
     def currentName(self) -> str:
-        if self._current_name is None:
-            self._current_name = self._application.userConfig.get(
-                self._application.userConfig.Key.UI_THEME,
-                str,
-                ""  # QML controlled
-            )
         return self._current_name
 
     @currentName.setter
-    def setCurrentName(self, value: str) -> None:
-        value = str(value)
+    def _setCurrentName(self, value: str) -> None:
+        if not value:
+            return
         self._application.userConfig.set(
             self._application.userConfig.Key.UI_THEME,
             value)
