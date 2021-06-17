@@ -24,7 +24,44 @@ class FiatCurrencyModel(AbstractStateModel):
 
 
 class LanguageModel(AbstractStateModel):
-    pass
+    __stateChanged = QSignal()
+
+    def __init__(self, application: GuiApplication) -> None:
+        super().__init__(application)
+        self._translation_list = Language.translationList()
+        self._current_name = self._application.userConfig.get(
+            self._application.userConfig.Key.UI_LANGUAGE,
+            str,
+            Language.primaryName)
+        if not self._isValidName(self._current_name):
+            self._current_name = Language.primaryName
+
+    # noinspection PyTypeChecker
+    @QProperty("QVariantList", constant=True)
+    def translationList(self) -> TranslationList:
+        return self._translation_list
+
+    def _isValidName(self, name) -> bool:
+        if name:
+            for language in self._translation_list:
+                if name == language["name"]:
+                    return True
+        return False
+
+    @QProperty(str, notify=__stateChanged)
+    def currentName(self) -> str:
+        return self._current_name
+
+    @currentName.setter
+    def _setCurrentName(self, value: str) -> None:
+        if not self._isValidName(value):
+            return
+        self._application.userConfig.set(
+            self._application.userConfig.Key.UI_LANGUAGE,
+            value)
+        if self._current_name != value:
+            self._current_name = value
+            self.update()
 
 
 class ThemeModel(AbstractStateModel):

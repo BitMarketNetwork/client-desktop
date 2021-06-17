@@ -27,8 +27,6 @@ class SettingsManager(QObject):
         self._application = application
 
         self._use_new_address = True
-        self._language_list: Optional[List[str]] = None
-        self._current_language_name: Optional[str] = None
         self._hide_to_tray: Optional[bool] = None
         self._font: Optional[Tuple] = None
         self._default_font = self._application.defaultFont
@@ -77,62 +75,6 @@ class SettingsManager(QObject):
             # noinspection PyUnresolvedReferences
             self.fiatCurrencyChanged.emit()
             self._application.networkQueryScheduler.updateCurrentFiatCurrency()
-
-    ############################################################################
-    # Language
-    ############################################################################
-
-    currentLanguageNameChanged = QSignal()
-
-    @QProperty('QVariantList', constant=True)
-    def languageList(self) -> list:
-        if self._language_list is None:
-            self._language_list = Language.createTranslationList()
-        assert type(self._language_list) is list
-        return self._language_list
-
-    def _isValidLanguageName(self, name) -> bool:
-        if type(name) is str:
-            language_list = self.languageList
-            for i in range(0, len(language_list)):
-                if name == language_list[i]['name']:
-                    return True
-        return False
-
-    @QProperty(str, notify=currentLanguageNameChanged)
-    def currentLanguageName(self) -> str:
-        if self._current_language_name is None:
-            name = self._application.userConfig.get(
-                UserConfig.KEY_UI_LANGUAGE,
-                str,
-                Language.primaryName)
-            if self._isValidLanguageName(name):
-                self._current_language_name = name
-            else:
-                self._current_language_name = Language.primaryName
-        assert type(self._current_language_name) is str
-        return self._current_language_name
-
-    @currentLanguageName.setter
-    def _setCurrentLanguageName(self, name: str) -> None:
-        assert type(name) is str
-        if not self._isValidLanguageName(name):
-            log.error(f"Unknown language '{name}'.")
-            return
-        self._application.userConfig.set(UserConfig.KEY_UI_LANGUAGE, name)
-        if self._current_language_name != name:
-            self._current_language_name = name
-            self.currentLanguageNameChanged.emit()
-
-    @QSlot(result=int)
-    def currentLanguageIndex(self) -> int:
-        name = self.currentLanguageName
-        language_list = self.languageList
-        for i in range(0, len(language_list)):
-            if name == language_list[i]['name']:
-                return i
-        assert False
-        return -1
 
     ############################################################################
     # HideToTray

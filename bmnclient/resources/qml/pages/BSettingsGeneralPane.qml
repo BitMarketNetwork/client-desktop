@@ -1,3 +1,4 @@
+import QtQuick 2.15
 import "../application"
 import "../basiccontrols"
 
@@ -10,16 +11,15 @@ BPane {
             text: qsTr("Application language:")
         }
         BDialogInputComboBox {
-            model: BBackend.settingsManager.languageList
+            model: BBackend.settings.language.translationList
             textRole: "friendlyName"
             valueRole: "name"
-            enabled: false
-            onModelChanged: {
-                currentIndex = BBackend.settingsManager.currentLanguageIndex()
+            Component.onCompleted: {
+                currentIndex = indexOfValue(BBackend.settings.language.currentName)
             }
             onActivated: {
-                BBackend.settingsManager.currentLanguageName = model[index]['name']
-                currentIndex = BBackend.settingsManager.currentLanguageIndex()
+                BBackend.settings.language.currentName = currentValue
+                currentIndex = indexOfValue(BBackend.settings.language.currentName)
             }
         }
 
