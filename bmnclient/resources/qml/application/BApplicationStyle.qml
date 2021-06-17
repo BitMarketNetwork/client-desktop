@@ -22,16 +22,15 @@ QtObject {
             "primary": Material.BlueGrey,
             "accent": Material.Blue
         }]
-    readonly property int currentThemeIndex: {
+    readonly property var currentTheme: {
         let name = BBackend.settings.theme.currentName
         for (let i in themeList) {
             if (themeList[i].name === name) {
-                return i
+                return themeList[i]
             }
         }
-        return 0
+        return themeList[0]
     }
-    readonly property var currentTheme: themeList[currentThemeIndex]
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -30,12 +30,12 @@ BPane {
             model: _applicationStyle.themeList
             textRole: "friendlyName"
             valueRole: "name"
-            onModelChanged: {
-                currentIndex = _applicationStyle.currentThemeIndex
+            Component.onCompleted: {
+                currentIndex = indexOfValue(BBackend.settings.theme.currentName)
             }
             onActivated: {
-                BBackend.settings.theme.currentName = model[index]['name']
-                currentIndex = _applicationStyle.currentThemeIndex
+                BBackend.settings.theme.currentName = currentValue
+                currentIndex = indexOfValue(BBackend.settings.theme.currentName)
             }
         }
     }
