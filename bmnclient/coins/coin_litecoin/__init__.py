@@ -15,6 +15,7 @@ class Litecoin(Bitcoin):
     _WIF_VERSION = 0xb0
 
     class Currency(Bitcoin.Currency):
+        _FULL_NAME = "LTC"
         _UNIT = "LTC"
 
     Address = _LitecoinAddress

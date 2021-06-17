@@ -18,17 +18,17 @@ class FiatCurrency(AbstractCurrency):
 
 
 class NoneFiatCurrency(FiatCurrency):
-    _NAME: Final = QObject().tr("-- None --")
+    _FULL_NAME: Final = QObject().tr("-- None --")
     _UNIT: Final = "N/A"
 
 
 class UsdFiatCurrency(FiatCurrency):
-    _NAME: Final = QObject().tr("US Dollar")
+    _FULL_NAME: Final = QObject().tr("US Dollar")
     _UNIT: Final = "USD"
 
 
 class EuroFiatCurrency(FiatCurrency):
-    _NAME: Final = QObject().tr("Euro")
+    _FULL_NAME: Final = QObject().tr("Euro")
     _UNIT: Final = "EUR"
 
 

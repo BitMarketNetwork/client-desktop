@@ -18,6 +18,7 @@ class Bitcoin(AbstractCoin):
 
     class Currency(AbstractCoin.Currency):
         _DECIMAL_SIZE = (0, 8)
+        _FULL_NAME = "BTC"
         _UNIT = "BTC"
 
     Address = _BitcoinAddress

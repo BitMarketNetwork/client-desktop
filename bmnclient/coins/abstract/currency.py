@@ -14,13 +14,13 @@ if TYPE_CHECKING:
 class AbstractCurrency(NotImplementedInstance):
     _DECIMAL_SIZE = (0, 0)
     _VALUE_BITS = 63  # int64
-    _NAME = "YYY"
+    _FULL_NAME = "YYY"
     _UNIT = "YYY"
     __string_template: Optional[str] = None
 
     @classproperty
-    def name(cls) -> str: # noqa
-        return cls._NAME
+    def fullName(cls) -> str: # noqa
+        return cls._FULL_NAME
 
     @classproperty
     def unit(cls) -> str: # noqa
