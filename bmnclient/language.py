@@ -139,7 +139,7 @@ class Language:
         assert locale.name() == name
         return {
             "name": name,
-            "friendlyName": "{} - {}".format(
+            "fullName": "{} - {}".format(
                 locale.nativeLanguageName().title(),
                 Locale.languageToString(locale.language()).title())
         }

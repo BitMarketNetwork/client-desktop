@@ -11,8 +11,8 @@ BPane {
             text: qsTr("Application language:")
         }
         BDialogInputComboBox {
-            model: BBackend.settings.language.translationList
-            textRole: "friendlyName"
+            model: BBackend.settings.language.list
+            textRole: "fullName"
             valueRole: "name"
             Component.onCompleted: {
                 currentIndex = indexOfValue(BBackend.settings.language.currentName)
@@ -28,7 +28,7 @@ BPane {
         }
         BDialogInputComboBox {
             model: _applicationStyle.themeList
-            textRole: "friendlyName"
+            textRole: "fullName"
             valueRole: "name"
             Component.onCompleted: {
                 currentIndex = indexOfValue(BBackend.settings.theme.currentName)

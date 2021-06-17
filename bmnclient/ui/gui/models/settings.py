@@ -31,7 +31,7 @@ class LanguageModel(AbstractStateModel):
 
     def __init__(self, application: GuiApplication) -> None:
         super().__init__(application)
-        self._translation_list = Language.translationList()
+        self._list = Language.translationList()
         self._current_name = self._application.userConfig.get(
             self._application.userConfig.Key.UI_LANGUAGE,
             str,
@@ -39,14 +39,13 @@ class LanguageModel(AbstractStateModel):
         if not self._isValidName(self._current_name):
             self._current_name = Language.primaryName
 
-    # noinspection PyTypeChecker
-    @QProperty("QVariantList", constant=True)
-    def translationList(self) -> TranslationList:
-        return self._translation_list
+    @QProperty(list, constant=True)
+    def list(self) -> TranslationList:
+        return self._list
 
     def _isValidName(self, name) -> bool:
         if name:
-            for language in self._translation_list:
+            for language in self._list:
                 if name == language["name"]:
                     return True
         return False

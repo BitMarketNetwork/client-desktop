@@ -11,13 +11,13 @@ QtObject {
 
     readonly property variant themeList: [{
             "name": "light",
-            "friendlyName": qsTr("Light (Default)"),
+            "fullName": qsTr("Light (Default)"),
             "theme": Material.Light,
             "primary": Material.BlueGrey,
             "accent": Material.Blue
         }, {
             "name": "dark",
-            "friendlyName": qsTr("Dark"),
+            "fullName": qsTr("Dark"),
             "theme": Material.Dark,
             "primary": Material.BlueGrey,
             "accent": Material.Blue
