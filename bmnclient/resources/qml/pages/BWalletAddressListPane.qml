@@ -27,7 +27,7 @@ BPane {
         BMenuItem {
             text: qsTr("Copy address")
             onTriggered: {
-                BBackend.uiManager.copyToClipboard(_contextMenu.address.name)
+                BBackend.clipboard.text = _contextMenu.address.name
             }
         }
         BMenuItem {

@@ -72,10 +72,6 @@ class UIManager(QObject):
         self.__tray.setMainWindowVisibleState(on)
         self.visibleChanged.emit()
 
-    @QSlot(str)
-    def copyToClipboard(self, text: str) -> None:
-        self._application.clipboard.setText(text)
-
     @QSlot(str, int)
     def notify(self, message: str, level: int = MessageIcon.INFORMATION):
         self.__tray.showMessage(message, level)

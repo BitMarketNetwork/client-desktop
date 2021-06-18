@@ -14,6 +14,7 @@ from PySide2.QtWidgets import QApplication
 
 from .debug_manager import DebugManager
 from .dialogs import BAlphaDialog, DialogManager
+from .models.clipboard import ClipboardModel
 from .models.coin import CoinListModel
 from .models.factory import ModelsFactory
 from .models.settings import SettingsModel
@@ -107,7 +108,6 @@ class GuiApplication(CoreApplication):
         self.updateTranslation()
         self._qml_engine.load(url)
 
-    @QSlot(QObject, QUrl)
     def _onQmlObjectCreated(self, qml_object: QObject, url: QUrl) -> None:
         if qml_object is None:
             # TODO If an error occurs, the objectCreated signal is emitted with
@@ -116,7 +116,6 @@ class GuiApplication(CoreApplication):
         else:
             self._logger.debug("QML object was created: %s", url.toString())
 
-    @QSlot(list)
     def _onQmlWarnings(self, warning_list: List[QQmlError]) -> None:
         # TODO: TypeError: Can't call meta function because I have no idea how
         #  to handle QList<QQmlError>...
@@ -164,6 +163,7 @@ class BackendContext(QObject):
         self._coin_list_model = CoinListModel(
             self._application,
             self._application.coinList)
+        self._clipboard_model = ClipboardModel(self._application)
         self._settings_model = SettingsModel(self._application)
         self._dialog_manager = DialogManager(self)
 
@@ -190,6 +190,10 @@ class BackendContext(QObject):
     @QProperty(QObject, constant=True)
     def keyStore(self) -> KeyStore:
         return self._application.keyStore
+
+    @QProperty(QObject, constant=True)
+    def clipboard(self) -> ClipboardModel:
+        return self._clipboard_model
 
     @QProperty(QObject, constant=True)
     def settings(self) -> SettingsModel:

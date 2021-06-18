@@ -52,7 +52,7 @@ BItemDelegate {
     }
 
     onDoubleClicked: {
-        BBackend.uiManager.copyToClipboard(address.name)
+        BBackend.clipboard.text = address.name
     }
 
     // TODO right click

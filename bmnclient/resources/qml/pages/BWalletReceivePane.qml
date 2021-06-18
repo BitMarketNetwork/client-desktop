@@ -72,7 +72,7 @@ BPane {
                             _layout.currentIndex = 0
                         }
                         onAccepted: {
-                            BBackend.uiManager.copyToClipboard(_resultBox.addressNameText)
+                            BBackend.clipboard.text = _resultBox.addressNameText
                         }
                     }
                 }
