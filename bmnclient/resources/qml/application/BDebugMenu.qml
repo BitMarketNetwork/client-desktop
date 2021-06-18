@@ -69,13 +69,4 @@ BMenu {
             }
         }
     }
-    BMenu {
-        title: "Debug scenarios"
-        BMenuItem {
-            text: "Online mode"
-            onTriggered: {
-                BBackend.uiManager.online = !BBackend.uiManager.online
-            }
-        }
-    }
 }

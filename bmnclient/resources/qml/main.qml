@@ -60,7 +60,7 @@ BApplicationWindow {
     }
 
     Component.onCompleted: {
-        BBackend.uiManager.onMainComponentCompleted()
+        BBackend.onMainComponentCompleted()
     }
 
     BStackLayout {
@@ -105,12 +105,16 @@ BApplicationWindow {
             _applicationWindow.hide()
         }
 
-        function onOpenDialogSignal(name, properties) {
+    }
+
+    Connections {
+        target: BBackend.dialogManager
+
+        function onOpenDialog(name, properties) {
             let dialog = _applicationManager.createDialog(name, {})
-            for(let i = 0; i < properties["signals"].length; ++i) {
-                let s = properties["signals"][i]
-                dialog[s].connect(function () {
-                    BBackend.uiManager.onDialogSignal(name, s)
+            for(let callback_name of properties["callbacks"]) {
+                dialog[callback_name].connect(function () {
+                    target.onResult(name, callback_name)
                 })
             }
             dialog.open()

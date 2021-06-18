@@ -13,6 +13,7 @@ from PySide2.QtQuickControls2 import QQuickStyle
 from PySide2.QtWidgets import QApplication
 
 from .debug_manager import DebugManager
+from .dialogs import BAlphaDialog, DialogManager
 from .models.coin import CoinListModel
 from .models.factory import ModelsFactory
 from .models.settings import SettingsModel
@@ -27,6 +28,7 @@ if TYPE_CHECKING:
     from typing import List
     from PySide2.QtGui import QFont
     from PySide2.QtQml import QQmlError
+    from .dialogs import AbstractDialog
     from ...application import CommandLine
     from ...key_store import KeyStore
 
@@ -122,6 +124,9 @@ class GuiApplication(CoreApplication):
     def _onQmlExit(self, code: int = 0) -> None:
         self.setExitEvent(code)
 
+    def onMainComponentCompleted(self) -> None:
+        self._backend_context.dialogManager.open(BAlphaDialog)
+
     def _onExit(self) -> None:
         # TODO https://stackoverflow.com/questions/30196113/properly-reloading-a-qqmlapplicationengine
         self._qml_engine.clearComponentCache()
@@ -156,6 +161,11 @@ class BackendContext(QObject):
             self._application,
             self._application.coinList)
         self._settings_model = SettingsModel(self._application)
+        self._dialog_manager = DialogManager(self)
+
+    @QSlot()
+    def onMainComponentCompleted(self) -> None:
+        self._application.onMainComponentCompleted()
 
     @QProperty(bool, constant=True)
     def isDebugMode(self) -> bool:
@@ -172,6 +182,10 @@ class BackendContext(QObject):
     @QProperty(QObject, constant=True)
     def settings(self) -> SettingsModel:
         return self._settings_model
+
+    @QProperty(QObject, constant=True)
+    def dialogManager(self) -> DialogManager:
+        return self._dialog_manager
 
     @QProperty(QObject, constant=True)
     def uiManager(self) -> UIManager:
