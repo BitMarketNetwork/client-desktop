@@ -7,7 +7,7 @@ import "pages"
 BApplicationWindow {
     id: _applicationWindow
 
-    title: BBackend.uiManager.title
+    title: BBackend.title
     visible: true // TODO wrong usage, should controlled by Python
 
     BApplicationStyle {
@@ -43,7 +43,7 @@ BApplicationWindow {
         }
         onExit: {
             // TODO confirmation
-            _applicationManager.exit()
+            BBackend.exit(0)
         }
     }
 

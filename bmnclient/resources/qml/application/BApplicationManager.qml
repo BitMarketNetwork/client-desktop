@@ -8,10 +8,6 @@ import "../dialogs"
 QtObject {
     required property BApplicationWindow applicationWindow
 
-    function exit(code = 0) {
-        BBackend.uiManager.exit(code)
-    }
-
     function imagePath(path) {
         return Qt.resolvedUrl("../../images/" + path)
     }

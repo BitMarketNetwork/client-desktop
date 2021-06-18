@@ -24,10 +24,10 @@ class UIManager(QObject):
     def __init__(self, application: GuiApplication) -> None:
         super().__init__()
         self._application = application
+
         self.__visible = False
-        #
         self.__notified_tx_list = []
-        #
+
         self.__tray = SystemTrayIcon(self._application)
         self.__tray.exit.connect(self._application.setExitEvent)
         self.__tray.showMainWindow.connect(self.show)
@@ -72,19 +72,10 @@ class UIManager(QObject):
         self.__tray.setMainWindowVisibleState(on)
         self.visibleChanged.emit()
 
-    @QProperty(str, constant=True)
-    def title(self) -> str:
-        return self._application.title
-
     @QSlot(str)
     def copyToClipboard(self, text: str) -> None:
-        import PySide2.QtGui as qt_gui
-        qt_gui.QGuiApplication.clipboard().setText(text)
+        self._application.clipboard.setText(text)
 
     @QSlot(str, int)
     def notify(self, message: str, level: int = MessageIcon.INFORMATION):
         self.__tray.showMessage(message, level)
-
-    @QSlot(int)
-    def exit(self, code: int) -> None:
-        self._application.setExitEvent(code)

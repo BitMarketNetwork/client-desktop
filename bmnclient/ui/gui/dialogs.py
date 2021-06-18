@@ -27,7 +27,7 @@ class AbstractDialog:
         self._context = context
 
     def onRejected(self) -> None:
-        self._context.uiManager.exit(0)
+        self._context.exit(0)
 
 
 class BAlphaDialog(AbstractDialog):

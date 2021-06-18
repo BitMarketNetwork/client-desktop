@@ -26,7 +26,7 @@ from ...version import Gui
 
 if TYPE_CHECKING:
     from typing import List
-    from PySide2.QtGui import QFont
+    from PySide2.QtGui import QClipboard, QFont
     from PySide2.QtQml import QQmlError
     from .dialogs import AbstractDialog
     from ...application import CommandLine
@@ -79,6 +79,10 @@ class GuiApplication(CoreApplication):
     @property
     def defaultFont(self) -> QFont:
         return self._qt_application.font()
+
+    @property
+    def clipboard(self) -> QClipboard:
+        return self._qt_application.clipboard()
 
     @property
     def uiManager(self) -> UIManager:
@@ -166,6 +170,14 @@ class BackendContext(QObject):
     @QSlot()
     def onMainComponentCompleted(self) -> None:
         self._application.onMainComponentCompleted()
+
+    @QProperty(str, constant=True)
+    def title(self) -> str:
+        return self._application.title
+
+    @QSlot(int)
+    def exit(self, code: int) -> None:
+        self._application.setExitEvent(code)
 
     @QProperty(bool, constant=True)
     def isDebugMode(self) -> bool:
