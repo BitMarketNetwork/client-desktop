@@ -65,6 +65,10 @@ class LanguageModel(AbstractTupleStateModel):
             user_config_key=application.userConfig.Key.UI_LANGUAGE,
             default_name=Language.primaryName)
 
+    def _setCurrentItemName(self, value: str) -> bool:
+        if super()._setCurrentItemName(value):
+            self._application.updateTranslation()
+
 
 class ThemeModel(AbstractTupleStateModel):
     def __init__(self, application: GuiApplication) -> None:

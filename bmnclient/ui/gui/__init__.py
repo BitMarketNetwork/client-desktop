@@ -1,11 +1,13 @@
+# JOK4
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
     Property as QProperty, \
     QObject, \
     QUrl, \
     Slot as QSlot
-from PySide2.QtGui import QFont
 from PySide2.QtQml import QQmlApplicationEngine, QQmlNetworkAccessManagerFactory
 from PySide2.QtQuickControls2 import QQuickStyle
 from PySide2.QtWidgets import QApplication
@@ -14,16 +16,19 @@ from .debug_manager import DebugManager
 from .models.coin import CoinListModel
 from .models.factory import ModelsFactory
 from .models.settings import SettingsModel
-from .ui_manager import UIManager, UIManager
-from ...application import CommandLine, CoreApplication
-from ...key_store import KeyStore
+from .ui_manager import UIManager
+from ...application import CoreApplication
 from ...language import Language
 from ...network.access_manager import NetworkAccessManager
 from ...resources import Resources
+from ...version import Gui
 
-QML_STYLE = "Material"
-QML_FILE = "main.qml"
-QML_CONTEXT_NAME = "BBackend"
+if TYPE_CHECKING:
+    from typing import List
+    from PySide2.QtGui import QFont
+    from PySide2.QtQml import QQmlError
+    from ...application import CommandLine
+    from ...key_store import KeyStore
 
 
 class GuiApplication(CoreApplication):
@@ -44,7 +49,7 @@ class GuiApplication(CoreApplication):
         self._initializeQml()
 
     def _initializeQml(self) -> None:
-        QQuickStyle.setStyle(QML_STYLE)
+        QQuickStyle.setStyle(Gui.QML_STYLE)
         self._logger.debug("QML Base URL: %s", Resources.qmlUrl.toString())
 
         self._qml_network_access_manager_factory = \
@@ -61,7 +66,7 @@ class GuiApplication(CoreApplication):
         qml_root_context = self._qml_engine.rootContext()
         qml_root_context.setBaseUrl(Resources.qmlUrl)
         qml_root_context.setContextProperty(
-            QML_CONTEXT_NAME,
+            Gui.QML_CONTEXT_NAME,
             self._backend_context)
 
         self._qml_engine.objectCreated.connect(self._onQmlObjectCreated)
@@ -92,21 +97,21 @@ class GuiApplication(CoreApplication):
 
     def _onRun(self) -> None:
         super()._onRun()
-        url = self._qml_engine.rootContext().resolvedUrl(QUrl(QML_FILE))
-        self._updateLanguage()
+        url = self._qml_engine.rootContext().resolvedUrl(QUrl(Gui.QML_FILE))
+        self.updateTranslation()
         self._qml_engine.load(url)
 
     @QSlot(QObject, QUrl)
-    def _onQmlObjectCreated(self, qml_object, url) -> None:
+    def _onQmlObjectCreated(self, qml_object: QObject, url: QUrl) -> None:
         if qml_object is None:
             # TODO If an error occurs, the objectCreated signal is emitted with
-            #  a null pointer as parameter an
+            #  a null pointer as parameter an.
             self.setExitEvent()
         else:
             self._logger.debug("QML object was created: %s", url.toString())
 
     @QSlot(list)
-    def _onQmlWarnings(self, warning_list) -> None:
+    def _onQmlWarnings(self, warning_list: List[QQmlError]) -> None:
         # TODO: TypeError: Can't call meta function because I have no idea how
         #  to handle QList<QQmlError>...
         # https://github.com/enthought/pyside/blob/master/libpyside/signalmanager.cpp
@@ -123,13 +128,19 @@ class GuiApplication(CoreApplication):
         self._qml_engine.deleteLater()
         super()._onExit()
 
-    @QSlot()
-    def _updateLanguage(self) -> None:
-        language = Language(self._settings_manager.currentLanguageName)
+    def updateTranslation(self) -> None:
+        language = Language(self._backend_context.settings.language.currentName)
 
         if self._language is not None:
+            self._logger.info(
+                "Removing the UI translation '%s'.",
+                self._language.name)
             self._language.uninstall()
+
         self._language = language
+        self._logger.info(
+            "Setting UI translation '%s'.",
+            self._language.name)
         self._language.install()
 
         self._qml_engine.setUiLanguage(language.name)
@@ -145,7 +156,6 @@ class BackendContext(QObject):
             self._application,
             self._application.coinList)
         self._settings_model = SettingsModel(self._application)
-
 
     @QProperty(bool, constant=True)
     def isDebugMode(self) -> bool:

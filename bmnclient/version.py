@@ -52,5 +52,8 @@ class Server:
 
 
 class Gui:
+    QML_STYLE: Final = "Material"
+    QML_FILE: Final = "main.qml"
+    QML_CONTEXT_NAME: Final = "BBackend"
     DEFAULT_THEME_NAME: Final = "light"
     DEFAULT_FONT_POINT_SIZE: Final = 10
