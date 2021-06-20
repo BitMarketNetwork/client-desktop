@@ -6,7 +6,7 @@ import "../coincontrols"
 BPane {
     id: _base
     property string title: qsTr("Receive")
-    property var coin
+    property var coin // CoinModel
 
     contentItem: BStackLayout {
         id: _layout

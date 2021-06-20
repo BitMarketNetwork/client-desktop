@@ -6,8 +6,6 @@ import "../basiccontrols"
 import "../dialogs"
 
 QtObject {
-    required property BApplicationWindow applicationWindow
-
     function imagePath(path) {
         return Qt.resolvedUrl("../../images/" + path)
     }
@@ -28,7 +26,7 @@ QtObject {
 
     function createDialog(name, properties) {
         let dialog = createObject(
-                applicationWindow,
+                _applicationWindow,
                 "../dialogs/" + name + ".qml",
                 Object.assign({}, properties, { "dynamicallyCreated": true }))
         return dialog
@@ -59,7 +57,7 @@ QtObject {
 
     function popupDebugMenu() {
         if (BBackend.isDebugMode) {
-            let menu = createObject(applicationWindow, "BDebugMenu.qml", {})
+            let menu = createObject(_applicationWindow, "BDebugMenu.qml", {})
             if (menu !== null) {
                 menu.onClosed.connect(function () {
                     Qt.callLater(menu.destroy)

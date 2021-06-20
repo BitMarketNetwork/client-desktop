@@ -57,7 +57,7 @@ class GuiApplication(CoreApplication):
 
         self._qml_network_access_manager_factory = \
             self.QmlNetworkAccessManagerFactory()
-        self._qml_engine = QQmlApplicationEngine(self)
+        self._qml_engine = QQmlApplicationEngine()
 
         # TODO self._engine.offlineStoragePath
         self._qml_engine.setBaseUrl(Resources.qmlUrl)
@@ -122,8 +122,6 @@ class GuiApplication(CoreApplication):
         # https://github.com/enthought/pyside/blob/master/libpyside/signalmanager.cpp
         pass
 
-    @QSlot()
-    @QSlot(int)
     def _onQmlExit(self, code: int = 0) -> None:
         self.setExitEvent(code)
 

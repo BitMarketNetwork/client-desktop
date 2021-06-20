@@ -14,7 +14,7 @@ BDialogLayout {
         CreateWatchOnly
     }
 
-    property var coin
+    property var coin // CoinModel
     property int type: BAddressEditBox.Type.View
     property bool readOnly: _base.type === BAddressEditBox.Type.ViewRecipient || _base.type === BAddressEditBox.Type.View
 

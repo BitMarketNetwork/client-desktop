@@ -3,12 +3,6 @@ import QtQuick.Controls.Material 2.15
 import "../basiccontrols"
 
 QtObject {
-    required property BApplicationWindow applicationWindow
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Theme
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     readonly property variant themeList: [{
             "name": "light",
             "fullName": qsTr("Light (Default)"),
@@ -32,10 +26,8 @@ QtObject {
         return themeList[0]
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     property FontMetrics baseFontMetrics: FontMetrics {
-        font: applicationWindow.font
+        font: _applicationWindow.font
     }
 
     property QtObject fontPointSizeFactor: QtObject {
@@ -52,7 +44,7 @@ QtObject {
         property int largeHeight: 48
     }
 
-    property real backgroundDarkFactor: applicationWindow.Material.theme === Material.Dark ? 1.2 : 1.04 // TODO to themeList
+    property real backgroundDarkFactor: _applicationWindow.Material.theme === Material.Dark ? 1.2 : 1.04 // TODO to themeList
     property real padding: baseFontMetrics.height
     property real spacing: baseFontMetrics.height * 0.5
     property real dividerSize: 1
