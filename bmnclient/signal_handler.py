@@ -8,47 +8,47 @@ from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
     QObject, \
-    Signal as QSignal, \
-    Slot as QSlot
+    Signal as QSignal
 from PySide2.QtNetwork import QAbstractSocket
 
 from .logger import Logger
 from .os_environment import Platform
 
 if TYPE_CHECKING:
-    from typing import Final, Optional
+    from typing import Final
 
 
 class SignalHandler(QObject):
-    SIGHUP: Final = QSignal()
-    SIGINT: Final = QSignal()
-    SIGQUIT: Final = QSignal()
-    SIGTERM: Final = QSignal()
+    sighupSignal: Final = QSignal()
+    sigintSignal: Final = QSignal()
+    sigquitSignal: Final = QSignal()
+    sigtermSignal: Final = QSignal()
 
     if Platform.isWindows:
         _SIGNAL_LIST: Final = (
-            (signal.SIGINT, "SIGINT"),
-            (signal.SIGTERM, "SIGTERM"),
+            (signal.SIGINT, "sigintSignal"),
+            (signal.SIGTERM, "sigtermSignal"),
         )
     elif Platform.isDarwin or Platform.isLinux:
         _SIGNAL_LIST: Final = (
-            (signal.SIGHUP, "SIGHUP"),
-            (signal.SIGINT, "SIGINT"),
-            (signal.SIGQUIT, "SIGQUIT"),
-            (signal.SIGTERM, "SIGTERM"),
+            (signal.SIGHUP, "sighupSignal"),
+            (signal.SIGINT, "sigintSignal"),
+            (signal.SIGQUIT, "sigquitSignal"),
+            (signal.SIGTERM, "sigtermSignal"),
         )
     else:
         raise RuntimeError("unsupported platform '{}'".format(Platform.type))
 
-    def __init__(self, parent: Optional[QObject] = None) -> None:
-        super().__init__(parent=parent)
+    def __init__(self) -> None:
+        super().__init__()
         self._logger = Logger.classLogger(self.__class__)
 
         read_socket, self._write_socket = socketpair(type=SOCK_STREAM)
         read_socket.setblocking(False)
         self._write_socket.setblocking(False)
 
-        self._qt_socket = QAbstractSocket(QAbstractSocket.TcpSocket, self)
+        # noinspection PyTypeChecker
+        self._qt_socket = QAbstractSocket(QAbstractSocket.TcpSocket, None)
         self._qt_socket.setSocketDescriptor(
             read_socket.detach(),
             openMode=QAbstractSocket.ReadOnly)
@@ -87,17 +87,16 @@ class SignalHandler(QObject):
             self._write_socket.close()
             self._write_socket = None
 
-    @QSlot()
     def _onReadSignal(self) -> None:
         while True:
-            sig = self._qt_socket.readData(1)
-            if not isinstance(sig, str) or len(sig) == 0:
+            sig = self._qt_socket.read(1).data()
+            if not len(sig):
                 break
-            sig = int.from_bytes(sig.encode("ascii"), sys.byteorder)
+            sig = int.from_bytes(sig, sys.byteorder)
             found = False
             for known_signal in self._SIGNAL_LIST:
                 if sig == known_signal[0]:
-                    self._logger.debug("%s", known_signal[1])
+                    self._logger.debug("%s", str(known_signal[0]))
                     getattr(self, known_signal[1]).emit()
                     found = True
                     break

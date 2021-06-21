@@ -183,14 +183,14 @@ class CoreApplication(QObject):
             Qt.DirectConnection)
 
         # SignalHandler
-        self._signal_handler = SignalHandler(self)
-        self._signal_handler.SIGINT.connect(
+        self._signal_handler = SignalHandler()
+        self._signal_handler.sigintSignal.connect(
             self.setExitEvent,
             Qt.QueuedConnection)
-        self._signal_handler.SIGQUIT.connect(
+        self._signal_handler.sigquitSignal.connect(
             self.setExitEvent,
             Qt.QueuedConnection)
-        self._signal_handler.SIGTERM.connect(
+        self._signal_handler.sigtermSignal.connect(
             self.setExitEvent,
             Qt.QueuedConnection)
 
@@ -230,6 +230,16 @@ class CoreApplication(QObject):
         self._run_called = True
         self._exit_code = self._qt_application.exec_()
         assert self._on_exit_called
+
+        if not self._exit_code:
+            self._logger.info(
+                "%s terminated successfully.",
+                Product.NAME)
+        else:
+            self._logger.warning(
+                "%s terminated with error %i.",
+                Product.NAME,
+                self._exit_code)
         return self._exit_code
 
     def setExitEvent(self, code: int = 0) -> None:
@@ -326,13 +336,3 @@ class CoreApplication(QObject):
         self._on_exit_called = True
         self.database.close()
         self._signal_handler.close()
-
-        if not self._exit_code:
-            self._logger.info(
-                "%s terminated successfully.",
-                Product.NAME)
-        else:
-            self._logger.warning(
-                "%s terminated with error %i.",
-                Product.NAME,
-                self._exit_code)
