@@ -113,7 +113,7 @@ BPane {
                 "This will destroy all your keys and lead to a risk of losing money!"
                   + " Please make sure that you made a backup."
                   + "\n\nContinue?")
-        standardButtons: BMessageDialog.Yes | BMessageDialog.No
+        type: BMessageDialog.Type.AskYesNo
     }
 
     FontDialog {

@@ -32,11 +32,11 @@ QtObject {
         return dialog
     }
 
-    function messageDialog(text, buttons) {
+    function messageDialog(text, type) {
         let dialog = createDialog(
                 "BMessageDialog", {
                     "text": text,
-                    "standardButtons": !buttons ? BMessageDialog.Ok : buttons
+                    "type": !type ? BMessageDialog.Type.Information : type
                 })
         return dialog
     }

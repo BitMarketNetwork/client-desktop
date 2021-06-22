@@ -36,7 +36,7 @@ BPasswordDialog {
                         "This will destroy all saved information and you can lose your money!\n"
                         + "Please make sure you remember the seed phrase.\n\n"
                         + "Reset?"),
-                    BMessageDialog.Yes | BMessageDialog.No)
+                    BMessageDialog.Type.AskYesNo)
             dialog.onAccepted.connect(function () {
                 BBackend.keyStore.resetPassword() // TODO if failed?
                 _base.autoDestroy()

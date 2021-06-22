@@ -8,7 +8,6 @@ BApplicationWindow {
     id: _applicationWindow
 
     title: BBackend.title
-    visible: true // TODO wrong usage, should controlled by Python
 
     BApplicationStyle {
         id: _applicationStyle
