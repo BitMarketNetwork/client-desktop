@@ -6,9 +6,11 @@ from typing import TYPE_CHECKING
 from PySide2.QtCore import \
     Property as QProperty, \
     QObject, \
+    Qt, \
     QUrl, \
     Slot as QSlot
 from PySide2.QtQml import QQmlApplicationEngine, QQmlNetworkAccessManagerFactory
+from PySide2.QtQuick import QQuickWindow
 from PySide2.QtQuickControls2 import QQuickStyle
 from PySide2.QtWidgets import QApplication
 
@@ -18,6 +20,7 @@ from .models.clipboard import ClipboardModel
 from .models.coin import CoinListModel
 from .models.factory import ModelsFactory
 from .models.settings import SettingsModel
+from .system_tray import SystemTrayIcon
 from .ui_manager import UIManager
 from ...application import CoreApplication
 from ...language import Language
@@ -26,7 +29,7 @@ from ...resources import Resources
 from ...version import Gui
 
 if TYPE_CHECKING:
-    from typing import List
+    from typing import Iterable, List
     from PySide2.QtGui import QClipboard, QFont
     from PySide2.QtQml import QQmlError
     from .dialogs import AbstractDialog
@@ -44,6 +47,8 @@ class GuiApplication(CoreApplication):
             qt_class=QApplication,
             command_line=command_line,
             model_factory=lambda o: ModelsFactory.create(self, o))
+
+        self._system_tray_icon = SystemTrayIcon(self)
 
         self._ui_manager = UIManager(self)
         self._debug_manager = DebugManager(self)
@@ -77,6 +82,11 @@ class GuiApplication(CoreApplication):
         self._qml_engine.exit.connect(self._onQmlExit)
         self._qml_engine.quit.connect(self._onQmlExit)
 
+    def _topLevelWindows(self) -> Iterable[QQuickWindow]:
+        return filter(
+            lambda w: isinstance(w, QQuickWindow),
+            self._qt_application.topLevelWindows())
+
     @property
     def defaultFont(self) -> QFont:
         return self._qt_application.font()
@@ -102,6 +112,25 @@ class GuiApplication(CoreApplication):
         assert self._language
         return self._language
 
+    def showMainWindow(self, show: bool = True) -> None:
+        for window in self._topLevelWindows():
+            if show:
+                window.setVisible(True)
+                # noinspection PyTypeChecker
+                state = int(window.windowStates())
+                if (state & Qt.WindowMinimized) == Qt.WindowMinimized:
+                    window.show()
+                window.raise_()
+                window.requestActivate()
+            else:
+                window.setVisible(False)
+
+    def isVisibleMainWindow(self) -> bool:
+        return any(w.isVisible() for w in self._topLevelWindows())
+
+    def isActiveMainWindow(self) -> bool:
+        return any(w.isActive() for w in self._topLevelWindows())
+
     def _onRun(self) -> None:
         super()._onRun()
         url = self._qml_engine.rootContext().resolvedUrl(QUrl(Gui.QML_FILE))
@@ -125,7 +154,7 @@ class GuiApplication(CoreApplication):
     def _onQmlExit(self, code: int = 0) -> None:
         self.setExitEvent(code)
 
-    def onMainComponentCompleted(self) -> None:
+    def onMainWindowCompleted(self) -> None:
         self._backend_context.dialogManager.open(BAlphaDialog)
 
     def _onExit(self) -> None:
@@ -166,8 +195,8 @@ class BackendContext(QObject):
         self._dialog_manager = DialogManager(self)
 
     @QSlot()
-    def onMainComponentCompleted(self) -> None:
-        self._application.onMainComponentCompleted()
+    def onMainWindowCompleted(self) -> None:
+        self._application.onMainWindowCompleted()
 
     @QProperty(str, constant=True)
     def title(self) -> str:

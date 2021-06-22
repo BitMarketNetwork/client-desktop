@@ -12,12 +12,10 @@ BApplicationWindow {
 
     BApplicationStyle {
         id: _applicationStyle
-        applicationWindow: _applicationWindow
     }
 
     BApplicationManager {
         id: _applicationManager
-        applicationWindow: _applicationWindow
     }
 
     background: Rectangle {
@@ -55,12 +53,8 @@ BApplicationWindow {
         }
     }
 
-    onVisibleChanged: {
-        BBackend.uiManager.visible = visible
-    }
-
     Component.onCompleted: {
-        BBackend.onMainComponentCompleted()
+        BBackend.onMainWindowCompleted()
     }
 
     BStackLayout {
@@ -90,21 +84,6 @@ BApplicationWindow {
         BSettingsPage {
             list.display: _drawer.barsDisplay
         }
-    }
-
-    Connections {
-        target: BBackend.uiManager
-
-        function onShow() {
-            _applicationWindow.showNormal()
-            _applicationWindow.raise()
-            _applicationWindow.requestActivate()
-        }
-
-        function onHide() {
-            _applicationWindow.hide()
-        }
-
     }
 
     Connections {
