@@ -53,6 +53,14 @@ class BNewSeedDialog(AbstractDialog):
     pass
 
 
+class BQuitDialog(AbstractDialog):
+    def onAccepted(self) -> None:
+        self._context.exit(0)
+
+    def onRejected(self) -> None:
+        pass
+
+
 class DialogManager(QObject):
     openDialog = QSignal(str, "QVariantMap")  # connected to QML frontend
 

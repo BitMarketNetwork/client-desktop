@@ -8,12 +8,14 @@ from PySide2.QtCore import \
     QObject, \
     QUrl, \
     Slot as QSlot
-from PySide2.QtQml import QQmlApplicationEngine, QQmlNetworkAccessManagerFactory
+from PySide2.QtQml import \
+    QQmlApplicationEngine, \
+    QQmlNetworkAccessManagerFactory
 from PySide2.QtQuick import QQuickWindow
 from PySide2.QtQuickControls2 import QQuickStyle
 
 from .debug_manager import DebugManager
-from .dialogs import BAlphaDialog, DialogManager
+from .dialogs import BAlphaDialog, BQuitDialog, DialogManager
 from .models.clipboard import ClipboardModel
 from .models.coin import CoinListModel
 from .models.factory import ModelsFactory
@@ -56,11 +58,9 @@ class QmlApplication(GuiApplication):
         # TODO replace with self._engine.warnings
         self._qml_engine.setOutputWarningsToStandardError(True)
 
-        qml_root_context = self._qml_engine.rootContext()
-        qml_root_context.setBaseUrl(Resources.qmlUrl)
-        qml_root_context.setContextProperty(
-            Gui.QML_CONTEXT_NAME,
-            self._qml_context)
+        context = self._qml_engine.rootContext()
+        context.setBaseUrl(Resources.qmlUrl)
+        context.setContextProperty(Gui.QML_CONTEXT_NAME, self._qml_context)
 
         self._qml_engine.objectCreated.connect(self._onQmlObjectCreated)
         # TODO self._qml_engine.warnings.connect(self._onQmlWarnings)
@@ -124,16 +124,26 @@ class QmlContext(QObject):
 
     @QSlot()
     def onCompleted(self) -> None:
-        self._application.onMainWindowCompleted()
+        self._dialog_manager.open(BAlphaDialog)
+        self._application.show()
 
     # noinspection PyTypeChecker
     @QSlot(result=bool)
     def onClosing(self) -> bool:
-        return self._application.onMainWindowClosing()
+        if self._settings_model.systemTray.closeToTray:
+            self._application.show(False)
+        else:
+            self.onQuitRequest()
+        return False
 
     @QSlot()
-    def onExit(self) -> None:
-        pass
+    def onQuitRequest(self) -> None:
+        self._application.show(True)
+        self._dialog_manager.open(BQuitDialog)
+
+    @QSlot(int)
+    def exit(self, code: int) -> None:
+        self._application.setExitEvent(code)
 
     @QProperty(str, constant=True)
     def title(self) -> str:
