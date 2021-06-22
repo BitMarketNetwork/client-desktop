@@ -16,14 +16,14 @@ from ....coin_interfaces import TxFactoryInterface
 
 if TYPE_CHECKING:
     from typing import Optional, Sequence
-    from .. import GuiApplication
+    from .. import QmlApplication
     from ....coins.abstract.coin import AbstractCoin
 
 
 class AbstractTxFactoryStateModel(AbstractCoinStateModel):
     def __init__(
             self,
-            application: GuiApplication,
+            application: QmlApplication,
             factory: AbstractCoin.TxFactory) -> None:
         super().__init__(application, factory.coin)
         self._factory = factory
@@ -50,7 +50,7 @@ class TxFactoryStateModel(AbstractTxFactoryStateModel):
 class AbstractTxFactoryAmountModel(AbstractAmountModel):
     def __init__(
             self,
-            application: GuiApplication,
+            application: QmlApplication,
             factory: AbstractCoin.TxFactory) -> None:
         super().__init__(application, factory.coin)
         self._factory = factory
@@ -62,7 +62,7 @@ class AbstractTxFactoryAmountModel(AbstractAmountModel):
 class AbstractTxFactoryAmountInputModel(AbstractAmountInputModel):
     def __init__(
             self,
-            application: GuiApplication,
+            application: QmlApplication,
             factory: AbstractCoin.TxFactory) -> None:
         super().__init__(application, factory.coin)
         self._factory = factory
@@ -167,7 +167,7 @@ class TxFactoryReceiverModel(AbstractTxFactoryStateModel):
 
     def __init__(
             self,
-            application: GuiApplication,
+            application: QmlApplication,
             factory: AbstractCoin.TxFactory) -> None:
         super().__init__(application, factory)
         self._first_use = True
@@ -199,7 +199,7 @@ class TxFactorySourceListModel(TxIoListModel):
 
     def __init__(
             self,
-            application: GuiApplication,
+            application: QmlApplication,
             source_list: Sequence) -> None:
         super().__init__(application, source_list)
         # noinspection PyUnresolvedReferences
@@ -233,7 +233,7 @@ class TxFactoryModel(TxFactoryInterface, AbstractModel):
 
     def __init__(
             self,
-            application: GuiApplication,
+            application: QmlApplication,
             factory: AbstractCoin.TxFactory) -> None:
         super().__init__(
             application,

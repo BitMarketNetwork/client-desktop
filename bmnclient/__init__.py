@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from .application import CommandLine
 from .logger import Logger
-from .ui.gui import GuiApplication
+from .ui.qml import QmlApplication
 from .version import Product
 
 if TYPE_CHECKING:
@@ -30,7 +30,7 @@ def main(argv: List[str]) -> int:
     try:
         command_line = CommandLine(argv)
         Logger.configure(command_line.logFilePath, command_line.logLevel)
-        exit_code = GuiApplication(command_line).run()
+        exit_code = QmlApplication(command_line=command_line).run()
     except SystemExit as e:
         exit_code = e.args[0]
     except Exception:  # noqa

@@ -13,7 +13,7 @@ from PySide2.QtCore import \
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Final, Iterable, Optional, Tuple
-    from .. import GuiApplication
+    from .. import QmlApplication
     from ....coins.abstract.coin import AbstractCoin
     from ....config import UserConfig
     from ....language import Locale
@@ -29,7 +29,7 @@ class AbstractStateModel(QObject):
     _NONE_STRING: Final = "-"
     stateChanged = QSignal()
 
-    def __init__(self, application: GuiApplication) -> None:
+    def __init__(self, application: QmlApplication) -> None:
         super().__init__()
         self._application = application
 
@@ -63,7 +63,7 @@ class AbstractTupleStateModel(AbstractStateModel):
 
     def __init__(
             self,
-            application: GuiApplication,
+            application: QmlApplication,
             source_list: Tuple[Dict[str, Any], ...],
             *,
             user_config_key: Optional[UserConfig.Key] = None,
@@ -121,7 +121,7 @@ class AbstractTupleStateModel(AbstractStateModel):
 
 
 class AbstractCoinStateModel(AbstractStateModel):
-    def __init__(self, application: GuiApplication, coin: AbstractCoin) -> None:
+    def __init__(self, application: QmlApplication, coin: AbstractCoin) -> None:
         super().__init__(application)
         self._coin = coin
 
@@ -129,7 +129,7 @@ class AbstractCoinStateModel(AbstractStateModel):
 class AbstractModel(QObject):
     stateChanged = QSignal()
 
-    def __init__(self, application: GuiApplication, *args, **kwargs) -> None:
+    def __init__(self, application: QmlApplication, *args, **kwargs) -> None:
         super().__init__()
         self._application = application
         self._update_lock = Lock()

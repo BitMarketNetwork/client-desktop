@@ -10,14 +10,14 @@ from PySide2.QtCore import \
 from PySide2.QtGui import QClipboard
 
 if TYPE_CHECKING:
-    from .. import GuiApplication
+    from .. import QmlApplication
 
 
 class ClipboardModel(QObject):
     _MODE = QClipboard.Clipboard
     stateChanged = QSignal()
 
-    def __init__(self, application: GuiApplication) -> None:
+    def __init__(self, application: QmlApplication) -> None:
         super().__init__()
         self._application = application
         # noinspection PyUnresolvedReferences

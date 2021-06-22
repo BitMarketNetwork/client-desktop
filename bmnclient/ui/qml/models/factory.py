@@ -12,13 +12,13 @@ from ....utils import NotImplementedInstance
 
 if TYPE_CHECKING:
     from typing import Optional, Union
-    from .. import GuiApplication
+    from .. import QmlApplication
 
 
 class ModelsFactory(NotImplementedInstance):
     @staticmethod
     def create(
-            application: GuiApplication,
+            application: QmlApplication,
             owner: Union[
                 AbstractCoin,
                 AbstractCoin.Address,

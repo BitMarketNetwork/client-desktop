@@ -14,11 +14,11 @@ from ....version import Gui
 
 if TYPE_CHECKING:
     from typing import Any, Dict, TypedDict
-    from .. import GuiApplication
+    from .. import QmlApplication
 
 
 class FiatRateServiceModel(AbstractTupleStateModel):
-    def __init__(self, application: GuiApplication) -> None:
+    def __init__(self, application: QmlApplication) -> None:
         super().__init__(
             application,
             tuple(
@@ -37,7 +37,7 @@ class FiatRateServiceModel(AbstractTupleStateModel):
 
 
 class FiatCurrencyModel(AbstractTupleStateModel):
-    def __init__(self, application: GuiApplication) -> None:
+    def __init__(self, application: QmlApplication) -> None:
         super().__init__(
             application,
             tuple(
@@ -58,7 +58,7 @@ class FiatCurrencyModel(AbstractTupleStateModel):
 
 
 class LanguageModel(AbstractTupleStateModel):
-    def __init__(self, application: GuiApplication) -> None:
+    def __init__(self, application: QmlApplication) -> None:
         super().__init__(
             application,
             Language.translationList(),
@@ -71,7 +71,7 @@ class LanguageModel(AbstractTupleStateModel):
 
 
 class ThemeModel(AbstractTupleStateModel):
-    def __init__(self, application: GuiApplication) -> None:
+    def __init__(self, application: QmlApplication) -> None:
         super().__init__(
             application,
             tuple(),  # QML controlled
@@ -91,7 +91,7 @@ class FontModel(AbstractStateModel):
             family: str
             pointSize: int
 
-    def __init__(self, application: GuiApplication) -> None:
+    def __init__(self, application: QmlApplication) -> None:
         super().__init__(application)
         self._default_font = self.__defaultFont()
         self._font = self.__currentFont()
@@ -154,7 +154,7 @@ class FontModel(AbstractStateModel):
 class SystemTrayModel(AbstractStateModel):
     __stateChanged = QSignal()
 
-    def __init__(self, application: GuiApplication) -> None:
+    def __init__(self, application: QmlApplication) -> None:
         super().__init__(application)
         self._close_to_tray = self._application.userConfig.get(
             self._application.userConfig.Key.UI_CLOSE_TO_TRAY,
@@ -177,7 +177,7 @@ class SystemTrayModel(AbstractStateModel):
 
 
 class SettingsModel(AbstractModel):
-    def __init__(self, application: GuiApplication) -> None:
+    def __init__(self, application: QmlApplication) -> None:
         super().__init__(application)
 
         self._fiat_rate_service_model = FiatRateServiceModel(self._application)

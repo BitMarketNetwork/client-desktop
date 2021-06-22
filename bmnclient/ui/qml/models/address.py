@@ -21,14 +21,14 @@ from ....coin_interfaces import AddressInterface
 if TYPE_CHECKING:
     from typing import Final, Optional
     from .tx import TxListModel, TxListSortedModel
-    from .. import GuiApplication
+    from .. import QmlApplication
     from ....coins.abstract.coin import AbstractCoin
 
 
 class AbstractAddressStateModel(AbstractCoinStateModel):
     def __init__(
             self,
-            application: GuiApplication,
+            application: QmlApplication,
             address: AbstractCoin.Address) -> None:
         super().__init__(application, address.coin)
         self._address = address
@@ -37,7 +37,7 @@ class AbstractAddressStateModel(AbstractCoinStateModel):
 class AbstractAddressAmountModel(AbstractAmountModel):
     def __init__(
             self,
-            application: GuiApplication,
+            application: QmlApplication,
             address: AbstractCoin.Address) -> None:
         super().__init__(application, address.coin)
         self._address = address
@@ -92,7 +92,7 @@ class AddressAmountModel(AbstractAddressAmountModel):
 class AddressModel(AddressInterface, AbstractModel):
     def __init__(
             self,
-            application: GuiApplication,
+            application: QmlApplication,
             address: AbstractCoin.Address) -> None:
         super().__init__(
             application,
@@ -190,6 +190,6 @@ class AddressListModel(AbstractListModel):
 class AddressListSortedModel(AbstractListSortedModel):
     def __init__(
             self,
-            application: GuiApplication,
+            application: QmlApplication,
             source_model: AddressListModel) -> None:
         super().__init__(application, source_model, AddressListModel.Role.NAME)

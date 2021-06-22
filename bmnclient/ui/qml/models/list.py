@@ -17,7 +17,7 @@ from PySide2.QtCore import \
 
 if TYPE_CHECKING:
     from typing import Any, List, Optional, Sequence
-    from .. import GuiApplication
+    from .. import QmlApplication
 
 
 class RoleEnum(IntEnum):
@@ -32,7 +32,7 @@ class RoleEnum(IntEnum):
 class ListModelHelper:
     __rowCountChanged = QSignal()
 
-    def __init__(self, application: GuiApplication) -> None:
+    def __init__(self, application: QmlApplication) -> None:
         self._application = application
         # noinspection PyUnresolvedReferences
         self.rowsInserted.connect(lambda *_: self.__rowCountChanged.emit())
@@ -107,7 +107,7 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
 
     def __init__(
             self,
-            application: GuiApplication,
+            application: QmlApplication,
             source_list: Sequence) -> None:
         super().__init__()
         ListModelHelper.__init__(self, application)
@@ -217,7 +217,7 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
 class AbstractConcatenateModel(QConcatenateTablesProxyModel, ListModelHelper):
     ROLE_MAP = {}
 
-    def __init__(self, application: GuiApplication) -> None:
+    def __init__(self, application: QmlApplication) -> None:
         super().__init__()
         ListModelHelper.__init__(self, application)
 
@@ -229,7 +229,7 @@ class AbstractConcatenateModel(QConcatenateTablesProxyModel, ListModelHelper):
 class AbstractListSortedModel(QSortFilterProxyModel, ListModelHelper):
     def __init__(
             self,
-            application: GuiApplication,
+            application: QmlApplication,
             source_model: AbstractListModel,
             sort_role: int,
             sort_order: Qt.SortOrder = Qt.AscendingOrder) -> None:

@@ -23,14 +23,14 @@ from ....coin_interfaces import TxInterface
 
 if TYPE_CHECKING:
     from typing import Final, Optional
-    from .. import GuiApplication
+    from .. import QmlApplication
     from ....coins.abstract.coin import AbstractCoin
 
 
 class AbstractTxStateModel(AbstractCoinStateModel):
     def __init__(
             self,
-            application: GuiApplication,
+            application: QmlApplication,
             tx: AbstractCoin.Tx) -> None:
         super().__init__(application, tx.coin)
         self._tx = tx
@@ -39,7 +39,7 @@ class AbstractTxStateModel(AbstractCoinStateModel):
 class AbstractTxAmountModel(AbstractAmountModel):
     def __init__(
             self,
-            application: GuiApplication,
+            application: QmlApplication,
             tx: AbstractCoin.Tx) -> None:
         super().__init__(application, tx.coin)
         self._tx = tx
@@ -115,7 +115,7 @@ class TxIoListModel(AbstractListModel):
 class TxModel(TxInterface, AbstractModel):
     def __init__(
             self,
-            application: GuiApplication,
+            application: QmlApplication,
             tx: AbstractCoin.Tx) -> None:
         super().__init__(
             application,
@@ -248,7 +248,7 @@ class TxListConcatenateModel(AbstractConcatenateModel):
 class TxListSortedModel(AbstractListSortedModel):
     def __init__(
             self,
-            application: GuiApplication,
+            application: QmlApplication,
             source_model: TxListModel) -> None:
         super().__init__(
             application,
