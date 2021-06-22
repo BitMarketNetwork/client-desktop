@@ -12,10 +12,10 @@ from ...logger import Logger
 
 if TYPE_CHECKING:
     from typing import Type
-    from . import BackendContext
+    from . import QmlContext
 
 
-def _askKeyStorePassword(context: BackendContext) -> None:
+def _askKeyStorePassword(context: QmlContext) -> None:
     if context.keyStore.hasPassword:
         context.dialogManager.open(BKeyStorePasswordDialog)
     else:
@@ -23,7 +23,7 @@ def _askKeyStorePassword(context: BackendContext) -> None:
 
 
 class AbstractDialog:
-    def __init__(self, context: BackendContext) -> None:
+    def __init__(self, context: QmlContext) -> None:
         self._context = context
 
     def onRejected(self) -> None:
@@ -56,7 +56,7 @@ class BNewSeedDialog(AbstractDialog):
 class DialogManager(QObject):
     openDialog = QSignal(str, "QVariantMap")  # connected to QML frontend
 
-    def __init__(self, context: BackendContext) -> None:
+    def __init__(self, context: QmlContext) -> None:
         super().__init__()
         self._logger = Logger.classLogger(self.__class__)
         self._context = context

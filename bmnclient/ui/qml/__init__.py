@@ -21,7 +21,6 @@ from .models.coin import CoinListModel
 from .models.factory import ModelsFactory
 from .models.settings import SettingsModel
 from .system_tray import SystemTrayIcon
-from .ui_manager import UIManager
 from ...application import CoreApplication
 from ...language import Language
 from ...network.access_manager import NetworkAccessManager
@@ -30,33 +29,64 @@ from ...version import Gui
 
 if TYPE_CHECKING:
     from typing import Iterable, List
-    from PySide2.QtGui import QClipboard, QFont
+    from PySide2.QtGui import QClipboard, QFont, QWindow
     from PySide2.QtQml import QQmlError
     from .dialogs import AbstractDialog
     from ...application import CommandLine
     from ...key_store import KeyStore
 
 
-class GuiApplication(CoreApplication):
-    class QmlNetworkAccessManagerFactory(QQmlNetworkAccessManagerFactory):
-        def create(self, parent: QObject) -> NetworkAccessManager:
-            return NetworkAccessManager("QML", parent)
-
-    def __init__(self, command_line: CommandLine) -> None:
+class GuiApplication(CoreApplication):  # TODO rename
+    def __init__(self, *, command_line: CommandLine) -> None:
         super().__init__(
             qt_class=QApplication,
             command_line=command_line,
             model_factory=lambda o: ModelsFactory.create(self, o))
-
         self._system_tray_icon = SystemTrayIcon(self)
 
-        self._ui_manager = UIManager(self)
-        self._debug_manager = DebugManager(self)
-        self._backend_context = BackendContext(self)
+    @property
+    def defaultFont(self) -> QFont:
+        return self._qt_application.font()
 
-        self._initializeQml()
+    @property
+    def clipboard(self) -> QClipboard:
+        return self._qt_application.clipboard()
 
-    def _initializeQml(self) -> None:
+    @property
+    def isVisible(self) -> bool:
+        return any(w.isVisible() for w in self.topLevelWindowList)
+
+    @property
+    def isActiveFocus(self) -> bool:
+        return any(w.isActive() for w in self.topLevelWindowList)
+
+    @property
+    def topLevelWindowList(self) -> Iterable[QWindow]:
+        return self._qt_application.topLevelWindows()
+
+    def show(self, show: bool = True) -> None:
+        for window in self.topLevelWindowList:
+            if show:
+                window.setVisible(True)
+                # noinspection PyTypeChecker
+                state = int(window.windowStates())
+                if (state & Qt.WindowMinimized) == Qt.WindowMinimized:
+                    window.show()
+                window.raise_()
+                window.requestActivate()
+            else:
+                window.setVisible(False)
+
+
+class QmlApplication(GuiApplication):
+    class QmlNetworkAccessManagerFactory(QQmlNetworkAccessManagerFactory):
+        def create(self, parent: QObject) -> NetworkAccessManager:
+            return NetworkAccessManager("QML", parent)
+
+    def __init__(self, *, command_line: CommandLine) -> None:
+        super().__init__(command_line=command_line)
+        self._qml_context = QmlContext(self)
+
         QQuickStyle.setStyle(Gui.QML_STYLE)
         self._logger.debug("QML Base URL: %s", Resources.qmlUrl.toString())
 
@@ -75,73 +105,42 @@ class GuiApplication(CoreApplication):
         qml_root_context.setBaseUrl(Resources.qmlUrl)
         qml_root_context.setContextProperty(
             Gui.QML_CONTEXT_NAME,
-            self._backend_context)
+            self._qml_context)
 
         self._qml_engine.objectCreated.connect(self._onQmlObjectCreated)
         # TODO self._qml_engine.warnings.connect(self._onQmlWarnings)
         self._qml_engine.exit.connect(self._onQmlExit)
         self._qml_engine.quit.connect(self._onQmlExit)
 
-    def _topLevelWindows(self) -> Iterable[QQuickWindow]:
-        return filter(
+    @property
+    def topLevelWindowList(self) -> Iterable[QQuickWindow]:
+        return list(filter(
             lambda w: isinstance(w, QQuickWindow),
-            self._qt_application.topLevelWindows())
+            super().topLevelWindowList))
 
-    @property
-    def defaultFont(self) -> QFont:
-        return self._qt_application.font()
-
-    @property
-    def clipboard(self) -> QClipboard:
-        return self._qt_application.clipboard()
-
-    @property
-    def uiManager(self) -> UIManager:
-        return self._ui_manager
-
-    @property
-    def debugManager(self) -> DebugManager:
-        return self._debug_manager
-
-    @property
-    def backendContext(self) -> BackendContext:
-        return self._backend_context
-
-    @property
-    def language(self) -> Language:
-        assert self._language
-        return self._language
-
-    def showMainWindow(self, show: bool = True) -> None:
-        for window in self._topLevelWindows():
-            if show:
-                window.setVisible(True)
-                # noinspection PyTypeChecker
-                state = int(window.windowStates())
-                if (state & Qt.WindowMinimized) == Qt.WindowMinimized:
-                    window.show()
-                window.raise_()
-                window.requestActivate()
-            else:
-                window.setVisible(False)
-
-    def isVisibleMainWindow(self) -> bool:
-        return any(w.isVisible() for w in self._topLevelWindows())
-
-    def isActiveMainWindow(self) -> bool:
-        return any(w.isActive() for w in self._topLevelWindows())
+    def updateTranslation(self) -> None:
+        super().updateTranslation()
+        self._qml_engine.setUiLanguage(self._language.name)
+        self._qml_engine.retranslate()
 
     def _onRun(self) -> None:
         super()._onRun()
-        url = self._qml_engine.rootContext().resolvedUrl(QUrl(Gui.QML_FILE))
-        self.updateTranslation()
+        url = QUrl(Gui.QML_FILE)
+        url = self._qml_engine.rootContext().resolvedUrl(url)
         self._qml_engine.load(url)
+
+    def _onExit(self) -> None:
+        # TODO
+        # https://stackoverflow.com/questions/30196113/properly-reloading-a-qqmlapplicationengine
+        self._qml_engine.clearComponentCache()
+        self._qml_engine.deleteLater()
+        super()._onExit()
 
     def _onQmlObjectCreated(self, qml_object: QObject, url: QUrl) -> None:
         if qml_object is None:
             # TODO If an error occurs, the objectCreated signal is emitted with
             #  a null pointer as parameter an.
-            self.setExitEvent()
+            self.setExitEvent(1)
         else:
             self._logger.debug("QML object was created: %s", url.toString())
 
@@ -154,35 +153,8 @@ class GuiApplication(CoreApplication):
     def _onQmlExit(self, code: int = 0) -> None:
         self.setExitEvent(code)
 
-    def onMainWindowCompleted(self) -> None:
-        self._backend_context.dialogManager.open(BAlphaDialog)
 
-    def _onExit(self) -> None:
-        # TODO https://stackoverflow.com/questions/30196113/properly-reloading-a-qqmlapplicationengine
-        self._qml_engine.clearComponentCache()
-        self._qml_engine.deleteLater()
-        super()._onExit()
-
-    def updateTranslation(self) -> None:
-        language = Language(self._backend_context.settings.language.currentName)
-
-        if self._language is not None:
-            self._logger.info(
-                "Removing the UI translation '%s'.",
-                self._language.name)
-            self._language.uninstall()
-
-        self._language = language
-        self._logger.info(
-            "Setting UI translation '%s'.",
-            self._language.name)
-        self._language.install()
-
-        self._qml_engine.setUiLanguage(language.name)
-        self._qml_engine.retranslate()
-
-
-class BackendContext(QObject):
+class QmlContext(QObject):
     def __init__(self, application: GuiApplication) -> None:
         super().__init__()
         self._application = application
@@ -193,18 +165,24 @@ class BackendContext(QObject):
         self._clipboard_model = ClipboardModel(self._application)
         self._settings_model = SettingsModel(self._application)
         self._dialog_manager = DialogManager(self)
+        self._debug_manager = DebugManager(self) if self.isDebugMode else None  # TODO
 
     @QSlot()
-    def onMainWindowCompleted(self) -> None:
+    def onCompleted(self) -> None:
         self._application.onMainWindowCompleted()
+
+    # noinspection PyTypeChecker
+    @QSlot(result=bool)
+    def onClosing(self) -> bool:
+        return self._application.onMainWindowClosing()
+
+    @QSlot()
+    def onExit(self) -> None:
+        pass
 
     @QProperty(str, constant=True)
     def title(self) -> str:
         return self._application.title
-
-    @QSlot(int)
-    def exit(self, code: int) -> None:
-        self._application.setExitEvent(code)
 
     @QProperty(bool, constant=True)
     def isDebugMode(self) -> bool:
@@ -229,10 +207,6 @@ class BackendContext(QObject):
     @QProperty(QObject, constant=True)
     def dialogManager(self) -> DialogManager:
         return self._dialog_manager
-
-    @QProperty(QObject, constant=True)
-    def uiManager(self) -> UIManager:
-        return self._application.uiManager
 
     @QProperty(QObject, constant=True)
     def coinList(self) -> CoinListModel:
