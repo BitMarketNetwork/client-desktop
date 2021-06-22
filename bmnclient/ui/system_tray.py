@@ -5,15 +5,14 @@ from enum import Enum
 from os import getenv
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import \
-    QObject
+from PySide2.QtCore import QObject
 from PySide2.QtWidgets import QMenu, QSystemTrayIcon
 
-from ...logger import Logger
-from ...os_environment import Platform
+from ..logger import Logger
+from ..os_environment import Platform
 
 if TYPE_CHECKING:
-    from . import GuiApplication
+    from .gui import GuiApplication
 
 
 class SystemTrayIcon(QObject):
@@ -70,11 +69,10 @@ class SystemTrayIcon(QObject):
         self.show()
 
     def _onToggleMainWindow(self) -> None:
-        self._application.showMainWindow(
-            not self._application.isVisibleMainWindow())
+        self._application.show(not self._application.isVisible)
 
     def _onActivateMainWindow(self) -> None:
-        self._application.showMainWindow(True)
+        self._application.show(True)
 
     def _onQuit(self) -> None:
         self._application.setExitEvent(0)

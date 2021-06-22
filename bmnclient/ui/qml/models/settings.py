@@ -68,6 +68,8 @@ class LanguageModel(AbstractTupleStateModel):
     def _setCurrentItemName(self, value: str) -> bool:
         if super()._setCurrentItemName(value):
             self._application.updateTranslation()
+            return True
+        return False
 
 
 class ThemeModel(AbstractTupleStateModel):

@@ -21,6 +21,7 @@ from .coins.list import CoinList
 from .config import UserConfig
 from .database.db_wrapper import Database
 from .key_store import KeyStore
+from .language import Language
 from .logger import Logger
 from .network.query_manager import NetworkQueryManager
 from .network.query_scheduler import NetworkQueryScheduler
@@ -35,7 +36,6 @@ if TYPE_CHECKING:
     from typing import Callable, List, Optional, Type, Union
     from PySide2.QtCore import QCoreApplication
     from .coins.hd import HdNode
-    from .language import Language
 
 
 class CommandLine:
@@ -301,6 +301,30 @@ class CoreApplication(QObject):
     def icon(self) -> QIcon:
         return self._icon
 
+    @property
+    def language(self) -> Optional[Language]:
+        return self._language
+
+    def updateTranslation(self) -> None:
+        language_name = self._user_config.get(
+            self._user_config.Key.UI_LANGUAGE,
+            str)
+        if not language_name:
+            language_name = Language.primaryName
+        language = Language(language_name)
+
+        if self._language is not None:
+            self._logger.info(
+                "Removing the translation '%s'.",
+                self._language.name)
+            self._language.uninstall()
+
+        self._language = language
+        self._logger.info(
+            "Setting translation '%s'.",
+            self._language.name)
+        self._language.install()
+
     def _onKeyStoreOpen(self, root_node: HdNode) -> None:
         assert not self._database.isLoaded
 
@@ -321,6 +345,7 @@ class CoreApplication(QObject):
         self._onRun()
 
     def _onRun(self) -> None:
+        self.updateTranslation()
         self._network_query_scheduler.start(
             self._network_query_scheduler.GLOBAL_NAMESPACE)
 

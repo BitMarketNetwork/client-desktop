@@ -6,13 +6,11 @@ from typing import TYPE_CHECKING
 from PySide2.QtCore import \
     Property as QProperty, \
     QObject, \
-    Qt, \
     QUrl, \
     Slot as QSlot
 from PySide2.QtQml import QQmlApplicationEngine, QQmlNetworkAccessManagerFactory
 from PySide2.QtQuick import QQuickWindow
 from PySide2.QtQuickControls2 import QQuickStyle
-from PySide2.QtWidgets import QApplication
 
 from .debug_manager import DebugManager
 from .dialogs import BAlphaDialog, DialogManager
@@ -20,62 +18,17 @@ from .models.clipboard import ClipboardModel
 from .models.coin import CoinListModel
 from .models.factory import ModelsFactory
 from .models.settings import SettingsModel
-from .system_tray import SystemTrayIcon
-from ...application import CoreApplication
-from ...language import Language
+from ..gui import GuiApplication
 from ...network.access_manager import NetworkAccessManager
 from ...resources import Resources
 from ...version import Gui
 
 if TYPE_CHECKING:
     from typing import Iterable, List
-    from PySide2.QtGui import QClipboard, QFont, QWindow
     from PySide2.QtQml import QQmlError
     from .dialogs import AbstractDialog
     from ...application import CommandLine
     from ...key_store import KeyStore
-
-
-class GuiApplication(CoreApplication):  # TODO rename
-    def __init__(self, *, command_line: CommandLine) -> None:
-        super().__init__(
-            qt_class=QApplication,
-            command_line=command_line,
-            model_factory=lambda o: ModelsFactory.create(self, o))
-        self._system_tray_icon = SystemTrayIcon(self)
-
-    @property
-    def defaultFont(self) -> QFont:
-        return self._qt_application.font()
-
-    @property
-    def clipboard(self) -> QClipboard:
-        return self._qt_application.clipboard()
-
-    @property
-    def isVisible(self) -> bool:
-        return any(w.isVisible() for w in self.topLevelWindowList)
-
-    @property
-    def isActiveFocus(self) -> bool:
-        return any(w.isActive() for w in self.topLevelWindowList)
-
-    @property
-    def topLevelWindowList(self) -> Iterable[QWindow]:
-        return self._qt_application.topLevelWindows()
-
-    def show(self, show: bool = True) -> None:
-        for window in self.topLevelWindowList:
-            if show:
-                window.setVisible(True)
-                # noinspection PyTypeChecker
-                state = int(window.windowStates())
-                if (state & Qt.WindowMinimized) == Qt.WindowMinimized:
-                    window.show()
-                window.raise_()
-                window.requestActivate()
-            else:
-                window.setVisible(False)
 
 
 class QmlApplication(GuiApplication):
@@ -84,7 +37,9 @@ class QmlApplication(GuiApplication):
             return NetworkAccessManager("QML", parent)
 
     def __init__(self, *, command_line: CommandLine) -> None:
-        super().__init__(command_line=command_line)
+        super().__init__(
+            command_line=command_line,
+            model_factory=lambda o: ModelsFactory.create(self, o))
         self._qml_context = QmlContext(self)
 
         QQuickStyle.setStyle(Gui.QML_STYLE)
@@ -155,7 +110,7 @@ class QmlApplication(GuiApplication):
 
 
 class QmlContext(QObject):
-    def __init__(self, application: GuiApplication) -> None:
+    def __init__(self, application: QmlApplication) -> None:
         super().__init__()
         self._application = application
 
