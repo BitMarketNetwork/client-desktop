@@ -1,5 +1,11 @@
+import QtQuick 2.15
 import QtQuick.Controls 2.15
 
 DialogButtonBox {
-    delegate: BButton {}
+    // block standardButtons
+    delegate: BButton {
+        Component.onCompleted: {
+            text = "standardButtons are not implemented"
+        }
+    }
 }
