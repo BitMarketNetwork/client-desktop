@@ -1,4 +1,3 @@
-// JOK++
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"

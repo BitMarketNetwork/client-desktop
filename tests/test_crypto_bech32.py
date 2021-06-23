@@ -1,4 +1,3 @@
-# JOK4
 from unittest import TestCase
 
 from bmnclient.crypto.bech32 import Bech32

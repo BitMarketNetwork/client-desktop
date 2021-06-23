@@ -1,4 +1,3 @@
-# JOK4
 from random import shuffle
 from unittest import TestCase
 

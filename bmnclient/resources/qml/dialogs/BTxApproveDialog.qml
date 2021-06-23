@@ -1,4 +1,3 @@
-// JOK++
 import QtQuick 2.15
 import "../application"
 import "../basiccontrols"

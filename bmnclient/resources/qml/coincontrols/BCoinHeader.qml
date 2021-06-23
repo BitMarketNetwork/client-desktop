@@ -1,4 +1,3 @@
-// JOK++
 import "../basiccontrols"
 
 BControl {

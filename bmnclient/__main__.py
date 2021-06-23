@@ -1,4 +1,3 @@
-# JOK4
 import sys
 
 from . import main

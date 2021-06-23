@@ -1,4 +1,3 @@
-# JOK4
 from unittest import TestCase
 
 from bmnclient.utils.string import StringUtils

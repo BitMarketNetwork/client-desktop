@@ -1,4 +1,3 @@
-# JOK4
 # Only standard imports, used by Makefile.
 from __future__ import annotations
 

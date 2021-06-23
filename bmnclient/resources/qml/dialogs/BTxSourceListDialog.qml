@@ -1,4 +1,3 @@
-// JOK++
 import QtQml 2.15
 import "../application"
 import "../basiccontrols"

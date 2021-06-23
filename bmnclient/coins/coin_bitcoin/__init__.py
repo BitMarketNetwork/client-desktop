@@ -1,4 +1,3 @@
-# JOK4
 from __future__ import annotations
 
 from .address import _BitcoinAddress, _BitcoinTestAddress
