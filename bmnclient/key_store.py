@@ -7,11 +7,6 @@ from json.decoder import JSONDecodeError
 from threading import RLock
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import \
-    Property as QProperty, \
-    QObject, \
-    Slot as QSlot
-
 from .coins.hd import HdNode
 from .coins.mnemonic import Mnemonic
 from .config import UserConfig
