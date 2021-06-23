@@ -27,7 +27,7 @@ class KeyIndex(Enum):
     SEED: Final = 1
 
 
-class KeyStore(QObject):
+class KeyStore:
     def __init__(
             self,
             *,
@@ -119,10 +119,6 @@ class KeyStore(QObject):
             return False
         return True
 
-    ############################################################################
-
-    # noinspection PyTypeChecker
-    @QSlot(str, result=str)
     def prepareGenerateSeedPhrase(self, language: str = None) -> str:
         with self._lock:
             self._mnemonic = Mnemonic(language)
@@ -132,8 +128,6 @@ class KeyStore(QObject):
             result = result[:Mnemonic.defaultDataLength]
             return self._mnemonic.getPhrase(result)
 
-    # noinspection PyTypeChecker
-    @QSlot(str, result=str)
     def updateGenerateSeedPhrase(self, salt: Optional[str]) -> str:
         with self._lock:
             if self._mnemonic and self._mnemonic_salt_hash:
@@ -146,15 +140,11 @@ class KeyStore(QObject):
                 return self._mnemonic.getPhrase(result)
         return ""
 
-    # noinspection PyTypeChecker
-    @QSlot(str, result=bool)
     def validateGenerateSeedPhrase(self, phrase: str) -> bool:
         return Mnemonic.isEqualPhrases(
             phrase,
             self.updateGenerateSeedPhrase(None))
 
-    # noinspection PyTypeChecker
-    @QSlot(str, result=bool)
     def finalizeGenerateSeedPhrase(self, phrase: str) -> bool:
         with self._lock:
             if not self.validateGenerateSeedPhrase(phrase):
@@ -168,24 +158,18 @@ class KeyStore(QObject):
         self._open_callback(root_node)
         return True
 
-    # noinspection PyTypeChecker
-    @QSlot(str, result=bool)
     def prepareRestoreSeedPhrase(self, language: str = None) -> bool:
         with self._lock:
             self._mnemonic = Mnemonic(language)
             self._mnemonic_salt_hash = None
         return True
 
-    # noinspection PyTypeChecker
-    @QSlot(str, result=bool)
     def validateRestoreSeedPhrase(self, phrase: str) -> bool:
         with self._lock:
             if self._mnemonic and self._mnemonic.isValidPhrase(phrase):
                 return True
         return False
 
-    # noinspection PyTypeChecker
-    @QSlot(str, result=bool)
     def finalizeRestoreSeedPhrase(self, phrase: str) -> bool:
         with self._lock:
             if not self._mnemonic or not self._mnemonic.isValidPhrase(phrase):
@@ -199,8 +183,6 @@ class KeyStore(QObject):
         self._open_callback(root_node)
         return True
 
-    # noinspection PyTypeChecker
-    @QSlot(str, result=str)
     def revealSeedPhrase(self, password: str):
         with self._lock:
             if not self.verifyPassword(password):
@@ -210,7 +192,6 @@ class KeyStore(QObject):
                 return self.tr("Seed phrase not found.")
             return phrase[1]
 
-    @QProperty(bool, constant=True)
     def hasSeed(self) -> bool:
         with self._lock:
             return self._has_seed
@@ -277,15 +258,10 @@ class KeyStore(QObject):
         self._has_seed = True
         return root_node
 
-    ############################################################################
-
-    # noinspection PyTypeChecker
-    @QSlot(str, result=int)
-    def calcPasswordStrength(self, password: str) -> int:
+    @staticmethod
+    def calcPasswordStrength(password: str) -> int:
         return PasswordStrength(password).calc()
 
-    # noinspection PyTypeChecker
-    @QSlot(str, result=bool)
     def createPassword(self, password: str) -> bool:
         value = self._generateSecretStoreValue()
         value = SecretStore(password).encryptValue(value)
@@ -295,8 +271,6 @@ class KeyStore(QObject):
                 self._user_config.Key.KEY_STORE_VALUE,
                 value)
 
-    # noinspection PyTypeChecker
-    @QSlot(str, result=bool)
     def applyPassword(self, password: str) -> bool:
         with self._lock:
             self._reset(hard=False)
@@ -314,8 +288,6 @@ class KeyStore(QObject):
             self._open_callback(root_node)
         return True
 
-    # noinspection PyTypeChecker
-    @QSlot(str, result=bool)
     def verifyPassword(self, password: str) -> bool:
         with self._lock:
             value = self._user_config.get(
@@ -325,15 +297,12 @@ class KeyStore(QObject):
                 return True
         return False
 
-    # noinspection PyTypeChecker
-    @QSlot(result=bool)
     def resetPassword(self) -> bool:
         with self._lock:
             self._reset(hard=True)
         self._reset_callback()
         return True
 
-    @QProperty(bool, constant=True)
     def hasPassword(self) -> bool:
         with self._lock:
             if self._user_config.get(
