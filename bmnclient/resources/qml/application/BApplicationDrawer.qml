@@ -10,7 +10,7 @@ BNavigationDrawer {
     signal showMarket
     signal showAbout
     signal showSettings
-    signal exit
+    signal quit
 
     BToolButton {
         id: _barsButton
@@ -74,9 +74,9 @@ BNavigationDrawer {
     }
     BNavigationDrawerItem {
         text: qsTr("Quit")
-        icon.source: _applicationManager.imagePath("icon-exit.svg")
+        icon.source: _applicationManager.imagePath("icon-quit.svg")
         onClicked: {
-            _base.exit()
+            _base.quit()
         }
     }
 }

@@ -38,7 +38,7 @@ BApplicationWindow {
         onShowSettings: {
             _mainLayout.currentIndex = 3
         }
-        onExit: {
+        onQuit: {
             BBackend.onQuitRequest()
         }
     }
