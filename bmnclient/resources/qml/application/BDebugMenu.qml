@@ -10,13 +10,13 @@ BMenu {
         BMenuItem {
             text: "Increase height"
             onTriggered: {
-                BBackend.debugManager.increaseHeight(1)
+                BBackend.debug.increaseHeight(1)
             }
         }
         BMenuItem {
             text: "Decrease height"
             onTriggered: {
-                BBackend.debugManager.increaseHeight(-1)
+                BBackend.debug.increaseHeight(-1)
             }
         }
     }
@@ -25,34 +25,34 @@ BMenu {
         BMenuItem {
             text: "Icon: none"
             onTriggered: {
-                BBackend.debugManager.notify(notificationMessage, "n")
+                BBackend.debug.notify(notificationMessage, "n")
             }
         }
         BMenuItem {
             text: "Icon: information"
             onTriggered: {
-                BBackend.debugManager.notify(notificationMessage, "i")
+                BBackend.debug.notify(notificationMessage, "i")
             }
         }
         BMenuItem {
             text: "Icon: warning"
             onTriggered: {
-                BBackend.debugManager.notify(notificationMessage, "w")
+                BBackend.debug.notify(notificationMessage, "w")
             }
         }
         BMenuItem {
             text: "Icon: error"
             onTriggered: {
-                BBackend.debugManager.notify(notificationMessage, "e")
+                BBackend.debug.notify(notificationMessage, "e")
             }
         }
         BMenuItem {
             text: "Icon: all"
             onTriggered: {
-                BBackend.debugManager.notify(notificationMessage, "n")
-                BBackend.debugManager.notify(notificationMessage, "i")
-                BBackend.debugManager.notify(notificationMessage, "w")
-                BBackend.debugManager.notify(notificationMessage, "e")
+                BBackend.debug.notify(notificationMessage, "n")
+                BBackend.debug.notify(notificationMessage, "i")
+                BBackend.debug.notify(notificationMessage, "w")
+                BBackend.debug.notify(notificationMessage, "e")
             }
         }
     }

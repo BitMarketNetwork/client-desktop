@@ -65,7 +65,7 @@ BDialog {
     BSeedPhraseDialog {
         id: _generateDialog
         type: BSeedPhraseDialog.Type.Generate
-        readOnly: !BBackend.isDebugMode
+        readOnly: !BBackend.debug.isEnabled
         enableAccept: true
 
         onAccepted: {

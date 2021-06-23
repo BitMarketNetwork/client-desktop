@@ -17,7 +17,7 @@ from PySide2.QtQuickControls2 import QQuickStyle
 from .dialogs import BAlphaDialog, BQuitDialog, DialogManager
 from .models.clipboard import ClipboardModel
 from .models.coin import CoinListModel
-from .models.debug import DebugManager
+from .models.debug import DebugModel
 from .models.factory import ModelsFactory
 from .models.settings import SettingsModel
 from ..gui import GuiApplication
@@ -120,7 +120,7 @@ class QmlContext(QObject):
         self._clipboard_model = ClipboardModel(self._application)
         self._settings_model = SettingsModel(self._application)
         self._dialog_manager = DialogManager(self)
-        self._debug_manager = DebugManager(self) if self.isDebugMode else None  # TODO
+        self._debug_model = DebugModel(self._application)
 
     @QSlot()
     def onCompleted(self) -> None:
@@ -149,17 +149,13 @@ class QmlContext(QObject):
     def title(self) -> str:
         return self._application.title
 
-    @QProperty(bool, constant=True)
-    def isDebugMode(self) -> bool:
-        return self._application.isDebugMode
-
-    @QProperty(QObject, constant=True)
-    def debugManager(self) -> DebugManager:
-        return self._debug_manager
-
     @QProperty(QObject, constant=True)
     def keyStore(self) -> KeyStore:
         return self._application.keyStore
+
+    @QProperty(QObject, constant=True)
+    def coinList(self) -> CoinListModel:
+        return self._coin_list_model
 
     @QProperty(QObject, constant=True)
     def clipboard(self) -> ClipboardModel:
@@ -174,5 +170,5 @@ class QmlContext(QObject):
         return self._dialog_manager
 
     @QProperty(QObject, constant=True)
-    def coinList(self) -> CoinListModel:
-        return self._coin_list_model
+    def debug(self) -> DebugModel:
+        return self._debug_model

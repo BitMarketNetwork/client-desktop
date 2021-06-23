@@ -6,8 +6,8 @@ import "../application"
 ApplicationWindow {
     // https://en.wikipedia.org/wiki/16:9_aspect_ratio
     // qHD
-    minimumWidth: BBackend.isDebugMode ? 0 : Math.min(Screen.desktopAvailableWidth, 960) // TODO DPI
-    minimumHeight: BBackend.isDebugMode ? 0 : Math.min(Screen.desktopAvailableHeight, 540) // TODO DPI
+    minimumWidth: BBackend.debug.isEnabled ? 0 : Math.min(Screen.desktopAvailableWidth, 960) // TODO DPI
+    minimumHeight: BBackend.debug.isEnabled ? 0 : Math.min(Screen.desktopAvailableHeight, 540) // TODO DPI
     // HD
     width: Math.min(Screen.desktopAvailableWidth, 1280)
     height: Math.min(Screen.desktopAvailableHeight, 720)

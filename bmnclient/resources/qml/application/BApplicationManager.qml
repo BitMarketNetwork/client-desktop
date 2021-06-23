@@ -79,7 +79,7 @@ QtObject {
                     "BSeedPhraseDialog", {
                         "type": BSeedPhraseDialog.Type.Reveal,
                         "seedPhraseText": BBackend.keyStore.revealSeedPhrase(password),
-                        "readOnly": !BBackend.isDebugMode
+                        "readOnly": !BBackend.debug.isEnabled
                     })
             dialog.open()
         })
@@ -87,7 +87,7 @@ QtObject {
     }
 
     function popupDebugMenu() {
-        if (BBackend.isDebugMode) {
+        if (BBackend.debug.isEnabled) {
             let menu = createObject(_applicationWindow, "BDebugMenu.qml", {})
             if (menu !== null) {
                 menu.onClosed.connect(function () {

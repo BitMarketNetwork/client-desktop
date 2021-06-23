@@ -5,6 +5,7 @@ import os
 from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
+    Property as QProperty, \
     QObject, \
     Slot as QSlot
 
@@ -12,10 +13,14 @@ if TYPE_CHECKING:
     from . import QmlApplication
 
 
-class DebugManager(QObject):
+class DebugModel(QObject):
     def __init__(self, application: QmlApplication):
         super().__init__()
         self._application = application
+
+    @QProperty(bool, constant=True)
+    def isEnabled(self) -> bool:
+        return self._application.isDebugMode
 
     @QSlot(int)
     def increaseHeight(self, value: int) -> None:
