@@ -86,7 +86,7 @@ BDialog {
         }
         onAccepted: {
             if (!BBackend.keyStore.finalizeGenerateSeedPhrase(seedPhraseText)) {
-                let dialog = _applicationManager.messageDialog(qsTr("Wrong seed pharse."))
+                let dialog = _applicationManager.createMessageDialog(qsTr("Wrong seed pharse."))
                 dialog.onClosed.connect(_validateDialog.open)
                 dialog.open()
             } else {
@@ -111,7 +111,7 @@ BDialog {
         }
         onAccepted: {
             if (!BBackend.keyStore.finalizeRestoreSeedPhrase(seedPhraseText)) {
-                let dialog = _applicationManager.messageDialog(qsTr("Invalid seed pharse."))
+                let dialog = _applicationManager.createMessageDialog(qsTr("Invalid seed pharse."))
                 dialog.onClosed.connect(_restoreDialog.open)
                 dialog.open()
             } else {

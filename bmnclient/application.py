@@ -315,7 +315,7 @@ class CoreApplication(QObject):
 
         if self._language is not None:
             self._logger.info(
-                "Removing the translation '%s'.",
+                "Removing translation '%s'.",
                 self._language.name)
             self._language.uninstall()
 

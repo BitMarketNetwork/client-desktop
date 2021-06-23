@@ -39,21 +39,8 @@ BApplicationWindow {
             _mainLayout.currentIndex = 3
         }
         onExit: {
-            // TODO confirmation
-            BBackend.exit(0)
+            BBackend.onQuitRequest()
         }
-    }
-
-    onClosing: {
-        if (BBackend.settings.systemTray.closeToTray) {
-            close.accepted = false
-            showMinimized()
-            hide()
-        }
-    }
-
-    Component.onCompleted: {
-        BBackend.onMainWindowCompleted()
     }
 
     BStackLayout {
@@ -85,17 +72,11 @@ BApplicationWindow {
         }
     }
 
-    Connections {
-        target: BBackend.dialogManager
+    onClosing: {
+        close.accepted = BBackend.onClosing()
+    }
 
-        function onOpenDialog(name, properties) {
-            let dialog = _applicationManager.createDialog(name, {})
-            for(let callback_name of properties["callbacks"]) {
-                dialog[callback_name].connect(function () {
-                    target.onResult(name, callback_name)
-                })
-            }
-            dialog.open()
-        }
+    Component.onCompleted: {
+        BBackend.onCompleted()
     }
 }

@@ -10,7 +10,7 @@ BPasswordDialog {
 
     onPasswordAccepted: {
         if (!BBackend.keyStore.applyPassword(password)) {
-            let dialog = _applicationManager.messageDialog(qsTr("Wrong password."))
+            let dialog = _applicationManager.createMessageDialog(qsTr("Wrong password."))
             dialog.onClosed.connect(_base.open)
             dialog.open()
             return
@@ -31,7 +31,7 @@ BPasswordDialog {
         onLinkActivated: {
             _base.close()
 
-            let dialog = _applicationManager.messageDialog(
+            let dialog = _applicationManager.createMessageDialog(
                     qsTr(
                         "This will destroy all saved information and you can lose your money!\n"
                         + "Please make sure you remember the seed phrase.\n\n"

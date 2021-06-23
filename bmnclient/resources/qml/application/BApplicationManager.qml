@@ -6,6 +6,22 @@ import "../basiccontrols"
 import "../dialogs"
 
 QtObject {
+    property var openedDialogs: ({})
+
+    property Connections backendDialogManager: Connections {
+        target: BBackend.dialogManager
+
+        function onOpenDialog(name, properties) {
+            let dialog = createDialog(name, {})
+            for (let callback_name of properties["callbacks"]) {
+                dialog[callback_name].connect(function () {
+                    target.onResult(name, callback_name)
+                })
+            }
+            dialog.open()
+        }
+    }
+
     function imagePath(path) {
         return Qt.resolvedUrl("../../images/" + path)
     }
@@ -29,10 +45,25 @@ QtObject {
                 _applicationWindow,
                 "../dialogs/" + name + ".qml",
                 Object.assign({}, properties, { "dynamicallyCreated": true }))
+
+        dialog.onOpened.connect(function () {
+            let oldDialog = openedDialogs[name]
+            openedDialogs[name] = dialog
+            if (oldDialog !== undefined) {
+                oldDialog.close()
+            }
+        })
+
+        dialog.onClosed.connect(function () {
+            if (openedDialogs[name] === dialog) {
+                delete openedDialogs[name]
+            }
+        })
+
         return dialog
     }
 
-    function messageDialog(text, type) {
+    function createMessageDialog(text, type) {
         let dialog = createDialog(
                 "BMessageDialog", {
                     "text": text,
