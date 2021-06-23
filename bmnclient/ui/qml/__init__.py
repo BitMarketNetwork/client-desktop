@@ -14,10 +14,10 @@ from PySide2.QtQml import \
 from PySide2.QtQuick import QQuickWindow
 from PySide2.QtQuickControls2 import QQuickStyle
 
-from .debug_manager import DebugManager
 from .dialogs import BAlphaDialog, BQuitDialog, DialogManager
 from .models.clipboard import ClipboardModel
 from .models.coin import CoinListModel
+from .models.debug import DebugManager
 from .models.factory import ModelsFactory
 from .models.settings import SettingsModel
 from ..gui import GuiApplication
@@ -155,7 +155,7 @@ class QmlContext(QObject):
 
     @QProperty(QObject, constant=True)
     def debugManager(self) -> DebugManager:
-        return self._application.debugManager
+        return self._debug_manager
 
     @QProperty(QObject, constant=True)
     def keyStore(self) -> KeyStore:

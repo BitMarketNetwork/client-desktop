@@ -20,7 +20,7 @@ class SystemTrayIcon(QObject):
         NONE = QSystemTrayIcon.MessageIcon.NoIcon
         INFORMATION = QSystemTrayIcon.MessageIcon.Information
         WARNING = QSystemTrayIcon.MessageIcon.Warning
-        CRITICAL = QSystemTrayIcon.MessageIcon.Critical
+        ERROR = QSystemTrayIcon.MessageIcon.Critical
 
     def __init__(self, application: GuiApplication) -> None:
         super().__init__()

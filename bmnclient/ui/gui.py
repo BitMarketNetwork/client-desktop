@@ -47,6 +47,10 @@ class GuiApplication(CoreApplication):
     def topLevelWindowList(self) -> Iterable[QWindow]:
         return self._qt_application.topLevelWindows()
 
+    @property
+    def systemTrayIcon(self) -> SystemTrayIcon:
+        return self._system_tray_icon
+
     def show(self, show: bool = True) -> None:
         for window in self.topLevelWindowList:
             if show:

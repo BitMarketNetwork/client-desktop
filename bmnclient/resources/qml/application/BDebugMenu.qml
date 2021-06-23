@@ -1,7 +1,8 @@
-import "../application"
 import "../basiccontrols"
 
 BMenu {
+    readonly property string notificationMessage: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore..."
+
     title: "Debug"
 
     BMenu {
@@ -19,53 +20,39 @@ BMenu {
             }
         }
     }
-
-
     BMenu {
-        title: "UI tests"
+        title: "Notification test"
         BMenuItem {
-            text: "OS notification test"
+            text: "Icon: none"
             onTriggered: {
-                BBackend.uiManager.notify(
-                            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore...",
-                            3)
-            }
-        }
-    }
-    BMenu {
-        title: "Wallet management"
-        BMenuItem {
-            text: "Increment coin block height"
-            onTriggered: {
-                // TODO dont work, no visual changes
-                //BBackend.coinManager.coin.height += 1
+                BBackend.debugManager.notify(notificationMessage, "n")
             }
         }
         BMenuItem {
-            text: "Clear all wallets"
+            text: "Icon: information"
             onTriggered: {
-                // TODO bad name
-                //BBackend.coinManager.clear()
+                BBackend.debugManager.notify(notificationMessage, "i")
             }
         }
-    }
-    BMenu {
-        title: "Network"
-        BMenu {
-            title: "Undo transactions"
-            BMenuItem {
-                text: "1"
-                onTriggered: {
-                    // TODO cannot test, not found ui visual updates
-                    //BBackend.debugManager.undoTransaction(1)
-                }
+        BMenuItem {
+            text: "Icon: warning"
+            onTriggered: {
+                BBackend.debugManager.notify(notificationMessage, "w")
             }
-            BMenuItem {
-                text: "2"
-                onTriggered: {
-                    // TODO cannot test, not found ui visual updates
-                    //BBackend.debugManager.undoTransaction(2)
-                }
+        }
+        BMenuItem {
+            text: "Icon: error"
+            onTriggered: {
+                BBackend.debugManager.notify(notificationMessage, "e")
+            }
+        }
+        BMenuItem {
+            text: "Icon: all"
+            onTriggered: {
+                BBackend.debugManager.notify(notificationMessage, "n")
+                BBackend.debugManager.notify(notificationMessage, "i")
+                BBackend.debugManager.notify(notificationMessage, "w")
+                BBackend.debugManager.notify(notificationMessage, "e")
             }
         }
     }
