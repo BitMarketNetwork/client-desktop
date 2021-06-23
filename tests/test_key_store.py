@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest import TestCase
 
 from bmnclient.coins.mnemonic import Mnemonic
-from bmnclient.config import UserConfig
+from bmnclient.config import UserConfig, UserConfigKey
 from bmnclient.key_store import KeyIndex, KeyStore
 from bmnclient.version import Product
 from tests import TestApplication
@@ -66,10 +66,10 @@ class TestKeyStore(TestCase):
 
         self.assertFalse(key_store.hasPassword)
         self.assertIsNone(
-            self.user_config.get(self.user_config.Key.KEY_STORE_VALUE, str))
+            self.user_config.get(UserConfigKey.KEY_STORE_VALUE, str))
         self.assertTrue(key_store.createPassword(self.password))
         self.assertIsInstance(
-            self.user_config.get(self.user_config.Key.KEY_STORE_VALUE, str),
+            self.user_config.get(UserConfigKey.KEY_STORE_VALUE, str),
             str)
         self.assertTrue(key_store.hasPassword)
 
@@ -105,7 +105,7 @@ class TestKeyStore(TestCase):
             # noinspection PyProtectedMember
             self.assertIsNone(key_store._key_list[i])
         self.assertIsNone(
-            self.user_config.get(self.user_config.Key.KEY_STORE_VALUE, str))
+            self.user_config.get(UserConfigKey.KEY_STORE_VALUE, str))
 
     def test_generate_seed_phrase(self) -> None:
         key_store = KeyStore(

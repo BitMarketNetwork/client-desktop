@@ -8,6 +8,7 @@ from PySide2.QtCore import \
     Signal as QSignal
 
 from . import AbstractModel, AbstractStateModel, AbstractTupleStateModel
+from ....config import UserConfigKey
 from ....language import Language
 from ....version import Gui
 
@@ -61,7 +62,7 @@ class LanguageModel(AbstractTupleStateModel):
         super().__init__(
             application,
             Language.translationList(),
-            user_config_key=application.userConfig.Key.UI_LANGUAGE,
+            user_config_key=UserConfigKey.UI_LANGUAGE,
             default_name=Language.primaryName)
 
     def _setCurrentItemName(self, value: str) -> bool:
@@ -76,7 +77,7 @@ class ThemeModel(AbstractTupleStateModel):
         super().__init__(
             application,
             tuple(),  # QML controlled
-            user_config_key=application.userConfig.Key.UI_THEME,
+            user_config_key=UserConfigKey.UI_THEME,
             default_name=Gui.DEFAULT_THEME_NAME)
 
     def _isValidName(self, name) -> bool:
@@ -108,13 +109,13 @@ class FontModel(AbstractStateModel):
     def __currentFont(self) -> FontDict:
         with self._application.userConfig.lock:
             family = self._application.userConfig.get(
-                self._application.userConfig.Key.UI_FONT_FAMILY,
+                UserConfigKey.UI_FONT_FAMILY,
                 str,
                 "")
             if not family:
                 family = self._default_font["family"]
             point_size = self._application.userConfig.get(
-                self._application.userConfig.Key.UI_FONT_SIZE,
+                UserConfigKey.UI_FONT_SIZE,
                 int,
                 0)
             if point_size <= 0:
@@ -137,11 +138,11 @@ class FontModel(AbstractStateModel):
 
         with self._application.userConfig.lock:
             self._application.userConfig.set(
-                self._application.userConfig.Key.UI_FONT_FAMILY,
+                UserConfigKey.UI_FONT_FAMILY,
                 family,
                 save=False)
             self._application.userConfig.set(
-                self._application.userConfig.Key.UI_FONT_SIZE,
+                UserConfigKey.UI_FONT_SIZE,
                 point_size,
                 save=False)
             self._application.userConfig.save()
@@ -158,7 +159,7 @@ class SystemTrayModel(AbstractStateModel):
     def __init__(self, application: QmlApplication) -> None:
         super().__init__(application)
         self._close_to_tray = self._application.userConfig.get(
-            self._application.userConfig.Key.UI_CLOSE_TO_TRAY,
+            UserConfigKey.UI_CLOSE_TO_TRAY,
             bool,
             False)
 
@@ -170,7 +171,7 @@ class SystemTrayModel(AbstractStateModel):
     def _setCloseToTray(self, value: bool) -> None:
         value = bool(value)
         self._application.userConfig.set(
-            self._application.userConfig.Key.UI_CLOSE_TO_TRAY,
+            UserConfigKey.UI_CLOSE_TO_TRAY,
             value)
         if self._close_to_tray != value:
             self._close_to_tray = value

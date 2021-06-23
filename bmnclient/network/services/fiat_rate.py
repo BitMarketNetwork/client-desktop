@@ -11,7 +11,7 @@ from ...coins.currency import \
     FiatCurrency, \
     FiatRate, \
     UsdFiatCurrency
-from ...config import UserConfig, UserConfigStaticList
+from ...config import UserConfigKey, UserConfigStaticList
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -174,7 +174,7 @@ class FiatRateServiceList(UserConfigStaticList):
 
         super().__init__(
             application.userConfig,
-            application.userConfig.Key.SERVICES_FIAT_RATE,
+            UserConfigKey.SERVICES_FIAT_RATE,
             service_list,
             default_index=1,
             item_property="name")

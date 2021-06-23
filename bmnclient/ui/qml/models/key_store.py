@@ -54,7 +54,7 @@ class KeyStoreModel(QObject):
 
     # noinspection PyTypeChecker
     @QSlot(str, result=str)
-    def revealSeedPhrase(self, password: str):
+    def revealSeedPhrase(self, password: str) -> str:
         return self._application.keyStore.revealSeedPhrase(password)
 
     @QProperty(bool, constant=True)
