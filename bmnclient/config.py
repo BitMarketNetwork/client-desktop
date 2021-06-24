@@ -43,6 +43,10 @@ class UserConfig:
         self._lock = RLock()
 
     @property
+    def filePath(self) -> PurePath:
+        return self._file_path
+
+    @property
     def lock(self) -> RLock:
         return self._lock
 

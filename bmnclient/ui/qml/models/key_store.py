@@ -59,7 +59,7 @@ class KeyStoreModel(QObject):
 
     @QProperty(bool, constant=True)
     def hasSeed(self) -> bool:
-        return self._application.keyStore.hasSeed()
+        return self._application.keyStore.hasSeed
 
     # noinspection PyTypeChecker
     @QSlot(str, result=int)
@@ -68,24 +68,24 @@ class KeyStoreModel(QObject):
 
     # noinspection PyTypeChecker
     @QSlot(str, result=bool)
-    def createPassword(self, password: str) -> bool:
-        return self._application.keyStore.createPassword(password)
+    def create(self, password: str) -> bool:
+        return self._application.keyStore.create(password)
 
     # noinspection PyTypeChecker
     @QSlot(str, result=bool)
-    def applyPassword(self, password: str) -> bool:
-        return self._application.keyStore.applyPassword(password)
+    def open(self, password: str) -> bool:
+        return self._application.keyStore.open(password)
 
     # noinspection PyTypeChecker
     @QSlot(str, result=bool)
-    def verifyPassword(self, password: str) -> bool:
-        return self._application.keyStore.verifyPassword(password)
+    def verify(self, password: str) -> bool:
+        return self._application.keyStore.verify(password)
 
     # noinspection PyTypeChecker
     @QSlot(result=bool)
-    def resetPassword(self) -> bool:
-        return self._application.keyStore.resetPassword()
+    def reset(self) -> bool:
+        return self._application.keyStore.reset()
 
     @QProperty(bool, constant=True)
-    def hasPassword(self) -> bool:
-        return self._application.keyStore.hasPassword()
+    def isExists(self) -> bool:
+        return self._application.keyStore.isExists

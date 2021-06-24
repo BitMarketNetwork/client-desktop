@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 def _askKeyStorePassword(context: QmlContext) -> None:
-    if context.keyStore.hasPassword:
+    if context.keyStore.isExists:
         context.dialogManager.open(BKeyStorePasswordDialog)
     else:
         context.dialogManager.open(BKeyStoreNewPasswordDialog)

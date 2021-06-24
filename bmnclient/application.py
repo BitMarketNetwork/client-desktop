@@ -144,7 +144,7 @@ class CoreApplication(QObject):
         self._user_config.load()
 
         self._key_store = KeyStore(
-            user_config=self._user_config,
+            self,
             open_callback=self._onKeyStoreOpen,
             reset_callback=self._onKeyStoreReset)
 

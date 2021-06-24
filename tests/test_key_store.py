@@ -4,10 +4,17 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
+from bmnclient.coins.hd import HdNode
 from bmnclient.coins.mnemonic import Mnemonic
-from bmnclient.config import UserConfig, UserConfigKey
-from bmnclient.key_store import KeyIndex, KeyStore
-from bmnclient.version import Product
+from bmnclient.config import UserConfigKey
+from bmnclient.crypto.cipher import AeadCipher, MessageCipher
+from bmnclient.crypto.digest import Sha256Digest
+from bmnclient.key_store import \
+    GenerateSeedPhrase, \
+    KeyIndex, \
+    KeyStore, \
+    RestoreSeedPhrase
+from bmnclient.version import Product, ProductPaths
 from tests import TestApplication
 
 _logger = TestApplication.getLogger(__name__)
@@ -15,35 +22,82 @@ _logger = TestApplication.getLogger(__name__)
 
 class TestKeyStore(TestCase):
     def setUp(self) -> None:
-        self.password = "123123Qaz"
-        self.user_config_path = \
-            Path(tempfile.gettempdir()) / (Product.SHORT_NAME + "-config.json")
-        if self.user_config_path.exists():
-            self.user_config_path.unlink()
-        self.user_config = UserConfig(self.user_config_path)
-        self.assertFalse(self.user_config.load())
+        self._password = "123123Qaz"
+        self._user_config_path = \
+            Path(tempfile.gettempdir()) \
+            / (Product.SHORT_NAME + "-" + self.__class__.__name__) \
+            / ProductPaths.CONFIG_FILE_NAME
+        if self._user_config_path.exists():
+            self._user_config_path.unlink()
+
+        self._application = TestApplication(
+            config_path=str(self._user_config_path.parent))
+        self.assertEqual(
+            str(self._user_config_path),
+            str(self._application.userConfig.filePath))
+        self.assertFalse(self._application.userConfig.load())
 
     def tearDown(self) -> None:
-        if self.user_config_path.exists():
-            self.user_config_path.unlink()
-        self.user_config = None
+        self._application.setExitEvent()
+        if self._user_config_path.exists():
+            self._user_config_path.unlink()
 
-    def test_secret_store_value(self) -> None:
-        key_store = KeyStore(
-            user_config=self.user_config,
-            open_callback=lambda *_: None,
-            reset_callback=lambda *_: None)
-        # noinspection PyProtectedMember
-        self.assertEqual(len(KeyIndex), len(key_store._nonce_list))
-        # noinspection PyProtectedMember
-        self.assertEqual(len(KeyIndex), len(key_store._key_list))
-
+    def assertKeysIsNone(self, key_store: KeyStore) -> None:
         for k in KeyIndex:
             # noinspection PyProtectedMember
             self.assertIsNone(key_store._getNonce(k))
+            # noinspection PyProtectedMember
+            self.assertIsNone(key_store._getKey(k))
+            self.assertIsNone(key_store.deriveCipher(k))
+            self.assertIsNone(key_store.deriveMessageCipher(k))
+
+    def assertKeysIsValid(self, key_store: KeyStore) -> None:
+        for k in KeyIndex:
+            # noinspection PyProtectedMember
+            self.assertIsInstance(key_store._getNonce(k), bytes)
+            # noinspection PyProtectedMember
+            self.assertIsInstance(key_store._getKey(k), bytes)
+            self.assertIsInstance(
+                key_store.deriveCipher(k),
+                AeadCipher)
+            self.assertIsInstance(
+                key_store.deriveMessageCipher(k),
+                MessageCipher)
+
+    def assertSeedIsValid(self, key_store: KeyStore) -> None:
+        # noinspection PyProtectedMember
+        self.assertIsInstance(
+            key_store._KeyStoreSeed__deriveSeed(),
+            bytes)
+        # noinspection PyProtectedMember
+        language, phrase = key_store._KeyStoreSeed__deriveSeedPhrase()
+        self.assertIsInstance(language, str)
+        self.assertIsInstance(phrase, str)
 
         # noinspection PyProtectedMember
-        value = KeyStore._generateSecretStoreValue()
+        self.assertIsInstance(
+            key_store._deriveRootHdNodeFromSeed(),
+            HdNode)
+        self.assertTrue(key_store.hasSeed)
+
+    def test_secret_store_value(self) -> None:
+        key_store = KeyStore(
+            self._application,
+            open_callback=lambda *_: None,
+            reset_callback=lambda *_: None)
+        # noinspection PyProtectedMember
+        self.assertEqual(
+            len(KeyIndex),
+            len(key_store._KeyStoreBase__nonce_list))
+        # noinspection PyProtectedMember
+        self.assertEqual(
+            len(KeyIndex),
+            len(key_store._KeyStoreBase__key_list))
+
+        self.assertKeysIsNone(key_store)
+
+        # noinspection PyProtectedMember
+        value = key_store._generateSecretStoreValue()
         self.assertIsInstance(value, bytes)
 
         json_value = json.loads(value.decode(Product.ENCODING))
@@ -51,103 +105,154 @@ class TestKeyStore(TestCase):
 
         # noinspection PyProtectedMember
         self.assertTrue(key_store._loadSecretStoreValue(value))
+        self.assertKeysIsValid(key_store)
 
-        for k in KeyIndex:
-            # noinspection PyProtectedMember
-            self.assertIsInstance(key_store._getNonce(k), bytes)
-            # noinspection PyProtectedMember
-            self.assertIsInstance(key_store._getKey(k), bytes)
+        # noinspection PyProtectedMember
+        self.assertFalse(key_store._loadSecretStoreValue(b"broken" + value))
+        self.assertKeysIsNone(key_store)
 
-    def test_password(self) -> None:
+    def test_seed(self) -> None:
         key_store = KeyStore(
-            user_config=self.user_config,
+            self._application,
             open_callback=lambda *_: None,
             reset_callback=lambda *_: None)
 
-        self.assertFalse(key_store.hasPassword)
-        self.assertIsNone(
-            self.user_config.get(UserConfigKey.KEY_STORE_VALUE, str))
-        self.assertTrue(key_store.createPassword(self.password))
+        self.assertFalse(key_store.hasSeed)
+        # noinspection PyProtectedMember
+        self.assertIsNone(key_store._KeyStoreSeed__deriveSeed())
+        # noinspection PyProtectedMember
+        self.assertTupleEqual(
+            (None, None),
+            key_store._KeyStoreSeed__deriveSeedPhrase())
+        # noinspection PyProtectedMember
+        self.assertIsNone(key_store._deriveRootHdNodeFromSeed())
+        self.assertFalse(key_store.hasSeed)
+
+        for language in Mnemonic.getLanguageList():
+            phrase_hash = Sha256Digest(os.urandom(64)).finalize()
+            phrase_hash = phrase_hash[:Mnemonic.defaultDataLength]
+            phrase = Mnemonic(language).getPhrase(phrase_hash)
+            self.assertLess(1, len(phrase))
+            seed = Mnemonic.phraseToSeed(phrase)
+            self.assertLess(1, len(seed))
+            # noinspection PyProtectedMember
+            self.assertFalse(key_store._saveSeed(language, phrase))
+
+            # noinspection PyProtectedMember
+            value = key_store._generateSecretStoreValue()
+            self.assertIsInstance(value, bytes)
+            # noinspection PyProtectedMember
+            self.assertTrue(key_store._loadSecretStoreValue(value))
+            self.assertKeysIsValid(key_store)
+
+            self.assertIsNone(self._application.userConfig.get(
+                UserConfigKey.KEY_STORE_SEED, str))
+            self.assertIsNone(self._application.userConfig.get(
+                UserConfigKey.KEY_STORE_SEED_PHRASE, str))
+            # noinspection PyProtectedMember
+            self.assertTrue(key_store._saveSeed(language, phrase))
+            self.assertIsInstance(self._application.userConfig.get(
+                UserConfigKey.KEY_STORE_SEED, str),
+                str)
+            self.assertIsInstance(self._application.userConfig.get(
+                UserConfigKey.KEY_STORE_SEED_PHRASE, str),
+                str)
+
+            # noinspection PyProtectedMember
+            self.assertEqual(
+                seed,
+                key_store._KeyStoreSeed__deriveSeed())
+            # noinspection PyProtectedMember
+            self.assertTupleEqual(
+                (language, phrase),
+                key_store._KeyStoreSeed__deriveSeedPhrase())
+            # noinspection PyProtectedMember
+            self.assertIsInstance(
+                key_store._deriveRootHdNodeFromSeed(),
+                HdNode)
+            self.assertTrue(key_store.hasSeed)
+
+            self.assertTrue(key_store.reset())
+            self.assertFalse(key_store.hasSeed)
+            # noinspection PyProtectedMember
+            self.assertIsNone(key_store._KeyStoreSeed__deriveSeed())
+            self.assertKeysIsNone(key_store)
+
+    def test(self) -> None:
+        key_store = KeyStore(
+            self._application,
+            open_callback=lambda *_: None,
+            reset_callback=lambda *_: None)
+
+        self.assertFalse(key_store.isExists)
+        self.assertIsNone(self._application.userConfig.get(
+            UserConfigKey.KEY_STORE_VALUE,
+            str))
+
+        self.assertTrue(key_store.create(self._password))
+        self.assertTrue(key_store.isExists)
         self.assertIsInstance(
-            self.user_config.get(UserConfigKey.KEY_STORE_VALUE, str),
+            self._application.userConfig.get(
+                UserConfigKey.KEY_STORE_VALUE,
+                str),
             str)
-        self.assertTrue(key_store.hasPassword)
+        self.assertKeysIsNone(key_store)
+        self.assertFalse(key_store.hasSeed)
 
-        for i in range(len(KeyIndex)):
-            # noinspection PyProtectedMember
-            self.assertIsNone(key_store._nonce_list[i])
-            # noinspection PyProtectedMember
-            self.assertIsNone(key_store._key_list[i])
-        self.assertFalse(key_store.applyPassword(self.password * 2))
-        for i in range(len(KeyIndex)):
-            # noinspection PyProtectedMember
-            self.assertIsNone(key_store._nonce_list[i])
-            # noinspection PyProtectedMember
-            self.assertIsNone(key_store._key_list[i])
-        self.assertTrue(key_store.applyPassword(self.password))
-        for i in range(len(KeyIndex)):
-            # noinspection PyProtectedMember
-            self.assertIsInstance(key_store._nonce_list[i], bytes)
-            # noinspection PyProtectedMember
-            self.assertIsInstance(key_store._key_list[i], bytes)
+        self.assertFalse(key_store.verify(self._password * 2))
+        self.assertFalse(key_store.open(self._password * 2))
+        self.assertKeysIsNone(key_store)
+        self.assertFalse(key_store.hasSeed)
 
-        for k in KeyIndex:
-            # noinspection PyProtectedMember
-            self.assertIsInstance(key_store._getNonce(k), bytes)
-            # noinspection PyProtectedMember
-            self.assertIsInstance(key_store._getKey(k), bytes)
+        self.assertTrue(key_store.verify(self._password))
+        self.assertTrue(key_store.open(self._password))
+        self.assertKeysIsValid(key_store)
+        self.assertFalse(key_store.hasSeed)
 
-        self.assertTrue(key_store.resetPassword())
-        self.assertFalse(key_store.hasPassword)
-        for i in range(len(KeyIndex)):
-            # noinspection PyProtectedMember
-            self.assertIsNone(key_store._nonce_list[i])
-            # noinspection PyProtectedMember
-            self.assertIsNone(key_store._key_list[i])
-        self.assertIsNone(
-            self.user_config.get(UserConfigKey.KEY_STORE_VALUE, str))
+        self.assertTrue(key_store.reset())
+        self.assertIsNone(self._application.userConfig.get(
+            UserConfigKey.KEY_STORE_VALUE,
+            str))
 
     def test_generate_seed_phrase(self) -> None:
         key_store = KeyStore(
-            user_config=self.user_config,
+            self._application,
             open_callback=lambda *_: None,
             reset_callback=lambda *_: None)
-        self.assertFalse(key_store.hasPassword)
-        self.assertTrue(key_store.createPassword(self.password))
-        self.assertTrue(key_store.applyPassword(self.password))
-        # noinspection PyProtectedMember
-        self.assertIsNone(key_store._getSeed())
+
+        self.assertFalse(key_store.isExists)
+        self.assertTrue(key_store.create(self._password))
+        self.assertTrue(key_store.open(self._password))
+        self.assertFalse(key_store.hasSeed)
 
         for language in Mnemonic.getLanguageList():
-            phrase1 = key_store.prepareGenerateSeedPhrase(language)
+            g1 = GenerateSeedPhrase(key_store)
+            phrase1 = g1.prepare(language)
             self.assertTrue(Mnemonic(language).isValidPhrase(phrase1))
-            self.assertTrue(key_store.validateGenerateSeedPhrase(phrase1))
+            self.assertTrue(g1.validate(phrase1))
 
-            phrase2 = key_store.updateGenerateSeedPhrase("123")
+            phrase2 = g1.update(os.urandom(10).hex())
             self.assertTrue(Mnemonic(language).isValidPhrase(phrase2))
-            self.assertTrue(key_store.validateGenerateSeedPhrase(phrase2))
+            self.assertTrue(g1.validate(phrase2))
             self.assertNotEqual(phrase1, phrase2)
             self.assertFalse(Mnemonic.isEqualPhrases(phrase1, phrase2))
-            self.assertFalse(key_store.validateGenerateSeedPhrase(phrase1))
+            self.assertFalse(g1.validate(phrase1))
 
             # noinspection PyProtectedMember
-            seed2 = key_store._mnemonic.phraseToSeed(phrase2)
+            seed2 = g1._mnemonic.phraseToSeed(phrase2)
             self.assertIsInstance(seed2, bytes)
 
-            self.assertFalse(key_store.finalizeGenerateSeedPhrase(phrase1))
-            self.assertTrue(key_store.finalizeGenerateSeedPhrase(phrase2))
-            # noinspection PyProtectedMember
-            self.assertIsNone(key_store._mnemonic)
-            # noinspection PyProtectedMember
-            self.assertIsNone(key_store._mnemonic_salt_hash)
+            self.assertFalse(g1.finalize(phrase1))
+            self.assertTrue(g1.finalize(phrase2))
+            self.assertTrue(key_store.hasSeed)
 
             # noinspection PyProtectedMember
-            result = key_store._getSeed()
+            result = key_store._KeyStoreSeed__deriveSeed()
             self.assertIsInstance(result, bytes)
             self.assertEqual(seed2, result)
 
             # noinspection PyProtectedMember
-            result = key_store._getSeedPhrase()
+            result = key_store._KeyStoreSeed__deriveSeedPhrase()
             self.assertIsInstance(result, tuple)
             self.assertIsInstance(result[0], str)
             self.assertIsInstance(result[1], str)
@@ -156,34 +261,32 @@ class TestKeyStore(TestCase):
 
     def test_restore_seed_phrase(self) -> None:
         key_store = KeyStore(
-            user_config=self.user_config,
+            self._application,
             open_callback=lambda *_: None,
             reset_callback=lambda *_: None)
 
-        self.assertFalse(key_store.hasPassword)
-        self.assertTrue(key_store.createPassword(self.password))
-        self.assertTrue(key_store.applyPassword(self.password))
+        self.assertFalse(key_store.isExists)
+        self.assertTrue(key_store.create(self._password))
+        self.assertTrue(key_store.open(self._password))
 
         for language in Mnemonic.getLanguageList():
+            r1 = RestoreSeedPhrase(key_store)
             phrase = Mnemonic(language).getPhrase(os.urandom(24))
-            self.assertGreater(len(phrase), 0)
+            self.assertLess(0, len(phrase))
 
-            self.assertFalse(key_store.validateRestoreSeedPhrase(phrase))
-            self.assertTrue(key_store.prepareRestoreSeedPhrase(language))
-            self.assertTrue(key_store.validateRestoreSeedPhrase(phrase))
-            self.assertTrue(key_store.finalizeRestoreSeedPhrase(phrase))
-            # noinspection PyProtectedMember
-            self.assertIsNone(key_store._mnemonic)
-            # noinspection PyProtectedMember
-            self.assertIsNone(key_store._mnemonic_salt_hash)
+            self.assertFalse(r1.validate(phrase))
+            self.assertTrue(r1.prepare(language))
+            self.assertTrue(r1.validate(phrase))
+            self.assertTrue(r1.finalize(phrase))
+            self.assertTrue(key_store.hasSeed)
 
             # noinspection PyProtectedMember
-            seed = key_store._getSeed()
+            seed = r1._mnemonic.phraseToSeed(phrase)
             self.assertIsInstance(seed, bytes)
             self.assertEqual(Mnemonic(language).phraseToSeed(phrase), seed)
 
             # noinspection PyProtectedMember
-            result = key_store._getSeedPhrase()
+            result = key_store._KeyStoreSeed__deriveSeedPhrase()
             self.assertIsInstance(result, tuple)
             self.assertIsInstance(result[0], str)
             self.assertIsInstance(result[1], str)

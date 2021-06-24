@@ -115,33 +115,3 @@ class TestWorkflow(unittest.TestCase):
         self.assertIsInstance(_addr.last_offset, str)
         #!!
         self.assertEqual(addr, _addr)
-
-
-@unittest.skip
-class Test_password(unittest.TestCase):
-
-    @unittest.skip
-    def test_db(self):
-        cipher.Cipher.ENCRYPT = True
-        self.db = db_wrapper.Database(True)
-        self.db.open_db("test.db")
-        password = "test password stuff"
-        self.db._set_meta_entry("password", password, strong=False)
-        void = self.db._get_meta_entry("password")
-        self.assertIsNone(void)
-        self.assertTrue(self.db._test_hash(password))
-        self.assertFalse(self.db._test_hash(password + "-"))
-
-    @unittest.skip
-    def test_higher_level(self):
-        gcd_ = gcd.GCD(True, None)
-        km = key_store.KeyStore(gcd_)
-        gcd_.reset_db()
-        self.assertFalse(gcd_.has_password())
-        password = "test password stuff"
-        km.setNewPassword(password)
-        self.assertTrue(km.testPassword(password))
-        self.assertFalse(km.testPassword(password*2))
-        self.assertTrue(km.hasPassword)
-        gcd_.reset_db()
-        self.assertFalse(km.hasPassword)

@@ -9,16 +9,16 @@ from typing import TYPE_CHECKING
 
 from .coins.hd import HdNode
 from .coins.mnemonic import Mnemonic
-from .config import UserConfig
+from .config import UserConfigKey
 from .crypto.cipher import AeadCipher, MessageCipher
 from .crypto.digest import Sha256Digest
 from .crypto.kdf import SecretStore
-from .crypto.password import PasswordStrength
 from .logger import Logger
 from .version import Product
 
 if TYPE_CHECKING:
-    from typing import Callable, Final, List, Optional, Tuple
+    from typing import Any, Callable, Dict, Final, List, Optional, Tuple, Union
+    from .application import CoreApplication
     from .crypto.digest import AbstractDigest
 
 
@@ -27,68 +27,31 @@ class KeyIndex(Enum):
     SEED: Final = 1
 
 
-class KeyStore:
-    def __init__(
-            self,
-            *,
-            user_config: UserConfig,
-            open_callback: Callable[[HdNode], None],
-            reset_callback: Callable[[], None]) -> None:
-        super().__init__()
+class _KeyStoreBase:
+    def __init__(self, application: CoreApplication) -> None:
         self._logger = Logger.classLogger(self.__class__)
         self._lock = RLock()
+        self._application = application
+        self._user_config_reset_list: Dict[UserConfigKey, Any] = {}
 
-        self._user_config = user_config
-        self._open_callback = open_callback
-        self._reset_callback = reset_callback
+        self.__nonce_list: List[Optional[bytes]] = [None] * len(KeyIndex)
+        self.__key_list: List[Optional[bytes]] = [None] * len(KeyIndex)
 
-        self._nonce_list: List[Optional[bytes]] = [None] * len(KeyIndex)
-        self._key_list: List[Optional[bytes]] = [None] * len(KeyIndex)
+    def __clearSecrets(self) -> None:
+        self.__nonce_list = [None] * len(KeyIndex)
+        self.__key_list = [None] * len(KeyIndex)
 
-        self._mnemonic: Optional[Mnemonic] = None
-        self._mnemonic_salt_hash: Optional[AbstractDigest] = None
-
-        self._has_seed = False
-
-    def _reset(self, *, hard: bool = True) -> None:
-        self._nonce_list = [None] * len(self._nonce_list)
-        self._key_list = [None] * len(self._key_list)
-        self._mnemonic = None
-        self._mnemonic_salt_hash = None
-        self._has_seed = False
-
-        if hard:
-            with self._user_config.lock:
-                for key in (
-                        self._user_config.Key.KEY_STORE_VALUE,
-                        self._user_config.Key.KEY_STORE_SEED,
-                        self._user_config.Key.KEY_STORE_SEED_PHRASE):
-                    self._user_config.set(key, None, save=False)
-                    self._user_config.save()
+    def _clear(self) -> None:
+        self.__clearSecrets()
 
     def _getNonce(self, key_index: KeyIndex) -> Optional[bytes]:
-        return self._nonce_list[key_index.value]
+        return self.__nonce_list[key_index.value]
 
     def _getKey(self, key_index: KeyIndex) -> Optional[bytes]:
-        return self._key_list[key_index.value]
+        return self.__key_list[key_index.value]
 
-    def deriveCipher(self, key_index: KeyIndex) -> Optional[AeadCipher]:
-        with self._lock:
-            assert self._getKey(key_index)
-            assert self._getNonce(key_index)
-            return AeadCipher(
-                self._getKey(key_index),
-                self._getNonce(key_index))
-
-    def deriveMessageCipher(
-            self,
-            key_index: KeyIndex) -> Optional[MessageCipher]:
-        with self._lock:
-            assert self._getKey(key_index)
-            return MessageCipher(self._getKey(key_index))
-
-    @classmethod
-    def _generateSecretStoreValue(cls) -> bytes:
+    @staticmethod
+    def _generateSecretStoreValue() -> bytes:
         value = {
             "version":
                 Product.VERSION_STRING,
@@ -106,148 +69,125 @@ class KeyStore:
         return json.dumps(value).encode(Product.ENCODING)
 
     def _loadSecretStoreValue(self, value: bytes) -> bool:
+        self.__clearSecrets()
         try:
             value = json.loads(value.decode(Product.ENCODING))
             for k, v in value.items():
                 if k.startswith("nonce_"):
                     k = int(k[6:])
-                    self._nonce_list[k] = bytes.fromhex(v)
+                    self.__nonce_list[k] = bytes.fromhex(v)
                 elif k.startswith("key_"):
                     k = int(k[4:])
-                    self._key_list[k] = bytes.fromhex(v)
+                    self.__key_list[k] = bytes.fromhex(v)
         except (IndexError, ValueError, TypeError, JSONDecodeError):
+            self.__clearSecrets()
             return False
         return True
 
-    def prepareGenerateSeedPhrase(self, language: str = None) -> str:
+    def deriveCipher(self, key_index: KeyIndex) -> Optional[AeadCipher]:
         with self._lock:
-            self._mnemonic = Mnemonic(language)
-            self._mnemonic_salt_hash = Sha256Digest()
-            self._mnemonic_salt_hash.update(os.urandom(64))
-            result = self._mnemonic_salt_hash.copy().finalize()
-            result = result[:Mnemonic.defaultDataLength]
-            return self._mnemonic.getPhrase(result)
+            key = self._getKey(key_index)
+            nonce = self._getNonce(key_index)
+            if key is None or nonce is None:
+                return None
+            return AeadCipher(key, nonce)
 
-    def updateGenerateSeedPhrase(self, salt: Optional[str]) -> str:
+    def deriveMessageCipher(
+            self,
+            key_index: KeyIndex) -> Optional[MessageCipher]:
         with self._lock:
-            if self._mnemonic and self._mnemonic_salt_hash:
-                if salt:
-                    self._mnemonic_salt_hash.update(
-                        salt.encode(Product.ENCODING))
-                    self._mnemonic_salt_hash.update(os.urandom(4))
-                result = self._mnemonic_salt_hash.copy().finalize()
-                result = result[:Mnemonic.defaultDataLength]
-                return self._mnemonic.getPhrase(result)
-        return ""
+            key = self._getKey(key_index)
+            if key is None:
+                return None
+            return MessageCipher(key)
 
-    def validateGenerateSeedPhrase(self, phrase: str) -> bool:
-        return Mnemonic.isEqualPhrases(
-            phrase,
-            self.updateGenerateSeedPhrase(None))
-
-    def finalizeGenerateSeedPhrase(self, phrase: str) -> bool:
+    def reset(self) -> bool:
         with self._lock:
-            if not self.validateGenerateSeedPhrase(phrase):
-                return False
-            if not self._saveSeedWithPhrase(self._mnemonic.language, phrase):
-                return False
-            root_node = self._loadSeed()
-            if root_node is None:
-                return False
-
-        self._open_callback(root_node)
+            self._clear()
+            with self._application.userConfig.lock:
+                for k, v in self._user_config_reset_list.items():
+                    if not self._application.userConfig.set(k, v, save=False):
+                        return False
+                if not self._application.userConfig.save():
+                    return False
         return True
 
-    def prepareRestoreSeedPhrase(self, language: str = None) -> bool:
-        with self._lock:
-            self._mnemonic = Mnemonic(language)
-            self._mnemonic_salt_hash = None
-        return True
 
-    def validateRestoreSeedPhrase(self, phrase: str) -> bool:
-        with self._lock:
-            if self._mnemonic and self._mnemonic.isValidPhrase(phrase):
-                return True
-        return False
+class _KeyStoreSeed(_KeyStoreBase):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._user_config_reset_list[UserConfigKey.KEY_STORE_SEED] = None
+        self._user_config_reset_list[UserConfigKey.KEY_STORE_SEED_PHRASE] = None
+        self.__has_seed = False
 
-    def finalizeRestoreSeedPhrase(self, phrase: str) -> bool:
-        with self._lock:
-            if not self._mnemonic or not self._mnemonic.isValidPhrase(phrase):
-                return False
-            if not self._saveSeedWithPhrase(self._mnemonic.language, phrase):
-                return False
-            root_node = self._loadSeed()
-            if root_node is None:
-                return False
+    def _clear(self) -> None:
+        super()._clear()
+        self.__has_seed = False
 
-        self._open_callback(root_node)
-        return True
-
-    def revealSeedPhrase(self, password: str):
-        with self._lock:
-            if not self.verifyPassword(password):
-                return self.tr("Wrong password.")
-            phrase = self._getSeedPhrase()
-            if not phrase:
-                return self.tr("Seed phrase not found.")
-            return phrase[1]
-
-    def hasSeed(self) -> bool:
-        with self._lock:
-            return self._has_seed
-
-    def _saveSeedWithPhrase(self, language: str, phrase: str) -> bool:
+    def _saveSeed(self, language: str, phrase: str) -> bool:
         if Product.STRING_SEPARATOR in language:
             return False
 
+        cipher = self.deriveMessageCipher(KeyIndex.SEED)
+        if cipher is None:
+            return False
+
         seed = Mnemonic.phraseToSeed(phrase)
+        seed = cipher.encrypt(seed)
+
         phrase = Product.STRING_SEPARATOR.join((language, phrase))
+        phrase = cipher.encrypt(phrase.encode(Product.ENCODING))
 
-        with self._user_config.lock:
-            if not self._user_config.set(
-                    self._user_config.Key.KEY_STORE_SEED,
-                    self.deriveMessageCipher(KeyIndex.SEED).encrypt(seed),
+        with self._application.userConfig.lock:
+            if not self._application.userConfig.set(
+                    UserConfigKey.KEY_STORE_SEED,
+                    seed,
                     save=False):
                 return False
-            if not self._user_config.set(
-                    self._user_config.Key.KEY_STORE_SEED_PHRASE,
-                    self.deriveMessageCipher(KeyIndex.SEED).encrypt(
-                        phrase.encode(Product.ENCODING)),
+            if not self._application.userConfig.set(
+                    UserConfigKey.KEY_STORE_SEED_PHRASE,
+                    phrase,
                     save=False):
                 return False
-            if not self._user_config.save():
-                return False
-        return True
+            return self._application.userConfig.save()
 
-    def _getSeed(self) -> Optional[bytes]:
-        value = self._user_config.get(self._user_config.Key.KEY_STORE_SEED, str)
-        if not value:
-            return None
-        return self.deriveMessageCipher(KeyIndex.SEED).decrypt(value)
-
-    def _getSeedPhrase(self) -> Optional[Tuple[str, str]]:
-        value = self._user_config.get(
-            self._user_config.Key.KEY_STORE_SEED_PHRASE,
+    def __deriveSeed(self) -> Optional[bytes]:
+        value = self._application.userConfig.get(
+            UserConfigKey.KEY_STORE_SEED,
             str)
         if not value:
             return None
-        value = self.deriveMessageCipher(KeyIndex.SEED).decrypt(value)
+        cipher = self.deriveMessageCipher(KeyIndex.SEED)
+        if cipher is None:
+            return None
+        return cipher.decrypt(value)
+
+    def __deriveSeedPhrase(self) -> Union[Tuple[str, str], Tuple[None, None]]:
+        value = self._application.userConfig.get(
+            UserConfigKey.KEY_STORE_SEED_PHRASE,
+            str)
+        if not value:
+            return None, None
+
+        cipher = self.deriveMessageCipher(KeyIndex.SEED)
+        if cipher is None:
+            return None, None
+
+        value = cipher.decrypt(value)
         try:
             value = value.decode(Product.ENCODING)
             (language, phrase) = value.split(Product.STRING_SEPARATOR, 1)
         except (UnicodeError, ValueError):
-            return None
+            return None, None
 
         language = language.lower()
         phrase = Mnemonic.friendlyPhrase(language, phrase)
         return language, phrase
 
-    def _loadSeed(self) -> Optional[HdNode]:
-        self._mnemonic = None
-        self._mnemonic_salt_hash = None
-        self._has_seed = False
+    def _deriveRootHdNodeFromSeed(self) -> Optional[HdNode]:
+        self.__has_seed = False
 
-        seed = self._getSeed()
+        seed = self.__deriveSeed()
         if not seed:
             return None
 
@@ -255,58 +195,156 @@ class KeyStore:
         if root_node is None:
             # TODO show message, this has probability lower than 1 in 2 ** 127.
             return None
-        self._has_seed = True
+        self.__has_seed = True
         return root_node
 
-    @staticmethod
-    def calcPasswordStrength(password: str) -> int:
-        return PasswordStrength(password).calc()
+    @property
+    def hasSeed(self) -> bool:
+        with self._lock:
+            return self.__has_seed
 
-    def createPassword(self, password: str) -> bool:
+
+class KeyStore(_KeyStoreSeed):
+    def __init__(
+            self,
+            application: CoreApplication,
+            *,
+            open_callback: Callable[[HdNode], None],
+            reset_callback: Callable[[], None]) -> None:
+        super().__init__(application)
+        self._user_config_reset_list[UserConfigKey.KEY_STORE_VALUE] = None
+        self._open_callback = open_callback
+        self._reset_callback = reset_callback
+
+    @property
+    def isExists(self) -> bool:
+        with self._lock:
+            if self._application.userConfig.get(
+                    UserConfigKey.KEY_STORE_VALUE,
+                    str):
+                return True
+        return False
+
+    def create(self, password: str) -> bool:
         value = self._generateSecretStoreValue()
         value = SecretStore(password).encryptValue(value)
         with self._lock:
-            self._reset(hard=True)
-            return self._user_config.set(
-                self._user_config.Key.KEY_STORE_VALUE,
+            self.reset()
+            return self._application.userConfig.set(
+                UserConfigKey.KEY_STORE_VALUE,
                 value)
 
-    def applyPassword(self, password: str) -> bool:
+    def verify(self, password: str) -> bool:
         with self._lock:
-            self._reset(hard=False)
-            value = self._user_config.get(
-                self._user_config.Key.KEY_STORE_VALUE,
+            value = self._application.userConfig.get(
+                UserConfigKey.KEY_STORE_VALUE,
+                str)
+            if value and SecretStore(password).decryptValue(value):
+                return True
+        return False
+
+    def open(self, password: str) -> bool:
+        with self._lock:
+            self._clear()
+
+            value = self._application.userConfig.get(
+                UserConfigKey.KEY_STORE_VALUE,
                 str)
             if not value:
                 return False
             value = SecretStore(password).decryptValue(value)
             if not value or not self._loadSecretStoreValue(value):
                 return False
-            root_node = self._loadSeed()
-
-        if root_node is not None:
-            self._open_callback(root_node)
+            root_node = self._deriveRootHdNodeFromSeed()
+            if root_node is not None:
+                self._open_callback(root_node)
         return True
 
-    def verifyPassword(self, password: str) -> bool:
+    def saveSeed(self, language: str, phrase: str) -> bool:
         with self._lock:
-            value = self._user_config.get(
-                self._user_config.Key.KEY_STORE_VALUE,
-                str)
-            if value and SecretStore(password).decryptValue(value):
-                return True
-        return False
-
-    def resetPassword(self) -> bool:
-        with self._lock:
-            self._reset(hard=True)
-        self._reset_callback()
+            if not self._saveSeed(language, phrase):
+                return False
+            root_node = self._deriveRootHdNodeFromSeed()
+            if root_node is None:
+                return False
+            self._open_callback(root_node)  # TODO reason
         return True
 
-    def hasPassword(self) -> bool:
+    def revealSeedPhrase(self, password: str):  # TODO
         with self._lock:
-            if self._user_config.get(
-                    self._user_config.Key.KEY_STORE_VALUE,
-                    str):
-                return True
-        return False
+            if not self.verify(password):
+                return self.tr("Wrong password.")
+            phrase = self._deriveSeedPhrase()
+            if not phrase:
+                return self.tr("Seed phrase not found.")
+            return phrase[1]
+
+    def reset(self) -> bool:
+        with self._lock:
+            if not super().reset():
+                return False
+            self._reset_callback()
+        return True
+
+
+class _AbstractSeedPhrase:
+    def __init__(self, key_store: KeyStore) -> None:
+        self._key_store = key_store
+        self._mnemonic: Optional[Mnemonic] = None
+
+    def prepare(self, language: str = None) -> str:
+        raise NotImplementedError
+
+    def validate(self, phrase: str) -> bool:
+        raise NotImplementedError
+
+    def finalize(self, phrase: str) -> bool:
+        if not self.validate(phrase):
+            return False
+        return self._key_store.saveSeed(self._mnemonic.language, phrase)
+
+
+class GenerateSeedPhrase(_AbstractSeedPhrase):
+    def __init__(self, key_store: KeyStore) -> None:
+        super().__init__(key_store)
+        self._salt_hash: Optional[AbstractDigest] = None
+
+    def prepare(self, language: str = None) -> str:
+        self._mnemonic = Mnemonic(language)
+        self._salt_hash = Sha256Digest()
+        self._salt_hash.update(os.urandom(64))
+
+        result = self._salt_hash.copy().finalize()
+        result = result[:Mnemonic.defaultDataLength]
+        return self._mnemonic.getPhrase(result)
+
+    def validate(self, phrase: str) -> bool:
+        return (
+                phrase
+                and Mnemonic.isEqualPhrases(phrase, self.update(None))
+        )
+
+    def update(self, salt: Optional[str]) -> str:
+        if self._mnemonic is None or self._salt_hash is None:
+            return ""
+
+        if salt:
+            self._salt_hash.update(salt.encode(Product.ENCODING))
+            self._salt_hash.update(os.urandom(4))
+
+        result = self._salt_hash.copy().finalize()
+        result = result[:Mnemonic.defaultDataLength]
+        return self._mnemonic.getPhrase(result)
+
+
+class RestoreSeedPhrase(_AbstractSeedPhrase):
+    def prepare(self, language: str = None) -> bool:
+        self._mnemonic = Mnemonic(language)
+        return True
+
+    def validate(self, phrase: str) -> bool:
+        return (
+                phrase
+                and self._mnemonic is not None
+                and self._mnemonic.isValidPhrase(phrase)
+        )

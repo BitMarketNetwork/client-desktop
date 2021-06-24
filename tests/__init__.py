@@ -13,18 +13,21 @@ from bmnclient.application import CommandLine, CoreApplication
 from bmnclient.utils.class_property import classproperty
 
 if TYPE_CHECKING:
-    from typing import Final
+    from typing import Final, Optional
 
 
 class TestApplication(CoreApplication):
     _DATA_PATH: Final = Path(__file__).parent.resolve() / "data"
     _logger_configured = False
 
-    def __init__(self) -> None:
-        command_line = CommandLine(["unittest"])
+    def __init__(self, *, config_path: Optional[str] = None) -> None:
+        command_line = ["unittest"]
+        if config_path:
+            command_line.append("--configpath=" + config_path)
+
         super().__init__(
             qt_class=QApplication,
-            command_line=command_line,
+            command_line=CommandLine(command_line),
             model_factory=None)
 
     @classproperty

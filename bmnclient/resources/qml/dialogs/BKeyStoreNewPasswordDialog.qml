@@ -4,7 +4,7 @@ BNewPasswordDialog {
     destroyOnClose: false
 
     onPasswordAccepted: {
-        if (!BBackend.keyStore.createPassword(password)) {
+        if (!BBackend.keyStore.create(password)) {
             // TODO internal error, show it
             open()
             return
