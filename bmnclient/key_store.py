@@ -27,6 +27,12 @@ class KeyIndex(Enum):
     SEED: Final = 1
 
 
+class KeyStoreError(Enum):
+    SUCCESS: Final = 0
+    ERROR_INVALID_PASSWORD = 1
+    ERROR_SEED_NOT_FOUND = 2
+
+
 class _KeyStoreBase:
     def __init__(self, application: CoreApplication) -> None:
         self._logger = Logger.classLogger(self.__class__)
@@ -162,7 +168,7 @@ class _KeyStoreSeed(_KeyStoreBase):
             return None
         return cipher.decrypt(value)
 
-    def __deriveSeedPhrase(self) -> Union[Tuple[str, str], Tuple[None, None]]:
+    def _deriveSeedPhrase(self) -> Union[Tuple[str, str], Tuple[None, None]]:
         value = self._application.userConfig.get(
             UserConfigKey.KEY_STORE_SEED_PHRASE,
             str)
@@ -267,17 +273,17 @@ class KeyStore(_KeyStoreSeed):
             root_node = self._deriveRootHdNodeFromSeed()
             if root_node is None:
                 return False
-            self._open_callback(root_node)  # TODO reason
+            self._open_callback(root_node)
         return True
 
-    def revealSeedPhrase(self, password: str):  # TODO
+    def revealSeedPhrase(self, password: str) -> Union[KeyStoreError, str]:
         with self._lock:
             if not self.verify(password):
-                return self.tr("Wrong password.")
-            phrase = self._deriveSeedPhrase()
-            if not phrase:
-                return self.tr("Seed phrase not found.")
-            return phrase[1]
+                return KeyStoreError.ERROR_INVALID_PASSWORD
+            language, phrase = self._deriveSeedPhrase()
+            if not language or not phrase:
+                return KeyStoreError.ERROR_SEED_NOT_FOUND
+            return phrase
 
     def reset(self) -> bool:
         with self._lock:
