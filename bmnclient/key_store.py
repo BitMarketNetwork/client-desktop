@@ -310,7 +310,7 @@ class _AbstractSeedPhrase:
         return self._key_store.saveSeed(self._mnemonic.language, phrase)
 
 
-class GenerateSeedPhrase(_AbstractSeedPhrase):
+class SeedPhraseGenerate(_AbstractSeedPhrase):
     def __init__(self, key_store: KeyStore) -> None:
         super().__init__(key_store)
         self._salt_hash: Optional[AbstractDigest] = None
@@ -343,7 +343,7 @@ class GenerateSeedPhrase(_AbstractSeedPhrase):
         return self._mnemonic.getPhrase(result)
 
 
-class RestoreSeedPhrase(_AbstractSeedPhrase):
+class SeedPhraseRestore(_AbstractSeedPhrase):
     def prepare(self, language: str = None) -> bool:
         self._mnemonic = Mnemonic(language)
         return True

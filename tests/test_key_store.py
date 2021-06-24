@@ -10,11 +10,11 @@ from bmnclient.config import UserConfigKey
 from bmnclient.crypto.cipher import AeadCipher, MessageCipher
 from bmnclient.crypto.digest import Sha256Digest
 from bmnclient.key_store import \
-    GenerateSeedPhrase, \
     KeyIndex, \
     KeyStore, \
     KeyStoreError, \
-    RestoreSeedPhrase
+    SeedPhraseGenerate, \
+    SeedPhraseRestore
 from bmnclient.version import Product, ProductPaths
 from tests import TestApplication
 
@@ -234,7 +234,7 @@ class TestKeyStore(TestCase):
             key_store.revealSeedPhrase(self._password))
 
         for language in Mnemonic.getLanguageList():
-            g1 = GenerateSeedPhrase(key_store)
+            g1 = SeedPhraseGenerate(key_store)
             phrase1 = g1.prepare(language)
             self.assertTrue(Mnemonic(language).isValidPhrase(phrase1))
             self.assertTrue(g1.validate(phrase1))
@@ -285,7 +285,7 @@ class TestKeyStore(TestCase):
         self.assertTrue(key_store.open(self._password))
 
         for language in Mnemonic.getLanguageList():
-            r1 = RestoreSeedPhrase(key_store)
+            r1 = SeedPhraseRestore(key_store)
             phrase = Mnemonic(language).getPhrase(os.urandom(24))
             self.assertLess(0, len(phrase))
 
