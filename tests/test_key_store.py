@@ -65,22 +65,6 @@ class TestKeyStore(TestCase):
                 key_store.deriveMessageCipher(k),
                 MessageCipher)
 
-    def assertSeedIsValid(self, key_store: KeyStore) -> None:
-        # noinspection PyProtectedMember
-        self.assertIsInstance(
-            key_store._KeyStoreSeed__deriveSeed(),
-            bytes)
-        # noinspection PyProtectedMember
-        language, phrase = key_store._deriveSeedPhrase()
-        self.assertIsInstance(language, str)
-        self.assertIsInstance(phrase, str)
-
-        # noinspection PyProtectedMember
-        self.assertIsInstance(
-            key_store._deriveRootHdNodeFromSeed(),
-            HdNode)
-        self.assertTrue(key_store.hasSeed)
-
     def test_secret_store_value(self) -> None:
         key_store = KeyStore(
             self._application,
