@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unicodedata
+from pathlib import PurePath
 from typing import TYPE_CHECKING
 
 from cryptography.hazmat.primitives import hashes
@@ -28,7 +29,8 @@ class Mnemonic:
     _PHRASE_WORD_COUNT_LIST: Final = (12, 15, 18, 21, 24)
 
     def __init__(self, language: Optional[str] = None) -> None:
-        self._language = language.lower() if language else "english"
+        language = language.lower() if language else "english"
+        self._language = str(PurePath(language).name)
         self._logger = Logger.classLogger(
             self.__class__,
             (None, self._language))
@@ -52,10 +54,11 @@ class Mnemonic:
         except ValueError as e:
             error_message = Logger.exceptionString(e)
         if error_message is not None:
-            Logger.fatal(
-                "Failed to read file '{}'. {}"
-                .format(self._file_path, error_message),
-                self._logger)
+            self._logger.debug(
+                "Failed to read file '%s'. %s",
+                self._file_path,
+                error_message)
+            self._word_list = [""] * self._WORD_COUNT
 
     @classproperty
     def dataLengthList(cls) -> Sequence:  # noqa

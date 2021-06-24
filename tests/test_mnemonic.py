@@ -38,6 +38,14 @@ class TestMnemonic(TestCase):
             Bitcoin.bip0032VersionPrivateKey,
             private=True))
 
+    def test_invalid_language(self) -> None:
+        for language in ("unknown", "..", "12\x003"):
+            mnemonic = Mnemonic(language)
+            phrase = mnemonic.getPhrase(os.urandom(24))
+            self.assertIsInstance(phrase, str)
+            self.assertLess(0, len(phrase))
+            self.assertFalse(mnemonic.isValidPhrase(phrase))
+
     def test_seed_en(self) -> None:
         test_list = json.loads(
             (TestApplication.dataPath / "bip-0039.json").read_text("utf-8"))
