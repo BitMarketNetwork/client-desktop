@@ -14,8 +14,9 @@ QtObject {
         function onOpenDialog(name, properties) {
             let dialog = createDialog(name, {})
             for (let callback_name of properties["callbacks"]) {
-                dialog[callback_name].connect(function () {
-                    target.onResult(name, callback_name)
+                let signal_name = callback_name.split(".").pop()
+                dialog[signal_name].connect(function (...args) {
+                    target.onResult(name, callback_name, args)
                 })
             }
             dialog.open()

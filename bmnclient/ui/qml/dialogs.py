@@ -72,31 +72,51 @@ class DialogManager(QObject):
         properties = {
             "callbacks": []
         }
+        dialog_name = dialog.qmlName if dialog.qmlName else dialog.__name__
         for n in dir(dialog):
             if n.startswith("on") and callable(getattr(dialog, n, None)):
-                properties["callbacks"].append(n)
-        # noinspection PyUnresolvedReferences
-        self.openDialog.emit(dialog.__name__, properties)
+                properties["callbacks"].append(dialog_name + "." + n)
 
-    @QSlot(str, str)
-    def onResult(self, name: str, callback_name: str) -> None:
-        dialog = globals().get(name)
+        # noinspection PyUnresolvedReferences
+        self.openDialog.emit(dialog_name, properties)
+
+    @QSlot(str, str, list)
+    def onResult(
+            self,
+            qml_name: str,
+            callback_name: str,
+            callback_args: List[str, int]) -> None:
+        try:
+            dialog_name, callback_name = callback_name.split(".", 1)
+        except ValueError:
+            Logger.fatal(
+                "Invalid dialog callback '{}', '{}'.".format(
+                    qml_name,
+                    callback_name),
+                self._logger)
+            return
+
+        dialog = globals().get(dialog_name)
         if (
                 dialog is None
                 or not isinstance(dialog, type)
                 or not issubclass(dialog, AbstractDialog)
         ):
             Logger.fatal(
-                "Undefined dialog '{}'.".format(name),
+                "Undefined dialog '{}', '{}'.".format(
+                    qml_name,
+                    dialog_name),
                 self._logger)
             return
+
         dialog = dialog(self._context)
         callback = getattr(dialog, callback_name, None)
         if not callable(callback):
             Logger.fatal(
-                "Undefined dialog callback '{}.{}'.".format(
-                    name,
+                "Undefined dialog callback '{}', '{}.{}'.".format(
+                    qml_name,
+                    dialog_name,
                     callback_name),
                 self._logger)
             return
-        callback()
+        callback(*callback_args)
