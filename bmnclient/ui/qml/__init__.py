@@ -67,6 +67,10 @@ class QmlApplication(GuiApplication):
         self._qml_engine.quit.connect(self._onQmlExit)
 
     @property
+    def qmlContext(self) -> QmlContext:
+        return self._qml_context
+
+    @property
     def topLevelWindowList(self) -> Iterable[QQuickWindow]:
         return list(filter(
             lambda w: isinstance(w, QQuickWindow),

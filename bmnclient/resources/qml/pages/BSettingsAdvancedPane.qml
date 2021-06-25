@@ -11,7 +11,6 @@ BPane {
     signal backupWallet
     signal restoreWallet
     signal clearWallet
-    signal revealSeedPhraseWallet
 
     contentItem: BDialogScrollableLayout {
         BDialogPromptLabel {
@@ -102,7 +101,7 @@ BPane {
                 | Qt.AlignHCenter
             text: qsTr("Reveal seed phrase...")
             onClicked: {
-                _base.revealSeedPhraseWallet()
+                BBackend.keyStore.onRevealSeedPhrase()
             }
         }
     }

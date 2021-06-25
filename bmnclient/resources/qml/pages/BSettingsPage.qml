@@ -20,9 +20,5 @@ BApplicationPage {
         }
         onClearWallet: {
         }
-
-        onRevealSeedPhraseWallet: {
-            _applicationManager.openRevealSeedPharseDialog()
-        }
     }
 }
