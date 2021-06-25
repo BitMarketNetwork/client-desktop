@@ -5,8 +5,8 @@ import "../basiccontrols"
 BDialog {
     id: _base
 
-    property alias text: _message.text
     property int type: BMessageDialog.Type.Information
+    property alias text: _message.text
 
     enum Type {
         Information,

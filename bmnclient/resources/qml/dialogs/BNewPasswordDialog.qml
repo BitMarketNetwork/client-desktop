@@ -6,7 +6,6 @@ BDialog {
     id: _base
 
     signal passwordAccepted(string password)
-    signal passwordReady
 
     title: qsTr("Set up new password")
     contentItem: BDialogLayout {
@@ -75,11 +74,6 @@ BDialog {
         _password1.forceActiveFocus()
     }
     onAccepted: {
-        if (!_acceptButton.enabled) {
-            console.assert(_acceptButton.enabled)
-            open()
-            return
-        }
         passwordAccepted(_password1.text)
     }
     onReset: {

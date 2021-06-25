@@ -11,14 +11,19 @@ QtObject {
     property Connections backendDialogManager: Connections {
         target: BBackend.dialogManager
 
-        function onOpenDialog(name, properties) {
-            let dialog = createDialog(name, {})
-            for (let callback_name of properties["callbacks"]) {
-                let signal_name = callback_name.split(".").pop()
-                dialog[signal_name].connect(function (...args) {
-                    target.onResult(name, callback_name, args)
+        function onOpenDialog(qml_name, options) {
+            let dialog = createDialog(qml_name, options["properties"])
+
+            dialog.Component.onDestruction.connect(function() {
+                target.onDestruction(options["id"])
+            })
+
+            for (let callback_name of options["callbacks"]) {
+                dialog[callback_name].connect(function (...args) {
+                    target.onResult(options["id"], callback_name, args)
                 })
             }
+
             dialog.open()
         }
     }
@@ -56,9 +61,11 @@ QtObject {
         })
 
         dialog.onClosed.connect(function () {
-            if (openedDialogs[name] === dialog) {
-                delete openedDialogs[name]
-            }
+            try {
+                if (openedDialogs[name] === dialog) {
+                    delete openedDialogs[name]
+                }
+            } catch(e) {}
         })
 
         return dialog

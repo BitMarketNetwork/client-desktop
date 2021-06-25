@@ -6,7 +6,6 @@ BDialog {
     default property alias children: _layout.children
 
     signal passwordAccepted(string password)
-    signal passwordReady
 
     title: qsTr("Input password")
     contentItem: BDialogLayout {

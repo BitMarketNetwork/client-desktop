@@ -13,7 +13,8 @@ from PySide2.QtQml import \
 from PySide2.QtQuick import QQuickWindow
 from PySide2.QtQuickControls2 import QQuickStyle
 
-from .dialogs import BAlphaDialog, BQuitDialog, DialogManager
+from .dialogs import DialogManager
+from .dialogs.basic import BAlphaDialog, BQuitDialog
 from .models.clipboard import ClipboardModel
 from .models.coin import CoinListModel
 from .models.debug import DebugModel
@@ -21,6 +22,7 @@ from .models.factory import ModelsFactory
 from .models.key_store import KeyStoreModel
 from .models.settings import SettingsModel
 from ..gui import GuiApplication
+from ...crypto.password import PasswordStrength
 from ...network.access_manager import NetworkAccessManager
 from ...resources import Resources
 from ...version import Gui
@@ -128,7 +130,7 @@ class QmlContext(QObject):
 
     @QSlot()
     def onCompleted(self) -> None:
-        self._dialog_manager.open(BAlphaDialog)
+        BAlphaDialog(self._dialog_manager).open()
         self._application.show()
 
     # noinspection PyTypeChecker
@@ -143,7 +145,7 @@ class QmlContext(QObject):
     @QSlot()
     def onQuitRequest(self) -> None:
         self._application.show(True)
-        self._dialog_manager.open(BQuitDialog)
+        BQuitDialog(self._dialog_manager).open()
 
     @QSlot(int)
     def exit(self, code: int) -> None:
@@ -176,3 +178,9 @@ class QmlContext(QObject):
     @QProperty(QObject, constant=True)
     def debug(self) -> DebugModel:
         return self._debug_model
+
+    # TODO PasswordModel
+    # noinspection PyTypeChecker
+    @QSlot(str, result=int)
+    def calcPasswordStrength(self, password: str) -> int:
+        return PasswordStrength(password).calc()

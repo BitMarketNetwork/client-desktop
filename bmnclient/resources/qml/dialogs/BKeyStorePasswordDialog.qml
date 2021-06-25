@@ -6,23 +6,6 @@ BPasswordDialog {
 
     signal resetWalletAccepted
 
-    destroyOnClose: false
-
-    onPasswordAccepted: {
-        if (!BBackend.keyStore.open(password)) {
-            let dialog = _applicationManager.createMessageDialog(qsTr("Wrong password."))
-            dialog.onClosed.connect(_base.open)
-            dialog.open()
-            return
-        }
-        autoDestroy()
-        passwordReady()
-    }
-
-    onRejected: {
-        autoDestroy()
-    }
-
     BDialogSeparator {}
     BDialogDescription {
         text:
@@ -30,20 +13,7 @@ BPasswordDialog {
             + " <a href=\"#\">" + qsTr("Reset wallet") + "</a>"
         onLinkActivated: {
             _base.close()
-
-            let dialog = _applicationManager.createMessageDialog(
-                    qsTr(
-                        "This will destroy all saved information and you can lose your money!\n"
-                        + "Please make sure you remember the seed phrase.\n\n"
-                        + "Reset?"),
-                    BMessageDialog.Type.AskYesNo)
-            dialog.onAccepted.connect(function () {
-                BBackend.keyStore.reset() // TODO if failed?
-                _base.autoDestroy()
-                _base.resetWalletAccepted()
-            })
-            dialog.onRejected.connect(_base.open)
-            dialog.open()
+            _base.resetWalletAccepted()
         }
     }
 }

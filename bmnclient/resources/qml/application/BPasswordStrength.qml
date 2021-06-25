@@ -28,7 +28,7 @@ QtObject {
     }
 
     function getIndex(password) {
-        return password.length > 0 ? BBackend.keyStore.calcPasswordStrength(password) : 0
+        return password.length > 0 ? BBackend.calcPasswordStrength(password) : 0
     }
 
     function isAcceptable(index) {
