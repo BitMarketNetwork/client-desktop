@@ -324,7 +324,9 @@ class CoreApplication(QObject):
             self._language.name)
         self._language.install()
 
-    def _onKeyStoreOpen(self, root_node: HdNode) -> None:
+    def _onKeyStoreOpen(self, root_node: Optional[HdNode]) -> None:
+        if root_node is None:
+            return
         assert not self._database.isLoaded
 
         for coin in self._coin_list:

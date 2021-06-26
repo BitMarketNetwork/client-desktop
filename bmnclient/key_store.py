@@ -215,7 +215,7 @@ class KeyStore(_KeyStoreSeed):
             self,
             application: CoreApplication,
             *,
-            open_callback: Callable[[HdNode], None],
+            open_callback: Callable[[Optional[HdNode]], None],
             reset_callback: Callable[[], None]) -> None:
         super().__init__(application)
         self._user_config_reset_list[UserConfigKey.KEY_STORE_VALUE] = None
@@ -262,8 +262,7 @@ class KeyStore(_KeyStoreSeed):
             if not value or not self._loadSecretStoreValue(value):
                 return False
             root_node = self._deriveRootHdNodeFromSeed()
-            if root_node is not None:
-                self._open_callback(root_node)
+            self._open_callback(root_node)
         return True
 
     def saveSeed(self, language: str, phrase: str) -> bool:
