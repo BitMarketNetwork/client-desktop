@@ -2,9 +2,7 @@ import "../application"
 import "../basiccontrols"
 
 BDialog {
-    id: _base
     default property alias children: _layout.children
-
     signal passwordAccepted(string password)
 
     title: qsTr("Input password")

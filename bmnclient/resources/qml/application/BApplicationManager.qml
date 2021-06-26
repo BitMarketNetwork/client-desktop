@@ -1,9 +1,4 @@
-import QtQml 2.15
 import QtQuick 2.15
-import QtQuick.Window 2.15
-import "../application"
-import "../basiccontrols"
-import "../dialogs"
 
 QtObject {
     property var openedDialogs: ({})
@@ -14,7 +9,7 @@ QtObject {
         function onOpenDialog(qml_name, options) {
             let dialog = createDialog(qml_name, options["properties"])
 
-            dialog.Component.onDestruction.connect(function() {
+            dialog.Component.onDestruction.connect(function () {
                 target.onDestruction(options["id"])
             })
 
@@ -65,33 +60,10 @@ QtObject {
                 if (openedDialogs[name] === dialog) {
                     delete openedDialogs[name]
                 }
-            } catch(e) {}
+            } catch (e) {}
         })
 
         return dialog
-    }
-
-    function createMessageDialog(text, type) {
-        let dialog = createDialog(
-                "BMessageDialog", {
-                    "text": text,
-                    "type": !type ? BMessageDialog.Type.Information : type
-                })
-        return dialog
-    }
-
-    function openRevealSeedPharseDialog() { // TODO create dialogs/*.qml file
-        let passwordDialog = createDialog("BPasswordDialog", {})
-        passwordDialog.onPasswordAccepted.connect(function (password) {
-            let dialog = createDialog(
-                    "BSeedPhraseDialog", {
-                        "type": BSeedPhraseDialog.Type.Reveal,
-                        "seedPhraseText": BBackend.keyStore.revealSeedPhrase(password),
-                        "readOnly": !BBackend.debug.isEnabled
-                    })
-            dialog.open()
-        })
-        passwordDialog.open()
     }
 
     function popupDebugMenu() {
@@ -103,7 +75,7 @@ QtObject {
                 })
                 menu.popup()
             }
-         }
+        }
     }
 
     function calcPopupPosition(parent, popupWidth, popupHeight) {

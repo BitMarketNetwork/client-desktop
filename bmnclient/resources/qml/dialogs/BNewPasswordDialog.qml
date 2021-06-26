@@ -4,7 +4,6 @@ import "../basiccontrols"
 
 BDialog {
     id: _base
-
     signal passwordAccepted(string password)
     property var strength: BBackend.password.calcStrength("")
 

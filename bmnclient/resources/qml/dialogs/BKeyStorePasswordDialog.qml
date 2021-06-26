@@ -1,9 +1,7 @@
-import "../application"
 import "../basiccontrols"
 
 BPasswordDialog {
     id: _base
-
     signal resetWalletAccepted
 
     BDialogSeparator {}

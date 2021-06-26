@@ -8,7 +8,7 @@ BDialog {
     readonly property string acceptDelayText: BCommon.button.acceptRole + " (%1)"
     readonly property int acceptDelay: BBackend.debug.isEnabled ? 1 : 10
 
-    title: // TODO move to MessageDialog
+    title:
         "<font color=\"%1\">".arg(Material.color(Material.Red))
         + qsTr("IMPORTANT NOTE")
         + "</font>"

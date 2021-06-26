@@ -4,7 +4,6 @@ import "../basiccontrols"
 
 BDialog {
     id: _base
-
     property int type: BMessageDialog.Type.Information
     property alias text: _message.text
 
