@@ -18,6 +18,8 @@ if TYPE_CHECKING:
 
 class AbstractDialog(QObject):
     _QML_NAME: Optional[str] = None
+    forceActiveFocus = QSignal()
+    reject = QSignal()
 
     def __init__(
             self,
@@ -26,7 +28,9 @@ class AbstractDialog(QObject):
             title: Optional[str] = None) -> None:
         super().__init__()
         self._manager = manager
-        self._qml_properties: QmlProperties = {}
+        self._qml_properties: QmlProperties = {
+            "context": self
+        }
 
         if title is not None:
             self._qml_properties["title"] = title

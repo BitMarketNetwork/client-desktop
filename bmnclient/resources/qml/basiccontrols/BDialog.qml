@@ -1,7 +1,11 @@
+import QtQuick 2.15
 import QtQuick.Controls 2.15
 
 Dialog {
+    id: _base
+
     property bool dynamicallyCreated: false
+    property var context // ui.qml.dialogs.AbstractDialog
 
     closePolicy: Dialog.CloseOnEscape
 
@@ -32,4 +36,20 @@ Dialog {
 
     // TODO Keys.onEnterPressed:
     // TODO Keys.onReturnPressed:
+
+    // connections with ui.qml.dialogs.AbstractDialog
+    Loader {
+        active: _base.context !== null
+        sourceComponent: Connections {
+            target: _base.context
+
+            function onForceActiveFocus() {
+                _base.forceActiveFocus()
+            }
+
+            function onReject() {
+                _base.reject()
+            }
+        }
+    }
 }
