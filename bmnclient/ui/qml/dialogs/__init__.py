@@ -19,10 +19,17 @@ if TYPE_CHECKING:
 class AbstractDialog(QObject):
     _QML_NAME: Optional[str] = None
 
-    def __init__(self, manager: DialogManager) -> None:
+    def __init__(
+            self,
+            manager: DialogManager,
+            *,
+            title: Optional[str] = None) -> None:
         super().__init__()
         self._manager = manager
         self._qml_properties: QmlProperties = {}
+
+        if title is not None:
+            self._qml_properties["title"] = title
 
     @property
     def qmlName(self) -> Optional[str]:
@@ -50,10 +57,8 @@ class AbstractMessageDialog(AbstractDialog):
             type_: Type = Type.Information,
             title: Optional[str] = None,
             text: str) -> None:
-        super().__init__(manager)
+        super().__init__(manager, title=title)
         self._qml_properties["type"] = type_.value
-        if title is not None:
-            self._qml_properties["title"] = title
         self._qml_properties["text"] = text
 
 

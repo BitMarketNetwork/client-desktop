@@ -25,7 +25,7 @@ def createKeyStorePasswordDialog(manager: DialogManager) -> AbstractDialog:
         return BKeyStoreNewPasswordDialog(manager)
 
 
-class BKeyStoreInvalidPasswordDialog(AbstractMessageDialog):
+class InvalidPasswordDialog(AbstractMessageDialog):
     def __init__(self, manager: DialogManager):
         super().__init__(
             manager,
@@ -35,7 +35,7 @@ class BKeyStoreInvalidPasswordDialog(AbstractMessageDialog):
         createKeyStorePasswordDialog(self._manager).open()
 
 
-class BKeyStoreConfirmResetWalletDialog(AbstractMessageDialog):
+class ConfirmResetWalletDialog(AbstractMessageDialog):
     def __init__(self, manager: DialogManager):
         text = QObject().tr(
             "This will destroy all saved information and you can lose your "
@@ -67,12 +67,12 @@ class BKeyStoreNewPasswordDialog(AbstractDialog):
 class BKeyStorePasswordDialog(AbstractDialog):
     def onPasswordAccepted(self, password: str) -> None:
         if not self._manager.context.keyStore.open(password):
-            BKeyStoreInvalidPasswordDialog(self._manager).open()
+            InvalidPasswordDialog(self._manager).open()
         elif not self._manager.context.keyStore.hasSeed:
             BNewSeedDialog(self._manager).open()
 
     def onResetWalletAccepted(self) -> None:
-        BKeyStoreConfirmResetWalletDialog(self._manager).open()
+        ConfirmResetWalletDialog(self._manager).open()
 
     def onRejected(self) -> None:
         self._manager.context.exit(0)
