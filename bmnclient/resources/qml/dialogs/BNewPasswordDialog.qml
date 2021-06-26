@@ -6,6 +6,7 @@ BDialog {
     id: _base
 
     signal passwordAccepted(string password)
+    property var strength: BBackend.password.calcStrength("")
 
     title: qsTr("Set up new password")
     contentItem: BDialogLayout {
@@ -19,15 +20,15 @@ BDialog {
             echoMode: _showPassword.checked ? BTextField.Normal : BTextField.Password
             placeholderText: qsTr("Enter your password")
             onTextChanged: {
-                let index = BPasswordStrength.getIndex(text)
-                _strength.advancedText = BPasswordStrength.getString(index)
-                _strength.status = BPasswordStrength.getValidMode(index)
+                strength = BBackend.password.calcStrength(text)
                 updatePasswordState()
             }
         }
         BDialogValidLabel {
             id: _strength
-            maxAdvancedTextLength: BPasswordStrength.getMaxStringLength()
+            maxAdvancedTextLength: BBackend.password.maxStrengthNameLength
+            advancedText: _base.strength["name"]
+            status: _base.strength["status"]
         }
 
         BDialogPromptLabel {
@@ -85,7 +86,7 @@ BDialog {
     function updatePasswordState() {
         if (_password1.text.length > 0 && _password1.text === _password2.text) {
             _confirmed.status = BCommon.ValidStatus.Accept
-            _acceptButton.enabled = BPasswordStrength.isAcceptable(BPasswordStrength.getIndex(_password1.text))
+            _acceptButton.enabled = strength["isAcceptable"]
         } else {
             if (_password1.text.length === 0 && _password2.text.length === 0) {
                 _confirmed.status = BCommon.ValidStatus.Unset

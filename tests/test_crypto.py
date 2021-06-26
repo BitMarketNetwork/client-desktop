@@ -81,7 +81,7 @@ class TestSecretStore(TestCase):
 
 
 class TestPassword(TestCase):
-    def test_char_groups(self) -> None:
+    def test_groups(self) -> None:
         password_list = (
             ("",  {
                 "upper": False,
@@ -154,23 +154,24 @@ class TestPassword(TestCase):
                 "numbers": False,
                 "special": True}),
         )
-        for v in password_list:
-            # noinspection PyProtectedMember
-            s = PasswordStrength(v[0])._getCharGroups()
-            self.assertEqual(s, v[1])
+        for password, groups in password_list:
+            s = PasswordStrength(password)
+            self.assertEqual(groups, s.groups)
 
     def test_strength(self) -> None:
         password_list = (
-            ("1", 1),
-            ("111122223333", 2),
-            ("12345678", 1),
-            ("1234567a", 2),
-            ("123456aA", 3),
-            ("12345aA@", 4),
-            ("12345aA@@@@@@@@@@", 5),
-            ("1234@aABCDEFGHIJ", 5),
-            ("1234@aABCDEFGHIJK", 6),
+            ("", 0, False),
+            ("1", 1, False),
+            ("111122223333", 2, False),
+            ("12345678", 1, False),
+            ("1234567a", 2, False),
+            ("123456aA", 3, False),
+            ("12345aA@", 4, True),
+            ("12345aA@@@@@@@@@@", 5, True),
+            ("1234@aABCDEFGHIJ", 5, True),
+            ("1234@aABCDEFGHIJK", 6, True),
         )
-        for v in password_list:
-            s = PasswordStrength(v[0]).calc()
-            self.assertEqual(s, v[1])
+        for password, score, is_acceptable in password_list:
+            s = PasswordStrength(password)
+            self.assertEqual(score, s.score)
+            self.assertEqual(is_acceptable, s.isAcceptable)

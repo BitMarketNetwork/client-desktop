@@ -20,9 +20,9 @@ from .models.coin import CoinListModel
 from .models.debug import DebugModel
 from .models.factory import ModelsFactory
 from .models.key_store import KeyStoreModel
+from .models.password import PasswordModel
 from .models.settings import SettingsModel
 from ..gui import GuiApplication
-from ...crypto.password import PasswordStrength
 from ...network.access_manager import NetworkAccessManager
 from ...resources import Resources
 from ...version import Gui
@@ -127,6 +127,7 @@ class QmlContext(QObject):
         self._settings_model = SettingsModel(self._application)
         self._dialog_manager = DialogManager(self)
         self._debug_model = DebugModel(self._application)
+        self._password_model = PasswordModel()
 
     @QSlot()
     def onCompleted(self) -> None:
@@ -179,8 +180,6 @@ class QmlContext(QObject):
     def debug(self) -> DebugModel:
         return self._debug_model
 
-    # TODO PasswordModel
-    # noinspection PyTypeChecker
-    @QSlot(str, result=int)
-    def calcPasswordStrength(self, password: str) -> int:
-        return PasswordStrength(password).calc()
+    @QProperty(QObject, constant=True)
+    def password(self) -> PasswordModel:
+        return self._password_model
