@@ -2,9 +2,10 @@ import "../application"
 import "../basiccontrols"
 
 BDialog {
-    id: _base
+    signal generateAccepted
+    signal restoreAccepted
+    signal restoreBackupAccepted
 
-    destroyOnClose: false
     title: qsTr("Master key generation")
 
     contentItem: BDialogLayout {
@@ -41,85 +42,11 @@ BDialog {
 
     onAccepted: {
         if (_generateButton.checked) {
-            _generateDialog.open()
+            generateAccepted()
         } else if (_restoreButton.checked) {
-            _restoreDialog.open()
+            restoreAccepted()
         } else if (_restoreBackupButton.checked) {
-            // TODO Segmentation fault
-            if (!BBackend.keyStore.importWallet()) {
-                // TODO
-                //console.log("Import error")
-                open()
-            } else {
-                autoDestroy()
-            }
-        } else {
-            autoDestroy()
-        }
-    }
-
-    onRejected: {
-        autoDestroy()
-    }
-
-    BSeedPhraseDialog {
-        id: _generateDialog
-        type: BSeedPhraseDialog.Type.Generate
-        readOnly: !BBackend.debug.isEnabled
-        enableAccept: true
-
-        onAccepted: {
-            _validateDialog.open()
-        }
-        onRejected: {
-            _base.open()
-        }
-    }
-
-    BSeedPhraseDialog {
-        id: _validateDialog
-        type: BSeedPhraseDialog.Type.Validate
-        readOnly: false
-
-        onSeedPhraseTextChanged: {
-            enableAccept = BBackend.keyStore.validateGenerateSeedPhrase(seedPhraseText)
-        }
-        onAccepted: {
-            if (!BBackend.keyStore.finalizeGenerateSeedPhrase(seedPhraseText)) {
-                let dialog = _applicationManager.createMessageDialog(qsTr("Wrong seed pharse."))
-                dialog.onClosed.connect(_validateDialog.open)
-                dialog.open()
-            } else {
-                _base.autoDestroy()
-            }
-        }
-        onRejected: {
-            _generateDialog.open()
-        }
-    }
-
-    BSeedPhraseDialog {
-        id: _restoreDialog
-        type: BSeedPhraseDialog.Type.Restore
-        readOnly: false
-
-        onAboutToShow: {
-            BBackend.keyStore.prepareRestoreSeedPhrase(null)
-        }
-        onSeedPhraseTextChanged: {
-            enableAccept = BBackend.keyStore.validateRestoreSeedPhrase(seedPhraseText)
-        }
-        onAccepted: {
-            if (!BBackend.keyStore.finalizeRestoreSeedPhrase(seedPhraseText)) {
-                let dialog = _applicationManager.createMessageDialog(qsTr("Invalid seed pharse."))
-                dialog.onClosed.connect(_restoreDialog.open)
-                dialog.open()
-            } else {
-                _base.autoDestroy()
-            }
-        }
-        onRejected: {
-            _base.open()
+            restoreBackupAccepted()
         }
     }
 }

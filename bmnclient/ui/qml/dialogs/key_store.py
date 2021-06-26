@@ -79,10 +79,15 @@ class BKeyStorePasswordDialog(AbstractDialog):
 
 
 class BNewSeedDialog(AbstractDialog):
-    # TODO
-    pass
+    def onGenerateAccepted(self) -> None:
+        GenerateSeedPhraseDialog(self._manager).open()
 
+    def onRestoreAccepted(self) -> None:
+        RestoreSeedPhraseDialog(self._manager).open()
 
-#class BRevealSeedPhrasePasswordDialog(AbstractPasswordDialog):
-#    def onPasswordAccepted(self, password: str) -> None:
-#        print("HELLO", password)
+    def onRestoreBackupAccepted(self) -> None:
+        raise NotImplementedError
+
+    def onRejected(self) -> None:
+        self._manager.context.exit(0)
+
