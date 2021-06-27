@@ -4,6 +4,11 @@ import "../basiccontrols"
 
 BDialog {
     id: _base
+    property int type: BSeedPhraseDialog.Type.Generate
+    property bool readOnly: false
+    property bool enableAccept: false
+    readonly property string closeDelayText: BCommon.button.closeRole + " (%1)"
+    readonly property int closeDelay: 10
 
     enum Type {
         Generate,
@@ -11,14 +16,6 @@ BDialog {
         Restore,
         Reveal
     }
-
-    property int type: BSeedPhraseDialog.Type.Generate
-    property alias seedPhraseText: _seedPhrase.text
-    property bool readOnly: false
-    property bool enableAccept: false
-
-    readonly property string closeDelayText: BCommon.button.closeRole + " (%1)"
-    readonly property int closeDelay: 10
 
     title: {
         switch (type) {

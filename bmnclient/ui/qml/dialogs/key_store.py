@@ -91,6 +91,63 @@ class BNewSeedDialog(AbstractDialog):
     def onRejected(self) -> None:
         self._manager.context.exit(0)
 
+
+class AbstractSeedPhraseDialog(AbstractDialog):
+    _QML_NAME = "BSeedPhraseDialog"
+    _textChanged = QSignal()
+
+    class Type(IntEnum):
+        Generate: Final = 0
+        Validate: Final = 1
+        Restore: Final = 2
+        Reveal: Final = 3
+
+    def __init__(self, manager: DialogManager) -> None:
+        super().__init__(manager)
+        self._text = ""
+
+    @QProperty(str, notify=_textChanged)
+    def text(self) -> str:
+        return self._text
+
+    @text.setter
+    def _setText(self, value: str) -> None:
+        if self._text != value:
+            self._text = value
+            # noinspection PyUnresolvedReferences
+            self._textChanged.emit()
+
+
+class GenerateSeedPhraseDialog(AbstractSeedPhraseDialog):
+    def __init__(self, manager: DialogManager) -> None:
+        super().__init__(manager)
+        self._qml_properties["type"] = self.Type.Generate.value
+        self._qml_properties["enableAccept"] = True
+        self._child_dialog: Optional[BSeedSaltDialog] = None
+
+        if not self._manager.context.debug.isEnabled:
+            self._qml_properties["readOnly"] = True
+
+    def _openSaltDialog(self) -> None:
+        self._child_dialog = BSeedSaltDialog(self._manager, self)
+        self._child_dialog.open()
+
+    def onOpened(self) -> None:
+        self._openSaltDialog()
+
+    def onReset(self) -> None:
+        self._setText("")
+        self._openSaltDialog()
+
+    def onAccepted(self) -> None:
+        ValidateSeedPhraseDialog(self._mamager).open()
+
+    def onRejected(self) -> None:
+        if self._child_dialog is not None:
+            self._child_dialog.close.emit()
+        BNewSeedDialog(self._manager).open()
+
+
 class BSeedSaltDialog(AbstractDialog):
     def __init__(
             self,
