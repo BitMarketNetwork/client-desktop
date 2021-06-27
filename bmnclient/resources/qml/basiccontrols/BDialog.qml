@@ -49,6 +49,9 @@ Dialog {
             function onReject() {
                 _base.reject()
             }
+            function onClose() {
+                _base.close()
+            }
         }
     }
 }

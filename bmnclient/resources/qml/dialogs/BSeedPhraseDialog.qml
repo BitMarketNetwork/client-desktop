@@ -55,6 +55,7 @@ BDialog {
             readOnly: _base.readOnly
             selectByMouse: !_base.readOnly
             wrapMode: TextEdit.WordWrap
+            text: _base.context.text
 
             font.bold: true
             font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.huge
@@ -121,14 +122,13 @@ BDialog {
         }
     }
 
-    onAboutToShow: {
+    onOpened: {
         _seedPhrase.forceActiveFocus()
+    }
+
+    onAboutToShow: {
         switch (type) {
         case BSeedPhraseDialog.Type.Generate:
-            if (!_saltDialogLoader.active) {
-                _saltDialogLoader.active = true
-                Qt.callLater(_saltDialogLoader.item.open)
-            }
             break
         case BSeedPhraseDialog.Type.Validate:
         case BSeedPhraseDialog.Type.Restore:
@@ -143,7 +143,6 @@ BDialog {
     onReset: {
         switch (type) {
         case BSeedPhraseDialog.Type.Generate:
-            _saltDialogLoader.item.open()
             break
         case BSeedPhraseDialog.Type.Validate:
         case BSeedPhraseDialog.Type.Restore:
@@ -151,31 +150,6 @@ BDialog {
             break
         case BSeedPhraseDialog.Type.Reveal:
             break
-        }
-    }
-
-    onRejected: {
-        _saltDialogLoader.active = false
-    }
-
-    Loader {
-        id: _saltDialogLoader
-        active: false
-        sourceComponent: BSeedSaltDialog {
-            property bool used: false
-
-            onAboutToShow: {
-                _seedPhrase.text = BBackend.keyStore.prepareGenerateSeedPhrase(null)
-            }
-            onUpdateSalt: {
-                _seedPhrase.text = BBackend.keyStore.updateGenerateSeedPhrase(value)
-            }
-            onAccepted: {
-                _seedPhrase.forceActiveFocus()
-            }
-            onRejected: {
-                _base.reject()
-            }
         }
     }
 

@@ -18,8 +18,10 @@ if TYPE_CHECKING:
 
 class AbstractDialog(QObject):
     _QML_NAME: Optional[str] = None
+
     forceActiveFocus = QSignal()
     reject = QSignal()
+    close = QSignal()
 
     def __init__(
             self,

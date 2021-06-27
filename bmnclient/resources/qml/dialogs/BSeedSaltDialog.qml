@@ -1,14 +1,12 @@
 import QtQuick 2.15
 import QtQuick.Controls.Material 2.15
-import QtQuick.Layouts 1.15
 import QtQuick.Particles 2.15
 import "../application"
 import "../basiccontrols"
 
 BDialog {
     id: _base
-    readonly property int stepCount: 500 + Math.random() * 501
-
+    property int stepCount
     signal updateSalt(string value)
 
     closePolicy: BDialog.NoAutoClose
@@ -29,15 +27,15 @@ BDialog {
             _base.saltStep(event.key)
         }
 
-        ColumnLayout {
+        BColumnLayout {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
 
             BLabel {
                 id: _label
-                Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-                Layout.fillWidth: true
+                BColumnLayout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+                BColumnLayout.fillWidth: true
                 horizontalAlignment: BLabel.AlignHCenter
                 wrapMode: BLabel.Wrap
                 font.bold: true
@@ -46,13 +44,13 @@ BDialog {
             }
             BProgressBar {
                 id: _progressBar
-                Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-                Layout.fillWidth: true
+                BColumnLayout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+                BColumnLayout.fillWidth: true
                 enabled: false
                 to: _base.stepCount
             }
             BButton {
-                Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+                BColumnLayout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
                 text: BCommon.button.cancelRole
                 onClicked: {
                     _base.reject()
@@ -94,16 +92,19 @@ BDialog {
     onAboutToShow: {
         _progressBar.value = 0
         _progressBar.enabled = true
+    }
+
+    onOpened: {
         _mouseArea.forceActiveFocus()
     }
 
     function saltStep(value) {
         if (_progressBar.enabled) {
-            _base.updateSalt("" + value)
+            updateSalt("" + value)
             if (_progressBar.value++ >= _progressBar.to) {
                 _progressBar.enabled = false
                 _progressBar.value = 0
-                Qt.callLater(_base.accept) // exectute after all updateSalt()
+                Qt.callLater(accept) // exectute after all updateSalt()
             }
         }
     }

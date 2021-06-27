@@ -91,3 +91,27 @@ class BNewSeedDialog(AbstractDialog):
     def onRejected(self) -> None:
         self._manager.context.exit(0)
 
+class BSeedSaltDialog(AbstractDialog):
+    def __init__(
+            self,
+            manager: DialogManager,
+            parent: GenerateSeedPhraseDialog) -> None:
+        super().__init__(manager)
+        self._qml_properties["stepCount"] = 500 + randint(1, 501)
+        self._parent = parent
+        self._generator = GenerateSeedPhrase(
+            self._manager.context.keyStore.native)
+
+    def onAboutToShow(self) -> None:
+        self._parent.text = self._generator.prepare()
+
+    def onUpdateSalt(self, value: str) -> None:
+        self._parent.text = self._generator.update(value)
+
+    def onAccepted(self) -> None:
+        self._parent.forceActiveFocus.emit()
+
+    def onRejected(self) -> None:
+        self._parent.reject.emit()
+
+
