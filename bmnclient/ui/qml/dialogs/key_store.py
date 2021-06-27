@@ -10,7 +10,7 @@ from PySide2.QtCore import \
     Signal as QSignal
 
 from . import AbstractDialog, AbstractMessageDialog, AbstractPasswordDialog
-from ....key_store import GenerateSeedPhrase
+from ....key_store import GenerateSeedPhrase, RestoreSeedPhrase
 
 if TYPE_CHECKING:
     from typing import Final, Optional
@@ -208,6 +208,37 @@ class ValidateSeedPhraseDialog(AbstractSeedPhraseDialog):
 
     def onRejected(self) -> None:
         GenerateSeedPhraseDialog(self._manager, self._generator).open()
+
+
+class RestoreSeedPhraseDialog(AbstractSeedPhraseDialog):
+    class InvalidSeedPhraseDialog(AbstractMessageDialog):
+        def __init__(self, manager: DialogManager):
+            super().__init__(
+                manager,
+                text=QObject().tr("Wrong seed phrase."))
+
+        def onClosed(self) -> None:
+            RestoreSeedPhraseDialog(self._manager).open()
+
+    def __init__(self, manager: DialogManager) -> None:
+        super().__init__(manager)
+        self._qml_properties["type"] = self.Type.Restore.value
+        self._qml_properties["readOnly"] = False
+        self._generator = RestoreSeedPhrase(
+                self._manager.context.keyStore.native)
+        self._generator.prepare()
+        self._current_phrase = ""
+
+    def onPhraseChanged(self, value: str) -> None:
+        self._current_phrase = value
+        self._setIsValid(self._generator.validate(self._current_phrase))
+
+    def onAccepted(self) -> None:
+        if not self._generator.finalize(self._current_phrase):
+            self.InvalidSeedPhraseDialog(self._manager).open()
+
+    def onRejected(self) -> None:
+        BNewSeedDialog(self._manager).open()
 
 
 class BSeedSaltDialog(AbstractDialog):
