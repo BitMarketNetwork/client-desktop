@@ -81,8 +81,4 @@ class GuiApplication(CoreApplication):
         else:
             icon = self._system_tray_icon.MessageIcon.INFORMATION
 
-        self._system_tray_icon.showMessage(
-            title,
-            text,
-            icon,
-            timeout * 10)
+        self._system_tray_icon.showMessage(title, text, icon, timeout)

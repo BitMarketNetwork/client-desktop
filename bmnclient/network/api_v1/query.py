@@ -143,6 +143,12 @@ class AbstractOffsetIteratorApiQuery(AbstractApiQuery):
                 and self._last_offset == other._last_offset
             )
 
+        def __hash__(self) -> int:
+            return hash((
+                self._first_offset,
+                self._last_offset
+            ))
+
         @property
         def firstOffset(self) -> str:
             return self._first_offset

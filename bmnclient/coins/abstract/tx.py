@@ -333,6 +333,6 @@ class _AbstractTx(Serializable):
 
     @staticmethod
     def toNameHuman(name: str) -> str:
-        if len(name) <= 4 * 2 + 3:
+        if len(name) <= 6 * 2 + 3:
             return name
-        return name[:4] + "..." + name[-4:]
+        return name[:6] + "..." + name[-6:]
