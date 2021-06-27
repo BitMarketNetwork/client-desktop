@@ -7,11 +7,13 @@ from PySide2.QtWidgets import QApplication
 
 from .system_tray import SystemTrayIcon
 from ..application import CoreApplication
+from ..version import Timer
 
 if TYPE_CHECKING:
     from typing import Callable, Iterable, Optional
     from PySide2.QtGui import QClipboard, QFont, QWindow
     from ..application import CommandLine
+    MessageType = CoreApplication.MessageType
 
 
 class GuiApplication(CoreApplication):
@@ -62,3 +64,25 @@ class GuiApplication(CoreApplication):
                 window.requestActivate()
             else:
                 window.setVisible(False)
+
+    def showMessage(
+            self,
+            *,
+            type_: MessageType = CoreApplication.MessageType.INFORMATION,
+            title: Optional[str] = None,
+            text: str,
+            timeout: int = Timer.UI_MESSAGE_TIMEOUT) -> None:
+        if type_ == CoreApplication.MessageType.INFORMATION:
+            icon = self._system_tray_icon.MessageIcon.INFORMATION
+        elif type_ == CoreApplication.MessageType.WARNING:
+            icon = self._system_tray_icon.MessageIcon.WARNING
+        elif type_ == CoreApplication.MessageType.ERROR:
+            icon = self._system_tray_icon.MessageIcon.ERROR
+        else:
+            icon = self._system_tray_icon.MessageIcon.INFORMATION
+
+        self._system_tray_icon.showMessage(
+            title,
+            text,
+            icon,
+            timeout * 10)

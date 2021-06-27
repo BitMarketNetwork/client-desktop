@@ -9,6 +9,7 @@ from PySide2.QtWidgets import QMenu, QSystemTrayIcon
 
 from ..logger import Logger
 from ..os_environment import Platform
+from ..version import Timer
 
 if TYPE_CHECKING:
     from .gui import GuiApplication
@@ -90,15 +91,16 @@ class SystemTrayIcon(QObject):
 
     def showMessage(
             self,
-            message: str,
+            title: str,
+            text: str,
             icon: MessageIcon = MessageIcon.INFORMATION,
-            timeout: int = 10 * 1000) -> None:
+            timeout: int = Timer.UI_MESSAGE_TIMEOUT) -> None:
         if not self._enable_message_icon:
             icon = self.MessageIcon.NONE
 
-        self._logger.debug("Message (%s): %s.", str(icon), message)
+        self._logger.debug("Message (%s):\n\t%s\n\t%s", str(icon), title, text)
         self._icon.showMessage(
-            self._application.title,
-            message,
+            title,
+            text,
             icon.value,
             timeout)

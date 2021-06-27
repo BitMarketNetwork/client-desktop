@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from argparse import ArgumentParser
+from enum import auto, Enum
 from pathlib import PurePath
 from typing import TYPE_CHECKING
 
@@ -29,7 +30,7 @@ from .network.services.fiat_rate import FiatRateServiceList
 from .os_environment import PlatformPaths
 from .resources import Resources
 from .signal_handler import SignalHandler
-from .version import Product, ProductPaths, Server
+from .version import Product, ProductPaths, Server, Timer
 
 if TYPE_CHECKING:
     from typing import Callable, List, Optional, Type, Union
@@ -122,6 +123,11 @@ class CommandLine:
 
 
 class CoreApplication(QObject):
+    class MessageType(Enum):
+        INFORMATION = auto()
+        WARNING = auto()
+        ERROR = auto()
+
     def __init__(
             self,
             *,
@@ -323,6 +329,15 @@ class CoreApplication(QObject):
             "Setting translation '%s'.",
             self._language.name)
         self._language.install()
+
+    def showMessage(
+            self,
+            *,
+            type_: MessageType = MessageType.INFORMATION,
+            title: Optional[str] = None,
+            text: str,
+            timeout: int = Timer.UI_MESSAGE_TIMEOUT) -> None:
+        raise NotImplementedError
 
     def _onKeyStoreOpen(self, root_node: Optional[HdNode]) -> None:
         if root_node is None:
