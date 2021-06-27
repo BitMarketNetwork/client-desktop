@@ -21,38 +21,31 @@ BMenu {
         }
     }
     BMenu {
-        title: "Notification test"
-        BMenuItem {
-            text: "Icon: none"
-            onTriggered: {
-                BBackend.debug.notify(notificationMessage, "n")
-            }
-        }
+        title: "Show message test"
         BMenuItem {
             text: "Icon: information"
             onTriggered: {
-                BBackend.debug.notify(notificationMessage, "i")
+                BBackend.debug.showMessage("i", notificationMessage)
             }
         }
         BMenuItem {
             text: "Icon: warning"
             onTriggered: {
-                BBackend.debug.notify(notificationMessage, "w")
+                BBackend.debug.showMessage("w", notificationMessage)
             }
         }
         BMenuItem {
             text: "Icon: error"
             onTriggered: {
-                BBackend.debug.notify(notificationMessage, "e")
+                BBackend.debug.showMessage("e", notificationMessage)
             }
         }
         BMenuItem {
             text: "Icon: all"
             onTriggered: {
-                BBackend.debug.notify(notificationMessage, "n")
-                BBackend.debug.notify(notificationMessage, "i")
-                BBackend.debug.notify(notificationMessage, "w")
-                BBackend.debug.notify(notificationMessage, "e")
+                BBackend.debug.showMessage("i", notificationMessage)
+                BBackend.debug.showMessage("w", notificationMessage)
+                BBackend.debug.showMessage("e", notificationMessage)
             }
         }
     }

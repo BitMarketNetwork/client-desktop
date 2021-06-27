@@ -31,15 +31,17 @@ class DebugModel(QObject):
         os.kill(os.getpid(), signal)
 
     @QSlot(str, str)
-    def notify(self, message: str, icon: str) -> None:
-        if icon == "n":
-            icon = self._application.systemTrayIcon.MessageIcon.NONE
-        elif icon == "i":
-            icon = self._application.systemTrayIcon.MessageIcon.INFORMATION
-        elif icon == "w":
-            icon = self._application.systemTrayIcon.MessageIcon.WARNING
-        elif icon == "e":
-            icon = self._application.systemTrayIcon.MessageIcon.ERROR
+    def showMessage(self, type_: str, text: str) -> None:
+        if type_ == "i":
+            type_ = self._application.MessageType.INFORMATION
+        elif type_ == "w":
+            type_ = self._application.MessageType.WARNING
+        elif type_ == "e":
+            type_ = self._application.MessageType.ERROR
         else:
-            icon = self._application.systemTrayIcon.MessageIcon.INFORMATION
-        self._application.systemTrayIcon.showMessage(message, icon)
+            type_ = self._application.MessageType.INFORMATION
+
+        self._application.showMessage(
+            type_=type_,
+            title="showMessage() Test",
+            text=text)

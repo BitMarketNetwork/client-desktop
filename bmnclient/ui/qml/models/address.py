@@ -23,6 +23,8 @@ if TYPE_CHECKING:
     from .. import QmlApplication
     from ....coins.abstract.coin import AbstractCoin
 
+_TX_NOTIFIED_LIST = []  # TODO tmp
+
 
 class AbstractAddressStateModel(AbstractCoinStateModel):
     def __init__(
@@ -158,9 +160,31 @@ class AddressModel(AddressInterface, AbstractModel):
         super().beforeAppendTx(tx)
 
     def afterAppendTx(self, tx: AbstractCoin.Tx) -> None:
+        global _TX_NOTIFIED_LIST
         self._tx_list_model.unlock()
+
+        if tx.rowId is None and tx.name not in _TX_NOTIFIED_LIST:
+            _TX_NOTIFIED_LIST.append(tx.name)
+            tx_model = tx.model
+
+            title = QObject().tr("New {coin_name} transaction")
+            title = title.format(coin_name=tx.coin.fullName)
+
+            text = QObject().tr(
+                "{tx_name}\n{amount} {unit} / {fiat_amount} {fiat_unit}")
+            text = text.format(
+                tx_name=tx_model.nameHuman,
+                amount=tx_model.amount.valueHuman,
+                unit=tx_model.amount.unit,
+                fiat_amount=tx_model.amount.fiatValueHuman,
+                fiat_unit=tx_model.amount.fiatUnit)
+
+            self._application.showMessage(
+                type_=self._application.MessageType.INFORMATION,
+                title=title,
+                text=text)
+
         super().afterAppendTx(tx)
-        # self._application.uiManager.process_incoming_tx(tx)
 
 
 class AddressListModel(AbstractListModel):
