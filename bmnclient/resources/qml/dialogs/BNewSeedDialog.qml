@@ -6,7 +6,7 @@ BDialog {
     signal restoreAccepted
     signal restoreBackupAccepted
 
-    title: qsTr("Master key generation")
+    title: qsTr("Root Key generation")
 
     contentItem: BDialogLayout {
         columns: 1
@@ -15,12 +15,12 @@ BDialog {
 
         BDialogInputRadioButton {
             id: _generateButton
-            text: qsTr("Generate new master key")
+            text: qsTr("Generate new Root Key")
             checked: true
         }
         BDialogInputRadioButton {
             id: _restoreButton
-            text: qsTr("Restore from seed phrase")
+            text: qsTr("Restore Root Key from Seed Phrase")
         }
         BDialogInputRadioButton {
             id: _restoreBackupButton

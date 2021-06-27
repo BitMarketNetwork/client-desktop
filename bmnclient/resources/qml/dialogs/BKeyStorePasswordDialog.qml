@@ -4,6 +4,8 @@ BPasswordDialog {
     id: _base
     signal resetWalletAccepted
 
+    title: qsTr("Open Key Store")
+
     BDialogSeparator {}
     BDialogDescription {
         text:

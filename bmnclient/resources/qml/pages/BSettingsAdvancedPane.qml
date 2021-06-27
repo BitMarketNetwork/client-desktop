@@ -99,7 +99,7 @@ BPane {
             BLayout.alignment:
                 (_applicationStyle.dialogInputAlignment & ~Qt.AlignHorizontal_Mask)
                 | Qt.AlignHCenter
-            text: qsTr("Reveal seed phrase...")
+            text: qsTr("Reveal Seed Phrase...")
             onClicked: {
                 BBackend.keyStore.onRevealSeedPhrase()
             }

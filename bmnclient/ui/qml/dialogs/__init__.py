@@ -4,6 +4,7 @@ from enum import IntEnum
 from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
+    Property as QProperty, \
     QObject, \
     Signal as QSignal, \
     Slot as QSlot
@@ -23,19 +24,26 @@ class AbstractDialog(QObject):
     reject = QSignal()
     close = QSignal()
 
+    _titleChanged = QSignal()
+
     def __init__(
             self,
             manager: DialogManager,
+            parent: Optional[AbstractDialog] = None,
             *,
             title: Optional[str] = None) -> None:
         super().__init__()
         self._manager = manager
+        self._parent = parent
         self._qml_properties: QmlProperties = {
             "context": self
         }
 
         if title is not None:
             self._qml_properties["title"] = title
+            self.__title = title
+        else:
+            self.__title = ""
 
     @property
     def qmlName(self) -> Optional[str]:
@@ -44,6 +52,17 @@ class AbstractDialog(QObject):
     @property
     def qmlProperties(self) -> QmlProperties:
         return self._qml_properties
+
+    @QProperty(str, notify=_titleChanged)
+    def title(self) -> str:
+        return self.__title
+
+    @title.setter
+    def _setTitle(self, value: str) -> None:
+        if self.__title != value:
+            self.__title = value
+            # noinspection PyUnresolvedReferences
+            self._titleChanged.emit()
 
     def open(self) -> None:
         self._manager.open(self)
@@ -59,11 +78,12 @@ class AbstractMessageDialog(AbstractDialog):
     def __init__(
             self,
             manager: DialogManager,
+            parent: Optional[AbstractDialog] = None,
             *,
             type_: Type = Type.Information,
             title: Optional[str] = None,
             text: str) -> None:
-        super().__init__(manager, title=title)
+        super().__init__(manager, parent, title=title)
         self._qml_properties["type"] = type_.value
         self._qml_properties["text"] = text
 

@@ -10,7 +10,7 @@ from PySide2.QtCore import \
     Signal as QSignal
 
 from . import AbstractDialog, AbstractMessageDialog, AbstractPasswordDialog
-from ....key_store import GenerateSeedPhrase, RestoreSeedPhrase
+from ....key_store import GenerateSeedPhrase, KeyStoreError, RestoreSeedPhrase
 
 if TYPE_CHECKING:
     from typing import Final, Optional
@@ -19,63 +19,98 @@ if TYPE_CHECKING:
 
 def createKeyStorePasswordDialog(manager: DialogManager) -> AbstractDialog:
     if manager.context.keyStore.isExists:
-        return BKeyStorePasswordDialog(manager)
+        return KeyStorePasswordDialog(manager)
     else:
-        return BKeyStoreNewPasswordDialog(manager)
+        return KeyStoreNewPasswordDialog(manager)
 
 
-class BKeyStoreNewPasswordDialog(AbstractDialog):
-    def onPasswordAccepted(self, password: str) -> None:
-        self._manager.context.keyStore.create(password)  # TODO if failed
+class KeyStoreErrorDialog(AbstractMessageDialog):
+    def __init__(
+            self,
+            manager: DialogManager,
+            parent: AbstractDialog,
+            *,
+            text: str = QObject().tr("Unknown Key Store error.")):
+        super().__init__(
+            manager,
+            parent,
+            title=parent.title,  # noqa
+            text=text)
+
+    def onClosed(self) -> None:
         createKeyStorePasswordDialog(self._manager).open()
+
+
+class KeyStoreNewPasswordDialog(AbstractDialog):
+    _QML_NAME = "BKeyStoreNewPasswordDialog"
+
+    def __init__(self, manager: DialogManager) -> None:
+        super().__init__(manager)
+
+    def onPasswordAccepted(self, password: str) -> None:
+        if not self._manager.context.keyStore.create(password):
+            KeyStoreErrorDialog(self._manager, self).open()
+        else:
+            createKeyStorePasswordDialog(self._manager).open()
 
     def onRejected(self) -> None:
         self._manager.context.exit(0)
 
 
-class BKeyStorePasswordDialog(AbstractDialog):
+class KeyStorePasswordDialog(AbstractDialog):
+    _QML_NAME = "BKeyStorePasswordDialog"
+
     class ConfirmResetWalletDialog(AbstractMessageDialog):
-        def __init__(self, manager: DialogManager):
+        def __init__(
+                self,
+                manager: DialogManager,
+                parent: KeyStorePasswordDialog):
             text = QObject().tr(
                 "This will destroy all saved information and you can lose your "
                 "money!"
-                "\nPlease make sure you remember the seed phrase."
+                "\nPlease make sure you remember the Seed Phrase."
                 "\n\nReset?")
             super().__init__(
                 manager,
+                parent,
                 type_=AbstractMessageDialog.Type.AskYesNo,
+                title=parent.title,  # noqa
                 text=text)
 
         def onAccepted(self) -> None:
-            self._manager.context.keyStore.reset()  # TODO if failed
-            createKeyStorePasswordDialog(self._manager).open()
+            if not self._manager.context.keyStore.reset():
+                KeyStoreErrorDialog(self._manager, self).open()
+            else:
+                createKeyStorePasswordDialog(self._manager).open()
 
         def onRejected(self) -> None:
             createKeyStorePasswordDialog(self._manager).open()
 
-    class InvalidPasswordDialog(AbstractMessageDialog):
-        def __init__(self, manager: DialogManager):
-            super().__init__(
-                manager,
-                text=QObject().tr("Wrong key store password."))
-
-        def onClosed(self) -> None:
-            createKeyStorePasswordDialog(self._manager).open()
+    def __init__(self, manager: DialogManager) -> None:
+        super().__init__(manager)
 
     def onPasswordAccepted(self, password: str) -> None:
         if not self._manager.context.keyStore.open(password):
-            self.InvalidPasswordDialog(self._manager).open()
+            KeyStoreErrorDialog(
+                self._manager,
+                self,
+                text=QObject().tr("Wrong Key Store password.")).open()
         elif not self._manager.context.keyStore.hasSeed:
-            BNewSeedDialog(self._manager).open()
+            NewSeedDialog(self._manager).open()
 
     def onResetWalletAccepted(self) -> None:
-        self.ConfirmResetWalletDialog(self._manager).open()
+        self.ConfirmResetWalletDialog(self._manager, self).open()
 
     def onRejected(self) -> None:
         self._manager.context.exit(0)
 
 
-class BNewSeedDialog(AbstractDialog):
+class NewSeedDialog(AbstractDialog):
+    _QML_NAME = "BNewSeedDialog"
+
+    def __init__(self, manager: DialogManager) -> None:
+        super().__init__(manager)
+
     def onGenerateAccepted(self) -> None:
         GenerateSeedPhraseDialog(self._manager, None).open()
 
@@ -87,6 +122,27 @@ class BNewSeedDialog(AbstractDialog):
 
     def onRejected(self) -> None:
         self._manager.context.exit(0)
+
+
+class InvalidSeedPhraseDialog(AbstractMessageDialog):
+    def __init__(
+            self,
+            manager: DialogManager,
+            parent: ValidateSeedPhraseDialog,
+            generator: Optional[GenerateSeedPhrase] = None):
+        super().__init__(
+            manager,
+            parent,
+            title=parent.title,  # noqa
+            text=QObject().tr("Wrong Seed Phrase."))
+        self._generator = generator
+
+    def onClosed(self) -> None:
+        if self._generator is not None:
+            dialog = self._parent.__class__(self._manager, self._generator)
+        else:
+            dialog = self._parent.__class__(self._manager)
+        dialog.open()
 
 
 class AbstractSeedPhraseDialog(AbstractDialog):
@@ -135,10 +191,12 @@ class GenerateSeedPhraseDialog(AbstractSeedPhraseDialog):
             generator: Optional[GenerateSeedPhrase]) -> None:
         super().__init__(manager)
         self._qml_properties["type"] = self.Type.Generate.value
-        if not self._manager.context.debug.isEnabled:
+        if self._manager.context.debug.isEnabled:
+            self._qml_properties["readOnly"] = False
+        else:
             self._qml_properties["readOnly"] = True
 
-        self._child_dialog: Optional[BSeedSaltDialog] = None
+        self._child_dialog: Optional[SeedSaltDialog] = None
 
         if generator is None:
             self._generator = GenerateSeedPhrase(
@@ -154,7 +212,7 @@ class GenerateSeedPhraseDialog(AbstractSeedPhraseDialog):
         return self._generator
 
     def _openSaltDialog(self) -> None:
-        self._child_dialog = BSeedSaltDialog(self._manager, self)
+        self._child_dialog = SeedSaltDialog(self._manager, self)
         self._child_dialog.open()
 
     def onOpened(self) -> None:
@@ -171,23 +229,10 @@ class GenerateSeedPhraseDialog(AbstractSeedPhraseDialog):
     def onRejected(self) -> None:
         if self._child_dialog is not None:
             self._child_dialog.close.emit()
-        BNewSeedDialog(self._manager).open()
+        NewSeedDialog(self._manager).open()
 
 
 class ValidateSeedPhraseDialog(AbstractSeedPhraseDialog):
-    class InvalidSeedPhraseDialog(AbstractMessageDialog):
-        def __init__(
-                self,
-                manager: DialogManager,
-                generator: GenerateSeedPhrase):
-            super().__init__(
-                manager,
-                text=QObject().tr("Wrong seed phrase."))
-            self._generator = generator
-
-        def onClosed(self) -> None:
-            ValidateSeedPhraseDialog(self._manager, self._generator).open()
-
     def __init__(
             self,
             manager: DialogManager,
@@ -204,22 +249,16 @@ class ValidateSeedPhraseDialog(AbstractSeedPhraseDialog):
 
     def onAccepted(self) -> None:
         if not self._generator.finalize(self._current_phrase):
-            self.InvalidSeedPhraseDialog(self._manager, self._generator).open()
+            InvalidSeedPhraseDialog(
+                self._manager,
+                self,
+                self._generator).open()
 
     def onRejected(self) -> None:
         GenerateSeedPhraseDialog(self._manager, self._generator).open()
 
 
 class RestoreSeedPhraseDialog(AbstractSeedPhraseDialog):
-    class InvalidSeedPhraseDialog(AbstractMessageDialog):
-        def __init__(self, manager: DialogManager):
-            super().__init__(
-                manager,
-                text=QObject().tr("Wrong seed phrase."))
-
-        def onClosed(self) -> None:
-            RestoreSeedPhraseDialog(self._manager).open()
-
     def __init__(self, manager: DialogManager) -> None:
         super().__init__(manager)
         self._qml_properties["type"] = self.Type.Restore.value
@@ -235,20 +274,21 @@ class RestoreSeedPhraseDialog(AbstractSeedPhraseDialog):
 
     def onAccepted(self) -> None:
         if not self._generator.finalize(self._current_phrase):
-            self.InvalidSeedPhraseDialog(self._manager).open()
+            InvalidSeedPhraseDialog(self._manager, self).open()
 
     def onRejected(self) -> None:
-        BNewSeedDialog(self._manager).open()
+        NewSeedDialog(self._manager).open()
 
 
-class BSeedSaltDialog(AbstractDialog):
+class SeedSaltDialog(AbstractDialog):
+    _QML_NAME = "BSeedSaltDialog"
+
     def __init__(
             self,
             manager: DialogManager,
             parent: GenerateSeedPhraseDialog) -> None:
-        super().__init__(manager)
+        super().__init__(manager, parent)
         self._qml_properties["stepCount"] = 500 + randint(1, 501)
-        self._parent = parent
 
     def onAboutToShow(self) -> None:
         self._parent.text = self._parent.generator.prepare()
@@ -262,5 +302,3 @@ class BSeedSaltDialog(AbstractDialog):
 
     def onRejected(self) -> None:
         self._parent.reject.emit()
-
-

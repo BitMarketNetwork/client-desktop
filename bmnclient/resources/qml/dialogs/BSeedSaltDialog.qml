@@ -40,7 +40,7 @@ BDialog {
                 wrapMode: BLabel.Wrap
                 font.bold: true
                 font.capitalization: Font.AllUppercase
-                text: qsTr("Move cursor and press keyboard keys randomly to generate seed phrase")
+                text: qsTr("Move cursor and press keyboard keys randomly to generate Seed Phrase")
             }
             BProgressBar {
                 id: _progressBar

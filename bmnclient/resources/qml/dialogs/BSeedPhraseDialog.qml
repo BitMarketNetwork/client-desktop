@@ -20,19 +20,19 @@ BDialog {
     title: {
         switch (type) {
         case BSeedPhraseDialog.Type.Generate:
-            return qsTr("Generate new seed phrase")
+            return qsTr("Generate new Seed Phrase")
         case BSeedPhraseDialog.Type.Validate:
-            return qsTr("Test yourself whether you memorized the seed phrase")
+            return qsTr("Validate new Seed Phrase")
         case BSeedPhraseDialog.Type.Restore:
-            return qsTr("Restore seed phrase")
+            return qsTr("Restore Seed Phrase")
         case BSeedPhraseDialog.Type.Reveal:
-            return qsTr("Reveal seed phrase")
+            return qsTr("Reveal Seed Phrase")
         }
     }
     contentItem: BDialogLayout {
         // TODO advanced description
         BDialogPromptLabel {
-            text: "Seed phrase:"
+            text: "Seed Phrase:"
         }
         BDialogInputTextArea {
             id: _seedPhrase
@@ -43,9 +43,9 @@ BDialog {
                 case BSeedPhraseDialog.Type.Reveal:
                     return qsTr("None")
                 case BSeedPhraseDialog.Type.Validate:
-                    return qsTr("Re-enter generated seed phrase")
+                    return qsTr("Re-enter generated Seed Phrase")
                 case BSeedPhraseDialog.Type.Restore:
-                    return qsTr("Enter your seed phrase")
+                    return qsTr("Enter your Seed Phrase")
                 }
             }
 
@@ -59,6 +59,9 @@ BDialog {
 
             onTextChanged: {
                 _base.phraseChanged(text)
+                if (text.length > 0 && _base.type === BSeedPhraseDialog.Type.Reveal) {
+                    _closeTimer.start()
+                }
             }
         }
     }
@@ -120,19 +123,6 @@ BDialog {
             onLoaded: {
                 _buttonBox.addItem(item)
             }
-        }
-    }
-
-    onOpened: {
-        _seedPhrase.forceActiveFocus()
-        switch (type) {
-        case BSeedPhraseDialog.Type.Generate:
-        case BSeedPhraseDialog.Type.Validate:
-        case BSeedPhraseDialog.Type.Restore:
-            break
-        case BSeedPhraseDialog.Type.Reveal:
-            _closeTimer.start()
-            break
         }
     }
 

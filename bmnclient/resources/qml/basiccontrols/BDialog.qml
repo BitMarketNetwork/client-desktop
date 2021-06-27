@@ -24,6 +24,18 @@ Dialog {
                             //implicitHeaderWidth,
                             implicitFooterWidth)
 
+    Component.onCompleted: {
+        if (context !== null) {
+            context.title = title
+        }
+    }
+
+    onTitleChanged: {
+        if (context !== null) {
+            context.title = title
+        }
+    }
+
     onClosed: {
         if (dynamicallyCreated) {
             // TODO unknown problem with overlay... the hover effect is lost...

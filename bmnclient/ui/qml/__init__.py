@@ -14,7 +14,7 @@ from PySide2.QtQuick import QQuickWindow
 from PySide2.QtQuickControls2 import QQuickStyle
 
 from .dialogs import DialogManager
-from .dialogs.basic import BAlphaDialog, BQuitDialog
+from .dialogs.basic import AlphaDialog, QuitDialog
 from .models.clipboard import ClipboardModel
 from .models.coin import CoinListModel
 from .models.debug import DebugModel
@@ -131,7 +131,7 @@ class QmlContext(QObject):
 
     @QSlot()
     def onCompleted(self) -> None:
-        BAlphaDialog(self._dialog_manager).open()
+        AlphaDialog(self._dialog_manager).open()
         self._application.show()
 
     # noinspection PyTypeChecker
@@ -146,7 +146,7 @@ class QmlContext(QObject):
     @QSlot()
     def onQuitRequest(self) -> None:
         self._application.show(True)
-        BQuitDialog(self._dialog_manager).open()
+        QuitDialog(self._dialog_manager).open()
 
     @QSlot(int)
     def exit(self, code: int) -> None:

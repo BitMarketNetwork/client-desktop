@@ -1,10 +1,20 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from . import AbstractDialog
 from .key_store import createKeyStorePasswordDialog
 
+if TYPE_CHECKING:
+    from . import DialogManager
 
-class BAlphaDialog(AbstractDialog):
+
+class AlphaDialog(AbstractDialog):
+    _QML_NAME = "BAlphaDialog"
+
+    def __init__(self, manager: DialogManager) -> None:
+        super().__init__(manager)
+
     def onAccepted(self) -> None:
         createKeyStorePasswordDialog(self._manager).open()
 
@@ -12,6 +22,11 @@ class BAlphaDialog(AbstractDialog):
         self._manager.context.exit(0)
 
 
-class BQuitDialog(AbstractDialog):
+class QuitDialog(AbstractDialog):
+    _QML_NAME = "BQuitDialog"
+
+    def __init__(self, manager: DialogManager) -> None:
+        super().__init__(manager)
+
     def onAccepted(self) -> None:
         self._manager.context.exit(0)
