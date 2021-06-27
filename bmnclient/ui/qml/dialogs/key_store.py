@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 def createKeyStorePasswordDialog(manager: DialogManager) -> AbstractDialog:
-    if manager.context.keyStore.isExists:
+    if manager.context.keyStore.native.isExists:
         return KeyStorePasswordDialog(manager)
     else:
         return KeyStoreNewPasswordDialog(manager)
@@ -48,7 +48,7 @@ class KeyStoreNewPasswordDialog(AbstractDialog):
         super().__init__(manager)
 
     def onPasswordAccepted(self, password: str) -> None:
-        if not self._manager.context.keyStore.create(password):
+        if not self._manager.context.keyStore.native.create(password):
             KeyStoreErrorDialog(self._manager, self).open()
         else:
             createKeyStorePasswordDialog(self._manager).open()
@@ -78,7 +78,7 @@ class KeyStorePasswordDialog(AbstractDialog):
                 text=text)
 
         def onAccepted(self) -> None:
-            if not self._manager.context.keyStore.reset():
+            if not self._manager.context.keyStore.native.reset():
                 KeyStoreErrorDialog(self._manager, self).open()
             else:
                 createKeyStorePasswordDialog(self._manager).open()
@@ -90,12 +90,12 @@ class KeyStorePasswordDialog(AbstractDialog):
         super().__init__(manager)
 
     def onPasswordAccepted(self, password: str) -> None:
-        if not self._manager.context.keyStore.open(password):
+        if not self._manager.context.keyStore.native.open(password):
             KeyStoreErrorDialog(
                 self._manager,
                 self,
                 text=QObject().tr("Wrong Key Store password.")).open()
-        elif not self._manager.context.keyStore.hasSeed:
+        elif not self._manager.context.keyStore.native.hasSeed:
             NewSeedDialog(self._manager).open()
 
     def onResetWalletAccepted(self) -> None:
@@ -349,7 +349,10 @@ class SeedSaltDialog(AbstractDialog):
             self,
             manager: DialogManager,
             parent: GenerateSeedPhraseDialog) -> None:
-        super().__init__(manager, parent)
+        super().__init__(
+            manager,
+            parent,
+            title=parent.title)  # noqa
         self._qml_properties["stepCount"] = 500 + randint(1, 501)
 
     def onAboutToShow(self) -> None:
