@@ -88,6 +88,10 @@ class AbstractMessageDialog(AbstractDialog):
         self._qml_properties["text"] = text
 
 
+class AbstractPasswordDialog(AbstractDialog):
+    _QML_NAME = "BPasswordDialog"
+
+
 class DialogManager(QObject):
     openDialog = QSignal(str, "QVariantMap")  # connected to QML frontend
 

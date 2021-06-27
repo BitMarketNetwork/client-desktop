@@ -280,6 +280,68 @@ class RestoreSeedPhraseDialog(AbstractSeedPhraseDialog):
         NewSeedDialog(self._manager).open()
 
 
+class RevealSeedPhraseDialog(AbstractSeedPhraseDialog):
+    class ErrorDialog(AbstractMessageDialog):
+        def __init__(
+                self,
+                manager: DialogManager,
+                parent: RevealSeedPhraseDialog,
+                *,
+                text: str):
+            super().__init__(
+                manager,
+                parent,
+                title=parent.title,  # noqa
+                text=text)
+
+        def onClosed(self) -> None:
+            self._parent.PasswordDialog(self._manager, self._parent).open()
+
+    class PasswordDialog(AbstractPasswordDialog):
+        def __init__(
+                self,
+                manager: DialogManager,
+                parent: RevealSeedPhraseDialog) -> None:
+            super().__init__(
+                manager,
+                parent,
+                title=parent.title) # noqa
+
+        def onPasswordAccepted(self, password: str) -> None:
+            result = self._manager.context.keyStore.native.revealSeedPhrase(
+                password)
+            if isinstance(result, str):
+                self._parent.text = result
+                return
+            if result == KeyStoreError.ERROR_INVALID_PASSWORD:
+                # noinspection PyTypeChecker
+                text = self.tr("Wrong Key Store password.")
+            elif result == KeyStoreError.ERROR_SEED_NOT_FOUND:
+                # noinspection PyTypeChecker
+                text = self.tr("Seed Phrase not found.")
+            else:
+                # noinspection PyTypeChecker
+                text = self.tr("Unknown Key Store error.")
+            self._parent.ErrorDialog(
+                self._manager,
+                self._parent,
+                text=text).open()
+
+        def onRejected(self) -> None:
+            self._parent.close.emit()
+
+    def __init__(self, manager: DialogManager) -> None:
+        super().__init__(manager)
+        self._qml_properties["type"] = self.Type.Reveal.value
+        if self._manager.context.debug.isEnabled:
+            self._qml_properties["readOnly"] = False
+        else:
+            self._qml_properties["readOnly"] = True
+
+    def onOpened(self) -> None:
+        self.PasswordDialog(self._manager, self).open()
+
+
 class SeedSaltDialog(AbstractDialog):
     _QML_NAME = "BSeedSaltDialog"
 
