@@ -148,6 +148,10 @@ class TxModel(TxInterface, AbstractModel):
     def name(self) -> str:
         return self._tx.name
 
+    @QProperty(str, constant=True)
+    def nameHuman(self) -> str:
+        return self._tx.nameHuman
+
     @QProperty(QObject, constant=True)
     def amount(self) -> TxAmountModel:
         return self._amount_model
@@ -182,6 +186,7 @@ class TxListModel(AbstractListModel):
         ID: Final = auto()
         VISIBLE: Final = auto()  # for TxListConcatenateModel
         NAME: Final = auto()
+        NAME_HUMAN: Final = auto()
         AMOUNT: Final = auto()
         FEE_AMOUNT: Final = auto()
         STATE: Final = auto()
@@ -198,6 +203,9 @@ class TxListModel(AbstractListModel):
         Role.NAME: (
             b"name",
             lambda t: t.model.name),
+        Role.NAME_HUMAN: (
+            b"name",
+            lambda t: t.model.nameHuman),
         Role.AMOUNT: (
             b"amount",
             lambda t: t.model.amount),

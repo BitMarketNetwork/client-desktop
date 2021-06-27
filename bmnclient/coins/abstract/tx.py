@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from functools import lru_cache
 from typing import TYPE_CHECKING
 
 from ..utils import CoinUtils
@@ -146,6 +147,11 @@ class _AbstractUtxo(Serializable):
     def name(self) -> str:
         return self._name
 
+    @property
+    @lru_cache()
+    def nameHuman(self) -> str:
+        return self._coin.Tx.toNameHuman(self._name)
+
     @serializable
     @property
     def height(self) -> int:
@@ -255,6 +261,11 @@ class _AbstractTx(Serializable):
     def name(self) -> str:
         return self._name
 
+    @property
+    @lru_cache()
+    def nameHuman(self) -> str:
+        return self.toNameHuman(self._name)
+
     @serializable
     @property
     def height(self) -> int:
@@ -319,3 +330,9 @@ class _AbstractTx(Serializable):
     @property
     def outputList(self) -> List[AbstractCoin.Tx.Io]:
         return self._output_list
+
+    @staticmethod
+    def toNameHuman(name: str) -> str:
+        if len(name) <= 4 * 2 + 3:
+            return name
+        return name[:4] + "..." + name[-4:]
