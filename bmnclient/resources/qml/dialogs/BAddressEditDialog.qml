@@ -2,6 +2,7 @@ import "../application"
 import "../basiccontrols"
 import "../coincontrols"
 
+// TODO python control
 // TODO show result in BAddressEditBox.Type.*View
 BDialog {
     property alias coin: _box.coin

@@ -3,6 +3,7 @@ import "../application"
 import "../basiccontrols"
 import "../coincontrols"
 
+// TODO python control
 BDialog {
     id: _base
     property var sourceList // TxFactorySourceListModel
