@@ -1,5 +1,13 @@
 # BitMarket Network Client Change Log
 
+## 0.12.5 (2x.06.2021)
+
+* Application quit confirmation
+* System Tray optimization
+* Dialogs optimization
+* Key Store optimization
+* Minor fixes
+
 ## 0.12.4 (12.06.2021)
 
 * Fixed calculation of the estimated transaction size on the "Send" page.
