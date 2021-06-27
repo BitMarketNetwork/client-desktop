@@ -4,7 +4,7 @@ import QtQuick.Controls 2.15
 Dialog {
     id: _base
     property bool dynamicallyCreated: false
-    property var context // ui.qml.dialogs.AbstractDialog
+    property var context: null // ui.qml.dialogs.AbstractDialog
 
     closePolicy: Dialog.CloseOnEscape
 
@@ -45,7 +45,6 @@ Dialog {
             function onForceActiveFocus() {
                 _base.forceActiveFocus()
             }
-
             function onReject() {
                 _base.reject()
             }

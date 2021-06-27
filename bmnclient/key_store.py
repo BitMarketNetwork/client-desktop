@@ -297,6 +297,13 @@ class _AbstractSeedPhrase:
         self._key_store = key_store
         self._mnemonic: Optional[Mnemonic] = None
 
+    @property
+    def inProgress(self) -> bool:
+        return self._mnemonic is not None
+
+    def clear(self) -> None:
+        self._mnemonic = None
+
     def prepare(self, language: str = None) -> str:
         raise NotImplementedError
 
@@ -306,13 +313,20 @@ class _AbstractSeedPhrase:
     def finalize(self, phrase: str) -> bool:
         if not self.validate(phrase):
             return False
-        return self._key_store.saveSeed(self._mnemonic.language, phrase)
+        if not self._key_store.saveSeed(self._mnemonic.language, phrase):
+            return False
+        self.clear()
+        return True
 
 
-class SeedPhraseGenerate(_AbstractSeedPhrase):
+class GenerateSeedPhrase(_AbstractSeedPhrase):
     def __init__(self, key_store: KeyStore) -> None:
         super().__init__(key_store)
         self._salt_hash: Optional[AbstractDigest] = None
+
+    def clear(self) -> None:
+        super().clear()
+        self._salt_hash = None
 
     def prepare(self, language: str = None) -> str:
         self._mnemonic = Mnemonic(language)
@@ -326,11 +340,12 @@ class SeedPhraseGenerate(_AbstractSeedPhrase):
     def validate(self, phrase: str) -> bool:
         return (
                 phrase
+                and self.inProgress
                 and Mnemonic.isEqualPhrases(phrase, self.update(None))
         )
 
     def update(self, salt: Optional[str]) -> str:
-        if self._mnemonic is None or self._salt_hash is None:
+        if not self.inProgress:
             return ""
 
         if salt:
@@ -342,7 +357,7 @@ class SeedPhraseGenerate(_AbstractSeedPhrase):
         return self._mnemonic.getPhrase(result)
 
 
-class SeedPhraseRestore(_AbstractSeedPhrase):
+class RestoreSeedPhrase(_AbstractSeedPhrase):
     def prepare(self, language: str = None) -> bool:
         self._mnemonic = Mnemonic(language)
         return True
@@ -350,6 +365,6 @@ class SeedPhraseRestore(_AbstractSeedPhrase):
     def validate(self, phrase: str) -> bool:
         return (
                 phrase
-                and self._mnemonic is not None
+                and self.inProgress
                 and self._mnemonic.isValidPhrase(phrase)
         )

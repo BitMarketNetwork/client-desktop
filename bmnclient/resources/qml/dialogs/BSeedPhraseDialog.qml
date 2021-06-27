@@ -6,9 +6,9 @@ BDialog {
     id: _base
     property int type: BSeedPhraseDialog.Type.Generate
     property bool readOnly: false
-    property bool enableAccept: false
     readonly property string closeDelayText: BCommon.button.closeRole + " (%1)"
     readonly property int closeDelay: 10
+    signal phraseChanged(string value)
 
     enum Type {
         Generate,
@@ -56,6 +56,10 @@ BDialog {
 
             font.bold: true
             font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.huge
+
+            onTextChanged: {
+                _base.phraseChanged(text)
+            }
         }
     }
     footer: BDialogButtonBox {
@@ -66,7 +70,7 @@ BDialog {
                 BDialogButtonBox.buttonRole: BDialogButtonBox.AcceptRole
                 parent: _buttonBox
                 text: BCommon.button.continueRole
-                enabled: _base.enableAccept
+                enabled: _base.context.isValid
             }
             onLoaded: {
                 _buttonBox.addItem(item)
@@ -121,15 +125,10 @@ BDialog {
 
     onOpened: {
         _seedPhrase.forceActiveFocus()
-    }
-
-    onAboutToShow: {
         switch (type) {
         case BSeedPhraseDialog.Type.Generate:
-            break
         case BSeedPhraseDialog.Type.Validate:
         case BSeedPhraseDialog.Type.Restore:
-            _seedPhrase.clear()
             break
         case BSeedPhraseDialog.Type.Reveal:
             _closeTimer.start()
