@@ -10,10 +10,13 @@ from typing import TYPE_CHECKING
 from PySide2.QtWidgets import QApplication
 
 from bmnclient.application import CommandLine, CoreApplication
+from bmnclient.os_environment import Platform
 from bmnclient.utils.class_property import classproperty
+from bmnclient.version import Timer
 
 if TYPE_CHECKING:
     from typing import Final, Optional
+    MessageType = CoreApplication.MessageType
 
 
 class TestApplication(CoreApplication):
@@ -24,11 +27,22 @@ class TestApplication(CoreApplication):
         command_line = ["unittest"]
         if config_path:
             command_line.append("--configpath=" + config_path)
+        if Platform.isLinux:
+            os.environ["QT_QPA_PLATFORM"] = "minimal"
 
         super().__init__(
             qt_class=QApplication,
             command_line=CommandLine(command_line),
             model_factory=None)
+
+    def showMessage(
+            self,
+            *,
+            type_: MessageType = CoreApplication.MessageType.INFORMATION,
+            title: Optional[str] = None,
+            text: str,
+            timeout: int = Timer.UI_MESSAGE_TIMEOUT) -> None:
+        pass
 
     @classproperty
     def dataPath(cls) -> Path:  # noqa

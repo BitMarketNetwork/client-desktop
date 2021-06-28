@@ -173,7 +173,9 @@ class CoreApplication(QObject):
             qt_class.setOrganizationDomain(Product.MAINTAINER_DOMAIN)
 
             # QCoreApplication
-            self._qt_application = qt_class(self._command_line.argv)
+            self._qt_application = qt_class([
+                self._command_line.argv[0],
+            ])
 
         if issubclass(qt_class, QApplication):
             qt_class.setWindowIcon(self._icon)
