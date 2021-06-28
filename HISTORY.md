@@ -1,6 +1,6 @@
 # BitMarket Network Client Change Log
 
-## 0.12.5 (2x.06.2021)
+## 0.12.5 (28.06.2021)
 
 * Application quit confirmation
 * System Tray optimization

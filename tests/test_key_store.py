@@ -280,7 +280,7 @@ class TestKeyStore(TestCase):
             self.assertTrue(key_store.hasSeed)
 
             # noinspection PyProtectedMember
-            seed = r1._mnemonic.phraseToSeed(phrase)
+            seed = Mnemonic.phraseToSeed(phrase)
             self.assertIsInstance(seed, bytes)
             self.assertEqual(Mnemonic(language).phraseToSeed(phrase), seed)
 
