@@ -83,9 +83,6 @@ Reset?</source>
     </message>
 </context>
 <context>
-    <name>KeyStore</name>
-</context>
-<context>
     <name>PasswordDialog</name>
     <message>
         <location filename="key_store.py" line="319"/>
@@ -115,8 +112,5 @@ Reset?</source>
         <source>&amp;Quit</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>UIManager</name>
 </context>
 </TS>
