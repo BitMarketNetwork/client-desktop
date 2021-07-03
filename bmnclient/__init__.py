@@ -17,12 +17,8 @@ if sys.version_info[:3] < Product.PYTHON_MINIMAL_VERSION:
         "current Python version is {}.{}.{}"
         .format(
             Product.NAME,
-            Product.PYTHON_MINIMAL_VERSION[0],
-            Product.PYTHON_MINIMAL_VERSION[1],
-            Product.PYTHON_MINIMAL_VERSION[2],
-            sys.version_info[0],
-            sys.version_info[1],
-            sys.version_info[2]))
+            *Product.PYTHON_MINIMAL_VERSION[:3],
+            *sys.version_info[:3]))
 
 
 def main(argv: List[str]) -> int:

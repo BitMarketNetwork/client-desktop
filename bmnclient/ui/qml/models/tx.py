@@ -204,7 +204,7 @@ class TxListModel(AbstractListModel):
             b"name",
             lambda t: t.model.name),
         Role.NAME_HUMAN: (
-            b"name",
+            b"nameHuman",
             lambda t: t.model.nameHuman),
         Role.AMOUNT: (
             b"amount",
