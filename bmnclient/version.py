@@ -1,4 +1,4 @@
-# Only standard imports, used by Makefile.
+# Only standard imports, used by Makefile, setup.cfg.
 from __future__ import annotations
 
 from pathlib import Path
