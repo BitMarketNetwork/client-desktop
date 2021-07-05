@@ -1,0 +1,4 @@
+include HISTORY.md
+include requirements.txt
+include bmnclient/resources/translations/*.ts
+prune bmnclient/resources/qrc
