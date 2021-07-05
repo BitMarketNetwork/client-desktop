@@ -121,15 +121,15 @@ appropriate environment variables.
 
 - Install application dependencies:
   ```shell
-  $ python3 -m pip install -r requirements-dev.txt
-  # or
-  $ python -m pip install -r requirements-dev.txt
-  ```
-  or if you don't want to create the distribution package:
-  ```shell
   $ python3 -m pip install -r requirements.txt
   # or
   $ python -m pip install -r requirements.txt
+  ```
+  ...and if you want to create the distribution package:
+  ```shell
+  $ python3 -m pip install -r requirements-dev.txt
+  # or
+  $ python -m pip install -r requirements-dev.txt
   ```
   **For Linux only:** Possibly required PySide2 tools will be installed to
   the `~/.local/bin`, because for more convenience you might want to add this

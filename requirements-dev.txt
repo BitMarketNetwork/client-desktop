@@ -1,17 +1,2 @@
-pyside2==5.15.1
-cryptography==3.4.7
-ecdsa==0.16.1
-requests>=2.20
-astroid==2.3.2
-isort==4.3.21
-lazy-object-proxy==1.4.2
-mccabe==0.6.1
-pylint==2.4.3
-six==1.12.0
-wrapt==1.11.2
-rope
-ipython
-ipdb
-bitcoinlib==0.5.1
 pyinstaller==4.1
 dmgbuild==1.4.2
