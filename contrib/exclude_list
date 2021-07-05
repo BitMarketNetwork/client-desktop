@@ -1,6 +1,7 @@
 # glob-style pattern
 
 bmnclient/**/.*
+bmnclient/resources/translations/*.ts
 
 include/*
 PySide2/Qt/libexec/*

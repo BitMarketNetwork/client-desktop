@@ -63,7 +63,7 @@ elif PLATFORM_LINUX:
 else:
     BMN_ICON_FILE_PATH = None
 
-USE_QML_QRC = int(os.getenv("USE_QML_QRC", "0"))
+USE_QRC = int(os.getenv("USE_QRC", "0"))
 
 ################################################################################
 
@@ -88,10 +88,11 @@ binary_list = [
 data_path_list = [
     RESOURCES_DIR / "wordlist"
 ]
-if USE_QML_QRC != 1:
+if USE_QRC != 1:
     data_path_list += [
         RESOURCES_DIR / "qml",
-        RESOURCES_DIR / "images"
+        RESOURCES_DIR / "images",
+        RESOURCES_DIR / "translations"
     ]
 
 hidden_imports = [

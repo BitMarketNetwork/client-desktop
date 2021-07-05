@@ -181,6 +181,21 @@ PY_SOURCES := $(sort $(call RWILDCARD,$(PACKAGE_DIR)/,*.py))
 QML_SOURCES := $(sort $(call RWILDCARD,$(RESOURCES_DIR)/,*.qml))
 
 ################################################################################
+# QRC
+################################################################################
+
+export USE_QRC ?= 0
+
+QRC_SOURCES := $(sort $(call RWILDCARD,$(RESOURCES_DIR)/,*.qml *.svg *qmldir))
+QRC_SOURCE = $(TEMP_DIR)/resources.qrc
+QRC_TARGET = $(RESOURCES_DIR)/qrc/__init__.py
+
+PY_SOURCES := $(filter-out $(QRC_TARGET),$(PY_SOURCES))
+
+QRC_PUT = $(file >>$(2),<file alias="$(patsubst $(RESOURCES_DIR)/%,%,$(1))">$(call NPATH,$(abspath $(1)))</file>)
+QRC_PUT_TR = $(file >>$(2),<file alias="$(patsubst $(RESOURCES_DIR)/%,%,$(1))">$(call NPATH,$(abspath $(1)))</file>)
+
+################################################################################
 # Translations
 ################################################################################
 
@@ -188,28 +203,8 @@ PY_TR_SOURCES := $(addprefix $(TRANSLATIONS_DIR)/,\
 	$(addsuffix .py.ts,$(TRANSLATIONS)))
 QML_TR_SOURCES := $(addprefix $(TRANSLATIONS_DIR)/,\
 	$(addsuffix .qml.ts,$(TRANSLATIONS)))
-TR_OBJECTS := $(addprefix $(TEMP_DIR)/$(notdir $(TRANSLATIONS_DIR))/,\
+TR_OBJECTS := $(addprefix $(TRANSLATIONS_DIR)/,\
 	$(patsubst %.ts,%.qm,$(notdir $(PY_TR_SOURCES) $(QML_TR_SOURCES))))
-
-################################################################################
-# QRC
-################################################################################
-
-export USE_QML_QRC ?= 1
-
-ifeq ($(USE_QML_QRC), 1)
-QRC_SOURCES := $(sort $(call RWILDCARD,$(RESOURCES_DIR)/,*.qml *.svg *qmldir))
-else
-QRC_SOURCES :=
-endif
-
-QRC_SOURCE = $(TEMP_DIR)/resources.qrc
-QRC_TARGET = $(RESOURCES_DIR)/qrc.py
-
-PY_SOURCES := $(filter-out $(QRC_TARGET),$(PY_SOURCES))
-
-QRC_PUT = $(file >>$(2),<file alias="$(patsubst $(RESOURCES_DIR)/%,%,$(1))">$(call NPATH,$(abspath $(1)))</file>)
-QRC_PUT_TR = $(file >>$(2),<file alias="$(patsubst $(TEMP_DIR)/%,%,$(1))">$(call NPATH,$(abspath $(1)))</file>)
 
 ################################################################################
 # PyInstaller
@@ -280,7 +275,12 @@ $(QML_TR_SOURCES): $(QML_SOURCES)
 ################################################################################
 
 .PHONY: qrc
+ifeq ($(USE_QRC), 1)
 qrc: $(QRC_TARGET)
+else
+qrc:
+	@$(call RM,$(QRC_TARGET))
+endif
 
 .PHONY: qrc-clean
 qrc-clean:
@@ -288,9 +288,13 @@ qrc-clean:
 	$(call RM,$(QRC_SOURCE))
 
 $(QRC_TARGET): $(QRC_SOURCE)
+	$(call MKDIR,$(@D))
 	$(PYRCC) "$(call NPATH,$<)" --no-compress -o "$(call NPATH,$@)"
 
-$(QRC_SOURCE): $(QRC_SOURCES) $(TR_OBJECTS)
+$(QRC_SOURCE)::
+	$(call MKDIR,$(@D))
+
+$(QRC_SOURCE):: $(QRC_SOURCES) $(TR_OBJECTS)
 	$(file >$@,<?xml version="1.0"?>)
 	$(file >> $@,<RCC><qresource prefix="/">)
 	$(foreach F,$(QRC_SOURCES),$(call QRC_PUT,$(F),$@))
