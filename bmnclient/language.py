@@ -12,8 +12,8 @@ from PySide2.QtCore import \
     QTranslator
 
 from .logger import Logger
+from .resources import Resources
 from .utils.class_property import classproperty
-from .version import ProductPaths
 
 if TYPE_CHECKING:
     from typing import Dict, Final, List, Optional, Tuple
@@ -123,7 +123,7 @@ class Language:
     def translationList(cls) -> TranslationList:
         result = [cls._appendTranslationItem(cls._PRIMARY_NAME)]
         it = QDirIterator(
-            str(ProductPaths.TRANSLATIONS_PATH),
+            str(Resources.translationsPath),
             (cls._FILE_MATH, ),
             QDir.Files)
         while it.next():
@@ -153,7 +153,7 @@ class Language:
             locale,
             "",
             "",
-            str(ProductPaths.TRANSLATIONS_PATH),
+            str(Resources.translationsPath),
             suffix)
 
         if not result:

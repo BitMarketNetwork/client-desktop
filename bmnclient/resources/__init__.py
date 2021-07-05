@@ -35,6 +35,12 @@ class Resources(NotImplementedInstance):
         _QML_URL: Final = QUrl.fromLocalFile(
             str(ProductPaths.RESOURCES_PATH / "qml") + os.sep)
 
+    if _resource_exists(":/translations"):
+        _TRANSLATIONS_PATH: Final = ":/translations"
+    else:
+        _TRANSLATIONS_PATH: Final = str(
+            ProductPaths.RESOURCES_PATH / "translations")
+
     @classproperty
     def iconFilePath(cls) -> str:  # noqa
         return cls._ICON_FILE_PATH
@@ -42,3 +48,7 @@ class Resources(NotImplementedInstance):
     @classproperty
     def qmlUrl(cls) -> QUrl:  # noqa
         return cls._QML_URL
+
+    @classproperty
+    def translationsPath(cls) -> str:  # noqa
+        return cls._TRANSLATIONS_PATH

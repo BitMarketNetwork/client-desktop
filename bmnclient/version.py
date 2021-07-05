@@ -25,8 +25,6 @@ class ProductPaths:
     BASE_PATH: Final = Path(__file__).parent.resolve()
     RESOURCES_PATH: Final = BASE_PATH / "resources"
 
-    TRANSLATIONS_PATH: Final = ":/translations"
-
     ICON_WINDOWS_FILE_PATH: Final = RESOURCES_PATH / "images" / "icon-logo.ico"
     ICON_DARWIN_FILE_PATH: Final = RESOURCES_PATH / "images" / "icon-logo.icns"
     ICON_LINUX_FILE_PATH: Final = RESOURCES_PATH / "images" / "icon-logo.svg"
