@@ -9,7 +9,9 @@ from .ui.qml import QmlApplication
 from .version import Product
 
 if TYPE_CHECKING:
-    from typing import List
+    from typing import List, Optional
+
+__version__ = Product.VERSION_STRING
 
 if sys.version_info[:3] < Product.PYTHON_MINIMAL_VERSION:
     raise RuntimeError(
@@ -21,7 +23,9 @@ if sys.version_info[:3] < Product.PYTHON_MINIMAL_VERSION:
             *sys.version_info[:3]))
 
 
-def main(argv: List[str]) -> int:
+def main(argv: Optional[List[str]] = None) -> int:
+    if argv is None:
+        argv = sys.argv
     try:
         command_line = CommandLine(argv)
         Logger.configure(command_line.logFilePath, command_line.logLevel)

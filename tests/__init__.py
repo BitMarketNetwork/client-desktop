@@ -80,7 +80,7 @@ class TestApplication(CoreApplication):
         logging.basicConfig(**kwargs)
 
         # Disable when running from Makefile
-        if "MAKELEVEL" in os.environ:
+        if "MAKELEVEL" in os.environ or "TOX_ENV_NAME" in os.environ:
             logging.disable()
 
         cls._logger_configured = True

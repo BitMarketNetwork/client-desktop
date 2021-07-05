@@ -43,7 +43,7 @@ class CommandLine:
         self._argv = argv
 
         parser = ArgumentParser(
-            prog=self._argv[0],
+            prog=os.path.basename(self._argv[0]),
             description=Product.NAME + " " + Product.VERSION_STRING)
         parser.add_argument(
             "-c",
