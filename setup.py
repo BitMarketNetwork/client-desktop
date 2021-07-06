@@ -64,7 +64,7 @@ setuptools.setup(
     install_requires=read_requirements("requirements.txt"),
     entry_points={
         "console_scripts": [
-            NAME + "=" + NAME + ":main"
+            "bmn-client" + "=" + NAME + ":main"
         ]
     },
     python_requires=">= 3.7, <= 3.10"
