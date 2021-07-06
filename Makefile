@@ -230,9 +230,9 @@ clean: tr-mostlyclean qrc-clean dist-clean pip-clean
 
 .PHONY: gui gui-debug
 gui: all
-	$(PYTHON) "$(call NPATH,$(BASE_DIR)/$(BMN_SHORT_NAME))"
+	$(PYTHON) -m $(BMN_PACKAGE_NAME)
 gui-debug: all
-	$(PYTHON) "$(call NPATH,$(BASE_DIR)/$(BMN_SHORT_NAME))" -d
+	$(PYTHON) -m $(BMN_PACKAGE_NAME) -d
 
 .PHONY: check
 check: T = $(call NPATH,$(BASE_DIR))
@@ -260,20 +260,15 @@ tr-mostlyclean:
 
 $(TR_OBJECTS): $(PY_TR_SOURCES) $(QML_TR_SOURCES)
 	$(call MKDIR,$(@D))
-	$(LRELEASE) -silent \
-		$(foreach F,$+,"$(call NPATH,${F})") \
-		-qm "$(call NPATH,$@)"
+	$(LRELEASE) -silent $(foreach F,$+,"$(call NPATH,${F})") -qm "$(call NPATH,$@)"
 
 $(PY_TR_SOURCES): $(PY_SOURCES)
 	$(call MKDIR,$(@D))
-	$(PYLUPDATE) -verbose \
-		$(foreach F,$+,"$(call NPATH,${F})") \
-		-ts "$(call NPATH,$@)"
+	$(PYLUPDATE) -verbose $(foreach F,$+,"$(call NPATH,${F})") -ts "$(call NPATH,$@)"
+
 $(QML_TR_SOURCES): $(QML_SOURCES)
 	$(call MKDIR,$(@D))
-	$(LUPDATE) -verbose \
-		$(foreach F,$+,"$(call NPATH,${F})") \
-		-ts "$(call NPATH,$@)"
+	$(LUPDATE) -verbose $(foreach F,$+,"$(call NPATH,${F})") -ts "$(call NPATH,$@)"
 
 ################################################################################
 
@@ -282,7 +277,6 @@ ifeq ($(USE_QRC), 1)
 qrc: $(QRC_TARGET)
 else
 qrc:
-	@$(call RM,$(QRC_TARGET))
 endif
 
 .PHONY: qrc-clean
