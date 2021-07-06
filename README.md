@@ -125,7 +125,7 @@ appropriate environment variables.
   # or
   $ python -m pip install -r requirements.txt
   ```
-  ...and if you want to create the distribution package:
+  ...and if you want to create the distribution package or run full tests:
   ```shell
   $ python3 -m pip install -r requirements-dev.txt
   # or

@@ -236,7 +236,8 @@ gui-debug: all
 check: T = $(call NPATH,$(BASE_DIR))
 check: S = $(call NPATH,$(TESTS_DIR))
 check: all
-	$(PYTHON) -m unittest discover -t "$(T)" -s "$(S)" -v
+	$(PYTHON) -m tox || $(PYTHON) -m unittest discover -t "$(T)" -s "$(S)" -v
+
 
 ################################################################################
 

@@ -2,6 +2,7 @@
 __pycache__
 /build
 /dist
+/.tox
 
 # generated resources
 /bmnclient/resources/qrc

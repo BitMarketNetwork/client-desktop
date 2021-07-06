@@ -1,2 +1,3 @@
-pyinstaller==4.1
-dmgbuild==1.4.2
+tox >= 3.23
+pyinstaller == 4.1
+dmgbuild == 1.4.2
