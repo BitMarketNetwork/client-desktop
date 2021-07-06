@@ -220,7 +220,7 @@ PYINSTALLER_WORK_DIR = $(BUILD_DIR)/pyinstaller
 all: tr qrc
 
 .PHONY: clean
-clean: tr-mostlyclean qrc-clean dist-clean
+clean: tr-mostlyclean qrc-clean dist-clean pip-clean
 
 ################################################################################
 
@@ -344,3 +344,20 @@ upload:
 		--stats \
 		"$(DIST_TARGET)" \
 		"$(BMN_UPLOAD_DIR)/$(DIST_TARGET_NAME)"
+
+################################################################################
+
+.PHONY: pip-dist
+pip-dist: all
+	$(PYTHON) ./setup.py sdist \
+		--dist-dir "$(call NPATH,$(DIST_DIR))"
+	$(PYTHON) ./setup.py bdist_wheel \
+		--bdist-dir "$(call NPATH,$(BUILD_DIR))" \
+		--dist-dir "$(call NPATH,$(DIST_DIR))"
+
+pip-clean: PIP_FILE_MASK := $(DIST_DIR)/$(BMN_PACKAGE_NAME)-$(BMN_VERSION_STRING)*
+pip-clean: PIP_FILE_LIST := $(wildcard $(PIP_FILE_MASK).tar.gz $(PIP_FILE_MASK).zip $(PIP_FILE_MASK).whl)
+pip-clean:
+	$(call RMDIR,$(BASE_DIR)/$(BMN_PACKAGE_NAME).egg-info)
+	$(call RMDIR,$(BUILD_DIR))
+	$(foreach F,$(PIP_FILE_LIST),$(call RM,$(F));)
