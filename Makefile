@@ -30,13 +30,12 @@ endif
 ifneq (,$(findstring mingw32,$(MAKE_HOST)))
 PLATFORM := mingw32
 
-; = $(subst &, &,&)
 EXEC_SUFFIX = .exe
 NPATH = $(subst /,\,$(1))
 MKDIR = if not exist "$(call NPATH,$(1))" mkdir "$(call NPATH,$(1))"
 CP =
-RM = del /F /Q "$(call NPATH,$(1))"
-RMDIR = -rmdir /S /Q "$(call NPATH,$(1))"
+RM = if exist "$(call NPATH,$(1))" del /F /Q "$(call NPATH,$(1))"
+RMDIR = if exist "$(call NPATH,$(1))" rmdir /S /Q "$(call NPATH,$(1))"
 ENVSUBST_FILE =
 CHMOD_EXEC =
 
@@ -58,7 +57,6 @@ else
 $(error Unsupported platform $(MAKE_HOST))
 endif
 
-; = ;
 EXEC_SUFFIX =
 NPATH = $(1)
 MKDIR = $(BMN_POSIX_BIN_DIR)mkdir -p "$(call NPATH,$(1))"
@@ -158,6 +156,12 @@ export TARGET_NAME_DEBUG = \
 # https://blog.jgc.org/2011/07/gnu-make-recursive-wildcard-function.html
 RWILDCARD = $(foreach d,$(wildcard $(1)*),$(call RWILDCARD,$(d)/,$(2))$(filter $(subst *,%,$(2)),$(d)))
 
+# new line char
+define NL
+
+
+endef
+
 ################################################################################
 # Common directories
 ################################################################################
@@ -247,12 +251,12 @@ tr-update: $(PY_TR_SOURCES) $(QML_TR_SOURCES)
 
 .PHONY: tr-clean
 tr-clean: tr-mostlyclean
-	$(foreach F,$(PY_TR_SOURCES),$(call RM,$(F))$(;))
-	$(foreach F,$(QML_TR_SOURCES),$(call RM,$(F))$(;))
+	$(foreach F,$(PY_TR_SOURCES),$(call RM,$(F))$(NL))
+	$(foreach F,$(QML_TR_SOURCES),$(call RM,$(F))$(NL))
 
 .PHONY: tr-mostlyclean
 tr-mostlyclean:
-	$(foreach F,$(TR_OBJECTS),$(call RM,$(F))$(;))
+	$(foreach F,$(TR_OBJECTS),$(call RM,$(F))$(NL))
 
 $(TR_OBJECTS): $(PY_TR_SOURCES) $(QML_TR_SOURCES)
 	$(call MKDIR,$(@D))
@@ -330,6 +334,23 @@ include $(CONTRIB_PLATFORM_DIR)/dist.mk
 
 ################################################################################
 
+.PHONY: pip-dist
+pip-dist: all
+	$(PYTHON) ./setup.py sdist \
+		--dist-dir "$(call NPATH,$(DIST_DIR))"
+	$(PYTHON) ./setup.py bdist_wheel \
+		--bdist-dir "$(call NPATH,$(BUILD_DIR))" \
+		--dist-dir "$(call NPATH,$(DIST_DIR))"
+
+pip-clean: PIP_FILE_MASK := $(DIST_DIR)/$(BMN_PACKAGE_NAME)-$(BMN_VERSION_STRING)*
+pip-clean: PIP_FILE_LIST := $(wildcard $(PIP_FILE_MASK).tar.gz $(PIP_FILE_MASK).whl)
+pip-clean:
+	$(call RMDIR,$(BASE_DIR)/$(BMN_PACKAGE_NAME).egg-info)
+	$(call RMDIR,$(BUILD_DIR))
+	$(foreach F,$(PIP_FILE_LIST),$(call RM,$(F))$(NL))
+
+################################################################################
+
 .PHONY: upload
 upload: DIST_TARGET_NAME := $(notdir $(DIST_TARGET))
 upload: DIST_TARGET_NAME := $(basename $(DIST_TARGET_NAME))-$(call FILE_MTIME,$(DIST_TARGET))$(suffix $(DIST_TARGET_NAME))
@@ -343,20 +364,3 @@ upload:
 		--stats \
 		"$(DIST_TARGET)" \
 		"$(BMN_UPLOAD_DIR)/$(DIST_TARGET_NAME)"
-
-################################################################################
-
-.PHONY: pip-dist
-pip-dist: all
-	$(PYTHON) ./setup.py sdist \
-		--dist-dir "$(call NPATH,$(DIST_DIR))"
-	$(PYTHON) ./setup.py bdist_wheel \
-		--bdist-dir "$(call NPATH,$(BUILD_DIR))" \
-		--dist-dir "$(call NPATH,$(DIST_DIR))"
-
-pip-clean: PIP_FILE_MASK := $(DIST_DIR)/$(BMN_PACKAGE_NAME)-$(BMN_VERSION_STRING)*
-pip-clean: PIP_FILE_LIST := $(wildcard $(PIP_FILE_MASK).tar.gz $(PIP_FILE_MASK).zip $(PIP_FILE_MASK).whl)
-pip-clean:
-	$(call RMDIR,$(BASE_DIR)/$(BMN_PACKAGE_NAME).egg-info)
-	$(call RMDIR,$(BUILD_DIR))
-	$(foreach F,$(PIP_FILE_LIST),$(call RM,$(F));)
