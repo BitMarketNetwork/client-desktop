@@ -171,7 +171,7 @@ export RESOURCES_DIR = $(PACKAGE_DIR)/resources
 export TRANSLATIONS_DIR = $(RESOURCES_DIR)/translations
 export TESTS_DIR = $(BASE_DIR)/tests
 export DIST_DIR = $(BASE_DIR)/dist
-export TEMP_DIR = $(BASE_DIR)/tmp
+export BUILD_DIR = $(BASE_DIR)/build
 
 ################################################################################
 # Sources
@@ -187,7 +187,7 @@ QML_SOURCES := $(sort $(call RWILDCARD,$(RESOURCES_DIR)/,*.qml))
 export USE_QRC ?= 0
 
 QRC_SOURCES := $(sort $(call RWILDCARD,$(RESOURCES_DIR)/,*.qml *.svg *qmldir))
-QRC_SOURCE = $(TEMP_DIR)/resources.qrc
+QRC_SOURCE = $(BUILD_DIR)/resources.qrc
 QRC_TARGET = $(RESOURCES_DIR)/qrc/__init__.py
 
 PY_SOURCES := $(filter-out $(QRC_TARGET),$(PY_SOURCES))
@@ -210,7 +210,7 @@ TR_OBJECTS := $(addprefix $(TRANSLATIONS_DIR)/,\
 # PyInstaller
 #################################################################################
 
-PYINSTALLER_WORK_DIR = $(TEMP_DIR)/pyinstaller-build
+PYINSTALLER_WORK_DIR = $(BUILD_DIR)/pyinstaller
 
 ################################################################################
 # Targets

@@ -39,7 +39,7 @@ CONTRIB_PLATFORM_DIR = Path(os.getenv("CONTRIB_PLATFORM_DIR"))
 PACKAGE_DIR = Path(os.getenv("PACKAGE_DIR"))
 RESOURCES_DIR = Path(os.getenv("RESOURCES_DIR"))
 DIST_DIR = Path(os.getenv("DIST_DIR"))
-TEMP_DIR = Path(os.getenv("TEMP_DIR"))
+BUILD_DIR = Path(os.getenv("BUILD_DIR"))
 
 TARGET_NAME_RELEASE = os.getenv("TARGET_NAME_RELEASE")
 TARGET_NAME_DEBUG = os.getenv("TARGET_NAME_DEBUG")
