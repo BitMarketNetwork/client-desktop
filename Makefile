@@ -230,8 +230,6 @@ gui: all
 gui-debug: all
 	$(PYTHON) "$(call NPATH,$(BASE_DIR)/$(BMN_SHORT_NAME))" -d
 
-# https://docs.python.org/3/library/unittest.html#test-discovery
-# https://docs.python.org/3/library/unittest.html#command-line-interface
 .PHONY: check
 check: T = $(call NPATH,$(BASE_DIR))
 check: S = $(call NPATH,$(TESTS_DIR))
