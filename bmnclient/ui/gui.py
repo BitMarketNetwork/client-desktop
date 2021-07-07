@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from os import environ
 from typing import TYPE_CHECKING
 
 from PySide2.QtCore import Qt
@@ -7,6 +8,7 @@ from PySide2.QtWidgets import QApplication
 
 from .system_tray import SystemTrayIcon
 from ..application import CoreApplication
+from ..os_environment import Platform
 from ..version import Timer
 
 if TYPE_CHECKING:
@@ -22,6 +24,16 @@ class GuiApplication(CoreApplication):
             *,
             command_line: CommandLine,
             model_factory: Optional[Callable[[object], object]] = None) -> None:
+
+        # Warning: Ignoring XDG_SESSION_TYPE=wayland on Gnome. Use
+        # QT_QPA_PLATFORM=wayland to run on Wayland anyway.
+        if Platform.isLinux:
+            if (
+                    environ.get("XDG_SESSION_TYPE", "").lower() == "wayland"
+                    and not environ.get("QT_QPA_PLATFORM")
+            ):
+                environ["QT_QPA_PLATFORM"] = "wayland"
+
         super().__init__(
             qt_class=QApplication,
             command_line=command_line,
