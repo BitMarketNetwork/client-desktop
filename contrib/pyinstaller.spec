@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import sys
 from fnmatch import fnmatch
@@ -16,7 +17,7 @@ from PyInstaller.building.build_main import \
     PYZ
 
 if TYPE_CHECKING:
-    from typing import Any, Final
+    from typing import Any, Final, List, Tuple
 
 
 ################################################################################
@@ -50,6 +51,32 @@ else:
 ################################################################################
 # Utils
 ################################################################################
+
+
+def get_module_path(name: str) -> Path:
+    spec = importlib.util.find_spec(name)
+    if not spec:
+        raise ImportError("module '{}' not found".format(name))
+
+    if (
+            not spec.submodule_search_locations
+            or not spec.submodule_search_locations[0]
+            or not Path(spec.submodule_search_locations[0]).exists()
+    ):
+        raise FileNotFoundError("path of module '{}' not found".format(name))
+
+    return Path(spec.submodule_search_locations[0])
+
+
+def glob_strict(path: Path, pattern: str) -> List[Path]:
+    if not path.is_dir():
+        raise FileNotFoundError("path '{}' not found".format(str(path)))
+    result = list(path.glob(pattern))
+    if not result:
+        raise FileNotFoundError(
+            "can't find files matching pattern '{}', path '{}'"
+            .format(pattern, str(path)))
+    return result
 
 
 def load_exclude_list() -> str:
@@ -100,6 +127,25 @@ def is_relative_to(p1, p2) -> bool:
         return p1.relative_to(p2)
     except ValueError:
         return False
+
+
+def find_qt_wayland_plugins() -> List[Tuple[Path, Path]]:
+    if not PLATFORM_IS_LINUX:
+        return []
+    result = []
+    module_path = get_module_path("PySide2")
+
+    for name in (
+            "wayland-decoration-client",
+            "wayland-graphics-integration-client",
+            "wayland-shell-integration"
+    ):
+        relative_path = Path("Qt") / "plugins" / name
+        for file_path in glob_strict(module_path / relative_path, "lib*.so"):
+            result.append((file_path, Path("PySide2") / relative_path))
+
+    assert result
+    return result
 
 
 # Sync with NSIS
@@ -204,6 +250,7 @@ source_list = [
 ]
 
 binary_list = [
+    *find_qt_wayland_plugins()
 ]
 
 data_path_list = [
@@ -229,7 +276,7 @@ hidden_import_list = [
 analysis = Analysis(
     map(str, source_list),
     pathex=[],
-    binaries=binary_list,
+    binaries=map(lambda v: map(str, v), binary_list),
     datas=map(
         lambda x: (str(x.resolve()), str(x.relative_to(BASE_PATH))),
         data_path_list),

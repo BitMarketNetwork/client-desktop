@@ -179,6 +179,7 @@ class CoreApplication(QObject):
 
         if issubclass(qt_class, QApplication):
             qt_class.setWindowIcon(self._icon)
+            qt_class.setDesktopFileName(Product.SHORT_NAME + ".desktop")
 
         # We recommend that you connect clean-up code to the aboutToQuit()
         # signal, instead of putting it in your application's main() function

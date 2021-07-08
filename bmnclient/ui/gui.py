@@ -38,6 +38,12 @@ class GuiApplication(CoreApplication):
             qt_class=QApplication,
             command_line=command_line,
             model_factory=model_factory)
+
+        if Platform.isLinux:
+            self._is_wayland = self._qt_application.platformName() == "wayland"
+        else:
+            self._is_wayland = False
+
         self._system_tray_icon = SystemTrayIcon(self)
 
     @property
@@ -73,7 +79,8 @@ class GuiApplication(CoreApplication):
                 if (state & Qt.WindowMinimized) == Qt.WindowMinimized:
                     window.show()
                 window.raise_()
-                window.requestActivate()
+                if not self._is_wayland:
+                    window.requestActivate()
             else:
                 window.setVisible(False)
 
