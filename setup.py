@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -11,6 +12,10 @@ from setuptools.config import read_configuration
 if TYPE_CHECKING:
     from typing import Dict, Final, List
 
+
+PLATFORM_IS_WINDOWS: Final = sys.platform.startswith("win32")
+PLATFORM_IS_DARWIN: Final = sys.platform.startswith("darwin")
+PLATFORM_IS_LINUX: Final = sys.platform.startswith("linux")
 
 METADATA: Final = read_configuration("setup.cfg")["metadata"]
 NAME: Final = METADATA["name"]
@@ -63,7 +68,7 @@ setuptools.setup(
     zip_safe=False,
     install_requires=read_requirements("requirements.txt"),
     entry_points={
-        "console_scripts": [
+        "gui_scripts" if PLATFORM_IS_WINDOWS else "console_scripts": [
             "bmn-client" + "=" + NAME + ":main"
         ]
     },
