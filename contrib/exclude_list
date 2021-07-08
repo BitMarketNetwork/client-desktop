@@ -6,6 +6,12 @@ bmnclient/resources/translations/*.ts
 include/*
 PySide2/Qt/libexec/*
 PySide2/plugins/qmltooling/*
+PySide2/plugins/platforms/qeglfs*
+PySide2/plugins/platforms/qlinuxfb*
+PySide2/plugins/platforms/qminimal*
+PySide2/plugins/platforms/qoffscreen*
+PySide2/plugins/platforms/qvnc*
+PySide2/plugins/platforms/qwebgl*
 PySide2/qml/Qt/*
 PySide2/*/designer/*
 
@@ -61,10 +67,20 @@ PySide2/qml/QtNfc/*
 Qt5Pdf*
 QtPdf*
 PySide2/qml/QtQuick/Pdf/*
+PySide2/plugins/imageformats/qpdf*
+
+Qt5Purchasing*
+QtPurchasing*
+PySide2/qml/QtPurchasing/*
+
+Qt5RemoteObjects*
+QtRemoteObjects*
+PySide2/qml/QtRemoteObjects/*
+PySide2/qml/QtQml/RemoteObjects/*
 
 Qt5Sensors*
 QtSensors*
-PySide2/qml/QtSensors*
+PySide2/qml/QtSensors/*
 
 Qt5SerialPort*
 QtSerialPort*

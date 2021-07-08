@@ -11,6 +11,3 @@ __pycache__
 # setuptools
 /*.egg-info
 /bmnclient-*.*.*
-
-# private
-/contrib/make-*
