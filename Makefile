@@ -174,6 +174,8 @@ export PACKAGE_DIR = $(BASE_DIR)/$(BMN_PACKAGE_NAME)
 export RESOURCES_DIR = $(PACKAGE_DIR)/resources
 export TRANSLATIONS_DIR = $(RESOURCES_DIR)/translations
 export TESTS_DIR = $(BASE_DIR)/tests
+
+# DON'T CHANGE! setuptools paths
 export DIST_DIR = $(BASE_DIR)/dist
 export BUILD_DIR = $(BASE_DIR)/build
 
@@ -329,18 +331,16 @@ include $(CONTRIB_PLATFORM_DIR)/dist.mk
 ################################################################################
 
 .PHONY: pip-dist
-pip-dist: all
-	$(PYTHON) ./setup.py sdist \
-		--dist-dir "$(call NPATH,$(DIST_DIR))"
-	$(PYTHON) ./setup.py bdist_wheel \
-		--bdist-dir "$(call NPATH,$(BUILD_DIR))/bdist" \
-		--dist-dir "$(call NPATH,$(DIST_DIR))"
+pip-dist: all pip-clean
+# DIST_DIR, BUILD_DIR used by default!
+	$(PYTHON) ./setup.py sdist
+	$(PYTHON) ./setup.py bdist_wheel
 
 pip-clean: PIP_FILE_MASK := $(DIST_DIR)/$(BMN_PACKAGE_NAME)-$(BMN_VERSION_STRING)*
 pip-clean: PIP_FILE_LIST := $(wildcard $(PIP_FILE_MASK).tar.gz $(PIP_FILE_MASK).whl)
 pip-clean:
 	$(call RMDIR,$(BASE_DIR)/$(BMN_PACKAGE_NAME).egg-info)
-	$(call RMDIR,$(BUILD_DIR)/bdist)
+	$(call RMDIR,$(BUILD_DIR))
 	$(foreach F,$(PIP_FILE_LIST),$(call RM,$(F))$(NL))
 
 ################################################################################
