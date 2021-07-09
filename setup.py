@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import os
+import site
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -11,6 +13,9 @@ from setuptools.config import read_configuration
 if TYPE_CHECKING:
     from typing import Dict, Final, List
 
+# https://github.com/pypa/pip/issues/7953
+if len(sys.argv) >= 3 and sys.argv[1] == "develop":
+    site.ENABLE_USER_SITE = "--user" in sys.argv[2:]
 
 METADATA: Final = read_configuration("setup.cfg")["metadata"]
 PACKAGE_NAME: Final = METADATA["name"]
