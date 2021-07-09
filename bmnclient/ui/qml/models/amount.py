@@ -71,7 +71,7 @@ class AbstractAmountInputModel(AbstractAmountModel):
         def _normalizeValue(self, value: str) -> str:
             value = value.replace(
                 self._owner.locale.groupSeparator(),
-                '')
+                "")
             if value and value[0] in (
                     "+",
                     "-",
@@ -84,7 +84,7 @@ class AbstractAmountInputModel(AbstractAmountModel):
                 self,
                 value: str,
                 currency_type: Type[AbstractCurrency],
-                unit_convert: Optional[Callable[[int], int]] = None) \
+                unit_converter: Optional[Callable[[int], int]] = None) \
                 -> QValidator.State:
             value = self._normalizeValue(value)
             if not value:
@@ -92,7 +92,7 @@ class AbstractAmountInputModel(AbstractAmountModel):
             value = self._owner._fromHumanValue(
                 value,
                 currency_type,
-                unit_convert)
+                unit_converter)
             if value is None:
                 return QValidator.State.Invalid
             return QValidator.State.Acceptable
@@ -131,7 +131,7 @@ class AbstractAmountInputModel(AbstractAmountModel):
             self,
             value: str,
             currency_type: Type[AbstractCurrency],
-            unit_convert: Optional[Callable[[int], Optional[int]]] = None) \
+            unit_converter: Optional[Callable[[int], Optional[int]]] = None) \
             -> Optional[int]:
         if not value:
             value = 0
@@ -143,18 +143,17 @@ class AbstractAmountInputModel(AbstractAmountModel):
             if value is None:
                 return None
 
-        if unit_convert:
-            value = unit_convert(value)
+        if unit_converter is not None:
+            value = unit_converter(value)
         return value
 
     def _setValueHelper(
             self,
-            value: Optional[Union[str, int]],
+            value: str,
             currency_type: Type[AbstractCurrency],
-            unit_convert: Optional[Callable[[int], Optional[int]]] = None) \
+            unit_converter: Optional[Callable[[int], Optional[int]]] = None) \
             -> bool:
-        if isinstance(value, str):
-            value = self._fromHumanValue(value, currency_type, unit_convert)
+        value = self._fromHumanValue(value, currency_type, unit_converter)
         result = value is not None
         if value != self._getValue():
             if value is None:

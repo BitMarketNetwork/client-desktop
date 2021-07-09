@@ -66,17 +66,17 @@ class AbstractCurrency(NotImplementedInstance):
         sign = False
         if (
                 source[0] == "-" or
-                (locale and source[0] == locale.negativeSign())
+                (locale is not None and source[0] == locale.negativeSign())
         ):
             sign = True
             source = source[1:]
         elif (
                 source[0] == "+" or
-                (locale and source[0] == locale.positiveSign())
+                (locale is not None and source[0] == locale.positiveSign())
         ):
             source = source[1:]
 
-        a = source.rsplit(locale.decimalPoint() if locale else ".")
+        a = source.rsplit(locale.decimalPoint() if locale is not None else ".")
         if len(a) == 1:
             b = ""
             a = a[0]
@@ -90,7 +90,7 @@ class AbstractCurrency(NotImplementedInstance):
 
         result = 0
         if a:
-            if locale:
+            if locale is not None:
                 if not strict:
                     a = a.replace(locale.groupSeparator(), '')
                 a = locale.stringToInteger(a)
