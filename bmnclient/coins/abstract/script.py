@@ -71,5 +71,5 @@ class _AbstractScript(LittleOrderIntegerConverter):
         raise NotImplementedError
 
     @classmethod
-    def pushData(cls, data: bytes) -> None:
+    def pushData(cls, data: bytes) -> Optional[bytes]:
         raise NotImplementedError

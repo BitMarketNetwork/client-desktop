@@ -56,15 +56,12 @@ class _BitcoinScript(AbstractCoin.Script):
                 cls.OpCode.OP_CHECKSIG
             )
         elif type_ == cls.Type.P2SH:
-            return None
-            # script = (
-            #     cls.OpCode.OP_HASH160,
-            #     cls.pushData(address.hash),
-            #     cls.OpCode.OP_EQUAL
-            # )
+            script = (
+                cls.OpCode.OP_HASH160,
+                cls.pushData(address.hash),
+                cls.OpCode.OP_EQUAL
+            )
         elif type_ in (cls.Type.P2SH_P2WPKH, cls.Type.P2WPKH, cls.Type.P2WSH):
-            if type_ == cls.Type.P2WSH:
-                return None
             script = (
                 cls.OpCode.OP_0,
                 cls.pushData(address.hash),

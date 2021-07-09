@@ -46,11 +46,11 @@ class _BitcoinMutableTxInput(AbstractCoin.TxFactory.MutableTx.Input):
             script = self._coin.Script.addressToScript(
                 self._utxo.address,
                 self._utxo.scriptType)
-        try:
-            self._script_bytes = \
-                self._coin.Script.integerToVarInt(len(script)) \
-                + script
-        except TypeError:
+        if script is not None:
+            self._script_bytes = (
+                self._coin.Script.integerToVarInt(len(script))
+                + script)
+        else:
             self._script_bytes = self._coin.Script.integerToVarInt(0)
 
     def sign(self, hash_: bytes) -> bool:
@@ -73,6 +73,8 @@ class _BitcoinMutableTxInput(AbstractCoin.TxFactory.MutableTx.Input):
         try:
             if not self._is_dummy:
                 signature = private_key.sign(hash_)
+                if not signature:
+                    return False
             else:
                 signature = b"\x00" * PrivateKey.signatureMaxSize
             signature += self._coin.Script.integerToVarInt(self._hash_type)
@@ -82,6 +84,8 @@ class _BitcoinMutableTxInput(AbstractCoin.TxFactory.MutableTx.Input):
                     script_sig = self._coin.Script.addressToScript(
                         self.utxo.address,
                         self._coin.Script.Type.P2WPKH)
+                    if script_sig is None:
+                        return False
                     script_sig = self._coin.Script.pushData(script_sig)
                 else:
                     script_sig = b""
@@ -108,21 +112,23 @@ class _BitcoinMutableTxInput(AbstractCoin.TxFactory.MutableTx.Input):
                 # A non-witness program (defined hereinafter) txin MUST be
                 # associated with an empty witness field, represented by a 0x00.
                 wd = self._coin.Script.integerToVarInt(0)
+        except TypeError:
+            return False
 
+        try:
             # noinspection PyAttributeOutsideInit
-            self._script_sig_bytes = \
-                self._coin.Script.integerToVarInt(len(script_sig)) \
-                + script_sig
+            self._script_sig_bytes = (
+                self._coin.Script.integerToVarInt(len(script_sig))
+                + script_sig)
             # noinspection PyAttributeOutsideInit
             self._witness_bytes = wd
+            return True
         except TypeError:
             # noinspection PyAttributeOutsideInit
             self._script_sig_bytes = b""
             # noinspection PyAttributeOutsideInit
             self._witness_bytes = b""
             return False
-
-        return True
 
 
 class _BitcoinMutableTxOutput(AbstractCoin.TxFactory.MutableTx.Output):
@@ -134,13 +140,13 @@ class _BitcoinMutableTxOutput(AbstractCoin.TxFactory.MutableTx.Output):
             amount: int,
             **kwargs) -> None:
         super().__init__(address, amount, **kwargs)
-        try:
-            script = self._coin.Script.addressToScript(self._address)
-            self._script_bytes = \
-                self._coin.Script.integerToVarInt(len(script)) \
-                + script
-        except TypeError:
-            self._script_bytes = b""
+        script = self._coin.Script.addressToScript(self._address)
+        if script is not None:
+            self._script_bytes = (
+                self._coin.Script.integerToVarInt(len(script))
+                + script)
+        else:
+            self._script_bytes = self._coin.Script.integerToVarInt(0)
 
 
 class _BitcoinMutableTx(AbstractCoin.TxFactory.MutableTx):
