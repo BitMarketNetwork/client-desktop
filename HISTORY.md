@@ -1,12 +1,18 @@
 # BitMarket Network Client Change Log
 
+## 0.12.6 (09.07.2021)
+
+* Fixed Linux Wayland support.
+* Fixed generation of transactions for P2SH, P2WSH addresses.
+* Python setuptools support.
+
 ## 0.12.5 (28.06.2021)
 
-* Application quit confirmation
-* System Tray optimization
-* Dialogs optimization
-* Key Store optimization
-* Minor fixes
+* Application quit confirmation.
+* System Tray optimization.
+* Dialogs optimization.
+* Key Store optimization.
+* Minor fixes.
 
 ## 0.12.4 (12.06.2021)
 
