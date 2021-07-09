@@ -1,3 +1,9 @@
 include HISTORY.md
 include requirements.txt
 include bmnclient/resources/translations/*.ts
+
+# tests
+include requirements-dev.txt
+include tox.ini
+recursive-include tests *.py
+graft tests/data

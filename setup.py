@@ -65,6 +65,9 @@ setuptools.setup(
     }),
     zip_safe=False,
     install_requires=read_requirements("requirements.txt"),
+    extras_require={
+        "dev": read_requirements("requirements-dev.txt"),
+    },
     entry_points={
         "gui_scripts": [
             "bmn-client" + "=" + PACKAGE_NAME + ":main"
