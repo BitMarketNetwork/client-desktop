@@ -22,7 +22,7 @@ class DummyCursor:
         pass
 
 
-class SqLite:
+class Sqlite:
     COLUMN_NAMES = [
         "key",
         "value",
@@ -110,7 +110,6 @@ class SqLite:
             sys.exit(1)
 
     def create_tables(self) -> None:
-        integer = "INTEGER"
         query = f"""
         CREATE TABLE IF NOT EXISTS {self.meta_table}
             (id INTEGER PRIMARY KEY,
@@ -120,9 +119,9 @@ class SqLite:
         CREATE TABLE IF NOT EXISTS {self.coins_table}
             (id INTEGER PRIMARY KEY ,
             {self.name_column}  TEXT NOT NULL UNIQUE,
-            {self.visible_column}       {integer} ,
-            {self.height_column}        {integer} ,
-            {self.verified_height_column}        {integer},
+            {self.visible_column}       INTEGER ,
+            {self.height_column}        INTEGER ,
+            {self.verified_height_column}        INTEGER,
             {self.offset_column}        TEXT,
             {self.unverified_offset_column}        TEXT,
             {self.unverified_hash_column}        TEXT
@@ -130,13 +129,13 @@ class SqLite:
         CREATE TABLE IF NOT EXISTS {self.addresses_table}
             (id INTEGER PRIMARY KEY,
             {self.address_column}   TEXT NOT NULL,
-            {self.coin_id_column}   {integer} NOT NULL,
+            {self.coin_id_column}   INTEGER NOT NULL,
             {self.label_column}     TEXT,
             {self.message_column}     TEXT,
-            {self.created_column}     {integer} NOT NULL,
-            {self.type_column}      {integer} NOT NULL,
-            {self.amount_column}   {integer},
-            {self.tx_count_column}  {integer},
+            {self.created_column}     INTEGER NOT NULL,
+            {self.type_column}      INTEGER NOT NULL,
+            {self.amount_column}   INTEGER,
+            {self.tx_count_column}  INTEGER,
             {self.first_offset_column}      TEXT,
             {self.last_offset_column}       TEXT,
             {self.key_column}       TEXT,
@@ -146,20 +145,20 @@ class SqLite:
         CREATE TABLE IF NOT EXISTS {self.transactions_table}
             (id INTEGER PRIMARY KEY,
             {self.name_column}   TEXT NOT NULL,
-            {self.address_id_column} {integer} NOT NULL,
-            {self.height_column} {integer} NOT NULL,
-            {self.time_column}   {integer} NOT NULL,
-            {self.amount_column} {integer} NOT NULL,
-            {self.fee_amount_column}    {integer} NOT NULL,
-            {self.coinbase_column}    {integer} NOT NULL,
+            {self.address_id_column} INTEGER NOT NULL,
+            {self.height_column} INTEGER NOT NULL,
+            {self.time_column}   INTEGER NOT NULL,
+            {self.amount_column} INTEGER NOT NULL,
+            {self.fee_amount_column}    INTEGER NOT NULL,
+            {self.coinbase_column}    INTEGER NOT NULL,
             FOREIGN KEY ({self.address_id_column}) REFERENCES {self.addresses_table} (id) ON DELETE CASCADE,
             UNIQUE({self.name_column}, {self.address_id_column})
             );
         CREATE TABLE IF NOT EXISTS {self.inputs_table} (id INTEGER PRIMARY KEY,
             {self.address_column}   TEXT NOT NULL,
-            {self.tx_id_column}     {integer} NOT NULL,
-            {self.amount_column}    {integer} NOT NULL,
-            {self.type_column}      {integer} NOT NULL,
+            {self.tx_id_column}     INTEGER NOT NULL,
+            {self.amount_column}    INTEGER NOT NULL,
+            {self.type_column}      INTEGER NOT NULL,
             {self.output_type_column}      TEXT NOT NULL,
             FOREIGN KEY ({self.tx_id_column}) REFERENCES {self.transactions_table} (id) ON DELETE CASCADE
             );

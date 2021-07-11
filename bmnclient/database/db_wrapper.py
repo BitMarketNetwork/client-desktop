@@ -24,15 +24,16 @@ class Database:
             self,
             application: CoreApplication,
             file_path: PurePath) -> None:
-        super().__init__()
         self._application = application
         self._logger = Logger.classLogger(
             self.__class__,
             (None, file_path.name))
+        self._logger.debug("bmnsqlite3 version: %s", bmnsqlite3.version)
         self._logger.debug("SQLite version: %s", bmnsqlite3.sqlite_version)
+
         self._file_path = file_path
         self.__db_name = None
-        self.__impl = sqlite_impl.SqLite()
+        self.__impl = sqlite_impl.Sqlite()
         self._is_loaded = False
 
     def __getattr__(self, attr: str) -> str:
