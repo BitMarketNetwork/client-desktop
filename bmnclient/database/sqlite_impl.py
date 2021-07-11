@@ -6,8 +6,6 @@ import sys
 import threading
 from typing import TYPE_CHECKING
 
-from . import cipher
-
 if TYPE_CHECKING:
     from typing import Any
     from ..application import CoreApplication
@@ -70,10 +68,8 @@ class SqLite:
     def __init__(self):
         self.__mutex = threading.Lock()
         self.__conn = None
-        self.__proxy = None
 
     def connect_impl(self, application: CoreApplication, db_name: str) -> None:
-        self.__proxy = cipher.Cipher(application)
         self.__conn = sql.connect(
             db_name,
             timeout=3,
@@ -85,7 +81,7 @@ class SqLite:
         )
         self.exec("PRAGMA foreign_keys=ON")
         sql.enable_callback_tracebacks(self.DEBUG)
-        self.__conn.text_factory = self.__proxy.text_from
+        self.__conn.text_factory = lambda v: v.decode()
 
     def exec(self, query: str, *args) -> None:
         if self.__conn is None:
@@ -186,9 +182,7 @@ class SqLite:
         raise AttributeError("bad table or column '{}'".format(attr))
 
     def __call__(self, data: Any, strong: bool = False, key: str = None):
-        if not self.__proxy:
-            return "-"
-        return self.__proxy.encrypt(data, strong)
+        return "" if data is None else data
 
     def __pos__(self):
         pass
