@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-import sqlite3 as sql
+import bmnsqlite3 as sql
 import sys
 import threading
 from typing import TYPE_CHECKING
@@ -114,7 +114,7 @@ class SqLite:
             sys.exit(1)
 
     def create_tables(self) -> None:
-        integer = "TEXT" if cipher.Cipher.ENCRYPT else "INTEGER"
+        integer = "INTEGER"
         query = f"""
         CREATE TABLE IF NOT EXISTS {self.meta_table}
             (id INTEGER PRIMARY KEY,
@@ -172,13 +172,6 @@ class SqLite:
         c.close()
 
     def __make_title(self, name: str) -> str:
-        if cipher.Cipher.ENCRYPT:
-            if not self.__proxy:
-                return "-"
-            name2 = name + "_title_"
-            if not hasattr(self, name2):
-                setattr(self, name2, f"_{self.__proxy.make_hash(name)}")
-            return getattr(self, name2)
         return name
 
     def __getattr__(self, attr: str) -> str:

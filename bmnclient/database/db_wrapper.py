@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import sqlite3
+import bmnsqlite3
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -29,7 +29,7 @@ class Database:
         self._logger = Logger.classLogger(
             self.__class__,
             (None, file_path.name))
-        self._logger.debug("SQLite version: %s", sqlite3.sqlite_version)
+        self._logger.debug("SQLite version: %s", bmnsqlite3.sqlite_version)
         self._file_path = file_path
         self.__db_name = None
         self.__impl = sqlite_impl.SqLite()
@@ -69,7 +69,7 @@ class Database:
     def execute(self, query: str, args: tuple = ()):
         try:
             return self.__impl.exec(query, args)
-        except sqlite3.DatabaseError as ie:
+        except bmnsqlite3.DatabaseError as ie:
             self._logger.error("Database error: %s", str(ie))
             return None
 

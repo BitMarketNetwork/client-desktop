@@ -24,15 +24,11 @@ class Type(enum.IntEnum):
 
 
 class Cipher:
-    ENCRYPT = True
-
     def __init__(self, application: CoreApplication) -> None:
         self._cipher = application.keyStore.deriveCipher(
             KeyIndex.WALLET_DATABASE)
 
     def text_from(self, value: bytes) -> str:
-        if self.ENCRYPT:
-            return self._decrypt(value)
         return value.decode()
 
     def _decrypt(self, value: bytes) -> Any:
@@ -82,22 +78,7 @@ class Cipher:
     def encrypt(self, value: Any, strong: bool) -> str:
         if value is None:
             return ""
-        if not self.ENCRYPT:
-            return value
-        try:
-            if isinstance(value, str):
-                return self._encrypt(value.encode(), Type.TypeText, strong)
-            if isinstance(value, bytes):
-                return self._encrypt(value, Type.TypeBytes, strong)
-            if isinstance(value, bool):
-                return self._encrypt(struct.pack("?", value), Type.TypeBool, strong)
-            if isinstance(value, int):
-                return self._encrypt(struct.pack("q", value), Type.TypeInt, strong)
-            if isinstance(value, float):
-                return self._encrypt(struct.pack("d", value), Type.TypeReal, strong)
-        except struct.error as se:
-            log.critical(f"packing error:{se} for {value}")
-        raise TypeError(f"{value} => {type(value)}")
+        return value
 
     def make_hash(self, value: str) -> str:
         return self._cipher.encrypt(None, value.encode("utf-8")).hex()

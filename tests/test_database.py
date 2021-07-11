@@ -21,8 +21,6 @@ class TestDataEncoding(unittest.TestCase):
         self.__do_test(False)
 
     def __do_test(self, encrypted: bool):
-        cipher.Cipher.ENCRYPT = encrypted
-        log.warning(f"start DB test crypted: {encrypted}")
         db = pathlib.Path(self.DB_NAME)
         if db.exists():
             db.unlink()
