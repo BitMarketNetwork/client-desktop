@@ -18,7 +18,7 @@ from PySide2.QtWidgets import QApplication
 
 from .coins.currency import FiatCurrencyList, FiatRate
 from .coins.list import CoinList
-from .config import Config, UserConfigKey
+from .config import Config, ConfigKey
 from .database.db_wrapper import Database
 from .key_store import KeyStore
 from .language import Language
@@ -314,9 +314,7 @@ class CoreApplication(QObject):
         return self._language
 
     def updateTranslation(self) -> None:
-        language_name = self._user_config.get(
-            UserConfigKey.UI_LANGUAGE,
-            str)
+        language_name = self._user_config.get(ConfigKey.UI_LANGUAGE, str)
         if not language_name:
             language_name = Language.primaryName
         language = Language(language_name)

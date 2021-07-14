@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from typing import Any, Dict, Final, Iterable, Optional, Tuple
     from .. import QmlApplication
     from ....coins.abstract.coin import AbstractCoin
-    from ....config import UserConfigKey
+    from ....config import ConfigKey
     from ....language import Locale
 
 
@@ -65,7 +65,7 @@ class AbstractTupleStateModel(AbstractStateModel):
             application: QmlApplication,
             source_list: Tuple[Dict[str, Any], ...],
             *,
-            user_config_key: Optional[UserConfigKey] = None,
+            user_config_key: Optional[ConfigKey] = None,
             default_name: Optional[str] = None) -> None:
         super().__init__(application)
         self._list = source_list

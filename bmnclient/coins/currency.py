@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from PySide2.QtCore import QObject
 
 from .abstract.currency import AbstractCurrency
-from ..config import UserConfigKey, UserConfigStaticList
+from ..config import ConfigKey, UserConfigStaticList
 
 if TYPE_CHECKING:
     from typing import Final, Iterator, Optional, Type, Union
@@ -35,7 +35,7 @@ class FiatCurrencyList(UserConfigStaticList):
     def __init__(self, application: CoreApplication) -> None:
         super().__init__(
             application.userConfig,
-            UserConfigKey.SERVICES_FIAT_CURRENCY,
+            ConfigKey.SERVICES_FIAT_CURRENCY,
             (
                 UsdFiatCurrency,
                 EuroFiatCurrency

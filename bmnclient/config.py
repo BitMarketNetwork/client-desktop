@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from pathlib import PurePath
 
 
-class UserConfigKey(Enum):
+class ConfigKey(Enum):
     VERSION: Final = "version"
 
     UI_LANGUAGE: Final = "ui.language"
@@ -105,7 +105,7 @@ class Config:
 
     def get(
             self,
-            key: UserConfigKey,
+            key: ConfigKey,
             value_type: Type = str,
             default_value: Any = None) -> Any:
         key_list = key.value.split('.')
@@ -123,10 +123,10 @@ class Config:
                 current_config = current_value
         return default_value
 
-    def exists(self, key: UserConfigKey, value_type: Type = str) -> bool:
+    def exists(self, key: ConfigKey, value_type: Type = str) -> bool:
         return self.get(key, value_type, None) is not None
 
-    def set(self, key: UserConfigKey, value: Any, *, save: bool = True) -> bool:
+    def set(self, key: ConfigKey, value: Any, *, save: bool = True) -> bool:
         key_list = key.value.split('.')
         with self._lock:
             current_config = self._config
@@ -146,15 +146,15 @@ class Config:
         return False
 
     def _updateVersion(self) -> None:
-        if not self.get(UserConfigKey.VERSION, str):
-            self.set(UserConfigKey.VERSION, Product.VERSION_STRING, save=False)
+        if not self.get(ConfigKey.VERSION, str):
+            self.set(ConfigKey.VERSION, Product.VERSION_STRING, save=False)
 
 
 class UserConfigStaticList(StaticList):
     def __init__(
             self,
             user_config: Config,
-            user_config_key: UserConfigKey,
+            user_config_key: ConfigKey,
             source_list: Union[list, tuple],
             *,
             default_index: int,

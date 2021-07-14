@@ -6,7 +6,7 @@ from unittest import TestCase
 
 from bmnclient.coins.hd import HdNode
 from bmnclient.coins.mnemonic import Mnemonic
-from bmnclient.config import UserConfigKey
+from bmnclient.config import ConfigKey
 from bmnclient.crypto.cipher import AeadCipher, MessageCipher
 from bmnclient.crypto.digest import Sha256Digest
 from bmnclient.key_store import \
@@ -131,16 +131,16 @@ class TestKeyStore(TestCase):
             self.assertKeysIsValid(key_store)
 
             self.assertIsNone(self._application.userConfig.get(
-                UserConfigKey.KEY_STORE_SEED, str))
+                ConfigKey.KEY_STORE_SEED, str))
             self.assertIsNone(self._application.userConfig.get(
-                UserConfigKey.KEY_STORE_SEED_PHRASE, str))
+                ConfigKey.KEY_STORE_SEED_PHRASE, str))
             # noinspection PyProtectedMember
             self.assertTrue(key_store._saveSeed(language, phrase))
             self.assertIsInstance(self._application.userConfig.get(
-                UserConfigKey.KEY_STORE_SEED, str),
+                ConfigKey.KEY_STORE_SEED, str),
                 str)
             self.assertIsInstance(self._application.userConfig.get(
-                UserConfigKey.KEY_STORE_SEED_PHRASE, str),
+                ConfigKey.KEY_STORE_SEED_PHRASE, str),
                 str)
 
             # noinspection PyProtectedMember
@@ -171,14 +171,14 @@ class TestKeyStore(TestCase):
 
         self.assertFalse(key_store.isExists)
         self.assertIsNone(self._application.userConfig.get(
-            UserConfigKey.KEY_STORE_VALUE,
+            ConfigKey.KEY_STORE_VALUE,
             str))
 
         self.assertTrue(key_store.create(self._password))
         self.assertTrue(key_store.isExists)
         self.assertIsInstance(
             self._application.userConfig.get(
-                UserConfigKey.KEY_STORE_VALUE,
+                ConfigKey.KEY_STORE_VALUE,
                 str),
             str)
         self.assertKeysIsNone(key_store)
@@ -196,7 +196,7 @@ class TestKeyStore(TestCase):
 
         self.assertTrue(key_store.reset())
         self.assertIsNone(self._application.userConfig.get(
-            UserConfigKey.KEY_STORE_VALUE,
+            ConfigKey.KEY_STORE_VALUE,
             str))
 
     def test_generate_seed_phrase(self) -> None:
