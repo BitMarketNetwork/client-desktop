@@ -18,7 +18,7 @@ from PySide2.QtWidgets import QApplication
 
 from .coins.currency import FiatCurrencyList, FiatRate
 from .coins.list import CoinList
-from .config import UserConfig, UserConfigKey
+from .config import Config, UserConfigKey
 from .database.db_wrapper import Database
 from .key_store import KeyStore
 from .language import Language
@@ -145,7 +145,7 @@ class CoreApplication(QObject):
         self._on_exit_called = False
         self._run_called = False
 
-        self._user_config = UserConfig(
+        self._user_config = Config(
             self._command_line.configPath / ProductPaths.CONFIG_FILE_NAME)
         self._user_config.load()
 
@@ -266,7 +266,7 @@ class CoreApplication(QObject):
         return self._exit_code
 
     @property
-    def userConfig(self) -> UserConfig:
+    def userConfig(self) -> Config:
         return self._user_config
 
     @property

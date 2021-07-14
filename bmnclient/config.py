@@ -33,7 +33,7 @@ class UserConfigKey(Enum):
     SERVICES_FIAT_CURRENCY: Final = "services.fiat_currency"
 
 
-class UserConfig:
+class Config:
     def __init__(self, file_path: PurePath) -> None:
         self._logger = Logger.classLogger(
             self.__class__,
@@ -153,7 +153,7 @@ class UserConfig:
 class UserConfigStaticList(StaticList):
     def __init__(
             self,
-            user_config: UserConfig,
+            user_config: Config,
             user_config_key: UserConfigKey,
             source_list: Union[list, tuple],
             *,
