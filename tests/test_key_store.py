@@ -35,8 +35,8 @@ class TestKeyStore(TestCase):
             config_path=str(self._user_config_path.parent))
         self.assertEqual(
             str(self._user_config_path),
-            str(self._application.userConfig.filePath))
-        self.assertFalse(self._application.userConfig.load())
+            str(self._application.config.filePath))
+        self.assertFalse(self._application.config.load())
 
     def tearDown(self) -> None:
         self._application.setExitEvent()
@@ -130,16 +130,16 @@ class TestKeyStore(TestCase):
             self.assertTrue(key_store._loadSecretStoreValue(value))
             self.assertKeysIsValid(key_store)
 
-            self.assertIsNone(self._application.userConfig.get(
+            self.assertIsNone(self._application.config.get(
                 ConfigKey.KEY_STORE_SEED, str))
-            self.assertIsNone(self._application.userConfig.get(
+            self.assertIsNone(self._application.config.get(
                 ConfigKey.KEY_STORE_SEED_PHRASE, str))
             # noinspection PyProtectedMember
             self.assertTrue(key_store._saveSeed(language, phrase))
-            self.assertIsInstance(self._application.userConfig.get(
+            self.assertIsInstance(self._application.config.get(
                 ConfigKey.KEY_STORE_SEED, str),
                 str)
-            self.assertIsInstance(self._application.userConfig.get(
+            self.assertIsInstance(self._application.config.get(
                 ConfigKey.KEY_STORE_SEED_PHRASE, str),
                 str)
 
@@ -170,14 +170,14 @@ class TestKeyStore(TestCase):
             reset_callback=lambda *_: None)
 
         self.assertFalse(key_store.isExists)
-        self.assertIsNone(self._application.userConfig.get(
+        self.assertIsNone(self._application.config.get(
             ConfigKey.KEY_STORE_VALUE,
             str))
 
         self.assertTrue(key_store.create(self._password))
         self.assertTrue(key_store.isExists)
         self.assertIsInstance(
-            self._application.userConfig.get(
+            self._application.config.get(
                 ConfigKey.KEY_STORE_VALUE,
                 str),
             str)
@@ -195,7 +195,7 @@ class TestKeyStore(TestCase):
         self.assertFalse(key_store.hasSeed)
 
         self.assertTrue(key_store.reset())
-        self.assertIsNone(self._application.userConfig.get(
+        self.assertIsNone(self._application.config.get(
             ConfigKey.KEY_STORE_VALUE,
             str))
 

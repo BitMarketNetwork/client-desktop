@@ -73,7 +73,7 @@ class AbstractTupleStateModel(AbstractStateModel):
         self.__default_name = default_name
 
         if self._user_config_key is not None:
-            self.__current_name = self._application.userConfig.get(
+            self.__current_name = self._application.config.get(
                 self._user_config_key,
                 str,
                 "")
@@ -114,7 +114,7 @@ class AbstractTupleStateModel(AbstractStateModel):
     def _setCurrentItemName(self, value: str) -> bool:
         if self._user_config_key is None:
             raise NotImplementedError
-        self._application.userConfig.set(self._user_config_key, value)
+        self._application.config.set(self._user_config_key, value)
         self.__current_name = value
         return True
 

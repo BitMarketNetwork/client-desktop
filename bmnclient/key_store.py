@@ -110,11 +110,11 @@ class _KeyStoreBase:
     def reset(self) -> bool:
         with self._lock:
             self._clear()
-            with self._application.userConfig.lock:
+            with self._application.config.lock:
                 for k, v in self._user_config_reset_list.items():
-                    if not self._application.userConfig.set(k, v, save=False):
+                    if not self._application.config.set(k, v, save=False):
                         return False
-                if not self._application.userConfig.save():
+                if not self._application.config.save():
                     return False
         return True
 
@@ -144,21 +144,21 @@ class _KeyStoreSeed(_KeyStoreBase):
         phrase = Product.STRING_SEPARATOR.join((language, phrase))
         phrase = cipher.encrypt(phrase.encode(Product.ENCODING))
 
-        with self._application.userConfig.lock:
-            if not self._application.userConfig.set(
+        with self._application.config.lock:
+            if not self._application.config.set(
                     ConfigKey.KEY_STORE_SEED,
                     seed,
                     save=False):
                 return False
-            if not self._application.userConfig.set(
+            if not self._application.config.set(
                     ConfigKey.KEY_STORE_SEED_PHRASE,
                     phrase,
                     save=False):
                 return False
-            return self._application.userConfig.save()
+            return self._application.config.save()
 
     def __deriveSeed(self) -> Optional[bytes]:
-        value = self._application.userConfig.get(
+        value = self._application.config.get(
             ConfigKey.KEY_STORE_SEED,
             str)
         if not value:
@@ -169,7 +169,7 @@ class _KeyStoreSeed(_KeyStoreBase):
         return cipher.decrypt(value)
 
     def _deriveSeedPhrase(self) -> Union[Tuple[str, str], Tuple[None, None]]:
-        value = self._application.userConfig.get(
+        value = self._application.config.get(
             ConfigKey.KEY_STORE_SEED_PHRASE,
             str)
         if not value:
@@ -225,7 +225,7 @@ class KeyStore(_KeyStoreSeed):
     @property
     def isExists(self) -> bool:
         with self._lock:
-            if self._application.userConfig.get(
+            if self._application.config.get(
                     ConfigKey.KEY_STORE_VALUE,
                     str):
                 return True
@@ -236,13 +236,13 @@ class KeyStore(_KeyStoreSeed):
         value = SecretStore(password).encryptValue(value)
         with self._lock:
             self.reset()
-            return self._application.userConfig.set(
+            return self._application.config.set(
                 ConfigKey.KEY_STORE_VALUE,
                 value)
 
     def verify(self, password: str) -> bool:
         with self._lock:
-            value = self._application.userConfig.get(
+            value = self._application.config.get(
                 ConfigKey.KEY_STORE_VALUE,
                 str)
             if value and SecretStore(password).decryptValue(value):
@@ -253,7 +253,7 @@ class KeyStore(_KeyStoreSeed):
         with self._lock:
             self._clear()
 
-            value = self._application.userConfig.get(
+            value = self._application.config.get(
                 ConfigKey.KEY_STORE_VALUE,
                 str)
             if not value:

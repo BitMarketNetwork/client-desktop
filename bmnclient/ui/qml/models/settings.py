@@ -107,14 +107,14 @@ class FontModel(AbstractStateModel):
         return dict(family=family, pointSize=point_size)
 
     def __currentFont(self) -> FontDict:
-        with self._application.userConfig.lock:
-            family = self._application.userConfig.get(
+        with self._application.config.lock:
+            family = self._application.config.get(
                 ConfigKey.UI_FONT_FAMILY,
                 str,
                 "")
             if not family:
                 family = self._default_font["family"]
-            point_size = self._application.userConfig.get(
+            point_size = self._application.config.get(
                 ConfigKey.UI_FONT_SIZE,
                 int,
                 0)
@@ -136,16 +136,16 @@ class FontModel(AbstractStateModel):
         if point_size <= 0:
             point_size = self._default_font["pointSize"]
 
-        with self._application.userConfig.lock:
-            self._application.userConfig.set(
+        with self._application.config.lock:
+            self._application.config.set(
                 ConfigKey.UI_FONT_FAMILY,
                 family,
                 save=False)
-            self._application.userConfig.set(
+            self._application.config.set(
                 ConfigKey.UI_FONT_SIZE,
                 point_size,
                 save=False)
-            self._application.userConfig.save()
+            self._application.config.save()
 
         value: FontModel.FontDict = dict(family=family, pointSize=point_size)
         if self._font != value:
@@ -158,7 +158,7 @@ class SystemTrayModel(AbstractStateModel):
 
     def __init__(self, application: QmlApplication) -> None:
         super().__init__(application)
-        self._close_to_tray = self._application.userConfig.get(
+        self._close_to_tray = self._application.config.get(
             ConfigKey.UI_CLOSE_TO_TRAY,
             bool,
             False)
@@ -170,7 +170,7 @@ class SystemTrayModel(AbstractStateModel):
     @closeToTray.setter
     def _setCloseToTray(self, value: bool) -> None:
         value = bool(value)
-        self._application.userConfig.set(
+        self._application.config.set(
             ConfigKey.UI_CLOSE_TO_TRAY,
             value)
         if self._close_to_tray != value:

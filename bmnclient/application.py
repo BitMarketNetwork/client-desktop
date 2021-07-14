@@ -266,7 +266,7 @@ class CoreApplication(QObject):
         return self._exit_code
 
     @property
-    def userConfig(self) -> Config:
+    def config(self) -> Config:
         return self._user_config
 
     @property

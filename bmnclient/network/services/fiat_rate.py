@@ -173,7 +173,7 @@ class FiatRateServiceList(ConfigStaticList):
             service_list = (RandomFiatRateService, ) + service_list
 
         super().__init__(
-            application.userConfig,
+            application.config,
             ConfigKey.SERVICES_FIAT_RATE,
             service_list,
             default_index=1,

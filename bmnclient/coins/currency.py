@@ -34,7 +34,7 @@ class EuroFiatCurrency(FiatCurrency):
 class FiatCurrencyList(ConfigStaticList):
     def __init__(self, application: CoreApplication) -> None:
         super().__init__(
-            application.userConfig,
+            application.config,
             ConfigKey.SERVICES_FIAT_CURRENCY,
             (
                 UsdFiatCurrency,
