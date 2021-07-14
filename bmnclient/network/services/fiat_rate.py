@@ -11,7 +11,7 @@ from ...coins.currency import \
     FiatCurrency, \
     FiatRate, \
     UsdFiatCurrency
-from ...config import ConfigKey, UserConfigStaticList
+from ...config import ConfigKey, ConfigStaticList
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -162,7 +162,7 @@ class CoinGeckoFiatRateService(AbstractFiatRateService):
             return None
 
 
-class FiatRateServiceList(UserConfigStaticList):
+class FiatRateServiceList(ConfigStaticList):
     def __init__(self, application: CoreApplication) -> None:
         service_list = (
             NoneFiatRateService,

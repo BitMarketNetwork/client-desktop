@@ -150,7 +150,7 @@ class Config:
             self.set(ConfigKey.VERSION, Product.VERSION_STRING, save=False)
 
 
-class UserConfigStaticList(StaticList):
+class ConfigStaticList(StaticList):
     def __init__(
             self,
             user_config: Config,
