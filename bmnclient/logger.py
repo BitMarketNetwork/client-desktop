@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from pathlib import PurePath
+from pathlib import Path
 from threading import Lock
 from time import strftime
 from typing import TYPE_CHECKING
@@ -73,7 +73,7 @@ class Logger:
     @classmethod
     def configure(
             cls,
-            file_path: PurePath = PurePath("stderr"),
+            file_path: Path = Path("stderr"),
             level: int = logging.DEBUG) -> None:
         global _is_configured
         global _configure_lock

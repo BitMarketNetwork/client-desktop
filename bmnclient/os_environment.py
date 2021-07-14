@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import sys
 from enum import auto, Enum
-from pathlib import Path, PurePath
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from .utils import NotImplementedInstance
@@ -48,12 +48,12 @@ class Platform(NotImplementedInstance):
         return cls._TYPE == cls.Type.LINUX
 
 
-def _configPath(home_path: PurePath) -> PurePath:
+def _configPath(home_path: Path) -> Path:
     if Platform.isWindows:
         v = os.environ.get("APPDATA")
         if not v:
             raise RuntimeError("can't determine APPDATA directory")
-        return PurePath(v)
+        return Path(v)
     elif Platform.isDarwin:
         return home_path / "Library" / "Application Support"
     elif Platform.isLinux:
@@ -62,7 +62,7 @@ def _configPath(home_path: PurePath) -> PurePath:
         raise RuntimeError("can't determine config directories")
 
 
-def _applicationConfigPath(config_path: PurePath) -> PurePath:
+def _applicationConfigPath(config_path: Path) -> Path:
     if Platform.isWindows:
         return config_path / Product.NAME
     elif Platform.isDarwin:
@@ -79,13 +79,13 @@ class PlatformPaths(NotImplementedInstance):
     _APPLICATION_CONFIG_PATH: Final = _applicationConfigPath(_CONFIG_PATH)
 
     @classproperty
-    def homePath(cls) -> PurePath:  # noqa
+    def homePath(cls) -> Path:  # noqa
         return cls._HOME_PATH
 
     @classproperty
-    def configPath(cls) -> PurePath:  # noqa
+    def configPath(cls) -> Path:  # noqa
         return cls._CONFIG_PATH
 
     @classproperty
-    def applicationConfigPath(cls) -> PurePath:  # noqa
+    def applicationConfigPath(cls) -> Path:  # noqa
         return cls._APPLICATION_CONFIG_PATH

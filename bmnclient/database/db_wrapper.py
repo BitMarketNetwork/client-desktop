@@ -9,7 +9,6 @@ from ..coins.abstract.coin import AbstractCoin
 from ..logger import Logger
 
 if TYPE_CHECKING:
-    from pathlib import PurePath
     from typing import Dict, List, Sequence, Tuple
     from ..application import CoreApplication
     from ..utils.serialize import DeserializedData
@@ -20,10 +19,7 @@ def nmark(number: int) -> str:
 
 
 class Database:
-    def __init__(
-            self,
-            application: CoreApplication,
-            file_path: PurePath) -> None:
+    def __init__(self, application: CoreApplication, file_path: Path) -> None:
         super().__init__()
         self._application = application
         self._logger = Logger.classLogger(
@@ -61,10 +57,9 @@ class Database:
 
     def remove(self) -> None:
         self.close()
-        pth = Path(self._file_path)
         self.__db_name = None
-        if pth.exists():
-            pth.unlink()
+        if self._file_path.exists():
+            self._file_path.unlink()
 
     def execute(self, query: str, args: tuple = ()):
         try:

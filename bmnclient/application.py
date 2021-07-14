@@ -4,7 +4,7 @@ import logging
 import os
 from argparse import ArgumentParser
 from enum import auto, Enum
-from pathlib import PurePath
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
@@ -83,8 +83,8 @@ class CommandLine:
             help="do not check the validity of server certificates")
 
         self._arguments = parser.parse_args(self._argv[1:])
-        assert isinstance(self._arguments.configpath, PurePath)
-        assert isinstance(self._arguments.logfile, PurePath)
+        assert isinstance(self._arguments.configpath, Path)
+        assert isinstance(self._arguments.logfile, Path)
         assert isinstance(self._arguments.debug, bool)
         assert isinstance(self._arguments.server_url, str)
         assert isinstance(self._arguments.server_insecure, bool)
@@ -94,11 +94,11 @@ class CommandLine:
         return self._argv
 
     @property
-    def configPath(self) -> PurePath:
+    def configPath(self) -> Path:
         return self._arguments.configpath
 
     @property
-    def logFilePath(self) -> PurePath:
+    def logFilePath(self) -> Path:
         return self._arguments.logfile
 
     @property
@@ -118,8 +118,8 @@ class CommandLine:
         return self._arguments.server_insecure
 
     @classmethod
-    def _expandPath(cls, path: str) -> PurePath:
-        return PurePath(os.path.expanduser(os.path.expandvars(path)))
+    def _expandPath(cls, path: str) -> Path:
+        return Path(os.path.expanduser(os.path.expandvars(path)))
 
 
 class CoreApplication(QObject):
@@ -259,7 +259,7 @@ class CoreApplication(QObject):
             self._onExit()
 
     @property
-    def configPath(self) -> PurePath:
+    def configPath(self) -> Path:
         return self._command_line.configPath
 
     @property
