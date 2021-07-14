@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from pathlib import PurePath
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
@@ -127,7 +127,7 @@ class Language:
             (cls._FILE_MATH, ),
             QDir.Files)
         while it.next():
-            name = PurePath(it.fileName()).with_suffix('').with_suffix('').stem
+            name = Path(it.fileName()).with_suffix('').with_suffix('').stem
             result.append(cls._appendTranslationItem(name))
         result.sort(key=lambda x: x["name"])
         return tuple(result)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import unicodedata
-from pathlib import PurePath
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from cryptography.hazmat.primitives import hashes
@@ -30,7 +30,7 @@ class Mnemonic:
 
     def __init__(self, language: Optional[str] = None) -> None:
         language = language.lower() if language else "english"
-        self._language = str(PurePath(language).name)
+        self._language = str(Path(language).name)
         self._logger = Logger.classLogger(
             self.__class__,
             (None, self._language))

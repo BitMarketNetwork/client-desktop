@@ -17,7 +17,6 @@ from bmnclient.utils.class_property import classproperty
 from bmnclient.version import Product, Timer
 
 if TYPE_CHECKING:
-    from pathlib import PurePath
     from typing import Final, Optional
     from unittest import TestCase
     MessageType = CoreApplication.MessageType
@@ -31,7 +30,7 @@ class TestApplication(CoreApplication):
             self,
             owner: TestCase,
             *,
-            config_path: Optional[PurePath] = None) -> None:
+            config_path: Optional[Path] = None) -> None:
         command_line = ["unittest"]
 
         if not config_path:

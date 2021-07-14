@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 from enum import Enum
 from json.decoder import JSONDecodeError
 from threading import RLock
@@ -13,7 +12,7 @@ from .version import Product
 
 if TYPE_CHECKING:
     from typing import Any, Final, Type, Union
-    from pathlib import PurePath
+    from pathlib import Path
 
 
 class ConfigKey(Enum):
@@ -34,7 +33,7 @@ class ConfigKey(Enum):
 
 
 class Config:
-    def __init__(self, file_path: PurePath) -> None:
+    def __init__(self, file_path: Path) -> None:
         self._logger = Logger.classLogger(
             self.__class__,
             (None, file_path.name))
@@ -43,7 +42,7 @@ class Config:
         self._lock = RLock()
 
     @property
-    def filePath(self) -> PurePath:
+    def filePath(self) -> Path:
         return self._file_path
 
     @property
@@ -82,7 +81,7 @@ class Config:
     def save(self) -> bool:
         with self._lock:
             try:
-                os.makedirs(self._file_path.parent, exist_ok=True)
+                self._file_path.parent.mkdir(parents=True, exist_ok=True)
                 with open(
                         self._file_path,
                         mode="w+t",
