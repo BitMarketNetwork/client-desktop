@@ -153,8 +153,8 @@ class Config:
 class ConfigStaticList(StaticList):
     def __init__(
             self,
-            user_config: Config,
-            user_config_key: ConfigKey,
+            config: Config,
+            config_key: ConfigKey,
             source_list: Union[list, tuple],
             *,
             default_index: int,
@@ -162,13 +162,13 @@ class ConfigStaticList(StaticList):
         super().__init__(source_list, item_property=item_property)
         self._logger = Logger.classLogger(self.__class__)
 
-        self._user_config = user_config
-        self._user_config_key = user_config_key
+        self._config = config
+        self._config_key = config_key
         self._current_index = default_index
         if self._current_index >= len(self):
             self._current_index = 0
 
-        value = self._user_config.get(self._user_config_key)
+        value = self._config.get(self._config_key)
         if value:
             for i in range(len(self._list)):
                 if getattr(self._list[i], self._item_property) == value:
@@ -182,10 +182,10 @@ class ConfigStaticList(StaticList):
     def setCurrentIndex(self, index: int) -> bool:
         if index < 0 or index >= len(self._list):
             return False
-        with self._user_config.lock:
+        with self._config.lock:
             self._current_index = index
-            return self._user_config.set(
-                self._user_config_key,
+            return self._config.set(
+                self._config_key,
                 getattr(self._list[index], self._item_property))
 
     @property
@@ -193,7 +193,7 @@ class ConfigStaticList(StaticList):
         return self._list[self._current_index]
 
     def setCurrent(self, value: str) -> bool:
-        with self._user_config.lock:
+        with self._config.lock:
             for i in range(len(self._list)):
                 if getattr(self._list[i], self._item_property) == value:
                     return self.setCurrentIndex(i)

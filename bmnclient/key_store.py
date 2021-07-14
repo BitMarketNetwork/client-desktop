@@ -38,7 +38,7 @@ class _KeyStoreBase:
         self._logger = Logger.classLogger(self.__class__)
         self._lock = RLock()
         self._application = application
-        self._user_config_reset_list: Dict[ConfigKey, Any] = {}
+        self._config_reset_list: Dict[ConfigKey, Any] = {}
 
         self.__nonce_list: List[Optional[bytes]] = [None] * len(KeyIndex)
         self.__key_list: List[Optional[bytes]] = [None] * len(KeyIndex)
@@ -111,7 +111,7 @@ class _KeyStoreBase:
         with self._lock:
             self._clear()
             with self._application.config.lock:
-                for k, v in self._user_config_reset_list.items():
+                for k, v in self._config_reset_list.items():
                     if not self._application.config.set(k, v, save=False):
                         return False
                 if not self._application.config.save():
@@ -122,8 +122,8 @@ class _KeyStoreBase:
 class _KeyStoreSeed(_KeyStoreBase):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._user_config_reset_list[ConfigKey.KEY_STORE_SEED] = None
-        self._user_config_reset_list[ConfigKey.KEY_STORE_SEED_PHRASE] = None
+        self._config_reset_list[ConfigKey.KEY_STORE_SEED] = None
+        self._config_reset_list[ConfigKey.KEY_STORE_SEED_PHRASE] = None
         self.__has_seed = False
 
     def _clear(self) -> None:
@@ -218,7 +218,7 @@ class KeyStore(_KeyStoreSeed):
             open_callback: Callable[[Optional[HdNode]], None],
             reset_callback: Callable[[], None]) -> None:
         super().__init__(application)
-        self._user_config_reset_list[ConfigKey.KEY_STORE_VALUE] = None
+        self._config_reset_list[ConfigKey.KEY_STORE_VALUE] = None
         self._open_callback = open_callback
         self._reset_callback = reset_callback
 

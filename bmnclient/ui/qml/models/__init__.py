@@ -65,16 +65,16 @@ class AbstractTupleStateModel(AbstractStateModel):
             application: QmlApplication,
             source_list: Tuple[Dict[str, Any], ...],
             *,
-            user_config_key: Optional[ConfigKey] = None,
+            config_key: Optional[ConfigKey] = None,
             default_name: Optional[str] = None) -> None:
         super().__init__(application)
         self._list = source_list
-        self._user_config_key = user_config_key
+        self._config_key = config_key
         self.__default_name = default_name
 
-        if self._user_config_key is not None:
+        if self._config_key is not None:
             self.__current_name = self._application.config.get(
-                self._user_config_key,
+                self._config_key,
                 str,
                 "")
             if self.__default_name is not None:
@@ -112,9 +112,9 @@ class AbstractTupleStateModel(AbstractStateModel):
         return self.__current_name
 
     def _setCurrentItemName(self, value: str) -> bool:
-        if self._user_config_key is None:
+        if self._config_key is None:
             raise NotImplementedError
-        self._application.config.set(self._user_config_key, value)
+        self._application.config.set(self._config_key, value)
         self.__current_name = value
         return True
 

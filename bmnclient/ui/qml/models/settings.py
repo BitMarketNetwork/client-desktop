@@ -62,7 +62,7 @@ class LanguageModel(AbstractTupleStateModel):
         super().__init__(
             application,
             Language.translationList(),
-            user_config_key=ConfigKey.UI_LANGUAGE,
+            config_key=ConfigKey.UI_LANGUAGE,
             default_name=Language.primaryName)
 
     def _setCurrentItemName(self, value: str) -> bool:
@@ -77,7 +77,7 @@ class ThemeModel(AbstractTupleStateModel):
         super().__init__(
             application,
             tuple(),  # QML controlled
-            user_config_key=ConfigKey.UI_THEME,
+            config_key=ConfigKey.UI_THEME,
             default_name=Gui.DEFAULT_THEME_NAME)
 
     def _isValidName(self, name) -> bool:

@@ -24,24 +24,24 @@ _logger = TestApplication.getLogger(__name__)
 class TestKeyStore(TestCase):
     def setUp(self) -> None:
         self._password = "123123Qaz"
-        self._user_config_path = \
+        self._config_path = \
             Path(tempfile.gettempdir()) \
             / (Product.SHORT_NAME + "-" + self.__class__.__name__) \
             / ProductPaths.CONFIG_FILE_NAME
-        if self._user_config_path.exists():
-            self._user_config_path.unlink()
+        if self._config_path.exists():
+            self._config_path.unlink()
 
         self._application = TestApplication(
-            config_path=str(self._user_config_path.parent))
+            config_path=str(self._config_path.parent))
         self.assertEqual(
-            str(self._user_config_path),
+            str(self._config_path),
             str(self._application.config.filePath))
         self.assertFalse(self._application.config.load())
 
     def tearDown(self) -> None:
         self._application.setExitEvent()
-        if self._user_config_path.exists():
-            self._user_config_path.unlink()
+        if self._config_path.exists():
+            self._config_path.unlink()
 
     def assertKeysIsNone(self, key_store: KeyStore) -> None:
         for k in KeyIndex:
