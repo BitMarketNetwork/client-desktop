@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from pathlib import PurePath
 
 
-class UserConfigKey(Enum):
+class ConfigKey(Enum):
     VERSION: Final = "version"
 
     UI_LANGUAGE: Final = "ui.language"
@@ -33,7 +33,7 @@ class UserConfigKey(Enum):
     SERVICES_FIAT_CURRENCY: Final = "services.fiat_currency"
 
 
-class UserConfig:
+class Config:
     def __init__(self, file_path: PurePath) -> None:
         self._logger = Logger.classLogger(
             self.__class__,
@@ -61,6 +61,8 @@ class UserConfig:
                     self._config = json.load(file)
                 self._updateVersion()
                 return True
+            except FileNotFoundError:
+                error_message = None
             except OSError as e:
                 error_message = Logger.osErrorString(e)
             except JSONDecodeError as e:
@@ -68,10 +70,11 @@ class UserConfig:
             except ValueError as e:
                 error_message = Logger.exceptionString(e)
 
-            self._logger.warning(
-                "Failed to read file '%s'. %s",
-                self._file_path,
-                str(error_message))
+            if error_message:
+                self._logger.warning(
+                    "Failed to read file '%s'. %s",
+                    self._file_path,
+                    str(error_message))
             self._config = dict()
             self._updateVersion()
         return False
@@ -105,7 +108,7 @@ class UserConfig:
 
     def get(
             self,
-            key: UserConfigKey,
+            key: ConfigKey,
             value_type: Type = str,
             default_value: Any = None) -> Any:
         key_list = key.value.split('.')
@@ -123,10 +126,10 @@ class UserConfig:
                 current_config = current_value
         return default_value
 
-    def exists(self, key: UserConfigKey, value_type: Type = str) -> bool:
+    def exists(self, key: ConfigKey, value_type: Type = str) -> bool:
         return self.get(key, value_type, None) is not None
 
-    def set(self, key: UserConfigKey, value: Any, *, save: bool = True) -> bool:
+    def set(self, key: ConfigKey, value: Any, *, save: bool = True) -> bool:
         key_list = key.value.split('.')
         with self._lock:
             current_config = self._config
@@ -146,15 +149,15 @@ class UserConfig:
         return False
 
     def _updateVersion(self) -> None:
-        if not self.get(UserConfigKey.VERSION, str):
-            self.set(UserConfigKey.VERSION, Product.VERSION_STRING, save=False)
+        if not self.get(ConfigKey.VERSION, str):
+            self.set(ConfigKey.VERSION, Product.VERSION_STRING, save=False)
 
 
-class UserConfigStaticList(StaticList):
+class ConfigStaticList(StaticList):
     def __init__(
             self,
-            user_config: UserConfig,
-            user_config_key: UserConfigKey,
+            config: Config,
+            config_key: ConfigKey,
             source_list: Union[list, tuple],
             *,
             default_index: int,
@@ -162,13 +165,13 @@ class UserConfigStaticList(StaticList):
         super().__init__(source_list, item_property=item_property)
         self._logger = Logger.classLogger(self.__class__)
 
-        self._user_config = user_config
-        self._user_config_key = user_config_key
+        self._config = config
+        self._config_key = config_key
         self._current_index = default_index
         if self._current_index >= len(self):
             self._current_index = 0
 
-        value = self._user_config.get(self._user_config_key)
+        value = self._config.get(self._config_key)
         if value:
             for i in range(len(self._list)):
                 if getattr(self._list[i], self._item_property) == value:
@@ -182,10 +185,10 @@ class UserConfigStaticList(StaticList):
     def setCurrentIndex(self, index: int) -> bool:
         if index < 0 or index >= len(self._list):
             return False
-        with self._user_config.lock:
+        with self._config.lock:
             self._current_index = index
-            return self._user_config.set(
-                self._user_config_key,
+            return self._config.set(
+                self._config_key,
                 getattr(self._list[index], self._item_property))
 
     @property
@@ -193,7 +196,7 @@ class UserConfigStaticList(StaticList):
         return self._list[self._current_index]
 
     def setCurrent(self, value: str) -> bool:
-        with self._user_config.lock:
+        with self._config.lock:
             for i in range(len(self._list)):
                 if getattr(self._list[i], self._item_property) == value:
                     return self.setCurrentIndex(i)

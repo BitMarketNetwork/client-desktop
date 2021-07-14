@@ -11,7 +11,7 @@ from ...coins.currency import \
     FiatCurrency, \
     FiatRate, \
     UsdFiatCurrency
-from ...config import UserConfigKey, UserConfigStaticList
+from ...config import ConfigKey, ConfigStaticList
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -115,7 +115,7 @@ class AbstractFiatRateService(AbstractJsonQuery):
         if not result:
             self._logger.warning(
                 "Required fiat currency '{}' not supported by '{}' Service."
-                .format(self._currency_type.name, self._FULL_NAME))
+                .format(self._currency_type.fullName, self._FULL_NAME))
 
         return result
 
@@ -162,7 +162,7 @@ class CoinGeckoFiatRateService(AbstractFiatRateService):
             return None
 
 
-class FiatRateServiceList(UserConfigStaticList):
+class FiatRateServiceList(ConfigStaticList):
     def __init__(self, application: CoreApplication) -> None:
         service_list = (
             NoneFiatRateService,
@@ -173,8 +173,8 @@ class FiatRateServiceList(UserConfigStaticList):
             service_list = (RandomFiatRateService, ) + service_list
 
         super().__init__(
-            application.userConfig,
-            UserConfigKey.SERVICES_FIAT_RATE,
+            application.config,
+            ConfigKey.SERVICES_FIAT_RATE,
             service_list,
             default_index=1,
             item_property="name")

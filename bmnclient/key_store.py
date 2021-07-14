@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from .coins.hd import HdNode
 from .coins.mnemonic import Mnemonic
-from .config import UserConfigKey
+from .config import ConfigKey
 from .crypto.cipher import AeadCipher, MessageCipher
 from .crypto.digest import Sha256Digest
 from .crypto.kdf import SecretStore
@@ -38,7 +38,7 @@ class _KeyStoreBase:
         self._logger = Logger.classLogger(self.__class__)
         self._lock = RLock()
         self._application = application
-        self._user_config_reset_list: Dict[UserConfigKey, Any] = {}
+        self._config_reset_list: Dict[ConfigKey, Any] = {}
 
         self.__nonce_list: List[Optional[bytes]] = [None] * len(KeyIndex)
         self.__key_list: List[Optional[bytes]] = [None] * len(KeyIndex)
@@ -110,11 +110,11 @@ class _KeyStoreBase:
     def reset(self) -> bool:
         with self._lock:
             self._clear()
-            with self._application.userConfig.lock:
-                for k, v in self._user_config_reset_list.items():
-                    if not self._application.userConfig.set(k, v, save=False):
+            with self._application.config.lock:
+                for k, v in self._config_reset_list.items():
+                    if not self._application.config.set(k, v, save=False):
                         return False
-                if not self._application.userConfig.save():
+                if not self._application.config.save():
                     return False
         return True
 
@@ -122,8 +122,8 @@ class _KeyStoreBase:
 class _KeyStoreSeed(_KeyStoreBase):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._user_config_reset_list[UserConfigKey.KEY_STORE_SEED] = None
-        self._user_config_reset_list[UserConfigKey.KEY_STORE_SEED_PHRASE] = None
+        self._config_reset_list[ConfigKey.KEY_STORE_SEED] = None
+        self._config_reset_list[ConfigKey.KEY_STORE_SEED_PHRASE] = None
         self.__has_seed = False
 
     def _clear(self) -> None:
@@ -144,22 +144,22 @@ class _KeyStoreSeed(_KeyStoreBase):
         phrase = Product.STRING_SEPARATOR.join((language, phrase))
         phrase = cipher.encrypt(phrase.encode(Product.ENCODING))
 
-        with self._application.userConfig.lock:
-            if not self._application.userConfig.set(
-                    UserConfigKey.KEY_STORE_SEED,
+        with self._application.config.lock:
+            if not self._application.config.set(
+                    ConfigKey.KEY_STORE_SEED,
                     seed,
                     save=False):
                 return False
-            if not self._application.userConfig.set(
-                    UserConfigKey.KEY_STORE_SEED_PHRASE,
+            if not self._application.config.set(
+                    ConfigKey.KEY_STORE_SEED_PHRASE,
                     phrase,
                     save=False):
                 return False
-            return self._application.userConfig.save()
+            return self._application.config.save()
 
     def __deriveSeed(self) -> Optional[bytes]:
-        value = self._application.userConfig.get(
-            UserConfigKey.KEY_STORE_SEED,
+        value = self._application.config.get(
+            ConfigKey.KEY_STORE_SEED,
             str)
         if not value:
             return None
@@ -169,8 +169,8 @@ class _KeyStoreSeed(_KeyStoreBase):
         return cipher.decrypt(value)
 
     def _deriveSeedPhrase(self) -> Union[Tuple[str, str], Tuple[None, None]]:
-        value = self._application.userConfig.get(
-            UserConfigKey.KEY_STORE_SEED_PHRASE,
+        value = self._application.config.get(
+            ConfigKey.KEY_STORE_SEED_PHRASE,
             str)
         if not value:
             return None, None
@@ -218,15 +218,15 @@ class KeyStore(_KeyStoreSeed):
             open_callback: Callable[[Optional[HdNode]], None],
             reset_callback: Callable[[], None]) -> None:
         super().__init__(application)
-        self._user_config_reset_list[UserConfigKey.KEY_STORE_VALUE] = None
+        self._config_reset_list[ConfigKey.KEY_STORE_VALUE] = None
         self._open_callback = open_callback
         self._reset_callback = reset_callback
 
     @property
     def isExists(self) -> bool:
         with self._lock:
-            if self._application.userConfig.get(
-                    UserConfigKey.KEY_STORE_VALUE,
+            if self._application.config.get(
+                    ConfigKey.KEY_STORE_VALUE,
                     str):
                 return True
         return False
@@ -236,14 +236,14 @@ class KeyStore(_KeyStoreSeed):
         value = SecretStore(password).encryptValue(value)
         with self._lock:
             self.reset()
-            return self._application.userConfig.set(
-                UserConfigKey.KEY_STORE_VALUE,
+            return self._application.config.set(
+                ConfigKey.KEY_STORE_VALUE,
                 value)
 
     def verify(self, password: str) -> bool:
         with self._lock:
-            value = self._application.userConfig.get(
-                UserConfigKey.KEY_STORE_VALUE,
+            value = self._application.config.get(
+                ConfigKey.KEY_STORE_VALUE,
                 str)
             if value and SecretStore(password).decryptValue(value):
                 return True
@@ -253,8 +253,8 @@ class KeyStore(_KeyStoreSeed):
         with self._lock:
             self._clear()
 
-            value = self._application.userConfig.get(
-                UserConfigKey.KEY_STORE_VALUE,
+            value = self._application.config.get(
+                ConfigKey.KEY_STORE_VALUE,
                 str)
             if not value:
                 return False

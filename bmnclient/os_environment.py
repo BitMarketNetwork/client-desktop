@@ -48,47 +48,44 @@ class Platform(NotImplementedInstance):
         return cls._TYPE == cls.Type.LINUX
 
 
-def _userConfigPath(user_home_path: PurePath) -> PurePath:
+def _configPath(home_path: PurePath) -> PurePath:
     if Platform.isWindows:
         v = os.environ.get("APPDATA")
         if not v:
             raise RuntimeError("can't determine APPDATA directory")
         return PurePath(v)
     elif Platform.isDarwin:
-        return user_home_path / "Library" / "Application Support"
+        return home_path / "Library" / "Application Support"
     elif Platform.isLinux:
-        return user_home_path / ".config"
+        return home_path / ".config"
     else:
-        raise RuntimeError("can't determine user directories")
+        raise RuntimeError("can't determine config directories")
 
 
-def _userApplicationConfigPath(user_config_path: PurePath) -> PurePath:
+def _applicationConfigPath(config_path: PurePath) -> PurePath:
     if Platform.isWindows:
-        return user_config_path / Product.NAME
+        return config_path / Product.NAME
     elif Platform.isDarwin:
-        return user_config_path / Product.NAME
+        return config_path / Product.NAME
     elif Platform.isLinux:
-        return user_config_path / Product.SHORT_NAME.lower()
+        return config_path / Product.SHORT_NAME.lower()
     else:
-        raise RuntimeError("can't determine user directories")
+        raise RuntimeError("can't determine config directories")
 
 
 class PlatformPaths(NotImplementedInstance):
-    _USER_HOME_PATH: Final = \
-        Path.home()
-    _USER_CONFIG_PATH: Final = \
-        _userConfigPath(_USER_HOME_PATH)
-    _USER_APPLICATION_CONFIG_PATH: Final = \
-        _userApplicationConfigPath(_USER_CONFIG_PATH)
+    _HOME_PATH: Final = Path.home()
+    _CONFIG_PATH: Final = _configPath(_HOME_PATH)
+    _APPLICATION_CONFIG_PATH: Final = _applicationConfigPath(_CONFIG_PATH)
 
     @classproperty
-    def userHomePath(cls) -> PurePath:  # noqa
-        return cls._USER_HOME_PATH
+    def homePath(cls) -> PurePath:  # noqa
+        return cls._HOME_PATH
 
     @classproperty
-    def userConfigPath(cls) -> PurePath:  # noqa
-        return cls._USER_CONFIG_PATH
+    def configPath(cls) -> PurePath:  # noqa
+        return cls._CONFIG_PATH
 
     @classproperty
-    def userApplicationConfigPath(cls) -> PurePath:  # noqa
-        return cls._USER_APPLICATION_CONFIG_PATH
+    def applicationConfigPath(cls) -> PurePath:  # noqa
+        return cls._APPLICATION_CONFIG_PATH

@@ -18,7 +18,7 @@ from PySide2.QtWidgets import QApplication
 
 from .coins.currency import FiatCurrencyList, FiatRate
 from .coins.list import CoinList
-from .config import UserConfig, UserConfigKey
+from .config import Config, ConfigKey
 from .database.db_wrapper import Database
 from .key_store import KeyStore
 from .language import Language
@@ -48,10 +48,10 @@ class CommandLine:
         parser.add_argument(
             "-c",
             "--configpath",
-            default=str(PlatformPaths.userApplicationConfigPath),
+            default=str(PlatformPaths.applicationConfigPath),
             type=self._expandPath,
             help="directory for configuration files; by default, it is '{}'"
-            .format(str(PlatformPaths.userApplicationConfigPath)),
+            .format(str(PlatformPaths.applicationConfigPath)),
             metavar="PATH")
         parser.add_argument(
             "-l",
@@ -145,9 +145,10 @@ class CoreApplication(QObject):
         self._on_exit_called = False
         self._run_called = False
 
-        self._user_config = UserConfig(
-            self._command_line.configPath / ProductPaths.CONFIG_FILE_NAME)
-        self._user_config.load()
+        self._config = Config(
+            self._command_line.configPath
+            / ProductPaths.CONFIG_FILE_NAME)
+        self._config.load()
 
         self._key_store = KeyStore(
             self,
@@ -258,16 +259,20 @@ class CoreApplication(QObject):
             self._onExit()
 
     @property
+    def configPath(self) -> PurePath:
+        return self._command_line.configPath
+
+    @property
+    def config(self) -> Config:
+        return self._config
+
+    @property
     def isDebugMode(self) -> bool:
         return self._command_line.isDebugMode
 
     @property
     def exitCode(self) -> int:
         return self._exit_code
-
-    @property
-    def userConfig(self) -> UserConfig:
-        return self._user_config
 
     @property
     def keyStore(self) -> KeyStore:
@@ -314,9 +319,7 @@ class CoreApplication(QObject):
         return self._language
 
     def updateTranslation(self) -> None:
-        language_name = self._user_config.get(
-            UserConfigKey.UI_LANGUAGE,
-            str)
+        language_name = self._config.get(ConfigKey.UI_LANGUAGE, str)
         if not language_name:
             language_name = Language.primaryName
         language = Language(language_name)
