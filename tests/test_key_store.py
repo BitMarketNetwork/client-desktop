@@ -1,7 +1,5 @@
 import json
 import os
-import tempfile
-from pathlib import Path
 from unittest import TestCase
 
 from bmnclient.coins.hd import HdNode
@@ -15,7 +13,7 @@ from bmnclient.key_store import \
     KeyStore, \
     KeyStoreError, \
     RestoreSeedPhrase
-from bmnclient.version import Product, ProductPaths
+from bmnclient.version import Product
 from tests import TestApplication
 
 _logger = TestApplication.getLogger(__name__)
@@ -24,24 +22,10 @@ _logger = TestApplication.getLogger(__name__)
 class TestKeyStore(TestCase):
     def setUp(self) -> None:
         self._password = "123123Qaz"
-        self._config_path = \
-            Path(tempfile.gettempdir()) \
-            / (Product.SHORT_NAME + "-" + self.__class__.__name__) \
-            / ProductPaths.CONFIG_FILE_NAME
-        if self._config_path.exists():
-            self._config_path.unlink()
-
-        self._application = TestApplication(
-            config_path=str(self._config_path.parent))
-        self.assertEqual(
-            str(self._config_path),
-            str(self._application.config.filePath))
-        self.assertFalse(self._application.config.load())
+        self._application = TestApplication(self)
 
     def tearDown(self) -> None:
         self._application.setExitEvent()
-        if self._config_path.exists():
-            self._config_path.unlink()
 
     def assertKeysIsNone(self, key_store: KeyStore) -> None:
         for k in KeyIndex:

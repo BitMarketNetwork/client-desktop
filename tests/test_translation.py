@@ -7,7 +7,7 @@ from tests import TestApplication
 
 class TestLanguage(TestCase):
     def setUp(self) -> None:
-        self._application = TestApplication()
+        self._application = TestApplication(self)
 
     def tearDown(self) -> None:
         self._application.setExitEvent()

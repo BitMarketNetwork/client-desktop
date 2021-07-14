@@ -5,6 +5,8 @@ import os
 import sys
 import time
 from pathlib import Path
+from random import randint
+from tempfile import gettempdir
 from typing import TYPE_CHECKING
 
 from PySide2.QtWidgets import QApplication
@@ -12,10 +14,12 @@ from PySide2.QtWidgets import QApplication
 from bmnclient.application import CommandLine, CoreApplication
 from bmnclient.os_environment import Platform
 from bmnclient.utils.class_property import classproperty
-from bmnclient.version import Timer
+from bmnclient.version import Product, Timer
 
 if TYPE_CHECKING:
+    from pathlib import PurePath
     from typing import Final, Optional
+    from unittest import TestCase
     MessageType = CoreApplication.MessageType
 
 
@@ -23,10 +27,25 @@ class TestApplication(CoreApplication):
     _DATA_PATH: Final = Path(__file__).parent.resolve() / "data"
     _logger_configured = False
 
-    def __init__(self, *, config_path: Optional[str] = None) -> None:
+    def __init__(
+            self,
+            owner: TestCase,
+            *,
+            config_path: Optional[PurePath] = None) -> None:
         command_line = ["unittest"]
-        if config_path:
-            command_line.append("--configpath=" + config_path)
+
+        if not config_path:
+            config_path = (
+                    Path(gettempdir())
+                    / "{:s}-{:s}.{:d}".format(
+                        Product.SHORT_NAME,
+                        owner.__class__.__name__,
+                        randint(1, 0xffffffffffffffff))
+            )
+            owner.assertFalse(config_path.exists())
+
+        command_line.append("--configpath=" + str(config_path))
+
         if Platform.isLinux:
             os.environ["QT_QPA_PLATFORM"] = "minimal"
 
