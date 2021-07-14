@@ -61,6 +61,8 @@ class Config:
                     self._config = json.load(file)
                 self._updateVersion()
                 return True
+            except FileNotFoundError:
+                error_message = None
             except OSError as e:
                 error_message = Logger.osErrorString(e)
             except JSONDecodeError as e:
@@ -68,10 +70,11 @@ class Config:
             except ValueError as e:
                 error_message = Logger.exceptionString(e)
 
-            self._logger.warning(
-                "Failed to read file '%s'. %s",
-                self._file_path,
-                str(error_message))
+            if error_message:
+                self._logger.warning(
+                    "Failed to read file '%s'. %s",
+                    self._file_path,
+                    str(error_message))
             self._config = dict()
             self._updateVersion()
         return False
