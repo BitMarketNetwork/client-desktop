@@ -8,7 +8,7 @@ from .logger import Logger
 
 if TYPE_CHECKING:
     from typing import Tuple
-    from .database.db_wrapper import Database
+    from .database import Database
     from .network.query_scheduler import NetworkQueryScheduler
     from .utils.string import ClassStringKeyTuple
 
@@ -36,7 +36,7 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
             **kwargs)
 
     def afterSetEnabled(self) -> None:
-        if self._database.isLoaded:
+        if self._database.isOpen:
             self._database.updateCoin(self._coin)
 
     def afterSetHeight(self) -> None:
@@ -62,7 +62,7 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
         pass
 
     def afterAppendAddress(self, address: AbstractCoin.Address) -> None:
-        if self._database.isLoaded and address.rowId is None:
+        if self._database.isOpen and address.rowId is None:
             self._database.updateCoinAddress(address)
         self._query_scheduler.updateCoinAddress(address)
 
@@ -70,7 +70,7 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
         pass
 
     def afterStateChanged(self) -> None:
-        if self._database.isLoaded:
+        if self._database.isOpen:
             self._database.updateCoin(self._coin)
 
 
@@ -83,37 +83,37 @@ class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
             **kwargs)
 
     def afterSetAmount(self) -> None:
-        if self._database.isLoaded:
+        if self._database.isOpen:
             self._database.updateCoinAddress(self._address)
 
     def afterSetLabel(self) -> None:
-        if self._database.isLoaded:
+        if self._database.isOpen:
             self._database.updateCoinAddress(self._address)
 
     def afterSetComment(self) -> None:
-        if self._database.isLoaded:
+        if self._database.isOpen:
             self._database.updateCoinAddress(self._address)
 
     def afterSetTxCount(self) -> None:
-        if self._database.isLoaded:
+        if self._database.isOpen:
             self._database.updateCoinAddress(self._address)
 
     def beforeAppendTx(self, tx: AbstractCoin.Tx) -> None:
         pass
 
     def afterAppendTx(self, tx: AbstractCoin.Tx) -> None:
-        if self._database.isLoaded and tx.height >= 0:
+        if self._database.isOpen and tx.height >= 0:
             self._database.updateCoinAddressTx(self._address, tx)
 
     def afterSetUtxoList(self) -> None:
         pass
 
     def afterSetHistoryFirstOffset(self) -> None:
-        if self._database.isLoaded:
+        if self._database.isOpen:
             self._database.updateCoinAddress(self._address)
 
     def afterSetHistoryLastOffset(self) -> None:
-        if self._database.isLoaded:
+        if self._database.isOpen:
             self._database.updateCoinAddress(self._address)
 
 

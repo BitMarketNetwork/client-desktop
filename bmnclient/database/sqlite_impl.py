@@ -63,24 +63,8 @@ class Sqlite:
         "transactions",
         "inputs",
     ]
-    DEBUG = True
-
-    def __init__(self):
-        self.__mutex = threading.Lock()
-        self.__conn = None
 
     def connect_impl(self, application: CoreApplication, db_name: str) -> None:
-        self.__conn = sql.connect(
-            db_name,
-            timeout=3,
-            # detect_types=sql.PARSE_DECLTYPES,
-            detect_types=sql.PARSE_COLNAMES,
-            check_same_thread=True,
-            cached_statements=100,
-            # factory=Connection,
-        )
-        self.exec("PRAGMA foreign_keys=ON")
-        sql.enable_callback_tracebacks(self.DEBUG)
         self.__conn.text_factory = lambda v: v.decode()
 
     def exec(self, query: str, *args) -> None:
@@ -185,9 +169,3 @@ class Sqlite:
 
     def __pos__(self):
         pass
-
-    def close(self) -> None:
-        if self.__conn:
-            self.__conn.close()
-            log.debug('connection is closed ')
-            self.__conn = None

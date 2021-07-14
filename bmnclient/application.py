@@ -19,7 +19,7 @@ from PySide2.QtWidgets import QApplication
 from .coins.currency import FiatCurrencyList, FiatRate
 from .coins.list import CoinList
 from .config import Config, ConfigKey
-from .database.db_wrapper import Database
+from .database import Database
 from .key_store import KeyStore
 from .language import Language
 from .logger import Logger
@@ -348,7 +348,7 @@ class CoreApplication(QObject):
     def _onKeyStoreOpen(self, root_node: Optional[HdNode]) -> None:
         if root_node is None:
             return
-        assert not self._database.isLoaded
+        assert not self._database.isOpen
 
         for coin in self._coin_list:
             if not coin.deriveHdNode(root_node):
@@ -360,7 +360,9 @@ class CoreApplication(QObject):
             self._network_query_scheduler.COINS_NAMESPACE)
 
     def _onKeyStoreReset(self) -> None:
-        self.database.remove()
+        if not self._database.remove():
+            # TODO show message if failed
+            pass
 
     @QSlot()
     def _onRunPrivate(self) -> None:
@@ -381,5 +383,5 @@ class CoreApplication(QObject):
     def _onExit(self) -> None:
         assert not self._on_exit_called
         self._on_exit_called = True
-        self.database.close()
+        self._database.close()
         self._signal_handler.close()

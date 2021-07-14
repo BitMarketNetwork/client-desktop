@@ -2,11 +2,65 @@ import logging
 import os
 import pathlib
 import unittest
+from pathlib import Path
+from typing import TYPE_CHECKING
+from unittest import TestCase
 
-from bmnclient import key_store
-from bmnclient.database import cipher, db_wrapper
+from bmnclient.database import Database
+from tests import TestApplication
+
+if TYPE_CHECKING:
+    pass
 
 log = logging.getLogger(__name__)
+
+
+class TestDatabase(TestCase):
+    def setUp(self) -> None:
+        self._application = TestApplication(self)
+
+    def tearDown(self) -> None:
+        self._application.setExitEvent()
+
+    def _create(self, file_name: Path, *, mkdir: bool = True) -> Database:
+        path = Path(self._application.configPath / file_name)
+        if mkdir:
+            path.parent.mkdir(parents=True, exist_ok=True)
+        if path.exists():
+            path.unlink()
+        return Database(self._application, path)
+
+    def test_open_1(self) -> None:
+        for i in range(0, 10):
+            db = self._create(Path(str(i) + ".db"))
+
+            self.assertFalse(db.filePath.exists())
+            self.assertFalse(db.isOpen)
+            self.assertTrue(db.open())
+            self.assertTrue(db.isOpen)
+
+            if i % 2 == 0:
+                self.assertTrue(db.close())
+
+            self.assertTrue(db.filePath.exists())
+            self.assertTrue(db.remove())
+            self.assertFalse(db.isOpen)
+            self.assertFalse(db.filePath.exists())
+
+        for i in range(0, 10):
+            db = self._create(
+                Path("not_exists") / (str(i) + ".db"),
+                mkdir=False)
+            self.assertFalse(db.filePath.exists())
+            self.assertFalse(db.isOpen)
+            self.assertFalse(db.open())
+            self.assertFalse(db.isOpen)
+
+            if i % 2 == 0:
+                self.assertTrue(db.close())
+            self.assertTrue(db.remove())
+            self.assertFalse(db.isOpen)
+
 
 
 @unittest.skip

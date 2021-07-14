@@ -1,17 +1,13 @@
 from __future__ import annotations
 
-import bmnsqlite3
-from pathlib import Path
 from typing import TYPE_CHECKING
 
-from . import sqlite_impl
+import bmnsqlite3
+
 from ..coins.abstract.coin import AbstractCoin
-from ..logger import Logger
 
 if TYPE_CHECKING:
-    from pathlib import PurePath
     from typing import Dict, List, Sequence, Tuple
-    from ..application import CoreApplication
     from ..utils.serialize import DeserializedData
 
 
@@ -20,22 +16,6 @@ def nmark(number: int) -> str:
 
 
 class Database:
-    def __init__(
-            self,
-            application: CoreApplication,
-            file_path: PurePath) -> None:
-        self._application = application
-        self._logger = Logger.classLogger(
-            self.__class__,
-            (None, file_path.name))
-        self._logger.debug("bmnsqlite3 version: %s", bmnsqlite3.version)
-        self._logger.debug("SQLite version: %s", bmnsqlite3.sqlite_version)
-
-        self._file_path = file_path
-        self.__db_name = None
-        self.__impl = sqlite_impl.Sqlite()
-        self._is_loaded = False
-
     def __getattr__(self, attr: str) -> str:
         if attr.endswith("_column") or attr.endswith("_table"):
             return self.__impl.__getattr__(attr)
@@ -49,23 +29,6 @@ class Database:
         self.readCoinList(self._application.coinList)
         address_list = self.readCoinAddressList(self._application.coinList)
         self.readCoinTxList(address_list)
-
-        self._is_loaded = True
-
-    @property
-    def isLoaded(self) -> bool:
-        return self._is_loaded
-
-    def close(self) -> None:
-        self._is_loaded = False
-        self.__impl.close()
-
-    def remove(self) -> None:
-        self.close()
-        pth = Path(self._file_path)
-        self.__db_name = None
-        if pth.exists():
-            pth.unlink()
 
     def execute(self, query: str, args: tuple = ()):
         try:
