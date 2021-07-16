@@ -189,6 +189,7 @@ class Database:
 
         if upgrade:
             for table_type in self._TABLE_TYPE_LIST:
+                self._logger.debug("Upgrading table '%s'...", table_type.name)
                 self.__table_list[id(table_type)].upgrade(version)
 
         self[MetadataTable].set(MetadataTable.Key.VERSION, self._VERSION)
@@ -199,7 +200,7 @@ class Database:
             if table is None:
                 self._logger.debug(
                     "Can't close table '%s', it was not open.",
-                    table_type.__name__)
+                    table_type.name)
                 continue
             table.close()
         self.__table_list.clear()
