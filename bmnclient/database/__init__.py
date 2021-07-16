@@ -199,7 +199,7 @@ class Database:
                 self.__table_list[id(table_type)].upgrade(version)
 
         for table_type in self._TABLE_TYPE_LIST:
-            self.__table_list[id(table_type)].create()
+            self.__table_list[id(table_type)].open()
 
         self[MetadataTable].set(MetadataTable.Key.VERSION, self._VERSION)
 

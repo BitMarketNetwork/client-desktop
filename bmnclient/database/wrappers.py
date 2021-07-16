@@ -46,6 +46,12 @@ class Connection(engine.Connection):
     def __init__(self, *args, logger: logging.Logger, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._logger = logger
+        self.row_factory = engine.Row
 
     def cursor(self, factory=Cursor) -> Cursor:
-        return Cursor(self, logger=self._logger)
+        return super().cursor(
+            factory=lambda *args, **kwargs: Cursor(
+                *args,
+                logger=self._logger,
+                **kwargs)
+        )

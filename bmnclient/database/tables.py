@@ -48,7 +48,7 @@ class AbstractTable:
     def __init__(self, database: Database) -> None:
         self._database = database
 
-    def create(self) -> None:
+    def open(self) -> None:
         query = ", ".join(chain(
             (str(c.value) for c in self.ColumnId),
             (c for c in self._CONSTRAINT_LIST)))
