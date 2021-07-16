@@ -6,7 +6,7 @@ import bmnsqlite3 as engine
 
 if TYPE_CHECKING:
     import logging
-    from typing import Any, Callable, Optional
+    from typing import Any, Callable
 
 
 class Cursor(engine.Cursor):
@@ -14,13 +14,13 @@ class Cursor(engine.Cursor):
         super().__init__(*args, **kwargs)
         self._logger = logger
 
-    def execute(self, query, *args, **kwargs) -> Optional[Cursor]:
+    def execute(self, query, *args, **kwargs) -> Cursor:
         return self._execute(super().execute, query, *args, **kwargs)
 
-    def executemany(self, query, *args, **kwargs) -> Optional[Cursor]:
+    def executemany(self, query, *args, **kwargs) -> Cursor:
         return self._execute(super().executemany, query, *args, **kwargs)
 
-    def executescript(self, query, *args, **kwargs) -> Optional[Cursor]:
+    def executescript(self, query, *args, **kwargs) -> Cursor:
         return self._execute(super().executescript, query, *args, **kwargs)
 
     def _execute(
@@ -31,7 +31,9 @@ class Cursor(engine.Cursor):
             **kwargs) -> Any:
         self._logger.debug("Query: %s", query)
         try:
-            return origin(query, *args, **kwargs)
+            r = origin(query, *args, **kwargs)
+            assert r is not None
+            return r
         except engine.Error as e:
             self._logger.error("Cursor error: %s", str(e))
             raise e

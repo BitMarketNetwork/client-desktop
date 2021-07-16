@@ -22,10 +22,7 @@ class Database:
         raise AttributeError(attr)
 
     def open(self) -> None:
-        self.__db_name = str(self._file_path)
-        self.__impl.connect_impl(self._application, self.__db_name)
         self.__impl.create_tables()
-
         self.readCoinList(self._application.coinList)
         address_list = self.readCoinAddressList(self._application.coinList)
         self.readCoinTxList(address_list)

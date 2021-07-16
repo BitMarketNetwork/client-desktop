@@ -1,25 +1,11 @@
 from __future__ import annotations
 
-import logging
 import bmnsqlite3 as sql
 import sys
-import threading
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any
     from ..application import CoreApplication
-
-log = logging.getLogger(__name__)
-
-
-class Connection (sql.Connection):
-    pass
-
-
-class DummyCursor:
-    def close(self) -> None:
-        pass
 
 
 class Sqlite:
@@ -69,13 +55,12 @@ class Sqlite:
 
     def exec(self, query: str, *args) -> None:
         if self.__conn is None:
-            return DummyCursor()
+            pass
         else:
             try:
                 cursor = self.__conn.cursor()
                 cursor.execute(query, *args)
                 self.__conn.commit()
-                +self
                 return cursor
             except sql.OperationalError as oe:
                 log.warning(f'SQL exception {oe} in {query}')
@@ -87,7 +72,6 @@ class Sqlite:
             cursor = self.__conn.cursor()
             cursor.executescript(query)
             self.__conn.commit()
-            +self
             return cursor
         except sql.OperationalError as oe:
             log.fatal(f'SQL exception {oe} in {query}')
@@ -95,11 +79,6 @@ class Sqlite:
 
     def create_tables(self) -> None:
         query = f"""
-        CREATE TABLE IF NOT EXISTS {self.meta_table}
-            (id INTEGER PRIMARY KEY,
-            {self.key_column}   TEXT NOT NULL UNIQUE,
-            {self.value_column} TEXT
-            );
         CREATE TABLE IF NOT EXISTS {self.coins_table}
             (id INTEGER PRIMARY KEY ,
             {self.name_column}  TEXT NOT NULL UNIQUE,
@@ -150,22 +129,13 @@ class Sqlite:
         c = self.__exec_script(query)
         c.close()
 
-    def __make_title(self, name: str) -> str:
-        return name
-
     def __getattr__(self, attr: str) -> str:
         if attr.endswith("_column"):
             if attr[:-7] in self.COLUMN_NAMES:
-                return self.__make_title(attr[:-7])
+                return attr[:-7]
         elif attr.endswith("_table"):
             if attr[:-6] in self.TABLE_NAMES:
-                return self.__make_title(attr[:-6])
+                return attr[:-6]
         else:
             raise AttributeError(attr)
         raise AttributeError("bad table or column '{}'".format(attr))
-
-    def __call__(self, data: Any, strong: bool = False, key: str = None):
-        return "" if data is None else data
-
-    def __pos__(self):
-        pass
