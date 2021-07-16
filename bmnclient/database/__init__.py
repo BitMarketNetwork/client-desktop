@@ -5,7 +5,13 @@ from typing import TYPE_CHECKING
 import bmnsqlite3
 
 from version import Product
-from .tables import AbstractTable, MetadataTable
+from .tables import \
+    AbstractTable, \
+    AddressListTable, \
+    CoinListTable, \
+    MetadataTable, \
+    TxIoListTable, \
+    TxListTable
 from .wrappers import Connection
 from ..logger import Logger
 from ..utils.class_property import classproperty
@@ -13,7 +19,6 @@ from ..utils.class_property import classproperty
 if TYPE_CHECKING:
     from pathlib import Path
     from typing import Dict, Final, Optional, Type, Union
-    from .tables import AbstractTable
     from ..application import CoreApplication
 
 
@@ -33,6 +38,10 @@ class Database:
 
     _TABLE_TYPE_LIST: Final = (
         MetadataTable,
+        CoinListTable,
+        AddressListTable,
+        TxListTable,
+        TxIoListTable
     )
 
     def __init__(
@@ -184,13 +193,13 @@ class Database:
                     version,
                     self._VERSION))
 
-        for table_type in self._TABLE_TYPE_LIST:
-            self.__table_list[id(table_type)].create()
-
         if upgrade:
             for table_type in self._TABLE_TYPE_LIST:
                 self._logger.debug("Upgrading table '%s'...", table_type.name)
                 self.__table_list[id(table_type)].upgrade(version)
+
+        for table_type in self._TABLE_TYPE_LIST:
+            self.__table_list[id(table_type)].create()
 
         self[MetadataTable].set(MetadataTable.Key.VERSION, self._VERSION)
 

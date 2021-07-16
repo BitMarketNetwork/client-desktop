@@ -119,3 +119,95 @@ class MetadataTable(AbstractTable):
         except self._database.engine.OperationalError:
             return False
         return cursor.lastrowid is not None
+
+
+class CoinListTable(AbstractTable):
+    _NAME = "coins"
+
+    class ColumnId(ColumnIdEnum):
+        ID: Final = AbstractTable.ColumnId.ID.value
+
+        NAME: Final = Column("name", "TEXT NOT NULL UNIQUE")
+        IS_ENABLED: Final = Column("is_enabled", "INTEGER NOT NULL")
+
+        HEIGHT: Final = Column("height", "INTEGER NOT NULL")
+        VERIFIED_HEIGHT: Final = Column("verified_height", "INTEGER NOT NULL")
+
+        OFFSET: Final = Column("offset", "TEXT NOT NULL")
+        UNVERIFIED_OFFSET: Final = Column("unverified_offset", "TEXT NOT NULL")
+        UNVERIFIED_HASH: Final = Column("unverified_hash", "TEXT NOT NULL")
+
+
+class AddressListTable(AbstractTable):
+    _NAME = "addresses"
+
+    class ColumnId(ColumnIdEnum):
+        ID: Final = AbstractTable.ColumnId.ID.value
+        COIN_ID: Final = Column("coin_id", "INTEGER NOT NULL")
+
+        NAME: Final = Column("name", "TEXT NOT NULL")
+        AMOUNT: Final = Column("amount", "INTEGER NOT NULL")
+        TX_COUNT: Final = Column("tx_count", "INTEGER NOT NULL")
+
+        LABEL: Final = Column("label", "TEXT NOT NULL")
+        COMMENT: Final = Column("comment", "TEXT NOT NULL")
+        KEY: Final = Column("key", "TEXT")
+
+        HISTORY_FIRST_OFFSET: Final = Column(
+            "history_first_offset",
+            "TEXT NOT NULL")
+        HISTORY_LAST_OFFSET: Final = Column(
+            "history_last_offset",
+            "TEXT NOT NULL")
+
+    _CONSTRAINT_LIST = (
+        f"FOREIGN KEY ({ColumnId.COIN_ID.value.id})"
+        f" REFERENCES {CoinListTable.id} ({CoinListTable.ColumnId.ID.value.id})"
+        f" ON DELETE CASCADE",
+
+        f"UNIQUE({ColumnId.COIN_ID.value.id}, {ColumnId.NAME.value.id})",
+    )
+
+
+class TxListTable(AbstractTable):
+    _NAME = "transactions"
+
+    class ColumnId(ColumnIdEnum):
+        ID: Final = AbstractTable.ColumnId.ID.value
+        COIN_ID: Final = Column("coin_id", "INTEGER NOT NULL")
+
+        NAME: Final = Column("name", "TEXT NOT NULL")
+        HEIGHT: Final = Column("height", "INTEGER NOT NULL")
+        TIME: Final = Column("time", "INTEGER NOT NULL")
+
+        AMOUNT: Final = Column("amount", "INTEGER NOT NULL")
+        FEE_AMOUNT: Final = Column("fee_amount", "INTEGER NOT NULL")
+
+        IS_COINBASE: Final = Column("is_coinbase", "INTEGER NOT NULL")
+
+    _CONSTRAINT_LIST = (
+        f"FOREIGN KEY ({ColumnId.COIN_ID.value.id})"
+        f" REFERENCES {CoinListTable.id} ({CoinListTable.ColumnId.ID.value.id})"
+        f" ON DELETE CASCADE",
+
+        f"UNIQUE({ColumnId.COIN_ID.value.id}, {ColumnId.NAME.value.id})",
+    )
+
+
+class TxIoListTable(AbstractTable):
+    _NAME = "transactions_io"
+
+    class ColumnId(ColumnIdEnum):
+        ID: Final = AbstractTable.ColumnId.ID.value
+        TX_ID: Final = Column("transaction_id", "INTEGER NOT NULL")
+        IO_TYPE: Final = Column("io_type", "TEXT NOT NULL")  # input/output
+
+        OUTPUT_TYPE: Final = Column("output_type", "TEXT NOT NULL")
+        ADDRESS_NAME: Final = Column("address_name", "TEXT")
+        AMOUNT: Final = Column("amount", "INTEGER NOT NULL")
+
+    _CONSTRAINT_LIST = (
+        f"FOREIGN KEY ({ColumnId.TX_ID.value.id})"
+        f" REFERENCES {TxListTable.id} ({TxListTable.ColumnId.ID.value.id})"
+        f" ON DELETE CASCADE",
+    )
