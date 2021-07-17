@@ -227,7 +227,7 @@ class _AbstractAddress(Serializable):
     def deserialize(cls, *args, **kwargs) -> Optional[AbstractCoin.Address]:
         return super().deserialize(
             *args,
-            deserialize_create=cls.decode,
+            deserialize_factory=cls.decode,
             **kwargs)
 
     @classmethod

@@ -97,7 +97,7 @@ class AbstractCoin(Serializable):
         self.__state_hash = 0
         self.__old_state_hash = 0
 
-        self._enabled = True
+        self._is_enabled = True
 
         self._height = 0
         self._verified_height = 0
@@ -135,7 +135,7 @@ class AbstractCoin(Serializable):
         coin: AbstractCoin = args[0]
         return super().deserialize(
             *args,
-            deserialize_create=coin._deserializeToSelf,
+            deserialize_factory=coin._deserializeToSelf,
             **kwargs)
 
     @classmethod
@@ -154,7 +154,7 @@ class AbstractCoin(Serializable):
             coin: AbstractCoin,
             *,
             name: str,
-            enabled: bool,
+            is_enabled: bool,
             height: int,
             verified_height: int,
             offset: str,
@@ -165,7 +165,7 @@ class AbstractCoin(Serializable):
         if self.name != name or id(coin) != id(self):
             return None
 
-        self.enabled = enabled
+        self.isEnabled = is_enabled
 
         self.beginUpdateState()
         if True:
@@ -243,13 +243,13 @@ class AbstractCoin(Serializable):
 
     @serializable
     @property
-    def enabled(self) -> bool:
-        return self._enabled
+    def isEnabled(self) -> bool:
+        return self._is_enabled
 
-    @enabled.setter
-    def enabled(self, value: bool):
-        if self._enabled != value:
-            self._enabled = value
+    @isEnabled.setter
+    def isEnabled(self, value: bool):
+        if self._is_enabled != value:
+            self._is_enabled = value
             if self._model:
                 self._model.afterSetEnabled()
 

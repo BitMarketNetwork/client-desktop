@@ -7,8 +7,10 @@ from typing import TYPE_CHECKING
 from ..utils.class_property import classproperty
 
 if TYPE_CHECKING:
-    from .import Database
     from typing import Final, Optional, Tuple, Type, Union
+    from . import Database
+    from ..coins.abstract.coin import AbstractCoin
+    from ..utils.serialize import Serializable
 
 
 class ColumnIdEnum(Enum):

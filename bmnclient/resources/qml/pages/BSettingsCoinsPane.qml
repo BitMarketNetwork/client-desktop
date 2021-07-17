@@ -24,9 +24,9 @@ BPane {
             delegate: BDialogInputSwitch {
                 BLayout.column: 1
                 BLayout.row: index + 1
-                checked: model.state.enabled
+                checked: model.state.isEnabled
                 onCheckedChanged: {
-                    model.state.enabled = checked
+                    model.state.isEnabled = checked
                 }
             }
         }

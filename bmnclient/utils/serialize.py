@@ -71,13 +71,13 @@ class Serializable:
     def deserialize(
             cls,
             *args,
-            deserialize_create: Callable[[...], Serializable] = None,
+            deserialize_factory: Callable[[...], Serializable] = None,
             **kwargs) -> Optional[Serializable]:
         kwargs = {
             k: cls._deserializeProperty(args, k, v) for k, v in kwargs.items()
         }
-        if deserialize_create is not None:
-            return deserialize_create(*args, **kwargs)
+        if deserialize_factory is not None:
+            return deserialize_factory(*args, **kwargs)
         else:
             return cls(*args, **kwargs)
 

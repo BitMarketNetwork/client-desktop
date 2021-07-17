@@ -11,8 +11,8 @@ BApplicationPage {
 
     list.model: BBackend.coinList
     list.delegate: BCoinItem {
-        visible: model.state.enabled
-        enabled: model.state.enabled
+        visible: model.state.isEnabled
+        enabled: model.state.isEnabled
         coin: model
         onClicked: {
             _base.stack.currentIndex = _base.coinToListIndex(coin.name)

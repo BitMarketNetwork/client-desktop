@@ -32,12 +32,12 @@ class CoinStateModel(AbstractCoinStateModel):
     __stateChanged = QSignal()
 
     @QProperty(bool, notify=__stateChanged)
-    def enabled(self) -> bool:
-        return self._coin.enabled
+    def isEnabled(self) -> bool:
+        return self._coin.isEnabled
 
-    @enabled.setter
-    def _setEnabled(self, value: bool) -> None:
-        self._coin.enabled = value
+    @isEnabled.setter
+    def _setIsEnabled(self, value: bool) -> None:
+        self._coin.isEnabled = value
 
 
 class CoinServerDataModel(AbstractCoinStateModel):

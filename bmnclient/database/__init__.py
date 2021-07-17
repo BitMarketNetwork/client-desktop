@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 import bmnsqlite3
 
-from version import Product
 from .tables import \
     AbstractTable, \
     AddressListTable, \
@@ -15,6 +14,7 @@ from .tables import \
 from .wrappers import Connection
 from ..logger import Logger
 from ..utils.class_property import classproperty
+from ..version import Product
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -28,9 +28,9 @@ class Database:
 
     # https://sqlite.org/pragma.html
     _PRAGMA_LIST: Final = (
+        "encoding = 'UTF-8'",
         "automatic_index = OFF",
         "case_sensitive_like = OFF",
-        "encoding = 'UTF-8'",
         "foreign_keys = ON",
         "main.journal_mode = DELETE",
         "temp_store = MEMORY",
@@ -81,7 +81,11 @@ class Database:
     def __getitem__(self, type_: Type[AbstractTable]) \
             -> Union[
                 AbstractTable,
-                MetadataTable
+                AddressListTable,
+                CoinListTable,
+                MetadataTable,
+                TxIoListTable,
+                TxListTable
             ]:
         assert issubclass(type_, AbstractTable)
         table = self.__table_list.get(id(type_))

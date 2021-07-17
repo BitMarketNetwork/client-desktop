@@ -272,7 +272,7 @@ class CoinsInfoApiQuery(AbstractApiQuery):
             return
 
         for coin in self._coin_list:
-            if not coin.enabled:
+            if not coin.isEnabled:
                 continue
 
             parser = CoinsInfoParser()
@@ -284,7 +284,7 @@ class CoinsInfoApiQuery(AbstractApiQuery):
             coin.status = parser.status
             coin.deserialize(
                 coin,
-                enabled=coin.enabled,
+                is_enabled=coin.isEnabled,
                 **parser.deserializedData)
 
 
