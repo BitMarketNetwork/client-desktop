@@ -153,6 +153,7 @@ class AbstractCoin(Serializable):
             self,
             coin: AbstractCoin,
             *,
+            row_id: int,
             name: str,
             is_enabled: bool,
             height: int,
@@ -160,11 +161,12 @@ class AbstractCoin(Serializable):
             offset: str,
             unverified_offset: str,
             unverified_hash: str,
-            address_list: Optional[List[Address]] = None) \
-            -> Optional[AbstractCoin]:
+            address_list: Optional[List[Address]] = None
+    ) -> Optional[AbstractCoin]:
         if self.name != name or id(coin) != id(self):
             return None
 
+        self.rowId = row_id
         self.isEnabled = bool(is_enabled)
 
         self.beginUpdateState()

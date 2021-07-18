@@ -24,8 +24,8 @@ def serializable(func: property) -> property:
 class Serializable:
     __map = None
 
-    def __init__(self, *args, **kwargs) -> None:
-        self.__row_id = -1
+    def __init__(self, *args, row_id: int = -1, **kwargs) -> None:
+        self.__row_id = row_id
 
     @property
     def rowId(self) -> int:

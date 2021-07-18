@@ -34,7 +34,7 @@ def _columnList(
     return _stringList(source_list)
 
 
-def _whereKeyList(*args: ColumnEnum) -> str:
+def _whereColumnList(*args: ColumnEnum) -> str:
     source_list = map(lambda s: f"{s.value.identifier} == ?", args)
     return " AND ".join(source_list)
 
@@ -161,7 +161,7 @@ class AbstractTable:
                 for r in self._database.execute(
                         f"SELECT {_columnList(self.Column.ROW_ID)}"
                         f" FROM {self.identifier}"
-                        f" WHERE {_whereKeyList(*key_columns.keys())}"
+                        f" WHERE {_whereColumnList(*key_columns.keys())}"
                         f" LIMIT 1",
                         *key_columns.values()):
                     row_id = int(r[0])
@@ -176,7 +176,7 @@ class AbstractTable:
         cursor = self._database.execute(
             f"UPDATE {self.identifier}"
             f" SET {_columnList(*data_columns.keys(), with_qmark=True)}"
-            f" WHERE {_whereKeyList(*key_columns.keys())}",
+            f" WHERE {_whereColumnList(*key_columns.keys())}",
             *data_columns.values(),
             *key_columns.values())
         if cursor.rowcount <= 0:
@@ -185,6 +185,51 @@ class AbstractTable:
                 .format(columnsString(key_columns)))
 
         return row_id
+
+    def _serialize(
+            self,
+            source: Serializable,
+            key_columns: Dict[Column, Any]) -> None:
+        source_data = source.serialize()
+        data_columns = {}
+        for column in self.Column:
+            if column not in key_columns:
+                if column.value.name in source_data:
+                    data_columns[column] = source_data[column.value.name]
+
+        source.rowId = self._insertOrUpdate(
+            key_columns,
+            data_columns,
+            row_id=source.rowId)
+        assert source.rowId > 0
+
+    def _deserialize(
+            self,
+            source_type: Type[Serializable],
+            key_columns: Dict[Column, Any]
+    ) -> Optional[Dict[str, Union[int, str]]]:
+        column_list = [self.Column.ROW_ID]
+        for column in self.Column:
+            if column not in key_columns:
+                if column.value.name in source_type.serializableMap:
+                    column_list.append(column)
+
+        for result in self._database.execute(
+                f"SELECT {_columnList(*column_list)}"
+                f" FROM {self.identifier}"
+                f" WHERE {_whereColumnList(*key_columns.keys())}"
+                f" LIMIT 1",
+                *key_columns.values()):
+
+            return dict(chain(
+                zip(
+                    (c.value.name for c in key_columns.keys()),
+                    key_columns.values()),
+                zip(
+                    (c.value.name for c in column_list),
+                    result)
+            ))
+        return None
 
 
 class MetadataTable(AbstractTable, name="metadata"):
@@ -262,6 +307,27 @@ class CoinListTable(AbstractTable, name="coins"):
         UNVERIFIED_HASH: Final = ColumnDefinition(
             "unverified_hash",
             "TEXT NOT NULL")
+
+    def loadCoin(self, coin: AbstractCoin) -> bool:
+        try:
+            result = self._deserialize(
+                type(coin),
+                {self.Column.NAME: coin.name})
+        except self._database.engine.OperationalError:
+            return False
+
+        if result is None:
+            return False
+        return coin.deserialize(coin, **result) is not None
+
+    def saveCoin(self, coin: AbstractCoin) -> bool:
+        try:
+            self._serialize(
+                coin,
+                {self.Column.NAME: coin.name})
+        except self._database.engine.OperationalError:
+            return False
+        return True
 
 
 class AddressListTable(AbstractTable, name="addresses"):

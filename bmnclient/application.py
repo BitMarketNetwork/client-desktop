@@ -20,6 +20,7 @@ from .coins.currency import FiatCurrencyList, FiatRate
 from .coins.list import CoinList
 from .config import Config, ConfigKey
 from .database import Database
+from .database.tables import CoinListTable
 from .key_store import KeyStore
 from .language import Language
 from .logger import Logger
@@ -355,7 +356,24 @@ class CoreApplication(QObject):
                 # TODO show message, force user to regenerate seed?
                 pass
 
-        self._database.open()
+        if self._database.open():
+            for coin in self._coin_list:
+                try:
+                    with self._database:
+                        if not self._database[CoinListTable].loadCoin(coin):
+                            self._logger.debug(
+                                "Coin '%s' not found in database.",
+                                coin.name)
+                            self._database[CoinListTable].saveCoin(coin)
+                except self._database.engine.Error:
+                    self._database.close()
+                    break
+        if not self._database.isOpen:
+            # TODO show message, allow continue without database
+            pass
+
+        self._network_query_scheduler.start(
+            self._network_query_scheduler.GLOBAL_NAMESPACE)
         self._network_query_scheduler.start(
             self._network_query_scheduler.COINS_NAMESPACE)
 
@@ -370,8 +388,6 @@ class CoreApplication(QObject):
 
     def _onRun(self) -> None:
         self.updateTranslation()
-        self._network_query_scheduler.start(
-            self._network_query_scheduler.GLOBAL_NAMESPACE)
 
     def __onAboutToQuit(self) -> None:
         self._logger.debug("Shutting down...")

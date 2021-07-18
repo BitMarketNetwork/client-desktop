@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from .coins.abstract.coin import AbstractCoin
 from .coins.utils import CoinUtils
+from .database.tables import CoinListTable
 from .logger import Logger
 
 if TYPE_CHECKING:
@@ -36,8 +37,9 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
             **kwargs)
 
     def afterSetEnabled(self) -> None:
-        if self._database.isOpen:
-            self._database.updateCoin(self._coin)
+        if not self._database.isLocked:
+            with self._database:
+                self._database[CoinListTable].saveCoin(self._coin)
 
     def afterSetHeight(self) -> None:
         pass
@@ -70,8 +72,9 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
         pass
 
     def afterStateChanged(self) -> None:
-        if self._database.isOpen:
-            self._database.updateCoin(self._coin)
+        if not self._database.isLocked:
+            with self._database:
+                self._database[CoinListTable].saveCoin(self._coin)
 
 
 class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):

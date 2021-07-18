@@ -284,6 +284,7 @@ class CoinsInfoApiQuery(AbstractApiQuery):
             coin.status = parser.status
             coin.deserialize(
                 coin,
+                row_id=coin.rowId,
                 is_enabled=coin.isEnabled,
                 **parser.deserializedData)
 

@@ -9,14 +9,8 @@ if TYPE_CHECKING:
     from ..utils.serialize import DeserializedData
 
 
-def nmark(number: int) -> str:
-    return f"({','.join('?' * number)})"
-
-
 class Database:
     def open(self) -> None:
-        self.__impl.create_tables()
-        self.readCoinList(self._application.coinList)
         address_list = self.readCoinAddressList(self._application.coinList)
         self.readCoinTxList(address_list)
 
@@ -27,128 +21,6 @@ class Database:
             if isinstance(value, (str, int, type(None))):
                 data[key] = self.__impl(value)
         return data
-
-    def appendCoin(self, coin: AbstractCoin) -> bool:
-        data = self._encryptDeserializedData(coin.serialize())
-        query = " ".join((
-            f"INSERT OR IGNORE INTO {self.coins_table} (",
-            f"{self.name_column},",
-            f"{self.visible_column},",  # TODO to config
-            f"{self.height_column},",
-            f"{self.verified_height_column},",
-            f"{self.offset_column},",
-            f"{self.unverified_offset_column},",
-            f"{self.unverified_hash_column}",
-            f") VALUES {nmark(7)}"
-        ))
-        cursor = self.execute(query, (
-            data["name"],
-            data["enabled"],
-            data["height"],
-            data["verified_height"],
-            data["offset"],
-            data["unverified_offset"],
-            data["unverified_hash"]
-        ))
-        if cursor is None:
-            return False
-        row_id = cursor.lastrowid
-        cursor.close()
-
-        if coin.rowId is None and row_id is not None:
-            coin.rowId = row_id
-            return True
-
-        query = " ".join((
-            f"SELECT",
-            f"id",
-            f"FROM {self.coins_table}",
-            f"WHERE {self.name_column}==? LIMIT 1"
-        ))
-        cursor = self.execute(query, (data["name"],))
-        if cursor is None:
-            return False
-        result = cursor.fetchone()
-        coin.rowId = int(result[0])
-        cursor.close()
-        return True
-
-    def readCoinList(self, coin_list: Sequence[AbstractCoin]) -> bool:
-        query = " ".join((
-            f"SELECT",
-            f"id,"                                # 0
-            f"{self.name_column},",               # 1
-            f"{self.visible_column},",            # 2  # TODO to config
-            f"{self.height_column},",             # 3
-            f"{self.verified_height_column},",    # 4
-            f"{self.offset_column},",             # 5
-            f"{self.unverified_offset_column},",  # 6
-            f"{self.unverified_hash_column}",     # 7
-            f"FROM {self.coins_table}"
-        ))
-        cursor = self.execute(query)
-        if cursor is None:
-            return False
-        fetch = cursor.fetchall()
-        cursor.close()
-
-        if not fetch:
-            for coin in coin_list:
-                self.appendCoin(coin)
-            return True
-
-        for value in fetch:
-            coin_name = str(value[1])
-            for coin in coin_list:
-                if coin.name != coin_name:
-                    continue
-
-                coin.rowId = int(value[0])
-                if coin.height < int(value[3]):
-                    coin.deserialize(
-                        coin,
-                        name=coin_name,
-                        is_enabled=int(value[2]),
-                        height=int(value[3]),
-                        verified_height=int(value[4]),
-                        offset=str(value[5]),
-                        unverified_offset=str(value[6]),
-                        unverified_hash=str(value[7]))
-                else:
-                    self._logger.debug(f"Saved coin {coin_name} was skipped.")
-                    coin.isEnabled = int(value[2])
-                    self.updateCoin(coin)
-        return True
-
-    def updateCoin(self, coin: AbstractCoin) -> bool:
-        if not coin.rowId:
-            self._logger.error("No coin row")
-            return False
-
-        data = self._encryptDeserializedData(coin.serialize())
-        query = " ".join((
-            f"UPDATE {self.coins_table} SET",
-            f"{self.visible_column}=?,",            # 0  # TODO to config
-            f"{self.height_column}=?,",             # 1
-            f"{self.verified_height_column}=?,",    # 2
-            f"{self.offset_column}=?,",             # 3
-            f"{self.unverified_offset_column}=?,",  # 4
-            f"{self.unverified_hash_column}=?",     # 5
-            f"WHERE id=?"                           # 6
-        ))
-        cursor = self.execute(query, (
-            data["enabled"],
-            data["height"],
-            data["verified_height"],
-            data["offset"],
-            data["unverified_offset"],
-            data["unverified_hash"],
-            coin.rowId
-        ))
-        if cursor is None:
-            return False
-        cursor.close()
-        return True
 
     def updateCoinAddress(self, address: AbstractCoin.Address) -> bool:
         assert address.coin.rowId is not None

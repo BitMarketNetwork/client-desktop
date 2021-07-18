@@ -64,19 +64,19 @@ class Database:
 
         self.__connection: Optional[Database._ENGINE.Connection] = None
         self.__table_list: Dict[int, AbstractTable] = {}
-        self.__in_context = False
+        self.__locked = False
 
     def __enter__(self) -> None:
         assert self.isOpen
-        assert not self.__in_context
+        assert not self.__locked
         self.__connection.__enter__()
-        self.__in_context = True
+        self.__locked = True
 
     def __exit__(self, *args, **kwargs) -> None:
         assert self.isOpen
-        assert self.__in_context
+        assert self.__locked
         self.__connection.__exit__(*args, **kwargs)
-        self.__in_context = False
+        self.__locked = False
 
     def __getitem__(self, type_: Type[AbstractTable]) \
             -> Union[
@@ -108,6 +108,10 @@ class Database:
     @property
     def isOpen(self) -> bool:
         return self.__connection is not None
+
+    @property
+    def isLocked(self) -> bool:
+        return bool(self.__locked or not self.isOpen)
 
     def open(self) -> bool:
         assert not self.isOpen
@@ -147,7 +151,7 @@ class Database:
 
     def execute(self, query, *args) -> Database._ENGINE.Cursor:
         assert self.isOpen
-        assert self.__in_context
+        assert self.__locked
         return self.__connection.execute(query, args)
 
     def close(self, *, force: bool = False) -> bool:
