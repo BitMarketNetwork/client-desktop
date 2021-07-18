@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import bmnsqlite3
-
 from ..coins.abstract.coin import AbstractCoin
 
 if TYPE_CHECKING:
@@ -16,23 +14,11 @@ def nmark(number: int) -> str:
 
 
 class Database:
-    def __getattr__(self, attr: str) -> str:
-        if attr.endswith("_column") or attr.endswith("_table"):
-            return self.__impl.__getattr__(attr)
-        raise AttributeError(attr)
-
     def open(self) -> None:
         self.__impl.create_tables()
         self.readCoinList(self._application.coinList)
         address_list = self.readCoinAddressList(self._application.coinList)
         self.readCoinTxList(address_list)
-
-    def execute(self, query: str, args: tuple = ()):
-        try:
-            return self.__impl.exec(query, args)
-        except bmnsqlite3.DatabaseError as ie:
-            self._logger.error("Database error: %s", str(ie))
-            return None
 
     def _encryptDeserializedData(
             self,
@@ -122,7 +108,7 @@ class Database:
                     coin.deserialize(
                         coin,
                         name=coin_name,
-                        enabled=int(value[2]),
+                        is_enabled=int(value[2]),
                         height=int(value[3]),
                         verified_height=int(value[4]),
                         offset=str(value[5]),
@@ -130,7 +116,7 @@ class Database:
                         unverified_hash=str(value[7]))
                 else:
                     self._logger.debug(f"Saved coin {coin_name} was skipped.")
-                    coin.enabled = int(value[2])
+                    coin.isEnabled = int(value[2])
                     self.updateCoin(coin)
         return True
 

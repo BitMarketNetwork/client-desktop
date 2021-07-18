@@ -5,7 +5,6 @@ import os
 import sys
 import time
 from pathlib import Path
-from random import randint
 from tempfile import gettempdir
 from typing import TYPE_CHECKING
 
@@ -36,12 +35,10 @@ class TestApplication(CoreApplication):
         if not config_path:
             config_path = (
                     Path(gettempdir())
-                    / "{:s}-{:s}.{:d}".format(
+                    / "{:s}-{:s}".format(
                         Product.SHORT_NAME,
-                        owner.__class__.__name__,
-                        randint(1, 0xffffffffffffffff))
+                        owner.__class__.__name__)
             )
-            owner.assertFalse(config_path.exists())
 
         command_line.append("--configpath=" + str(config_path))
 

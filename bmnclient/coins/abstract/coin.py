@@ -165,7 +165,7 @@ class AbstractCoin(Serializable):
         if self.name != name or id(coin) != id(self):
             return None
 
-        self.isEnabled = is_enabled
+        self.isEnabled = bool(is_enabled)
 
         self.beginUpdateState()
         if True:
