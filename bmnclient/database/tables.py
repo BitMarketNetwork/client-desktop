@@ -214,7 +214,7 @@ class AbstractTable:
         column_list = [self.Column.ROW_ID]
         for column in self.Column:
             if column not in key_columns:
-                if column.value.name in source_type.serializableMap:
+                if column.value.name in source_type.serializeMap:
                     column_list.append(column)
 
         query = (

@@ -10,8 +10,9 @@ from ...utils.class_property import classproperty
 from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
-    from typing import Any, List, Optional, Tuple, Union
+    from typing import Any, List, Optional, Union
     from .coin import AbstractCoin
+    from ...utils.serialize import DeserializedData, DeserializedDict
 
 
 class _AbstractAddressTypeValue:
@@ -224,6 +225,22 @@ class _AbstractAddress(Serializable):
             self._type
         ))
 
+    def serialize(
+            self,
+            *,
+            allow_hd_path: bool = True,
+            **options) -> DeserializedDict:
+        return super().serialize(allow_hd_path=allow_hd_path, **options)
+
+    def _serializeProperty(
+            self,
+            key: str,
+            value: Any,
+            **options) -> DeserializedData:
+        if key == "key":
+            return self.exportKey(allow_hd_path=options["allow_hd_path"])
+        return super()._serializeProperty(key, value, **options)
+
     @classmethod
     def deserialize(cls, *args, **kwargs) -> Optional[AbstractCoin.Address]:
         return super().deserialize(
@@ -247,11 +264,6 @@ class _AbstractAddress(Serializable):
             coin: AbstractCoin = args[0]
             return coin.Tx.Utxo.deserialize(coin, **value)
         return super()._deserializeProperty(args, key, value)
-
-    def _serializeProperty(self, key: str, value: Any) -> Any:
-        if key == "key":
-            return self.exportKey(allow_hd_path=True)
-        return super()._serializeProperty(key, value)
 
     @classproperty
     def hrp(cls) -> str:  # noqa

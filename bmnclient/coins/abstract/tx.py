@@ -59,7 +59,7 @@ class _AbstractTxIo(Serializable):
             self._output_type
         ))
 
-    def serialize(self) -> DeserializedData:
+    def serialize(self, **options) -> DeserializedData:
         if self._address.isNullData:
             address_name = None
         else:
@@ -69,7 +69,7 @@ class _AbstractTxIo(Serializable):
             "output_type": self._output_type,
             "address_name": address_name,
             "amount": self._address.amount,
-            **super().serialize()
+            **super().serialize(**options)
         }
 
     @property

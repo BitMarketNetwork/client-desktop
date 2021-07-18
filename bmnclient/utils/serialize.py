@@ -6,8 +6,9 @@ from .class_property import classproperty
 from .string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, List, Optional, Tuple
-    DeserializedData = Dict[str, Optional[str, int, List, Dict]]
+    from typing import Any, Dict, List, Optional
+    DeserializedData = Optional[str, int, List, Dict]
+    DeserializedDict = Dict[str, DeserializedData]
 
 
 class DeserializationNotSupportedError(Exception):
@@ -22,7 +23,7 @@ def serializable(func: property) -> property:
 
 
 class Serializable:
-    __map = None
+    __serialize_map = None
 
     def __init__(self, *args, row_id: int = -1, **kwargs) -> None:
         self.__row_id = row_id
@@ -36,9 +37,9 @@ class Serializable:
         self.__row_id = value
 
     @classproperty
-    def serializableMap(cls) -> Dict[str, str]: # noqa
-        if cls.__map is None:
-            cls.__map = {}
+    def serializeMap(cls) -> Dict[str, str]: # noqa
+        if cls.__serialize_map is None:
+            cls.__serialize_map = {}
             for name in dir(cls):
                 v = getattr(cls, name)
                 if (
@@ -46,22 +47,36 @@ class Serializable:
                         hasattr(v.fget, "__serializable") and
                         getattr(v.fget, "__serializable")
                 ):
-                    cls.__map[StringUtils.toSnakeCase(name)] = name
-        return cls.__map
+                    cls.__serialize_map[StringUtils.toSnakeCase(name)] = name
+        return cls.__serialize_map
 
-    def serialize(self) -> DeserializedData:
+    def serialize(
+            self,
+            *,
+            exclude_subclasses: bool = False,
+            **options) -> DeserializedDict:
         result = {}
-        for (key, name) in self.serializableMap.items():
-            result[key] = self._serializeProperty(key, getattr(self, name))
+        for (key, name) in self.serializeMap.items():
+            result[key] = self._serializeProperty(
+                key,
+                getattr(self, name),
+                exclude_subclasses=exclude_subclasses,
+                **options)
         return result
 
-    def _serializeProperty(self, key: str, value: Any) -> Any:
+    def _serializeProperty(
+            self,
+            key: str,
+            value: Any,
+            **options) -> DeserializedData:
         if isinstance(value, Serializable):
-            return value.serialize()
+            if options["exclude_subclasses"]:
+                return {}
+            return value.serialize(**options)
         if isinstance(value, (int, str, type(None))):
             return value
         if isinstance(value, list):
-            return [self._serializeProperty(key, v) for v in value]
+            return [self._serializeProperty(key, v, **options) for v in value]
 
         raise TypeError(
             "cannot serialize value of type '{}'"
