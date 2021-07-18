@@ -168,6 +168,7 @@ class _AbstractAddress(Serializable):
             self,
             coin: AbstractCoin,
             *,
+            row_id: int = -1,
             name: Optional[str],
             type_: AbstractCoin.Address.Type,
             data: bytes = b"",
@@ -180,7 +181,7 @@ class _AbstractAddress(Serializable):
             utxo_list: Optional[List[AbstractCoin.Tx.Utxo]] = None,
             history_first_offset: str = "",
             history_last_offset: str = "") -> None:
-        super().__init__()
+        super().__init__(row_id=row_id)
 
         self._coin = coin
         self._name = name or self._NULLDATA_NAME
@@ -249,7 +250,7 @@ class _AbstractAddress(Serializable):
 
     def _serializeProperty(self, key: str, value: Any) -> Any:
         if key == "key":
-            return self.exportKey()
+            return self.exportKey(allow_hd_path=True)
         return super()._serializeProperty(key, value)
 
     @classproperty
@@ -296,6 +297,8 @@ class _AbstractAddress(Serializable):
     def decode(
             cls,
             coin: AbstractCoin,
+            *,
+            name: str,
             **kwargs) -> Optional[AbstractCoin.Address]:
         raise NotImplementedError
 

@@ -98,8 +98,9 @@ class AbstractCoin(Serializable):
     def __init__(
             self,
             *,
+            row_id: int = -1,
             model_factory: Optional[Callable[[object], object]] = None) -> None:
-        super().__init__()
+        super().__init__(row_id=row_id)
 
         self._model_factory = model_factory
         self.__state_hash = 0
@@ -161,7 +162,7 @@ class AbstractCoin(Serializable):
             self,
             coin: AbstractCoin,
             *,
-            row_id: int,
+            row_id: int = -1,
             name: str,
             is_enabled: bool,
             height: int,

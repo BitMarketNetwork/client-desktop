@@ -147,6 +147,11 @@ class Config:
                 current_config = current_value
         return False
 
+    def clear(self, *, save: bool = True) -> bool:
+        with self._lock:
+            self._config.clear()
+            return self.save() if save else True
+
     def _updateVersion(self) -> None:
         if not self.get(ConfigKey.VERSION, str):
             self.set(ConfigKey.VERSION, Product.VERSION_STRING, save=False)
