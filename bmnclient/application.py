@@ -360,11 +360,11 @@ class CoreApplication(QObject):
             for coin in self._coin_list:
                 try:
                     with self._database:
-                        if not self._database[CoinListTable].loadCoin(coin):
+                        if not self._database[CoinListTable].load(coin):
                             self._logger.debug(
                                 "Coin '%s' not found in database.",
                                 coin.name)
-                            self._database[CoinListTable].saveCoin(coin)
+                            self._database[CoinListTable].save(coin)
                 except self._database.engine.Error:
                     self._database.close()
                     break

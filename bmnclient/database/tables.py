@@ -11,6 +11,7 @@ if TYPE_CHECKING:
         Any, \
         Dict, \
         Final, \
+        Generator, \
         Iterable, \
         Optional, \
         Tuple, \
@@ -206,22 +207,29 @@ class AbstractTable:
     def _deserialize(
             self,
             source_type: Type[Serializable],
-            key_columns: Dict[Column, Any]
-    ) -> Optional[Dict[str, Union[int, str]]]:
+            key_columns: Dict[Column, Any],
+            *,
+            limit: int = -1
+    ) -> Generator[Dict[str, Union[int, str]], None, None]:
         column_list = [self.Column.ROW_ID]
         for column in self.Column:
             if column not in key_columns:
                 if column.value.name in source_type.serializableMap:
                     column_list.append(column)
 
-        for result in self._database.execute(
-                f"SELECT {_columnList(*column_list)}"
-                f" FROM {self.identifier}"
-                f" WHERE {_whereColumnList(*key_columns.keys())}"
-                f" LIMIT 1",
-                *key_columns.values()):
+        query = (
+            f"SELECT {_columnList(*column_list)}"
+            f" FROM {self.identifier}"
+            f" WHERE {_whereColumnList(*key_columns.keys())}"
+        )
+        query_args = [*key_columns.values()]
 
-            return dict(chain(
+        if limit >= 0:
+            query += f" LIMIT ?"
+            query_args.append(limit)
+
+        for result in self._database.execute(query, *query_args):
+            yield dict(chain(
                 zip(
                     (c.value.name for c in key_columns.keys()),
                     key_columns.values()),
@@ -229,7 +237,6 @@ class AbstractTable:
                     (c.value.name for c in column_list),
                     result)
             ))
-        return None
 
 
 class MetadataTable(AbstractTable, name="metadata"):
@@ -308,25 +315,31 @@ class CoinListTable(AbstractTable, name="coins"):
             "unverified_hash",
             "TEXT NOT NULL")
 
-    def loadCoin(self, coin: AbstractCoin) -> bool:
+    def load(self, coin: AbstractCoin) -> bool:
         try:
-            result = self._deserialize(
-                type(coin),
-                {self.Column.NAME: coin.name})
+            result = next(
+                self._deserialize(
+                    type(coin),
+                    {self.Column.NAME: coin.name},
+                    limit=1),
+                None)
         except self._database.engine.OperationalError:
             return False
 
         if result is None:
             return False
-        return coin.deserialize(coin, **result) is not None
+        result = coin.deserialize(coin, **result)
+        assert coin.rowId > 0
+        return result is not None
 
-    def saveCoin(self, coin: AbstractCoin) -> bool:
+    def save(self, coin: AbstractCoin) -> bool:
         try:
             self._serialize(
                 coin,
                 {self.Column.NAME: coin.name})
         except self._database.engine.OperationalError:
             return False
+        assert coin.rowId > 0
         return True
 
 
