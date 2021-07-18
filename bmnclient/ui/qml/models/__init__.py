@@ -11,7 +11,7 @@ from PySide2.QtCore import \
     SignalInstance as QSignalInstance
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Final, Iterable, Optional, Tuple
+    from typing import Any, Dict, Final, Generator, Optional, Tuple
     from .. import QmlApplication
     from ....coins.abstract.coin import AbstractCoin
     from ....config import ConfigKey
@@ -133,7 +133,7 @@ class AbstractModel(QObject):
         self._application = application
         self._update_lock = Lock()
 
-    def iterateStateModels(self) -> Iterable[AbstractStateModel]:
+    def iterateStateModels(self) -> Generator[AbstractStateModel, None, None]:
         for a in dir(self):
             if a.startswith("_"):
                 a = getattr(self, a)

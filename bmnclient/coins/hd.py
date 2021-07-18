@@ -8,7 +8,14 @@ from ..crypto.digest import Hash160Digest, Hmac, Sha512Digest
 from ..crypto.secp256k1 import KeyUtils, PrivateKey, PublicKey
 
 if TYPE_CHECKING:
-    from typing import Final, Iterator, Optional, Sequence, Tuple, Union
+    from typing import \
+        Final, \
+        Generator, \
+        Iterator, \
+        Optional, \
+        Sequence, \
+        Tuple, \
+        Union
     from .abstract.coin import AbstractCoin
 
 
@@ -360,7 +367,7 @@ class HdAddressIterator:
             self._empty_address_count = 0
             self._is_empty_account = False
 
-    def _iterator(self) -> AbstractCoin.Address:
+    def _iterator(self) -> Generator[AbstractCoin.Address, None, None]:
         if not self._coin.hdNodeList:
             return
 

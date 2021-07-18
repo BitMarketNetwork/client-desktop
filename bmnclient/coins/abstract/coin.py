@@ -15,7 +15,15 @@ from ...utils.class_property import classproperty
 from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+    from typing import \
+        Any, \
+        Callable, \
+        Dict, \
+        Generator, \
+        List, \
+        Optional, \
+        Tuple, \
+        Union
 
 
 class _AbstractCoinInterface:
@@ -493,7 +501,7 @@ class AbstractCoin(Serializable):
             self,
             *,
             is_read_only: Optional[bool] = None,
-            with_utxo: Optional[bool] = None) -> Address:
+            with_utxo: Optional[bool] = None) -> Generator[Address, None, None]:
         for address in self._address_list:
             if is_read_only is not None:
                 if is_read_only != address.isReadOnly:
