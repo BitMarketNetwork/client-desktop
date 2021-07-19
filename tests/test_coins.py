@@ -371,7 +371,7 @@ class TestCoins(TestCase):
                     time=randint(10000, 1000000),
                     amount=randint(10000, 1000000),
                     fee_amount=randint(10000, 1000000),
-                    coinbase=randint(0, 1) == 1,
+                    is_coinbase=randint(0, 1) == 1,
                     input_list=input_list,
                     output_list=output_list))
 
@@ -425,7 +425,7 @@ class TestCoins(TestCase):
                 self.assertEqual(t1.time, t2.time)
                 self.assertEqual(t1.amount, t2.amount)
                 self.assertEqual(t1.feeAmount, t2.feeAmount)
-                self.assertEqual(t1.coinbase, t2.coinbase)
+                self.assertEqual(t1.isCoinbase, t2.isCoinbase)
 
                 # io list compare
                 self.assertEqual(len(t1.inputList), len(t2.inputList))

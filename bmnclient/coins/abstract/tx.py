@@ -225,7 +225,7 @@ class _AbstractTx(Serializable):
             time: int = -1,
             amount: int,
             fee_amount: int,
-            coinbase: bool,
+            is_coinbase: bool,
             input_list: List[AbstractCoin.Tx.Io],
             output_list: List[AbstractCoin.Tx.Io]) -> None:
         super().__init__()
@@ -237,7 +237,7 @@ class _AbstractTx(Serializable):
         self._time = time
         self._amount = amount
         self._fee_amount = fee_amount
-        self._coinbase = coinbase
+        self._is_coinbase = bool(is_coinbase)
 
         self._input_list = list(Utils.filterNotNone(input_list))
         self._output_list = list(Utils.filterNotNone(output_list))
@@ -345,8 +345,8 @@ class _AbstractTx(Serializable):
 
     @serializable
     @property
-    def coinbase(self) -> bool:
-        return self._coinbase
+    def isCoinbase(self) -> bool:
+        return self._is_coinbase
 
     @serializable
     @property
