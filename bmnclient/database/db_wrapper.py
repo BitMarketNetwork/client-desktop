@@ -11,64 +11,7 @@ if TYPE_CHECKING:
 
 class Database:
     def open(self) -> None:
-        address_list = self.readCoinAddressList(self._application.coinList)
         self.readCoinTxList(address_list)
-
-    def readCoinAddressList(
-            self,
-            coin_list: Sequence[AbstractCoin]) \
-            -> List[AbstractCoin.Address]:
-        query = " ".join((
-            f"SELECT",
-            f"{self.coin_id_column},",       # 0
-            f"{self.address_column},",       # 1
-            f"id,",                          # 2
-            f"{self.label_column},",         # 3
-            f"{self.message_column},",       # 4
-            f"{self.created_column},",       # 5
-            f"{self.type_column},",          # 6
-            f"{self.amount_column},",        # 7
-            f"{self.tx_count_column},",      # 8
-            f"{self.first_offset_column},",  # 9
-            f"{self.last_offset_column},",   # 10
-            f"{self.key_column}",            # 11
-            f"FROM {self.addresses_table}"
-        ))
-        cursor = self.execute(query)
-        if cursor is None:
-            return []
-        fetch = cursor.fetchall()
-        cursor.close()
-
-        coin_map = {c.rowId: c for c in coin_list}
-        coin = coin_list[0]
-        address_list = []
-
-        for value in fetch:
-            coin_row_id = int(value[0])
-            if coin.rowId != coin_row_id:
-                coin = coin_map.get(coin_row_id)
-                if coin is None:
-                    continue
-
-            address = coin.Address.deserialize(
-                coin,
-                name=str(value[1]),
-                key=str(value[11]),
-                amount=int(value[7]),
-                tx_count=int(value[8]),
-                label=str(value[3]),
-                comment=str(value[4]),
-                history_first_offset=str(value[9]),
-                history_last_offset=str(value[10]))
-            if address is not None:
-                address.rowId = int(value[2])
-                coin.appendAddress(address)
-                address_list.append(address)
-
-        for coin in coin_list:
-            coin.updateAmount()
-        return address_list
 
     def updateCoinAddressTx(
             self,

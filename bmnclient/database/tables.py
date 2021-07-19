@@ -389,6 +389,40 @@ class AddressListTable(AbstractTable, name="addresses"):
         f"UNIQUE({_columnList(Column.COIN_ROW_ID, Column.NAME)})",
     )
 
+    # TODO dynamic interface with coin.addressList
+    def loadAll(self, coin: AbstractCoin) -> bool:
+        assert coin.rowId > 0
+        try:
+            for result in self._deserialize(
+                    coin.Address,
+                    {self.Column.COIN_ROW_ID: coin.rowId}):
+                assert result[self.Column.COIN_ROW_ID.value.name] == coin.rowId
+                del result[self.Column.COIN_ROW_ID.value.name]
+                address = coin.Address.deserialize(result, coin)
+                if address is not None:
+                    assert address.rowId > 0
+                    coin.appendAddress(address)
+        except self._database.engine.OperationalError:
+            return False
+        return True
+
+    def save(self, address: AbstractCoin.Address) -> bool:
+        assert address.coin.rowId > 0
+        if address.isNullData:
+            return False
+
+        try:
+            self._serialize(
+                address,
+                {
+                    self.Column.COIN_ROW_ID: address.coin.rowId,
+                    self.Column.NAME: address.name
+                },
+                allow_hd_path=True)
+        except self._database.engine.OperationalError:
+            return False
+        return True
+
 
 class TxListTable(AbstractTable, name="transactions"):
     class Column(ColumnEnum):

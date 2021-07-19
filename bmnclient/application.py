@@ -20,7 +20,7 @@ from .coins.currency import FiatCurrencyList, FiatRate
 from .coins.list import CoinList
 from .config import Config, ConfigKey
 from .database import Database
-from .database.tables import CoinListTable
+from .database.tables import AddressListTable, CoinListTable
 from .key_store import KeyStore
 from .language import Language
 from .logger import Logger
@@ -360,7 +360,9 @@ class CoreApplication(QObject):
             for coin in self._coin_list:
                 try:
                     with self._database:
-                        if not self._database[CoinListTable].load(coin):
+                        if self._database[CoinListTable].load(coin):
+                            self._database[AddressListTable].loadAll(coin)
+                        else:
                             self._logger.debug(
                                 "Coin '%s' not found in database.",
                                 coin.name)

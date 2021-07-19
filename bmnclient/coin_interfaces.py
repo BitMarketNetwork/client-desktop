@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from .coins.abstract.coin import AbstractCoin
 from .coins.utils import CoinUtils
-from .database.tables import CoinListTable
+from .database.tables import AddressListTable, CoinListTable
 from .logger import Logger
 
 if TYPE_CHECKING:
@@ -39,7 +39,7 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
     def afterSetEnabled(self) -> None:
         if not self._database.isLocked:
             with self._database:
-                self._database[CoinListTable].saveCoin(self._coin)
+                self._database[CoinListTable].save(self._coin)
 
     def afterSetHeight(self) -> None:
         pass
@@ -64,8 +64,9 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
         pass
 
     def afterAppendAddress(self, address: AbstractCoin.Address) -> None:
-        if self._database.isOpen and address.rowId is None:
-            self._database.updateCoinAddress(address)
+        if address.rowId <= 0 and not self._database.isLocked:
+            with self._database:
+                self._database[AddressListTable].save(address)
         self._query_scheduler.updateCoinAddress(address)
 
     def afterSetServerData(self) -> None:
@@ -74,7 +75,7 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
     def afterStateChanged(self) -> None:
         if not self._database.isLocked:
             with self._database:
-                self._database[CoinListTable].saveCoin(self._coin)
+                self._database[CoinListTable].save(self._coin)
 
 
 class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
@@ -85,21 +86,22 @@ class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
             name_key_tuple=CoinUtils.addressToNameKeyTuple(address),
             **kwargs)
 
+    def _save(self) -> None:
+        if not self._database.isLocked:
+            with self._database:
+                self._database[AddressListTable].save(self._address)
+
     def afterSetAmount(self) -> None:
-        if self._database.isOpen:
-            self._database.updateCoinAddress(self._address)
+        self._save()
 
     def afterSetLabel(self) -> None:
-        if self._database.isOpen:
-            self._database.updateCoinAddress(self._address)
+        self._save()
 
     def afterSetComment(self) -> None:
-        if self._database.isOpen:
-            self._database.updateCoinAddress(self._address)
+        self._save()
 
     def afterSetTxCount(self) -> None:
-        if self._database.isOpen:
-            self._database.updateCoinAddress(self._address)
+        self._save()
 
     def beforeAppendTx(self, tx: AbstractCoin.Tx) -> None:
         pass
@@ -112,12 +114,10 @@ class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
         pass
 
     def afterSetHistoryFirstOffset(self) -> None:
-        if self._database.isOpen:
-            self._database.updateCoinAddress(self._address)
+        self._save()
 
     def afterSetHistoryLastOffset(self) -> None:
-        if self._database.isOpen:
-            self._database.updateCoinAddress(self._address)
+        self._save()
 
 
 class TxInterface(_AbstractInterface, AbstractCoin.Tx.Interface):
