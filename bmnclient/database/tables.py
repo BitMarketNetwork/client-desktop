@@ -74,11 +74,12 @@ class ColumnDefinition:
 
 
 class AbstractTable:
-    _CONSTRAINT_LIST: Tuple[str] = tuple()
-
     class Column(ColumnEnum):
         # compatible with utils.serialize.Serializable.rowId
         ROW_ID: Final = ColumnDefinition("row_id", "INTEGER PRIMARY KEY")
+
+    _CONSTRAINT_LIST: Tuple[str] = tuple()
+    _UNIQUE_COLUMN_LIST: Tuple[Tuple[Column]] = tuple()
 
     # noinspection PyMethodOverriding
     def __init_subclass__(cls, *args, name: str, **kwargs) -> None:
@@ -88,7 +89,9 @@ class AbstractTable:
 
         definition_list = _stringList(chain(
             (str(c.value) for c in cls.Column),
-            (c for c in cls._CONSTRAINT_LIST)))
+            (c for c in cls._CONSTRAINT_LIST),
+            (f"UNIQUE({_columnList(*c)})" for c in cls._UNIQUE_COLUMN_LIST)
+        ))
         cls.__DEFINITION = (
             f"CREATE TABLE IF NOT EXISTS {cls.__IDENTIFIER}"
             f" ({definition_list})"
@@ -385,8 +388,9 @@ class AddressListTable(AbstractTable, name="addresses"):
         f" REFERENCES {CoinListTable.identifier}"
         f" ({_columnList(CoinListTable.Column.ROW_ID)})"
         f" ON DELETE CASCADE",
-
-        f"UNIQUE({_columnList(Column.COIN_ROW_ID, Column.NAME)})",
+    )
+    _UNIQUE_COLUMN_LIST = (
+        (Column.COIN_ROW_ID, Column.NAME),
     )
 
     # TODO dynamic interface with coin.addressList
@@ -457,8 +461,9 @@ class TxListTable(AbstractTable, name="transactions"):
         f" REFERENCES {CoinListTable.identifier}"
         f" ({_columnList(CoinListTable.Column.ROW_ID)})"
         f" ON DELETE CASCADE",
-
-        f"UNIQUE({_columnList(Column.COIN_ROW_ID, Column.NAME)})",
+    )
+    _UNIQUE_COLUMN_LIST = (
+        (Column.COIN_ROW_ID, Column.NAME),
     )
 
 
