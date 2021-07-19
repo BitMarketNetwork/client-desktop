@@ -190,8 +190,11 @@ class AbstractTable:
     def _serialize(
             self,
             source: Serializable,
-            key_columns: Dict[Column, Any]) -> None:
-        source_data = source.serialize()
+            key_columns: Dict[Column, Any],
+            **options) -> None:
+        source_data = source.serialize(
+            exclude_subclasses=True,
+            **options)
         data_columns = {}
         for column in self.Column:
             if column not in key_columns:
@@ -328,7 +331,7 @@ class CoinListTable(AbstractTable, name="coins"):
 
         if result is None:
             return False
-        result = coin.deserialize(coin, **result)
+        result = coin.deserialize(result, coin)
         assert coin.rowId > 0
         return result is not None
 

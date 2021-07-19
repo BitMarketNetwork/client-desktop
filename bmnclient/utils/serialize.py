@@ -85,28 +85,34 @@ class Serializable:
     @classmethod
     def deserialize(
             cls,
-            *args,
-            deserialize_factory: Callable[[...], Serializable] = None,
-            **kwargs) -> Optional[Serializable]:
-        kwargs = {
-            k: cls._deserializeProperty(args, k, v) for k, v in kwargs.items()
+            source_data: DeserializedDict,
+            *instance_args,
+            **options) -> Optional[Serializable]:
+        instance_kwargs = {
+            key: cls._deserializeProperty(key, value, *instance_args, **options)
+            for key, value in source_data.items()
         }
-        if deserialize_factory is not None:
-            return deserialize_factory(*args, **kwargs)
-        else:
-            return cls(*args, **kwargs)
+        return cls._deserializeFactory(*instance_args, **instance_kwargs)
 
     @classmethod
     def _deserializeProperty(
             cls,
-            args: Tuple[Any],
             key: str,
-            value: Any) -> Any:
+            value: DeserializedData,
+            *instance_args,
+            **options) -> Any:
         if isinstance(value, (int, str, type(None))):
             return value
         if isinstance(value, list):
-            return [cls._deserializeProperty(args, key, v) for v in value]
+            return [
+                cls._deserializeProperty(key, v, *instance_args, **options)
+                for v in value
+            ]
 
         raise TypeError(
             "cannot deserialize value of type '{}'"
             .format(str(type(value))))
+
+    @classmethod
+    def _deserializeFactory(cls, *args, **kwargs) -> Optional[Serializable]:
+        return cls(*args, **kwargs)

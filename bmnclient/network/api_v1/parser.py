@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Final, List, Optional, Type, Union
-    from ...utils.serialize import DeserializedData
+    from ...utils.serialize import DeserializedDict
 
 
 class ParseError(LookupError):
@@ -20,11 +20,11 @@ class AbstractParser:
             self,
             flags: Optional[AbstractParser.ParseFlag] = None) -> None:
         self._flags = flags
-        self._deserialized_data: DeserializedData = {}
+        self._deserialized_dict: DeserializedDict = {}
 
     @property
-    def deserializedData(self) -> DeserializedData:
-        return self._deserialized_data
+    def deserializedDict(self) -> DeserializedDict:
+        return self._deserialized_dict
 
     @classmethod
     def parseKey(
@@ -120,10 +120,7 @@ class TxParser(AbstractParser):
     def __init__(self, flags: ParseFlag = ParseFlag.NONE) -> None:
         super().__init__(flags)
 
-    def __call__(
-            self,
-            name: str,
-            value: dict) -> DeserializedData:
+    def __call__(self, name: str, value: dict) -> DeserializedDict:
         if self._flags & self.ParseFlag.MEMPOOL:
             # TODO fix server
             # self.parseKey(value, "height", type(None), allow_none=True)
@@ -239,7 +236,7 @@ class CoinsInfoParser(AbstractParser):
                 coin_info,
                 "status",
                 int)
-            self._deserialized_data = {
+            self._deserialized_dict = {
                 "name": coin_name,
                 "height": self.parseKey(
                     coin_info,
@@ -308,7 +305,7 @@ class AddressTxParser(AbstractParser):
         self._address_name = ""
         self._first_offset = ""
         self._last_offset: Optional[str] = None
-        self._tx_list: List[DeserializedData] = []
+        self._tx_list: List[DeserializedDict] = []
 
     @property
     def addressType(self) -> str:
@@ -327,7 +324,7 @@ class AddressTxParser(AbstractParser):
         return self._last_offset
 
     @property
-    def txList(self) -> List[DeserializedData]:
+    def txList(self) -> List[DeserializedDict]:
         return self._tx_list
 
     def __call__(self, value: dict) -> None:
@@ -388,14 +385,14 @@ class CoinMempoolParser(AbstractParser):
     def __init__(self) -> None:
         super().__init__()
         self._hash = ""
-        self._tx_list: List[DeserializedData] = []
+        self._tx_list: List[DeserializedDict] = []
 
     @property
     def hash(self) -> str:
         return self._hash
 
     @property
-    def txList(self) -> List[DeserializedData]:
+    def txList(self) -> List[DeserializedDict]:
         return self._tx_list
 
     def __call__(self, value: dict) -> None:

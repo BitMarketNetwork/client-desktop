@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from PySide2.QtNetwork import QSslError
     from ...coins.abstract.coin import AbstractCoin
     from ...coins.list import CoinList
-    from ...utils.serialize import DeserializedData
+    from ...utils.serialize import DeserializedDict
     from ...utils.string import ClassStringKeyTuple
 
 
@@ -282,11 +282,7 @@ class CoinsInfoApiQuery(AbstractApiQuery):
                     coin.name)
                 continue
             coin.status = parser.status
-            coin.deserialize(
-                coin,
-                row_id=coin.rowId,
-                is_enabled=coin.isEnabled,
-                **parser.deserializedData)
+            coin.deserialize(parser.deserializedDict, coin)
 
 
 class AddressInfoApiQuery(AbstractApiQuery):
@@ -435,7 +431,7 @@ class AddressTxIteratorApiQuery(
         parser(value)
 
         for tx in parser.txList:
-            tx_d = self._address.coin.Tx.deserialize(self._address.coin, **tx)
+            tx_d = self._address.coin.Tx.deserialize(tx, self._address.coin)
             if tx_d is not None:
                 self._address.appendTx(tx_d)
             else:
@@ -536,8 +532,8 @@ class AddressUtxoIteratorApiQuery(
 
         for tx in parser.txList:
             tx_d = self._address.coin.Tx.Utxo.deserialize(
-                self._address.coin,
-                **tx)
+                tx,
+                self._address.coin)
             if tx_d is not None:
                 self._utxo_list.append(tx_d)
             else:
@@ -603,13 +599,13 @@ class CoinMempoolIteratorApiQuery(AbstractApiQuery):
 
         return "unconfirmed", data
 
-    def _processTx(self, tx: DeserializedData) -> None:
+    def _processTx(self, tx: DeserializedDict) -> None:
         for tx_io in chain(tx["input_list"], tx["output_list"]):
             address = self._coin.findAddressByName(tx_io["address_name"])
             if address is None:
                 continue
 
-            tx_d = self._coin.Tx.deserialize(self._coin, **tx)
+            tx_d = self._coin.Tx.deserialize(tx, self._coin)
             if tx_d is not None:
                 address.appendTx(tx_d)
             else:

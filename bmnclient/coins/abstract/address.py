@@ -242,28 +242,35 @@ class _AbstractAddress(Serializable):
         return super()._serializeProperty(key, value, **options)
 
     @classmethod
-    def deserialize(cls, *args, **kwargs) -> Optional[AbstractCoin.Address]:
-        return super().deserialize(
-            *args,
-            deserialize_factory=cls.decode,
-            **kwargs)
+    def deserialize(
+            cls,
+            source_data: DeserializedDict,
+            coin: Optional[AbstractCoin] = None,
+            **options) -> Optional[AbstractCoin.Address]:
+        assert coin is not None
+        return super().deserialize(source_data, coin, **options)
 
     @classmethod
     def _deserializeProperty(
             cls,
-            args: Tuple[Any],
             key: str,
-            value: Any) -> Any:
+            value: DeserializedData,
+            coin: Optional[AbstractCoin] = None,
+            **options) -> Any:
         if isinstance(value, str) and key == "key":
-            coin: AbstractCoin = args[0]
             return cls.importKey(coin, value)
         if isinstance(value, dict) and key == "tx_list":
-            coin: AbstractCoin = args[0]
-            return coin.Tx.deserialize(coin, **value)
+            return coin.Tx.deserialize(value, coin)
         if isinstance(value, dict) and key == "utxo_list":
-            coin: AbstractCoin = args[0]
-            return coin.Tx.Utxo.deserialize(coin, **value)
-        return super()._deserializeProperty(args, key, value)
+            return coin.Tx.Utxo.deserialize(value, coin)
+        return super()._deserializeProperty(key, value, coin, **options)
+
+    @classmethod
+    def _deserializeFactory(
+            cls,
+            coin: AbstractCoin,
+            **kwargs) -> Optional[AbstractCoin.Address]:
+        return cls.decode(coin, **kwargs)
 
     @classproperty
     def hrp(cls) -> str:  # noqa

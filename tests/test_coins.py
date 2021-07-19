@@ -384,14 +384,14 @@ class TestCoins(TestCase):
 
             coin.appendAddress(address)
 
-        data = coin.serialize()
+        data = coin.serialize(allow_hd_path=False)
         self.assertIsInstance(data, dict)
 
         # from pprint import pprint
         # pprint(data, sort_dicts=False)
 
         coin_new = Bitcoin()
-        Bitcoin.deserialize(coin_new, **data)
+        Bitcoin.deserialize(data, coin_new)
 
         # coin compare
         self.assertEqual(coin.name, coin_new.name)

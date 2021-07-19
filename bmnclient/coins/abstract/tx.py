@@ -10,9 +10,9 @@ from ...utils.serialize import Serializable, serializable
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Any, List, Optional, Tuple
+    from typing import Any, List, Optional
     from .coin import AbstractCoin
-    from ...utils.serialize import DeserializedData
+    from ...utils.serialize import DeserializedData, DeserializedDict
 
 
 class _AbstractTxIo(Serializable):
@@ -59,7 +59,7 @@ class _AbstractTxIo(Serializable):
             self._output_type
         ))
 
-    def serialize(self, **options) -> DeserializedData:
+    def serialize(self, **options) -> DeserializedDict:
         if self._address.isNullData:
             address_name = None
         else:
@@ -71,6 +71,15 @@ class _AbstractTxIo(Serializable):
             "amount": self._address.amount,
             **super().serialize(**options)
         }
+
+    @classmethod
+    def deserialize(
+            cls,
+            source_data: DeserializedDict,
+            coin: Optional[AbstractCoin] = None,
+            **options) -> Optional[AbstractCoin.Tx.Io]:
+        assert coin is not None
+        return super().deserialize(source_data, coin, **options)
 
     @property
     def outputType(self) -> str:
@@ -123,6 +132,15 @@ class _AbstractUtxo(Serializable):
         return StringUtils.classString(
             self.__class__,
             *CoinUtils.utxoToNameKeyTuple(self))
+
+    @classmethod
+    def deserialize(
+            cls,
+            source_data: DeserializedDict,
+            coin: Optional[AbstractCoin] = None,
+            **options) -> Optional[AbstractCoin.Tx.Utxo]:
+        assert coin is not None
+        return super().deserialize(source_data, coin, **options)
 
     @property
     def coin(self) -> AbstractCoin:
@@ -238,15 +256,24 @@ class _AbstractTx(Serializable):
         return hash((self._coin, self._name, ))
 
     @classmethod
+    def deserialize(
+            cls,
+            source_data: DeserializedDict,
+            coin: Optional[AbstractCoin] = None,
+            **options) -> Optional[AbstractCoin.Tx]:
+        assert coin is not None
+        return super().deserialize(source_data, coin, **options)
+
+    @classmethod
     def _deserializeProperty(
             cls,
-            args: Tuple[Any],
             key: str,
-            value: Any) -> Any:
+            value: DeserializedData,
+            coin: Optional[AbstractCoin] = None,
+            **options) -> Any:
         if isinstance(value, dict) and key in ("input_list", "output_list"):
-            coin: AbstractCoin = args[0]
-            return cls.Io.deserialize(coin, **value)
-        return super()._deserializeProperty(args, key, value)
+            return cls.Io.deserialize(value, coin, **options)
+        return super()._deserializeProperty(key, value, coin, **options)
 
     @property
     def model(self) -> Optional[AbstractCoin.Tx.Interface]:

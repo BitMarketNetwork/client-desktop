@@ -6,7 +6,7 @@ from ..coins.abstract.coin import AbstractCoin
 
 if TYPE_CHECKING:
     from typing import Dict, List, Sequence, Tuple
-    from ..utils.serialize import DeserializedData
+    from ..utils.serialize import DeserializedDict
 
 
 class Database:
@@ -184,7 +184,7 @@ class Database:
     def _writeCoinTxIo(
             self,
             tx_row_id: int,
-            data: DeserializedData,
+            data: DeserializedDict,
             is_input: bool) -> bool:
         query = " ".join((
             f"INSERT INTO {self.inputs_table} (",
@@ -208,7 +208,7 @@ class Database:
         return True
 
     def _readCoinTxIo(self) \
-            -> Tuple[Dict[int, DeserializedData], Dict[int, DeserializedData]]:
+            -> Tuple[Dict[int, DeserializedDict], Dict[int, DeserializedDict]]:
         query = " ".join((
             f"SELECT",
             f"{self.tx_id_column},",       # 0
