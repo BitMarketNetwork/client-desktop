@@ -346,6 +346,7 @@ class TestCoins(TestCase):
             for i in range(1, 3):
                 input_list.append(coin.Tx.Io(
                     coin,
+                    index=i,
                     output_type="output_type_" + str(i),
                     address_name=address.name,
                     amount=randint(1000, 100000)))
@@ -354,11 +355,13 @@ class TestCoins(TestCase):
             for i in range(1, 3):
                 output_list.append(coin.Tx.Io(
                     coin,
+                    index=i,
                     output_type="output_type_" + str(i),
                     address_name=address.name,
                     amount=randint(1000, 100000)))
             output_list.append(coin.Tx.Io(
                 coin,
+                index=4,
                 output_type="output_type_nulldata",
                 address_name=None,
                 amount=0))

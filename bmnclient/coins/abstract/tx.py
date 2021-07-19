@@ -20,11 +20,13 @@ class _AbstractTxIo(Serializable):
             self,
             coin: AbstractCoin,
             *,
+            index: int,
             output_type: str,
             address_name: Optional[str],
             amount: int) -> None:
         super().__init__()
         self._coin = coin
+        self._index = index
         self._output_type = output_type
 
         if not address_name:
@@ -46,31 +48,20 @@ class _AbstractTxIo(Serializable):
         return (
                 isinstance(other, self.__class__)
                 and self._coin == other._coin
+                and self._index == other.index
+                and self._output_type == other._output_type
                 and self._address == other.address
                 and self._address.amount == other._address.amount
-                and self._output_type == other._output_type
         )
 
     def __hash__(self) -> int:
         return hash((
             self._coin,
+            self._index,
+            self._output_type,
             self._address,
-            self._address.amount,
-            self._output_type
+            self._address.amount
         ))
-
-    def serialize(self, **options) -> DeserializedDict:
-        if self._address.isNullData:
-            address_name = None
-        else:
-            address_name = self._address.name
-
-        return {
-            "output_type": self._output_type,
-            "address_name": address_name,
-            "amount": self._address.amount,
-            **super().serialize(**options)
-        }
 
     @classmethod
     def deserialize(
@@ -81,13 +72,29 @@ class _AbstractTxIo(Serializable):
         assert coin is not None
         return super().deserialize(source_data, coin, **options)
 
+    @serializable
+    @property
+    def index(self) -> index:
+        return self._index
+
+    @serializable
     @property
     def outputType(self) -> str:
         return self._output_type
 
+    @serializable
+    @property
+    def addressName(self) -> Optional[str]:
+        return self._address.name if not self._address.isNullData else None
+
     @property
     def address(self) -> AbstractCoin.Address:
         return self._address
+
+    @serializable
+    @property
+    def amount(self) -> int:
+        return self._address.amount
 
 
 class _AbstractUtxo(Serializable):
