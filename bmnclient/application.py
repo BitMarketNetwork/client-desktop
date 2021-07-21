@@ -373,11 +373,11 @@ class CoreApplication(QObject):
             # TODO show message if failed
             pass
 
-    def _loadWalletData(self) -> bool:
+    def _loadWalletData(self) -> bool:  # TODO move to coins
         try:
             with self._database.transaction() as cursor:
                 for coin in self._coin_list:
-                    if True or not self._database[CoinListTable].deserialize(
+                    if not self._database[CoinListTable].deserialize(
                             cursor,
                             coin):
                         self._logger.debug(
@@ -385,7 +385,11 @@ class CoreApplication(QObject):
                             coin.name)
                         self._database[CoinListTable].serialize(cursor, coin)
                         continue
-                    # self._database[AddressListTable].loadAll(coin)
+
+                    self._database[AddressListTable].deserializeAll(
+                            cursor,
+                            coin)
+
                     # for address in coin.addressList:
                     #    self._database[TxListTable].loadAll(address)
         except (Database.engine.Error, Database.engine.Warning) as e:

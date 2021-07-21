@@ -64,9 +64,11 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
         pass
 
     def afterAppendAddress(self, address: AbstractCoin.Address) -> None:
-        if address.rowId <= 0 and not self._database.isLocked:
-            with self._database:
-                self._database[AddressListTable].save(address)
+        try:
+            with self._database.transaction() as cursor:
+                self._database[AddressListTable].serialize(cursor, address)
+        except self._database.TransactionInEffectError:
+            pass
         self._query_scheduler.updateCoinAddress(address)
 
     def afterSetServerData(self) -> None:
@@ -89,9 +91,13 @@ class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
             **kwargs)
 
     def _save(self) -> None:
-        if not self._database.isLocked:
-            with self._database:
-                self._database[AddressListTable].save(self._address)
+        try:
+            with self._database.transaction() as cursor:
+                self._database[AddressListTable].serialize(
+                    cursor,
+                    self._address)
+        except self._database.TransactionInEffectError:
+            pass
 
     def afterSetAmount(self) -> None:
         self._save()
