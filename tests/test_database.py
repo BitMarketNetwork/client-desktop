@@ -58,8 +58,18 @@ class TestDatabase(TestCase):
 
         with db.transaction(suppress_exceptions=False) as c1:
             self.assertIsNotNone(c1)
-            with db.transaction(suppress_exceptions=False) as c2:
+
+            with db.transaction(suppress_exceptions=True) as c2:
                 self.assertIsNone(c2)
+
+            ok = False
+            try:
+                with db.transaction(suppress_exceptions=False):
+                    pass
+            except db.Error:
+                ok = True
+            self.assertTrue(ok)
+
 
     def test_upgrade(self) -> None:
         db = self._create(Path("upgrade.db"))
@@ -194,7 +204,7 @@ class TestDatabase(TestCase):
             # UPDATE + INSERT + UPDATE: duplicated key and invalid row_id
             # noinspection PyProtectedMember
             self.assertRaises(
-                db.engine.OperationalError,
+                Database.engine.OperationalError,
                 db[MetadataTable]._insertOrUpdate,
                 c,
                 keys,

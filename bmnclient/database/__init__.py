@@ -99,16 +99,26 @@ class Database:
     )
 
     class Error(_engine.OperationalError):
-        def __init__(self, value: str, query: str):
+        def __init__(self, value: str, query: Optional[str]):
             super().__init__(value)
             self._query = query
 
         @property
-        def query(self) -> str:
+        def query(self) -> Optional[str]:
             return self._query
 
     class InsertOrUpdateError(Error):
         pass
+
+    class TransactionError(Error):
+        pass
+
+    class TransactionInEffectError(Error):
+        def __init__(
+                self,
+                value: str = "transaction is already in effect",
+                query: Optional[str] = None):
+            super().__init__(value, query)
 
     def __init__(
             self,
@@ -207,7 +217,7 @@ class Database:
             with self.transaction(suppress_exceptions=False) as cursor:
                 self._closeTables(cursor)
             self.__connection.close()
-        except (_engine.Warning, _engine.Error) as e:
+        except (_engine.Error, _engine.Warning) as e:
             self._logger.error("Failed to close database: %s", str(e))
             if force:
                 self.__connection = None
@@ -220,14 +230,17 @@ class Database:
     def transaction(
             self,
             *,
-            suppress_exceptions: bool = True
+            suppress_exceptions: bool = False,
     ) -> Generator[Optional[Database], None, None]:
         if not self.isOpen or self.__in_transaction:
-            try:
-                yield None
-            finally:
-                pass
-            return
+            if suppress_exceptions:
+                try:
+                    yield None
+                finally:
+                    pass
+                return
+            else:
+                raise self.TransactionInEffectError
 
         self.__in_transaction = True
         self._logger.debug("BEGIN")
@@ -238,13 +251,16 @@ class Database:
             yield cursor
             commit = True
         except self.Error as e:
-            # not Cursor exception
-            self.logException(e)
-            if not suppress_exceptions:
+            if suppress_exceptions:
+                # not Cursor exception
+                self.logException(e)
+            else:
                 raise
         except _engine.OperationalError:
-            # logged with Cursor
-            if not suppress_exceptions:
+            if suppress_exceptions:
+                # logged with Cursor
+                pass
+            else:
                 raise
         finally:
             assert self.isOpen and self.__in_transaction
@@ -319,7 +335,7 @@ class Database:
                     Product.NAME,
                     version,
                     self._VERSION),
-                "")
+                None)
 
         if upgrade:
             for table_type in self._TABLE_TYPE_LIST:

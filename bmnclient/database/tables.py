@@ -163,18 +163,19 @@ class AbstractTable:
 
         if row_id_required:
             if row_id <= 0:
-                for r in cursor.execute(
-                        f"SELECT {_columnList(self.Column.ROW_ID)}"
-                        f" FROM {self.identifier}"
-                        f" WHERE {_whereColumnList(*key_columns.keys())}"
-                        f" LIMIT 1",
-                        (*key_columns.values(), )):
+                query = (
+                    f"SELECT {_columnList(self.Column.ROW_ID)}"
+                    f" FROM {self.identifier}"
+                    f" WHERE {_whereColumnList(*key_columns.keys())}"
+                    f" LIMIT 1"
+                )
+                for r in cursor.execute(query, (*key_columns.values(), )):
                     row_id = int(r[0])
                     break
                 if row_id <= 0:
                     raise self._database.InsertOrUpdateError(
-                        "SELECT failed, row not found, where {}"
-                        .format(columnsString(key_columns)))
+                        "row not found".format(columnsString(key_columns)),
+                        query)
         if row_id > 0:
             key_columns = {self.Column.ROW_ID: row_id}
 
@@ -338,30 +339,29 @@ class CoinListTable(AbstractTable, name="coins"):
             "unverified_hash",
             "TEXT NOT NULL")
 
-    def load(self, coin: AbstractCoin) -> bool:
-        try:
-            result = next(
-                self._deserialize(
-                    type(coin),
-                    {self.Column.NAME: coin.name},
-                    limit=1),
-                None)
-        except self._database.engine.OperationalError:
-            return False
-
+    def deserialize(self, cursor: Cursor, coin: AbstractCoin) -> bool:
+        result = next(
+            self._deserialize(
+                cursor,
+                type(coin),
+                {self.Column.NAME: coin.name},
+                limit=1),
+            None)
         if result is None:
             return False
-        result = coin.deserialize(result, coin)
-        assert coin.rowId > 0
-        return result is not None
 
-    def save(self, coin: AbstractCoin) -> bool:
-        try:
-            self._serialize(
-                coin,
-                {self.Column.NAME: coin.name})
-        except self._database.engine.OperationalError:
+        result = coin.deserialize(result, coin)
+        if result is None:
             return False
+
+        assert coin.rowId > 0
+        return True
+
+    def serialize(self, cursor: Cursor, coin: AbstractCoin) -> bool:
+        self._serialize(
+            cursor,
+            coin,
+            {self.Column.NAME: coin.name})
         assert coin.rowId > 0
         return True
 

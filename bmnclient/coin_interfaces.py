@@ -73,9 +73,11 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
         pass
 
     def afterStateChanged(self) -> None:
-        if not self._database.isLocked:
-            with self._database:
-                self._database[CoinListTable].save(self._coin)
+        try:
+            with self._database.transaction() as cursor:
+                self._database[CoinListTable].serialize(cursor, self._coin)
+        except self._database.TransactionInEffectError:
+            pass
 
 
 class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):

@@ -357,19 +357,8 @@ class CoreApplication(QObject):
                 pass
 
         if self._database.open():
-            for coin in self._coin_list:
-                try:
-                    with self._database:
-                        if self._database[CoinListTable].load(coin):
-                            self._database[AddressListTable].loadAll(coin)
-                        else:
-                            self._logger.debug(
-                                "Coin '%s' not found in database.",
-                                coin.name)
-                            self._database[CoinListTable].save(coin)
-                except self._database.engine.Error:
-                    self._database.close()
-                    break
+            if not self._loadWalletData():
+                self._database.close()
         if not self._database.isOpen:
             # TODO show message, allow continue without database
             pass
@@ -383,6 +372,28 @@ class CoreApplication(QObject):
         if not self._database.remove():
             # TODO show message if failed
             pass
+
+    def _loadWalletData(self) -> bool:
+        try:
+            with self._database.transaction() as cursor:
+                for coin in self._coin_list:
+                    if True or not self._database[CoinListTable].deserialize(
+                            cursor,
+                            coin):
+                        self._logger.debug(
+                            "Cannot deserialize coin '%s' from database.",
+                            coin.name)
+                        self._database[CoinListTable].serialize(cursor, coin)
+                        continue
+                    # self._database[AddressListTable].loadAll(coin)
+                    # for address in coin.addressList:
+                    #    self._database[TxListTable].loadAll(address)
+        except (Database.engine.Error, Database.engine.Warning) as e:
+            self._logger.error(
+                "Failed to read wallet from database: %s",
+                str(e))
+            return False
+        return True
 
     @QSlot()
     def _onRunPrivate(self) -> None:
