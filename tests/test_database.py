@@ -52,34 +52,38 @@ class TestDatabase(TestCase):
             self.assertTrue(db.remove())
             self.assertFalse(db.isOpen)
 
+    def test_transaction(self) -> None:
+        db = self._create(Path("transaction.db"))
+        self.assertTrue(db.open())
+
+        with db.transaction(suppress_exceptions=False) as c1:
+            self.assertIsNotNone(c1)
+            with db.transaction(suppress_exceptions=False) as c2:
+                self.assertIsNone(c2)
+
     def test_upgrade(self) -> None:
         db = self._create(Path("upgrade.db"))
         self.assertTrue(db.open())
 
-        with db:
-            version = db[MetadataTable].get(MetadataTable.Key.VERSION, int)
+        with db.transaction(suppress_exceptions=False) as c:
+            version = db[MetadataTable].get(c, MetadataTable.Key.VERSION, int)
         self.assertEqual(db.version, version)
 
-        with db:
-            self.assertTrue(
-                db[MetadataTable].set(MetadataTable.Key.VERSION, -1))
-        with db:
-            version = db[MetadataTable].get(MetadataTable.Key.VERSION, int)
+        with db.transaction(suppress_exceptions=False) as c:
+            db[MetadataTable].set(c, MetadataTable.Key.VERSION, -1)
+        with db.transaction(suppress_exceptions=False) as c:
+            version = db[MetadataTable].get(c, MetadataTable.Key.VERSION, int)
         self.assertEqual(-1, version)
 
         self.assertTrue(db.close())
         self.assertTrue(db.open())
 
-        with db:
-            version = db[MetadataTable].get(MetadataTable.Key.VERSION, int)
+        with db.transaction(suppress_exceptions=False) as c:
+            version = db[MetadataTable].get(c, MetadataTable.Key.VERSION, int)
         self.assertEqual(db.version, version)
 
-        with db:
-            self.assertTrue(
-                db[MetadataTable].set(
-                    MetadataTable.Key.VERSION,
-                    db.version + 1)
-            )
+        with db.transaction(suppress_exceptions=False) as c:
+            db[MetadataTable].set(c, MetadataTable.Key.VERSION, db.version + 1)
 
         self.assertTrue(db.close())
         self.assertFalse(db.open())
@@ -95,13 +99,14 @@ class TestDatabase(TestCase):
             MetadataTable.Column.VALUE: "value1"
         }
 
-        with db:
+        with db.transaction(suppress_exceptions=False) as c:
             # noinspection PyProtectedMember
             db._logger.debug("-" * 80)
 
             # INSERT: new row
             # noinspection PyProtectedMember
             row_id_1 = db[MetadataTable]._insertOrUpdate(
+                c,
                 keys,
                 data,
                 row_id=-1,
@@ -115,6 +120,7 @@ class TestDatabase(TestCase):
             # INSERT + UPDATE: row exists, only the key value is known
             # noinspection PyProtectedMember
             row_id_2 = db[MetadataTable]._insertOrUpdate(
+                c,
                 keys,
                 data,
                 row_id=-1,
@@ -129,6 +135,7 @@ class TestDatabase(TestCase):
             # row_id_required is True
             # noinspection PyProtectedMember
             row_id_3 = db[MetadataTable]._insertOrUpdate(
+                c,
                 keys,
                 data,
                 row_id=-1,
@@ -142,6 +149,7 @@ class TestDatabase(TestCase):
             # UPDATE: row exists, row_id is known
             # noinspection PyProtectedMember
             row_id_3 = db[MetadataTable]._insertOrUpdate(
+                c,
                 keys,
                 data,
                 row_id=row_id_3,
@@ -156,6 +164,7 @@ class TestDatabase(TestCase):
             # matter
             # noinspection PyProtectedMember
             row_id_3 = db[MetadataTable]._insertOrUpdate(
+                c,
                 keys,
                 data,
                 row_id=row_id_3,
@@ -170,6 +179,7 @@ class TestDatabase(TestCase):
             keys[MetadataTable.Column.KEY] = "key2"
             # noinspection PyProtectedMember
             row_id_4 = db[MetadataTable]._insertOrUpdate(
+                c,
                 keys,
                 data,
                 row_id=row_id_3 * 10000,
@@ -186,6 +196,7 @@ class TestDatabase(TestCase):
             self.assertRaises(
                 db.engine.OperationalError,
                 db[MetadataTable]._insertOrUpdate,
+                c,
                 keys,
                 data,
                 row_id=row_id_4 * 10000,
@@ -198,6 +209,7 @@ class TestDatabase(TestCase):
             # UPDATE: OK
             # noinspection PyProtectedMember
             row_id_3 = db[MetadataTable]._insertOrUpdate(
+                c,
                 keys,
                 data,
                 row_id=row_id_3,

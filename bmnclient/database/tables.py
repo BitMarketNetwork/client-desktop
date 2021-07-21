@@ -7,17 +7,19 @@ from typing import TYPE_CHECKING
 from ..utils.class_property import classproperty
 
 if TYPE_CHECKING:
-    from typing import \
-        Any, \
-        Dict, \
-        Final, \
-        Generator, \
-        Iterable, \
-        Optional, \
-        Tuple, \
-        Type, \
+    from typing import (
+        Any,
+        Dict,
+        Final,
+        Generator,
+        Iterable,
+        List,
+        Optional,
+        Tuple,
+        Type,
         Union
-    from . import Database
+    )
+    from . import Cursor, Database
     from ..coins.abstract.coin import AbstractCoin
     from ..utils.serialize import Serializable
 
@@ -111,17 +113,18 @@ class AbstractTable:
     def identifier(cls) -> str:  # noqa
         return cls.__IDENTIFIER
 
-    def open(self) -> None:
-        self._database.execute(str(self))
+    def open(self, cursor: Cursor) -> None:
+        cursor.execute(str(self))
 
-    def upgrade(self, old_version: int) -> None:
+    def upgrade(self, cursor: Cursor, old_version: int) -> None:
         pass
 
-    def close(self) -> None:
+    def close(self, cursor: Cursor) -> None:
         pass
 
     def _insertOrUpdate(
             self,
+            cursor: Cursor,
             key_columns: Dict[Column, Any],
             data_columns: Dict[Column, Any],
             *,
@@ -138,22 +141,20 @@ class AbstractTable:
             )
 
         if row_id > 0:
-            cursor = self._database.execute(
+            cursor.execute(
                 f"UPDATE {self.identifier}"
                 f" SET {_columnList(*data_columns.keys(), with_qmark=True)}"
                 f" WHERE {self.Column.ROW_ID.value.identifier} == ?",
-                *data_columns.values(),
-                row_id)
+                (*data_columns.values(), row_id))
             if cursor.rowcount > 0:
                 assert cursor.rowcount == 1
                 return row_id
 
-        cursor = self._database.execute(
+        cursor.execute(
             f"INSERT OR IGNORE INTO {self.identifier}"
             f" ({_columnList(*key_columns.keys(), *data_columns.keys())})"
             f" VALUES({_qmarkList(len(key_columns) + len(data_columns))})",
-            *key_columns.values(),
-            *data_columns.values())
+            (*key_columns.values(), *data_columns.values()))
 
         if cursor.rowcount > 0:
             assert cursor.rowcount == 1
@@ -162,49 +163,55 @@ class AbstractTable:
 
         if row_id_required:
             if row_id <= 0:
-                for r in self._database.execute(
+                for r in cursor.execute(
                         f"SELECT {_columnList(self.Column.ROW_ID)}"
                         f" FROM {self.identifier}"
                         f" WHERE {_whereColumnList(*key_columns.keys())}"
                         f" LIMIT 1",
-                        *key_columns.values()):
+                        (*key_columns.values(), )):
                     row_id = int(r[0])
                     break
                 if row_id <= 0:
-                    raise self._database.engine.OperationalError(
+                    raise self._database.InsertOrUpdateError(
                         "SELECT failed, row not found, where {}"
                         .format(columnsString(key_columns)))
         if row_id > 0:
             key_columns = {self.Column.ROW_ID: row_id}
 
-        cursor = self._database.execute(
+        query = (
             f"UPDATE {self.identifier}"
             f" SET {_columnList(*data_columns.keys(), with_qmark=True)}"
-            f" WHERE {_whereColumnList(*key_columns.keys())}",
-            *data_columns.values(),
-            *key_columns.values())
+            f" WHERE {_whereColumnList(*key_columns.keys())}"
+        )
+        cursor.execute(query, (*data_columns.values(), *key_columns.values()))
         if cursor.rowcount <= 0:
-            raise self._database.engine.OperationalError(
-                "UPDATE failed, row not found, where {}"
-                .format(columnsString(key_columns)))
+            raise self._database.InsertOrUpdateError("row not found", query)
 
         return row_id
 
     def _serialize(
             self,
+            cursor: Cursor,
             source: Serializable,
             key_columns: Dict[Column, Any],
+            custom_columns: Optional[Dict[Column, Any]] = None,
             **options) -> None:
         source_data = source.serialize(
             exclude_subclasses=True,
             **options)
-        data_columns = {}
+        if custom_columns is None:
+            custom_columns = {}
+            data_columns = {}
+        else:
+            data_columns = custom_columns.copy()
+
         for column in self.Column:
-            if column not in key_columns:
+            if column not in key_columns and column not in custom_columns:
                 if column.value.name in source_data:
                     data_columns[column] = source_data[column.value.name]
 
         source.rowId = self._insertOrUpdate(
+            cursor,
             key_columns,
             data_columns,
             row_id=source.rowId)
@@ -212,6 +219,7 @@ class AbstractTable:
 
     def _deserialize(
             self,
+            cursor: Cursor,
             source_type: Type[Serializable],
             key_columns: Dict[Column, Any],
             *,
@@ -223,18 +231,15 @@ class AbstractTable:
                 if column.value.name in source_type.serializeMap:
                     column_list.append(column)
 
-        query = (
-            f"SELECT {_columnList(*column_list)}"
-            f" FROM {self.identifier}"
-            f" WHERE {_whereColumnList(*key_columns.keys())}"
-        )
-        query_args = [*key_columns.values()]
+        query, query_args = self._deserializeQueryFactory(
+            column_list,
+            key_columns)
 
         if limit >= 0:
             query += f" LIMIT ?"
             query_args.append(limit)
 
-        for result in self._database.execute(query, *query_args):
+        for result in cursor.execute(query, query_args):
             yield dict(chain(
                 zip(
                     (c.value.name for c in key_columns.keys()),
@@ -243,6 +248,20 @@ class AbstractTable:
                     (c.value.name for c in column_list),
                     result)
             ))
+
+    def _deserializeQueryFactory(
+            self,
+            column_list: List[ColumnEnum],
+            key_columns: Dict[Column, Any]
+    ) -> Tuple[str, List[Any]]:
+        return (
+            (
+                f"SELECT {_columnList(*column_list)}"
+                f" FROM {self.identifier}"
+                f" WHERE {_whereColumnList(*key_columns.keys())}"
+            ),
+            [*key_columns.values()]
+        )
 
 
 class MetadataTable(AbstractTable, name="metadata"):
@@ -256,16 +275,17 @@ class MetadataTable(AbstractTable, name="metadata"):
 
     def get(
             self,
+            cursor: Cursor,
             key: Key,
             value_type: Type[Union[int, str]],
             default_value: Optional[int, str] = None) -> Optional[int, str]:
         try:
-            cursor = self._database.execute(
+            cursor.execute(
                 f"SELECT {_columnList(self.Column.VALUE)}"
                 f" FROM {self.identifier}"
                 f" WHERE {self.Column.KEY.value.identifier} == ?"
                 f" LIMIT 1",
-                key.value
+                (key.value, )
             )
         except self._database.engine.OperationalError:
             value = default_value
@@ -281,16 +301,13 @@ class MetadataTable(AbstractTable, name="metadata"):
         except (TypeError, ValueError):
             return default_value
 
-    def set(self, key: Key, value: Optional[int, str]) -> bool:
-        try:
-            self._insertOrUpdate(
-                {self.Column.KEY: key.value},
-                {self.Column.VALUE: str(value)},
-                row_id_required=False
-            )
-        except self._database.engine.OperationalError:
-            return False
-        return True
+    def set(self, cursor: Cursor, key: Key, value: Optional[int, str]) -> None:
+        self._insertOrUpdate(
+            cursor,
+            {self.Column.KEY: key.value},
+            {self.Column.VALUE: str(value)},
+            row_id_required=False
+        )
 
 
 class CoinListTable(AbstractTable, name="coins"):
