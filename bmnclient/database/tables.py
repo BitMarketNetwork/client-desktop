@@ -29,21 +29,33 @@ def _stringList(source_list: Iterable[str]) -> str:
 
 
 def _columnList(
-        *args: ColumnEnum,
+        *source_list: ColumnEnum,
         with_qmark: bool = False) -> str:
-    source_list = map(lambda s: s.value.identifier, args)
+    source_list = map(lambda s: s.value.identifier, source_list)
     if with_qmark:
         source_list = map(lambda s: f"{s} = ?", source_list)
     return _stringList(source_list)
 
 
-def _whereColumnList(*args: ColumnEnum) -> str:
-    source_list = map(lambda s: f"{s.value.identifier} == ?", args)
+def _whereColumnList(*source_list: ColumnEnum) -> str:
+    source_list = map(lambda s: f"{s.value.identifier} == ?", source_list)
     return " AND ".join(source_list)
+
+
+def _orderColumnList(*source_list: Dict[ColumnEnum, Order]) -> str:
+    source_list = map(
+        lambda t: f"{t[0].value.identifier} {t[1].value}",
+        source_list)
+    return _stringList(source_list)
 
 
 def _qmarkList(count: int) -> str:
     return _stringList("?" * count)
+
+
+class Order(Enum):
+    ASC: Final = "ASC"
+    DESC: Final = "DESC"
 
 
 class ColumnEnum(Enum):
@@ -224,6 +236,7 @@ class AbstractTable:
             cursor: Cursor,
             source_type: Type[Serializable],
             key_columns: Dict[Column, Any],
+            order_columns: Dict[Column, Order],
             *,
             limit: int = -1,
             return_key_columns: bool = False,
@@ -240,6 +253,9 @@ class AbstractTable:
             column_list,
             key_columns,
             **options)
+
+        if order_columns:
+            query += f" ORDER BY {_orderColumnList(*order_columns.items())}"
 
         if limit >= 0:
             query += f" LIMIT ?"
@@ -357,6 +373,7 @@ class CoinListTable(AbstractTable, name="coins"):
                 cursor,
                 type(coin),
                 {self.Column.NAME: coin.name},
+                {},
                 limit=1,
                 return_key_columns=True),
             None)
@@ -430,7 +447,9 @@ class AddressListTable(AbstractTable, name="addresses"):
         for result in self._deserialize(
                 cursor,
                 coin.Address,
-                {self.Column.COIN_ROW_ID: coin.rowId}):
+                {self.Column.COIN_ROW_ID: coin.rowId},
+                {}
+        ):
             address = coin.Address.deserialize(result, coin)
             if address is None:
                 error = True
@@ -526,7 +545,13 @@ class TxListTable(AbstractTable, name="transactions"):
         for result in self._deserialize(
                 cursor,
                 address.coin.Tx,
-                {self.Column.COIN_ROW_ID: address.coin.rowId},
+                {
+                    self.Column.COIN_ROW_ID: address.coin.rowId
+                },
+                {
+                    self.Column.HEIGHT: Order.ASC,
+                    self.Column.TIME: Order.ASC
+                },
                 address_row_id=address.rowId
         ):
             input_error, result["input_list"] = \
@@ -636,7 +661,6 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
         assert tx_row_id > 0
         io_list = []
 
-        # TODO ORDER BY
         error = False
         for result in self._deserialize(
                 cursor,
@@ -644,6 +668,9 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
                 {
                     self.Column.TX_ROW_ID: tx_row_id,
                     self.Column.IO_TYPE: io_type.value
+                },
+                {
+                    self.Column.INDEX: Order.ASC
                 }
         ):
             io = coin.Tx.Io.deserialize(result, coin)
