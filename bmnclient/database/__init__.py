@@ -302,6 +302,16 @@ class Database:
         else:
             self._logger.error(*message)
 
+    def logDeserializeError(
+            self,
+            type_,
+            result: Dict[str, Union[int, str]]) -> None:
+        self._logger.error(
+            "Failed to deserialize '%s' object.\n\t%s",
+            str(type_.__name__),
+            str(result))
+        pass
+
     def remove(self) -> bool:
         if not self.close():
             return False

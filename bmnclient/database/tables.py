@@ -197,6 +197,7 @@ class AbstractTable:
             key_columns: Dict[Column, Any],
             custom_columns: Optional[Dict[Column, Any]] = None,
             **options) -> None:
+        assert self.Column.ROW_ID not in key_columns
         source_data = source.serialize(
             exclude_subclasses=True,
             **options)
@@ -224,7 +225,9 @@ class AbstractTable:
             source_type: Type[Serializable],
             key_columns: Dict[Column, Any],
             *,
-            limit: int = -1
+            limit: int = -1,
+            return_key_columns: bool = False,
+            **options
     ) -> Generator[Dict[str, Union[int, str]], None, None]:
         column_list = [self.Column.ROW_ID]
         for column in self.Column:
@@ -232,28 +235,36 @@ class AbstractTable:
                 if column.value.name in source_type.serializeMap:
                     column_list.append(column)
 
-        query, query_args = self._deserializeQueryFactory(
+        query, query_args = self._deserializeStatement(
             column_list,
-            key_columns)
+            key_columns,
+            **options)
 
         if limit >= 0:
             query += f" LIMIT ?"
             query_args.append(limit)
 
         for result in cursor.execute(query, query_args):
-            yield dict(chain(
-                zip(
-                    (c.value.name for c in key_columns.keys()),
-                    key_columns.values()),
-                zip(
+            if return_key_columns:
+                yield dict(chain(
+                    zip(
+                        (c.value.name for c in key_columns.keys()),
+                        key_columns.values()),
+                    zip(
+                        (c.value.name for c in column_list),
+                        result)
+                ))
+            else:
+                yield dict(zip(
                     (c.value.name for c in column_list),
                     result)
-            ))
+                )
 
-    def _deserializeQueryFactory(
+    def _deserializeStatement(
             self,
             column_list: List[ColumnEnum],
-            key_columns: Dict[Column, Any]
+            key_columns: Dict[Column, Any],
+            **options
     ) -> Tuple[str, List[Any]]:
         return (
             (
@@ -345,25 +356,25 @@ class CoinListTable(AbstractTable, name="coins"):
                 cursor,
                 type(coin),
                 {self.Column.NAME: coin.name},
-                limit=1),
+                limit=1,
+                return_key_columns=True),
             None)
         if result is None:
             return False
 
-        result = coin.deserialize(result, coin)
-        if result is None:
+        if coin.deserialize(result, coin) is None:
+            self._database.logDeserializeError(type(coin), result)
             return False
+        else:
+            assert coin.rowId > 0
+            return True
 
-        assert coin.rowId > 0
-        return True
-
-    def serialize(self, cursor: Cursor, coin: AbstractCoin) -> bool:
+    def serialize(self, cursor: Cursor, coin: AbstractCoin) -> None:
         self._serialize(
             cursor,
             coin,
             {self.Column.NAME: coin.name})
         assert coin.rowId > 0
-        return True
 
 
 class AddressListTable(AbstractTable, name="addresses"):
