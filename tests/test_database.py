@@ -1,9 +1,25 @@
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest import TestCase
 
-from bmnclient.database import Database
-from bmnclient.database.tables import MetadataTable
+from bmnclient.coins.list import CoinList
+from bmnclient.database import Cursor, Database
+from bmnclient.database.tables import (
+    AddressListTable,
+    AddressTxMapTable,
+    CoinListTable,
+    MetadataTable,
+    TxIoListTable,
+    TxListTable
+)
 from tests import TestApplication
+from tests.test_coins import fillCoin
+
+if TYPE_CHECKING:
+    from typing import Any, List, Tuple
+    from bmnclient.coins.abstract.coin import AbstractCoin
 
 
 class TestDatabase(TestCase):
@@ -69,7 +85,6 @@ class TestDatabase(TestCase):
             except db.Error:
                 ok = True
             self.assertTrue(ok)
-
 
     def test_upgrade(self) -> None:
         db = self._create(Path("upgrade.db"))
@@ -229,3 +244,171 @@ class TestDatabase(TestCase):
 
             # noinspection PyProtectedMember
             db._logger.debug("-" * 80)
+
+    def _fill_db(
+            self,
+            db: Database,
+            cursor: Cursor,
+            coin_list: CoinList) -> None:
+        for coin in coin_list:
+            fillCoin(self, coin, address_count=10, tx_count=10)
+            db[CoinListTable].serialize(cursor, coin)
+            for address in coin.addressList:
+                db[AddressListTable].serialize(cursor, address)
+                for tx in address.txList:
+                    db[TxListTable].serialize(cursor, address, tx)
+
+    def _select_coin(
+            self,
+            cursor: Cursor,
+            coin: AbstractCoin) -> List[Tuple[Any]]:
+        cursor.execute(
+            f"SELECT * FROM {CoinListTable.identifier} WHERE "
+            f" {CoinListTable.Column.NAME.value.identifier} == ?",
+            (coin.name,))
+        r = cursor.fetchall()
+        self.assertIsNotNone(r)
+        return r
+
+    def _select_addresses(
+            self,
+            cursor: Cursor,
+            coin: AbstractCoin) -> List[Tuple[Any]]:
+        cursor.execute(
+            f"SELECT * FROM {AddressListTable.identifier} WHERE"
+            f" {AddressListTable.Column.COIN_ROW_ID.value.identifier} == ?",
+            (coin.rowId, ))
+        r = cursor.fetchall()
+        self.assertIsNotNone(r)
+        return r
+
+    def _select_transactions(
+            self,
+            cursor: Cursor,
+            coin: AbstractCoin) -> List[Tuple[Any]]:
+        cursor.execute(
+            f"SELECT * FROM {TxListTable.identifier} WHERE"
+            f" {TxListTable.Column.COIN_ROW_ID.value.identifier} == ?",
+            (coin.rowId, ))
+        r = cursor.fetchall()
+        self.assertIsNotNone(r)
+        return r
+
+    def _select_transaction_io(
+            self,
+            cursor: Cursor,
+            tx: AbstractCoin.Tx) -> List[Tuple[Any]]:
+        cursor.execute(
+            f"SELECT * FROM {TxIoListTable.identifier} WHERE"
+            f" {TxIoListTable.Column.TX_ROW_ID.value.identifier} == ?",
+            (tx.rowId, ))
+        r = cursor.fetchall()
+        self.assertIsNotNone(r)
+        return r
+
+    def _select_transaction_address_map(
+            self,
+            cursor: Cursor,
+            tx: AbstractCoin.Tx) -> List[Tuple[Any]]:
+        where = AddressTxMapTable.Column.TX_ROW_ID.value.identifier
+        cursor.execute(
+            f"SELECT * FROM {AddressTxMapTable.identifier} WHERE"
+            f" {where} == ?",
+            (tx.rowId, ))
+        r = cursor.fetchall()
+        self.assertIsNotNone(r)
+        return r
+
+    def _select_address_transaction_map(
+            self,
+            cursor: Cursor,
+            address: AbstractCoin.Address) -> List[Tuple[Any]]:
+        where = AddressTxMapTable.Column.ADDRESS_ROW_ID.value.identifier
+        cursor.execute(
+            f"SELECT * FROM {AddressTxMapTable.identifier}"
+            f" WHERE {where} == ?",
+            (address.rowId, ))
+        r = cursor.fetchall()
+        self.assertIsNotNone(r)
+        return r
+
+    def test_foreign_keys(self) -> None:
+        db = self._create(Path("foreign_keys.db"))
+        self.assertTrue(db.open())
+
+        # generate
+        coin_list = CoinList()
+        with db.transaction(suppress_exceptions=False) as c:
+            self._fill_db(db, c, coin_list)
+
+        # check
+        with db.transaction(suppress_exceptions=False) as c:
+            for coin in coin_list:
+                self.assertEqual(1, len(self._select_coin(c, coin)))
+                self.assertEqual(10, len(self._select_addresses(c, coin)))
+                self.assertEqual(100, len(self._select_transactions(c, coin)))
+
+                self.assertEqual(10, len(coin.addressList))
+                for address in coin.addressList:
+                    self.assertEqual(10, len(address.txList))
+                    self.assertEqual(
+                        10,
+                        len(self._select_address_transaction_map(c, address)))
+                    for tx in address.txList:
+                        self.assertEqual(
+                            len(tx.inputList) + len(tx.outputList),
+                            len(self._select_transaction_io(c, tx)))
+                        self.assertEqual(
+                            1,
+                            len(self._select_transaction_address_map(c, tx)))
+
+        # delete coin[0]
+        with db.transaction(suppress_exceptions=False) as c:
+            coin = coin_list[0]
+            c.execute(
+                f"DELETE FROM {CoinListTable.identifier} WHERE "
+                f" {CoinListTable.Column.ROW_ID.value.identifier} == ?",
+                (coin.rowId, ))
+            self.assertEqual(1, c.rowcount)
+            self.assertEqual(0, len(self._select_coin(c, coin)))
+            self.assertEqual(0, len(self._select_addresses(c, coin)))
+            self.assertEqual(0, len(self._select_transactions(c, coin)))
+
+            for address in coin.addressList:
+                self.assertEqual(
+                    0,
+                    len(self._select_address_transaction_map(c, address)))
+                for tx in address.txList:
+                    self.assertEqual(
+                        0,
+                        len(self._select_transaction_io(c, tx)))
+                    self.assertEqual(
+                        0,
+                        len(self._select_transaction_address_map(c, tx)))
+
+        # delete coin[1].address[1]
+        with db.transaction(suppress_exceptions=False) as c:
+            address = coin_list[1].addressList[1]
+            c.execute(
+                f"DELETE FROM {AddressListTable.identifier} WHERE "
+                f" {AddressListTable.Column.ROW_ID.value.identifier} == ?",
+                (address.rowId, ))
+            self.assertEqual(1, c.rowcount)
+            self.assertEqual(
+                0,
+                len(self._select_address_transaction_map(c, address)))
+
+        # delete coin[1].address[2].tx[2]
+        with db.transaction(suppress_exceptions=False) as c:
+            tx = coin_list[1].addressList[2].txList[2]
+            c.execute(
+                f"DELETE FROM {TxListTable.identifier} WHERE "
+                f" {TxListTable.Column.ROW_ID.value.identifier} == ?",
+                (tx.rowId, ))
+            self.assertEqual(1, c.rowcount)
+            self.assertEqual(
+                0,
+                len(self._select_transaction_io(c, tx)))
+            self.assertEqual(
+                0,
+                len(self._select_transaction_address_map(c, tx)))

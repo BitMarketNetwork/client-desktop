@@ -231,7 +231,7 @@ class Database:
             self,
             *,
             suppress_exceptions: bool = False,
-    ) -> Generator[Optional[Database], None, None]:
+    ) -> Generator[Optional[Cursor], None, None]:
         if not self.isOpen or self.__in_transaction:
             if suppress_exceptions:
                 try:

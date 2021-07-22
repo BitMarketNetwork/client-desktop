@@ -8,10 +8,11 @@ from unittest import TestCase
 from bmnclient.coins.coin_bitcoin import Bitcoin, BitcoinTest
 from bmnclient.coins.coin_litecoin import Litecoin
 from bmnclient.coins.hd import HdNode
+from bmnclient.coins.list import CoinList
 from bmnclient.language import Locale
 
 if TYPE_CHECKING:
-    from typing import List, Optional, Sequence
+    from typing import List, Optional, Sequence, Type
     from bmnclient.coins.abstract.coin import AbstractCoin
 
 
@@ -116,6 +117,81 @@ LITECOIN_ADDRESS_LIST = (
         "a372b79ed9520395bf4ec0b0d4c14c8dd0907fe6728fcfccec318c7503fcceb9" # noqa
     )
 )
+
+
+def fillCoin(
+        owner: TestCase,
+        coin: AbstractCoin,
+        *,
+        address_count: int = 4,
+        tx_count: int = 4) -> AbstractCoin:
+    root_node = HdNode.deriveRootNode(urandom(64))
+    owner.assertIsNotNone(root_node)
+
+    owner.assertTrue(coin.deriveHdNode(root_node))
+    coin.height = randint(1000, 100000)
+    coin.offset = "offset" + str(randint(1000, 100000))
+    coin.unverifiedOffset = "u_offset" + str(randint(1000, 100000))
+    coin.unverifiedHash = "u_hash" + str(randint(1000, 100000))
+    coin.verifiedHeight = randint(1000, 100000)
+
+    for address_index in range(1, address_count + 1):
+        address = coin.deriveHdAddress(
+            account=0,
+            is_change=False,
+            amount=randint(1000, 100000),
+            tx_count=randint(1000, 100000),
+            label="address label " + str(address_index),
+            comment="address comment " + str(address_index),
+            history_first_offset="first_" + str(randint(1000, 100000)),
+            history_last_offset="last_" + str(randint(1000, 100000)))
+        owner.assertIsNotNone(address)
+
+        for tx_index in range(1, tx_count + 1):
+            input_list = []
+            for i in range(1, 3):
+                input_list.append(coin.Tx.Io(
+                    coin,
+                    index=i,
+                    output_type="output_type_" + str(i),
+                    address_name=address.name,
+                    amount=randint(1000, 100000)))
+
+            output_list = []
+            for i in range(1, 3):
+                output_list.append(coin.Tx.Io(
+                    coin,
+                    index=i,
+                    output_type="output_type_" + str(i),
+                    address_name=address.name,
+                    amount=randint(1000, 100000)))
+            output_list.append(coin.Tx.Io(
+                coin,
+                index=4,
+                output_type="output_type_nulldata",
+                address_name=None,
+                amount=0))
+
+            address.appendTx(coin.Tx(
+                coin,
+                name="tx_name_" + str(tx_index) + "_" + address.name,
+                height=randint(10000, 1000000),
+                time=randint(10000, 1000000),
+                amount=randint(10000, 1000000),
+                fee_amount=randint(10000, 1000000),
+                is_coinbase=randint(0, 2) == 1,
+                input_list=input_list,
+                output_list=output_list))
+
+        address.utxoList = [coin.Tx.Utxo(
+            coin,
+            name="utxo_" + str(i),
+            height=randint(10000, 1000000),
+            index=randint(10000, 1000000),
+            amount=randint(10000, 1000000)) for i in range(1, 3)]
+
+        coin.appendAddress(address)
+    return coin
 
 
 class TestCoins(TestCase):
@@ -318,74 +394,8 @@ class TestCoins(TestCase):
                 # noinspection PyProtectedMember
                 self.assertEqual(len(coin._mempool_cache), len(mempool_list))
 
-    def test_serialization(self) -> None:
-        root_node = HdNode.deriveRootNode(urandom(64))
-        self.assertIsNotNone(root_node)
-
-        coin = Bitcoin()
-        self.assertTrue(coin.deriveHdNode(root_node))
-        coin.height = randint(1000, 100000)
-        coin.offset = "offset" + str(randint(1000, 100000))
-        coin.unverifiedOffset = "u_offset" + str(randint(1000, 100000))
-        coin.unverifiedHash = "u_hash" + str(randint(1000, 100000))
-        coin.verifiedHeight = randint(1000, 100000)
-
-        for address_index in range(1, 3):
-            address = coin.deriveHdAddress(
-                account=0,
-                is_change=False,
-                amount=randint(1000, 100000),
-                tx_count=randint(1000, 100000),
-                label="address label " + str(address_index),
-                comment="address comment " + str(address_index),
-                history_first_offset="first_" + str(randint(1000, 100000)),
-                history_last_offset="last_" + str(randint(1000, 100000)))
-            self.assertIsNotNone(address)
-
-            input_list = []
-            for i in range(1, 3):
-                input_list.append(coin.Tx.Io(
-                    coin,
-                    index=i,
-                    output_type="output_type_" + str(i),
-                    address_name=address.name,
-                    amount=randint(1000, 100000)))
-
-            output_list = []
-            for i in range(1, 3):
-                output_list.append(coin.Tx.Io(
-                    coin,
-                    index=i,
-                    output_type="output_type_" + str(i),
-                    address_name=address.name,
-                    amount=randint(1000, 100000)))
-            output_list.append(coin.Tx.Io(
-                coin,
-                index=4,
-                output_type="output_type_nulldata",
-                address_name=None,
-                amount=0))
-
-            for i in range(1, 4):
-                address.appendTx(coin.Tx(
-                    coin,
-                    name="tx_name_" + str(i),
-                    height=randint(10000, 1000000),
-                    time=randint(10000, 1000000),
-                    amount=randint(10000, 1000000),
-                    fee_amount=randint(10000, 1000000),
-                    is_coinbase=randint(0, 1) == 1,
-                    input_list=input_list,
-                    output_list=output_list))
-
-            address.utxoList = [coin.Tx.Utxo(
-                coin,
-                name="utxo_" + str(i),
-                height=randint(10000, 1000000),
-                index=randint(10000, 1000000),
-                amount=randint(10000, 1000000)) for i in range(1, 3)]
-
-            coin.appendAddress(address)
+    def _test_serialization(self, coin_type: Type[AbstractCoin]) -> None:
+        coin = fillCoin(self, coin_type())
 
         data = coin.serialize(allow_hd_path=False)
         self.assertIsInstance(data, dict)
@@ -393,8 +403,8 @@ class TestCoins(TestCase):
         # from pprint import pprint
         # pprint(data, sort_dicts=False)
 
-        coin_new = Bitcoin()
-        Bitcoin.deserialize(data, coin_new)
+        coin_new = coin_type()
+        coin_type.deserialize(data, coin_new)
 
         # coin compare
         self.assertEqual(coin.name, coin_new.name)
@@ -455,6 +465,10 @@ class TestCoins(TestCase):
                 self.assertEqual(u1.height, u2.height)
                 self.assertEqual(u1.index, u2.index)
                 self.assertEqual(u1.amount, u2.amount)
+
+    def test_serialization(self) -> None:
+        for coin in CoinList():
+            self._test_serialization(coin.__class__)
 
 
 class TestTxFactory(TestCase):
