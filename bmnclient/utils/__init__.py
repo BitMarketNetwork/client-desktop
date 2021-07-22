@@ -18,8 +18,4 @@ class NotImplementedInstance:
 
 
 class Utils(NotImplementedInstance):
-    @staticmethod
-    def filterNotNone(iterable: Iterable) -> Generator[Any, None, None]:
-        for v in iterable:
-            if v is not None:
-                yield v
+    pass

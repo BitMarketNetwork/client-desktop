@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 
 from ..hd import HdNode
 from ...crypto.secp256k1 import PrivateKey, PublicKey
-from ...utils import Utils
 from ...utils.class_property import classproperty
 from ...utils.serialize import Serializable, serializable
 
@@ -196,10 +195,10 @@ class _AbstractAddress(Serializable):
         self._tx_count = tx_count  # not linked with self._tx_list
 
         self._tx_list = (
-            [] if tx_list is None else list(Utils.filterNotNone(tx_list))
+            [] if tx_list is None else list(tx_list)
         )
         self._utxo_list = (
-            [] if tx_list is None else list(Utils.filterNotNone(utxo_list))
+            [] if tx_list is None else list(utxo_list)
         )
 
         if history_first_offset and history_last_offset:

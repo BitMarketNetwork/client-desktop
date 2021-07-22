@@ -5,7 +5,6 @@ from functools import lru_cache
 from typing import TYPE_CHECKING
 
 from ..utils import CoinUtils
-from ...utils import Utils
 from ...utils.serialize import Serializable, serializable
 from ...utils.string import StringUtils
 
@@ -248,8 +247,8 @@ class _AbstractTx(Serializable):
         self._fee_amount = fee_amount
         self._is_coinbase = bool(is_coinbase)
 
-        self._input_list = list(Utils.filterNotNone(input_list))
-        self._output_list = list(Utils.filterNotNone(output_list))
+        self._input_list = list(input_list)
+        self._output_list = list(output_list)
 
         self._model: Optional[AbstractCoin.Tx.Interface] = \
             self._coin.model_factory(self)
