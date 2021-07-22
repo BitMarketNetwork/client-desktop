@@ -425,23 +425,23 @@ class AddressListTable(AbstractTable, name="addresses"):
     def deserializeAll(self, cursor: Cursor, coin: AbstractCoin) -> bool:
         assert coin.rowId > 0
 
+        error = False
         for result in self._deserialize(
                 cursor,
                 coin.Address,
                 {self.Column.COIN_ROW_ID: coin.rowId}):
-            assert result[self.Column.COIN_ROW_ID.value.name] == coin.rowId
-            del result[self.Column.COIN_ROW_ID.value.name]
-
             address = coin.Address.deserialize(result, coin)
-            if address is not None:
+            if address is None:
+                error = True
+                self._database.logDeserializeError(coin.Address, result)
+            else:
                 assert address.rowId > 0
                 coin.appendAddress(address)
-        return True
+        return not error
 
-    def serialize(self, cursor: Cursor, address: AbstractCoin.Address) -> bool:
+    def serialize(self, cursor: Cursor, address: AbstractCoin.Address) -> None:
         assert address.coin.rowId > 0
-        if address.isNullData:
-            return False
+        assert not address.isNullData
 
         self._serialize(
             cursor,
@@ -452,7 +452,6 @@ class AddressListTable(AbstractTable, name="addresses"):
             },
             allow_hd_path=True)
         assert address.rowId > 0
-        return True
 
 
 class TxListTable(AbstractTable, name="transactions"):
