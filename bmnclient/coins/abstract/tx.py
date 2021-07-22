@@ -10,7 +10,7 @@ from ...utils.serialize import Serializable, serializable
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Any, List, Optional
+    from typing import Any, Iterable, List, Optional
     from .coin import AbstractCoin
     from ...utils.serialize import DeserializedData, DeserializedDict
 
@@ -20,11 +20,12 @@ class _AbstractTxIo(Serializable):
             self,
             coin: AbstractCoin,
             *,
+            row_id: int = -1,
             index: int,
             output_type: str,
             address_name: Optional[str],
             amount: int) -> None:
-        super().__init__()
+        super().__init__(row_id=row_id)
         self._coin = coin
         self._index = index
         self._output_type = output_type
@@ -227,15 +228,16 @@ class _AbstractTx(Serializable):
             self,
             coin: AbstractCoin,
             *,
+            row_id: int = -1,
             name: str,
             height: int = -1,
             time: int = -1,
             amount: int,
             fee_amount: int,
             is_coinbase: bool,
-            input_list: List[AbstractCoin.Tx.Io],
-            output_list: List[AbstractCoin.Tx.Io]) -> None:
-        super().__init__()
+            input_list: Iterable[AbstractCoin.Tx.Io],
+            output_list: Iterable[AbstractCoin.Tx.Io]) -> None:
+        super().__init__(row_id=row_id)
 
         self._coin = coin
         self._name = name.strip().lower()
@@ -278,8 +280,11 @@ class _AbstractTx(Serializable):
             value: DeserializedData,
             coin: Optional[AbstractCoin] = None,
             **options) -> Any:
-        if isinstance(value, dict) and key in ("input_list", "output_list"):
-            return cls.Io.deserialize(value, coin, **options)
+        if key in ("input_list", "output_list"):
+            if isinstance(value, dict):
+                return cls.Io.deserialize(value, coin, **options)
+            elif isinstance(value, cls.Io):
+                return value
         return super()._deserializeProperty(key, value, coin, **options)
 
     @property

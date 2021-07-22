@@ -229,6 +229,7 @@ class AbstractTable:
             return_key_columns: bool = False,
             **options
     ) -> Generator[Dict[str, Union[int, str]], None, None]:
+        assert self.Column.ROW_ID not in key_columns
         column_list = [self.Column.ROW_ID]
         for column in self.Column:
             if column not in key_columns:
@@ -492,8 +493,106 @@ class TxListTable(AbstractTable, name="transactions"):
         (Column.COIN_ROW_ID, Column.NAME),
     )
 
+    def _deserializeStatement(
+            self,
+            column_list: List[ColumnEnum],
+            key_columns: Dict[Column, Any],
+            *,
+            address_row_id: int = -1,
+            **options
+    ) -> Tuple[str, List[Any]]:
+        assert address_row_id > 0
+        where, where_args = \
+            self._database[AddressTxMapTable].statementSelectTransactions(
+                address_row_id)
+        return (
+            (
+                f"SELECT {_columnList(*column_list)}"
+                f" FROM {self.identifier}"
+                f" WHERE {_columnList(self.Column.ROW_ID)} IN ({where})"
+            ),
+            where_args
+        )
+
+    # TODO dynamic interface with coin.txList
+    def deserializeAll(
+            self,
+            cursor: Cursor,
+            address: AbstractCoin.Address) -> bool:
+        assert address.coin.rowId > 0
+        assert address.rowId > 0
+
+        error = False
+        for result in self._deserialize(
+                cursor,
+                address.coin.Tx,
+                {self.Column.COIN_ROW_ID: address.coin.rowId},
+                address_row_id=address.rowId
+        ):
+            input_error, result["input_list"] = \
+                self._database[TxIoListTable].deserializeAll(
+                    cursor.connection.cursor(),
+                    address.coin,
+                    result["row_id"],
+                    TxIoListTable.IoType.INPUT)
+            output_error, result["output_list"] = \
+                self._database[TxIoListTable].deserializeAll(
+                    cursor.connection.cursor(),
+                    address.coin,
+                    result["row_id"],
+                    TxIoListTable.IoType.OUTPUT)
+            if input_error or output_error:
+                error = True
+
+            tx = address.coin.Tx.deserialize(result, address.coin)
+            if tx is None:
+                error = True
+                self._database.logDeserializeError(address.coin.Tx, result)
+            else:
+                assert tx.rowId > 0
+                address.appendTx(tx)
+        return not error
+
+    def serialize(
+            self,
+            cursor: Cursor,
+            address: AbstractCoin.Address,
+            tx: AbstractCoin.Tx) -> None:
+        assert tx.coin.rowId > 0
+        assert tx.coin.rowId == address.coin.rowId
+
+        self._serialize(
+            cursor,
+            tx,
+            {
+                self.Column.COIN_ROW_ID: tx.coin.rowId,
+                self.Column.NAME: tx.name
+            })
+        assert tx.rowId > 0
+
+        # TODO delete old list?
+        for io_type, io_list in (
+                (TxIoListTable.IoType.INPUT, tx.inputList),
+                (TxIoListTable.IoType.OUTPUT, tx.outputList)
+        ):
+            for io in io_list:
+                self._database[TxIoListTable].serialize(
+                    cursor,
+                    tx,
+                    io_type,
+                    io)
+
+        self._database[AddressTxMapTable].insert(
+                cursor,
+                address.rowId,
+                tx.rowId)
+
 
 class TxIoListTable(AbstractTable, name="transactions_io"):
+    class IoType(Enum):
+        INPUT: Final = "input"
+        OUTPUT: Final = "output"
+
     class Column(ColumnEnum):
         ROW_ID: Final = AbstractTable.Column.ROW_ID.value
         TX_ROW_ID: Final = ColumnDefinition(
@@ -501,7 +600,10 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
             "INTEGER NOT NULL")
         IO_TYPE: Final = ColumnDefinition(
             "io_type",
-            "TEXT NOT NULL")
+            "TEXT NOT NULL")  # IoType
+        INDEX: Final = ColumnDefinition(
+            "index",
+            "INTEGER NOT NULL")
 
         OUTPUT_TYPE: Final = ColumnDefinition(
             "output_type",
@@ -519,3 +621,111 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
         f" ({_columnList(TxListTable.Column.ROW_ID)})"
         f" ON DELETE CASCADE",
     )
+
+    _UNIQUE_COLUMN_LIST = (
+        (Column.TX_ROW_ID, Column.IO_TYPE, Column.INDEX),
+    )
+
+    def deserializeAll(
+            self,
+            cursor: Cursor,
+            coin: AbstractCoin,
+            tx_row_id: int,
+            io_type: IoType) -> Tuple[bool, List[AbstractCoin.Tx.Io]]:
+        assert coin.rowId > 0
+        assert tx_row_id > 0
+        io_list = []
+
+        # TODO ORDER BY
+        error = False
+        for result in self._deserialize(
+                cursor,
+                coin.Tx.Io,
+                {
+                    self.Column.TX_ROW_ID: tx_row_id,
+                    self.Column.IO_TYPE: io_type.value
+                }
+        ):
+            io = coin.Tx.Io.deserialize(result, coin)
+            if io is None:
+                error = True
+                self._database.logDeserializeError(coin.Tx.Io, result)
+            else:
+                assert io.rowId > 0
+                io_list.append(io)
+
+        return not error, io_list
+
+    def serialize(
+            self,
+            cursor: Cursor,
+            tx: AbstractCoin.Tx,
+            io_type: IoType,
+            io: AbstractCoin.Tx.Io) -> None:
+        assert tx.rowId > 0
+
+        self._serialize(
+            cursor,
+            io,
+            {
+                self.Column.TX_ROW_ID: tx.rowId,
+                self.Column.IO_TYPE: io_type.value,
+                self.Column.INDEX: io.index
+            })
+        assert io.rowId > 0
+
+
+class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
+    class Column(ColumnEnum):
+        ROW_ID: Final = AbstractTable.Column.ROW_ID.value
+
+        ADDRESS_ROW_ID: Final = ColumnDefinition(
+            "address_row_id",
+            "INTEGER NOT NULL")
+        TX_ROW_ID: Final = ColumnDefinition(
+            "tx_row_id",
+            "INTEGER NOT NULL")
+
+    _CONSTRAINT_LIST = (
+        f"FOREIGN KEY ({_columnList(Column.ADDRESS_ROW_ID)})"
+        f" REFERENCES {AddressListTable.identifier}"
+        f" ({_columnList(AddressListTable.Column.ROW_ID)})"
+        f" ON DELETE CASCADE",
+
+        f"FOREIGN KEY ({_columnList(Column.TX_ROW_ID)})"
+        f" REFERENCES {TxListTable.identifier}"
+        f" ({_columnList(TxListTable.Column.ROW_ID)})"
+        f" ON DELETE CASCADE",
+    )
+
+    _UNIQUE_COLUMN_LIST = (
+        (Column.ADDRESS_ROW_ID, Column.TX_ROW_ID),
+    )
+
+    def insert(
+            self, cursor: Cursor,
+            address_row_id: int,
+            tx_row_id: int) -> None:
+        assert address_row_id > 0
+        assert tx_row_id > 0
+        columns = (
+            self.Column.ADDRESS_ROW_ID,
+            self.Column.TX_ROW_ID)
+        cursor.execute(
+            f"INSERT OR IGNORE INTO {self.identifier}"
+            f" ({_columnList(*columns)})"
+            f" VALUES({_qmarkList(len(columns))})",
+            (address_row_id, tx_row_id))
+
+    def statementSelectTransactions(
+            self,
+            address_row_id: int) -> Tuple[str, List[Any]]:
+        assert address_row_id > 0
+        return (
+            (
+                f"SELECT {_columnList(self.Column.TX_ROW_ID)}"
+                f" FROM {self.identifier}"
+                f" WHERE {_whereColumnList(self.Column.ADDRESS_ROW_ID)}"
+            ),
+            [address_row_id]
+        )

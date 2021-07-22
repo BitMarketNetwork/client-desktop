@@ -10,7 +10,7 @@ from ...utils.class_property import classproperty
 from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
-    from typing import Any, List, Optional, Union
+    from typing import Any, Iterable, List, Optional, Union
     from .coin import AbstractCoin
     from ...utils.serialize import DeserializedData, DeserializedDict
 
@@ -178,8 +178,8 @@ class _AbstractAddress(Serializable):
             tx_count: int = 0,
             label: str = "",
             comment: str = "",
-            tx_list: Optional[List[AbstractCoin.Tx]] = None,
-            utxo_list: Optional[List[AbstractCoin.Tx.Utxo]] = None,
+            tx_list: Optional[Iterable[AbstractCoin.Tx]] = None,
+            utxo_list: Optional[Iterable[AbstractCoin.Tx.Utxo]] = None,
             history_first_offset: str = "",
             history_last_offset: str = "") -> None:
         super().__init__(row_id=row_id)
@@ -195,10 +195,12 @@ class _AbstractAddress(Serializable):
         self._comment = comment
         self._tx_count = tx_count  # not linked with self._tx_list
 
-        self._tx_list: List[AbstractCoin.Tx] = \
+        self._tx_list = (
             [] if tx_list is None else list(Utils.filterNotNone(tx_list))
-        self._utxo_list: List[AbstractCoin.Tx.Utxo] = \
+        )
+        self._utxo_list = (
             [] if tx_list is None else list(Utils.filterNotNone(utxo_list))
+        )
 
         if history_first_offset and history_last_offset:
             self._history_first_offset = history_first_offset
@@ -259,10 +261,16 @@ class _AbstractAddress(Serializable):
             **options) -> Any:
         if isinstance(value, str) and key == "key":
             return cls.importKey(coin, value)
-        if isinstance(value, dict) and key == "tx_list":
-            return coin.Tx.deserialize(value, coin)
-        if isinstance(value, dict) and key == "utxo_list":
-            return coin.Tx.Utxo.deserialize(value, coin)
+        if key == "tx_list":
+            if isinstance(value, dict):
+                return coin.Tx.deserialize(value, coin)
+            elif isinstance(value, coin.Tx):
+                return value
+        if key == "utxo_list":
+            if isinstance(value, dict):
+                return coin.Tx.Utxo.deserialize(value, coin)
+            elif isinstance(value, coin.Tx.Utxo):
+                return value
         return super()._deserializeProperty(key, value, coin, **options)
 
     @classmethod
