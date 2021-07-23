@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from .coins.abstract.coin import AbstractCoin
 from .coins.utils import CoinUtils
-from .database.tables import AddressListTable, CoinListTable
+from .database.tables import AddressListTable, CoinListTable, TxListTable
 from .logger import Logger
 
 if TYPE_CHECKING:
@@ -36,10 +36,15 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
             name_key_tuple=CoinUtils.coinToNameKeyTuple(coin),
             **kwargs)
 
+    def _save(self) -> None:
+        try:
+            with self._database.transaction() as cursor:
+                self._database[CoinListTable].serialize(cursor, self._coin)
+        except self._database.TransactionInEffectError:
+            pass
+
     def afterSetEnabled(self) -> None:
-        if not self._database.isLocked:
-            with self._database:
-                self._database[CoinListTable].save(self._coin)
+        self._save()
 
     def afterSetHeight(self) -> None:
         pass
@@ -64,22 +69,19 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
         pass
 
     def afterAppendAddress(self, address: AbstractCoin.Address) -> None:
-        try:
-            with self._database.transaction() as cursor:
-                self._database[AddressListTable].serialize(cursor, address)
-        except self._database.TransactionInEffectError:
-            pass
+        if address.rowId <= 0:
+            try:
+                with self._database.transaction() as cursor:
+                    self._database[AddressListTable].serialize(cursor, address)
+            except self._database.TransactionInEffectError:
+                pass
         self._query_scheduler.updateCoinAddress(address)
 
     def afterSetServerData(self) -> None:
         pass
 
     def afterStateChanged(self) -> None:
-        try:
-            with self._database.transaction() as cursor:
-                self._database[CoinListTable].serialize(cursor, self._coin)
-        except self._database.TransactionInEffectError:
-            pass
+        self._save()
 
 
 class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
@@ -115,8 +117,15 @@ class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
         pass
 
     def afterAppendTx(self, tx: AbstractCoin.Tx) -> None:
-        if self._database.isOpen and tx.height >= 0:
-            self._database.updateCoinAddressTx(self._address, tx)
+        if tx.rowId <= 0:
+            try:
+                with self._database.transaction() as cursor:
+                    self._database[TxListTable].serialize(
+                        cursor,
+                        self._address,
+                        tx)
+            except self._database.TransactionInEffectError:
+                pass
 
     def afterSetUtxoList(self) -> None:
         pass
@@ -136,17 +145,21 @@ class TxInterface(_AbstractInterface, AbstractCoin.Tx.Interface):
             name_key_tuple=CoinUtils.txToNameKeyTuple(tx),
             **kwargs)
 
+    def _save(self) -> None:
+        try:
+            with self._database.transaction() as cursor:
+                self._database[TxListTable].serialize(
+                    cursor,
+                    None,
+                    self._tx)
+        except self._database.TransactionInEffectError:
+            pass
+
     def afterSetHeight(self) -> None:
-        # TODO slow, bad
-        for address in self._tx.coin.addressList:
-            if self._tx in address.txList:
-                self._database.updateCoinAddressTx(address, self._tx)
+        self._save()
 
     def afterSetTime(self) -> None:
-        # TODO slow, bad
-        for address in self._tx.coin.addressList:
-            if self._tx in address.txList:
-                self._database.updateCoinAddressTx(address, self._tx)
+        self._save()
 
 
 class TxFactoryInterface(_AbstractInterface, AbstractCoin.TxFactory.Interface):

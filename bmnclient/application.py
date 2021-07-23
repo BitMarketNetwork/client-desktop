@@ -7,12 +7,13 @@ from enum import auto, Enum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import \
-    QLocale, \
-    QMetaObject, \
-    QObject, \
-    Qt, \
+from PySide2.QtCore import (
+    QLocale,
+    QMetaObject,
+    QObject,
+    Qt,
     Slot as QSlot
+)
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 
@@ -20,7 +21,7 @@ from .coins.currency import FiatCurrencyList, FiatRate
 from .coins.list import CoinList
 from .config import Config, ConfigKey
 from .database import Database
-from .database.tables import AddressListTable, CoinListTable
+from .database.tables import AddressListTable, CoinListTable, TxListTable
 from .key_store import KeyStore
 from .language import Language
 from .logger import Logger
@@ -390,8 +391,10 @@ class CoreApplication(QObject):
                             cursor,
                             coin)
 
-                    # for address in coin.addressList:
-                    #    self._database[TxListTable].loadAll(address)
+                    for address in coin.addressList:
+                        self._database[TxListTable].deserializeAll(
+                            cursor,
+                            address)
         except (Database.engine.Error, Database.engine.Warning) as e:
             self._logger.error(
                 "Failed to read wallet from database: %s",

@@ -30,7 +30,7 @@ class ProductPaths:
     ICON_LINUX_FILE_PATH: Final = RESOURCES_PATH / "images" / "icon-logo.svg"
 
     CONFIG_FILE_NAME: Final = "config.json"
-    DATABASE_FILE_NAME: Final = "wallet_v2.db"
+    DATABASE_FILE_NAME: Final = "wallet.db"
 
 
 class Timer:

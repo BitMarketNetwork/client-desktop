@@ -581,10 +581,9 @@ class TxListTable(AbstractTable, name="transactions"):
     def serialize(
             self,
             cursor: Cursor,
-            address: AbstractCoin.Address,
+            address: Optional[AbstractCoin.Address],
             tx: AbstractCoin.Tx) -> None:
         assert tx.coin.rowId > 0
-        assert tx.coin.rowId == address.coin.rowId
 
         self._serialize(
             cursor,
@@ -607,10 +606,12 @@ class TxListTable(AbstractTable, name="transactions"):
                     io_type,
                     io)
 
-        self._database[AddressTxMapTable].insert(
-                cursor,
-                address.rowId,
-                tx.rowId)
+        if address is not None:
+            assert tx.coin.rowId == address.coin.rowId
+            self._database[AddressTxMapTable].insert(
+                    cursor,
+                    address.rowId,
+                    tx.rowId)
 
 
 class TxIoListTable(AbstractTable, name="transactions_io"):

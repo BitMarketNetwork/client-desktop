@@ -18,6 +18,7 @@ from .tables import (
     TxIoListTable,
     TxListTable
 )
+from .vfs import Vfs
 from ..logger import Logger
 from ..utils.class_property import classproperty
 from ..version import Product
