@@ -7,7 +7,10 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
-import bmnsqlite3 as _engine
+try:
+    import bmnsqlite3 as _engine
+except ImportError:
+    import sqlite3 as _engine
 
 from .tables import (
     AbstractTable,
@@ -69,6 +72,8 @@ class Connection(_engine.Connection):
         self._database = database
 
     def cursor(self, factory=Cursor) -> Cursor:
+        # noinspection PyArgumentList
+        # TODO sqlite.Connection.cursor(factory)
         return super().cursor(
             factory=lambda *args, **kwargs: Cursor(
                 *args,
@@ -181,9 +186,13 @@ class Database:
         try:
             _engine.enable_callback_tracebacks(
                 self._application.isDebugMode)
+            # noinspection PyTypeChecker
+            # TODO PyTypeChecker:
+            #  sqlite3.connect(factory: Type[Connection])
+            #  bmnsqlite3.connect(uri)
             self.__connection = _engine.connect(
                 self._file_path,
-                timeout=0,
+                timeout=0.0,
                 detect_types=0,
                 isolation_level="DEFERRED",
                 check_same_thread=True,
@@ -192,7 +201,7 @@ class Database:
                     database=self,
                     **kwargs),
                 cached_statements=100,
-                uri=False)  # noqa TODO type checking
+                uri=False)  # noqa
         except (_engine.Error, _engine.Warning) as e:
             self.__connection = None
             self._logger.error("Failed to open database: %s", str(e))
