@@ -81,6 +81,14 @@ DMGBUILD = $(BMN_DMGBUILD_BIN_DIR)dmgbuild
 APPIMAGETOOL = $(BMN_APPIMAGE_BIN_DIR)appimagetool
 endif
 
+RSYNC_FLAGS = \
+	--progress \
+    --human-readable \
+    --links \
+    --chmod=u=rw,go=r \
+    --times \
+    --stats \
+
 ################################################################################
 # Version
 ################################################################################
@@ -219,6 +227,14 @@ TR_OBJECTS := $(addprefix $(TRANSLATIONS_DIR)/,\
 PYINSTALLER_WORK_DIR = $(BUILD_DIR)/pyinstaller
 
 ################################################################################
+# PIP
+################################################################################
+
+PIP_DIST_TARGET_PREFIX := $(DIST_DIR)/$(BMN_PACKAGE_NAME)-$(BMN_VERSION_STRING)
+PIP_DIST_TARGET_WHEEL := $(PIP_DIST_TARGET_PREFIX)-py3-none-any.whl
+PIP_DIST_TARGET_SDIST := $(PIP_DIST_TARGET_PREFIX).tar.gz
+
+################################################################################
 # Targets
 ################################################################################
 
@@ -226,7 +242,7 @@ PYINSTALLER_WORK_DIR = $(BUILD_DIR)/pyinstaller
 all: tr qrc
 
 .PHONY: clean
-clean: tr-mostlyclean qrc-clean dist-clean pip-clean
+clean: check-clean tr-mostlyclean qrc-clean pip-clean dist-clean
 
 ################################################################################
 
@@ -242,6 +258,10 @@ check: S = $(call NPATH,$(TESTS_DIR))
 check: all
 	$(PYTHON) -m tox || $(PYTHON) -m unittest discover -t "$(T)" -s "$(S)" -v
 
+
+.PHONY: check-clean
+check-clean:
+	$(call RMDIR,$(BASE_DIR)/.tox)
 
 ################################################################################
 
@@ -336,12 +356,19 @@ pip-dist: all pip-clean
 	$(PYTHON) ./setup.py sdist
 	$(PYTHON) ./setup.py bdist_wheel
 
-pip-clean: PIP_FILE_MASK := $(DIST_DIR)/$(BMN_PACKAGE_NAME)-$(BMN_VERSION_STRING)*
-pip-clean: PIP_FILE_LIST := $(wildcard $(PIP_FILE_MASK).tar.gz $(PIP_FILE_MASK).whl)
+.PHONY: pip-clean
 pip-clean:
 	$(call RMDIR,$(BASE_DIR)/$(BMN_PACKAGE_NAME).egg-info)
 	$(call RMDIR,$(BUILD_DIR))
-	$(foreach F,$(PIP_FILE_LIST),$(call RM,$(F))$(NL))
+	$(call RM,$(PIP_DIST_TARGET_WHEEL))
+	$(call RM,$(PIP_DIST_TARGET_SDIST))
+
+.PHONY: pip-upload
+pip-upload:
+	$(RSYNC) $(RSYNC_FLAGS) \
+		"$(PIP_DIST_TARGET_WHEEL)" \
+		"$(PIP_DIST_TARGET_SDIST)" \
+		"$(BMN_UPLOAD_DIR)/"
 
 ################################################################################
 
@@ -349,12 +376,6 @@ pip-clean:
 upload: DIST_TARGET_NAME := $(notdir $(DIST_TARGET))
 upload: DIST_TARGET_NAME := $(basename $(DIST_TARGET_NAME))-$(call FILE_MTIME,$(DIST_TARGET))$(suffix $(DIST_TARGET_NAME))
 upload:
-	$(RSYNC) \
-		--progress \
-		--human-readable \
-		--links \
-		--chmod=u=rw,go=r \
-		--times \
-		--stats \
+	$(RSYNC) $(RSYNC_FLAGS) \
 		"$(DIST_TARGET)" \
 		"$(BMN_UPLOAD_DIR)/$(DIST_TARGET_NAME)"
