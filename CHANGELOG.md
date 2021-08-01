@@ -24,7 +24,7 @@
 ## 0.12.3 (22.05.2021)
 
 * Fixed TLS connections on macOS.
-* New algorithm for choosing UTXO`s for a transaction.
+* New algorithm for choosing UTXO's for a transaction.
 * New logger output format.
 * New command line arguments: "--server-url", "--server-insecure".
 
