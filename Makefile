@@ -242,7 +242,7 @@ PIP_DIST_TARGET_SDIST := $(PIP_DIST_TARGET_PREFIX).tar.gz
 all: tr qrc
 
 .PHONY: clean
-clean: tr-mostlyclean qrc-clean dist-clean pip-clean
+clean: check-clean tr-mostlyclean qrc-clean pip-clean dist-clean
 
 ################################################################################
 
@@ -258,6 +258,10 @@ check: S = $(call NPATH,$(TESTS_DIR))
 check: all
 	$(PYTHON) -m tox || $(PYTHON) -m unittest discover -t "$(T)" -s "$(S)" -v
 
+
+.PHONY: check-clean
+check-clean:
+	$(call RMDIR,$(BASE_DIR)/.tox)
 
 ################################################################################
 
