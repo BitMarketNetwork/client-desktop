@@ -11,3 +11,6 @@ __pycache__
 # setuptools
 /*.egg-info
 /bmnclient-*.*.*
+
+# private
+/.publish*

@@ -58,13 +58,13 @@ class CommandLine:
             "--logfile",
             default="stderr",
             type=self._expandPath,
-            help="file that will store the log; can be one of the following "
-            "special values: stdout, stderr; by default, it is 'stderr'",
+            help="file that will store the log; can be one of the following"
+            " special values: stdout, stderr; by default, it is 'stderr'",
             metavar="FILE")
         parser.add_argument(
-            '-d',
-            '--debug',
-            action='store_true',
+            "-d",
+            "--debug",
+            action="store_true",
             default=False,
             help="run the application in debug mode")
 
@@ -78,7 +78,7 @@ class CommandLine:
             metavar="URL")
         parser.add_argument(
             "--server-insecure",
-            action='store_true',
+            action="store_true",
             default=False,
             help="do not check the validity of server certificates")
 
