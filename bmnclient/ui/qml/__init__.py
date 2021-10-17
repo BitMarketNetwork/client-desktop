@@ -25,7 +25,8 @@ from .models.settings import SettingsModel
 from ..gui import GuiApplication
 from ...network.access_manager import NetworkAccessManager
 from ...resources import Resources
-from ...version import Gui
+from ...version import Gui, ProductPaths
+from ...os_environment import PlatformPaths
 
 if TYPE_CHECKING:
     from typing import Iterable, List
@@ -52,7 +53,8 @@ class QmlApplication(GuiApplication):
             self.QmlNetworkAccessManagerFactory()
         self._qml_engine = QQmlApplicationEngine()
 
-        # TODO self._engine.offlineStoragePath
+        self._qml_engine.setOfflineStoragePath(
+            str(PlatformPaths.applicationLocalDataPath / ProductPaths.QML_OFFLINE_STORAGE_PATH))
         self._qml_engine.setBaseUrl(Resources.qmlUrl)
         self._qml_engine.setNetworkAccessManagerFactory(
             self._qml_network_access_manager_factory)

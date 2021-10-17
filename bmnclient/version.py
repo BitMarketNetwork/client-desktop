@@ -32,6 +32,8 @@ class ProductPaths:
     CONFIG_FILE_NAME: Final = "config.json"
     DATABASE_FILE_NAME: Final = "wallet_v2.db"
 
+    QML_OFFLINE_STORAGE_PATH: Final = Path("qml") / "offline_storage"
+
 
 class Timer:
     UI_MESSAGE_TIMEOUT: Final = 10 * 1000
