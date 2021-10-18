@@ -47,15 +47,23 @@ class CommandLine:
             description=Product.NAME + " " + Product.VERSION_STRING)
         parser.add_argument(
             "-c",
-            "--configpath",
+            "--config-path",
             default=str(PlatformPaths.applicationConfigPath),
             type=self._expandPath,
             help="directory for configuration files; by default, it is '{}'"
             .format(str(PlatformPaths.applicationConfigPath)),
             metavar="PATH")
         parser.add_argument(
+            "-L",
+            "--local-data-path",
+            default=str(PlatformPaths.applicationLocalDataPath),
+            type=self._expandPath,
+            help="directory for local data files; by default, it is '{}'"
+            .format(str(PlatformPaths.applicationLocalDataPath)),
+            metavar="PATH")
+        parser.add_argument(
             "-l",
-            "--logfile",
+            "--log-file",
             default="stderr",
             type=self._expandPath,
             help="file that will store the log; can be one of the following"
@@ -67,7 +75,6 @@ class CommandLine:
             action="store_true",
             default=False,
             help="run the application in debug mode")
-
         parser.add_argument(
             "-s",
             "--server-url",
@@ -83,8 +90,9 @@ class CommandLine:
             help="do not check the validity of server certificates")
 
         self._arguments = parser.parse_args(self._argv[1:])
-        assert isinstance(self._arguments.configpath, Path)
-        assert isinstance(self._arguments.logfile, Path)
+        assert isinstance(self._arguments.config_path, Path)
+        assert isinstance(self._arguments.local_data_path, Path)
+        assert isinstance(self._arguments.log_file, Path)
         assert isinstance(self._arguments.debug, bool)
         assert isinstance(self._arguments.server_url, str)
         assert isinstance(self._arguments.server_insecure, bool)
@@ -95,11 +103,15 @@ class CommandLine:
 
     @property
     def configPath(self) -> Path:
-        return self._arguments.configpath
+        return self._arguments.config_path
+
+    @property
+    def localDataPath(self) -> Path:
+        return self._arguments.local_data_path
 
     @property
     def logFilePath(self) -> Path:
-        return self._arguments.logfile
+        return self._arguments.log_file
 
     @property
     def logLevel(self) -> int:

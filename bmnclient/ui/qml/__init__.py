@@ -55,9 +55,9 @@ class QmlApplication(GuiApplication):
         self._qml_engine = QQmlApplicationEngine()
 
         os.environ['QML_DISK_CACHE_PATH'] = \
-            str(PlatformPaths.applicationLocalDataPath / ProductPaths.QML_CACHE_PATH)
+            str(command_line.localDataPath / ProductPaths.QML_CACHE_PATH)
         self._qml_engine.setOfflineStoragePath(
-            str(PlatformPaths.applicationLocalDataPath / ProductPaths.QML_OFFLINE_STORAGE_PATH))
+            str(command_line.localDataPath / ProductPaths.QML_OFFLINE_STORAGE_PATH))
         self._qml_engine.setBaseUrl(Resources.qmlUrl)
         self._qml_engine.setNetworkAccessManagerFactory(
             self._qml_network_access_manager_factory)

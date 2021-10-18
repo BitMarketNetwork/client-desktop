@@ -85,6 +85,7 @@ def _applicationConfigPath(config_path: Path) -> Path:
     else:
         raise RuntimeError("can't determine config directories")
 
+
 def _applicationLocalDataPath(local_data_path: Path) -> Path:
     if Platform.isWindows:
         return local_data_path / Product.NAME
