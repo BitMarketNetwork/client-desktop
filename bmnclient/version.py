@@ -33,6 +33,7 @@ class ProductPaths:
     DATABASE_FILE_NAME: Final = "wallet_v2.db"
 
     QML_OFFLINE_STORAGE_PATH: Final = Path("qml") / "offline_storage"
+    QML_CACHE_PATH: Final = Path("qml") / "cache"
 
 
 class Timer:
