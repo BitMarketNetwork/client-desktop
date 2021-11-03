@@ -1,3 +1,4 @@
+import QtQuick 2.15
 import QtQuick.Controls.Material 2.15
 import "../application"
 import "../basiccontrols"
@@ -22,6 +23,11 @@ BDialog {
                 strength = BBackend.password.calcStrength(text)
                 updatePasswordState()
             }
+            Keys.onReturnPressed: {
+                if (_acceptButton.enabled) {
+                    Qt.callLater(accept)
+                }
+            }
         }
         BDialogValidLabel {
             id: _strength
@@ -40,6 +46,12 @@ BDialog {
             onTextChanged: {
                 updatePasswordState()
             }
+            Keys.onReturnPressed: {
+                if (_acceptButton.enabled) {
+                    Qt.callLater(accept)
+                }
+            }
+
         }
         BDialogValidLabel {
             id: _confirmed
@@ -62,10 +74,19 @@ BDialog {
             BDialogButtonBox.buttonRole: BDialogButtonBox.AcceptRole
             text: BCommon.button.okRole
             enabled: false
+
+            Keys.onReturnPressed: {
+                Qt.callLater(accept)
+            }
+
         }
         BButton {
             BDialogButtonBox.buttonRole: BDialogButtonBox.RejectRole
             text: BCommon.button.cancelRole
+
+            Keys.onReturnPressed: {
+                Qt.callLater(reject)
+            }
         }
     }
 
