@@ -1,3 +1,4 @@
+import QtQuick 2.15
 import "../application"
 import "../basiccontrols"
 
@@ -16,6 +17,10 @@ BDialog {
             id: _password1
             echoMode: _showPassword.checked ? BTextField.Normal : BTextField.Password
             placeholderText: qsTr("Enter your password")
+            Keys.onReturnPressed: {
+                passwordAccepted(_password1.text)
+            }
+
         }
 
         BDialogPromptLabel {
@@ -36,6 +41,7 @@ BDialog {
             text: BCommon.button.cancelRole
         }
     }
+
 
     onAboutToShow: {
         onReset()
