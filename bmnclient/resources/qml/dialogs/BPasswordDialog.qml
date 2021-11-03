@@ -13,32 +13,41 @@ BDialog {
         BDialogPromptLabel {
             text: qsTr("Password:")
         }
+
         BDialogInputTextField {
             id: _password1
             echoMode: _showPassword.checked ? BTextField.Normal : BTextField.Password
             placeholderText: qsTr("Enter your password")
             Keys.onReturnPressed: {
-                passwordAccepted(_password1.text)
+                Qt.callLater(accept)
             }
-
         }
 
         BDialogPromptLabel {
             text: qsTr("Show password:")
         }
+
         BDialogInputSwitch {
             id: _showPassword
         }
     }
+
     footer: BDialogButtonBox {
         BButton {
             BDialogButtonBox.buttonRole: BDialogButtonBox.AcceptRole
             text: BCommon.button.okRole
             enabled: _password1.text.length > 0
+            Keys.onReturnPressed: {
+                Qt.callLater(accept)
+            }
         }
+
         BButton {
             BDialogButtonBox.buttonRole: BDialogButtonBox.RejectRole
             text: BCommon.button.cancelRole
+            Keys.onReturnPressed: {
+                Qt.callLater(reject)
+            }
         }
     }
 
@@ -47,9 +56,11 @@ BDialog {
         onReset()
         _password1.forceActiveFocus()
     }
+
     onAccepted: {
         passwordAccepted(_password1.text)
     }
+
     onReset: {
         _password1.clear()
         _showPassword.checked = false

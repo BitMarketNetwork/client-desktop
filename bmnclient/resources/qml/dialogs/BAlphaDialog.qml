@@ -35,10 +35,18 @@ BDialog {
             implicitWidth: leftPadding + rightPadding + textMetrics.width
             text: _base.acceptDelayText.arg(_base.acceptDelay)
             enabled: false
+
+            Keys.onReturnPressed: {
+                Qt.callLater(accept)
+            }
+
         }
         BButton {
             BDialogButtonBox.buttonRole: BDialogButtonBox.RejectRole
             text: BCommon.button.declineRole
+            Keys.onReturnPressed: {
+                Qt.callLater(reject)
+            }
         }
     }
 
@@ -57,6 +65,7 @@ BDialog {
                 stop()
                 _acceptButton.text = BCommon.button.acceptRole
                 _acceptButton.enabled = true
+                _acceptButton.forceActiveFocus(Qt.TabFocus)
             } else {
                 _acceptButton.text = acceptDelayText.arg(counter)
             }
