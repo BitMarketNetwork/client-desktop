@@ -291,7 +291,7 @@ class RestoreSeedPhraseDialog(AbstractSeedPhraseDialog):
                 self._manager,
                 self,
                 text=QObject().tr("Error derive Root HD Key.")).open()
-        if not result:
+        elif not result:
             InvalidSeedPhraseDialog(self._manager, self).open()
 
     def onRejected(self) -> None:
