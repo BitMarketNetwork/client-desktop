@@ -11,9 +11,9 @@ from PySide2.QtNetwork import QNetworkReply, QNetworkRequest
 
 from .utils import NetworkUtils
 from ..logger import Logger
+from ..utils.size_unit import SizeUnit, SizeUnitConverter
 from ..utils.string import StringUtils
 from ..version import Product, Timer
-from ..utils.size_unit import SizeUnit, SizeUnitConverter
 
 if TYPE_CHECKING:
     from typing import Callable, Dict, List, Optional, Tuple, Union
@@ -339,7 +339,9 @@ class AbstractJsonQuery(AbstractQuery):
         # TODO stream mode
         self._logger.debug(
             "Limit download size: %d MiB",
-            SizeUnitConverter.sizeToUnit(self._DEFAULT_DOWNLOAD_MAX_SIZE, SizeUnit.MB))
+            SizeUnitConverter.sizeToUnit(
+                self._DEFAULT_DOWNLOAD_MAX_SIZE,
+                SizeUnit.MB))
         if len(data) > self._DEFAULT_DOWNLOAD_MAX_SIZE:
             self._logger.error(
                 "Limit download size has been reached: %d bytes",

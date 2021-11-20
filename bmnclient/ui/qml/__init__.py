@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 
 from PySide2.QtCore import \
@@ -26,8 +27,6 @@ from ..gui import GuiApplication
 from ...network.access_manager import NetworkAccessManager
 from ...resources import Resources
 from ...version import Gui, ProductPaths
-from ...os_environment import PlatformPaths
-import os
 
 if TYPE_CHECKING:
     from typing import Iterable, List
@@ -54,10 +53,12 @@ class QmlApplication(GuiApplication):
             self.QmlNetworkAccessManagerFactory()
         self._qml_engine = QQmlApplicationEngine()
 
-        os.environ['QML_DISK_CACHE_PATH'] = \
+        os.environ["QML_DISK_CACHE_PATH"] = \
             str(command_line.localDataPath / ProductPaths.QML_CACHE_PATH)
         self._qml_engine.setOfflineStoragePath(
-            str(command_line.localDataPath / ProductPaths.QML_OFFLINE_STORAGE_PATH))
+            str(
+                command_line.localDataPath
+                / ProductPaths.QML_OFFLINE_STORAGE_PATH))
         self._qml_engine.setBaseUrl(Resources.qmlUrl)
         self._qml_engine.setNetworkAccessManagerFactory(
             self._qml_network_access_manager_factory)
