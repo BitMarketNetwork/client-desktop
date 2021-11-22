@@ -179,10 +179,10 @@ BDialogLayout {
             switch (_base.type) {
             case BAddressEditBox.Type.Create:
             case BAddressEditBox.Type.CreateRecipient:
-                _label.forceActiveFocus()
+                _label.forceActiveFocus(Qt.TabFocus)
                 break
             default:
-                _address.forceActiveFocus()
+                _address.forceActiveFocus(Qt.TabFocus)
                 break
             }
         }

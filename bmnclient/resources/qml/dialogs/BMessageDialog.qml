@@ -32,7 +32,6 @@ BDialog {
             }
             onLoaded: {
                 _buttonBox.addItem(item)
-                item.forceActiveFocus(Qt.TabFocus)
             }
         }
 
@@ -45,7 +44,6 @@ BDialog {
             }
             onLoaded: {
                 _buttonBox.addItem(item)
-                item.forceActiveFocus(Qt.TabFocus)
             }
         }
         Loader {
@@ -59,5 +57,19 @@ BDialog {
                 _buttonBox.addItem(item)
             }
         }
+    }
+
+    onAboutToShow: {
+        try {
+            for (let i = 0; i < footer.contentChildren.length; ++i) {
+                let item = footer.contentChildren[i]
+                if (item.BDialogButtonBox.buttonRole === BDialogButtonBox.AcceptRole) {
+                    if (item.enabled) {
+                        item.forceActiveFocus(Qt.TabFocus)
+                    }
+                    break
+                }
+            }
+        } catch (e) {}
     }
 }

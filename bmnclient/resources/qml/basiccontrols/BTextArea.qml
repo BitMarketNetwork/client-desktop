@@ -51,7 +51,7 @@ BScrollView {
 
     onActiveFocusChanged: { // TODO read focus manuals
         if (activeFocus) {
-            _base.forceActiveFocus()
+            _base.forceActiveFocus(Qt.TabFocus)
         }
     }
 

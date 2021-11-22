@@ -71,7 +71,7 @@ BDialog {
 
     onAboutToShow: {
         onReset()
-        _password1.forceActiveFocus()
+        _password1.forceActiveFocus(Qt.TabFocus)
     }
     onAccepted: {
         passwordAccepted(_password1.text)
