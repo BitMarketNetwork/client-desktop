@@ -28,6 +28,11 @@ Dialog {
         if (context !== null) {
             context.title = title
         }
+        contentItem.Keys.onReturnPressed.connect(clickAcceptButton)
+        contentItem.Keys.onEnterPressed.connect(clickAcceptButton)
+
+        footer.Keys.onReturnPressed.connect(clickCurrentButton)
+        footer.Keys.onEnterPressed.connect(clickCurrentButton)
     }
 
     onTitleChanged: {
@@ -45,9 +50,6 @@ Dialog {
         }
     }
 
-    // TODO Keys.onEnterPressed:
-    // TODO Keys.onReturnPressed:
-
     // connections with ui.qml.dialogs.AbstractDialog
     Loader {
         active: _base.context !== null
@@ -64,5 +66,36 @@ Dialog {
                 _base.close()
             }
         }
+    }
+
+    function clickAcceptButton() {
+        try {
+            for (let i = 0; i < footer.contentChildren.length; ++i) {
+                let item = footer.contentChildren[i]
+                if (item.BDialogButtonBox.buttonRole === BDialogButtonBox.AcceptRole) {
+                    if (item.enabled) {
+                        Qt.callLater(item.clicked)
+                        return true
+                    }
+                    break
+                }
+            }
+        } catch (e) {}
+        return false
+    }
+
+    function clickCurrentButton() {
+        try {
+            for (let i = 0; i < footer.contentChildren.length; ++i) {
+                let item = footer.contentChildren[i]
+                if (item.enabled && item.activeFocus) {
+                    if (typeof item.BDialogButtonBox.buttonRole !== "undefined") {
+                        Qt.callLater(item.clicked)
+                        return true
+                    }
+                }
+            }
+        } catch (e) {}
+        return false
     }
 }

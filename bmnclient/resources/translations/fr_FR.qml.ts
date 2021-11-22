@@ -447,12 +447,12 @@ Please use this version carefully for reference only, as it is intended for demo
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/dialogs/BPasswordDialog.qml" line="18"/>
+        <location filename="../qml/dialogs/BPasswordDialog.qml" line="19"/>
         <source>Enter your password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/dialogs/BPasswordDialog.qml" line="22"/>
+        <location filename="../qml/dialogs/BPasswordDialog.qml" line="23"/>
         <source>Show password:</source>
         <translation type="unfinished"></translation>
     </message>
