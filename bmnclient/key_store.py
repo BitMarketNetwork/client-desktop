@@ -31,6 +31,7 @@ class KeyStoreError(Enum):
     SUCCESS: Final = 0
     ERROR_INVALID_PASSWORD = 1
     ERROR_SEED_NOT_FOUND = 2
+    ERROR_DERIVE_ROOT_HD_NODE = 3
 
 
 class _KeyStoreBase:
@@ -190,7 +191,7 @@ class _KeyStoreSeed(_KeyStoreBase):
         phrase = Mnemonic.friendlyPhrase(language, phrase)
         return language, phrase
 
-    def _deriveRootHdNodeFromSeed(self) -> Optional[HdNode]:
+    def _deriveRootHdNodeFromSeed(self) -> Optional[HdNode, KeyStoreError]:
         self.__has_seed = False
 
         seed = self.__deriveSeed()
@@ -199,8 +200,7 @@ class _KeyStoreSeed(_KeyStoreBase):
 
         root_node = HdNode.deriveRootNode(seed)
         if root_node is None:
-            # TODO show message, this has probability lower than 1 in 2 ** 127.
-            return None
+            return KeyStoreError.ERROR_DERIVE_ROOT_HD_NODE
         self.__has_seed = True
         return root_node
 
@@ -249,7 +249,7 @@ class KeyStore(_KeyStoreSeed):
                 return True
         return False
 
-    def open(self, password: str) -> bool:
+    def open(self, password: str) -> [bool, KeyStoreError]:
         with self._lock:
             self._clear()
 
@@ -262,16 +262,20 @@ class KeyStore(_KeyStoreSeed):
             if not value or not self._loadSecretStoreValue(value):
                 return False
             root_node = self._deriveRootHdNodeFromSeed()
+            if root_node is KeyStoreError.ERROR_DERIVE_ROOT_HD_NODE:
+                return root_node
             self._open_callback(root_node)
         return True
 
-    def saveSeed(self, language: str, phrase: str) -> bool:
+    def saveSeed(self, language: str, phrase: str) -> [bool, KeyStoreError]:
         with self._lock:
             if not self._saveSeed(language, phrase):
                 return False
             root_node = self._deriveRootHdNodeFromSeed()
             if root_node is None:
                 return False
+            if root_node is KeyStoreError.ERROR_DERIVE_ROOT_HD_NODE:
+                return root_node
             self._open_callback(root_node)
         return True
 
@@ -291,6 +295,8 @@ class KeyStore(_KeyStoreSeed):
             self._reset_callback()
         return True
 
+    def getLastErr(self) -> KeyStoreError:
+        return self._last_error
 
 class _AbstractSeedPhrase:
     def __init__(self, key_store: KeyStore) -> None:
@@ -310,11 +316,17 @@ class _AbstractSeedPhrase:
     def validate(self, phrase: str) -> bool:
         raise NotImplementedError
 
-    def finalize(self, phrase: str) -> bool:
+    def finalize(self, phrase: str) -> [bool, KeyStoreError]:
         if not self.validate(phrase):
             return False
-        if not self._key_store.saveSeed(self._mnemonic.language, phrase):
+
+        result = self._key_store.saveSeed(self._mnemonic.language, phrase)
+
+        if result is KeyStoreError.ERROR_DERIVE_ROOT_HD_NODE:
+            return result
+        if result is False:
             return False
+
         self.clear()
         return True
 

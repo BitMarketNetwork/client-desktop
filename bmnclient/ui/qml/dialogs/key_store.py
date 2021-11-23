@@ -90,7 +90,13 @@ class KeyStorePasswordDialog(AbstractDialog):
         super().__init__(manager)
 
     def onPasswordAccepted(self, password: str) -> None:
-        if not self._manager.context.keyStore.native.open(password):
+        result = self._manager.context.keyStore.native.open(password)
+        if result is KeyStoreError.ERROR_DERIVE_ROOT_HD_NODE:
+            KeyStoreErrorDialog(
+                self._manager,
+                self,
+                text=QObject().tr("Error derive Root HD Key.")).open()
+        elif not result:
             KeyStoreErrorDialog(
                 self._manager,
                 self,
@@ -248,7 +254,13 @@ class ValidateSeedPhraseDialog(AbstractSeedPhraseDialog):
         self._setIsValid(self._generator.validate(self._current_phrase))
 
     def onAccepted(self) -> None:
-        if not self._generator.finalize(self._current_phrase):
+        result = self._generator.finalize(self._current_phrase)
+        if result is KeyStoreError.ERROR_DERIVE_ROOT_HD_NODE:
+            KeyStoreErrorDialog(
+                self._manager,
+                self,
+                text=QObject().tr("Error derive Root HD Key.")).open()
+        elif not result:
             InvalidSeedPhraseDialog(
                 self._manager,
                 self,
@@ -273,7 +285,13 @@ class RestoreSeedPhraseDialog(AbstractSeedPhraseDialog):
         self._setIsValid(self._generator.validate(self._current_phrase))
 
     def onAccepted(self) -> None:
-        if not self._generator.finalize(self._current_phrase):
+        result = self._generator.finalize(self._current_phrase)
+        if result is KeyStoreError.ERROR_DERIVE_ROOT_HD_NODE:
+            KeyStoreErrorDialog(
+                self._manager,
+                self,
+                text=QObject().tr("Error derive Root HD Key.")).open()
+        elif not result:
             InvalidSeedPhraseDialog(self._manager, self).open()
 
     def onRejected(self) -> None:
