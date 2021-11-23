@@ -28,9 +28,9 @@ Dialog {
         if (context !== null) {
             context.title = title
         }
+
         contentItem.Keys.onReturnPressed.connect(clickAcceptButton)
         contentItem.Keys.onEnterPressed.connect(clickAcceptButton)
-
         footer.Keys.onReturnPressed.connect(clickCurrentButton)
         footer.Keys.onEnterPressed.connect(clickCurrentButton)
     }
