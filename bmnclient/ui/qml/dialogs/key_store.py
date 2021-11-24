@@ -91,16 +91,18 @@ class KeyStorePasswordDialog(AbstractDialog):
 
     def onPasswordAccepted(self, password: str) -> None:
         result = self._manager.context.keyStore.native.open(password)
-        if result is KeyStoreError.ERROR_DERIVE_ROOT_HD_NODE:
+        if result == KeyStoreError.ERROR_DERIVE_ROOT_HD_NODE:
             KeyStoreErrorDialog(
                 self._manager,
                 self,
                 text=QObject().tr("Error derive Root HD Key.")).open()
-        elif not result:
+        elif result == KeyStoreError.ERROR_INVALID_PASSWORD:
             KeyStoreErrorDialog(
                 self._manager,
                 self,
                 text=QObject().tr("Wrong Key Store password.")).open()
+        elif result != KeyStoreError.SUCCESS:
+            KeyStoreErrorDialog(self._manager, self).open()
         elif not self._manager.context.keyStore.native.hasSeed:
             NewSeedDialog(self._manager).open()
 
@@ -255,12 +257,12 @@ class ValidateSeedPhraseDialog(AbstractSeedPhraseDialog):
 
     def onAccepted(self) -> None:
         result = self._generator.finalize(self._current_phrase)
-        if result is KeyStoreError.ERROR_DERIVE_ROOT_HD_NODE:
+        if result == KeyStoreError.ERROR_DERIVE_ROOT_HD_NODE:
             KeyStoreErrorDialog(
                 self._manager,
                 self,
                 text=QObject().tr("Error derive Root HD Key.")).open()
-        elif not result:
+        elif result != KeyStoreError.SUCCESS:
             InvalidSeedPhraseDialog(
                 self._manager,
                 self,
@@ -286,12 +288,12 @@ class RestoreSeedPhraseDialog(AbstractSeedPhraseDialog):
 
     def onAccepted(self) -> None:
         result = self._generator.finalize(self._current_phrase)
-        if result is KeyStoreError.ERROR_DERIVE_ROOT_HD_NODE:
+        if result == KeyStoreError.ERROR_DERIVE_ROOT_HD_NODE:
             KeyStoreErrorDialog(
                 self._manager,
                 self,
                 text=QObject().tr("Error derive Root HD Key.")).open()
-        elif not result:
+        elif result != KeyStoreError.SUCCESS:
             InvalidSeedPhraseDialog(self._manager, self).open()
 
     def onRejected(self) -> None:

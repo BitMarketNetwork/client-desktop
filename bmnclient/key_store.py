@@ -29,9 +29,11 @@ class KeyIndex(Enum):
 
 class KeyStoreError(Enum):
     SUCCESS: Final = 0
-    ERROR_INVALID_PASSWORD = 1
-    ERROR_SEED_NOT_FOUND = 2
-    ERROR_DERIVE_ROOT_HD_NODE = 3
+    ERROR_INVALID_PASSWORD: Final = 1
+    ERROR_SEED_NOT_FOUND: Final = 2
+    ERROR_SAVE_SEED: Final = 3
+    ERROR_INVALID_SEED_PHRASE: Final = 4
+    ERROR_DERIVE_ROOT_HD_NODE: Final = 5
 
 
 class _KeyStoreBase:
@@ -249,7 +251,7 @@ class KeyStore(_KeyStoreSeed):
                 return True
         return False
 
-    def open(self, password: str) -> [bool, KeyStoreError]:
+    def open(self, password: str) -> KeyStoreError:
         with self._lock:
             self._clear()
 
@@ -257,27 +259,29 @@ class KeyStore(_KeyStoreSeed):
                 ConfigKey.KEY_STORE_VALUE,
                 str)
             if not value:
-                return False
+                return KeyStoreError.ERROR_SEED_NOT_FOUND
             value = SecretStore(password).decryptValue(value)
-            if not value or not self._loadSecretStoreValue(value):
-                return False
+            if not value:
+                return KeyStoreError.ERROR_INVALID_PASSWORD
+            if not self._loadSecretStoreValue(value):
+                return KeyStoreError.ERROR_SEED_NOT_FOUND
             root_node = self._deriveRootHdNodeFromSeed()
-            if root_node is KeyStoreError.ERROR_DERIVE_ROOT_HD_NODE:
+            if isinstance(root_node, KeyStoreError):
                 return root_node
             self._open_callback(root_node)
-        return True
+        return KeyStoreError.SUCCESS
 
-    def saveSeed(self, language: str, phrase: str) -> [bool, KeyStoreError]:
+    def saveSeed(self, language: str, phrase: str) -> KeyStoreError:
         with self._lock:
             if not self._saveSeed(language, phrase):
-                return False
+                return KeyStoreError.ERROR_SAVE_SEED
             root_node = self._deriveRootHdNodeFromSeed()
             if root_node is None:
-                return False
-            if root_node is KeyStoreError.ERROR_DERIVE_ROOT_HD_NODE:
+                return KeyStoreError.ERROR_SEED_NOT_FOUND
+            if isinstance(root_node, KeyStoreError):
                 return root_node
             self._open_callback(root_node)
-        return True
+        return KeyStoreError.SUCCESS
 
     def revealSeedPhrase(self, password: str) -> Union[KeyStoreError, str]:
         with self._lock:
@@ -314,19 +318,16 @@ class _AbstractSeedPhrase:
     def validate(self, phrase: str) -> bool:
         raise NotImplementedError
 
-    def finalize(self, phrase: str) -> [bool, KeyStoreError]:
+    def finalize(self, phrase: str) -> KeyStoreError:
         if not self.validate(phrase):
-            return False
+            return KeyStoreError.ERROR_INVALID_SEED_PHRASE
 
         result = self._key_store.saveSeed(self._mnemonic.language, phrase)
-
-        if result is KeyStoreError.ERROR_DERIVE_ROOT_HD_NODE:
+        if result != KeyStoreError.SUCCESS:
             return result
-        if result is False:
-            return False
 
         self.clear()
-        return True
+        return KeyStoreError.SUCCESS
 
 
 class GenerateSeedPhrase(_AbstractSeedPhrase):
