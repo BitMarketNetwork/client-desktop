@@ -133,7 +133,7 @@ class TestNetworkQuery(TestCase):
 
         query.setResponse(response, None)
         query.event_loop = QEventLoop()
-        query.event_loop.exec_()
+        query.event_loop.exec()
         query.event_loop = None
 
     def test_query(self) -> None:

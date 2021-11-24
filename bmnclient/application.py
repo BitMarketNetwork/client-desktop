@@ -175,8 +175,6 @@ class CoreApplication(QObject):
             # Prepare QCoreApplication
             QLocale.setDefault(QLocale.c())
 
-            qt_class.setAttribute(Qt.AA_EnableHighDpiScaling)
-            qt_class.setAttribute(Qt.AA_UseHighDpiPixmaps)
             qt_class.setAttribute(Qt.AA_DisableShaderDiskCache)
             qt_class.setAttribute(Qt.AA_DisableWindowContextHelpButton)
 
@@ -249,7 +247,7 @@ class CoreApplication(QObject):
 
         assert not self._on_exit_called
         self._run_called = True
-        self._exit_code = self._qt_application.exec_()
+        self._exit_code = self._qt_application.exec()
         assert self._on_exit_called
 
         if not self._exit_code:
