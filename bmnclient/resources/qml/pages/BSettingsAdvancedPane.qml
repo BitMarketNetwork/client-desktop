@@ -1,4 +1,4 @@
-import QtQuick.Dialogs 1.3
+import QtQuick.Dialogs
 import "../application"
 import "../basiccontrols"
 import "../dialogs"
@@ -119,8 +119,8 @@ BPane {
         id: _fontDialog
         modality: Qt.WindowModal
         title: qsTr("Select a preferable font")
-        font: Qt.font(BBackend.settings.font.current)
-        onFontChanged: {
+        selectedFont: Qt.font(BBackend.settings.font.current)
+        onSelectedFontChanged: {
             BBackend.settings.font.current = {
                 "family": font.family,
                 "pointSize": font.pointSize,

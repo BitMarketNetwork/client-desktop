@@ -176,7 +176,6 @@ class CoreApplication(QObject):
             QLocale.setDefault(QLocale.c())
 
             qt_class.setAttribute(Qt.AA_DisableShaderDiskCache)
-            qt_class.setAttribute(Qt.AA_DisableWindowContextHelpButton)
 
             qt_class.setApplicationName(Product.NAME)
             qt_class.setApplicationVersion(Product.VERSION_STRING)
