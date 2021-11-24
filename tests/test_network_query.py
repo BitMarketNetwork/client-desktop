@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from unittest import TestCase
 
-from PySide2.QtCore import QEventLoop
-from PySide2.QtNetwork import QNetworkReply, QNetworkRequest
+from PySide6.QtCore import QEventLoop
+from PySide6.QtNetwork import QNetworkReply, QNetworkRequest
 
 from bmnclient.network.access_manager import NetworkAccessManager
 from bmnclient.network.query import AbstractJsonQuery, AbstractQuery

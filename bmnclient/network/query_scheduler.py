@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import \
+from PySide6.QtCore import \
     QBasicTimer, \
     QObject
 
@@ -22,7 +22,7 @@ from ..version import Timer
 
 if TYPE_CHECKING:
     from typing import Callable, Dict, Final, List, Tuple
-    from PySide2.QtCore import QTimerEvent
+    from PySide6.QtCore import QTimerEvent
     from .query import AbstractQuery
     from ..application import CoreApplication
     from ..coins.abstract.coin import AbstractCoin

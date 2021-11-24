@@ -4,7 +4,7 @@ from enum import IntEnum
 from random import randint
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import \
+from PySide6.QtCore import \
     Property as QProperty, \
     QObject, \
     Signal as QSignal

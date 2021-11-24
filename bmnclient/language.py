@@ -4,7 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import \
+from PySide6.QtCore import \
     QCoreApplication, \
     QDir, \
     QDirIterator, \

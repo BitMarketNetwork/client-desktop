@@ -3,16 +3,16 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import \
+from PySide6.QtCore import \
     Property as QProperty, \
     QObject, \
     QUrl, \
     Slot as QSlot
-from PySide2.QtQml import \
+from PySide6.QtQml import \
     QQmlApplicationEngine, \
     QQmlNetworkAccessManagerFactory
-from PySide2.QtQuick import QQuickWindow
-from PySide2.QtQuickControls2 import QQuickStyle
+from PySide6.QtQuick import QQuickWindow
+from PySide6.QtQuickControls2 import QQuickStyle
 
 from .dialogs import DialogManager
 from .dialogs.basic import AlphaDialog, QuitDialog
@@ -30,7 +30,7 @@ from ...version import Gui, ProductPaths
 
 if TYPE_CHECKING:
     from typing import Iterable, List
-    from PySide2.QtQml import QQmlError
+    from PySide6.QtQml import QQmlError
     from .dialogs import AbstractDialog
     from ...application import CommandLine
 
@@ -111,6 +111,7 @@ class QmlApplication(GuiApplication):
             self._logger.debug("QML object was created: %s", url.toString())
 
     def _onQmlWarnings(self, warning_list: List[QQmlError]) -> None:
+        # PYSIDE6FIXME
         # TODO: TypeError: Can't call meta function because I have no idea how
         #  to handle QList<QQmlError>...
         # https://github.com/enthought/pyside/blob/master/libpyside/signalmanager.cpp

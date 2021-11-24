@@ -133,7 +133,7 @@ def find_qt_wayland_plugins() -> List[Tuple[Path, Path]]:
     if not PLATFORM_IS_LINUX:
         return []
     result = []
-    module_path = get_module_path("PySide2")
+    module_path = get_module_path("PySide6")
 
     for name in (
             "wayland-decoration-client",
@@ -142,7 +142,7 @@ def find_qt_wayland_plugins() -> List[Tuple[Path, Path]]:
     ):
         relative_path = Path("Qt") / "plugins" / name
         for file_path in glob_strict(module_path / relative_path, "lib*.so"):
-            result.append((file_path, Path("PySide2") / relative_path))
+            result.append((file_path, Path("PySide6") / relative_path))
 
     assert result
     return result
@@ -264,7 +264,7 @@ if USE_QRC != 1:
     ]
 
 hidden_import_list = [
-    "PySide2.QtQuick"
+    "PySide6.QtQuick"
 ]
 
 
@@ -299,7 +299,7 @@ if PLATFORM_IS_WINDOWS and False:
         lambda x: not is_relative_to(Path(x[1]), os_root),
         analysis.binaries))
 
-# TODO temporary fix for Qt5Network
+# TODO temporary fix for Qt5Network # PYSIDE6FIXME
 if PLATFORM_IS_WINDOWS:
     for b in analysis.binaries.copy():
         if b[0].lower() == "libssl-1_1.dll":

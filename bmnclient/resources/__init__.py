@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import QFile, QUrl
+from PySide6.QtCore import QFile, QUrl
 
 from ..utils import NotImplementedInstance
 from ..utils.class_property import classproperty

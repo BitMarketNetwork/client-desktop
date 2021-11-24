@@ -7,14 +7,14 @@ from enum import auto, Enum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import \
+from PySide6.QtCore import \
     QLocale, \
     QMetaObject, \
     QObject, \
     Qt, \
     Slot as QSlot
-from PySide2.QtGui import QIcon
-from PySide2.QtWidgets import QApplication
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QApplication
 
 from .coins.currency import FiatCurrencyList, FiatRate
 from .coins.list import CoinList
@@ -34,7 +34,7 @@ from .version import Product, ProductPaths, Server, Timer
 
 if TYPE_CHECKING:
     from typing import Callable, List, Optional, Type, Union
-    from PySide2.QtCore import QCoreApplication
+    from PySide6.QtCore import QCoreApplication
     from .coins.hd import HdNode
 
 

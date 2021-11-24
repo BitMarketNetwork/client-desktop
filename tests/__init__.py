@@ -9,7 +9,7 @@ from random import randint
 from tempfile import gettempdir
 from typing import TYPE_CHECKING
 
-from PySide2.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 
 from bmnclient.application import CommandLine, CoreApplication
 from bmnclient.os_environment import Platform

@@ -3,8 +3,8 @@ from __future__ import annotations
 from os import environ
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import Qt
-from PySide2.QtWidgets import QApplication
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication
 
 from .system_tray import SystemTrayIcon
 from ..application import CoreApplication
@@ -13,7 +13,7 @@ from ..version import Timer
 
 if TYPE_CHECKING:
     from typing import Callable, Iterable, Optional
-    from PySide2.QtGui import QClipboard, QFont, QWindow
+    from PySide6.QtGui import QClipboard, QFont, QWindow
     from ..application import CommandLine
     MessageType = CoreApplication.MessageType
 

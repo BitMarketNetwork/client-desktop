@@ -1,111 +1,112 @@
 # glob-style pattern
+# PYSIDE6FIXME
 
 bmnclient/**/.*
 bmnclient/resources/translations/*.ts
 
 include/*
-PySide2/Qt/libexec/*
-PySide2/plugins/qmltooling/*
-PySide2/plugins/platforms/qeglfs*
-PySide2/plugins/platforms/qlinuxfb*
-PySide2/plugins/platforms/qminimal*
-PySide2/plugins/platforms/qoffscreen*
-PySide2/plugins/platforms/qvnc*
-PySide2/plugins/platforms/qwebgl*
-PySide2/qml/Qt/*
-PySide2/*/designer/*
+PySide6/Qt/libexec/*
+PySide6/plugins/qmltooling/*
+PySide6/plugins/platforms/qeglfs*
+PySide6/plugins/platforms/qlinuxfb*
+PySide6/plugins/platforms/qminimal*
+PySide6/plugins/platforms/qoffscreen*
+PySide6/plugins/platforms/qvnc*
+PySide6/plugins/platforms/qwebgl*
+PySide6/qml/Qt/*
+PySide6/*/designer/*
 
-Qt53D*
-Qt5Quick3D*
+Qt63D*
+Qt6Quick3D*
 Qt3D*
 QtQuick3D*
-PySide2/qml/Qt3D/*
-PySide2/qml/QtQuick3D/*
-PySide2/qml/QtQuick/Scene2D/*
-PySide2/qml/QtQuick/Scene3D/*
+PySide6/qml/Qt3D/*
+PySide6/qml/QtQuick3D/*
+PySide6/qml/QtQuick/Scene2D/*
+PySide6/qml/QtQuick/Scene3D/*
 
-Qt5Bluetooth*
+Qt6Bluetooth*
 QtBluetooth*
-PySide2/qml/QtBluetooth/*
+PySide6/qml/QtBluetooth/*
 
-Qt5Charts*
+Qt6Charts*
 QtCharts*
-PySide2/qml/QtCharts/*
+PySide6/qml/QtCharts/*
 
-Qt5Concurrent*
+Qt6Concurrent*
 QtConcurrent*
 
-Qt5DataVisualization*
+Qt6DataVisualization*
 QtDataVisualization*
-PySide2/qml/QtDataVisualization/*
+PySide6/qml/QtDataVisualization/*
 
-Qt5Designer*
+Qt6Designer*
 QtDesigner*
 
-Qt5Gamepad*
+Qt6Gamepad*
 QtGamepad*
-PySide2/qml/QtGamepad/*
+PySide6/qml/QtGamepad/*
 
-Qt5Help*
+Qt6Help*
 QtHelp*
 
-Qt5Location*
+Qt6Location*
 QtLocation*
-Qt5Positioning*
+Qt6Positioning*
 QtPositioning*
-PySide2/qml/QtLocation/*
-PySide2/qml/QtPositioning/*
+PySide6/qml/QtLocation/*
+PySide6/qml/QtPositioning/*
 
-Qt5Multimedia*
+Qt6Multimedia*
 QtMultimedia*
-PySide2/qml/QtMultimedia/*
+PySide6/qml/QtMultimedia/*
 
-Qt5Nfc*
+Qt6Nfc*
 QtNfc*
-PySide2/qml/QtNfc/*
+PySide6/qml/QtNfc/*
 
-Qt5Pdf*
+Qt6Pdf*
 QtPdf*
-PySide2/qml/QtQuick/Pdf/*
-PySide2/plugins/imageformats/qpdf*
+PySide6/qml/QtQuick/Pdf/*
+PySide6/plugins/imageformats/qpdf*
 
-Qt5Purchasing*
+Qt6Purchasing*
 QtPurchasing*
-PySide2/qml/QtPurchasing/*
+PySide6/qml/QtPurchasing/*
 
-Qt5RemoteObjects*
+Qt6RemoteObjects*
 QtRemoteObjects*
-PySide2/qml/QtRemoteObjects/*
-PySide2/qml/QtQml/RemoteObjects/*
+PySide6/qml/QtRemoteObjects/*
+PySide6/qml/QtQml/RemoteObjects/*
 
-Qt5Sensors*
+Qt6Sensors*
 QtSensors*
-PySide2/qml/QtSensors/*
+PySide6/qml/QtSensors/*
 
-Qt5SerialPort*
+Qt6SerialPort*
 QtSerialPort*
 
-Qt5Sql*
+Qt6Sql*
 QtSql*
 
-Qt5Test*
+Qt6Test*
 QtTest*
-PySide2/qml/QtTest/*
+PySide6/qml/QtTest/*
 
-Qt5TextToSpeech*
+Qt6TextToSpeech*
 QtTextToSpeech*
 
-Qt5VirtualKeyboard*
+Qt6VirtualKeyboard*
 QtVirtualKeyboard*
-PySide2/qml/QtQuick/VirtualKeyboard/*
+PySide6/qml/QtQuick/VirtualKeyboard/*
 
-Qt5Web*
+Qt6Web*
 QtWeb*
-PySide2/qml/QtWeb*
+PySide6/qml/QtWeb*
 
-Qt5Xml*
+Qt6Xml*
 QtXml*
-Qt5Scxml*
+Qt6Scxml*
 QtScxml*
-PySide2/qml/QtScxml*
-PySide2/qml/QtQuick/XmlListModel/*
+PySide6/qml/QtScxml*
+PySide6/qml/QtQuick/XmlListModel/*

@@ -4,7 +4,7 @@
 
 BMN_POSIX_BIN_DIR    ?=
 BMN_PYTHON_BIN_DIR   ?=
-BMN_PYSIDE2_BIN_DIR  ?=
+BMN_PYSIDE_BIN_DIR   ?=
 BMN_QT_BIN_DIR       ?=
 BMN_NSIS_BIN_DIR     ?=
 BMN_DMGBUILD_BIN_DIR ?=
@@ -41,8 +41,8 @@ CHMOD_EXEC =
 
 RSYNC = "$(BMN_POSIX_BIN_DIR)rsync.exe" "--rsh=$(BMN_POSIX_BIN_DIR)ssh.exe"
 PYTHON = "$(BMN_PYTHON_BIN_DIR)python.exe"
-PYLUPDATE = "$(BMN_PYSIDE2_BIN_DIR)pyside2-lupdate.exe"
-PYRCC = "$(BMN_PYSIDE2_BIN_DIR)pyside2-rcc.exe"
+PYLUPDATE = "$(BMN_PYSIDE_BIN_DIR)pyside6-lupdate.exe"
+PYRCC = "$(BMN_PYSIDE_BIN_DIR)pyside6-rcc.exe"
 LUPDATE = "$(BMN_QT_BIN_DIR)lupdate.exe"
 LRELEASE = "$(BMN_QT_BIN_DIR)lrelease.exe"
 MAKENSIS = "$(BMN_NSIS_BIN_DIR)makensis.exe"
@@ -72,8 +72,8 @@ PYTHON = /usr/bin/env python3
 else
 PYTHON = $(BMN_PYTHON_BIN_DIR)python3
 endif
-PYLUPDATE = $(BMN_PYSIDE2_BIN_DIR)pyside2-lupdate
-PYRCC = $(BMN_PYSIDE2_BIN_DIR)pyside2-rcc
+PYLUPDATE = $(BMN_PYSIDE_BIN_DIR)pyside6-lupdate
+PYRCC = $(BMN_PYSIDE_BIN_DIR)pyside6-rcc
 LUPDATE = $(BMN_QT_BIN_DIR)lupdate
 LRELEASE = $(BMN_QT_BIN_DIR)lrelease
 MAKENSIS =

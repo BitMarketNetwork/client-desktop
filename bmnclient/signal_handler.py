@@ -5,10 +5,10 @@ import sys
 from socket import SOCK_STREAM, socketpair
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import \
+from PySide6.QtCore import \
     QObject, \
     Signal as QSignal
-from PySide2.QtNetwork import QAbstractSocket
+from PySide6.QtNetwork import QAbstractSocket
 
 from .logger import Logger
 from .os_environment import Platform

@@ -22,7 +22,7 @@ don't try to use x86!
 - Python 3.7+ with PIP
     * [requirements.txt](requirements.txt)
     * [requirements-dev.txt](requirements-dev.txt)
-- Qt 5.15.1
+- Qt 6.2.1
 - NSIS 3.06+ (for Windows)
 - AppImage Tool 12 (for Linux)
 
@@ -37,13 +37,13 @@ don't try to use x86!
   ```
 
 
-- **[Qt 5.15.1 64-bit][qt download]**<br/>
+- **[Qt 6.2.1 64-bit][qt download]**<br/>
   Currently for Qt an online installer only is available. Download and run it.
   Install the following packages:
     - `Qt/Developer and Designer Tools/MinGW 8.x.x 64-bit` this is required for
       the `mingw32-make` tool. For more convenience, add the package bin path to
       the `PATH` environment variable.
-    - `Qt/Qt 5.15.1/MinGW 8.x.x 64-bit` this is required for the `lrelease`,
+    - PYSIDE6FIXME `Qt/Qt 5.15.1/MinGW 8.x.x 64-bit` this is required for the `lrelease`,
       `lupdate` tools.
 
 
@@ -74,9 +74,9 @@ don't try to use x86!
   ```
 
 
-- **Qt 5.15.x**<br/>
+- **Qt 6.2.1**<br/>
   ```bash
-  $ brew install qt5@5.15.1
+  $ brew install qt5@5.15.1  # PYSIDE6FIXME
   ```
 
 
@@ -85,11 +85,11 @@ don't try to use x86!
 - Basic packages:<br/>
   **Ubuntu and Debian:**
   ```bash
-  $ sudo apt install make python3-pip qt5-default qttools5-dev-tools
+  $ sudo apt install make python3-pip qt5-default qttools5-dev-tools  # PYSIDE6FIXME
   ```
   **Arch Linux:**
   ```bash
-  $ sudo pacman -S --needed make python-pip qt5-tools
+  $ sudo pacman -S --needed make python-pip qt5-tools  # PYSIDE6FIXME
   ```
 
 
@@ -131,7 +131,7 @@ appropriate environment variables.
   # or
   $ python -m pip install -r requirements-dev.txt
   ```
-  **For Linux only:** Possibly required PySide2 tools will be installed to
+  **For Linux only:** Possibly required PySide6 tools will be installed to
   the `~/.local/bin`, because for more convenience you might want to add this
   path to `PATH` environment variable:
   ```bash

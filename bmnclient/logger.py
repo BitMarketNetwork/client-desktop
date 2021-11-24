@@ -8,7 +8,7 @@ from threading import Lock
 from time import strftime
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import qInstallMessageHandler, QtMsgType
+from PySide6.QtCore import qInstallMessageHandler, QtMsgType
 
 from .os_environment import Platform
 from .utils.string import StringUtils
@@ -17,7 +17,7 @@ from .version import Product
 if TYPE_CHECKING:
     from json import JSONDecodeError
     from typing import Optional, Type
-    from PySide2.QtCore import QMessageLogContext
+    from PySide6.QtCore import QMessageLogContext
     from .utils.string import ClassStringKeyTuple
 
 
@@ -107,6 +107,7 @@ class Logger:
             logging.basicConfig(**kwargs)
             _qt_logger = logging.getLogger("Qt")
 
+            # PYSIDE6FIXME
             # TODO I found this deadlock only on macOS (10.14 - 11.0), I have to
             #  disable the custom handler for this OS...
             #  pyside-setup/sources/pyside2/PySide2/glue/qtcore.cpp:

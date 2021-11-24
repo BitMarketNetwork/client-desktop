@@ -6,8 +6,8 @@ from io import BytesIO
 from json import JSONDecodeError
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import QUrl
-from PySide2.QtNetwork import QNetworkReply, QNetworkRequest
+from PySide6.QtCore import QUrl
+from PySide6.QtNetwork import QNetworkReply, QNetworkRequest
 
 from .utils import NetworkUtils
 from ..logger import Logger
@@ -17,7 +17,7 @@ from ..version import Product, Timer
 
 if TYPE_CHECKING:
     from typing import Callable, Dict, List, Optional, Tuple, Union
-    from PySide2.QtNetwork import QSslError
+    from PySide6.QtNetwork import QSslError
     from ..utils.string import ClassStringKeyTuple
 
 

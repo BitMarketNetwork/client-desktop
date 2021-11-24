@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import \
+from PySide6.QtCore import \
     Property as QProperty, \
     Signal as QSignal, \
     Slot as QSlot
-from PySide2.QtGui import QValidator
+from PySide6.QtGui import QValidator
 
 from . import AbstractCoinStateModel
 
