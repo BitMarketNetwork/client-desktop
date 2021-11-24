@@ -29,11 +29,12 @@ class KeyIndex(Enum):
 
 class KeyStoreError(Enum):
     SUCCESS: Final = 0
-    ERROR_INVALID_PASSWORD: Final = 1
-    ERROR_SEED_NOT_FOUND: Final = 2
-    ERROR_SAVE_SEED: Final = 3
-    ERROR_INVALID_SEED_PHRASE: Final = 4
-    ERROR_DERIVE_ROOT_HD_NODE: Final = 5
+    ERROR_UNKNOWN: Final = 1
+    ERROR_INVALID_PASSWORD: Final = 1000
+    ERROR_SEED_NOT_FOUND: Final = 2000
+    ERROR_SAVE_SEED: Final = 2001
+    ERROR_INVALID_SEED_PHRASE: Final = 2002
+    ERROR_DERIVE_ROOT_HD_NODE: Final = 3000
 
 
 class _KeyStoreBase:
