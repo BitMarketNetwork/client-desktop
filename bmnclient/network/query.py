@@ -63,9 +63,6 @@ class AbstractQuery:
             QNetworkRequest.EmitAllUploadProgressSignalsAttribute,
             False
         ), (
-            QNetworkRequest.FollowRedirectsAttribute,
-            False
-        ), (
             QNetworkRequest.RedirectPolicyAttribute,
             QNetworkRequest.ManualRedirectPolicy
         ), (
