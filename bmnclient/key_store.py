@@ -295,8 +295,6 @@ class KeyStore(_KeyStoreSeed):
             self._reset_callback()
         return True
 
-    def getLastErr(self) -> KeyStoreError:
-        return self._last_error
 
 class _AbstractSeedPhrase:
     def __init__(self, key_store: KeyStore) -> None:

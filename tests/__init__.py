@@ -43,7 +43,7 @@ class TestApplication(CoreApplication):
             )
             owner.assertFalse(config_path.exists())
 
-        command_line.append("--configpath=" + str(config_path))
+        command_line.append("--config-path=" + str(config_path))
 
         if Platform.isLinux:
             os.environ["QT_QPA_PLATFORM"] = "minimal"
