@@ -69,9 +69,16 @@ class QmlApplication(GuiApplication):
         context.setBaseUrl(Resources.qmlUrl)
         context.setContextProperty(Gui.QML_CONTEXT_NAME, self._qml_context)
 
+        # noinspection PyUnresolvedReferences
         self._qml_engine.objectCreated.connect(self._onQmlObjectCreated)
-        # TODO self._qml_engine.warnings.connect(self._onQmlWarnings)
+
+        # noinspection PyUnresolvedReferences
+        self._qml_engine.warnings.connect(self._onQmlWarnings)
+        self._qml_engine.setOutputWarningsToStandardError(False)
+
+        # noinspection PyUnresolvedReferences
         self._qml_engine.exit.connect(self._onQmlExit)
+        # noinspection PyUnresolvedReferences
         self._qml_engine.quit.connect(self._onQmlExit)
 
     @property
@@ -111,11 +118,8 @@ class QmlApplication(GuiApplication):
             self._logger.debug("QML object was created: %s", url.toString())
 
     def _onQmlWarnings(self, warning_list: List[QQmlError]) -> None:
-        # PYSIDE6FIXME
-        # TODO: TypeError: Can't call meta function because I have no idea how
-        #  to handle QList<QQmlError>...
-        # https://github.com/enthought/pyside/blob/master/libpyside/signalmanager.cpp
-        pass
+        for warning in warning_list:
+            self._logger.warning(warning.toString())
 
     def _onQmlExit(self, code: int = 0) -> None:
         self.setExitEvent(code)
