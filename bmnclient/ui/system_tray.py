@@ -33,7 +33,7 @@ class SystemTrayIcon(QObject):
         if not QSystemTrayIcon.supportsMessages():
             self._logger.warning("System tray don't support balloon messages.")
 
-        if Platform.isLinux:  # PYSIDE6FIXME
+        if Platform.isLinux:
             for v in getenv("XDG_CURRENT_DESKTOP", "").split(":"):
                 if v.lower() == "xfce":
                     self._logger.warning(
