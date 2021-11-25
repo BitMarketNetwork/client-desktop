@@ -58,7 +58,7 @@ class AbstractDialog(QObject):
         return self.__title
 
     @title.setter
-    def _setTitle(self, value: str) -> None:
+    def title(self, value: str) -> None:
         if self.__title != value:
             self.__title = value
             # noinspection PyUnresolvedReferences

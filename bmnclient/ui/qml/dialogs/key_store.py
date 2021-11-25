@@ -176,7 +176,7 @@ class AbstractSeedPhraseDialog(AbstractDialog):
         return self.__text
 
     @text.setter
-    def _setText(self, value: str) -> None:
+    def text(self, value: str) -> None:
         if self.__text != value:
             self.__text = value
             # noinspection PyUnresolvedReferences
@@ -187,7 +187,7 @@ class AbstractSeedPhraseDialog(AbstractDialog):
         return self.__is_valid
 
     @isValid.setter
-    def _setIsValid(self, value: bool) -> None:
+    def isValid(self, value: bool) -> None:
         if self.__is_valid != value:
             self.__is_valid = value
             # noinspection PyUnresolvedReferences

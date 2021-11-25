@@ -69,7 +69,7 @@ class AddressStateModel(AbstractAddressStateModel):
         # return self._address.useAsSource
 
     @useAsTransactionInput.setter
-    def _setUseAsTransactionInput(self, value: bool):
+    def useAsTransactionInput(self, value: bool):
         # TODO
         # if self._address.useAsSource != value:
         #     self._address.useAsSource = value

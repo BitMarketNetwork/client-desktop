@@ -36,7 +36,7 @@ class CoinStateModel(AbstractCoinStateModel):
         return self._coin.enabled
 
     @enabled.setter
-    def _setEnabled(self, value: bool) -> None:
+    def enabled(self, value: bool) -> None:
         self._coin.enabled = value
 
 

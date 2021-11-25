@@ -114,7 +114,7 @@ class TxFactoryFeeAmountModel(AbstractTxFactoryAmountModel):
         return self._factory.subtractFee
 
     @subtractFromAmount.setter
-    def _setSubtractFromAmount(self, value: bool) -> None:
+    def subtractFromAmount(self, value: bool) -> None:
         self._factory.subtractFee = value
         self.update()  # TODO kill
 
@@ -152,7 +152,7 @@ class TxFactoryChangeAmountModel(AbstractTxFactoryAmountModel):
         raise NotImplementedError
 
     @toNewAddress.setter
-    def _setToNewAddress(self, value: bool) -> None:
+    def toNewAddress(self, value: bool) -> None:
         raise NotImplementedError
 
     @QProperty(str, notify=__stateChanged)
@@ -179,7 +179,7 @@ class TxFactoryReceiverModel(AbstractTxFactoryStateModel):
             return ""
 
     @addressName.setter
-    def _setAddressName(self, value: str) -> None:
+    def addressName(self, value: str) -> None:
         self._factory.setReceiverAddressName(value)
         self._first_use = False
         self.update()
@@ -215,7 +215,7 @@ class TxFactorySourceListModel(TxIoListModel):
         return True
 
     @useAllInputs.setter
-    def _setUseAllInputs(self, value: bool) -> None:
+    def useAllInputs(self, value: bool) -> None:
         changed = False
         for i in range(0, self.rowCount()):
             state = self.data(self.index(i), self.Role.STATE)

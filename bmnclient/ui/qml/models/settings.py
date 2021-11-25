@@ -128,7 +128,7 @@ class FontModel(AbstractStateModel):
         return self._font
 
     @current.setter
-    def _setCurrent(self, value: Dict[str, Any]) -> None:
+    def current(self, value: Dict[str, Any]) -> None:
         family = str(value.get("family", ""))
         if not family:
             family = self._default_font["family"]
@@ -168,7 +168,7 @@ class SystemTrayModel(AbstractStateModel):
         return self._close_to_tray
 
     @closeToTray.setter
-    def _setCloseToTray(self, value: bool) -> None:
+    def closeToTray(self, value: bool) -> None:
         value = bool(value)
         self._application.config.set(
             ConfigKey.UI_CLOSE_TO_TRAY,

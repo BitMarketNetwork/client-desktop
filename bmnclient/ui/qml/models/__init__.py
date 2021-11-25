@@ -96,7 +96,7 @@ class AbstractTupleStateModel(AbstractStateModel):
         return self._getCurrentItemName()
 
     @currentName.setter
-    def _setCurrentName(self, value: str) -> None:
+    def currentName(self, value: str) -> None:
         if not self._isValidName(value):
             return
         if self._getCurrentItemName() != value:

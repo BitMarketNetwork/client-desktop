@@ -27,7 +27,7 @@ class ClipboardModel(QObject):
         return self._application.clipboard.text("plain", self._MODE)
 
     @text.setter
-    def _setText(self, value: str):
+    def text(self, value: str):
         self._application.clipboard.setText(value, self._MODE)
 
     def _onChanged(self, mode: QClipboard.Mode):
