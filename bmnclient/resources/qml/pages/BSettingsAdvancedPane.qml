@@ -19,8 +19,8 @@ BPane {
         BDialogInputButton {
             id: _fontDialogButton
             text: qsTr("%1, %2")
-                    .arg(_fontDialog.font.family)
-                    .arg(Math.round(_fontDialog.font.pointSize))
+                    .arg(_fontDialog.currentFont.family)
+                    .arg(Math.round(_fontDialog.currentFont.pointSize))
             onClicked: {
                 _fontDialog.open()
             }
@@ -122,8 +122,8 @@ BPane {
         selectedFont: Qt.font(BBackend.settings.font.current)
         onSelectedFontChanged: {
             BBackend.settings.font.current = {
-                "family": font.family,
-                "pointSize": font.pointSize,
+                "family": selectedFont.family,
+                "pointSize": selectedFont.pointSize,
             }
         }
     }

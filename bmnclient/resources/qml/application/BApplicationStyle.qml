@@ -3,7 +3,7 @@ import QtQuick.Controls.Material
 import "../basiccontrols"
 
 QtObject {
-    readonly property variant themeList: [{
+    readonly property var themeList: [{
             "name": "light",
             "fullName": qsTr("Light (Default)"),
             "theme": Material.Light,

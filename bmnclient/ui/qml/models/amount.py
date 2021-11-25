@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtCore import \
     Property as QProperty, \
+    QObject, \
     Signal as QSignal, \
     Slot as QSlot
 from PySide6.QtGui import QValidator
@@ -11,7 +12,7 @@ from PySide6.QtGui import QValidator
 from . import AbstractCoinStateModel
 
 if TYPE_CHECKING:
-    from typing import Callable, Optional, Type, Union
+    from typing import Callable, Optional, Type
     from .. import QmlApplication
     from ....coins.abstract.coin import AbstractCoin
     from ....coins.abstract.currency import AbstractCurrency
@@ -163,11 +164,11 @@ class AbstractAmountInputModel(AbstractAmountModel):
             self.update()
         return result
 
-    @QProperty(QValidator, constant=True)
+    @QProperty(QObject, constant=True)
     def valueHumanValidator(self) -> QValidator:
         return self._value_human_validator
 
-    @QProperty(QValidator, notify=__stateChanged)
+    @QProperty(QObject, notify=__stateChanged)
     def fiatValueHumanValidator(self) -> QValidator:
         return self._fiat_value_human_validator
 

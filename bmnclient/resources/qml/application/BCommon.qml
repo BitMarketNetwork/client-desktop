@@ -81,7 +81,7 @@ QtObject {
         readonly property var outputList: [] // TODO ListModel
     }
 
-    readonly property variant txStatusMap: [
+    readonly property var txStatusMap: [
         [ qsTr("Pending"),   Material.Pink   ],
         [ qsTr("Confirmed"), Material.Yellow ],
         [ qsTr("Complete") , Material.Green  ]

@@ -72,7 +72,7 @@ BApplicationWindow {
         }
     }
 
-    onClosing: {
+    onClosing: function(close) {
         close.accepted = BBackend.onClosing()
     }
 
