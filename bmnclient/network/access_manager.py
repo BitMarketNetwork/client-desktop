@@ -141,27 +141,12 @@ class NetworkAccessManager(QNetworkAccessManager):
 
     @property
     def http2Configuration(self) -> None:
+        # PYSIDE6FIXME
         raise NotImplementedError
         # return self._http2_config
 
-    def _createTlsConfiguration(self) -> QSslConfiguration:
-        if self._logger.isEnabledFor(logging.DEBUG):
-            version_string = QSslSocket.sslLibraryVersionString()
-            version_number = QSslSocket.sslLibraryVersionNumber()
-            if version_number > 0:
-                version_number = " (0x{:08x})".format(version_number)
-            else:
-                version_number = ""
-            self._logger.debug(
-                "TLS information:"
-                "\n\tSupports: %s"
-                "\n\tVersion:  %s%s",
-                "YES" if QSslSocket.supportsSsl() else "NO",
-                version_string,
-                version_number)
-        if not QSslSocket.supportsSsl():
-            Logger.fatal("Platform doesn't support TLS.", self._logger)
-
+    @staticmethod
+    def _createTlsConfiguration() -> QSslConfiguration:
         tls = QSslConfiguration()
         tls.setOcspStaplingEnabled(False)
         tls.setPeerVerifyDepth(0)  # whole certificate chain should be checked

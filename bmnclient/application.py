@@ -23,6 +23,7 @@ from .database.db_wrapper import Database
 from .key_store import KeyStore
 from .language import Language
 from .logger import Logger
+from .network import Network
 from .network.query_manager import NetworkQueryManager
 from .network.query_scheduler import NetworkQueryScheduler
 from .network.server_list import ServerList
@@ -212,12 +213,17 @@ class CoreApplication(QObject):
             self.setExitEvent,
             Qt.QueuedConnection)
 
+        self._init_database()
+        self._init_network()
+        self._init_coins(model_factory)
+
+    def _init_database(self) -> None:
         self._database = Database(
             self,
             self._command_line.configPath / ProductPaths.DATABASE_FILE_NAME)
 
-        self._fiat_currency_list = FiatCurrencyList(self)
-        self._fiat_rate_service_list = FiatRateServiceList(self)
+    def _init_network(self) -> None:
+        Network.configure()
 
         self._server_list = ServerList(
             self._command_line.allowServerInsecure)
@@ -232,7 +238,12 @@ class CoreApplication(QObject):
             self,
             self._network_query_manager)
 
-        # initialize coins
+    def _init_coins(
+            self,
+            model_factory: Optional[Callable[[object], object]] = None) -> None:
+        self._fiat_currency_list = FiatCurrencyList(self)
+        self._fiat_rate_service_list = FiatRateServiceList(self)
+
         self._coin_list = CoinList(model_factory=model_factory)
         for coin in self._coin_list:
             coin.fiatRate = FiatRate(0, self._fiat_currency_list.current)
