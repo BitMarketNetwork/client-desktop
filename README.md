@@ -61,11 +61,11 @@ don't try to use x86!
   By default Homebrew installs the latest Python version, some PIP-packages may
   be non-compatible with the latest Python version.
   ```bash
-  $ brew install python@3.7
+  $ brew install python@3.8
   ```
   optional
   ```bash
-  $ brew link --overwrite python@3.7
+  $ brew link --overwrite python@3.8
   ```
 
 
@@ -73,12 +73,6 @@ don't try to use x86!
   Unfortunately, preinstalled `make` by XCode is outdated
   ```bash
   $ brew install make
-  ```
-
-
-- **Qt 6.2.1**<br/>
-  ```bash
-  $ brew install qt5@5.15.1  # PYSIDE6FIXME
   ```
 
 
@@ -145,7 +139,7 @@ appropriate environment variables.
   ```
 
 
-- Build/update advanced production files:
+- Build/Update advanced production files:
   #### Windows:
   ```shell
   $ mingw32-make
