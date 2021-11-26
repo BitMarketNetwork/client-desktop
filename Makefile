@@ -5,7 +5,6 @@
 BMN_POSIX_BIN_DIR    ?=
 BMN_PYTHON_BIN_DIR   ?=
 BMN_PYSIDE_BIN_DIR   ?=
-BMN_QT_BIN_DIR       ?=
 BMN_NSIS_BIN_DIR     ?=
 BMN_DMGBUILD_BIN_DIR ?=
 BMN_APPIMAGE_BIN_DIR ?=
@@ -43,7 +42,7 @@ RSYNC = "$(BMN_POSIX_BIN_DIR)rsync.exe" "--rsh=$(BMN_POSIX_BIN_DIR)ssh.exe"
 PYTHON = "$(BMN_PYTHON_BIN_DIR)python.exe"
 RCC = "$(BMN_PYSIDE_BIN_DIR)pyside6-rcc.exe"
 LUPDATE = "$(BMN_PYSIDE_BIN_DIR)pyside6-lupdate.exe"
-LRELEASE = "$(BMN_QT_BIN_DIR)pyside6-lrelease.exe"
+LRELEASE = "$(BMN_PYSIDE_BIN_DIR)pyside6-lrelease.exe"
 MAKENSIS = "$(BMN_NSIS_BIN_DIR)makensis.exe"
 DMGBUILD =
 APPIMAGETOOL =
@@ -73,7 +72,7 @@ PYTHON = $(BMN_PYTHON_BIN_DIR)python3
 endif
 RCC = $(BMN_PYSIDE_BIN_DIR)pyside6-rcc
 LUPDATE = $(BMN_PYSIDE_BIN_DIR)pyside6-lupdate
-LRELEASE = $(BMN_QT_BIN_DIR)pyside6-lrelease
+LRELEASE = $(BMN_PYSIDE_BIN_DIR)pyside6-lrelease
 MAKENSIS =
 DMGBUILD = $(BMN_DMGBUILD_BIN_DIR)dmgbuild
 APPIMAGETOOL = $(BMN_APPIMAGE_BIN_DIR)appimagetool
