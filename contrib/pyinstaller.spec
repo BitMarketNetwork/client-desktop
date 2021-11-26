@@ -6,6 +6,7 @@ import importlib.util
 import os
 import sys
 from fnmatch import fnmatch
+from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -17,7 +18,7 @@ from PyInstaller.building.build_main import \
     PYZ
 
 if TYPE_CHECKING:
-    from typing import Any, Final, List, Tuple
+    from typing import Any, Final, List, Tuple, Iterable
 
 
 ################################################################################
@@ -68,14 +69,14 @@ def get_module_path(name: str) -> Path:
     return Path(spec.submodule_search_locations[0])
 
 
-def glob_strict(path: Path, pattern: str) -> List[Path]:
+def glob_strict(path: Path, pattern_list: Iterable[str]) -> List[Path]:
     if not path.is_dir():
         raise FileNotFoundError("path '{}' not found".format(str(path)))
-    result = list(path.glob(pattern))
+    result = list(chain.from_iterable(path.glob(p) for p in pattern_list))
     if not result:
         raise FileNotFoundError(
-            "can't find files matching pattern '{}', path '{}'"
-            .format(pattern, str(path)))
+            "can't find files matching patterns '{}', path '{}'"
+            .format(", ".join(pattern_list), str(path)))
     return result
 
 
