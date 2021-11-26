@@ -41,10 +41,9 @@ CHMOD_EXEC =
 
 RSYNC = "$(BMN_POSIX_BIN_DIR)rsync.exe" "--rsh=$(BMN_POSIX_BIN_DIR)ssh.exe"
 PYTHON = "$(BMN_PYTHON_BIN_DIR)python.exe"
-PYLUPDATE = "$(BMN_PYSIDE_BIN_DIR)pyside6-lupdate.exe"
-PYRCC = "$(BMN_PYSIDE_BIN_DIR)pyside6-rcc.exe"
-LUPDATE = "$(BMN_QT_BIN_DIR)lupdate.exe"
-LRELEASE = "$(BMN_QT_BIN_DIR)lrelease.exe"
+RCC = "$(BMN_PYSIDE_BIN_DIR)pyside6-rcc.exe"
+LUPDATE = "$(BMN_PYSIDE_BIN_DIR)pyside6-lupdate.exe"
+LRELEASE = "$(BMN_QT_BIN_DIR)pyside6-lrelease.exe"
 MAKENSIS = "$(BMN_NSIS_BIN_DIR)makensis.exe"
 DMGBUILD =
 APPIMAGETOOL =
@@ -72,10 +71,9 @@ PYTHON = /usr/bin/env python3
 else
 PYTHON = $(BMN_PYTHON_BIN_DIR)python3
 endif
-PYLUPDATE = $(BMN_PYSIDE_BIN_DIR)pyside6-lupdate
-PYRCC = $(BMN_PYSIDE_BIN_DIR)pyside6-rcc
-LUPDATE = $(BMN_QT_BIN_DIR)lupdate
-LRELEASE = $(BMN_QT_BIN_DIR)lrelease
+RCC = $(BMN_PYSIDE_BIN_DIR)pyside6-rcc
+LUPDATE = $(BMN_PYSIDE_BIN_DIR)pyside6-lupdate
+LRELEASE = $(BMN_QT_BIN_DIR)pyside6-lrelease
 MAKENSIS =
 DMGBUILD = $(BMN_DMGBUILD_BIN_DIR)dmgbuild
 APPIMAGETOOL = $(BMN_APPIMAGE_BIN_DIR)appimagetool
@@ -213,12 +211,8 @@ QRC_PUT_TR = $(file >>$(2),<file alias="$(patsubst $(RESOURCES_DIR)/%,%,$(1))">$
 # Translations
 ################################################################################
 
-PY_TR_SOURCES := $(addprefix $(TRANSLATIONS_DIR)/,\
-	$(addsuffix .py.ts,$(TRANSLATIONS)))
-QML_TR_SOURCES := $(addprefix $(TRANSLATIONS_DIR)/,\
-	$(addsuffix .qml.ts,$(TRANSLATIONS)))
-TR_OBJECTS := $(addprefix $(TRANSLATIONS_DIR)/,\
-	$(patsubst %.ts,%.qm,$(notdir $(PY_TR_SOURCES) $(QML_TR_SOURCES))))
+TR_SOURCES := $(addprefix $(TRANSLATIONS_DIR)/,$(addsuffix .ts,$(TRANSLATIONS)))
+TR_OBJECTS := $(addprefix $(TRANSLATIONS_DIR)/,$(patsubst %.ts,%.qm,$(notdir $(TR_SOURCES))))
 
 ################################################################################
 # PyInstaller
@@ -269,27 +263,22 @@ check-clean:
 tr: $(TR_OBJECTS)
 
 .PHONY: tr-update
-tr-update: $(PY_TR_SOURCES) $(QML_TR_SOURCES)
+tr-update: $(TR_SOURCES)
 
 .PHONY: tr-clean
 tr-clean: tr-mostlyclean
-	$(foreach F,$(PY_TR_SOURCES),$(call RM,$(F))$(NL))
-	$(foreach F,$(QML_TR_SOURCES),$(call RM,$(F))$(NL))
+	$(foreach F,$(TR_SOURCES),$(call RM,$(F))$(NL))
 
 .PHONY: tr-mostlyclean
 tr-mostlyclean:
 	$(foreach F,$(TR_OBJECTS),$(call RM,$(F))$(NL))
 
-$(TR_OBJECTS): $(PY_TR_SOURCES) $(QML_TR_SOURCES)
-	$(call MKDIR,$(@D))
-	$(LRELEASE) -silent $(foreach F,$+,"$(call NPATH,${F})") -qm "$(call NPATH,$@)"
+%.qm: %.ts
+	@$(call MKDIR,$(@D))
+	$(LRELEASE) -silent -removeidentical "$<" -qm "$(call NPATH,$@)"
 
-$(PY_TR_SOURCES): $(PY_SOURCES)
-	$(call MKDIR,$(@D))
-	$(PYLUPDATE) -verbose $(foreach F,$+,"$(call NPATH,${F})") -ts "$(call NPATH,$@)"
-
-$(QML_TR_SOURCES): $(QML_SOURCES)
-	$(call MKDIR,$(@D))
+$(TR_SOURCES): $(PY_SOURCES) $(QML_SOURCES)
+	@$(call MKDIR,$(@D))
 	$(LUPDATE) -verbose $(foreach F,$+,"$(call NPATH,${F})") -ts "$(call NPATH,$@)"
 
 ################################################################################
@@ -307,11 +296,11 @@ qrc-clean:
 	$(call RM,$(QRC_SOURCE))
 
 $(QRC_TARGET): $(QRC_SOURCE)
-	$(call MKDIR,$(@D))
-	$(PYRCC) "$(call NPATH,$<)" --no-compress -o "$(call NPATH,$@)"
+	@$(call MKDIR,$(@D))
+	$(RCC) "$(call NPATH,$<)" --no-compress -o "$(call NPATH,$@)"
 
 $(QRC_SOURCE)::
-	$(call MKDIR,$(@D))
+	@$(call MKDIR,$(@D))
 
 $(QRC_SOURCE):: $(QRC_SOURCES) $(TR_OBJECTS)
 	$(file >$@,<?xml version="1.0"?>)
