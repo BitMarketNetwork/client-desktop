@@ -92,11 +92,11 @@ def load_exclude_list() -> str:
                         yield line
 
 
-def exclude_list_filter(v) -> bool:
+def exclude_list_filter(file_item: List[str, str]) -> bool:
     for pattern in exclude_list:
-        path = Path(v[0])
+        path = Path(file_item[0])
         if fnmatch(str(path), pattern):
-            print("Excluded file: " + v[0])
+            print("Excluded file: " + file_item[0])
             return False
         elif (
                 (PLATFORM_IS_LINUX or PLATFORM_IS_DARWIN)
@@ -108,12 +108,12 @@ def exclude_list_filter(v) -> bool:
                 pattern[-1] = "lib" + pattern[-1]
                 pattern = "/".join(pattern)
                 if fnmatch(str(path), pattern):
-                    print("Excluded file (lib): " + v[0])
+                    print("Excluded file (lib): " + file_item[0])
                     return False
     return True
 
 
-def save_file_list(suffix, file_list) -> None:
+def save_file_list(suffix: str, file_list: List[List[str, str]]) -> None:
     with open(
             DIST_PATH / (BMN_SHORT_NAME + suffix),
             "wt",
@@ -123,9 +123,10 @@ def save_file_list(suffix, file_list) -> None:
 
 
 # TODO pathlib.PurePath.is_relative_to(), Python 3.9+
-def is_relative_to(p1, p2) -> bool:
+def is_relative_to(p1: Path, p2: Path) -> bool:
     try:
-        return p1.relative_to(p2)
+        p1.relative_to(p2)
+        return True
     except ValueError:
         return False
 
@@ -150,7 +151,7 @@ def find_qt_wayland_plugins() -> List[Tuple[Path, Path]]:
 
 
 # Sync with NSIS
-def create_version_info(file_name) -> Any:
+def create_version_info(file_name: str) -> Any:
     if not PLATFORM_IS_WINDOWS:
         return None
     version_tuple = tuple(
