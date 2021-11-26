@@ -62,7 +62,9 @@ don't try to use x86!
   be non-compatible with the latest Python version.
   ```bash
   $ brew install python@3.7
-  # optional
+  ```
+  optional
+  ```bash
   $ brew link --overwrite python@3.7
   ```
 
@@ -82,14 +84,14 @@ don't try to use x86!
 
 ### Linux Requirements
 
-- Basic packages:<br/>
+- System packages:<br/>
   **Ubuntu and Debian:**
   ```bash
-  $ sudo apt install make python3-pip qt5-default qttools5-dev-tools  # PYSIDE6FIXME
+  $ sudo apt install make python3-pip libffi-dev
   ```
   **Arch Linux:**
   ```bash
-  $ sudo pacman -S --needed make python-pip qt5-tools  # PYSIDE6FIXME
+  $ sudo pacman -S --needed make python-pip
   ```
 
 
@@ -122,13 +124,17 @@ appropriate environment variables.
 - Install application dependencies:
   ```shell
   $ python3 -m pip install -r requirements.txt
-  # or
+  ```
+  ...or
+  ```shell
   $ python -m pip install -r requirements.txt
   ```
   ...and if you want to create the distribution package or run full tests:
   ```shell
   $ python3 -m pip install -r requirements-dev.txt
-  # or
+  ```
+  ...or
+  ```shell
   $ python -m pip install -r requirements-dev.txt
   ```
   **For Linux only:** Possibly required PySide6 tools will be installed to
@@ -140,44 +146,62 @@ appropriate environment variables.
 
 
 - Build/update advanced production files:
+  #### Windows:
   ```shell
-  # for Windows:
   $ mingw32-make
-  # for macOS:
+  ```
+  #### macOS:
+  ```shell
   $ gmake
-  # for Linux:
+  ```
+  #### Linux:
+  ```shell
   $ make
   ```
 
 - Run tests (optional):
+  #### Windows:
   ```shell
-  # for Windows:
   $ mingw32-make check
-  # for macOS:
-  $ gmake gui check
-  # for Linux:
-  $ make gui check
+  ```
+  #### macOS:
+  ```shell
+  $ gmake check
+  ```
+  #### Linux:
+  ```shell
+  $ make check
   ```
 
 - Run:
+  ####Windows:
   ```shell
-  # for Windows:
   $ mingw32-make gui
-  # for macOS:
+  ```
+  #### macOS:
+  ```shell
   $ gmake gui
-  # for Linux:
+  ```
+  #### Linux:
+  ```shell
   $ make gui
-  # or
+  ```
+  #### or:
+  ```shell
   $ python3 bmn-client
   ```
 
 - Build the distribution package:
+  #### Windows:
   ```shell
-  # for Windows:
   $ mingw32-make dist
-  # for macOS:
+  ```
+  #### macOS:
+  ```shell
   $ gmake dist
-  # for Linux:
+  ```
+  #### Linux:
+  ```shell
   $ make dist
   ```
 
