@@ -106,20 +106,7 @@ class Logger:
             }
             logging.basicConfig(**kwargs)
             _qt_logger = logging.getLogger("Qt")
-
-            # PYSIDE6FIXME
-            # TODO I found this deadlock only on macOS (10.14 - 11.0), I have to
-            #  disable the custom handler for this OS...
-            #  pyside-setup/sources/pyside2/PySide2/glue/qtcore.cpp:
-            #  msgHandlerCallback()
-            #  -> Shiboken::GilState::GilState()
-            #  -> PyGILState_Ensure()
-            #  == deadlock
-            # 2021.01.22: Now i found this deadlock on Windows...
-            if Platform.type not in (
-                    Platform.Type.DARWIN,
-                    Platform.Type.WINDOWS):
-                qInstallMessageHandler(_qtMessageHandler)
+            qInstallMessageHandler(_qtMessageHandler)
 
             _is_configured = True
 

@@ -299,15 +299,6 @@ if PLATFORM_IS_WINDOWS and False:
         lambda x: not is_relative_to(Path(x[1]), os_root),
         analysis.binaries))
 
-# TODO temporary fix for Qt5Network # PYSIDE6FIXME
-if PLATFORM_IS_WINDOWS:
-    for b in analysis.binaries.copy():
-        if b[0].lower() == "libssl-1_1.dll":
-            analysis.binaries.append(("libssl-1_1-x64.dll", b[1], b[2]))
-        elif b[0].lower() == "libcrypto-1_1.dll":
-            analysis.binaries.append(("libcrypto-1_1-x64.dll", b[1], b[2]))
-
-
 analysis.binaries = list(filter(exclude_list_filter, analysis.binaries))
 analysis.datas = list(filter(exclude_list_filter, analysis.datas))
 
