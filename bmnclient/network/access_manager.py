@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtNetwork import \
     QAbstractNetworkCache, \
+    QHttp2Configuration, \
     QNetworkAccessManager, \
     QNetworkCacheMetaData, \
     QNetworkCookieJar, \
@@ -102,7 +103,7 @@ class NetworkAccessManager(QNetworkAccessManager):
         self._cookie_jar = NullNetworkCookieJar()
         self._proxy = QNetworkProxy(QNetworkProxy.NoProxy)
         self._tls_config = self._createTlsConfiguration()
-        self._http2_config = None  # TODO QHttp2Configuration not supported
+        self._http2_config = self._createHttp2Configuration()
 
         self.setAutoDeleteReplies(True)
         self.enableStrictTransportSecurityStore(False)
@@ -140,10 +141,8 @@ class NetworkAccessManager(QNetworkAccessManager):
         return self._tls_config
 
     @property
-    def http2Configuration(self) -> None:
-        # PYSIDE6FIXME
-        raise NotImplementedError
-        # return self._http2_config
+    def http2Configuration(self) -> QHttp2Configuration:
+        return self._http2_config
 
     @staticmethod
     def _createTlsConfiguration() -> QSslConfiguration:
@@ -165,6 +164,11 @@ class NetworkAccessManager(QNetworkAccessManager):
         tls.setSslOption(QSsl.SslOptionDisableSessionSharing, False)
         tls.setSslOption(QSsl.SslOptionDisableSessionPersistence, True)
         return tls
+
+    @staticmethod
+    def _createHttp2Configuration() -> QHttp2Configuration:
+        http2 = QHttp2Configuration()
+        return http2
 
     def createRequest(
             self,
