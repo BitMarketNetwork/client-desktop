@@ -93,24 +93,43 @@ def load_exclude_list() -> str:
 
 
 def exclude_list_filter(file_item: List[str, str]) -> bool:
+    file_path = Path(file_item[0])
     for pattern in exclude_list:
-        path = Path(file_item[0])
-        if fnmatch(str(path), pattern):
-            print("Excluded file: " + file_item[0])
+        if fnmatch(str(file_path), pattern):
+            print("Excluded file: " + str(file_path))
             return False
         elif (
                 (PLATFORM_IS_LINUX or PLATFORM_IS_DARWIN)
-                and path.name.startswith("lib")
-                and len(path.name) > 3
+                and file_path.name.startswith("lib")
+                and len(file_path.name) > 3
         ):
             pattern = pattern.split("/")
             if not pattern[-1].startswith("lib"):
                 pattern[-1] = "lib" + pattern[-1]
                 pattern = "/".join(pattern)
-                if fnmatch(str(path), pattern):
-                    print("Excluded file (lib): " + file_item[0])
+                if fnmatch(str(file_path), pattern):
+                    print("Excluded file (lib): " + str(file_path))
                     return False
     return True
+
+
+def qt_translations_filter(file_item: List[str, str]) -> bool:
+    file_path = Path(file_item[0])
+    if not fnmatch(file_path, PYSIDE_PATH.name + "/Qt/translations/*"):
+        return True
+
+    for name in BMN_TRANSLATION_LIST.split(" "):
+        name = name.strip()
+        if not name:
+            continue
+        language, _ = name.split("_")
+        if (
+                fnmatch(file_path.name, f"*_{language}.*")
+                or fnmatch(file_path.name, f"*_{name}.*")
+        ):
+            return True
+    print("Excluded file (translation): " + str(file_path))
+    return False
 
 
 def save_file_list(suffix: str, file_list: List[List[str, str]]) -> None:
@@ -215,6 +234,7 @@ BMN_MAINTAINER_DOMAIN: Final = os.getenv("BMN_MAINTAINER_DOMAIN")
 BMN_NAME: Final = os.getenv("BMN_NAME")
 BMN_SHORT_NAME: Final = os.getenv("BMN_SHORT_NAME")
 BMN_VERSION_STRING: Final = os.getenv("BMN_VERSION_STRING")
+BMN_TRANSLATION_LIST: Final = os.getenv("BMN_TRANSLATION_LIST")
 
 if PLATFORM_IS_WINDOWS:
     BMN_ICON_FILE_PATH: Final = \
@@ -304,7 +324,9 @@ if PLATFORM_IS_WINDOWS and False:
         analysis.binaries))
 
 analysis.binaries = list(filter(exclude_list_filter, analysis.binaries))
+analysis.binaries = list(filter(qt_translations_filter, analysis.binaries))
 analysis.datas = list(filter(exclude_list_filter, analysis.datas))
+analysis.datas = list(filter(qt_translations_filter, analysis.datas))
 
 
 ################################################################################

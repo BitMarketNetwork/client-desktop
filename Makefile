@@ -90,7 +90,7 @@ RSYNC_FLAGS = \
 # Version
 ################################################################################
 
-TRANSLATIONS := $(sort \
+export BMN_TRANSLATION_LIST := $(sort \
 	de_DE \
 	fr_FR \
 	ja_JP \
@@ -210,7 +210,7 @@ QRC_PUT_TR = $(file >>$(2),<file alias="$(patsubst $(RESOURCES_DIR)/%,%,$(1))">$
 # Translations
 ################################################################################
 
-TR_SOURCES := $(addprefix $(TRANSLATIONS_DIR)/,$(addsuffix .ts,$(TRANSLATIONS)))
+TR_SOURCES := $(addprefix $(TRANSLATIONS_DIR)/,$(addsuffix .ts,$(BMN_TRANSLATION_LIST)))
 TR_OBJECTS := $(addprefix $(TRANSLATIONS_DIR)/,$(patsubst %.ts,%.qm,$(notdir $(TR_SOURCES))))
 
 ################################################################################
