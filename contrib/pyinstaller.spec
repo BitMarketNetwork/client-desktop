@@ -18,7 +18,7 @@ from PyInstaller.building.build_main import \
     PYZ
 
 if TYPE_CHECKING:
-    from typing import Any, Final, List, Tuple, Iterable
+    from typing import Any, Dict, Final, List, Tuple, Iterable
 
 
 ################################################################################
@@ -131,21 +131,14 @@ def is_relative_to(p1: Path, p2: Path) -> bool:
         return False
 
 
-def find_qt_wayland_plugins() -> List[Tuple[Path, Path]]:
-    if not PLATFORM_IS_LINUX:
-        return []
+def find_qt_plugins(
+        plugins: Dict[Path, Tuple[str, ...]]) -> List[Tuple[Path, Path]]:
     result = []
-    module_path = get_module_path("PySide6")
 
-    for name in (
-            "wayland-decoration-client",
-            "wayland-graphics-integration-client",
-            "wayland-shell-integration"
-    ):
-        relative_path = Path("Qt") / "plugins" / name
-        for file_path in glob_strict(module_path / relative_path, "lib*.so"):
-            result.append((file_path, Path("PySide6") / relative_path))
-
+    for plugin_path, mask_list in plugins.items():
+        plugin_path = Path("Qt") / "plugins" / plugin_path
+        for file_path in glob_strict(PYSIDE_PATH / plugin_path, mask_list):
+            result.append((file_path, PYSIDE_PATH.name / plugin_path))
     assert result
     return result
 
@@ -212,7 +205,7 @@ PACKAGE_PATH: Final = Path(os.getenv("PACKAGE_DIR"))
 RESOURCES_PATH: Final = Path(os.getenv("RESOURCES_DIR"))
 DIST_PATH: Final = Path(os.getenv("DIST_DIR"))
 BUILD_PATH: Final = Path(os.getenv("BUILD_DIR"))
-
+PYSIDE_PATH: Final = get_module_path("PySide6")
 TARGET_NAME_RELEASE: Final = os.getenv("TARGET_NAME_RELEASE")
 TARGET_NAME_DEBUG: Final = os.getenv("TARGET_NAME_DEBUG")
 
@@ -252,7 +245,17 @@ source_list = [
 ]
 
 binary_list = [
-    *find_qt_wayland_plugins()
+    *find_qt_plugins({
+        Path("wayland-decoration-client"): (
+            "lib*.so",
+        ),
+        Path("wayland-graphics-integration-client"): (
+            "lib*.so",
+        ),
+        Path("wayland-shell-integration"): (
+            "lib*.so",
+        ),
+    }),
 ]
 
 data_path_list = [
@@ -266,7 +269,6 @@ if USE_QRC != 1:
     ]
 
 hidden_import_list = [
-    "PySide6.QtQuick"
 ]
 
 
