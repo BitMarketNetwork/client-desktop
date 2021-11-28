@@ -202,7 +202,6 @@ class NetworkAccessManager(QNetworkAccessManager):
         if self._logger.isEnabledFor(logging.DEBUG):
             tls_config = reply.sslConfiguration()
             cipher_name = tls_config.sessionCipher().name()
-            # TODO empty for http2, recheck after moving to Qt6
             if cipher_name:
                 self._logger.debug(
                     "%s New TLS session, cipher: %s",
@@ -231,10 +230,12 @@ class NetworkAccessManager(QNetworkAccessManager):
             status_code = reply.attribute(
                 QNetworkRequest.HttpStatusCodeAttribute)
             status_code = int(status_code) if status_code else -1
+            is_http2 = reply.attribute(QNetworkRequest.Http2WasUsedAttribute)
             self._logger.debug(
-                "%s HTTP status code: %i",
+                "%s HTTP status code: %i, is_http2=%s",
                 self._loggerReplyPrefix(reply),
-                status_code)
+                status_code,
+                "YES" if is_http2 else "NO")
 
     def __onTlsErrors(
             self,
