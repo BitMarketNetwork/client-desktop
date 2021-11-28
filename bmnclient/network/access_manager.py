@@ -149,7 +149,7 @@ class NetworkAccessManager(QNetworkAccessManager):
         tls = QSslConfiguration()
         tls.setOcspStaplingEnabled(False)
         tls.setPeerVerifyDepth(0)  # whole certificate chain should be checked
-        # TODO: Qt 6.2.1 + macOS, recheck after updating Qt
+        # TODO: PySide 6.2.1 + macOS, recheck after updating PySide
         if Platform.isDarwin:
             tls.setPeerVerifyMode(QSslSocket.AutoVerifyPeer)
             tls.setProtocol(QSsl.SecureProtocols)

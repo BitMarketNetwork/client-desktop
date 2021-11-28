@@ -62,8 +62,6 @@ class QmlApplication(GuiApplication):
         self._qml_engine.setBaseUrl(Resources.qmlUrl)
         self._qml_engine.setNetworkAccessManagerFactory(
             self._qml_network_access_manager_factory)
-        # TODO replace with self._engine.warnings
-        self._qml_engine.setOutputWarningsToStandardError(True)
 
         context = self._qml_engine.rootContext()
         context.setBaseUrl(Resources.qmlUrl)
