@@ -65,8 +65,8 @@ class Locale(QLocale):
 
 
 class Language:
-    _SUFFIX_LIST: Final = (".qml.qm", ".py.qm",)
-    _FILE_MATH: Final = "*.qml.qm"
+    _SUFFIX_LIST: Final = (".qm", )
+    _FILE_MATH: Final = "*.qm"
     _PRIMARY_NAME: Final = "en_US"
 
     def __init__(self, name: str = _PRIMARY_NAME) -> None:
