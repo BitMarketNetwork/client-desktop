@@ -2,44 +2,45 @@ bmnclient/**/.*
 bmnclient/resources/translations/*.ts
 
 include/*
-PySide6/*.debug
-PySide6/*/designer/*
-PySide6/Qt/libexec/*
+PySide?/*.debug
+PySide?/*/designer/*
+PySide?/Qt/libexec/*
 
 # unused image formats
 
-PySide6/Qt/plugins/imageformats/qgif*
-PySide6/Qt/plugins/imageformats/qtga*
-PySide6/Qt/plugins/imageformats/qtiff*
-PySide6/Qt/plugins/imageformats/qwebp*
+PySide?*/plugins/imageformats/qgif*
+PySide?*/plugins/imageformats/qtga*
+PySide?*/plugins/imageformats/qtiff*
+PySide?*/plugins/imageformats/qwebp*
 
 # unused platforms
 
-PySide6/Qt/plugins/platforms/qeglfs*
-PySide6/Qt/plugins/platforms/qlinuxfb*
-PySide6/Qt/plugins/platforms/qminimal*
-PySide6/Qt/plugins/platforms/qoffscreen*
-PySide6/Qt/plugins/platforms/qvnc*
-PySide6/Qt/plugins/platforms/qwebgl*
+PySide?*/plugins/platforms/qeglfs*
+PySide?*/plugins/platforms/qlinuxfb*
+PySide?*/plugins/platforms/qminimal*
+PySide?*/plugins/platforms/qoffscreen*
+PySide?*/plugins/platforms/qvnc*
+PySide?*/plugins/platforms/qwebgl*
 
-PySide6/Qt/plugins/platforminputcontexts/qtvirtualkeyboard*
+PySide?*/plugins/platforminputcontexts/qtvirtualkeyboard*
 
 # unused tls modules
 
-PySide6/Qt/plugins/tls/qcertonlybackend*
+PySide?*/plugins/tls/qcertonlybackend*
 
 # unused themes
 
-PySide6/Qt/qml/QtQuick/Controls/Fusion/*
-PySide6/Qt/qml/QtQuick/Controls/Imagine/*
-PySide6/Qt/qml/QtQuick/Controls/macOS/*
-PySide6/Qt/qml/QtQuick/Controls/Universal/*
-PySide6/Qt/qml/QtQuick/NativeStyle/*
+PySide?*/qml/QtQuick/Controls/Fusion/*
+PySide?*/qml/QtQuick/Controls/Imagine/*
+PySide?*/qml/QtQuick/Controls/macOS/*
+PySide?*/qml/QtQuick/Controls/Universal/*
+PySide?*/qml/QtQuick/Controls/Windows/*
+PySide?*/qml/QtQuick/NativeStyle/*
 
 # unused QML
 
-PySide6/Qt/plugins/qmltooling/*
-PySide6/Qt/qml/QtQuick/tooling/*
+PySide?*/plugins/qmltooling/*
+PySide?*/qml/QtQuick/tooling/*
 
 # unused libs
 
@@ -47,77 +48,77 @@ Qt63D*
 Qt3D*
 Qt6Quick3D*
 QtQuick3D*
-PySide6/Qt/qml/Qt3D/*
-PySide6/Qt/qml/QtQuick3D/*
-PySide6/Qt/qml/QtQuick/Scene2D/*
-PySide6/Qt/qml/QtQuick/Scene3D/*
+PySide?*/qml/Qt3D/*
+PySide?*/qml/QtQuick3D/*
+PySide?*/qml/QtQuick/Scene2D/*
+PySide?*/qml/QtQuick/Scene3D/*
 
-PySide6/Qt/qml/Qt5Compat/*
+PySide?*/qml/Qt5Compat/*
 
 Qt6Bodymovin*
 QtBodymovin*
 
 Qt6Charts*
 QtCharts*
-PySide6/Qt/qml/QtCharts/*
+PySide?*/qml/QtCharts/*
 
 Qt6Concurrent*
 QtConcurrent*
 
 Qt6DataVisualization*
 QtDataVisualization*
-PySide6/Qt/qml/QtDataVisualization/*
+PySide?*/qml/QtDataVisualization/*
 
 Qt6Labs*
 QtLabs*
-PySide6/Qt/qml/Qt/labs/*
+PySide?*/qml/Qt/labs/*
 
 Qt6Multimedia*
 QtMultimedia*
-PySide6/Qt/qml/QtMultimedia/*
+PySide?*/qml/QtMultimedia/*
 
 Qt6Positioning*
 QtPositioning*
-PySide6/Qt/qml/QtPositioning/*
+PySide?*/qml/QtPositioning/*
 
 Qt6QmlLocalStorage*
 QtQmlLocalStorage*
-PySide6/Qt/qml/QtQuick/LocalStorage/*
+PySide?*/qml/QtQuick/LocalStorage/*
 
 Qt6QmlXmlListModel*
 QtQmlXmlListModel*
-PySide6/Qt/qml/QtQml/XmlListModel/*
+PySide?*/qml/QtQml/XmlListModel/*
 
 Qt6QuickParticles*
 QtQuickParticles*
-PySide6/Qt/qml/QtQuick/Particles/*
+PySide?*/qml/QtQuick/Particles/*
 
 Qt6QuickShapes*
 QtQuickShapes*
-PySide6/Qt/qml/QtQuick/Shapes/*
+PySide?*/qml/QtQuick/Shapes/*
 
 Qt6QuickTest*
 QtQuickTest*
-PySide6/Qt/qml/QtTest/*
+PySide?*/qml/QtTest/*
 
 Qt6QuickTimeline*
 QtQuickTimeline*
-PySide6/Qt/qml/QtQuick/Timeline/*
+PySide?*/qml/QtQuick/Timeline/*
 
 Qt6RemoteObjects*
 QtRemoteObjects*
-PySide6/Qt/qml/QtRemoteObjects/*
+PySide?*/qml/QtRemoteObjects/*
 
 Qt6Sensors*
 QtSensors*
-PySide6/Qt/qml/QtSensors/*
+PySide?*/qml/QtSensors/*
 
 Qt6ShaderTools*
 QtShaderTools*
 
 Qt6StateMachine*
 QtStateMachine*
-PySide6/Qt/qml/QtQml/StateMachine/*
+PySide?*/qml/QtQml/StateMachine/*
 
 Qt6Sql*
 QtSql*
@@ -127,12 +128,12 @@ QtTest*
 
 Qt6VirtualKeyboard*
 QtVirtualKeyboard*
-PySide6/Qt/qml/QtQuick/VirtualKeyboard/*
+PySide?*/qml/QtQuick/VirtualKeyboard/*
 
 Qt6Web*
 QtWeb*
-PySide6/Qt/qml/QtWeb*
+PySide?*/qml/QtWeb*
 
 Qt6Scxml*
 QtScxml*
-PySide6/Qt/qml/QtScxml*
+PySide?*/qml/QtScxml*

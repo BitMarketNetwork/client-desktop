@@ -115,7 +115,10 @@ def exclude_list_filter(file_item: List[str, str]) -> bool:
 
 def qt_translations_filter(file_item: List[str, str]) -> bool:
     file_path = Path(file_item[0])
-    if not fnmatch(file_path, PYSIDE_PATH.name + "/Qt/translations/*"):
+    if (
+            not fnmatch(file_path, PYSIDE_PATH.name + "/Qt/translations/*")
+            and not fnmatch(file_path, PYSIDE_PATH.name + "/translations/*")
+    ):
         return True
 
     for name in BMN_TRANSLATION_LIST.split(" "):
