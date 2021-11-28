@@ -1,5 +1,9 @@
 # BitMarket Network Client Change Log
 
+## 0.13.0 (xx.xx.202x)
+
+* Ported to PySide6 6.2.1 
+
 ## 0.12.6 (09.07.2021)
 
 * Fixed Linux Wayland support.
