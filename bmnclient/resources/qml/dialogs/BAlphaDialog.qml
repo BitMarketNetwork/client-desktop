@@ -1,5 +1,5 @@
-import QtQuick 2.15
-import QtQuick.Controls.Material 2.15
+import QtQuick
+import QtQuick.Controls.Material
 import "../application"
 import "../basiccontrols"
 
@@ -35,18 +35,10 @@ BDialog {
             implicitWidth: leftPadding + rightPadding + textMetrics.width
             text: _base.acceptDelayText.arg(_base.acceptDelay)
             enabled: false
-
-            Keys.onReturnPressed: {
-                Qt.callLater(accept)
-            }
-
         }
         BButton {
             BDialogButtonBox.buttonRole: BDialogButtonBox.RejectRole
             text: BCommon.button.declineRole
-            Keys.onReturnPressed: {
-                Qt.callLater(reject)
-            }
         }
     }
 

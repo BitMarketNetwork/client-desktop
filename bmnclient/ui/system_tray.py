@@ -4,8 +4,8 @@ from enum import Enum
 from os import getenv
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import QObject
-from PySide2.QtWidgets import QMenu, QSystemTrayIcon
+from PySide6.QtCore import QObject
+from PySide6.QtWidgets import QMenu, QSystemTrayIcon
 
 from ..logger import Logger
 from ..os_environment import Platform

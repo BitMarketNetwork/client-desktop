@@ -1,4 +1,4 @@
-import QtQuick.Dialogs 1.3
+import QtQuick.Dialogs
 import "../application"
 import "../basiccontrols"
 import "../dialogs"
@@ -19,8 +19,8 @@ BPane {
         BDialogInputButton {
             id: _fontDialogButton
             text: qsTr("%1, %2")
-                    .arg(_fontDialog.font.family)
-                    .arg(Math.round(_fontDialog.font.pointSize))
+                    .arg(_fontDialog.currentFont.family)
+                    .arg(Math.round(_fontDialog.currentFont.pointSize))
             onClicked: {
                 _fontDialog.open()
             }
@@ -119,11 +119,11 @@ BPane {
         id: _fontDialog
         modality: Qt.WindowModal
         title: qsTr("Select a preferable font")
-        font: Qt.font(BBackend.settings.font.current)
-        onFontChanged: {
+        selectedFont: Qt.font(BBackend.settings.font.current)
+        onSelectedFontChanged: {
             BBackend.settings.font.current = {
-                "family": font.family,
-                "pointSize": font.pointSize,
+                "family": selectedFont.family,
+                "pointSize": selectedFont.pointSize,
             }
         }
     }

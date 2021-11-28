@@ -3,7 +3,7 @@ from __future__ import annotations
 from io import BytesIO
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import QObject
+from PySide6.QtCore import QObject
 
 from ..query import AbstractJsonQuery
 from ...coins.currency import \

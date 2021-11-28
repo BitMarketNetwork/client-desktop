@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import auto
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import \
+from PySide6.QtCore import \
     Property as QProperty, \
     QObject, \
     Signal as QSignal, \
@@ -36,7 +36,7 @@ class CoinStateModel(AbstractCoinStateModel):
         return self._coin.enabled
 
     @enabled.setter
-    def _setEnabled(self, value: bool) -> None:
+    def enabled(self, value: bool) -> None:
         self._coin.enabled = value
 
 

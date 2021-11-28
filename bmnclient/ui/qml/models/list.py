@@ -4,7 +4,7 @@ from enum import IntEnum
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import \
+from PySide6.QtCore import \
     Property as QProperty, \
     QAbstractListModel, \
     QByteArray, \

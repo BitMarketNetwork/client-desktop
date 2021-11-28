@@ -1,4 +1,4 @@
-import QtQuick.Controls 2.15
+import QtQuick.Controls
 
 ToolTip {
     x: (parent.width - implicitWidth) / 2

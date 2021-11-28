@@ -1,6 +1,6 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Controls.Material 2.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls.Material
 
 BScrollView {
     id: _view
@@ -51,7 +51,7 @@ BScrollView {
 
     onActiveFocusChanged: { // TODO read focus manuals
         if (activeFocus) {
-            _base.forceActiveFocus()
+            _base.forceActiveFocus(Qt.TabFocus)
         }
     }
 

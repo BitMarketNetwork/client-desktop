@@ -1,4 +1,4 @@
-import QtQuick.Window 2.15
+import QtQuick.Window
 import "../application"
 
 BToolButton {

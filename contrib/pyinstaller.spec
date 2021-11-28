@@ -6,6 +6,7 @@ import importlib.util
 import os
 import sys
 from fnmatch import fnmatch
+from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -17,7 +18,7 @@ from PyInstaller.building.build_main import \
     PYZ
 
 if TYPE_CHECKING:
-    from typing import Any, Final, List, Tuple
+    from typing import Any, Dict, Final, List, Tuple, Iterable
 
 
 ################################################################################
@@ -68,14 +69,14 @@ def get_module_path(name: str) -> Path:
     return Path(spec.submodule_search_locations[0])
 
 
-def glob_strict(path: Path, pattern: str) -> List[Path]:
+def glob_strict(path: Path, pattern_list: Iterable[str]) -> List[Path]:
     if not path.is_dir():
         raise FileNotFoundError("path '{}' not found".format(str(path)))
-    result = list(path.glob(pattern))
+    result = list(chain.from_iterable(path.glob(p) for p in pattern_list))
     if not result:
         raise FileNotFoundError(
-            "can't find files matching pattern '{}', path '{}'"
-            .format(pattern, str(path)))
+            "can't find files matching patterns '{}', path '{}'"
+            .format(", ".join(pattern_list), str(path)))
     return result
 
 
@@ -91,28 +92,50 @@ def load_exclude_list() -> str:
                         yield line
 
 
-def exclude_list_filter(v) -> bool:
+def exclude_list_filter(file_item: List[str, str]) -> bool:
+    file_path = Path(file_item[0])
     for pattern in exclude_list:
-        path = Path(v[0])
-        if fnmatch(str(path), pattern):
-            print("Excluded file: " + v[0])
+        if fnmatch(str(file_path), pattern):
+            print("Excluded file: " + str(file_path))
             return False
         elif (
                 (PLATFORM_IS_LINUX or PLATFORM_IS_DARWIN)
-                and path.name.startswith("lib")
-                and len(path.name) > 3
+                and file_path.name.startswith("lib")
+                and len(file_path.name) > 3
         ):
             pattern = pattern.split("/")
             if not pattern[-1].startswith("lib"):
                 pattern[-1] = "lib" + pattern[-1]
                 pattern = "/".join(pattern)
-                if fnmatch(str(path), pattern):
-                    print("Excluded file (lib): " + v[0])
+                if fnmatch(str(file_path), pattern):
+                    print("Excluded file (lib): " + str(file_path))
                     return False
     return True
 
 
-def save_file_list(suffix, file_list) -> None:
+def qt_translations_filter(file_item: List[str, str]) -> bool:
+    file_path = Path(file_item[0])
+    if (
+            not fnmatch(file_path, PYSIDE_PATH.name + "/Qt/translations/*")
+            and not fnmatch(file_path, PYSIDE_PATH.name + "/translations/*")
+    ):
+        return True
+
+    for name in BMN_TRANSLATION_LIST.split(" "):
+        name = name.strip()
+        if not name:
+            continue
+        language, _ = name.split("_")
+        if (
+                fnmatch(file_path.name, f"*_{language}.*")
+                or fnmatch(file_path.name, f"*_{name}.*")
+        ):
+            return True
+    print("Excluded file (translation): " + str(file_path))
+    return False
+
+
+def save_file_list(suffix: str, file_list: List[List[str, str]]) -> None:
     with open(
             DIST_PATH / (BMN_SHORT_NAME + suffix),
             "wt",
@@ -122,34 +145,28 @@ def save_file_list(suffix, file_list) -> None:
 
 
 # TODO pathlib.PurePath.is_relative_to(), Python 3.9+
-def is_relative_to(p1, p2) -> bool:
+def is_relative_to(p1: Path, p2: Path) -> bool:
     try:
-        return p1.relative_to(p2)
+        p1.relative_to(p2)
+        return True
     except ValueError:
         return False
 
 
-def find_qt_wayland_plugins() -> List[Tuple[Path, Path]]:
-    if not PLATFORM_IS_LINUX:
-        return []
+def find_qt_plugins(
+        plugins: Dict[Path, Tuple[str, ...]]) -> List[Tuple[Path, Path]]:
     result = []
-    module_path = get_module_path("PySide2")
 
-    for name in (
-            "wayland-decoration-client",
-            "wayland-graphics-integration-client",
-            "wayland-shell-integration"
-    ):
-        relative_path = Path("Qt") / "plugins" / name
-        for file_path in glob_strict(module_path / relative_path, "lib*.so"):
-            result.append((file_path, Path("PySide2") / relative_path))
-
-    assert result
+    for plugin_path, mask_list in plugins.items():
+        plugin_path = Path("Qt") / "plugins" / plugin_path
+        for file_path in glob_strict(PYSIDE_PATH / plugin_path, mask_list):
+            result.append((file_path, PYSIDE_PATH.name / plugin_path))
+    assert not plugins or result
     return result
 
 
 # Sync with NSIS
-def create_version_info(file_name) -> Any:
+def create_version_info(file_name: str) -> Any:
     if not PLATFORM_IS_WINDOWS:
         return None
     version_tuple = tuple(
@@ -210,7 +227,7 @@ PACKAGE_PATH: Final = Path(os.getenv("PACKAGE_DIR"))
 RESOURCES_PATH: Final = Path(os.getenv("RESOURCES_DIR"))
 DIST_PATH: Final = Path(os.getenv("DIST_DIR"))
 BUILD_PATH: Final = Path(os.getenv("BUILD_DIR"))
-
+PYSIDE_PATH: Final = get_module_path("PySide6")
 TARGET_NAME_RELEASE: Final = os.getenv("TARGET_NAME_RELEASE")
 TARGET_NAME_DEBUG: Final = os.getenv("TARGET_NAME_DEBUG")
 
@@ -220,6 +237,7 @@ BMN_MAINTAINER_DOMAIN: Final = os.getenv("BMN_MAINTAINER_DOMAIN")
 BMN_NAME: Final = os.getenv("BMN_NAME")
 BMN_SHORT_NAME: Final = os.getenv("BMN_SHORT_NAME")
 BMN_VERSION_STRING: Final = os.getenv("BMN_VERSION_STRING")
+BMN_TRANSLATION_LIST: Final = os.getenv("BMN_TRANSLATION_LIST")
 
 if PLATFORM_IS_WINDOWS:
     BMN_ICON_FILE_PATH: Final = \
@@ -249,9 +267,21 @@ source_list = [
     (CONTRIB_PATH / "main.py").resolve()
 ]
 
-binary_list = [
-    *find_qt_wayland_plugins()
-]
+binary_list = []
+if PLATFORM_IS_LINUX:
+    binary_list += [
+        *find_qt_plugins({
+            Path("wayland-decoration-client"): (
+                "lib*.so",
+            ),
+            Path("wayland-graphics-integration-client"): (
+                "lib*.so",
+            ),
+            Path("wayland-shell-integration"): (
+                "lib*.so",
+            ),
+        }),
+    ]
 
 data_path_list = [
     RESOURCES_PATH / "wordlist"
@@ -264,7 +294,6 @@ if USE_QRC != 1:
     ]
 
 hidden_import_list = [
-    "PySide2.QtQuick"
 ]
 
 
@@ -299,17 +328,10 @@ if PLATFORM_IS_WINDOWS and False:
         lambda x: not is_relative_to(Path(x[1]), os_root),
         analysis.binaries))
 
-# TODO temporary fix for Qt5Network
-if PLATFORM_IS_WINDOWS:
-    for b in analysis.binaries.copy():
-        if b[0].lower() == "libssl-1_1.dll":
-            analysis.binaries.append(("libssl-1_1-x64.dll", b[1], b[2]))
-        elif b[0].lower() == "libcrypto-1_1.dll":
-            analysis.binaries.append(("libcrypto-1_1-x64.dll", b[1], b[2]))
-
-
 analysis.binaries = list(filter(exclude_list_filter, analysis.binaries))
+analysis.binaries = list(filter(qt_translations_filter, analysis.binaries))
 analysis.datas = list(filter(exclude_list_filter, analysis.datas))
+analysis.datas = list(filter(qt_translations_filter, analysis.datas))
 
 
 ################################################################################

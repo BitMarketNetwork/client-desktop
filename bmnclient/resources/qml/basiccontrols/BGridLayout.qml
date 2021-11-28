@@ -1,4 +1,4 @@
-import QtQuick.Layouts 1.15
+import QtQuick.Layouts
 
 GridLayout {
     columnSpacing: 0

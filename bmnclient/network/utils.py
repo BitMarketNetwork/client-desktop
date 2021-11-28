@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from urllib.parse import quote, quote_plus
 
-from PySide2.QtCore import QUrl
+from PySide6.QtCore import QUrl
 
 from ..utils import NotImplementedInstance
 

@@ -61,6 +61,7 @@ def _configPath(home_path: Path) -> Path:
     else:
         raise RuntimeError("can't determine config directories")
 
+
 def _localDataPath(home_path: Path) -> Path:
     if Platform.isWindows:
         v = os.environ.get("LOCALAPPDATA")
@@ -98,11 +99,16 @@ def _applicationLocalDataPath(local_data_path: Path) -> Path:
 
 
 class PlatformPaths(NotImplementedInstance):
-    _HOME_PATH: Final = Path.home()
-    _CONFIG_PATH: Final = _configPath(_HOME_PATH)
-    _LOCAL_DATA_PATH: Final = _localDataPath(_HOME_PATH)
-    _APPLICATION_CONFIG_PATH: Final = _applicationConfigPath(_CONFIG_PATH)
-    _APPLICATION_LOCAL_DATA_PATH: Final = _applicationLocalDataPath(_LOCAL_DATA_PATH)
+    _HOME_PATH: Final = \
+        Path.home()
+    _CONFIG_PATH: Final = \
+        _configPath(_HOME_PATH)
+    _LOCAL_DATA_PATH: Final = \
+        _localDataPath(_HOME_PATH)
+    _APPLICATION_CONFIG_PATH: Final = \
+        _applicationConfigPath(_CONFIG_PATH)
+    _APPLICATION_LOCAL_DATA_PATH: Final = \
+        _applicationLocalDataPath(_LOCAL_DATA_PATH)
 
     @classproperty
     def homePath(cls) -> Path:  # noqa

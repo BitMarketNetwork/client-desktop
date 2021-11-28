@@ -1,4 +1,4 @@
-import QtQuick.Layouts 1.15
+import QtQuick.Layouts
 
 StackLayout {
     implicitHeight: currentIndex >= 0 ? children[currentIndex].implicitHeight : 0

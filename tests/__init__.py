@@ -9,7 +9,7 @@ from random import randint
 from tempfile import gettempdir
 from typing import TYPE_CHECKING
 
-from PySide2.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 
 from bmnclient.application import CommandLine, CoreApplication
 from bmnclient.os_environment import Platform
@@ -43,7 +43,7 @@ class TestApplication(CoreApplication):
             )
             owner.assertFalse(config_path.exists())
 
-        command_line.append("--configpath=" + str(config_path))
+        command_line.append("--config-path=" + str(config_path))
 
         if Platform.isLinux:
             os.environ["QT_QPA_PLATFORM"] = "minimal"

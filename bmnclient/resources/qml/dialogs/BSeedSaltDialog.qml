@@ -1,6 +1,6 @@
-import QtQuick 2.15
-import QtQuick.Controls.Material 2.15
-import QtQuick.Particles 2.15
+import QtQuick
+import QtQuick.Controls.Material
+import QtQuick.Particles
 import "../application"
 import "../basiccontrols"
 

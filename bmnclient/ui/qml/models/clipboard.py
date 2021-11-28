@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import \
+from PySide6.QtCore import \
     Property as QProperty, \
     QObject, \
     Signal as QSignal
-from PySide2.QtGui import QClipboard
+from PySide6.QtGui import QClipboard
 
 if TYPE_CHECKING:
     from .. import QmlApplication
@@ -27,7 +27,7 @@ class ClipboardModel(QObject):
         return self._application.clipboard.text("plain", self._MODE)
 
     @text.setter
-    def _setText(self, value: str):
+    def text(self, value: str):
         self._application.clipboard.setText(value, self._MODE)
 
     def _onChanged(self, mode: QClipboard.Mode):

@@ -3,8 +3,9 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from PySide2.QtNetwork import \
+from PySide6.QtNetwork import \
     QAbstractNetworkCache, \
+    QHttp2Configuration, \
     QNetworkAccessManager, \
     QNetworkCacheMetaData, \
     QNetworkCookieJar, \
@@ -22,8 +23,8 @@ from ..version import Timer
 
 if TYPE_CHECKING:
     from typing import Final, List, Optional
-    from PySide2.QtCore import QIODevice, QObject, QUrl
-    from PySide2.QtNetwork import QAuthenticator, QNetworkCookie, QSslError
+    from PySide6.QtCore import QIODevice, QObject, QUrl
+    from PySide6.QtNetwork import QAuthenticator, QNetworkCookie, QSslError
 
 
 class AbstractNetworkCache(QAbstractNetworkCache):
@@ -102,7 +103,7 @@ class NetworkAccessManager(QNetworkAccessManager):
         self._cookie_jar = NullNetworkCookieJar()
         self._proxy = QNetworkProxy(QNetworkProxy.NoProxy)
         self._tls_config = self._createTlsConfiguration()
-        self._http2_config = None  # TODO QHttp2Configuration not supported
+        self._http2_config = self._createHttp2Configuration()
 
         self.setAutoDeleteReplies(True)
         self.enableStrictTransportSecurityStore(False)
@@ -140,32 +141,15 @@ class NetworkAccessManager(QNetworkAccessManager):
         return self._tls_config
 
     @property
-    def http2Configuration(self) -> None:
-        raise NotImplementedError
-        # return self._http2_config
+    def http2Configuration(self) -> QHttp2Configuration:
+        return self._http2_config
 
-    def _createTlsConfiguration(self) -> QSslConfiguration:
-        if self._logger.isEnabledFor(logging.DEBUG):
-            version_string = QSslSocket.sslLibraryVersionString()
-            version_number = QSslSocket.sslLibraryVersionNumber()
-            if version_number > 0:
-                version_number = " (0x{:08x})".format(version_number)
-            else:
-                version_number = ""
-            self._logger.debug(
-                "TLS information:"
-                "\n\tSupports: %s"
-                "\n\tVersion:  %s%s",
-                "YES" if QSslSocket.supportsSsl() else "NO",
-                version_string,
-                version_number)
-        if not QSslSocket.supportsSsl():
-            Logger.fatal("Platform doesn't support TLS.", self._logger)
-
+    @staticmethod
+    def _createTlsConfiguration() -> QSslConfiguration:
         tls = QSslConfiguration()
         tls.setOcspStaplingEnabled(False)
         tls.setPeerVerifyDepth(0)  # whole certificate chain should be checked
-        # TODO: Qt 5.15 + macOS, recheck after moving to Qt6
+        # TODO: Qt 6.2.1 + macOS, recheck after updating Qt
         if Platform.isDarwin:
             tls.setPeerVerifyMode(QSslSocket.AutoVerifyPeer)
             tls.setProtocol(QSsl.SecureProtocols)
@@ -180,6 +164,11 @@ class NetworkAccessManager(QNetworkAccessManager):
         tls.setSslOption(QSsl.SslOptionDisableSessionSharing, False)
         tls.setSslOption(QSsl.SslOptionDisableSessionPersistence, True)
         return tls
+
+    @staticmethod
+    def _createHttp2Configuration() -> QHttp2Configuration:
+        http2 = QHttp2Configuration()
+        return http2
 
     def createRequest(
             self,
