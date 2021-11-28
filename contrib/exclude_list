@@ -22,6 +22,8 @@ PySide6/Qt/plugins/platforms/qoffscreen*
 PySide6/Qt/plugins/platforms/qvnc*
 PySide6/Qt/plugins/platforms/qwebgl*
 
+PySide6/Qt/plugins/platforminputcontexts/qtvirtualkeyboard*
+
 # unused tls modules
 
 PySide6/Qt/plugins/tls/qcertonlybackend*
@@ -30,6 +32,7 @@ PySide6/Qt/plugins/tls/qcertonlybackend*
 
 PySide6/Qt/qml/QtQuick/Controls/Fusion/*
 PySide6/Qt/qml/QtQuick/Controls/Imagine/*
+PySide6/Qt/qml/QtQuick/Controls/macOS/*
 PySide6/Qt/qml/QtQuick/Controls/Universal/*
 PySide6/Qt/qml/QtQuick/NativeStyle/*
 
@@ -78,7 +81,7 @@ QtPositioning*
 PySide6/Qt/qml/QtPositioning/*
 
 Qt6QmlLocalStorage*
-Q6QmlLocalStorage*
+QtQmlLocalStorage*
 PySide6/Qt/qml/QtQuick/LocalStorage/*
 
 Qt6QmlXmlListModel*

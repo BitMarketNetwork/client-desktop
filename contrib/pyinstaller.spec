@@ -158,7 +158,7 @@ def find_qt_plugins(
         plugin_path = Path("Qt") / "plugins" / plugin_path
         for file_path in glob_strict(PYSIDE_PATH / plugin_path, mask_list):
             result.append((file_path, PYSIDE_PATH.name / plugin_path))
-    assert result
+    assert not plugins or result
     return result
 
 
@@ -264,19 +264,21 @@ source_list = [
     (CONTRIB_PATH / "main.py").resolve()
 ]
 
-binary_list = [
-    *find_qt_plugins({
-        Path("wayland-decoration-client"): (
-            "lib*.so",
-        ),
-        Path("wayland-graphics-integration-client"): (
-            "lib*.so",
-        ),
-        Path("wayland-shell-integration"): (
-            "lib*.so",
-        ),
-    }),
-]
+binary_list = []
+if PLATFORM_IS_LINUX:
+    binary_list += [
+        *find_qt_plugins({
+            Path("wayland-decoration-client"): (
+                "lib*.so",
+            ),
+            Path("wayland-graphics-integration-client"): (
+                "lib*.so",
+            ),
+            Path("wayland-shell-integration"): (
+                "lib*.so",
+            ),
+        }),
+    ]
 
 data_path_list = [
     RESOURCES_PATH / "wordlist"
