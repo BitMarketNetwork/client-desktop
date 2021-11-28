@@ -78,7 +78,7 @@ don't try to use x86!
 - ### System packages:
   #### Ubuntu and Debian
   ```bash
-  $ sudo apt install make python3-pip libffi-dev
+  $ sudo apt install make python3-pip
   ```
   #### Arch Linux
   ```bash
