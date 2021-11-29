@@ -8,4 +8,4 @@ Icon=${BMN_SHORT_NAME}
 Exec=${BMN_SHORT_NAME}
 Terminal=false
 StartupNotify=false
-#StartupWMClass=TODO
+StartupWMClass=${BMN_NAME}

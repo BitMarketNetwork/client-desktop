@@ -1,17 +1,18 @@
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import \
+from PySide6.QtCore import \
     Property as QProperty, \
     QObject, \
     QUrl, \
     Slot as QSlot
-from PySide2.QtQml import \
+from PySide6.QtQml import \
     QQmlApplicationEngine, \
     QQmlNetworkAccessManagerFactory
-from PySide2.QtQuick import QQuickWindow
-from PySide2.QtQuickControls2 import QQuickStyle
+from PySide6.QtQuick import QQuickWindow
+from PySide6.QtQuickControls2 import QQuickStyle
 
 from .dialogs import DialogManager
 from .dialogs.basic import AlphaDialog, QuitDialog
@@ -25,11 +26,11 @@ from .models.settings import SettingsModel
 from ..gui import GuiApplication
 from ...network.access_manager import NetworkAccessManager
 from ...resources import Resources
-from ...version import Gui
+from ...version import Gui, ProductPaths
 
 if TYPE_CHECKING:
     from typing import Iterable, List
-    from PySide2.QtQml import QQmlError
+    from PySide6.QtQml import QQmlError
     from .dialogs import AbstractDialog
     from ...application import CommandLine
 
@@ -52,20 +53,30 @@ class QmlApplication(GuiApplication):
             self.QmlNetworkAccessManagerFactory()
         self._qml_engine = QQmlApplicationEngine()
 
-        # TODO self._engine.offlineStoragePath
+        os.environ["QML_DISK_CACHE_PATH"] = \
+            str(command_line.localDataPath / ProductPaths.QML_CACHE_PATH)
+        self._qml_engine.setOfflineStoragePath(
+            str(
+                command_line.localDataPath
+                / ProductPaths.QML_OFFLINE_STORAGE_PATH))
         self._qml_engine.setBaseUrl(Resources.qmlUrl)
         self._qml_engine.setNetworkAccessManagerFactory(
             self._qml_network_access_manager_factory)
-        # TODO replace with self._engine.warnings
-        self._qml_engine.setOutputWarningsToStandardError(True)
 
         context = self._qml_engine.rootContext()
         context.setBaseUrl(Resources.qmlUrl)
         context.setContextProperty(Gui.QML_CONTEXT_NAME, self._qml_context)
 
+        # noinspection PyUnresolvedReferences
         self._qml_engine.objectCreated.connect(self._onQmlObjectCreated)
-        # TODO self._qml_engine.warnings.connect(self._onQmlWarnings)
+
+        # noinspection PyUnresolvedReferences
+        self._qml_engine.warnings.connect(self._onQmlWarnings)
+        self._qml_engine.setOutputWarningsToStandardError(False)
+
+        # noinspection PyUnresolvedReferences
         self._qml_engine.exit.connect(self._onQmlExit)
+        # noinspection PyUnresolvedReferences
         self._qml_engine.quit.connect(self._onQmlExit)
 
     @property
@@ -105,10 +116,8 @@ class QmlApplication(GuiApplication):
             self._logger.debug("QML object was created: %s", url.toString())
 
     def _onQmlWarnings(self, warning_list: List[QQmlError]) -> None:
-        # TODO: TypeError: Can't call meta function because I have no idea how
-        #  to handle QList<QQmlError>...
-        # https://github.com/enthought/pyside/blob/master/libpyside/signalmanager.cpp
-        pass
+        for warning in warning_list:
+            self._logger.warning(warning.toString())
 
     def _onQmlExit(self, code: int = 0) -> None:
         self.setExitEvent(code)

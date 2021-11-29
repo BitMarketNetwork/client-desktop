@@ -7,15 +7,14 @@ from enum import auto, Enum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import (
-    QLocale,
-    QMetaObject,
-    QObject,
-    Qt,
+from PySide6.QtCore import \
+    QLocale, \
+    QMetaObject, \
+    QObject, \
+    Qt, \
     Slot as QSlot
-)
-from PySide2.QtGui import QIcon
-from PySide2.QtWidgets import QApplication
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QApplication
 
 from .coins.currency import FiatCurrencyList, FiatRate
 from .coins.list import CoinList
@@ -25,6 +24,7 @@ from .database.tables import AddressListTable, CoinListTable, TxListTable
 from .key_store import KeyStore
 from .language import Language
 from .logger import Logger
+from .network import Network
 from .network.query_manager import NetworkQueryManager
 from .network.query_scheduler import NetworkQueryScheduler
 from .network.server_list import ServerList
@@ -36,7 +36,7 @@ from .version import Product, ProductPaths, Server, Timer
 
 if TYPE_CHECKING:
     from typing import Callable, List, Optional, Type, Union
-    from PySide2.QtCore import QCoreApplication
+    from PySide6.QtCore import QCoreApplication
     from .coins.hd import HdNode
 
 
@@ -49,15 +49,23 @@ class CommandLine:
             description=Product.NAME + " " + Product.VERSION_STRING)
         parser.add_argument(
             "-c",
-            "--configpath",
+            "--config-path",
             default=str(PlatformPaths.applicationConfigPath),
             type=self._expandPath,
             help="directory for configuration files; by default, it is '{}'"
             .format(str(PlatformPaths.applicationConfigPath)),
             metavar="PATH")
         parser.add_argument(
+            "-L",
+            "--local-data-path",
+            default=str(PlatformPaths.applicationLocalDataPath),
+            type=self._expandPath,
+            help="directory for local data files; by default, it is '{}'"
+            .format(str(PlatformPaths.applicationLocalDataPath)),
+            metavar="PATH")
+        parser.add_argument(
             "-l",
-            "--logfile",
+            "--log-file",
             default="stderr",
             type=self._expandPath,
             help="file that will store the log; can be one of the following"
@@ -69,7 +77,6 @@ class CommandLine:
             action="store_true",
             default=False,
             help="run the application in debug mode")
-
         parser.add_argument(
             "-s",
             "--server-url",
@@ -85,8 +92,9 @@ class CommandLine:
             help="do not check the validity of server certificates")
 
         self._arguments = parser.parse_args(self._argv[1:])
-        assert isinstance(self._arguments.configpath, Path)
-        assert isinstance(self._arguments.logfile, Path)
+        assert isinstance(self._arguments.config_path, Path)
+        assert isinstance(self._arguments.local_data_path, Path)
+        assert isinstance(self._arguments.log_file, Path)
         assert isinstance(self._arguments.debug, bool)
         assert isinstance(self._arguments.server_url, str)
         assert isinstance(self._arguments.server_insecure, bool)
@@ -97,11 +105,15 @@ class CommandLine:
 
     @property
     def configPath(self) -> Path:
-        return self._arguments.configpath
+        return self._arguments.config_path
+
+    @property
+    def localDataPath(self) -> Path:
+        return self._arguments.local_data_path
 
     @property
     def logFilePath(self) -> Path:
-        return self._arguments.logfile
+        return self._arguments.log_file
 
     @property
     def logLevel(self) -> int:
@@ -165,10 +177,7 @@ class CoreApplication(QObject):
             # Prepare QCoreApplication
             QLocale.setDefault(QLocale.c())
 
-            qt_class.setAttribute(Qt.AA_EnableHighDpiScaling)
-            qt_class.setAttribute(Qt.AA_UseHighDpiPixmaps)
             qt_class.setAttribute(Qt.AA_DisableShaderDiskCache)
-            qt_class.setAttribute(Qt.AA_DisableWindowContextHelpButton)
 
             qt_class.setApplicationName(Product.NAME)
             qt_class.setApplicationVersion(Product.VERSION_STRING)
@@ -205,12 +214,17 @@ class CoreApplication(QObject):
             self.setExitEvent,
             Qt.QueuedConnection)
 
+        self._init_database()
+        self._init_network()
+        self._init_coins(model_factory)
+
+    def _init_database(self) -> None:
         self._database = Database(
             self,
             self._command_line.configPath / ProductPaths.DATABASE_FILE_NAME)
 
-        self._fiat_currency_list = FiatCurrencyList(self)
-        self._fiat_rate_service_list = FiatRateServiceList(self)
+    def _init_network(self) -> None:
+        Network.configure()
 
         self._server_list = ServerList(
             self._command_line.allowServerInsecure)
@@ -225,7 +239,12 @@ class CoreApplication(QObject):
             self,
             self._network_query_manager)
 
-        # initialize coins
+    def _init_coins(
+            self,
+            model_factory: Optional[Callable[[object], object]] = None) -> None:
+        self._fiat_currency_list = FiatCurrencyList(self)
+        self._fiat_rate_service_list = FiatRateServiceList(self)
+
         self._coin_list = CoinList(model_factory=model_factory)
         for coin in self._coin_list:
             coin.fiatRate = FiatRate(0, self._fiat_currency_list.current)
@@ -239,7 +258,7 @@ class CoreApplication(QObject):
 
         assert not self._on_exit_called
         self._run_called = True
-        self._exit_code = self._qt_application.exec_()
+        self._exit_code = self._qt_application.exec()
         assert self._on_exit_called
 
         if not self._exit_code:

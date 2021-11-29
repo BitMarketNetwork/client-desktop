@@ -55,11 +55,25 @@ def _configPath(home_path: Path) -> Path:
             raise RuntimeError("can't determine APPDATA directory")
         return Path(v)
     elif Platform.isDarwin:
-        return home_path / "Library" / "Application Support"
+        return home_path / "Library" / "Preferences"
     elif Platform.isLinux:
         return home_path / ".config"
     else:
         raise RuntimeError("can't determine config directories")
+
+
+def _localDataPath(home_path: Path) -> Path:
+    if Platform.isWindows:
+        v = os.environ.get("LOCALAPPDATA")
+        if not v:
+            raise RuntimeError("can't determine LOCALAPPDATA directory")
+        return Path(v)
+    elif Platform.isDarwin:
+        return home_path / "Library" / "Application Support"
+    elif Platform.isLinux:
+        return home_path / ".local" / "share"
+    else:
+        raise RuntimeError("can't determine local data directories")
 
 
 def _applicationConfigPath(config_path: Path) -> Path:
@@ -73,10 +87,28 @@ def _applicationConfigPath(config_path: Path) -> Path:
         raise RuntimeError("can't determine config directories")
 
 
+def _applicationLocalDataPath(local_data_path: Path) -> Path:
+    if Platform.isWindows:
+        return local_data_path / Product.NAME
+    elif Platform.isDarwin:
+        return local_data_path / Product.NAME
+    elif Platform.isLinux:
+        return local_data_path / Product.SHORT_NAME.lower()
+    else:
+        raise RuntimeError("can't determine local storage directories")
+
+
 class PlatformPaths(NotImplementedInstance):
-    _HOME_PATH: Final = Path.home()
-    _CONFIG_PATH: Final = _configPath(_HOME_PATH)
-    _APPLICATION_CONFIG_PATH: Final = _applicationConfigPath(_CONFIG_PATH)
+    _HOME_PATH: Final = \
+        Path.home()
+    _CONFIG_PATH: Final = \
+        _configPath(_HOME_PATH)
+    _LOCAL_DATA_PATH: Final = \
+        _localDataPath(_HOME_PATH)
+    _APPLICATION_CONFIG_PATH: Final = \
+        _applicationConfigPath(_CONFIG_PATH)
+    _APPLICATION_LOCAL_DATA_PATH: Final = \
+        _applicationLocalDataPath(_LOCAL_DATA_PATH)
 
     @classproperty
     def homePath(cls) -> Path:  # noqa
@@ -89,3 +121,7 @@ class PlatformPaths(NotImplementedInstance):
     @classproperty
     def applicationConfigPath(cls) -> Path:  # noqa
         return cls._APPLICATION_CONFIG_PATH
+
+    @classproperty
+    def applicationLocalDataPath(cls) -> Path:  # noqa
+        return cls._APPLICATION_LOCAL_DATA_PATH

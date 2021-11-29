@@ -1,5 +1,5 @@
-import QtQuick 2.15
-import QtQuick.Controls.Material 2.15
+import QtQuick
+import QtQuick.Controls.Material
 import "application"
 import "basiccontrols"
 import "pages"
@@ -72,7 +72,7 @@ BApplicationWindow {
         }
     }
 
-    onClosing: {
+    onClosing: function(close) {
         close.accepted = BBackend.onClosing()
     }
 

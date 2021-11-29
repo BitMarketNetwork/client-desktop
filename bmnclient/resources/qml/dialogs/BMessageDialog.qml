@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick
 import "../application"
 import "../basiccontrols"
 
@@ -57,5 +57,19 @@ BDialog {
                 _buttonBox.addItem(item)
             }
         }
+    }
+
+    onAboutToShow: {
+        try {
+            for (let i = 0; i < footer.contentChildren.length; ++i) {
+                let item = footer.contentChildren[i]
+                if (item.BDialogButtonBox.buttonRole === BDialogButtonBox.AcceptRole) {
+                    if (item.enabled) {
+                        item.forceActiveFocus(Qt.TabFocus)
+                    }
+                    break
+                }
+            }
+        } catch (e) {}
     }
 }

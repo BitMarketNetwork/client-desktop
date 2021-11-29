@@ -1,4 +1,4 @@
-import QtQuick.Controls.Material 2.15
+import QtQuick.Controls.Material
 import "../application"
 import "../basiccontrols"
 
@@ -71,7 +71,7 @@ BDialog {
 
     onAboutToShow: {
         onReset()
-        _password1.forceActiveFocus()
+        _password1.forceActiveFocus(Qt.TabFocus)
     }
     onAccepted: {
         passwordAccepted(_password1.text)

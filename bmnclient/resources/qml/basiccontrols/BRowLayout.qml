@@ -1,4 +1,4 @@
-import QtQuick.Layouts 1.15
+import QtQuick.Layouts
 
 RowLayout {
     spacing: 0

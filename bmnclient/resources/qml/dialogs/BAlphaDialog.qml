@@ -1,5 +1,5 @@
-import QtQuick 2.15
-import QtQuick.Controls.Material 2.15
+import QtQuick
+import QtQuick.Controls.Material
 import "../application"
 import "../basiccontrols"
 
@@ -57,6 +57,7 @@ BDialog {
                 stop()
                 _acceptButton.text = BCommon.button.acceptRole
                 _acceptButton.enabled = true
+                _acceptButton.forceActiveFocus(Qt.TabFocus)
             } else {
                 _acceptButton.text = acceptDelayText.arg(counter)
             }

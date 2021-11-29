@@ -97,8 +97,8 @@ class NetworkQueryManager:
             query.finishInvalidRequest()
             return self.QueryRunState.FAILED
 
-        # request.setHttp2Configuration(self._manager.http2Configuration)
         request.setSslConfiguration(self._manager.tlsConfiguration)
+        request.setHttp2Configuration(self._manager.http2Configuration)
 
         if query.method == AbstractQuery.Method.GET:
             response = self._manager.get(request)

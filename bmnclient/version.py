@@ -14,7 +14,7 @@ class Product:
     MAINTAINER_URL: Final = "https://" + MAINTAINER_DOMAIN + "/"
     NAME: Final = "BitMarket Network Client"
     SHORT_NAME: Final = "bmn-client"
-    VERSION: Final = (0, 12, 6)
+    VERSION: Final = (0, 13, 0)
     VERSION_STRING: Final = ".".join(map(str, VERSION))
     ENCODING: Final = "utf-8"
     STRING_SEPARATOR: Final = ":"
@@ -31,6 +31,9 @@ class ProductPaths:
 
     CONFIG_FILE_NAME: Final = "config.json"
     DATABASE_FILE_NAME: Final = "wallet.db"
+
+    QML_OFFLINE_STORAGE_PATH: Final = Path("qml") / "offline_storage"
+    QML_CACHE_PATH: Final = Path("qml") / "cache"
 
 
 class Timer:

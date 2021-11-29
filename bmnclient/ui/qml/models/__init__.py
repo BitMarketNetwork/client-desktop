@@ -4,7 +4,7 @@ from enum import IntEnum
 from threading import Lock
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import \
+from PySide6.QtCore import \
     Property as QProperty, \
     QObject, \
     Signal as QSignal, \
@@ -96,7 +96,7 @@ class AbstractTupleStateModel(AbstractStateModel):
         return self._getCurrentItemName()
 
     @currentName.setter
-    def _setCurrentName(self, value: str) -> None:
+    def currentName(self, value: str) -> None:
         if not self._isValidName(value):
             return
         if self._getCurrentItemName() != value:

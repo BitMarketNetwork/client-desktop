@@ -3,6 +3,7 @@ __pycache__
 /build
 /dist
 /.tox
+/.idea
 
 # generated resources
 /bmnclient/resources/qrc

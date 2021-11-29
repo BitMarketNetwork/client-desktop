@@ -1,5 +1,5 @@
-import QtQuick 2.15
-import QtQuick.Controls.Material 2.15
+import QtQuick
+import QtQuick.Controls.Material
 
 BControl {
     default property alias children: _layout.children

@@ -6,17 +6,18 @@ from io import BytesIO
 from json import JSONDecodeError
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import QUrl
-from PySide2.QtNetwork import QNetworkReply, QNetworkRequest
+from PySide6.QtCore import QUrl
+from PySide6.QtNetwork import QNetworkReply, QNetworkRequest
 
 from .utils import NetworkUtils
 from ..logger import Logger
+from ..utils.size_unit import SizeUnit, SizeUnitConverter
 from ..utils.string import StringUtils
 from ..version import Product, Timer
 
 if TYPE_CHECKING:
     from typing import Callable, Dict, List, Optional, Tuple, Union
-    from PySide2.QtNetwork import QSslError
+    from PySide6.QtNetwork import QSslError
     from ..utils.string import ClassStringKeyTuple
 
 
@@ -57,12 +58,9 @@ class AbstractQuery:
             False
         ), (
             QNetworkRequest.Http2AllowedAttribute,
-            False  # TODO QNetworkRequest.encrypted not called
+            True
         ), (
             QNetworkRequest.EmitAllUploadProgressSignalsAttribute,
-            False
-        ), (
-            QNetworkRequest.FollowRedirectsAttribute,
             False
         ), (
             QNetworkRequest.RedirectPolicyAttribute,
@@ -289,7 +287,7 @@ class AbstractQuery:
     def __onResponseRedirected(self, url: QUrl) -> None:
         Logger.fatal(
             "Redirect to '{}' detected, but redirects was disabled."
-            .format(url.toString()),
+                .format(url.toString()),
             self._logger)
 
     def __onTlsErrors(self, error_list: List[QSslError]) -> None:
@@ -310,6 +308,7 @@ class AbstractQuery:
 
 class AbstractJsonQuery(AbstractQuery):
     _DEFAULT_CONTENT_TYPE = "application/json"
+    _DEFAULT_DOWNLOAD_MAX_SIZE = SizeUnitConverter.unitToSize(16, SizeUnit.MB)
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -334,8 +333,17 @@ class AbstractJsonQuery(AbstractQuery):
         return None
 
     def _onResponseData(self, data) -> bool:
-        # TODO limit downloaded size
         # TODO stream mode
+        self._logger.debug(
+            "Limit download size: %d MiB",
+            SizeUnitConverter.sizeToUnit(
+                self._DEFAULT_DOWNLOAD_MAX_SIZE,
+                SizeUnit.MB))
+        if len(data) > self._DEFAULT_DOWNLOAD_MAX_SIZE:
+            self._logger.error(
+                "Limit download size has been reached: %d bytes",
+                self._DEFAULT_DOWNLOAD_MAX_SIZE)
+            return False
         self._json_buffer.write(data)
         return True
 

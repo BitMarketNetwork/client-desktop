@@ -4,7 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PySide2.QtCore import \
+from PySide6.QtCore import \
     QCoreApplication, \
     QDir, \
     QDirIterator, \
@@ -65,8 +65,8 @@ class Locale(QLocale):
 
 
 class Language:
-    _SUFFIX_LIST: Final = (".qml.qm", ".py.qm",)
-    _FILE_MATH: Final = "*.qml.qm"
+    _SUFFIX_LIST: Final = (".qm", )
+    _FILE_MATH: Final = "*.qm"
     _PRIMARY_NAME: Final = "en_US"
 
     def __init__(self, name: str = _PRIMARY_NAME) -> None:
