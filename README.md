@@ -9,14 +9,14 @@
     - [Windows Requirements](#windows-requirements)
     - [macOS Requirements](#macos-requirements)
     - [Linux Requirements](#linux-requirements)
-    - [Run application](#run-application)
+    - [Run Application](#run-application)
 
 # Development version
 
 AMD64 (x86_64) architecture only has been tested among other platforms. Please
 don't try to use x86!
 
-## Requirements:
+## Requirements
 
 - GNU Make 4.1+
 - Python 3.7+ with PIP
@@ -28,7 +28,8 @@ don't try to use x86!
 
 ## Windows Requirements
 
-- ### [Python 3.7+ (64-bit) and PIP][python download windows]
+- **[Python 3.7+ (64-bit) and PIP][python download windows]**:
+
   For more convenience, add Python to the `PATH` environment variable, this can
   be done by the installer itself. After completing the installation you may
   install PIP:
@@ -36,7 +37,8 @@ don't try to use x86!
   $ python -m ensurepip
   ```
 
-- ### [MinGW-w64 8.1+][mingw download]
+- **[MinGW-w64 8.1+][mingw download]**:
+
   Run the mingw-w64-install.exe. When asked, select:
     - Version: **8.1.0 (or later)**
     - Architecture: **x86_64**
@@ -48,44 +50,53 @@ don't try to use x86!
   `C:\Program Files\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin`) to
   the `PATH` environment variable.
 
-- ### [NSIS 3.06+][nsis download]
+- **[NSIS 3.06+][nsis download]**:
+
   This tool is required only if you want to create the distribution package.
 
 ## macOS Requirements
 
-- ### [Homebrew][homebrew download]
+- **[Homebrew][homebrew download]**:
+
   Install it if you don't want to install any other requirements manually.
 
-- ### Python 3.7+
+- **Python 3.7+**:
+
   By default, Homebrew installs the latest Python version, some PIP-packages may
   be non-compatible with the latest Python version.
   ```bash
   $ brew install python@3.8
   ```
-  optional
+  optional:
   ```bash
   $ brew link --overwrite python@3.8
   ```
 
-- ### GNU Make 4.1
-  Unfortunately, preinstalled `make` by XCode is outdated
+- **GNU Make 4.1**:
+
+  Unfortunately, preinstalled `make` by XCode is outdated.
   ```bash
   $ brew install make
   ```
 
 ## Linux Requirements
 
-- ### System packages:
-  #### Ubuntu and Debian
-  ```bash
-  $ sudo apt install make python3-pip
-  ```
-  #### Arch Linux
-  ```bash
-  $ sudo pacman -S --needed make python-pip
-  ```
+- **System packages**:
 
-- ### [AppImage Tool 12][appimage download]
+    - Ubuntu and Debian:
+
+      ```bash
+      $ sudo apt install make python3-pip
+      ```
+
+    - Arch Linux:
+
+      ```bash
+      $ sudo pacman -S --needed make python-pip
+      ```
+
+- **[AppImage Tool 12][appimage download]**:
+
   This tool is required only if you want to create the distribution package.
   ```bash
   $ wget https://github.com/AppImage/AppImageKit/releases/download/12/appimagetool-x86_64.AppImage
@@ -93,7 +104,7 @@ don't try to use x86!
   $ sudo mv appimagetool-x86_64.AppImage /usr/local/bin/appimagetool
   ```
 
-## Run application
+## Run Application
 
 Optionally, for avoiding the requirement's conflict you can create a
 [Python virtual environment][python venv] for running the application
@@ -104,35 +115,35 @@ environment variable, see [Makefile](Makefile) file. In the first lines you can
 see `BMN_*_BIN_DIR` variables. You can change their values inline or set the
 appropriate environment variables.
 
-- ### Check out the code from GitHub, or download and extract tarball / ZIP archive
+Depending on your installed environment, in the instructions below you will need
+to use `python` instead of `python3`.
+
+- **Check out the code from GitHub, or download and extract tarball / ZIP
+  archive**:
+
   ```shell
   $ git clone git://github.com/BitMarketNetwork/client-desktop.git
   $ cd client-desktop
   ```
 
-- ### Install application dependencies
+- **Install application dependencies**:
+
   ```shell
   $ python3 -m pip install -r requirements.txt
-  ```
-  ...or
-  ```shell
-  $ python -m pip install -r requirements.txt
   ```
   ...and if you want to create the distribution package or run full tests:
   ```shell
   $ python3 -m pip install -r requirements-dev.txt
   ```
-  ...or
-  ```shell
-  $ python -m pip install -r requirements-dev.txt
-  ```
 
-- ### Windows environment variables
+- **Windows environment variables**:
+
   Possibly required PySide6 tools will be installed to the
   `%APPDATA%\Python\Python3x\Scripts`, because for more convenience you might
   want to add this path to `PATH` environment variable.
 
-- ### Linux environment variables
+- **Linux environment variables**:
+
   Possibly required PySide6 tools will be installed to the `~/.local/bin`,
   because for more convenience you might want to add this path to `PATH`
   environment variable:
@@ -140,65 +151,89 @@ appropriate environment variables.
   $ export PATH=~/.local/bin:$PATH
   ```
 
-- ### Build/Update advanced production files:
-  #### Windows:
-  ```shell
-  $ mingw32-make
-  ```
-  #### macOS:
-  ```shell
-  $ gmake
-  ```
-  #### Linux:
-  ```shell
-  $ make
-  ```
+- **Build/Update advanced production files**:
 
-- ### Run tests (optional):
-  #### Windows:
-  ```shell
-  $ mingw32-make check
-  ```
-  #### macOS:
-  ```shell
-  $ gmake check
-  ```
-  #### Linux:
-  ```shell
-  $ make check
-  ```
+    - Windows:
 
-- ### Run:
-  #### Windows:
-  ```shell
-  $ mingw32-make gui
-  ```
-  #### macOS:
-  ```shell
-  $ gmake gui
-  ```
-  #### Linux:
-  ```shell
-  $ make gui
-  ```
-  #### or:
-  ```shell
-  $ python3 bmn-client
-  ```
+      ```shell
+      $ mingw32-make
+      ```
 
-- ### Build the distribution package:
-  #### Windows:
-  ```shell
-  $ mingw32-make dist
-  ```
-  #### macOS:
-  ```shell
-  $ gmake dist
-  ```
-  #### Linux:
-  ```shell
-  $ make dist
-  ```
+    - macOS:
+
+      ```shell
+      $ gmake
+      ```
+
+    - Linux:
+
+      ```shell
+      $ make
+      ```
+
+- **Run tests (optional)**:
+
+    - Windows:
+
+      ```shell
+      $ mingw32-make check
+      ```
+
+    - macOS:
+
+      ```shell
+      $ gmake check
+      ```
+
+    - Linux:
+
+      ```shell
+      $ make check
+      ```
+
+- **Run application**:
+
+    - Windows:
+
+      ```shell
+      $ mingw32-make gui
+      ```
+
+    - macOS:
+
+      ```shell
+      $ gmake gui
+      ```
+
+    - Linux:
+
+      ```shell
+      $ make gui
+      ```
+      ...or:
+      ```shell
+      $ python3 bmn-client
+      ```
+
+- **Build the distribution package**:
+
+    - Windows:
+
+      ```shell
+      $ mingw32-make dist
+      ```
+
+    - macOS:
+
+      ```shell
+      $ gmake dist
+      ```
+
+    - Linux:
+
+      ```shell
+      $ make dist
+      ```
 
 [homepage]:
 https://bitmarket.network
