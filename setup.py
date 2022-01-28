@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from __future__ import annotations
 
 import os
@@ -81,5 +80,5 @@ setuptools.setup(
             "bmn-client_debug" + "=" + PACKAGE_NAME + ":main"
         ]
     },
-    python_requires=">= 3.7, < 3.10"
+    python_requires=">= 3.7, < 3.11"
 )
