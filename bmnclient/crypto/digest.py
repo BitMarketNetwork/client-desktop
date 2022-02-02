@@ -18,7 +18,7 @@ class AbstractDigest:
 
     def __init__(
             self,
-            data: Optional[bytes] = None,
+            data: Optional[bytes] = None,  # TODO kill
             *,
             context: Any) -> None:
         self._context = context
@@ -71,7 +71,7 @@ class AbstractDigestHashlib(AbstractDigest):
 
 
 class AbstractDigestHazmat(AbstractDigest):
-    _HAZMAT_TYPE: Optional[Type[hashes.HashAlgorithm]] = None
+    _HAZMAT_ALGORITHM: Optional[Type[hashes.HashAlgorithm]] = None
     _HAZMAT_ARGS: Tuple[Any] = ()
 
     def __init__(
@@ -81,7 +81,7 @@ class AbstractDigestHazmat(AbstractDigest):
             context: Optional[hashes.HashAlgorithm] = None) -> None:
         if not context:
             # noinspection PyArgumentList
-            context = hashes.Hash(self._HAZMAT_TYPE(*self._HAZMAT_ARGS))
+            context = hashes.Hash(self._HAZMAT_ALGORITHM(*self._HAZMAT_ARGS))
         super().__init__(data, context=context)
 
     def update(self, data: bytes) -> AbstractDigestHazmat:
@@ -135,7 +135,7 @@ class Sha256Digest(AbstractDigestHazmat):
     _NAME = "sha256"
     _SIZE: Final = 256 // 8
     _BLOCK_SIZE: Final = 64
-    _HAZMAT_TYPE: Final = hashes.SHA256
+    _HAZMAT_ALGORITHM: Final = hashes.SHA256
 
 
 class Sha256DoubleDigest(Sha256Digest):
@@ -149,14 +149,14 @@ class Sha512Digest(AbstractDigestHazmat):
     _NAME: Final = "sha512"
     _SIZE: Final = 512 // 8
     _BLOCK_SIZE: Final = 128
-    _HAZMAT_TYPE: Final = hashes.SHA512
+    _HAZMAT_ALGORITHM: Final = hashes.SHA512
 
 
 class Blake2bDigest(AbstractDigestHazmat):
     _NAME: Final = "blake2b"
     _SIZE: Final = 512 // 8
     _BLOCK_SIZE: Final = 128
-    _HAZMAT_TYPE: Final = hashes.BLAKE2b
+    _HAZMAT_ALGORITHM: Final = hashes.BLAKE2b
     _HAZMAT_ARGS: Final = (512 // 8, )
 
 
@@ -196,7 +196,9 @@ class Hmac(AbstractDigest):
         if not context:
             # noinspection PyArgumentList
             # noinspection PyProtectedMember
-            context = hmac.HMAC(key, digest._HAZMAT_TYPE(*digest._HAZMAT_ARGS))
+            context = hmac.HMAC(
+                key,
+                digest._HAZMAT_ALGORITHM(*digest._HAZMAT_ARGS))
         super().__init__(data, context=context)
 
     def update(self, data: bytes) -> Hmac:

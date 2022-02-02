@@ -92,6 +92,8 @@ class AbstractTable:
         # compatible with utils.serialize.Serializable.rowId
         ROW_ID: Final = ColumnDefinition("row_id", "INTEGER PRIMARY KEY")
 
+    __NAME: str = ""
+    __IDENTIFIER: str = ""
     _CONSTRAINT_LIST: Tuple[str] = tuple()
     _UNIQUE_COLUMN_LIST: Tuple[Tuple[Column]] = tuple()
 

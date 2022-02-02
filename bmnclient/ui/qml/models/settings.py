@@ -81,7 +81,7 @@ class ThemeModel(AbstractTupleStateModel):
             default_name=Gui.DEFAULT_THEME_NAME)
 
     def _isValidName(self, name) -> bool:
-        return True if name else False
+        return bool(name)
 
 
 class FontModel(AbstractStateModel):
