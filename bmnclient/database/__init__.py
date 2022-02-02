@@ -184,14 +184,17 @@ class Database:
         assert not self.isOpen
 
         try:
-            _engine.enable_callback_tracebacks(
-                self._application.isDebugMode)
+            file_path = self._file_path.resolve(strict=False).as_uri()
+            file_path += "?vfs=bmn_vfs"  # TODO
+            _engine.vfs_register(Vfs())
+            _engine.enable_callback_tracebacks(self._application.isDebugMode)
+
             # noinspection PyTypeChecker
             # TODO PyTypeChecker:
             #  sqlite3.connect(factory: Type[Connection])
             #  bmnsqlite3.connect(uri)
             self.__connection = _engine.connect(
-                self._file_path,
+                file_path,
                 timeout=0.0,
                 detect_types=0,
                 isolation_level="DEFERRED",
@@ -201,8 +204,8 @@ class Database:
                     database=self,
                     **kwargs),
                 cached_statements=100,
-                uri=False)  # noqa
-        except (_engine.Error, _engine.Warning) as e:
+                uri=True)  # noqa
+        except (_engine.Error, _engine.Warning, RuntimeError) as e:
             self.__connection = None
             self._logger.error("Failed to open database: %s", str(e))
             return False

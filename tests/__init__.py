@@ -23,6 +23,10 @@ if TYPE_CHECKING:
 
 class TestApplication(CoreApplication):
     _DATA_PATH: Final = Path(__file__).parent.resolve() / "data"
+    _TEMP_PATH: Final = (
+            Path(gettempdir())
+            / "{:s}-tests".format(Product.SHORT_NAME)
+    )
     _logger_configured = False
 
     def __init__(
@@ -33,13 +37,7 @@ class TestApplication(CoreApplication):
         command_line = ["unittest"]
 
         if not config_path:
-            config_path = (
-                    Path(gettempdir())
-                    / "{:s}-{:s}".format(
-                        Product.SHORT_NAME,
-                        owner.__class__.__name__)
-            )
-
+            config_path = self._TEMP_PATH / "config"
         command_line.append("--config-path=" + str(config_path))
 
         if Platform.isLinux:
@@ -62,6 +60,10 @@ class TestApplication(CoreApplication):
     @classproperty
     def dataPath(cls) -> Path:  # noqa
         return cls._DATA_PATH
+
+    @classproperty
+    def tempPath(cls) -> Path:  # noqa
+        return cls._TEMP_PATH
 
     @staticmethod
     def getLogger(name: str) -> logging.Logger:
