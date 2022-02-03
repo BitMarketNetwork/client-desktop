@@ -186,7 +186,7 @@ class Database:
         try:
             file_path = self._file_path.resolve(strict=False).as_uri()
             file_path += "?vfs=bmn_vfs"  # TODO
-            _engine.vfs_register(Vfs())
+            _engine.vfs_register(Vfs(self._application))
             _engine.enable_callback_tracebacks(self._application.isDebugMode)
 
             # noinspection PyTypeChecker

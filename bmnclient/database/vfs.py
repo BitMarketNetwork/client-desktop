@@ -10,6 +10,7 @@ from ..version import Product
 
 if TYPE_CHECKING:
     from typing import Union, Tuple, Final
+    from ..application import CoreApplication
 
 
 # TODO move to bmnsqlite3
@@ -51,9 +52,11 @@ class VfsFile:
 
     def __init__(
             self,
+            application: CoreApplication,
             file_name: Union[str, PurePath],
             sqlite_flags: int,
             sector_size: int = 0) -> None:
+        self._application = application
         self._file_path = PurePath(file_name)
         self._logger = Logger.classLogger(
             self.__class__,
@@ -174,7 +177,7 @@ class VfsFile:
     def _encrypt(self, sector_index: int, data: bytes) -> bytes:
         cipher = BlockDeviceCipher(
             BlockDeviceCipher.OpMode.ENCRYPT,
-            b"\0" * 32 + b"\1" * 32,  # TODO
+            self._application.keyStore.deriveBlockDeviceKey(),
             sector_index,
             self._salt)
         return cipher.update(data) + cipher.finalize()
@@ -182,7 +185,7 @@ class VfsFile:
     def _decrypt(self, sector_index: int, data: bytes) -> bytes:
         cipher = BlockDeviceCipher(
             BlockDeviceCipher.OpMode.DECRYPT,
-            b"\0" * 32 + b"\1" * 32,  # TODO
+            self._application.keyStore.deriveBlockDeviceKey(),
             sector_index,
             self._salt)
         return cipher.update(data) + cipher.finalize()
@@ -268,16 +271,16 @@ class VfsFile:
                 Logger.osErrorString(e))
         return 0
 
-    def sync(self, flags: int) -> int:
+    def sync(self, flags: int) -> None:
         if not self.isValid:
-            return 0
+            return
         try:
             os.fsync(self._fd)
         except OSError as e:
             self._logger.error(
                 "Failed to sync file. %s",
                 Logger.osErrorString(e))
-        return 0
+        return None
 
     def file_size(self) -> int:
         if not self.isValid:
@@ -298,13 +301,13 @@ class VfsFile:
 
 
 class Vfs:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, application: CoreApplication) -> None:
+        self._application = application
 
-    def open(cls, file_name: str, sqlite_flags: int) -> VfsFile:
-        return VfsFile(file_name, sqlite_flags)
+    def open(self, file_name: str, sqlite_flags: int) -> VfsFile:
+        return VfsFile(self._application, file_name, sqlite_flags)
 
-    def close(cls, vfs_file: VfsFile) -> None:
+    def close(self, vfs_file: VfsFile) -> None:
         vfs_file.close()
 
     def read(self, vfs_file: VfsFile, length: int, offset: int) -> Union[bytes, bool]:
@@ -316,7 +319,7 @@ class Vfs:
     def truncate(self, vfs_file: VfsFile, size: int) -> int:
         return vfs_file.truncate(size)
 
-    def sync(self, vfs_file: VfsFile, flags: int) -> int:
+    def sync(self, vfs_file: VfsFile, flags: int) -> None:
         return vfs_file.sync(flags)
 
     def file_size(self, vfs_file: VfsFile) -> int:

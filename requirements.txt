@@ -1,3 +1,4 @@
 pyside6 == 6.2.1
 cryptography == 3.4.7
 ecdsa == 0.16.1
+bmnsqlite3 == 0.1.0
