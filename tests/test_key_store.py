@@ -50,6 +50,7 @@ class TestKeyStore(TestCase):
                 MessageCipher)
 
     def test_secret_store_value(self) -> None:
+        self.assertTrue(self._application.config.clear())
         key_store = KeyStore(
             self._application,
             open_callback=lambda *_: None,
@@ -81,6 +82,7 @@ class TestKeyStore(TestCase):
         self.assertKeysIsNone(key_store)
 
     def test_seed(self) -> None:
+        self.assertTrue(self._application.config.clear())
         key_store = KeyStore(
             self._application,
             open_callback=lambda *_: None,
@@ -148,6 +150,7 @@ class TestKeyStore(TestCase):
             self.assertKeysIsNone(key_store)
 
     def test(self) -> None:
+        self.assertTrue(self._application.config.clear())
         key_store = KeyStore(
             self._application,
             open_callback=lambda *_: None,
@@ -188,6 +191,7 @@ class TestKeyStore(TestCase):
             str))
 
     def test_generate_seed_phrase(self) -> None:
+        self.assertTrue(self._application.config.clear())
         key_store = KeyStore(
             self._application,
             open_callback=lambda *_: None,
@@ -253,6 +257,7 @@ class TestKeyStore(TestCase):
                 key_store.revealSeedPhrase(self._password))
 
     def test_restore_seed_phrase(self) -> None:
+        self.assertTrue(self._application.config.clear())
         key_store = KeyStore(
             self._application,
             open_callback=lambda *_: None,

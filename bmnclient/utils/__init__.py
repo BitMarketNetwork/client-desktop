@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any, Iterable
+    from typing import Any, Generator, Iterable
 
 
 class NotImplementedInstanceError(Exception):
@@ -18,8 +18,4 @@ class NotImplementedInstance:
 
 
 class Utils(NotImplementedInstance):
-    @staticmethod
-    def filterNotNone(iterable: Iterable) -> Any:
-        for v in iterable:
-            if v is not None:
-                yield v
+    pass

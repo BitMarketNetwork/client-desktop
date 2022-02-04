@@ -24,6 +24,6 @@ class TestLanguage(TestCase):
                 self.assertFalse(language.install())
                 language.uninstall()
             else:
-                self.assertEqual(2, len(language.translatorList))
+                self.assertLessEqual(1, len(language.translatorList))
                 self.assertTrue(language.install())
                 language.uninstall()

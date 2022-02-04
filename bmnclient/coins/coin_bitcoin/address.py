@@ -122,35 +122,40 @@ class _BitcoinAddress(AbstractCoin.Address):
     def decode(
             cls,
             coin: Bitcoin,
+            *,
+            name: str,
             **kwargs) -> Optional[Bitcoin.Address]:
-        name = kwargs.get("name")
         if not name or len(name) <= len(cls._HRP) + 1:
             return None
 
         if name[0] in cls._PUBKEY_HASH_PREFIX_LIST:
-            return cls._decode(coin, cls.Type.PUBKEY_HASH, **kwargs)
-        if name[0] in cls._SCRIPT_HASH_PREFIX_LIST:
-            return cls._decode(coin, cls.Type.SCRIPT_HASH, **kwargs)
+            address_type = cls.Type.PUBKEY_HASH
+        elif name[0] in cls._SCRIPT_HASH_PREFIX_LIST:
+            address_type = cls.Type.SCRIPT_HASH
 
-        if name[len(cls._HRP)] != Bech32.separator:
+        elif name[len(cls._HRP)] != Bech32.separator:
             return None
 
-        if len(name) == len(cls._HRP) + 1 + 39:
-            return cls._decode(coin, cls.Type.WITNESS_V0_KEY_HASH, **kwargs)
-        if len(name) == len(cls._HRP) + 1 + 59:
-            return cls._decode(coin, cls.Type.WITNESS_V0_SCRIPT_HASH, **kwargs)
+        elif len(name) == len(cls._HRP) + 1 + 39:
+            address_type = cls.Type.WITNESS_V0_KEY_HASH
+        elif len(name) == len(cls._HRP) + 1 + 59:
+            address_type = cls.Type.WITNESS_V0_SCRIPT_HASH
 
-        return cls._decode(coin, cls.Type.WITNESS_UNKNOWN, **kwargs)
+        else:
+            address_type = cls.Type.WITNESS_UNKNOWN
+
+        return cls._decode(coin, address_type, name=name, **kwargs)
 
     @classmethod
     def _decode(
             cls,
             coin: Bitcoin,
             address_type: Type,
+            *,
+            name: str,
             **kwargs) -> Optional[Bitcoin.Address]:
         if not address_type.value:
             return None
-        name = kwargs["name"]
 
         if address_type in (
                 cls.Type.PUBKEY_HASH,
@@ -185,9 +190,8 @@ class _BitcoinAddress(AbstractCoin.Address):
         if not address_type.value.isValidSize(len(data)):
             return None
 
-        kwargs["name"] = name
         kwargs["type_"] = address_type
-        return cls(coin, **kwargs)
+        return cls(coin, name=name, **kwargs)
 
     @classmethod
     def createNullData(cls, coin: Bitcoin, **kwargs) -> Bitcoin.Address:

@@ -1,8 +1,18 @@
 # BitMarket Network Client Change Log
 
-## 0.13.0 (xx.xx.202x)
+## 0.13.0 (03.02.2022)
 
-* Ported to PySide6 6.2.1
+* Ported to PySide6 6.2.1.
+* Database engine has been changed from the `sqlite3` package to the
+  `bmnsqlite3` package.
+* Full database encryption with AES-XTS cipher.
+* New database table structure.
+* Setting the `QML_DISK_CACHE_PATH` environment variable.
+* Setting the `QQmlEngine.offlineStoragePath` property.
+* Some command line option names have been renamed to be more readable.
+* New command line option `--local-data-path`.
+* Limited download of data from the server (16MiB).
+* QML: Keyboard navigation optimization.
 
 ## 0.12.6 (09.07.2021)
 
@@ -24,8 +34,8 @@
 * The "Send" page now displays the estimated original size and virtual size of
   the transaction.
 * Database: Private keys of HD addresses have been replaced on HD paths.
-* Fixed iteration and generation of "broken" HD addresses (BIP-0044, BIP-0084)
-  . **The "broken" iteration is maintained until the summer of 2022.**
+* Fixed iteration and generation of "broken" HD addresses (BIP-0044, BIP-0084).
+  **The "broken" iteration is maintained until the summer of 2022.**
 
 ## 0.12.3 (22.05.2021)
 
@@ -91,7 +101,7 @@
 * A lot of crucial background improvements.
 * New tests.
 * A lot of UI changes.
-* Russian and ukranian localization.
+* Russian and Ukrainian localization.
 * Smart algorithm for source address selection for new outgoing transaction.
 * Ability to select what unspents to use for outgoing transaction.
 * Changes in master key generation from mnemonic phrase. If you lose your

@@ -65,7 +65,7 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
         def __enter__(self) -> None:
             raise NotImplementedError
 
-        def __exit__(self, exc_type, exc_value, traceback) -> None:
+        def __exit__(self, exc_type, exc_value, traceback) -> bool:
             raise NotImplementedError
 
     class LockInsertRows(_LockRows):
@@ -76,9 +76,10 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
                     self._first_index,
                     self._last_index)
 
-        def __exit__(self, exc_type, exc_value, traceback) -> None:
+        def __exit__(self, exc_type, exc_value, traceback) -> bool:
             if not self._dummy:
                 self._owner.endInsertRows()
+            return False
 
     class LockRemoveRows(_LockRows):
         def __enter__(self) -> None:
@@ -88,9 +89,10 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
                     self._first_index,
                     self._last_index)
 
-        def __exit__(self, exc_type, exc_value, traceback) -> None:
+        def __exit__(self, exc_type, exc_value, traceback) -> bool:
             if not self._dummy:
                 self._owner.endRemoveRows()
+            return False
 
     class LockReset:
         def __init__(self, owner: AbstractListModel) -> None:
@@ -99,8 +101,9 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
         def __enter__(self) -> None:
             self._owner.beginResetModel()
 
-        def __exit__(self, exc_type, exc_value, traceback) -> None:
+        def __exit__(self, exc_type, exc_value, traceback) -> bool:
             self._owner.endResetModel()
+            return False
 
     ROLE_MAP = {}
 

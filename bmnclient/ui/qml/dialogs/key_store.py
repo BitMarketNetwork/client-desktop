@@ -214,8 +214,8 @@ class GenerateSeedPhraseDialog(AbstractSeedPhraseDialog):
         else:
             self._generator = generator
         if self._generator.inProgress:
-            self._setText(self._generator.update(None))
-            self._setIsValid(True)
+            self.text = self._generator.update(None)
+            self.valid = True
 
     @property
     def generator(self) -> GenerateSeedPhrase:
@@ -230,7 +230,7 @@ class GenerateSeedPhraseDialog(AbstractSeedPhraseDialog):
             self._openSaltDialog()
 
     def onReset(self) -> None:
-        self._setText("")
+        self.text = ""
         self._openSaltDialog()
 
     def onAccepted(self) -> None:
@@ -255,7 +255,7 @@ class ValidateSeedPhraseDialog(AbstractSeedPhraseDialog):
 
     def onPhraseChanged(self, value: str) -> None:
         self._current_phrase = value
-        self._setIsValid(self._generator.validate(self._current_phrase))
+        self.isValid = self._generator.validate(self._current_phrase)
 
     def onAccepted(self) -> None:
         result = self._generator.finalize(self._current_phrase)
@@ -282,7 +282,7 @@ class RestoreSeedPhraseDialog(AbstractSeedPhraseDialog):
 
     def onPhraseChanged(self, value: str) -> None:
         self._current_phrase = value
-        self._setIsValid(self._generator.validate(self._current_phrase))
+        self.isValid = self._generator.validate(self._current_phrase)
 
     def onAccepted(self) -> None:
         result = self._generator.finalize(self._current_phrase)

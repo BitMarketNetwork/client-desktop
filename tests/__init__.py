@@ -5,7 +5,6 @@ import os
 import sys
 import time
 from pathlib import Path
-from random import randint
 from tempfile import gettempdir
 from typing import TYPE_CHECKING
 
@@ -24,6 +23,10 @@ if TYPE_CHECKING:
 
 class TestApplication(CoreApplication):
     _DATA_PATH: Final = Path(__file__).parent.resolve() / "data"
+    _TEMP_PATH: Final = (
+            Path(gettempdir())
+            / "{:s}-tests".format(Product.SHORT_NAME)
+    )
     _logger_configured = False
 
     def __init__(
@@ -34,15 +37,7 @@ class TestApplication(CoreApplication):
         command_line = ["unittest"]
 
         if not config_path:
-            config_path = (
-                    Path(gettempdir())
-                    / "{:s}-{:s}.{:d}".format(
-                        Product.SHORT_NAME,
-                        owner.__class__.__name__,
-                        randint(1, 0xffffffffffffffff))
-            )
-            owner.assertFalse(config_path.exists())
-
+            config_path = self._TEMP_PATH / "config"
         command_line.append("--config-path=" + str(config_path))
 
         if Platform.isLinux:
@@ -65,6 +60,10 @@ class TestApplication(CoreApplication):
     @classproperty
     def dataPath(cls) -> Path:  # noqa
         return cls._DATA_PATH
+
+    @classproperty
+    def tempPath(cls) -> Path:  # noqa
+        return cls._TEMP_PATH
 
     @staticmethod
     def getLogger(name: str) -> logging.Logger:

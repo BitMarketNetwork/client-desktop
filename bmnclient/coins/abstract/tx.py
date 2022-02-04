@@ -5,14 +5,13 @@ from functools import lru_cache
 from typing import TYPE_CHECKING
 
 from ..utils import CoinUtils
-from ...utils import Utils
 from ...utils.serialize import Serializable, serializable
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Any, List, Optional, Tuple
+    from typing import Any, Iterable, List, Optional
     from .coin import AbstractCoin
-    from ...utils.serialize import DeserializedData
+    from ...utils.serialize import DeserializedData, DeserializedDict
 
 
 class _AbstractTxIo(Serializable):
@@ -20,11 +19,14 @@ class _AbstractTxIo(Serializable):
             self,
             coin: AbstractCoin,
             *,
+            row_id: int = -1,
+            index: int,
             output_type: str,
             address_name: Optional[str],
             amount: int) -> None:
-        super().__init__()
+        super().__init__(row_id=row_id)
         self._coin = coin
+        self._index = index
         self._output_type = output_type
 
         if not address_name:
@@ -46,39 +48,53 @@ class _AbstractTxIo(Serializable):
         return (
                 isinstance(other, self.__class__)
                 and self._coin == other._coin
+                and self._index == other.index
+                and self._output_type == other._output_type
                 and self._address == other.address
                 and self._address.amount == other._address.amount
-                and self._output_type == other._output_type
         )
 
     def __hash__(self) -> int:
         return hash((
             self._coin,
+            self._index,
+            self._output_type,
             self._address,
-            self._address.amount,
-            self._output_type
+            self._address.amount
         ))
 
-    def serialize(self) -> DeserializedData:
-        if self._address.isNullData:
-            address_name = None
-        else:
-            address_name = self._address.name
+    @classmethod
+    def deserialize(
+            cls,
+            source_data: DeserializedDict,
+            coin: Optional[AbstractCoin] = None,
+            **options) -> Optional[AbstractCoin.Tx.Io]:
+        assert coin is not None
+        return super().deserialize(source_data, coin, **options)
 
-        return {
-            "output_type": self._output_type,
-            "address_name": address_name,
-            "amount": self._address.amount,
-            **super().serialize()
-        }
+    @serializable
+    @property
+    def index(self) -> index:
+        return self._index
 
+    @serializable
     @property
     def outputType(self) -> str:
         return self._output_type
 
+    @serializable
+    @property
+    def addressName(self) -> Optional[str]:
+        return self._address.name if not self._address.isNullData else None
+
     @property
     def address(self) -> AbstractCoin.Address:
         return self._address
+
+    @serializable
+    @property
+    def amount(self) -> int:
+        return self._address.amount
 
 
 class _AbstractUtxo(Serializable):
@@ -123,6 +139,15 @@ class _AbstractUtxo(Serializable):
         return StringUtils.classString(
             self.__class__,
             *CoinUtils.utxoToNameKeyTuple(self))
+
+    @classmethod
+    def deserialize(
+            cls,
+            source_data: DeserializedDict,
+            coin: Optional[AbstractCoin] = None,
+            **options) -> Optional[AbstractCoin.Tx.Utxo]:
+        assert coin is not None
+        return super().deserialize(source_data, coin, **options)
 
     @property
     def coin(self) -> AbstractCoin:
@@ -202,15 +227,16 @@ class _AbstractTx(Serializable):
             self,
             coin: AbstractCoin,
             *,
+            row_id: int = -1,
             name: str,
             height: int = -1,
             time: int = -1,
             amount: int,
             fee_amount: int,
-            coinbase: bool,
-            input_list: List[AbstractCoin.Tx.Io],
-            output_list: List[AbstractCoin.Tx.Io]) -> None:
-        super().__init__()
+            is_coinbase: bool,
+            input_list: Iterable[AbstractCoin.Tx.Io],
+            output_list: Iterable[AbstractCoin.Tx.Io]) -> None:
+        super().__init__(row_id=row_id)
 
         self._coin = coin
         self._name = name.strip().lower()
@@ -219,10 +245,10 @@ class _AbstractTx(Serializable):
         self._time = time
         self._amount = amount
         self._fee_amount = fee_amount
-        self._coinbase = coinbase
+        self._is_coinbase = bool(is_coinbase)
 
-        self._input_list = list(Utils.filterNotNone(input_list))
-        self._output_list = list(Utils.filterNotNone(output_list))
+        self._input_list = list(input_list)
+        self._output_list = list(output_list)
 
         self._model: Optional[AbstractCoin.Tx.Interface] = \
             self._coin.model_factory(self)
@@ -238,15 +264,27 @@ class _AbstractTx(Serializable):
         return hash((self._coin, self._name, ))
 
     @classmethod
+    def deserialize(
+            cls,
+            source_data: DeserializedDict,
+            coin: Optional[AbstractCoin] = None,
+            **options) -> Optional[AbstractCoin.Tx]:
+        assert coin is not None
+        return super().deserialize(source_data, coin, **options)
+
+    @classmethod
     def _deserializeProperty(
             cls,
-            args: Tuple[Any],
             key: str,
-            value: Any) -> Any:
-        if isinstance(value, dict) and key in ("input_list", "output_list"):
-            coin: AbstractCoin = args[0]
-            return cls.Io.deserialize(coin, **value)
-        return super()._deserializeProperty(args, key, value)
+            value: DeserializedData,
+            coin: Optional[AbstractCoin] = None,
+            **options) -> Any:
+        if key in ("input_list", "output_list"):
+            if isinstance(value, dict):
+                return cls.Io.deserialize(value, coin, **options)
+            elif isinstance(value, cls.Io):
+                return value
+        return super()._deserializeProperty(key, value, coin, **options)
 
     @property
     def model(self) -> Optional[AbstractCoin.Tx.Interface]:
@@ -318,8 +356,8 @@ class _AbstractTx(Serializable):
 
     @serializable
     @property
-    def coinbase(self) -> bool:
-        return self._coinbase
+    def isCoinbase(self) -> bool:
+        return self._is_coinbase
 
     @serializable
     @property

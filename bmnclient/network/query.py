@@ -58,7 +58,7 @@ class AbstractQuery:
             False
         ), (
             QNetworkRequest.Http2AllowedAttribute,
-            False  # TODO QNetworkRequest.encrypted not called
+            True
         ), (
             QNetworkRequest.EmitAllUploadProgressSignalsAttribute,
             False

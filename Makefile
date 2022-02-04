@@ -79,7 +79,7 @@ APPIMAGETOOL = $(BMN_APPIMAGE_BIN_DIR)appimagetool
 endif
 
 RSYNC_FLAGS = \
-	--progress \
+    --progress \
     --human-readable \
     --links \
     --chmod=u=rw,go=r \

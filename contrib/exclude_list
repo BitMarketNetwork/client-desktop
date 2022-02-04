@@ -89,10 +89,6 @@ Qt6QmlXmlListModel*
 QtQmlXmlListModel*
 PySide?*/qml/QtQml/XmlListModel/*
 
-Qt6QuickParticles*
-QtQuickParticles*
-PySide?*/qml/QtQuick/Particles/*
-
 Qt6QuickShapes*
 QtQuickShapes*
 PySide?*/qml/QtQuick/Shapes/*

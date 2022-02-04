@@ -19,7 +19,8 @@ from PySide6.QtWidgets import QApplication
 from .coins.currency import FiatCurrencyList, FiatRate
 from .coins.list import CoinList
 from .config import Config, ConfigKey
-from .database.db_wrapper import Database
+from .database import Database
+from .database.tables import AddressListTable, CoinListTable, TxListTable
 from .key_store import KeyStore
 from .language import Language
 from .logger import Logger
@@ -368,19 +369,57 @@ class CoreApplication(QObject):
     def _onKeyStoreOpen(self, root_node: Optional[HdNode]) -> None:
         if root_node is None:
             return
-        assert not self._database.isLoaded
+        assert not self._database.isOpen
 
         for coin in self._coin_list:
             if not coin.deriveHdNode(root_node):
                 # TODO show message, force user to regenerate seed?
                 pass
 
-        self._database.open()
+        if self._database.open():
+            if not self._loadWalletData():
+                self._database.close()
+        if not self._database.isOpen:
+            # TODO show message, allow continue without database
+            pass
+
+        self._network_query_scheduler.start(
+            self._network_query_scheduler.GLOBAL_NAMESPACE)
         self._network_query_scheduler.start(
             self._network_query_scheduler.COINS_NAMESPACE)
 
     def _onKeyStoreReset(self) -> None:
-        self.database.remove()
+        if not self._database.remove():
+            # TODO show message if failed
+            pass
+
+    def _loadWalletData(self) -> bool:  # TODO move to coins
+        try:
+            with self._database.transaction() as cursor:
+                for coin in self._coin_list:
+                    if not self._database[CoinListTable].deserialize(
+                            cursor,
+                            coin):
+                        self._logger.debug(
+                            "Cannot deserialize coin '%s' from database.",
+                            coin.name)
+                        self._database[CoinListTable].serialize(cursor, coin)
+                        continue
+
+                    self._database[AddressListTable].deserializeAll(
+                            cursor,
+                            coin)
+
+                    for address in coin.addressList:
+                        self._database[TxListTable].deserializeAll(
+                            cursor,
+                            address)
+        except (Database.engine.Error, Database.engine.Warning) as e:
+            self._logger.error(
+                "Failed to read wallet from database: %s",
+                str(e))
+            return False
+        return True
 
     @QSlot()
     def _onRunPrivate(self) -> None:
@@ -388,8 +427,6 @@ class CoreApplication(QObject):
 
     def _onRun(self) -> None:
         self.updateTranslation()
-        self._network_query_scheduler.start(
-            self._network_query_scheduler.GLOBAL_NAMESPACE)
 
     def __onAboutToQuit(self) -> None:
         self._logger.debug("Shutting down...")
@@ -401,5 +438,5 @@ class CoreApplication(QObject):
     def _onExit(self) -> None:
         assert not self._on_exit_called
         self._on_exit_called = True
-        self.database.close()
+        self._database.close()
         self._signal_handler.close()

@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 
 class AbstractIntegerConverter:
-    _BYTE_ORDER = ""
+    _BYTE_ORDER = None
 
     @classmethod
     def integerToBytes(cls, value: int, length: int) -> Optional[bytes]:

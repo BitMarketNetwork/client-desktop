@@ -32,12 +32,12 @@ class CoinStateModel(AbstractCoinStateModel):
     __stateChanged = QSignal()
 
     @QProperty(bool, notify=__stateChanged)
-    def enabled(self) -> bool:
-        return self._coin.enabled
+    def isEnabled(self) -> bool:
+        return self._coin.isEnabled
 
-    @enabled.setter
-    def enabled(self, value: bool) -> None:
-        self._coin.enabled = value
+    @isEnabled.setter
+    def isEnabled(self, value: bool) -> None:
+        self._coin.isEnabled = value
 
 
 class CoinServerDataModel(AbstractCoinStateModel):
@@ -138,7 +138,7 @@ class CoinReceiveManagerModel(AbstractCoinStateModel):
 
     @QProperty(bool, notify=__stateChanged)
     def isWitness(self) -> bool:
-        return True if self._address is None else True  # TODO
+        return bool(self._address is None)  # TODO
 
     # noinspection PyTypeChecker
     @QSlot(bool, str, str, result=bool)

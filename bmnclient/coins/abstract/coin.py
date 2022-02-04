@@ -15,7 +15,8 @@ from ...utils.class_property import classproperty
 from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+    from typing import Any, Callable, Dict, Generator, List, Optional, Union
+    from ...utils.serialize import DeserializedData, DeserializedDict
 
 
 class _AbstractCoinInterface:
@@ -90,14 +91,15 @@ class AbstractCoin(Serializable):
     def __init__(
             self,
             *,
+            row_id: int = -1,
             model_factory: Optional[Callable[[object], object]] = None) -> None:
-        super().__init__()
+        super().__init__(row_id=row_id)
 
         self._model_factory = model_factory
         self.__state_hash = 0
         self.__old_state_hash = 0
 
-        self._enabled = True
+        self._is_enabled = True
 
         self._height = 0
         self._verified_height = 0
@@ -131,56 +133,63 @@ class AbstractCoin(Serializable):
         return hash((self.name, ))
 
     @classmethod
-    def deserialize(cls, *args, **kwargs) -> Optional[AbstractCoin]:
-        coin: AbstractCoin = args[0]
-        return super().deserialize(
-            *args,
-            deserialize_create=coin._deserializeToSelf,
-            **kwargs)
+    def deserialize(
+            cls,
+            source_data: DeserializedDict,
+            coin: Optional[AbstractCoin] = None,
+            **options) -> Optional[AbstractCoin]:
+        assert coin is not None
+        return super().deserialize(source_data, coin, **options)
 
     @classmethod
     def _deserializeProperty(
             cls,
-            args: Tuple[Any],
             key: str,
-            value: Any) -> Any:
+            value: DeserializedData,
+            coin: Optional[AbstractCoin] = None,
+            **options) -> Any:
         if isinstance(value, dict) and key == "address_list":
-            coin: AbstractCoin = args[0]
-            return cls.Address.deserialize(coin, **value)
-        return super()._deserializeProperty(args, key, value)
+            return cls.Address.deserialize(value, coin)
+        return super()._deserializeProperty(key, value, coin, **options)
 
-    def _deserializeToSelf(
-            self,
+    @classmethod
+    def _deserializeFactory(
+            cls,
             coin: AbstractCoin,
             *,
+            row_id: Optional[int] = None,
             name: str,
-            enabled: bool,
+            is_enabled: Optional[bool] = None,
             height: int,
             verified_height: int,
             offset: str,
             unverified_offset: str,
             unverified_hash: str,
-            address_list: Optional[List[Address]] = None) \
-            -> Optional[AbstractCoin]:
-        if self.name != name or id(coin) != id(self):
+            address_list: Optional[List[Address]] = None
+    ) -> Optional[AbstractCoin]:
+        if coin.name != name:
             return None
 
-        self.enabled = enabled
+        if row_id is not None:
+            coin.rowId = row_id
 
-        self.beginUpdateState()
+        if is_enabled is not None:
+            coin.isEnabled = bool(is_enabled)
+
+        coin.beginUpdateState()
         if True:
-            self.height = height
-            self.verifiedHeight = verified_height
-            self.offset = offset
-            self.unverifiedOffset = unverified_offset
-            self.unverifiedHash = unverified_hash
+            coin.height = height
+            coin.verifiedHeight = verified_height
+            coin.offset = offset
+            coin.unverifiedOffset = unverified_offset
+            coin.unverifiedHash = unverified_hash
 
             if address_list is not None:
-                self._address_list.clear()  # TODO clear with callback
+                coin._address_list.clear()  # TODO clear with callback
                 for address in address_list:
-                    self.appendAddress(address)
-        self.endUpdateState()
-        return self
+                    coin.appendAddress(address)
+        coin.endUpdateState()
+        return coin
 
     @property
     def model(self) -> Optional[AbstractCoin.Interface]:
@@ -243,13 +252,13 @@ class AbstractCoin(Serializable):
 
     @serializable
     @property
-    def enabled(self) -> bool:
-        return self._enabled
+    def isEnabled(self) -> bool:
+        return self._is_enabled
 
-    @enabled.setter
-    def enabled(self, value: bool):
-        if self._enabled != value:
-            self._enabled = value
+    @isEnabled.setter
+    def isEnabled(self, value: bool):
+        if self._is_enabled != value:
+            self._is_enabled = value
             if self._model:
                 self._model.afterSetEnabled()
 
@@ -491,7 +500,7 @@ class AbstractCoin(Serializable):
             self,
             *,
             is_read_only: Optional[bool] = None,
-            with_utxo: Optional[bool] = None) -> Address:
+            with_utxo: Optional[bool] = None) -> Generator[Address, None, None]:
         for address in self._address_list:
             if is_read_only is not None:
                 if is_read_only != address.isReadOnly:

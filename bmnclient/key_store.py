@@ -94,6 +94,15 @@ class _KeyStoreBase:
             return False
         return True
 
+    # TODO temporary
+    def deriveBlockDeviceKey(self) -> Optional[bytes]:
+        key1 = self._getKey(KeyIndex.WALLET_DATABASE)
+        key2 = self._getKey(KeyIndex.SEED)
+        if not key1 or not key2:
+            return None
+        assert len(key1) + len(key2) == 256 // 8
+        return key1 + key2
+
     def deriveCipher(self, key_index: KeyIndex) -> Optional[AeadCipher]:
         with self._lock:
             key = self._getKey(key_index)

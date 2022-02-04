@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="de_DE">
+<TS version="2.1" language="de_DE" sourcelanguage="en_US">
 <context>
     <name></name>
     <message>
@@ -12,12 +12,12 @@
     <message>
         <location filename="../../coins/currency.py" line="26"/>
         <source>US Dollar</source>
-        <translation type="unfinished"></translation>
+        <translation>US Dollar</translation>
     </message>
     <message>
         <location filename="../../coins/currency.py" line="31"/>
         <source>Euro</source>
-        <translation type="unfinished"></translation>
+        <translation>Euro</translation>
     </message>
     <message>
         <location filename="../../crypto/password.py" line="18"/>

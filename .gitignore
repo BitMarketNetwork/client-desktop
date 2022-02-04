@@ -4,15 +4,13 @@ __pycache__
 /dist
 /.tox
 /.idea
+/*.egg-info
 
 # generated resources
 /bmnclient/resources/qrc
 /bmnclient/resources/translations/*.qm
 /bmnclient/resources/translations/*.ts
 
-# setuptools
-/*.egg-info
-/bmnclient-*.*.*
-
 # private
 /.publish*
+.pypirc

@@ -28,7 +28,7 @@ class _AbstractScript(LittleOrderIntegerConverter):
     @classmethod
     def integerToVarInt(cls, value: int) -> Optional[bytes]:
         if value < 0xfd:
-            prefix = b''
+            prefix = b""
             length = 1
         elif value <= 0xffff:
             prefix = b"\xfd"

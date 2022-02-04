@@ -5,13 +5,13 @@ from typing import TYPE_CHECKING
 
 from ..hd import HdNode
 from ...crypto.secp256k1 import PrivateKey, PublicKey
-from ...utils import Utils
 from ...utils.class_property import classproperty
 from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
-    from typing import Any, List, Optional, Tuple, Union
+    from typing import Any, Iterable, List, Optional, Union
     from .coin import AbstractCoin
+    from ...utils.serialize import DeserializedData, DeserializedDict
 
 
 class _AbstractAddressTypeValue:
@@ -168,6 +168,7 @@ class _AbstractAddress(Serializable):
             self,
             coin: AbstractCoin,
             *,
+            row_id: int = -1,
             name: Optional[str],
             type_: AbstractCoin.Address.Type,
             data: bytes = b"",
@@ -176,11 +177,11 @@ class _AbstractAddress(Serializable):
             tx_count: int = 0,
             label: str = "",
             comment: str = "",
-            tx_list: Optional[List[AbstractCoin.Tx]] = None,
-            utxo_list: Optional[List[AbstractCoin.Tx.Utxo]] = None,
+            tx_list: Optional[Iterable[AbstractCoin.Tx]] = None,
+            utxo_list: Optional[Iterable[AbstractCoin.Tx.Utxo]] = None,
             history_first_offset: str = "",
             history_last_offset: str = "") -> None:
-        super().__init__()
+        super().__init__(row_id=row_id)
 
         self._coin = coin
         self._name = name or self._NULLDATA_NAME
@@ -193,10 +194,12 @@ class _AbstractAddress(Serializable):
         self._comment = comment
         self._tx_count = tx_count  # not linked with self._tx_list
 
-        self._tx_list: List[AbstractCoin.Tx] = \
-            [] if tx_list is None else list(Utils.filterNotNone(tx_list))
-        self._utxo_list: List[AbstractCoin.Tx.Utxo] = \
-            [] if tx_list is None else list(Utils.filterNotNone(utxo_list))
+        self._tx_list = (
+            [] if tx_list is None else list(tx_list)
+        )
+        self._utxo_list = (
+            [] if tx_list is None else list(utxo_list)
+        )
 
         if history_first_offset and history_last_offset:
             self._history_first_offset = history_first_offset
@@ -223,34 +226,58 @@ class _AbstractAddress(Serializable):
             self._type
         ))
 
+    def serialize(
+            self,
+            *,
+            allow_hd_path: bool = True,
+            **options) -> DeserializedDict:
+        return super().serialize(allow_hd_path=allow_hd_path, **options)
+
+    def _serializeProperty(
+            self,
+            key: str,
+            value: Any,
+            **options) -> DeserializedData:
+        if key == "key":
+            return self.exportKey(allow_hd_path=options["allow_hd_path"])
+        return super()._serializeProperty(key, value, **options)
+
     @classmethod
-    def deserialize(cls, *args, **kwargs) -> Optional[AbstractCoin.Address]:
-        return super().deserialize(
-            *args,
-            deserialize_create=cls.decode,
-            **kwargs)
+    def deserialize(
+            cls,
+            source_data: DeserializedDict,
+            coin: Optional[AbstractCoin] = None,
+            **options) -> Optional[AbstractCoin.Address]:
+        assert coin is not None
+        return super().deserialize(source_data, coin, **options)
 
     @classmethod
     def _deserializeProperty(
             cls,
-            args: Tuple[Any],
             key: str,
-            value: Any) -> Any:
+            value: DeserializedData,
+            coin: Optional[AbstractCoin] = None,
+            **options) -> Any:
         if isinstance(value, str) and key == "key":
-            coin: AbstractCoin = args[0]
             return cls.importKey(coin, value)
-        if isinstance(value, dict) and key == "tx_list":
-            coin: AbstractCoin = args[0]
-            return coin.Tx.deserialize(coin, **value)
-        if isinstance(value, dict) and key == "utxo_list":
-            coin: AbstractCoin = args[0]
-            return coin.Tx.Utxo.deserialize(coin, **value)
-        return super()._deserializeProperty(args, key, value)
+        if key == "tx_list":
+            if isinstance(value, dict):
+                return coin.Tx.deserialize(value, coin)
+            elif isinstance(value, coin.Tx):
+                return value
+        if key == "utxo_list":
+            if isinstance(value, dict):
+                return coin.Tx.Utxo.deserialize(value, coin)
+            elif isinstance(value, coin.Tx.Utxo):
+                return value
+        return super()._deserializeProperty(key, value, coin, **options)
 
-    def _serializeProperty(self, key: str, value: Any) -> Any:
-        if key == "key":
-            return self.exportKey()
-        return super()._serializeProperty(key, value)
+    @classmethod
+    def _deserializeFactory(
+            cls,
+            coin: AbstractCoin,
+            **kwargs) -> Optional[AbstractCoin.Address]:
+        return cls.decode(coin, **kwargs)
 
     @classproperty
     def hrp(cls) -> str:  # noqa
@@ -296,6 +323,8 @@ class _AbstractAddress(Serializable):
     def decode(
             cls,
             coin: AbstractCoin,
+            *,
+            name: str,
             **kwargs) -> Optional[AbstractCoin.Address]:
         raise NotImplementedError
 
