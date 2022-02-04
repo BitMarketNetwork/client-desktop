@@ -242,6 +242,35 @@ class GenerateSeedPhraseDialog(AbstractSeedPhraseDialog):
         NewSeedDialog(self._manager).open()
 
 
+
+
+class SeedPasswordDialog(AbstractDialog):
+
+    _QML_NAME = "BSeedPasswordDialog"
+
+    def __init__(self, manager: DialogManager, generator: GenerateSeedPhrase, phrase: str) -> None:
+        super().__init__(manager)
+        self._generator = generator
+        self._current_phrase = phrase
+
+    def onPasswordAccepted(self, password: str) -> None:
+        result = self._generator.finalize(self._current_phrase, password)
+        if result != KeyStoreError.SUCCESS:
+            InvalidSeedPhraseDialog(
+                self._manager,
+                self,
+                self._generator,
+                result).open()
+
+    def onRejected(self) -> None:
+        result = self._generator.finalize(self._current_phrase, None)
+        if result != KeyStoreError.SUCCESS:
+            InvalidSeedPhraseDialog(
+                self._manager,
+                self,
+                self._generator,
+                result).open()
+
 class ValidateSeedPhraseDialog(AbstractSeedPhraseDialog):
     def __init__(
             self,
@@ -258,13 +287,7 @@ class ValidateSeedPhraseDialog(AbstractSeedPhraseDialog):
         self.isValid = self._generator.validate(self._current_phrase)
 
     def onAccepted(self) -> None:
-        result = self._generator.finalize(self._current_phrase)
-        if result != KeyStoreError.SUCCESS:
-            InvalidSeedPhraseDialog(
-                self._manager,
-                self,
-                self._generator,
-                result).open()
+        SeedPasswordDialog(self._manager, self._generator, self._current_phrase).open()
 
     def onRejected(self) -> None:
         GenerateSeedPhraseDialog(self._manager, self._generator).open()
@@ -285,9 +308,7 @@ class RestoreSeedPhraseDialog(AbstractSeedPhraseDialog):
         self.isValid = self._generator.validate(self._current_phrase)
 
     def onAccepted(self) -> None:
-        result = self._generator.finalize(self._current_phrase)
-        if result != KeyStoreError.SUCCESS:
-            InvalidSeedPhraseDialog(self._manager, self, None, result).open()
+        SeedPasswordDialog(self._manager, self._generator, self._current_phrase).open()
 
     def onRejected(self) -> None:
         NewSeedDialog(self._manager).open()
