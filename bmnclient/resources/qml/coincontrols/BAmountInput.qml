@@ -44,6 +44,9 @@ BControl {
                     _fiatValueField.focus = false // paranoid
                 }
             }
+            onTextChanged: {
+                _base.amount.setValueHuman(text)
+            }
         }
         BLabel {
             BLayout.column: 1
@@ -87,6 +90,10 @@ BControl {
                     _valueField.focus = false // paranoid
                 }
             }
+            onTextChanged: {
+                _base.amount.setFiatValueHuman(text)
+            }
+
         }
         BLabel {
             BLayout.column: _base.orientation === Qt.Vertical ? 1 : 4
@@ -124,4 +131,10 @@ BControl {
             }
         }
     }
+
+    function clear() {
+        _fiatValueField.clear()
+        _valueField.clear()
+    }
+
 }

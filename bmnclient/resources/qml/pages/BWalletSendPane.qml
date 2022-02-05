@@ -25,15 +25,30 @@ BPane {
             text: qsTr("Pay to:")
         }
         BDialogInputTextField {
+            id: _InputRecipientAddress
             text: ""
             onTextEdited: {
                 _base.coin.txFactory.receiver.addressName = text
             }
+            onTextChanged: {
+                _base.coin.txFactory.receiver.addressName = text
+            }
+
         }
         BDialogValidLabel {
             status: _base.coin.txFactory.receiver.validStatus
         }
+        /*
+        BDialogSeparator {}
 
+        BDialogPromptLabel {
+            text: qsTr("Spend from:")
+        }
+
+        BDialogInputComboBox {
+            stateModel: BBackend.settings.language
+        }
+        */
         BDialogSeparator {}
 
         BDialogPromptLabel {
@@ -50,6 +65,7 @@ BPane {
             text: qsTr("Amount:")
         }
         BAmountInput {
+            id: _InputAmount1
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
             amount: _base.coin.txFactory.receiverAmount
@@ -74,6 +90,7 @@ BPane {
             text: qsTr("per kilobyte:")
         }
         BAmountInput {
+            id: _InputAmount2
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
             amount: _base.coin.txFactory.kibFeeAmount
@@ -150,7 +167,9 @@ BPane {
                 text: BCommon.button.resetRole
             }
             onReset: {
-                // TODO
+                _InputRecipientAddress.clear()
+                _InputAmount1.clear()
+                _InputAmount2.clear()
             }
             onAccepted: {
                 if (_base.coin.txFactory.isValid && _base.coin.txFactory.prepare()) {
@@ -161,7 +180,11 @@ BPane {
                                 })
                     dialog.onAccepted.connect(function () {
                         if (_base.coin.txFactory.sign()) {
-                            _base.coin.txFactory.broadcast() // TODO error?
+                            if (_base.coin.txFactory.broadcast()) { // TODO error?
+                                _InputRecipientAddress.clear()
+                                _InputAmount1.clear()
+                                _InputAmount2.clear()
+                            }
                         } else {
                             // TODO error?
                         }
