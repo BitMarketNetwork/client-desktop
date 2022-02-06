@@ -290,6 +290,8 @@ class _AbstractTxFactory:
 
         self._change_address: Optional[AbstractCoin.Address] = None
 
+        self._source_address: Optional[AbstractCoin.Address] = None
+
         self._subtract_fee = False
         self._fee_amount_per_byte = 103  # TODO
 
@@ -334,6 +336,24 @@ class _AbstractTxFactory:
             return self._mtx.name
         return None
 
+    def setSourceAddressName(self, name: str) -> bool:
+        if not name:
+            address = None
+        else:
+            address = self._coin.Address.decode(self._coin, name=name)
+
+        if address is None:
+            self._logger.warning("Source address '%s' is invalid.", name)
+            self._coin.useAllSourceAdresses()
+            self._source_address = None
+        else:
+            self._logger.debug("Source address: %s", address.name)
+            if self._source_address != address:
+                self._source_address = address
+                self._coin.useAsSourceAddress(address)
+        self.updateUtxoList()
+        return address is not None
+
     def setReceiverAddressName(self, name: str) -> bool:
         if not name:
             address = None
@@ -350,6 +370,10 @@ class _AbstractTxFactory:
             self._selectUtxoList()
 
         return address is not None
+
+    @property
+    def sourceAddress(self) -> Optional[AbstractCoin.Address]:
+        return self._source_address
 
     @property
     def receiverAddress(self) -> Optional[AbstractCoin.Address]:
@@ -727,11 +751,13 @@ class _AbstractTxFactory:
         return raw_size >= 0
 
     def updateUtxoList(self) -> None:
-        address_filter = dict(is_read_only=False, with_utxo=True)
+
+        address_filter = dict(is_read_only=False, with_utxo=True, use_as_source=True)
 
         self._utxo_list = list(chain.from_iterable(
             a.utxoList
             for a in self._coin.filterAddressList(**address_filter)))
+
         self._utxo_amount = sum(u.amount for u in self._utxo_list)
 
         self.__logUtxoList(

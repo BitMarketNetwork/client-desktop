@@ -30,6 +30,12 @@ BPane {
             }
         }
         BMenuItem {
+            text: qsTr("Spend from")
+            onTriggered: {
+                _base.coin.txFactory.receiver.addressSourceName = _contextMenu.address.name
+            }
+        }
+        BMenuItem {
             text: qsTr("Edit...")
             onTriggered: {
                 // TODO

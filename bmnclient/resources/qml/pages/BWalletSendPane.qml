@@ -38,17 +38,22 @@ BPane {
         BDialogValidLabel {
             status: _base.coin.txFactory.receiver.validStatus
         }
-        /*
+
+
         BDialogSeparator {}
 
         BDialogPromptLabel {
-            text: qsTr("Spend from:")
+            text: qsTr("Pay from (optional):")
+        }
+        BDialogInputTextField {
+            id: _InputSourceAddress
+            text: _base.coin.txFactory.receiver.addressSourceName
+            readOnly: true
+            onTextChanged: {
+                _base.coin.txFactory.receiver.addressSourceName = text
+            }
         }
 
-        BDialogInputComboBox {
-            stateModel: BBackend.settings.language
-        }
-        */
         BDialogSeparator {}
 
         BDialogPromptLabel {
@@ -168,6 +173,7 @@ BPane {
             }
             onReset: {
                 _InputRecipientAddress.clear()
+                _InputSourceAddress.clear()
                 _InputAmount1.clear()
                 _InputAmount2.clear()
             }
@@ -182,6 +188,7 @@ BPane {
                         if (_base.coin.txFactory.sign()) {
                             if (_base.coin.txFactory.broadcast()) { // TODO error?
                                 _InputRecipientAddress.clear()
+                                _InputSourceAddress.clear()
                                 _InputAmount1.clear()
                                 _InputAmount2.clear()
                             }

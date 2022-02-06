@@ -177,6 +177,7 @@ class _AbstractAddress(Serializable):
             tx_count: int = 0,
             label: str = "",
             comment: str = "",
+            as_input: bool = False,
             tx_list: Optional[Iterable[AbstractCoin.Tx]] = None,
             utxo_list: Optional[Iterable[AbstractCoin.Tx.Utxo]] = None,
             history_first_offset: str = "",
@@ -192,6 +193,7 @@ class _AbstractAddress(Serializable):
         self._amount = amount
         self._label = label
         self._comment = comment
+        self._as_input = as_input
         self._tx_count = tx_count  # not linked with self._tx_list
 
         self._tx_list = (
@@ -479,6 +481,16 @@ class _AbstractAddress(Serializable):
             self._comment = value
             if self._model:
                 self._model.afterSetComment()
+
+    @serializable
+    @property
+    def useAsSource(self) -> bool:
+        return self._as_input
+
+    @useAsSource.setter
+    def useAsSource(self, value: bool) -> None:
+        if self._as_input != value:
+            self._as_input = value
 
     @property
     def isReadOnly(self) -> bool:

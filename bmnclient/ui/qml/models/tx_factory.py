@@ -184,6 +184,18 @@ class TxFactoryReceiverModel(AbstractTxFactoryStateModel):
         self._first_use = False
         self.update()
 
+    @QProperty(str, notify=__stateChanged)
+    def addressSourceName(self) -> str:
+        if self._factory.sourceAddress is not None:
+            return self._factory.sourceAddress.name
+        else:
+            return ""
+
+    @addressSourceName.setter
+    def addressSourceName(self, value: str) -> None:
+        self._factory.setSourceAddressName(value)
+        self.update()
+
     def _getValidStatus(self) -> ValidStatus:
         if self._factory.receiverAddress is not None:
             return super()._getValidStatus()
