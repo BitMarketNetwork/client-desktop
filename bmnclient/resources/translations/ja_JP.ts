@@ -50,37 +50,37 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/qml/dialogs/key_store.py" line="30"/>
+        <location filename="../../ui/qml/dialogs/key_store.py" line="31"/>
         <source>Unknown Key Store error.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/qml/dialogs/key_store.py" line="32"/>
+        <location filename="../../ui/qml/dialogs/key_store.py" line="33"/>
         <source>Wrong Key Store password.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/qml/dialogs/key_store.py" line="34"/>
+        <location filename="../../ui/qml/dialogs/key_store.py" line="35"/>
         <source>The seed was not found in the Key Store.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/qml/dialogs/key_store.py" line="36"/>
+        <location filename="../../ui/qml/dialogs/key_store.py" line="37"/>
         <source>Failed to save seed to Key Store.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/qml/dialogs/key_store.py" line="38"/>
+        <location filename="../../ui/qml/dialogs/key_store.py" line="39"/>
         <source>Invalid Seed Phrase.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/qml/dialogs/key_store.py" line="40"/>
+        <location filename="../../ui/qml/dialogs/key_store.py" line="41"/>
         <source>Error derive Root HD Key.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/qml/dialogs/key_store.py" line="88"/>
+        <location filename="../../ui/qml/dialogs/key_store.py" line="89"/>
         <source>This will destroy all saved information and you can lose your money!
 Please make sure you remember the Seed Phrase.
 
@@ -88,12 +88,12 @@ Reset?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/qml/models/address.py" line="171"/>
+        <location filename="../../ui/qml/models/address.py" line="172"/>
         <source>New {coin_name} transaction</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/qml/models/address.py" line="175"/>
+        <location filename="../../ui/qml/models/address.py" line="176"/>
         <source>{tx_name}
 {amount} {unit} / {fiat_amount} {fiat_unit}</source>
         <translation type="unfinished"></translation>
@@ -316,12 +316,12 @@ Please use this version carefully for reference only, as it is intended for demo
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/coincontrols/BAmountInput.qml" line="76"/>
+        <location filename="../qml/coincontrols/BAmountInput.qml" line="79"/>
         <source>Fiat amount</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/coincontrols/BAmountInput.qml" line="117"/>
+        <location filename="../qml/coincontrols/BAmountInput.qml" line="124"/>
         <source>max</source>
         <translation type="unfinished"></translation>
     </message>
@@ -565,6 +565,29 @@ Please use this version carefully for reference only, as it is intended for demo
     <message>
         <location filename="../qml/dialogs/BQuitDialog.qml" line="3"/>
         <source>Do you want to quit %1?</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BSeedPasswordDialog</name>
+    <message>
+        <location filename="../qml/dialogs/BSeedPasswordDialog.qml" line="9"/>
+        <source>Set up seed&apos;s password (optional)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BSeedPasswordDialog.qml" line="14"/>
+        <source>Seed&apos;s password:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BSeedPasswordDialog.qml" line="19"/>
+        <source>Enter your password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BSeedPasswordDialog.qml" line="23"/>
+        <source>Show password:</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -849,27 +872,7 @@ Continue?</source>
     </message>
     <message>
         <location filename="../qml/pages/BWalletAddressListPane.qml" line="33"/>
-        <source>Edit...</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/BWalletAddressListPane.qml" line="40"/>
-        <source>Export transactions</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/BWalletAddressListPane.qml" line="47"/>
-        <source>Update</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/BWalletAddressListPane.qml" line="55"/>
-        <source>Remove address</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/BWalletAddressListPane.qml" line="63"/>
-        <source>Clear transactions</source>
+        <source>Spend from</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -930,52 +933,57 @@ Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="40"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="43"/>
+        <source>Pay from (optional):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="60"/>
         <source>Available amount:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="50"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="70"/>
         <source>Amount:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="64"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="85"/>
         <source>Transaction fee:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="74"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="95"/>
         <source>per kilobyte:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="80"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="102"/>
         <source>Recommended</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="87"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="109"/>
         <source>Subtract fee from amount:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="100"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="122"/>
         <source>Raw size / Virtual size:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="104"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="126"/>
         <source>%1 / %2 bytes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="110"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="132"/>
         <source>Change:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="145"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="167"/>
         <source>Prepare...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -991,17 +999,17 @@ Continue?</source>
 <context>
     <name>PasswordDialog</name>
     <message>
-        <location filename="../../ui/qml/dialogs/key_store.py" line="332"/>
+        <location filename="../../ui/qml/dialogs/key_store.py" line="362"/>
         <source>Wrong Key Store password.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/qml/dialogs/key_store.py" line="335"/>
+        <location filename="../../ui/qml/dialogs/key_store.py" line="365"/>
         <source>Seed Phrase not found.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/qml/dialogs/key_store.py" line="338"/>
+        <location filename="../../ui/qml/dialogs/key_store.py" line="368"/>
         <source>Unknown Key Store error.</source>
         <translation type="unfinished"></translation>
     </message>
