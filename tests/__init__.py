@@ -31,7 +31,7 @@ class TestApplication(CoreApplication):
         temp_path = (
                 Path(gettempdir())
                 / "{:s}-tests".format(Product.SHORT_NAME.lower()))
-        if config_path:
+        if not config_path:
             config_path = temp_path / "config"
 
         command_line = [

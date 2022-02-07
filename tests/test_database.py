@@ -24,7 +24,9 @@ if TYPE_CHECKING:
 
 class TestDatabase(TestCase):
     def setUp(self) -> None:
-        self._application = TestApplication(self)
+        self._application = TestApplication()
+        self.assertTrue(self._application.keyStore.create("123456"))
+        self.assertTrue(self._application.keyStore.open("123456"))
 
     def tearDown(self) -> None:
         self._application.setExitEvent()

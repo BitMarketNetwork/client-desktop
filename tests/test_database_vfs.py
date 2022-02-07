@@ -10,6 +10,14 @@ from tests import TestApplication
 
 
 class TestDatabaseVfs(TestCase):
+    def setUp(self) -> None:
+        self._application = TestApplication()
+        self.assertTrue(self._application.keyStore.create("123456"))
+        self.assertTrue(self._application.keyStore.open("123456"))
+
+    def tearDown(self) -> None:
+        self._application.setExitEvent()
+
     def test_sectors(self) -> None:
         for sector_size in chain(
                 [i for i in range(16, 32)],  # AES block size as minimal value
@@ -18,8 +26,9 @@ class TestDatabaseVfs(TestCase):
             self._test_sector(sector_size)
 
     def _test_sector(self, sector_size: int):
-        TestApplication.tempPath.mkdir(parents=True, exist_ok=True)
+        self._application.tempPath.mkdir(parents=True, exist_ok=True)
         file = VfsFile(
+            self._application,
             (
                     self._application.tempPath
                     / "sectors-{:06d}.dat".format(sector_size)
