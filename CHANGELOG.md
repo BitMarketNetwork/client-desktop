@@ -1,5 +1,11 @@
 # BitMarket Network Client Change Log
 
+## 0.13.1 (08.02.2022)
+
+* New command line option `--temp-path`.
+* It is possible to select single address as the transaction input.
+* It is possible to specify a password (secret word) when creating a seed.
+
 ## 0.13.0 (03.02.2022)
 
 * Ported to PySide6 6.2.1.
