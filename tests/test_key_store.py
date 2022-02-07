@@ -107,7 +107,7 @@ class TestKeyStore(TestCase):
             seed = Mnemonic.phraseToSeed(phrase)
             self.assertLess(1, len(seed))
             # noinspection PyProtectedMember
-            self.assertFalse(key_store._saveSeed(language, phrase))
+            self.assertFalse(key_store._saveSeed(language, phrase, ""))
 
             # noinspection PyProtectedMember
             value = key_store._generateSecretStoreValue()
@@ -121,7 +121,7 @@ class TestKeyStore(TestCase):
             self.assertIsNone(self._application.config.get(
                 ConfigKey.KEY_STORE_SEED_PHRASE, str))
             # noinspection PyProtectedMember
-            self.assertTrue(key_store._saveSeed(language, phrase))
+            self.assertTrue(key_store._saveSeed(language, phrase, ""))
             self.assertIsInstance(self._application.config.get(
                 ConfigKey.KEY_STORE_SEED, str),
                 str)
@@ -229,10 +229,10 @@ class TestKeyStore(TestCase):
             self.assertIsInstance(seed2, bytes)
 
             self.assertEqual(
-                g1.finalize(phrase1),
+                g1.finalize(phrase1, ""),
                 KeyStoreError.ERROR_INVALID_SEED_PHRASE)
             self.assertEqual(
-                g1.finalize(phrase2),
+                g1.finalize(phrase2, ""),
                 KeyStoreError.SUCCESS)
             self.assertTrue(key_store.hasSeed)
 
@@ -278,7 +278,7 @@ class TestKeyStore(TestCase):
             self.assertTrue(r1.prepare(language))
             self.assertTrue(r1.validate(phrase))
             self.assertEqual(
-                r1.finalize(phrase),
+                r1.finalize(phrase, ""),
                 KeyStoreError.SUCCESS)
             self.assertTrue(key_store.hasSeed)
 

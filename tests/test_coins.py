@@ -655,6 +655,7 @@ class TestTxFactory(TestCase):
         self.assertEqual(1, len(self._coin.addressList))
 
         txf = self._coin.txFactory
+        self._coin.useAsSourceAllAddresses()
         txf.updateUtxoList()
         self.assertIsNone(txf.name)
         self.assertIsNone(txf.receiverAddress)
