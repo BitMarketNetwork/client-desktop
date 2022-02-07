@@ -112,7 +112,7 @@ class DefaultJsonPostQuery(DefaultJsonGetQuery):
 
 class TestNetworkQuery(TestCase):
     def setUp(self) -> None:
-        self._application = TestApplication(self)
+        self._application = TestApplication()
 
     def tearDown(self) -> None:
         self._application.setExitEvent()

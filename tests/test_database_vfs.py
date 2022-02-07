@@ -21,8 +21,8 @@ class TestDatabaseVfs(TestCase):
         TestApplication.tempPath.mkdir(parents=True, exist_ok=True)
         file = VfsFile(
             (
-                TestApplication.tempPath
-                / "sectors-{:06d}.dat".format(sector_size)
+                    self._application.tempPath
+                    / "sectors-{:06d}.dat".format(sector_size)
             ),
             vfs.SQLITE_OPEN_READWRITE
             | vfs.SQLITE_OPEN_CREATE

@@ -22,7 +22,7 @@ _logger = TestApplication.getLogger(__name__)
 class TestKeyStore(TestCase):
     def setUp(self) -> None:
         self._password = "123123Qaz"
-        self._application = TestApplication(self)
+        self._application = TestApplication()
 
     def tearDown(self) -> None:
         self._application.setExitEvent()

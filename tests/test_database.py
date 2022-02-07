@@ -30,7 +30,7 @@ class TestDatabase(TestCase):
         self._application.setExitEvent()
 
     def _create(self, file_name: Path, *, mkdir: bool = True) -> Database:
-        path = Path(self._application.configPath / file_name)
+        path = Path(self._application.tempPath / file_name)
         if mkdir:
             path.parent.mkdir(parents=True, exist_ok=True)
         if path.exists():

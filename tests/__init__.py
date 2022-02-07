@@ -17,28 +17,28 @@ from bmnclient.version import Product, Timer
 
 if TYPE_CHECKING:
     from typing import Final, Optional
-    from unittest import TestCase
     MessageType = CoreApplication.MessageType
 
 
 class TestApplication(CoreApplication):
     _DATA_PATH: Final = Path(__file__).parent.resolve() / "data"
-    _TEMP_PATH: Final = (
-            Path(gettempdir())
-            / "{:s}-tests".format(Product.SHORT_NAME)
-    )
     _logger_configured = False
 
     def __init__(
             self,
-            owner: TestCase,
             *,
             config_path: Optional[Path] = None) -> None:
-        command_line = ["unittest"]
+        temp_path = (
+                Path(gettempdir())
+                / "{:s}-tests".format(Product.SHORT_NAME.lower()))
+        if config_path:
+            config_path = temp_path / "config"
 
-        if not config_path:
-            config_path = self._TEMP_PATH / "config"
-        command_line.append("--config-path=" + str(config_path))
+        command_line = [
+            "unittest",
+            "--config-path=" + str(config_path),
+            "--temp-path=" + str(temp_path)
+        ]
 
         if Platform.isLinux:
             os.environ["QT_QPA_PLATFORM"] = "minimal"
@@ -60,10 +60,6 @@ class TestApplication(CoreApplication):
     @classproperty
     def dataPath(cls) -> Path:  # noqa
         return cls._DATA_PATH
-
-    @classproperty
-    def tempPath(cls) -> Path:  # noqa
-        return cls._TEMP_PATH
 
     @staticmethod
     def getLogger(name: str) -> logging.Logger:

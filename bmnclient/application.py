@@ -64,6 +64,14 @@ class CommandLine:
             .format(str(PlatformPaths.applicationLocalDataPath)),
             metavar="PATH")
         parser.add_argument(
+            "-T",
+            "--temp-path",
+            default=str(PlatformPaths.applicationLocalDataPath),
+            type=self._expandPath,
+            help="directory for temporary files; by default, it is '{}'"
+            .format(str(PlatformPaths.applicationTempPath)),
+            metavar="PATH")
+        parser.add_argument(
             "-l",
             "--log-file",
             default="stderr",
@@ -102,6 +110,10 @@ class CommandLine:
     @property
     def argv(self) -> List[str]:
         return self._argv
+
+    @property
+    def tempPath(self) -> Path:
+        return self._arguments.temp_path
 
     @property
     def configPath(self) -> Path:
@@ -278,6 +290,10 @@ class CoreApplication(QObject):
         elif not self._on_exit_called:
             self._exit_code = code
             self._onExit()
+
+    @property
+    def tempPath(self) -> Path:
+        return self._command_line.tempPath
 
     @property
     def configPath(self) -> Path:

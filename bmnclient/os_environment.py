@@ -98,6 +98,11 @@ def _applicationLocalDataPath(local_data_path: Path) -> Path:
         raise RuntimeError("can't determine local storage directories")
 
 
+def _applicationTempPath() -> Path:
+    from tempfile import gettempdir
+    return Path(gettempdir()) / Product.SHORT_NAME.lower()
+
+
 class PlatformPaths(NotImplementedInstance):
     _HOME_PATH: Final = \
         Path.home()
@@ -109,6 +114,8 @@ class PlatformPaths(NotImplementedInstance):
         _applicationConfigPath(_CONFIG_PATH)
     _APPLICATION_LOCAL_DATA_PATH: Final = \
         _applicationLocalDataPath(_LOCAL_DATA_PATH)
+    _APPLICATION_TEMP_PATH: Final = \
+        _applicationTempPath()
 
     @classproperty
     def homePath(cls) -> Path:  # noqa
@@ -125,3 +132,7 @@ class PlatformPaths(NotImplementedInstance):
     @classproperty
     def applicationLocalDataPath(cls) -> Path:  # noqa
         return cls._APPLICATION_LOCAL_DATA_PATH
+
+    @classproperty
+    def applicationTempPath(cls) -> Path:  # noqa
+        return cls._APPLICATION_TEMP_PATH
