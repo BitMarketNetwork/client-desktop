@@ -222,7 +222,9 @@ class _AbstractMutableTx:
 
     def sign(self) -> bool:
         self.__class__.serialize.cache_clear()
+        # noinspection PyUnresolvedReferences
         self.__class__.name.fget.cache_clear()
+
         if not self._is_signed and self._sign():
             self._is_signed = True
             return True
@@ -289,7 +291,6 @@ class _AbstractTxFactory:
         self._receiver_amount = 0
 
         self._change_address: Optional[AbstractCoin.Address] = None
-
         self._source_address: Optional[AbstractCoin.Address] = None
 
         self._subtract_fee = False
@@ -751,8 +752,10 @@ class _AbstractTxFactory:
         return raw_size >= 0
 
     def updateUtxoList(self) -> None:
-
-        address_filter = dict(is_read_only=False, with_utxo=True, use_as_source=True)
+        address_filter = dict(
+            is_read_only=False,
+            with_utxo=True,
+            is_tx_input=True)
 
         self._utxo_list = list(chain.from_iterable(
             a.utxoList

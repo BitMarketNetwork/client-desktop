@@ -498,27 +498,27 @@ class AbstractCoin(Serializable):
 
     def useAllSourceAdresses(self) -> None:
         for address in self._address_list:
-            address.useAsSource = True
+            address.isTxInput = True
 
-    def useAsSourceAddress(self, sourceAddress: Address) -> None:
+    def useAsSourceAddress(self, source_address: Address) -> None:
         for address in self._address_list:
-            if address == sourceAddress:
-                address.useAsSource = True
+            if address == source_address:
+                address.isTxInput = True
             else:
-                address.useAsSource = False
+                address.isTxInput = False
 
     def filterAddressList(
             self,
             *,
             is_read_only: Optional[bool] = None,
-            use_as_source: Optional[bool] = None,
+            is_tx_input: Optional[bool] = None,
             with_utxo: Optional[bool] = None) -> Generator[Address, None, None]:
         for address in self._address_list:
             if is_read_only is not None:
                 if is_read_only != address.isReadOnly:
                     continue
-            if use_as_source is not None:
-                if use_as_source != address.useAsSource:
+            if is_tx_input is not None:
+                if is_tx_input != address.isTxInput:
                     continue
             if with_utxo is not None:
                 if (len(address.utxoList) > 0) != with_utxo:
