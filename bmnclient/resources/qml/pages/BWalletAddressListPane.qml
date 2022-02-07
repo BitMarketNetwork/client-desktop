@@ -32,46 +32,46 @@ BPane {
         BMenuItem {
             text: qsTr("Spend from")
             onTriggered: {
-                _base.coin.txFactory.receiver.addressSourceName = _contextMenu.address.name
+                _contextMenu.address.state.isTxInput = true
             }
         }
-        BMenuItem {
+        /*BMenuItem {
             text: qsTr("Edit...")
             onTriggered: {
                 // TODO
                 //showAddressDetails(_contextMenu.index)
             }
-        }
-        BMenuItem {
+        }*/
+        /*BMenuItem {
             text: qsTr("Export transactions")
             onTriggered: {
                 // TODO
                 //BBackend.coinManager.exportTransactions(addressIndex)
             }
-        }
-        BMenuItem {
+        }*/
+        /*BMenuItem {
             text: qsTr("Update")
             //enabled: !_contextMenu.address.updating
             onTriggered: {
                 // TODO
                 //BBackend.coinManager.updateAddress(addressIndex)
             }
-        }
-        BMenuItem {
+        }*/
+        /*BMenuItem {
             text: qsTr("Remove address")
             //enabled: !_contextMenu.address.updating
             onTriggered: {
                 // TODO
                 //BBackend.coinManager.removeAddress(addressIndex)
             }
-        }
-        BMenuItem {
+        }*/
+        /*BMenuItem {
             text: qsTr("Clear transactions")
             //enabled: !_contextMenu.address.updating
             onTriggered: {
                 // TODO
                 //BBackend.coinManager.clearTransactions(api.addressIndex)
             }
-        }
+        }*/
     }
 }

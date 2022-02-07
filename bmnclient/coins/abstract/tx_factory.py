@@ -260,6 +260,12 @@ class _AbstractTxFactoryInterface:
     def afterUpdateState(self) -> None:
         raise NotImplementedError
 
+    def afterSetInputAddress(self) -> None:
+        raise NotImplementedError
+
+    def afterSetReceiverAddress(self) -> None:
+        raise NotImplementedError
+
     def onBroadcast(self, mtx: AbstractCoin.TxFactory.MutableTx) -> None:
         raise NotImplementedError
 
@@ -287,11 +293,12 @@ class _AbstractTxFactory:
         self._utxo_amount = 0
         self._selected_utxo_data = self._SelectedUtxoData()
 
+        self._input_address: Optional[AbstractCoin.Address] = None
+
         self._receiver_address: Optional[AbstractCoin.Address] = None
         self._receiver_amount = 0
 
         self._change_address: Optional[AbstractCoin.Address] = None
-        self._source_address: Optional[AbstractCoin.Address] = None
 
         self._subtract_fee = False
         self._fee_amount_per_byte = 103  # TODO
@@ -337,23 +344,38 @@ class _AbstractTxFactory:
             return self._mtx.name
         return None
 
-    def setSourceAddressName(self, name: str) -> bool:
-        if not name:
+    @property
+    def inputAddress(self) -> Optional[AbstractCoin.Address]:
+        return self._input_address
+
+    def setInputAddressName(self, name: Optional[str]) -> bool:
+        result = True
+
+        if name is None:
             address = None
+            self._logger.debug("Input address: *")
         else:
             address = self._coin.Address.decode(self._coin, name=name)
+            if address is not None:
+                self._logger.debug("Input address: %s", address.name)
+            else:
+                self._logger.warning("Input address '%s' is invalid.", name)
+                result = False
 
-        if address is None:
-            self._logger.warning("Source address '%s' is invalid.", name)
-            self._coin.useAllSourceAdresses()
-            self._source_address = None
+        if self._input_address == address:
+            return result
+
+        if address is not None:
+            self._coin.useAsSourceAddress(address)
         else:
-            self._logger.debug("Source address: %s", address.name)
-            if self._source_address != address:
-                self._source_address = address
-                self._coin.useAsSourceAddress(address)
+            self._coin.useAsSourceAllAddresses()
+
+        self._input_address = address
+        if self._model:
+            self._model.afterSetInputAddress()
         self.updateUtxoList()
-        return address is not None
+
+        return result
 
     def setReceiverAddressName(self, name: str) -> bool:
         if not name:
@@ -368,13 +390,11 @@ class _AbstractTxFactory:
 
         if self._receiver_address != address:
             self._receiver_address = address
+            if self._model:
+                self._model.afterSetReceiverAddress()
             self._selectUtxoList()
 
         return address is not None
-
-    @property
-    def sourceAddress(self) -> Optional[AbstractCoin.Address]:
-        return self._source_address
 
     @property
     def receiverAddress(self) -> Optional[AbstractCoin.Address]:

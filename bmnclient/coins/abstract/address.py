@@ -130,6 +130,9 @@ class _AbstractAddressInterface:
     def afterSetComment(self) -> None:
         raise NotImplementedError
 
+    def afterSetIsTxInput(self) -> None:
+        raise NotImplementedError
+
     def afterSetTxCount(self) -> None:
         raise NotImplementedError
 
@@ -489,7 +492,10 @@ class _AbstractAddress(Serializable):
 
     @isTxInput.setter
     def isTxInput(self, value: bool) -> None:
-        self._is_tx_input = value
+        if self._is_tx_input != value:
+            self._is_tx_input = value
+            if self._model:
+                self._model.afterSetIsTxInput()
 
     @property
     def isReadOnly(self) -> bool:

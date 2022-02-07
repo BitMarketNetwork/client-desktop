@@ -663,6 +663,19 @@ class TestTxFactory(TestCase):
         self.assertEqual(sum(amount_list), txf.availableAmount)
         self.assertEqual(0, txf.receiverAmount)
 
+        self.assertTrue(txf.setInputAddressName(None))
+        self.assertIsNone(txf.inputAddress)
+        self.assertFalse(txf.setInputAddressName(
+            "BAD_INPUT1"))
+        self.assertIsNone(txf.inputAddress)
+        self.assertTrue(txf.setInputAddressName(
+            "3Ps86GT6vHg7dCT5QhcECDFkRaUJbBzqXB"))
+        self.assertIsNotNone(txf.inputAddress)
+        self.assertFalse(txf.setInputAddressName(
+            "BAD_INPUT2"))
+        self.assertIsNone(txf.inputAddress)
+        self.assertTrue(txf.setInputAddressName(None))
+
         self.assertEqual(0, txf.setReceiverMaxAmount())
         self.assertFalse(txf.isValidReceiverAmount)
         self.assertFalse(txf.isValidFeeAmount)

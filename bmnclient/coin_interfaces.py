@@ -110,6 +110,9 @@ class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
     def afterSetComment(self) -> None:
         self._save()
 
+    def afterSetIsTxInput(self) -> None:
+        pass
+
     def afterSetTxCount(self) -> None:
         self._save()
 
@@ -175,6 +178,12 @@ class TxFactoryInterface(_AbstractInterface, AbstractCoin.TxFactory.Interface):
             **kwargs)
 
     def afterUpdateState(self) -> None:
+        pass
+
+    def afterSetInputAddress(self) -> None:
+        pass
+
+    def afterSetReceiverAddress(self) -> None:
         pass
 
     def onBroadcast(self, mtx: AbstractCoin.TxFactory.MutableTx) -> None:

@@ -69,6 +69,9 @@ class AddressStateModel(AbstractAddressStateModel):
     @isTxInput.setter
     def isTxInput(self, value: bool):
         self._address.isTxInput = value
+        # TODO temporary, allow multiple input addresses
+        if self._address.isTxInput:
+            self._coin.txFactory.setInputAddressName(self._address.name)
 
 
 class AddressAmountModel(AbstractAddressAmountModel):
@@ -145,6 +148,10 @@ class AddressModel(AddressInterface, AbstractModel):
     def afterSetComment(self) -> None:
         self._state_model.update()
         super().afterSetComment()
+
+    def afterSetIsTxInput(self) -> None:
+        self._state_model.update()
+        super().afterSetIsTxInput()
 
     def afterSetTxCount(self) -> None:
         super().afterSetTxCount()
