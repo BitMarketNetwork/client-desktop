@@ -63,18 +63,12 @@ class AddressStateModel(AbstractAddressStateModel):
         return False  # TODO self._address.isUpdating
 
     @QProperty(bool, notify=__stateChanged)
-    def useAsTransactionInput(self) -> bool:
-        pass
-        # TODO
-        # return self._address.useAsSource
+    def isTxInput(self) -> bool:
+        return self._address.isTxInput
 
-    @useAsTransactionInput.setter
-    def useAsTransactionInput(self, value: bool):
-        # TODO
-        # if self._address.useAsSource != value:
-        #     self._address.useAsSource = value
-        #     self.update()
-        pass
+    @isTxInput.setter
+    def isTxInput(self, value: bool):
+        self._address.isTxInput = value
 
 
 class AddressAmountModel(AbstractAddressAmountModel):
