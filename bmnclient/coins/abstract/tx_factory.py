@@ -365,11 +365,7 @@ class _AbstractTxFactory:
         if self._input_address == address:
             return result
 
-        if address is not None:
-            self._coin.useAsSourceAddress(address)
-        else:
-            self._coin.useAsSourceAllAddresses()
-
+        self._coin.setTxInputAddress(address)
         self._input_address = address
         if self._model:
             self._model.afterSetInputAddress()
