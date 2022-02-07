@@ -39,7 +39,6 @@ BPane {
             status: _base.coin.txFactory.receiver.validStatus
         }
 
-
         BDialogSeparator {}
 
         BDialogPromptLabel {

@@ -117,7 +117,7 @@ class Mnemonic:
             phrase: str,
             password: Optional[str] = None) -> bytes:
         phrase = cls.normalizePhrase(phrase)
-        if password is None:
+        if not password:
             password = "".join(phrase[::-3])
         else:
             password = cls.normalizePhrase(password)

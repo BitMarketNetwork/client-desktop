@@ -4,10 +4,11 @@ from enum import IntEnum
 from random import randint
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    Property as QProperty, \
-    QObject, \
+from PySide6.QtCore import (
+    Property as QProperty,
+    QObject,
     Signal as QSignal
+)
 
 from . import AbstractDialog, AbstractMessageDialog, AbstractPasswordDialog
 from ....key_store import GenerateSeedPhrase, KeyStoreError, RestoreSeedPhrase
@@ -141,7 +142,7 @@ class InvalidSeedPhraseDialog(KeyStoreErrorDialog):
     def __init__(
             self,
             manager: DialogManager,
-            parent: ValidateSeedPhraseDialog,
+            parent: SeedPasswordDialog,
             generator: Optional[GenerateSeedPhrase] = None,
             error: KeyStoreError = KeyStoreError.ERROR_INVALID_SEED_PHRASE):
         super().__init__(manager, parent, error)
@@ -242,13 +243,14 @@ class GenerateSeedPhraseDialog(AbstractSeedPhraseDialog):
         NewSeedDialog(self._manager).open()
 
 
-
-
 class SeedPasswordDialog(AbstractDialog):
-
     _QML_NAME = "BSeedPasswordDialog"
 
-    def __init__(self, manager: DialogManager, generator: GenerateSeedPhrase, phrase: str) -> None:
+    def __init__(
+            self,
+            manager: DialogManager,
+            generator: GenerateSeedPhrase,
+            phrase: str) -> None:
         super().__init__(manager)
         self._generator = generator
         self._current_phrase = phrase
@@ -271,6 +273,7 @@ class SeedPasswordDialog(AbstractDialog):
                 self._generator,
                 result).open()
 
+
 class ValidateSeedPhraseDialog(AbstractSeedPhraseDialog):
     def __init__(
             self,
@@ -287,7 +290,10 @@ class ValidateSeedPhraseDialog(AbstractSeedPhraseDialog):
         self.isValid = self._generator.validate(self._current_phrase)
 
     def onAccepted(self) -> None:
-        SeedPasswordDialog(self._manager, self._generator, self._current_phrase).open()
+        SeedPasswordDialog(
+            self._manager,
+            self._generator,
+            self._current_phrase).open()
 
     def onRejected(self) -> None:
         GenerateSeedPhraseDialog(self._manager, self._generator).open()
@@ -308,7 +314,10 @@ class RestoreSeedPhraseDialog(AbstractSeedPhraseDialog):
         self.isValid = self._generator.validate(self._current_phrase)
 
     def onAccepted(self) -> None:
-        SeedPasswordDialog(self._manager, self._generator, self._current_phrase).open()
+        SeedPasswordDialog(
+            self._manager,
+            self._generator,
+            self._current_phrase).open()
 
     def onRejected(self) -> None:
         NewSeedDialog(self._manager).open()

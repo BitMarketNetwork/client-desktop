@@ -143,7 +143,7 @@ class _KeyStoreSeed(_KeyStoreBase):
         super()._clear()
         self.__has_seed = False
 
-    def _saveSeed(self, language: str, phrase: str, seed_password: str) -> bool:
+    def _saveSeed(self, language: str, phrase: str, password: str) -> bool:
         if Product.STRING_SEPARATOR in language:
             return False
 
@@ -151,7 +151,7 @@ class _KeyStoreSeed(_KeyStoreBase):
         if cipher is None:
             return False
 
-        seed = Mnemonic.phraseToSeed(phrase, seed_password)
+        seed = Mnemonic.phraseToSeed(phrase, password)
         seed = cipher.encrypt(seed)
 
         phrase = Product.STRING_SEPARATOR.join((language, phrase))
@@ -281,9 +281,13 @@ class KeyStore(_KeyStoreSeed):
             self._open_callback(root_node)
         return KeyStoreError.SUCCESS
 
-    def saveSeed(self, language: str, phrase: str, seed_password: str) -> KeyStoreError:
+    def saveSeed(
+            self,
+            language: str,
+            phrase: str,
+            password: str) -> KeyStoreError:
         with self._lock:
-            if not self._saveSeed(language, phrase, seed_password):
+            if not self._saveSeed(language, phrase, password):
                 return KeyStoreError.ERROR_SAVE_SEED
             root_node = self._deriveRootHdNodeFromSeed()
             if root_node is None:
@@ -332,7 +336,10 @@ class _AbstractSeedPhrase:
         if not self.validate(phrase):
             return KeyStoreError.ERROR_INVALID_SEED_PHRASE
 
-        result = self._key_store.saveSeed(self._mnemonic.language, phrase, password)
+        result = self._key_store.saveSeed(
+            self._mnemonic.language,
+            phrase,
+            password)
         if result != KeyStoreError.SUCCESS:
             return result
 
