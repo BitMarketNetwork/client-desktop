@@ -138,7 +138,7 @@ class CoinReceiveManagerModel(AbstractCoinStateModel):
 
     @QProperty(bool, notify=__stateChanged)
     def isWitness(self) -> bool:
-        return bool(self._address is None)  # TODO
+        return self._address is None  # TODO
 
     # noinspection PyTypeChecker
     @QSlot(bool, str, str, result=bool)

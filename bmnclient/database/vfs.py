@@ -134,7 +134,7 @@ class VfsFile:
 
     @property
     def isValid(self) -> bool:
-        return bool(self._fd >= 0)
+        return self._fd >= 0
 
     def close(self) -> None:
         if not self.isValid:

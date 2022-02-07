@@ -196,7 +196,7 @@ class _AbstractAddress(Serializable):
         self._amount = amount
         self._label = label
         self._comment = comment
-        self._is_tx_input = is_tx_input
+        self._is_tx_input = bool(is_tx_input)
         self._tx_count = tx_count  # not linked with self._tx_list
 
         self._tx_list = (

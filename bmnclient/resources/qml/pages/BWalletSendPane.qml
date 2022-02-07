@@ -25,7 +25,7 @@ BPane {
             text: qsTr("Pay to:")
         }
         BDialogInputTextField {
-            id: _InputRecipientAddress
+            id: _inputRecipientAddress
             text: ""
             onTextEdited: {
                 _base.coin.txFactory.receiver.addressName = text
@@ -39,18 +39,19 @@ BPane {
             status: _base.coin.txFactory.receiver.validStatus
         }
 
-        BDialogSeparator {}
-
         BDialogPromptLabel {
             text: qsTr("Pay from (optional):")
         }
         BDialogInputTextField {
-            id: _InputSourceAddress
-            text: _base.coin.txFactory.receiver.addressSourceName
+            id: _inputSourceAddress
+            text: _base.coin.txFactory.receiver.inputAddressName
             readOnly: true
             onTextChanged: {
-                _base.coin.txFactory.receiver.addressSourceName = text
+                _base.coin.txFactory.receiver.inputAddressName = text
             }
+        }
+        BDialogValidLabel {
+            status: BCommon.ValidStatus.Unset // TODO
         }
 
         BDialogSeparator {}
@@ -69,7 +70,7 @@ BPane {
             text: qsTr("Amount:")
         }
         BAmountInput {
-            id: _InputAmount1
+            id: _inputAmount1
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
             amount: _base.coin.txFactory.receiverAmount
@@ -94,7 +95,7 @@ BPane {
             text: qsTr("per kilobyte:")
         }
         BAmountInput {
-            id: _InputAmount2
+            id: _inputAmount2
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
             amount: _base.coin.txFactory.kibFeeAmount
@@ -171,10 +172,7 @@ BPane {
                 text: BCommon.button.resetRole
             }
             onReset: {
-                _InputRecipientAddress.clear()
-                _InputSourceAddress.clear()
-                _InputAmount1.clear()
-                _InputAmount2.clear()
+                _base.clear()
             }
             onAccepted: {
                 if (_base.coin.txFactory.isValid && _base.coin.txFactory.prepare()) {
@@ -186,10 +184,7 @@ BPane {
                     dialog.onAccepted.connect(function () {
                         if (_base.coin.txFactory.sign()) {
                             if (_base.coin.txFactory.broadcast()) { // TODO error?
-                                _InputRecipientAddress.clear()
-                                _InputSourceAddress.clear()
-                                _InputAmount1.clear()
-                                _InputAmount2.clear()
+                                _base.clear()
                             }
                         } else {
                             // TODO error?
@@ -207,5 +202,12 @@ BPane {
         onClosed: {
             // TODO _base.coin.txFactory.recalcSources()
         }
+    }
+
+    function clear() {
+        _inputRecipientAddress.clear()
+        _inputSourceAddress.clear()
+        _inputAmount1.clear()
+        _inputAmount2.clear()
     }
 }
