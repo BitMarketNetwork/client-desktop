@@ -183,8 +183,11 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
             first_index: int,
             last_index: int) -> None:
         super().beginRemoveRows(parent, first_index, last_index)
-        while range(first_index, last_index + 1):
+        if last_index == first_index:
             self._data_list.pop(first_index)
+        else:
+            while range(first_index, last_index + 1):
+                self._data_list.pop(first_index)
 
     def endResetModel(self) -> None:
         self._data_list = [{}] * len(self._source_list)

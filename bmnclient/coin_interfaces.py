@@ -77,6 +77,16 @@ class CoinInterface(_AbstractInterface, AbstractCoin.Interface):
                 pass
         self._query_scheduler.updateCoinAddress(address)
 
+    def beforeRemoveAddress(self, address: AbstractCoin.Address, index: int) -> None:
+        pass
+
+    def afterRemoveAddress(self, address: AbstractCoin.Address) -> None:
+        try:
+            with self._database.transaction() as cursor:
+                self._database[AddressListTable].delete(cursor, address)
+        except self._database.TransactionInEffectError:
+            pass
+
     def afterSetServerData(self) -> None:
         pass
 
@@ -112,6 +122,9 @@ class AddressInterface(_AbstractInterface, AbstractCoin.Address.Interface):
 
     def afterSetIsTxInput(self) -> None:
         pass
+
+    def afterSetIsHidden(self) -> None:
+        self._save()
 
     def afterSetTxCount(self) -> None:
         self._save()

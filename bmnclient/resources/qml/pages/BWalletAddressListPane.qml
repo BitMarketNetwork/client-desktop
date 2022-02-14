@@ -35,6 +35,13 @@ BPane {
                 _contextMenu.address.state.isTxInput = true
             }
         }
+        BMenuItem {
+            text: qsTr("Delete")
+            enabled: !_contextMenu.address.state.isUsed
+            onTriggered: {
+                _base.coin.manager.removeAddress(_contextMenu.address.name, _contextMenu.address.state.label, _contextMenu.address.state.comment)
+            }
+        }
         /*BMenuItem {
             text: qsTr("Edit...")
             onTriggered: {

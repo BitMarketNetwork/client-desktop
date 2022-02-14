@@ -475,6 +475,17 @@ class AddressListTable(AbstractTable, name="addresses"):
             allow_hd_path=True)
         assert address.rowId > 0
 
+    def delete(
+            self, cursor: Cursor,
+            address: AbstractCoin.Address) -> None:
+        assert address.coin.rowId > 0
+        assert not address.isNullData
+
+        cursor.execute(
+            f"DELETE FROM {self.identifier}"
+            f" WHERE {_columnList(self.Column.COIN_ROW_ID)} == ? AND {_columnList(self.Column.NAME)} == ?",
+            (address.coin.rowId, address.name))
+
 
 class TxListTable(AbstractTable, name="transactions"):
     class Column(ColumnEnum):

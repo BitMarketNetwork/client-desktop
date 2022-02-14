@@ -51,6 +51,12 @@ class _AbstractCoinInterface:
     def afterAppendAddress(self, address: AbstractCoin.Address) -> None:
         raise NotImplementedError
 
+    def beforeRemoveAddress(self, address: AbstractCoin.Address, index: int) -> None:
+        raise NotImplementedError
+
+    def afterRemoveAddress(self, address: AbstractCoin.Address) -> None:
+        raise NotImplementedError
+
     def afterSetServerData(self) -> None:
         raise NotImplementedError
 
@@ -555,6 +561,20 @@ class AbstractCoin(Serializable):
         if self._model:
             self._model.afterAppendAddress(address)
 
+        self.updateAmount()
+        return True
+
+    def removeAddress(self, address: Address) -> bool:
+        if address is None:
+            return False
+        index = self._address_list.index(address)
+        if index is None:
+            return False
+        if self._model:
+            self._model.beforeRemoveAddress(address, index)
+        self._address_list.remove(address)
+        if self._model:
+            self._model.afterRemoveAddress(address)
         self.updateAmount()
         return True
 

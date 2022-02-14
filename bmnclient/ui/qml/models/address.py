@@ -54,6 +54,10 @@ class AddressStateModel(AbstractAddressStateModel):
     def label(self) -> str:
         return self._address.label
 
+    @QProperty(str, notify=__stateChanged)
+    def comment(self) -> str:
+        return self._address.comment
+
     @QProperty(bool, constant=True)
     def isReadOnly(self) -> bool:
         return self._address.isReadOnly
@@ -72,6 +76,12 @@ class AddressStateModel(AbstractAddressStateModel):
         # TODO temporary, allow multiple input addresses
         if self._address.isTxInput:
             self._coin.txFactory.setInputAddressName(self._address.name)
+
+    @QProperty(bool, notify=__stateChanged)
+    def isUsed(self) -> bool:
+        if self._address.amount > 0:
+            return True
+        return False
 
 
 class AddressAmountModel(AbstractAddressAmountModel):

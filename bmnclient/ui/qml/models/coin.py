@@ -201,6 +201,23 @@ class CoinManagerModel(AbstractCoinStateModel):
         return True
 
     # noinspection PyTypeChecker
+    @QSlot(str, str, str, result=bool)
+    def removeAddress(
+            self,
+            address_name: str,
+            label: str,
+            comment: str) -> bool:
+        address = self._coin.Address.decode(
+            self._coin,
+            name=address_name,
+            label=label,
+            comment=comment)
+        if address is None:
+            return False
+        self._coin.removeAddress(address)
+        return True
+
+    # noinspection PyTypeChecker
     @QSlot(str, result=bool)
     def isValidAddress(self, address_name: str) -> bool:
         if self._coin.Address.decode(self._coin, name=address_name) is None:
@@ -331,6 +348,17 @@ class CoinModel(CoinInterface, AbstractModel):
         # noinspection PyUnresolvedReferences
         self._tx_list_model.addSourceModel(address.model.txList)
         super().afterAppendAddress(address)
+
+    def beforeRemoveAddress(self, address: AbstractCoin.Address, index: int) -> None:
+        self._address_list_model.lock(self._address_list_model.lockRemoveRows(first_index=index, count=1))
+        super().beforeRemoveAddress(address, index)
+
+    def afterRemoveAddress(self, address: AbstractCoin.Address) -> None:
+        self._address_list_model.unlock()
+        # noinspection PyUnresolvedReferences
+        #self._tx_list_model.removeSourceModel(address.model.txList)
+        super().afterRemoveAddress(address)
+
 
     def afterSetServerData(self) -> None:
         self._server_data_model.update()
