@@ -12,7 +12,7 @@ from . import AbstractCoinStateModel, AbstractModel, ValidStatus
 from .amount import AbstractAmountInputModel, AbstractAmountModel
 from .tx import TxIoListModel
 from ....coin_interfaces import TxFactoryInterface
-
+from ..dialogs.tx import TxBroadcastPendingDialog
 if TYPE_CHECKING:
     from typing import Optional, Sequence
     from .. import QmlApplication
@@ -354,6 +354,7 @@ class TxFactoryModel(TxFactoryInterface, AbstractModel):
 
     def onBroadcast(self, mtx: AbstractCoin.TxFactory.MutableTx) -> None:
         super().onBroadcast(mtx)
+        TxBroadcastPendingDialog(self._application.qmlContext.dialogManager, mtx).open()
         # TODO show pending dialog
 
     def onBroadcastFinished(
