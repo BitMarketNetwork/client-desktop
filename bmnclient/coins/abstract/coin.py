@@ -4,18 +4,17 @@ import math
 from typing import TYPE_CHECKING
 
 from .address import _Address
-from .currency import _Currency
 from .script import _Script
 from .tx import _Tx
 from .tx_factory import _TxFactory
 from ..hd import HdNode
 from ...crypto.digest import Sha256Digest
+from ...currency import Currency as _Currency, FiatRate, NoneFiatCurrency
 from ...utils.class_property import classproperty
 from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, Generator, List, Optional, Union
-    from ..currency import FiatRate
     from ...utils.serialize import DeserializedData, DeserializedDict
 
 
@@ -110,7 +109,6 @@ class _Coin(Serializable):
 
         self._status = 0
 
-        from ..currency import FiatRate, NoneFiatCurrency
         self._fiat_rate = FiatRate(0, NoneFiatCurrency)
         self._amount = 0
 

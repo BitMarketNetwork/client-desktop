@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utils import NotImplementedInstance
-from ...utils.class_property import classproperty
+from ..utils import NotImplementedInstance
+from ..utils.class_property import classproperty
 
 if TYPE_CHECKING:
     from typing import Optional
-    from ...language import Locale
+    from ..language import Locale
 
 
-class _Currency(NotImplementedInstance):
+class Currency(NotImplementedInstance):
     _DECIMAL_SIZE = (0, 0)
     _VALUE_BITS = 63  # int64
     _FULL_NAME = "YYY"

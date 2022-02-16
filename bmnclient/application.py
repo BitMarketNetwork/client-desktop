@@ -3,22 +3,22 @@ from __future__ import annotations
 import logging
 import os
 from argparse import ArgumentParser
-from enum import auto, Enum
+from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    QLocale, \
-    QMetaObject, \
-    QObject, \
-    Qt, \
-    Slot as QSlot
+from PySide6.QtCore import (
+    QLocale,
+    QMetaObject,
+    QObject,
+    Qt,
+    Slot as QSlot)
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
-from .coins.currency import FiatCurrencyList, FiatRate
 from .coins.list import CoinList
 from .config import Config, ConfigKey
+from .currency import FiatCurrencyList, FiatRate
 from .database import Database
 from .database.tables import AddressListTable, CoinListTable, TxListTable
 from .key_store import KeyStore

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QObject
 
-from . import abstract
+from .currency import Currency
 from ..config import ConfigKey, ConfigStaticList
 
 if TYPE_CHECKING:
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from ..application import CoreApplication
 
 
-class FiatCurrency(abstract.Coin.Currency):  # TODO change parent
+class FiatCurrency(Currency):
     _DECIMAL_SIZE = (2, 2)
 
 
@@ -57,17 +57,3 @@ class FiatCurrencyList(ConfigStaticList):
     @property
     def current(self) -> Type[FiatCurrency]:
         return super().current
-
-
-class FiatRate:
-    def __init__(self, value: int, currency_type: Type[FiatCurrency]) -> None:
-        self._value = value
-        self._currency_type = currency_type
-
-    @property
-    def value(self) -> int:
-        return self._value
-
-    @property
-    def currencyType(self) -> Type[FiatCurrency]:
-        return self._currency_type

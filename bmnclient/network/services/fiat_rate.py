@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING
 from PySide6.QtCore import QObject
 
 from ..query import AbstractJsonQuery
-from ...coins.currency import \
-    EuroFiatCurrency, \
-    FiatCurrency, \
-    FiatRate, \
-    UsdFiatCurrency
 from ...config import ConfigKey, ConfigStaticList
+from ...currency import (
+    EuroFiatCurrency,
+    FiatCurrency,
+    FiatRate,
+    UsdFiatCurrency)
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
