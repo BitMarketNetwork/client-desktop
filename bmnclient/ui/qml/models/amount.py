@@ -14,8 +14,7 @@ from . import AbstractCoinStateModel
 if TYPE_CHECKING:
     from typing import Callable, Optional, Type
     from .. import QmlApplication
-    from ....coins.abstract.coin import AbstractCoin
-    from ....coins.abstract.currency import AbstractCurrency
+    from ....coins import abstract
 
 
 class AbstractAmountModel(AbstractCoinStateModel):
@@ -27,7 +26,7 @@ class AbstractAmountModel(AbstractCoinStateModel):
     def _toHumanValue(
             self,
             value: int,
-            currency_type: Type[AbstractCurrency]) -> str:
+            currency_type: Type[abstract.Coin.Currency]) -> str:
         return currency_type.toString(value, locale=self.locale)
 
     @QProperty(str, notify=__stateChanged)
@@ -84,7 +83,7 @@ class AbstractAmountInputModel(AbstractAmountModel):
         def _validateHelper(
                 self,
                 value: str,
-                currency_type: Type[AbstractCurrency],
+                currency_type: Type[abstract.Coin.Currency],
                 unit_converter: Optional[Callable[[int], int]] = None) \
                 -> QValidator.State:
             value = self._normalizeValue(value)
@@ -114,7 +113,7 @@ class AbstractAmountInputModel(AbstractAmountModel):
                 self._owner._coin.fiatRate.currencyType,
                 self._owner._coin.fromFiatAmount)
 
-    def __init__(self, application: QmlApplication, coin: AbstractCoin) -> None:
+    def __init__(self, application: QmlApplication, coin: abstract.Coin) -> None:
         super().__init__(application, coin)
         self._value_human_validator = self._ValueHumanValidator(self)
         self._fiat_value_human_validator = self._FiatValueHumanValidator(self)
@@ -131,7 +130,7 @@ class AbstractAmountInputModel(AbstractAmountModel):
     def _fromHumanValue(
             self,
             value: str,
-            currency_type: Type[AbstractCurrency],
+            currency_type: Type[abstract.Coin.Currency],
             unit_converter: Optional[Callable[[int], Optional[int]]] = None) \
             -> Optional[int]:
         if not value:
@@ -151,7 +150,7 @@ class AbstractAmountInputModel(AbstractAmountModel):
     def _setValueHelper(
             self,
             value: str,
-            currency_type: Type[AbstractCurrency],
+            currency_type: Type[abstract.Coin.Currency],
             unit_converter: Optional[Callable[[int], Optional[int]]] = None) \
             -> bool:
         value = self._fromHumanValue(value, currency_type, unit_converter)

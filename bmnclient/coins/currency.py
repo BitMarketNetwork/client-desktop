@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QObject
 
-from .abstract.currency import AbstractCurrency
+from . import abstract
 from ..config import ConfigKey, ConfigStaticList
 
 if TYPE_CHECKING:
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from ..application import CoreApplication
 
 
-class FiatCurrency(AbstractCurrency):
+class FiatCurrency(abstract.Coin.Currency):  # TODO change parent
     _DECIMAL_SIZE = (2, 2)
 
 

@@ -7,10 +7,10 @@ from ...utils.integer import LittleOrderIntegerConverter
 
 if TYPE_CHECKING:
     from typing import Optional, Sequence
-    from .coin import AbstractCoin
+    from .coin import _Coin
 
 
-class _AbstractScript(LittleOrderIntegerConverter):
+class _Script(LittleOrderIntegerConverter):
     Type = Enum
     OpCode = IntEnum
 
@@ -65,8 +65,8 @@ class _AbstractScript(LittleOrderIntegerConverter):
     @classmethod
     def addressToScript(
             cls,
-            address: AbstractCoin.Address,
-            type_: Optional[AbstractCoin.Script.Type] = None) \
+            address: _Coin.Address,
+            type_: Optional[_Coin.Script.Type] = None) \
             -> Optional[bytes]:
         raise NotImplementedError
 

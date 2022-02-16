@@ -10,11 +10,11 @@ from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
     from typing import Any, Iterable, List, Optional, Union
-    from .coin import AbstractCoin
+    from .coin import _Coin
     from ...utils.serialize import DeserializedData, DeserializedDict
 
 
-class _AbstractAddressTypeValue:
+class _TypeValue:
     __slots__ = (
         "_name",
         "_version",
@@ -31,9 +31,9 @@ class _AbstractAddressTypeValue:
             name: str,
             version: int,
             size: int,
-            encoding: Optional[AbstractCoin.Address.Encoding],
+            encoding: Optional[_Coin.Address.Encoding],
             is_witness: bool,
-            script_type: Optional[AbstractCoin.Script.Type],
+            script_type: Optional[_Coin.Script.Type],
             hd_purpose: Optional[int]) -> None:
         self._name = name
         self._version = version
@@ -43,7 +43,7 @@ class _AbstractAddressTypeValue:
         self._script_type = script_type
         self._hd_purpose = hd_purpose
 
-    def __eq__(self, other: AbstractCoin.Address.TypeValue) -> bool:
+    def __eq__(self, other: _Coin.Address.TypeValue) -> bool:
         return (
                 isinstance(other, self.__class__)
                 and self._name == other._name
@@ -63,7 +63,7 @@ class _AbstractAddressTypeValue:
             self._script_type,
             self._hd_purpose))
 
-    def copy(self, **kwargs) -> AbstractCoin.Address.TypeValue:
+    def copy(self, **kwargs) -> _Coin.Address.TypeValue:
         return self.__class__(
             name=kwargs.get("name", self._name),
             version=kwargs.get("version", self._version),
@@ -96,7 +96,7 @@ class _AbstractAddressTypeValue:
         return self._size
 
     @property
-    def encoding(self) -> Optional[AbstractCoin.Address.Encoding]:
+    def encoding(self) -> Optional[_Coin.Address.Encoding]:
         return self._encoding
 
     @property
@@ -104,7 +104,7 @@ class _AbstractAddressTypeValue:
         return self._is_witness
 
     @property
-    def scriptType(self) -> Optional[AbstractCoin.Script.Type]:
+    def scriptType(self) -> Optional[_Coin.Script.Type]:
         return self._script_type
 
     @property
@@ -112,11 +112,11 @@ class _AbstractAddressTypeValue:
         return self._hd_purpose
 
 
-class _AbstractAddressInterface:
+class _Interface:
     def __init__(
             self,
             *args,
-            address: AbstractCoin.Address,
+            address: _Coin.Address,
             **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._address = address
@@ -136,10 +136,10 @@ class _AbstractAddressInterface:
     def afterSetTxCount(self) -> None:
         raise NotImplementedError
 
-    def beforeAppendTx(self, tx: AbstractCoin.Tx) -> None:
+    def beforeAppendTx(self, tx: _Coin.Tx) -> None:
         raise NotImplementedError
 
-    def afterAppendTx(self, tx: AbstractCoin.Tx) -> None:
+    def afterAppendTx(self, tx: _Coin.Tx) -> None:
         raise NotImplementedError
 
     def afterSetUtxoList(self) -> None:
@@ -152,7 +152,7 @@ class _AbstractAddressInterface:
         raise NotImplementedError
 
 
-class _AbstractAddress(Serializable):
+class _Address(Serializable):
     _NULLDATA_NAME = "NULL_DATA"
     _HRP = "hrp"
 
@@ -163,17 +163,17 @@ class _AbstractAddress(Serializable):
         BASE58 = auto()
         BECH32 = auto()
 
-    Interface = _AbstractAddressInterface
-    TypeValue = _AbstractAddressTypeValue
+    Interface = _Interface
+    TypeValue = _TypeValue
     Type = Enum
 
     def __init__(
             self,
-            coin: AbstractCoin,
+            coin: _Coin,
             *,
             row_id: int = -1,
             name: Optional[str],
-            type_: AbstractCoin.Address.Type,
+            type_: _Coin.Address.Type,
             data: bytes = b"",
             key: Optional[KeyType] = None,
             amount: int = 0,
@@ -181,8 +181,8 @@ class _AbstractAddress(Serializable):
             label: str = "",
             comment: str = "",
             is_tx_input: bool = False,
-            tx_list: Optional[Iterable[AbstractCoin.Tx]] = None,
-            utxo_list: Optional[Iterable[AbstractCoin.Tx.Utxo]] = None,
+            tx_list: Optional[Iterable[_Coin.Tx]] = None,
+            utxo_list: Optional[Iterable[_Coin.Tx.Utxo]] = None,
             history_first_offset: str = "",
             history_last_offset: str = "") -> None:
         super().__init__(row_id=row_id)
@@ -213,10 +213,10 @@ class _AbstractAddress(Serializable):
             self._history_first_offset = ""
             self._history_last_offset = ""
 
-        self._model: Optional[AbstractCoin.Address.Interface] = \
+        self._model: Optional[_Coin.Address.Interface] = \
             self._coin.model_factory(self)
 
-    def __eq__(self, other: AbstractCoin.Address) -> bool:
+    def __eq__(self, other: _Coin.Address) -> bool:
         return (
                 isinstance(other, self.__class__)
                 and self._coin == other.coin
@@ -251,8 +251,8 @@ class _AbstractAddress(Serializable):
     def deserialize(
             cls,
             source_data: DeserializedDict,
-            coin: Optional[AbstractCoin] = None,
-            **options) -> Optional[AbstractCoin.Address]:
+            coin: Optional[_Coin] = None,
+            **options) -> Optional[_Coin.Address]:
         assert coin is not None
         return super().deserialize(source_data, coin, **options)
 
@@ -261,7 +261,7 @@ class _AbstractAddress(Serializable):
             cls,
             key: str,
             value: DeserializedData,
-            coin: Optional[AbstractCoin] = None,
+            coin: Optional[_Coin] = None,
             **options) -> Any:
         if isinstance(value, str) and key == "key":
             return cls.importKey(coin, value)
@@ -280,8 +280,8 @@ class _AbstractAddress(Serializable):
     @classmethod
     def _deserializeFactory(
             cls,
-            coin: AbstractCoin,
-            **kwargs) -> Optional[AbstractCoin.Address]:
+            coin: _Coin,
+            **kwargs) -> Optional[_Coin.Address]:
         return cls.decode(coin, **kwargs)
 
     @classproperty
@@ -289,21 +289,21 @@ class _AbstractAddress(Serializable):
         return cls._HRP
 
     @property
-    def model(self) -> Optional[AbstractCoin.Address.Interface]:
+    def model(self) -> Optional[_Coin.Address.Interface]:
         return self._model
 
     @property
-    def coin(self) -> AbstractCoin:
+    def coin(self) -> _Coin:
         return self._coin
 
     @classmethod
     def create(
             cls,
-            coin: AbstractCoin,
+            coin: _Coin,
             *,
-            type_: AbstractCoin.Address.Type,
+            type_: _Coin.Address.Type,
             key: KeyType,
-            **kwargs) -> Optional[AbstractCoin.Address]:
+            **kwargs) -> Optional[_Coin.Address]:
         raise NotImplementedError
 
     @serializable
@@ -321,23 +321,23 @@ class _AbstractAddress(Serializable):
         return self.__hash
 
     @property
-    def type(self) -> AbstractCoin.Address.Type:
+    def type(self) -> _Coin.Address.Type:
         return self._type
 
     @classmethod
     def decode(
             cls,
-            coin: AbstractCoin,
+            coin: _Coin,
             *,
             name: str,
-            **kwargs) -> Optional[AbstractCoin.Address]:
+            **kwargs) -> Optional[_Coin.Address]:
         raise NotImplementedError
 
     @classmethod
     def createNullData(
             cls,
-            coin: AbstractCoin,
-            **kwargs) -> AbstractCoin.Address:
+            coin: _Coin,
+            **kwargs) -> _Coin.Address:
         raise NotImplementedError
 
     @property
@@ -403,7 +403,7 @@ class _AbstractAddress(Serializable):
         return value
 
     @classmethod
-    def importKey(cls, coin: AbstractCoin, value: str) -> Optional[KeyType]:
+    def importKey(cls, coin: _Coin, value: str) -> Optional[KeyType]:
         if not value:
             return None
 
@@ -515,10 +515,10 @@ class _AbstractAddress(Serializable):
 
     @serializable
     @property
-    def txList(self) -> List[AbstractCoin.Tx]:
+    def txList(self) -> List[_Coin.Tx]:
         return self._tx_list
 
-    def appendTx(self, tx: AbstractCoin.Tx) -> bool:
+    def appendTx(self, tx: _Coin.Tx) -> bool:
         for etx in self._tx_list:
             if tx.name != etx.name:
                 continue
@@ -538,11 +538,11 @@ class _AbstractAddress(Serializable):
 
     @serializable
     @property
-    def utxoList(self) -> List[AbstractCoin.Tx.Utxo]:
+    def utxoList(self) -> List[_Coin.Tx.Utxo]:
         return self._utxo_list
 
     @utxoList.setter
-    def utxoList(self, utxo_list: List[AbstractCoin.Tx.Utxo]) -> None:
+    def utxoList(self, utxo_list: List[_Coin.Tx.Utxo]) -> None:
         if self._utxo_list == utxo_list:
             return
 

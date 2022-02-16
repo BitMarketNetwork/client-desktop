@@ -3,12 +3,11 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
-from .address import _AbstractAddress
-from .currency import AbstractCurrency
-from .script import _AbstractScript
-from .tx import _AbstractTx
-from .tx_factory import _AbstractTxFactory
-from ..currency import FiatRate, NoneFiatCurrency
+from .address import _Address
+from .currency import _Currency
+from .script import _Script
+from .tx import _Tx
+from .tx_factory import _TxFactory
 from ..hd import HdNode
 from ...crypto.digest import Sha256Digest
 from ...utils.class_property import classproperty
@@ -16,11 +15,12 @@ from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, Generator, List, Optional, Union
+    from ..currency import FiatRate
     from ...utils.serialize import DeserializedData, DeserializedDict
 
 
-class _AbstractCoinInterface:
-    def __init__(self, *args, coin: AbstractCoin, **kwargs) -> None:
+class _Interface:
+    def __init__(self, *args, coin: _Coin, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._coin = coin
 
@@ -45,10 +45,10 @@ class _AbstractCoinInterface:
     def afterUpdateUtxoList(self) -> None:
         raise NotImplementedError
 
-    def beforeAppendAddress(self, address: AbstractCoin.Address) -> None:
+    def beforeAppendAddress(self, address: _Coin.Address) -> None:
         raise NotImplementedError
 
-    def afterAppendAddress(self, address: AbstractCoin.Address) -> None:
+    def afterAppendAddress(self, address: _Coin.Address) -> None:
         raise NotImplementedError
 
     def afterSetServerData(self) -> None:
@@ -58,7 +58,7 @@ class _AbstractCoinInterface:
         raise NotImplementedError
 
 
-class AbstractCoin(Serializable):
+class _Coin(Serializable):
     _SHORT_NAME = ""
     _FULL_NAME = ""
     _IS_TEST_NET = False
@@ -70,12 +70,12 @@ class AbstractCoin(Serializable):
 
     _WIF_VERSION = 0x00
 
-    Interface = _AbstractCoinInterface
-    Currency = AbstractCurrency
-    Address = _AbstractAddress
-    Tx = _AbstractTx
-    TxFactory = _AbstractTxFactory
-    Script = _AbstractScript
+    Interface = _Interface
+    Currency = _Currency
+    Address = _Address
+    Tx = _Tx
+    TxFactory = _TxFactory
+    Script = _Script
 
     class MempoolCacheItem:
         __slots__ = ("remote_hash", "access_count")
@@ -110,20 +110,21 @@ class AbstractCoin(Serializable):
 
         self._status = 0
 
+        from ..currency import FiatRate, NoneFiatCurrency
         self._fiat_rate = FiatRate(0, NoneFiatCurrency)
         self._amount = 0
 
         self._hd_node_list: Dict[int, HdNode] = {}
 
-        self._address_list: List[AbstractCoin.Address] = []
+        self._address_list: List[_Coin.Address] = []
         self._server_data: Dict[str, Union[int, str]] = {}
-        self._mempool_cache: Dict[bytes, AbstractCoin.MempoolCacheItem] = {}
+        self._mempool_cache: Dict[bytes, _Coin.MempoolCacheItem] = {}
         self._mempool_cache_access_counter = 0
         self._tx_factory = self.TxFactory(self)
 
-        self._model: Optional[AbstractCoin.Interface] = self.model_factory(self)
+        self._model: Optional[_Coin.Interface] = self.model_factory(self)
 
-    def __eq__(self, other: AbstractCoin) -> bool:
+    def __eq__(self, other: _Coin) -> bool:
         return (
                 isinstance(other, self.__class__)
                 and self.name == other.name
@@ -136,8 +137,8 @@ class AbstractCoin(Serializable):
     def deserialize(
             cls,
             source_data: DeserializedDict,
-            coin: Optional[AbstractCoin] = None,
-            **options) -> Optional[AbstractCoin]:
+            coin: Optional[_Coin] = None,
+            **options) -> Optional[_Coin]:
         assert coin is not None
         return super().deserialize(source_data, coin, **options)
 
@@ -146,7 +147,7 @@ class AbstractCoin(Serializable):
             cls,
             key: str,
             value: DeserializedData,
-            coin: Optional[AbstractCoin] = None,
+            coin: Optional[_Coin] = None,
             **options) -> Any:
         if isinstance(value, dict) and key == "address_list":
             return cls.Address.deserialize(value, coin)
@@ -155,7 +156,7 @@ class AbstractCoin(Serializable):
     @classmethod
     def _deserializeFactory(
             cls,
-            coin: AbstractCoin,
+            coin: _Coin,
             *,
             row_id: Optional[int] = None,
             name: str,
@@ -166,7 +167,7 @@ class AbstractCoin(Serializable):
             unverified_offset: str,
             unverified_hash: str,
             address_list: Optional[List[Address]] = None
-    ) -> Optional[AbstractCoin]:
+    ) -> Optional[_Coin]:
         if coin.name != name:
             return None
 
@@ -192,7 +193,7 @@ class AbstractCoin(Serializable):
         return coin
 
     @property
-    def model(self) -> Optional[AbstractCoin.Interface]:
+    def model(self) -> Optional[_Coin.Interface]:
         return self._model
 
     def beginUpdateState(self) -> None:

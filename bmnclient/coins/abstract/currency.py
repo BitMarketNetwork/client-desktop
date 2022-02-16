@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from ...language import Locale
 
 
-class AbstractCurrency(NotImplementedInstance):
+class _Currency(NotImplementedInstance):
     _DECIMAL_SIZE = (0, 0)
     _VALUE_BITS = 63  # int64
     _FULL_NAME = "YYY"

@@ -3,7 +3,7 @@ from __future__ import annotations
 from math import ceil
 from typing import TYPE_CHECKING
 
-from ..abstract.coin import AbstractCoin
+from .. import abstract
 from ...crypto.digest import Sha256Digest, Sha256DoubleDigest
 from ...crypto.secp256k1 import PrivateKey, PublicKey
 
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from . import Bitcoin
 
 
-class _BitcoinMutableTxInput(AbstractCoin.TxFactory.MutableTx.Input):
+class _BitcoinMutableTxInput(abstract.Coin.TxFactory.MutableTx.Input):
     _AMOUNT_LENGTH = 8
     _HASH_TYPE_LENGTH = 4
     _SEQUENCE_LENGTH = 4
@@ -131,7 +131,7 @@ class _BitcoinMutableTxInput(AbstractCoin.TxFactory.MutableTx.Input):
             return False
 
 
-class _BitcoinMutableTxOutput(AbstractCoin.TxFactory.MutableTx.Output):
+class _BitcoinMutableTxOutput(abstract.Coin.TxFactory.MutableTx.Output):
     _AMOUNT_LENGTH = 8
 
     def __init__(
@@ -149,7 +149,7 @@ class _BitcoinMutableTxOutput(AbstractCoin.TxFactory.MutableTx.Output):
             self._script_bytes = self._coin.Script.integerToVarInt(0)
 
 
-class _BitcoinMutableTx(AbstractCoin.TxFactory.MutableTx):
+class _BitcoinMutableTx(abstract.Coin.TxFactory.MutableTx):
     _VERSION_LENGTH = 4
     _LOCK_TIME_LENGTH = 4
     _WITNESS_HEADER = b"\x00\x01"
@@ -283,7 +283,7 @@ class _BitcoinMutableTx(AbstractCoin.TxFactory.MutableTx):
         return self.rawSize
 
 
-class _BitcoinTxFactory(AbstractCoin.TxFactory):
+class _BitcoinTxFactory(abstract.Coin.TxFactory):
     MutableTx = _BitcoinMutableTx
 
     def _prepare(

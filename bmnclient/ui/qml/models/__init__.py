@@ -13,7 +13,7 @@ from PySide6.QtCore import \
 if TYPE_CHECKING:
     from typing import Any, Dict, Final, Generator, Optional, Tuple
     from .. import QmlApplication
-    from ....coins.abstract.coin import AbstractCoin
+    from ....coins import abstract
     from ....config import ConfigKey
     from ....language import Locale
 
@@ -120,7 +120,7 @@ class AbstractTupleStateModel(AbstractStateModel):
 
 
 class AbstractCoinStateModel(AbstractStateModel):
-    def __init__(self, application: QmlApplication, coin: AbstractCoin) -> None:
+    def __init__(self, application: QmlApplication, coin: abstract.Coin) -> None:
         super().__init__(application)
         self._coin = coin
 

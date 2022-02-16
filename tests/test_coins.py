@@ -13,7 +13,7 @@ from bmnclient.language import Locale
 
 if TYPE_CHECKING:
     from typing import List, Optional, Sequence, Type
-    from bmnclient.coins.abstract.coin import AbstractCoin
+    from bmnclient.coins import abstract
 
 
 BITCOIN_ADDRESS_LIST = (
@@ -121,10 +121,10 @@ LITECOIN_ADDRESS_LIST = (
 
 def fillCoin(
         owner: TestCase,
-        coin: AbstractCoin,
+        coin: abstract.Coin,
         *,
         address_count: int = 4,
-        tx_count: int = 4) -> AbstractCoin:
+        tx_count: int = 4) -> abstract.Coin:
     root_node = HdNode.deriveRootNode(urandom(64))
     owner.assertIsNotNone(root_node)
 
@@ -197,7 +197,7 @@ def fillCoin(
 class TestCoins(TestCase):
     def _test_address_decode(
             self,
-            coin: AbstractCoin,
+            coin: abstract.Coin,
             address_list: Sequence[tuple]) -> None:
         hash_check_count = 0
 
@@ -394,7 +394,7 @@ class TestCoins(TestCase):
                 # noinspection PyProtectedMember
                 self.assertEqual(len(coin._mempool_cache), len(mempool_list))
 
-    def _test_serialization(self, coin_type: Type[AbstractCoin]) -> None:
+    def _test_serialization(self, coin_type: Type[abstract.Coin]) -> None:
         coin = fillCoin(self, coin_type())
 
         data = coin.serialize(allow_hd_path=False)
@@ -575,7 +575,7 @@ class TestTxFactory(TestCase):
                 self.assertEqual(1, len(l))
                 self.assertEqual(i, a)
 
-        # find nearest amount + height test
+        # find the nearest amount + height test
         if True:
             amount_list = list(range(1, 1000, 2)) + list(range(1, 1000, 2))
             shuffle(amount_list)
@@ -772,16 +772,16 @@ class TestMutableTx(TestCase):
 
     def _createInput(
             self,
-            coin: AbstractCoin,
+            coin: abstract.Coin,
             name: str,
             index: int,
             *,
             private_key: str,
-            address_type: AbstractCoin.Address.Type,
-            script_type: AbstractCoin.Script.Type,
+            address_type: abstract.Coin.Address.Type,
+            script_type: abstract.Coin.Script.Type,
             amount: int,
             sequence: int,
-            is_dummy: bool = False) -> AbstractCoin.TxFactory.MutableTx.Input:
+            is_dummy: bool = False) -> abstract.Coin.TxFactory.MutableTx.Input:
         private_key = coin.Address.importKey(coin, private_key)
         self.assertIsNotNone(private_key)
 
@@ -807,12 +807,12 @@ class TestMutableTx(TestCase):
     @classmethod
     def _createOutput(
             cls,
-            coin: AbstractCoin,
+            coin: abstract.Coin,
             *,
             address_name: str,
-            address_type: AbstractCoin.Address.Type,
+            address_type: abstract.Coin.Address.Type,
             amount: int,
-            is_dummy: bool = False) -> AbstractCoin.TxFactory.MutableTx.Output:
+            is_dummy: bool = False) -> abstract.Coin.TxFactory.MutableTx.Output:
         address = coin.Address(
             coin,
             name=address_name,
@@ -824,15 +824,15 @@ class TestMutableTx(TestCase):
 
     def _test_mtx(
             self,
-            input_list: Sequence[AbstractCoin.TxFactory.MutableTx.Input],
-            output_list: Sequence[AbstractCoin.TxFactory.MutableTx.Output],
+            input_list: Sequence[abstract.Coin.TxFactory.MutableTx.Input],
+            output_list: Sequence[abstract.Coin.TxFactory.MutableTx.Output],
             *,
             lock_time: int,
             is_dummy: bool,
             expected_name: Optional[str],
             expected_data: str,
             excepted_raw_size: int,
-            excepted_virtual_size: int) -> AbstractCoin.TxFactory.MutableTx:
+            excepted_virtual_size: int) -> abstract.Coin.TxFactory.MutableTx:
         mtx = self._coin.TxFactory.MutableTx(
             self._coin,
             input_list,

@@ -16,14 +16,14 @@ from ..dialogs.tx import TxBroadcastPendingDialog
 if TYPE_CHECKING:
     from typing import Optional, Sequence
     from .. import QmlApplication
-    from ....coins.abstract.coin import AbstractCoin
+    from ....coins import abstract
 
 
 class AbstractTxFactoryStateModel(AbstractCoinStateModel):
     def __init__(
             self,
             application: QmlApplication,
-            factory: AbstractCoin.TxFactory) -> None:
+            factory: abstract.Coin.TxFactory) -> None:
         super().__init__(application, factory.coin)
         self._factory = factory
 
@@ -50,7 +50,7 @@ class AbstractTxFactoryAmountModel(AbstractAmountModel):
     def __init__(
             self,
             application: QmlApplication,
-            factory: AbstractCoin.TxFactory) -> None:
+            factory: abstract.Coin.TxFactory) -> None:
         super().__init__(application, factory.coin)
         self._factory = factory
 
@@ -62,7 +62,7 @@ class AbstractTxFactoryAmountInputModel(AbstractAmountInputModel):
     def __init__(
             self,
             application: QmlApplication,
-            factory: AbstractCoin.TxFactory) -> None:
+            factory: abstract.Coin.TxFactory) -> None:
         super().__init__(application, factory.coin)
         self._factory = factory
 
@@ -167,7 +167,7 @@ class TxFactoryReceiverModel(AbstractTxFactoryStateModel):
     def __init__(
             self,
             application: QmlApplication,
-            factory: AbstractCoin.TxFactory) -> None:
+            factory: abstract.Coin.TxFactory) -> None:
         super().__init__(application, factory)
         self._first_use = True
 
@@ -243,7 +243,7 @@ class TxFactoryModel(TxFactoryInterface, AbstractModel):
     def __init__(
             self,
             application: QmlApplication,
-            factory: AbstractCoin.TxFactory) -> None:
+            factory: abstract.Coin.TxFactory) -> None:
         super().__init__(
             application,
             query_scheduler=application.networkQueryScheduler,
@@ -352,7 +352,7 @@ class TxFactoryModel(TxFactoryInterface, AbstractModel):
     def afterSetReceiverAddress(self) -> None:
         self._receiver.update()
 
-    def onBroadcast(self, mtx: AbstractCoin.TxFactory.MutableTx) -> None:
+    def onBroadcast(self, mtx: abstract.Coin.TxFactory.MutableTx) -> None:
         super().onBroadcast(mtx)
         TxBroadcastPendingDialog(self._application.qmlContext.dialogManager, mtx).open()
         # TODO show pending dialog
@@ -360,6 +360,6 @@ class TxFactoryModel(TxFactoryInterface, AbstractModel):
     def onBroadcastFinished(
             self,
             error_code: int,
-            mtx: AbstractCoin.TxFactory.MutableTx) -> None:
+            mtx: abstract.Coin.TxFactory.MutableTx) -> None:
         super().onBroadcastFinished(error_code, mtx)
         # TODO show finished message
