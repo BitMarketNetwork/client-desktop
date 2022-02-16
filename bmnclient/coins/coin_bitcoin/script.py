@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from . import Bitcoin
 
 
-class _BitcoinScript(Coin.Script):
+class _Script(Coin.Script):
     class Type(Coin.Script.Type):
         P2PK = auto()
         P2PKH = auto()

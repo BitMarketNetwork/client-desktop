@@ -1,1 +1,1 @@
-from .coin import _Coin as Coin
+from .coin import Coin

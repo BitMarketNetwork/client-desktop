@@ -7,7 +7,7 @@ from ...utils.integer import LittleOrderIntegerConverter
 
 if TYPE_CHECKING:
     from typing import Optional, Sequence
-    from .coin import _Coin
+    from .coin import Coin
 
 
 class _Script(LittleOrderIntegerConverter):
@@ -65,8 +65,8 @@ class _Script(LittleOrderIntegerConverter):
     @classmethod
     def addressToScript(
             cls,
-            address: _Coin.Address,
-            type_: Optional[_Coin.Script.Type] = None) \
+            address: Coin.Address,
+            type_: Optional[Coin.Script.Type] = None) \
             -> Optional[bytes]:
         raise NotImplementedError
 

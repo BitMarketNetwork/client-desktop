@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from . import Bitcoin
 
 
-class _BitcoinMutableTxInput(Coin.TxFactory.MutableTx.Input):
+class _MutableInput(Coin.TxFactory.MutableTx.Input):
     _AMOUNT_LENGTH = 8
     _HASH_TYPE_LENGTH = 4
     _SEQUENCE_LENGTH = 4
@@ -131,7 +131,7 @@ class _BitcoinMutableTxInput(Coin.TxFactory.MutableTx.Input):
             return False
 
 
-class _BitcoinMutableTxOutput(Coin.TxFactory.MutableTx.Output):
+class _MutableOutput(Coin.TxFactory.MutableTx.Output):
     _AMOUNT_LENGTH = 8
 
     def __init__(
@@ -149,13 +149,13 @@ class _BitcoinMutableTxOutput(Coin.TxFactory.MutableTx.Output):
             self._script_bytes = self._coin.Script.integerToVarInt(0)
 
 
-class _BitcoinMutableTx(Coin.TxFactory.MutableTx):
+class _MutableTx(Coin.TxFactory.MutableTx):
     _VERSION_LENGTH = 4
     _LOCK_TIME_LENGTH = 4
     _WITNESS_HEADER = b"\x00\x01"
 
-    Input = _BitcoinMutableTxInput
-    Output = _BitcoinMutableTxOutput
+    Input = _MutableInput
+    Output = _MutableOutput
 
     def __init__(
             self,
@@ -283,8 +283,8 @@ class _BitcoinMutableTx(Coin.TxFactory.MutableTx):
         return self.rawSize
 
 
-class _BitcoinTxFactory(Coin.TxFactory):
-    MutableTx = _BitcoinMutableTx
+class _TxFactory(Coin.TxFactory):
+    MutableTx = _MutableTx
 
     def _prepare(
             self,

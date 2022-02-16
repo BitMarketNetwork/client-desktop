@@ -10,14 +10,14 @@ from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
     from typing import Any, Iterable, List, Optional
-    from .coin import _Coin
+    from .coin import Coin
     from ...utils.serialize import DeserializedData, DeserializedDict
 
 
 class _Io(Serializable):
     def __init__(
             self,
-            coin: _Coin,
+            coin: Coin,
             *,
             row_id: int = -1,
             index: int,
@@ -44,7 +44,7 @@ class _Io(Serializable):
                     name=address_name or "UNKNOWN",
                     amount=amount)
 
-    def __eq__(self, other: _Coin.Tx.Io) -> bool:
+    def __eq__(self, other: Coin.Tx.Io) -> bool:
         return (
                 isinstance(other, self.__class__)
                 and self._coin == other._coin
@@ -67,8 +67,8 @@ class _Io(Serializable):
     def deserialize(
             cls,
             source_data: DeserializedDict,
-            coin: Optional[_Coin] = None,
-            **options) -> Optional[_Coin.Tx.Io]:
+            coin: Optional[Coin] = None,
+            **options) -> Optional[Coin.Tx.Io]:
         assert coin is not None
         return super().deserialize(source_data, coin, **options)
 
@@ -88,7 +88,7 @@ class _Io(Serializable):
         return self._address.name if not self._address.isNullData else None
 
     @property
-    def address(self) -> _Coin.Address:
+    def address(self) -> Coin.Address:
         return self._address
 
     @serializable
@@ -100,23 +100,23 @@ class _Io(Serializable):
 class _Utxo(Serializable):
     def __init__(
             self,
-            coin: _Coin,
+            coin: Coin,
             *,
             name: str,
             height: int,
             index: int,
             amount: int,
-            script_type: Optional[_Coin.Script.Type] = None) -> None:
+            script_type: Optional[Coin.Script.Type] = None) -> None:
         super().__init__()
         self._coin = coin
-        self._address: Optional[_Coin.Address] = None
+        self._address: Optional[Coin.Address] = None
         self._name = name
         self._height = height
         self._index = index
         self._amount = amount
         self._script_type = script_type
 
-    def __eq__(self, other: _Coin.Tx.Utxo) -> bool:
+    def __eq__(self, other: Coin.Tx.Utxo) -> bool:
         return (
                 isinstance(other, self.__class__)
                 and self._coin == other._coin
@@ -144,21 +144,21 @@ class _Utxo(Serializable):
     def deserialize(
             cls,
             source_data: DeserializedDict,
-            coin: Optional[_Coin] = None,
-            **options) -> Optional[_Coin.Tx.Utxo]:
+            coin: Optional[Coin] = None,
+            **options) -> Optional[Coin.Tx.Utxo]:
         assert coin is not None
         return super().deserialize(source_data, coin, **options)
 
     @property
-    def coin(self) -> _Coin:
+    def coin(self) -> Coin:
         return self._coin
 
     @property
-    def address(self) -> Optional[_Coin.Address]:
+    def address(self) -> Optional[Coin.Address]:
         return self._address
 
     @address.setter
-    def address(self, address: _Coin.Address) -> None:
+    def address(self, address: Coin.Address) -> None:
         if self._address is not None:
             raise AttributeError(
                 "already associated with address '{}'"
@@ -193,7 +193,7 @@ class _Utxo(Serializable):
         return self._amount
 
     @property
-    def scriptType(self) -> Optional[_Coin.Script.Type]:
+    def scriptType(self) -> Optional[Coin.Script.Type]:
         return self._script_type
 
 
@@ -201,7 +201,7 @@ class _Interface:
     def __init__(
             self,
             *args,
-            tx: _Coin.Tx,
+            tx: Coin.Tx,
             **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._tx = tx
@@ -225,7 +225,7 @@ class _Tx(Serializable):
 
     def __init__(
             self,
-            coin: _Coin,
+            coin: Coin,
             *,
             row_id: int = -1,
             name: str,
@@ -234,8 +234,8 @@ class _Tx(Serializable):
             amount: int,
             fee_amount: int,
             is_coinbase: bool,
-            input_list: Iterable[_Coin.Tx.Io],
-            output_list: Iterable[_Coin.Tx.Io]) -> None:
+            input_list: Iterable[Coin.Tx.Io],
+            output_list: Iterable[Coin.Tx.Io]) -> None:
         super().__init__(row_id=row_id)
 
         self._coin = coin
@@ -250,10 +250,10 @@ class _Tx(Serializable):
         self._input_list = list(input_list)
         self._output_list = list(output_list)
 
-        self._model: Optional[_Coin.Tx.Interface] = \
+        self._model: Optional[Coin.Tx.Interface] = \
             self._coin.model_factory(self)
 
-    def __eq__(self, other: _Coin.Tx) -> bool:
+    def __eq__(self, other: Coin.Tx) -> bool:
         return (
                 isinstance(other, self.__class__)
                 and self._coin == other._coin
@@ -267,8 +267,8 @@ class _Tx(Serializable):
     def deserialize(
             cls,
             source_data: DeserializedDict,
-            coin: Optional[_Coin] = None,
-            **options) -> Optional[_Coin.Tx]:
+            coin: Optional[Coin] = None,
+            **options) -> Optional[Coin.Tx]:
         assert coin is not None
         return super().deserialize(source_data, coin, **options)
 
@@ -277,7 +277,7 @@ class _Tx(Serializable):
             cls,
             key: str,
             value: DeserializedData,
-            coin: Optional[_Coin] = None,
+            coin: Optional[Coin] = None,
             **options) -> Any:
         if key in ("input_list", "output_list"):
             if isinstance(value, dict):
@@ -287,11 +287,11 @@ class _Tx(Serializable):
         return super()._deserializeProperty(key, value, coin, **options)
 
     @property
-    def model(self) -> Optional[_Coin.Tx.Interface]:
+    def model(self) -> Optional[Coin.Tx.Interface]:
         return self._model
 
     @property
-    def coin(self) -> _Coin:
+    def coin(self) -> Coin:
         return self._coin
 
     @serializable
@@ -361,12 +361,12 @@ class _Tx(Serializable):
 
     @serializable
     @property
-    def inputList(self) -> List[_Coin.Tx.Io]:
+    def inputList(self) -> List[Coin.Tx.Io]:
         return self._input_list
 
     @serializable
     @property
-    def outputList(self) -> List[_Coin.Tx.Io]:
+    def outputList(self) -> List[Coin.Tx.Io]:
         return self._output_list
 
     @staticmethod
