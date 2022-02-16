@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .coins import abstract
+from .coins.abstract import Coin
 from .coins.utils import CoinUtils
 from .database.tables import AddressListTable, CoinListTable, TxListTable
 from .logger import Logger
@@ -28,8 +28,8 @@ class _AbstractInterface:
         self._database = database
 
 
-class CoinInterface(_AbstractInterface, abstract.Coin.Interface):
-    def __init__(self, *args, coin: abstract.Coin, **kwargs) -> None:
+class CoinInterface(_AbstractInterface, Coin.Interface):
+    def __init__(self, *args, coin: Coin, **kwargs) -> None:
         super().__init__(
             *args,
             coin=coin,
@@ -65,10 +65,10 @@ class CoinInterface(_AbstractInterface, abstract.Coin.Interface):
     def afterUpdateUtxoList(self) -> None:
         pass
 
-    def beforeAppendAddress(self, address: abstract.Coin.Address) -> None:
+    def beforeAppendAddress(self, address: Coin.Address) -> None:
         pass
 
-    def afterAppendAddress(self, address: abstract.Coin.Address) -> None:
+    def afterAppendAddress(self, address: Coin.Address) -> None:
         if address.rowId <= 0:
             try:
                 with self._database.transaction() as cursor:
@@ -84,8 +84,8 @@ class CoinInterface(_AbstractInterface, abstract.Coin.Interface):
         self._save()
 
 
-class AddressInterface(_AbstractInterface, abstract.Coin.Address.Interface):
-    def __init__(self, *args, address: abstract.Coin.Address, **kwargs) -> None:
+class AddressInterface(_AbstractInterface, Coin.Address.Interface):
+    def __init__(self, *args, address: Coin.Address, **kwargs) -> None:
         super().__init__(
             *args,
             address=address,
@@ -116,10 +116,10 @@ class AddressInterface(_AbstractInterface, abstract.Coin.Address.Interface):
     def afterSetTxCount(self) -> None:
         self._save()
 
-    def beforeAppendTx(self, tx: abstract.Coin.Tx) -> None:
+    def beforeAppendTx(self, tx: Coin.Tx) -> None:
         pass
 
-    def afterAppendTx(self, tx: abstract.Coin.Tx) -> None:
+    def afterAppendTx(self, tx: Coin.Tx) -> None:
         if tx.rowId <= 0:
             try:
                 with self._database.transaction() as cursor:
@@ -140,8 +140,8 @@ class AddressInterface(_AbstractInterface, abstract.Coin.Address.Interface):
         self._save()
 
 
-class TxInterface(_AbstractInterface, abstract.Coin.Tx.Interface):
-    def __init__(self, *args, tx: abstract.Coin.Tx, **kwargs) -> None:
+class TxInterface(_AbstractInterface, Coin.Tx.Interface):
+    def __init__(self, *args, tx: Coin.Tx, **kwargs) -> None:
         super().__init__(
             *args,
             tx=tx,
@@ -165,11 +165,11 @@ class TxInterface(_AbstractInterface, abstract.Coin.Tx.Interface):
         self._save()
 
 
-class TxFactoryInterface(_AbstractInterface, abstract.Coin.TxFactory.Interface):
+class TxFactoryInterface(_AbstractInterface, Coin.TxFactory.Interface):
     def __init__(
             self,
             *args,
-            factory: abstract.Coin.TxFactory,
+            factory: Coin.TxFactory,
             **kwargs) -> None:
         super().__init__(
             *args,
@@ -186,11 +186,11 @@ class TxFactoryInterface(_AbstractInterface, abstract.Coin.TxFactory.Interface):
     def afterSetReceiverAddress(self) -> None:
         pass
 
-    def onBroadcast(self, mtx: abstract.Coin.TxFactory.MutableTx) -> None:
+    def onBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None:
         self._query_scheduler.broadcastTx(mtx, self.onBroadcastFinished)
 
     def onBroadcastFinished(
             self,
             error_code: int,
-            mtx: abstract.Coin.TxFactory.MutableTx) -> None:
+            mtx: Coin.TxFactory.MutableTx) -> None:
         self._logger.debug("Result: error_code=%i, tx=%s", error_code, mtx.name)

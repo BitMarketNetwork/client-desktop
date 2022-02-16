@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .script import _BitcoinScript
-from .. import abstract
+from ..abstract import Coin
 from ...crypto.base58 import Base58
 from ...crypto.bech32 import Bech32
 from ...crypto.digest import Hash160Digest, Sha256Digest
@@ -13,13 +13,13 @@ if TYPE_CHECKING:
     from . import Bitcoin
 
 
-class _BitcoinAddress(abstract.Coin.Address):
+class _BitcoinAddress(Coin.Address):
     _PUBKEY_HASH_PREFIX_LIST = ("1",)
     _SCRIPT_HASH_PREFIX_LIST = ("3",)
     _HRP = "bc"
 
-    class Type(abstract.Coin.Address.Type):
-        UNKNOWN: Final = abstract.Coin.Address.TypeValue(
+    class Type(Coin.Address.Type):
+        UNKNOWN: Final = Coin.Address.TypeValue(
             name="unknown",
             version=0xff,
             size=0,
@@ -27,43 +27,43 @@ class _BitcoinAddress(abstract.Coin.Address):
             is_witness=False,
             script_type=None,
             hd_purpose=None)
-        PUBKEY_HASH: Final = abstract.Coin.Address.TypeValue(
+        PUBKEY_HASH: Final = Coin.Address.TypeValue(
             name="p2pkh",
             version=0x00,
             size=Hash160Digest.size,
-            encoding=abstract.Coin.Address.Encoding.BASE58,
+            encoding=Coin.Address.Encoding.BASE58,
             is_witness=False,
             script_type=_BitcoinScript.Type.P2PKH,
             hd_purpose=44)  # BIP-0044
-        SCRIPT_HASH: Final = abstract.Coin.Address.TypeValue(
+        SCRIPT_HASH: Final = Coin.Address.TypeValue(
             name="p2sh",
             version=0x05,
             size=Hash160Digest.size,
-            encoding=abstract.Coin.Address.Encoding.BASE58,
+            encoding=Coin.Address.Encoding.BASE58,
             is_witness=False,
             script_type=_BitcoinScript.Type.P2SH,
             hd_purpose=None)
-        WITNESS_V0_KEY_HASH: Final = abstract.Coin.Address.TypeValue(
+        WITNESS_V0_KEY_HASH: Final = Coin.Address.TypeValue(
             name="p2wpkh",
             version=0x00,
             size=Hash160Digest.size,
-            encoding=abstract.Coin.Address.Encoding.BECH32,
+            encoding=Coin.Address.Encoding.BECH32,
             is_witness=True,
             script_type=_BitcoinScript.Type.P2WPKH,
             hd_purpose=84)  # BIP-0084
-        WITNESS_V0_SCRIPT_HASH: Final = abstract.Coin.Address.TypeValue(
+        WITNESS_V0_SCRIPT_HASH: Final = Coin.Address.TypeValue(
             name="p2wsh",
             version=0x00,
             size=Sha256Digest.size,
-            encoding=abstract.Coin.Address.Encoding.BECH32,
+            encoding=Coin.Address.Encoding.BECH32,
             is_witness=True,
             script_type=_BitcoinScript.Type.P2WSH,
             hd_purpose=None)
-        WITNESS_UNKNOWN: Final = abstract.Coin.Address.TypeValue(
+        WITNESS_UNKNOWN: Final = Coin.Address.TypeValue(
             name="witness_unknown",
             version=0x00,
             size=-40,
-            encoding=abstract.Coin.Address.Encoding.BECH32,
+            encoding=Coin.Address.Encoding.BECH32,
             is_witness=True,
             script_type=None,
             hd_purpose=None)
@@ -209,7 +209,7 @@ class _BitcoinTestAddress(_BitcoinAddress):
     _SCRIPT_HASH_PREFIX_LIST = ("2",)
     _HRP = "tb"
 
-    class Type(abstract.Coin.Address.Type):
+    class Type(Coin.Address.Type):
         UNKNOWN: Final = \
             _BitcoinAddress.Type.UNKNOWN.value
         PUBKEY_HASH: Final = \

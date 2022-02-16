@@ -7,7 +7,7 @@ from ..utils import NotImplementedInstance
 
 if TYPE_CHECKING:
     from typing import Optional, Tuple
-    from . import abstract
+    from .abstract import Coin
     from ..utils.string import ClassStringKeyTuple
 
 
@@ -15,13 +15,13 @@ class CoinUtils(NotImplementedInstance):
     @classmethod
     def coinToNameKeyTuple(
             cls,
-            coin: Optional[abstract.Coin]) -> Tuple[ClassStringKeyTuple, ...]:
+            coin: Optional[Coin]) -> Tuple[ClassStringKeyTuple, ...]:
         return (None, "no_coin" if coin is None else coin.name),
 
     @classmethod
     def addressToNameKeyTuple(
             cls,
-            address: Optional[abstract.Coin.Address]) \
+            address: Optional[Coin.Address]) \
             -> Tuple[ClassStringKeyTuple, ...]:
         result = (
             *cls.coinToNameKeyTuple(None if address is None else address.coin),
@@ -34,7 +34,7 @@ class CoinUtils(NotImplementedInstance):
     @classmethod
     def txToNameKeyTuple(
             cls,
-            tx: abstract.Coin.Tx) -> Tuple[ClassStringKeyTuple, ...]:
+            tx: Coin.Tx) -> Tuple[ClassStringKeyTuple, ...]:
         return (
             *cls.coinToNameKeyTuple(tx.coin),
             (None, tx.name)
@@ -43,13 +43,13 @@ class CoinUtils(NotImplementedInstance):
     @classmethod
     def txFactoryToNameKeyTuple(
             cls,
-            factory: abstract.Coin.TxFactory) -> Tuple[ClassStringKeyTuple, ...]:
+            factory: Coin.TxFactory) -> Tuple[ClassStringKeyTuple, ...]:
         return cls.coinToNameKeyTuple(factory.coin)
 
     @classmethod
     def mutableTxToNameKeyTuple(
             cls,
-            mtx: abstract.Coin.TxFactory.MutableTx) \
+            mtx: Coin.TxFactory.MutableTx) \
             -> Tuple[ClassStringKeyTuple, ...]:
         return (
             *cls.coinToNameKeyTuple(mtx.coin),
@@ -59,7 +59,7 @@ class CoinUtils(NotImplementedInstance):
     @classmethod
     def utxoToNameKeyTuple(
             cls,
-            utxo: abstract.Coin.Tx.Utxo) -> Tuple[ClassStringKeyTuple, ...]:
+            utxo: Coin.Tx.Utxo) -> Tuple[ClassStringKeyTuple, ...]:
         return (
             *cls.addressToNameKeyTuple(utxo.address),
             (None, utxo.name),

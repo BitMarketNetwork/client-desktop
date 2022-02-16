@@ -16,7 +16,7 @@ if TYPE_CHECKING:
         Sequence, \
         Tuple, \
         Union
-    from . import abstract
+    from .abstract import Coin
 
 
 # https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
@@ -341,7 +341,7 @@ class HdAddressIterator:
 
     def __init__(
             self,
-            coin: abstract.Coin,
+            coin: Coin,
             *,
             broken_mode: bool = False) -> None:
         self._coin = coin
@@ -350,14 +350,14 @@ class HdAddressIterator:
         self.broken_mode = broken_mode  # TODO remove in summer 2022
         self._it = self._iterator()
 
-    def __iter__(self) -> Iterator[abstract.Coin.Address]:
+    def __iter__(self) -> Iterator[Coin.Address]:
         return self._it
 
-    def __next__(self) -> abstract.Coin.Address:
+    def __next__(self) -> Coin.Address:
         return next(self._it)
 
     @property
-    def coin(self) -> abstract.Coin:
+    def coin(self) -> Coin:
         return self._coin
 
     def markCurrentAddress(self, is_empty: bool) -> None:
@@ -367,7 +367,7 @@ class HdAddressIterator:
             self._empty_address_count = 0
             self._is_empty_account = False
 
-    def _iterator(self) -> Generator[abstract.Coin.Address, None, None]:
+    def _iterator(self) -> Generator[Coin.Address, None, None]:
         if not self._coin.hdNodeList:
             return
 

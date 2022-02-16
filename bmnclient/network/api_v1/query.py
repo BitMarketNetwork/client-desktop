@@ -24,7 +24,7 @@ from ...logger import Logger
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, Final, List, Optional, Tuple, Union
     from PySide6.QtNetwork import QSslError
-    from ...coins import abstract
+    from ...coins.abstract import Coin
     from ...coins.list import CoinList
     from ...utils.serialize import DeserializedDict
     from ...utils.string import ClassStringKeyTuple
@@ -293,7 +293,7 @@ class AddressInfoApiQuery(AbstractApiQuery):
 
     def __init__(
             self,
-            address: abstract.Coin.Address,
+            address: Coin.Address,
             *,
             name_key_tuple: Tuple[ClassStringKeyTuple, ...] = ()) -> None:
         if not name_key_tuple:
@@ -325,10 +325,10 @@ class AddressInfoApiQuery(AbstractApiQuery):
 class HdAddressIteratorApiQuery(AddressInfoApiQuery):
     def __init__(
             self,
-            coin: abstract.Coin,
+            coin: Coin,
             *,
             _hd_iterator: Optional[HdAddressIterator] = None,
-            _current_address: Optional[abstract.Coin.Address] = None) -> None:
+            _current_address: Optional[Coin.Address] = None) -> None:
         if _hd_iterator is None:
             _hd_iterator = HdAddressIterator(coin)
         if _current_address is None:
@@ -394,7 +394,7 @@ class AddressTxIteratorApiQuery(
 
     def __init__(
             self,
-            address: abstract.Coin.Address,
+            address: Coin.Address,
             *,
             mode: AbstractOffsetIteratorApiQuery.Mode,
             first_offset: Optional[str] = None,
@@ -498,11 +498,11 @@ class AddressUtxoIteratorApiQuery(
 
     def __init__(
             self,
-            address: abstract.Coin.Address,
+            address: Coin.Address,
             *,
             first_offset: Optional[str] = None,
             last_offset: Optional[str] = None,
-            _utxo_list: Optional[List[abstract.Coin.Tx.Utxo]] = None) -> None:
+            _utxo_list: Optional[List[Coin.Tx.Utxo]] = None) -> None:
         super().__init__(
             address,
             name_key_tuple=CoinUtils.addressToNameKeyTuple(address),
@@ -562,7 +562,7 @@ class CoinMempoolIteratorApiQuery(AbstractApiQuery):
 
     def __init__(
             self,
-            coin: abstract.Coin,
+            coin: Coin,
             *,
             _address_list: List[Dict[str, Any]] = None) -> None:
         super().__init__(name_key_tuple=CoinUtils.coinToNameKeyTuple(coin))
@@ -644,7 +644,7 @@ class TxBroadcastApiQuery(AbstractApiQuery):
     )
     _DEFAULT_METHOD = AbstractApiQuery.Method.POST
 
-    def __init__(self, mtx: abstract.Coin.TxFactory.MutableTx) -> None:
+    def __init__(self, mtx: Coin.TxFactory.MutableTx) -> None:
         super().__init__(name_key_tuple=CoinUtils.mutableTxToNameKeyTuple(mtx))
         self._mtx = mtx
         self._result: Optional[BroadcastTxParser] = None

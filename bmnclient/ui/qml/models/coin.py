@@ -25,7 +25,7 @@ from ....coin_interfaces import CoinInterface
 if TYPE_CHECKING:
     from typing import Final, Optional
     from .. import QmlApplication
-    from ....coins import abstract
+    from ....coins.abstract import Coin
 
 
 class CoinStateModel(AbstractCoinStateModel):
@@ -115,9 +115,9 @@ class CoinAmountModel(AbstractAmountModel):
 class CoinReceiveManagerModel(AbstractCoinStateModel):
     __stateChanged = QSignal()
 
-    def __init__(self, application: QmlApplication, coin: abstract.Coin) -> None:
+    def __init__(self, application: QmlApplication, coin: Coin) -> None:
         super().__init__(application, coin)
-        self._address: Optional[abstract.Coin.Address] = None
+        self._address: Optional[Coin.Address] = None
 
     def _getValidStatus(self) -> ValidStatus:
         if self._address is not None:
@@ -209,7 +209,7 @@ class CoinManagerModel(AbstractCoinStateModel):
 
 
 class CoinModel(CoinInterface, AbstractModel):
-    def __init__(self, application: QmlApplication, coin: abstract.Coin) -> None:
+    def __init__(self, application: QmlApplication, coin: Coin) -> None:
         super().__init__(
             application,
             query_scheduler=application.networkQueryScheduler,
@@ -322,11 +322,11 @@ class CoinModel(CoinInterface, AbstractModel):
         self._coin.txFactory.model.update()
         super().afterUpdateUtxoList()
 
-    def beforeAppendAddress(self, address: abstract.Coin.Address) -> None:
+    def beforeAppendAddress(self, address: Coin.Address) -> None:
         self._address_list_model.lock(self._address_list_model.lockInsertRows())
         super().beforeAppendAddress(address)
 
-    def afterAppendAddress(self, address: abstract.Coin.Address) -> None:
+    def afterAppendAddress(self, address: Coin.Address) -> None:
         self._address_list_model.unlock()
         # noinspection PyUnresolvedReferences
         self._tx_list_model.addSourceModel(address.model.txList)

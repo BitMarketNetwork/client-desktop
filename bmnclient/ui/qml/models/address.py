@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from typing import Final, Optional
     from .tx import TxListModel, TxListSortedModel
     from .. import QmlApplication
-    from ....coins import abstract
+    from ....coins.abstract import Coin
 
 _TX_NOTIFIED_LIST = []  # TODO tmp
 
@@ -30,7 +30,7 @@ class AbstractAddressStateModel(AbstractCoinStateModel):
     def __init__(
             self,
             application: QmlApplication,
-            address: abstract.Coin.Address) -> None:
+            address: Coin.Address) -> None:
         super().__init__(application, address.coin)
         self._address = address
 
@@ -39,7 +39,7 @@ class AbstractAddressAmountModel(AbstractAmountModel):
     def __init__(
             self,
             application: QmlApplication,
-            address: abstract.Coin.Address) -> None:
+            address: Coin.Address) -> None:
         super().__init__(application, address.coin)
         self._address = address
 
@@ -91,7 +91,7 @@ class AddressModel(AddressInterface, AbstractModel):
     def __init__(
             self,
             application: QmlApplication,
-            address: abstract.Coin.Address) -> None:
+            address: Coin.Address) -> None:
         super().__init__(
             application,
             query_scheduler=application.networkQueryScheduler,
@@ -156,11 +156,11 @@ class AddressModel(AddressInterface, AbstractModel):
     def afterSetTxCount(self) -> None:
         super().afterSetTxCount()
 
-    def beforeAppendTx(self, tx: abstract.Coin.Tx) -> None:
+    def beforeAppendTx(self, tx: Coin.Tx) -> None:
         self._tx_list_model.lock(self._tx_list_model.lockInsertRows())
         super().beforeAppendTx(tx)
 
-    def afterAppendTx(self, tx: abstract.Coin.Tx) -> None:
+    def afterAppendTx(self, tx: Coin.Tx) -> None:
         global _TX_NOTIFIED_LIST
         self._tx_list_model.unlock()
 

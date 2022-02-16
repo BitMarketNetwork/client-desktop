@@ -3,15 +3,15 @@ from __future__ import annotations
 from enum import auto
 from typing import TYPE_CHECKING
 
-from .. import abstract
+from ..abstract import Coin
 
 if TYPE_CHECKING:
     from typing import Final, Optional
     from . import Bitcoin
 
 
-class _BitcoinScript(abstract.Coin.Script):
-    class Type(abstract.Coin.Script.Type):
+class _BitcoinScript(Coin.Script):
+    class Type(Coin.Script.Type):
         P2PK = auto()
         P2PKH = auto()
         P2SH = auto()
@@ -19,7 +19,7 @@ class _BitcoinScript(abstract.Coin.Script):
         P2WPKH = auto()
         P2WSH = auto()
 
-    class OpCode(abstract.Coin.Script.OpCode):
+    class OpCode(Coin.Script.OpCode):
         OP_0: Final = 0x00
         OP_PUSHDATA1: Final = 0x4c
         OP_PUSHDATA2: Final = 0x4d

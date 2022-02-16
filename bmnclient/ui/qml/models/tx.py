@@ -23,14 +23,14 @@ from ....coin_interfaces import TxInterface
 if TYPE_CHECKING:
     from typing import Final, Optional
     from .. import QmlApplication
-    from ....coins import abstract
+    from ....coins.abstract import Coin
 
 
 class AbstractTxStateModel(AbstractCoinStateModel):
     def __init__(
             self,
             application: QmlApplication,
-            tx: abstract.Coin.Tx) -> None:
+            tx: Coin.Tx) -> None:
         super().__init__(application, tx.coin)
         self._tx = tx
 
@@ -39,7 +39,7 @@ class AbstractTxAmountModel(AbstractAmountModel):
     def __init__(
             self,
             application: QmlApplication,
-            tx: abstract.Coin.Tx) -> None:
+            tx: Coin.Tx) -> None:
         super().__init__(application, tx.coin)
         self._tx = tx
 
@@ -115,7 +115,7 @@ class TxModel(TxInterface, AbstractModel):
     def __init__(
             self,
             application: QmlApplication,
-            tx: abstract.Coin.Tx) -> None:
+            tx: Coin.Tx) -> None:
         super().__init__(
             application,
             query_scheduler=application.networkQueryScheduler,

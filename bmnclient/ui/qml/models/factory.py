@@ -6,7 +6,7 @@ from .address import AddressModel
 from .coin import CoinModel
 from .tx import TxModel
 from .tx_factory import TxFactoryModel
-from ....coins import abstract
+from ....coins.abstract import Coin
 from ....utils import NotImplementedInstance
 
 if TYPE_CHECKING:
@@ -19,20 +19,20 @@ class ModelsFactory(NotImplementedInstance):
     def create(
             application: QmlApplication,
             owner: Union[
-                abstract.Coin,
-                abstract.Coin.Address,
-                abstract.Coin.Tx,
-                abstract.Coin.TxFactory]) -> Optional[object]:
-        if isinstance(owner, abstract.Coin):
+                Coin,
+                Coin.Address,
+                Coin.Tx,
+                Coin.TxFactory]) -> Optional[object]:
+        if isinstance(owner, Coin):
             return CoinModel(application, owner)
 
-        if isinstance(owner, abstract.Coin.Address):
+        if isinstance(owner, Coin.Address):
             return AddressModel(application, owner)
 
-        if isinstance(owner, abstract.Coin.Tx):
+        if isinstance(owner, Coin.Tx):
             return TxModel(application, owner)
 
-        if isinstance(owner, abstract.Coin.TxFactory):
+        if isinstance(owner, Coin.TxFactory):
             return TxFactoryModel(application, owner)
 
         return None

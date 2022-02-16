@@ -8,7 +8,7 @@ from ..utils.static_list import StaticList
 
 if TYPE_CHECKING:
     from typing import Callable, Iterator, Optional, Union
-    from . import abstract
+    from .abstract import Coin
 
 
 class CoinList(StaticList):
@@ -25,8 +25,8 @@ class CoinList(StaticList):
             item_property="name"
         )
 
-    def __iter__(self) -> Iterator[abstract.Coin]:
+    def __iter__(self) -> Iterator[Coin]:
         return super().__iter__()
 
-    def __getitem__(self, value: Union[str, int]) -> Optional[abstract.Coin]:
+    def __getitem__(self, value: Union[str, int]) -> Optional[Coin]:
         return super().__getitem__(value)

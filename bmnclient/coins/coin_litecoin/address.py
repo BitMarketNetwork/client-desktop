@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .. import abstract
+from ..abstract import Coin
 from ..coin_bitcoin import Bitcoin
 
 if TYPE_CHECKING:
@@ -14,7 +14,7 @@ class _LitecoinAddress(Bitcoin.Address):
     _SCRIPT_HASH_PREFIX_LIST = ("M",)
     _HRP = "ltc"
 
-    class Type(abstract.Coin.Address.Type):
+    class Type(Coin.Address.Type):
         UNKNOWN: Final = \
             Bitcoin.Address.Type.UNKNOWN.value
         PUBKEY_HASH: Final = \

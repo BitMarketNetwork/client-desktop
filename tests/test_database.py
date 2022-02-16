@@ -19,7 +19,7 @@ from tests.test_coins import fillCoin
 
 if TYPE_CHECKING:
     from typing import Any, List, Tuple
-    from bmnclient.coins import abstract
+    from bmnclient.coins.abstract import Coin
 
 
 class TestDatabase(TestCase):
@@ -263,7 +263,7 @@ class TestDatabase(TestCase):
     def _select_coin(
             self,
             cursor: Cursor,
-            coin: abstract.Coin) -> List[Tuple[Any]]:
+            coin: Coin) -> List[Tuple[Any]]:
         cursor.execute(
             f"SELECT * FROM {CoinListTable.identifier} WHERE "
             f" {CoinListTable.Column.NAME.value.identifier} == ?",
@@ -275,7 +275,7 @@ class TestDatabase(TestCase):
     def _select_addresses(
             self,
             cursor: Cursor,
-            coin: abstract.Coin) -> List[Tuple[Any]]:
+            coin: Coin) -> List[Tuple[Any]]:
         cursor.execute(
             f"SELECT * FROM {AddressListTable.identifier} WHERE"
             f" {AddressListTable.Column.COIN_ROW_ID.value.identifier} == ?",
@@ -287,7 +287,7 @@ class TestDatabase(TestCase):
     def _select_transactions(
             self,
             cursor: Cursor,
-            coin: abstract.Coin) -> List[Tuple[Any]]:
+            coin: Coin) -> List[Tuple[Any]]:
         cursor.execute(
             f"SELECT * FROM {TxListTable.identifier} WHERE"
             f" {TxListTable.Column.COIN_ROW_ID.value.identifier} == ?",
@@ -299,7 +299,7 @@ class TestDatabase(TestCase):
     def _select_transaction_io(
             self,
             cursor: Cursor,
-            tx: abstract.Coin.Tx) -> List[Tuple[Any]]:
+            tx: Coin.Tx) -> List[Tuple[Any]]:
         cursor.execute(
             f"SELECT * FROM {TxIoListTable.identifier} WHERE"
             f" {TxIoListTable.Column.TX_ROW_ID.value.identifier} == ?",
@@ -311,7 +311,7 @@ class TestDatabase(TestCase):
     def _select_transaction_address_map(
             self,
             cursor: Cursor,
-            tx: abstract.Coin.Tx) -> List[Tuple[Any]]:
+            tx: Coin.Tx) -> List[Tuple[Any]]:
         where = AddressTxMapTable.Column.TX_ROW_ID.value.identifier
         cursor.execute(
             f"SELECT * FROM {AddressTxMapTable.identifier} WHERE"
@@ -324,7 +324,7 @@ class TestDatabase(TestCase):
     def _select_address_transaction_map(
             self,
             cursor: Cursor,
-            address: abstract.Coin.Address) -> List[Tuple[Any]]:
+            address: Coin.Address) -> List[Tuple[Any]]:
         where = AddressTxMapTable.Column.ADDRESS_ROW_ID.value.identifier
         cursor.execute(
             f"SELECT * FROM {AddressTxMapTable.identifier}"
