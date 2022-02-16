@@ -4,12 +4,12 @@ from enum import Enum
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
-from .tx_io import _Io
+from .tx_io import _Io, _MutableInput, _MutableOutput
 from .utxo import _Utxo
 from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
-    from typing import Any, Iterable, List, Optional
+    from typing import Any, Iterable, List, Optional, Sequence
     from .coin import Coin
     from ...utils.serialize import DeserializedData, DeserializedDict
 
@@ -191,3 +191,107 @@ class _Tx(Serializable):
         if len(name) <= 6 * 2 + 3:
             return name
         return name[:6] + "..." + name[-6:]
+
+
+class _MutableTx:
+    _VERSION_LENGTH = 0
+    _LOCK_TIME_LENGTH = 0
+
+    Input = _MutableInput
+    Output = _MutableOutput
+
+    def __init__(
+            self,
+            coin: Coin,
+            input_list: Sequence[Input],
+            output_list: Sequence[Output],
+            *,
+            version: int,
+            lock_time: int,
+            is_dummy: bool = False):
+        self._is_dummy = is_dummy
+        self._coin = coin
+        self._input_list = input_list
+        self._output_list = output_list
+        self._version = version
+        self._lock_time = lock_time
+        self._is_witness = any(i.isWitness for i in self._input_list)
+        self._is_signed = False
+
+    @property
+    def isDummy(self) -> bool:
+        return self._is_dummy
+
+    def _deriveName(self) -> Optional[str]:
+        raise NotImplementedError
+
+    @property
+    @lru_cache()
+    def name(self) -> Optional[str]:
+        if not self._is_signed or self._is_dummy:
+            return None
+        return self._deriveName()
+
+    @property
+    def coin(self) -> Coin:
+        return self._coin
+
+    @property
+    def version(self) -> int:
+        return self._version
+
+    @property
+    def versionBytes(self) -> bytes:
+        return self._coin.Script.integerToBytes(
+            self._version,
+            self._VERSION_LENGTH,
+            safe=True)
+
+    @property
+    def lockTime(self) -> int:
+        return self._lock_time
+
+    @property
+    def lockTimeBytes(self) -> bytes:
+        return self._coin.Script.integerToBytes(
+            self._lock_time,
+            self._LOCK_TIME_LENGTH,
+            safe=True)
+
+    @property
+    def isWitness(self) -> bool:
+        return self._is_witness
+
+    @property
+    def isSigned(self) -> bool:
+        return self._is_signed
+
+    def _sign(self) -> bool:
+        raise NotImplementedError
+
+    def sign(self) -> bool:
+        self.__class__.serialize.cache_clear()
+        # noinspection PyUnresolvedReferences
+        self.__class__.name.fget.cache_clear()
+
+        if not self._is_signed and self._sign():
+            self._is_signed = True
+            return True
+        return False
+
+    def _serialize(self, *, with_witness: bool = True, **kwargs) -> bytes:
+        raise NotImplementedError
+
+    @lru_cache()
+    def serialize(self, *, with_witness: bool = True, **kwargs) -> bytes:
+        if not self._is_signed:
+            return b""
+        return self._serialize(with_witness=with_witness, **kwargs)
+
+    @property
+    def rawSize(self) -> int:
+        return len(self.serialize(with_witness=True))
+
+    @property
+    def virtualSize(self) -> int:
+        raise NotImplementedError

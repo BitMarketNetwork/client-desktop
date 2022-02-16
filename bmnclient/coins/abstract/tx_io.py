@@ -91,3 +91,124 @@ class _Io(Serializable):
     @property
     def amount(self) -> int:
         return self._address.amount
+
+
+class _MutableIo:
+    _AMOUNT_LENGTH = 0
+
+    def __init__(
+            self,
+            coin: Coin,
+            amount: int,
+            *,
+            is_dummy: bool = False):
+        assert amount >= 0
+        self._is_dummy = is_dummy
+        self._coin = coin
+        self._amount = amount
+        self._script_bytes = b""
+
+    @property
+    def isDummy(self) -> bool:
+        return self._is_dummy
+
+    @property
+    def amount(self) -> int:
+        return self._amount
+
+    @property
+    def amountBytes(self) -> bytes:
+        return self._coin.Script.integerToBytes(
+            self._amount,
+            self._AMOUNT_LENGTH,
+            safe=True)
+
+    @property
+    def scriptBytes(self) -> bytes:
+        return self._script_bytes
+
+
+class _MutableInput(_MutableIo):
+    _HASH_TYPE_LENGTH = 0
+    _SEQUENCE_LENGTH = 0
+
+    def __init__(
+            self,
+            utxo: Coin.Tx.Utxo,
+            *,
+            utxo_id_bytes: bytes,
+            hash_type: int,
+            sequence: int,
+            **kwargs) -> None:
+        super().__init__(utxo.coin, utxo.amount, **kwargs)
+        self._utxo = utxo
+        self._utxo_id_bytes = utxo_id_bytes
+        self._hash_type = hash_type
+        self._sequence = sequence
+
+        self._script_sig_bytes = b""
+        self._witness_bytes = b""
+
+    def __eq__(self, other: Coin.TxFactory.MutableTx.Input):
+        return (
+                isinstance(other, self.__class__)
+                and self._utxo_id_bytes == other._utxo_id_bytes
+        )
+
+    def __hash__(self) -> int:
+        return hash((self._utxo_id_bytes, ))
+
+    @property
+    def isWitness(self) -> bool:
+        return self._utxo.address.type.value.isWitness
+
+    @property
+    def utxo(self) -> Coin.Tx.Utxo:
+        return self._utxo
+
+    @property
+    def utxoIdBytes(self) -> bytes:
+        return self._utxo_id_bytes
+
+    @property
+    def hashType(self) -> int:
+        return self._hash_type
+
+    @property
+    def hashTypeBytes(self) -> bytes:
+        return self._coin.Script.integerToBytes(
+            self._hash_type,
+            self._HASH_TYPE_LENGTH,
+            safe=True)
+
+    @property
+    def sequence(self) -> int:
+        return self._sequence
+
+    @property
+    def sequenceBytes(self) -> bytes:
+        return self._coin.Script.integerToBytes(
+            self._sequence,
+            self._SEQUENCE_LENGTH,
+            safe=True)
+
+    @property
+    def scriptSigBytes(self) -> bytes:
+        return self._script_sig_bytes
+
+    @property
+    def witnessBytes(self) -> bytes:
+        return self._witness_bytes
+
+    def sign(self, hash_: bytes) -> bool:
+        raise NotImplementedError
+
+
+class _MutableOutput(_MutableIo):
+    def __init__(
+            self,
+            address: Coin.Address,
+            amount: int,
+            **kwargs) -> None:
+        super().__init__(address.coin, amount, **kwargs)
+        self._address = address

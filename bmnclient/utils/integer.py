@@ -10,10 +10,17 @@ class AbstractIntegerConverter:
     _BYTE_ORDER = None
 
     @classmethod
-    def integerToBytes(cls, value: int, length: int) -> Optional[bytes]:
+    def integerToBytes(
+            cls,
+            value: int,
+            length: int,
+            *,
+            safe: bool = False) -> Optional[bytes]:
         try:
             return value.to_bytes(length, cls._BYTE_ORDER)
         except OverflowError:
+            if safe:
+                return b"\x00" * length
             return None
 
     @classmethod
