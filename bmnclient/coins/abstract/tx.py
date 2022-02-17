@@ -193,7 +193,7 @@ class _Tx(Serializable):
         return name[:6] + "..." + name[-6:]
 
 
-class _MutableTx:
+class _MutableTx(_Tx):
     _VERSION_LENGTH = 0
     _LOCK_TIME_LENGTH = 0
 
@@ -209,14 +209,22 @@ class _MutableTx:
             version: int,
             lock_time: int,
             is_dummy: bool = False):
+        # TODO move after super().__init__()
         self._is_dummy = is_dummy
-        self._coin = coin
-        self._input_list = input_list
-        self._output_list = output_list
         self._version = version
         self._lock_time = lock_time
-        self._is_witness = any(i.isWitness for i in self._input_list)
+        self._is_witness = any(i.isWitness for i in input_list)
         self._is_signed = False
+        super().__init__(
+            coin,
+            name="mutable_tx", # TODO
+            height=-1,
+            time=-1,
+            amount=0,  # TODO
+            fee_amount=0,  # TODO,
+            is_coinbase=False,
+            input_list=input_list,
+            output_list=output_list)
 
     @property
     def isDummy(self) -> bool:

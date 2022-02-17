@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
-    from typing import Optional
+    from typing import Final, Optional
     from .coin import Coin
     from ...utils.serialize import DeserializedDict
 
@@ -14,6 +14,7 @@ class _Io(Serializable):
     def __init__(
             self,
             coin: Coin,
+            address: Optional[Coin.Address] = None,
             *,
             row_id: int = -1,
             index: int,
@@ -21,24 +22,27 @@ class _Io(Serializable):
             address_name: Optional[str],
             amount: int) -> None:
         super().__init__(row_id=row_id)
-        self._coin = coin
-        self._index = index
-        self._output_type = output_type
+        self._coin: Final = coin
+        self._index: Final = index
+        self._output_type: Final = output_type
 
-        if not address_name:
-            self._address = self._coin.Address.createNullData(
+        if address is not None:
+            assert not address_name  # TODO and amount == 0
+        elif not address_name:
+            address = self._coin.Address.createNullData(
                 self._coin,
                 amount=amount)
         else:
-            self._address = self._coin.Address.decode(
+            address = self._coin.Address.decode(
                 self._coin,
                 name=address_name,
                 amount=amount)
-            if self._address is None:
-                self._address = self._coin.Address.createNullData(
+            if address is None:
+                address = self._coin.Address.createNullData(
                     self._coin,
                     name=address_name or "UNKNOWN",
                     amount=amount)
+        self._address = address
 
     def __eq__(self, other: Coin.Tx.Io) -> bool:
         return (
@@ -93,36 +97,53 @@ class _Io(Serializable):
         return self._address.amount
 
 
-class _MutableIo:
+class _MutableIo(_Io):
     _AMOUNT_LENGTH = 0
 
     def __init__(
             self,
             coin: Coin,
-            amount: int,
+            address: Optional[Coin.Address],
             *,
+            amount: int,
+            script_bytes: bytes,
             is_dummy: bool = False):
-        assert amount >= 0
-        self._is_dummy = is_dummy
-        self._coin = coin
-        self._amount = amount
-        self._script_bytes = b""
+        super().__init__(
+            coin,
+            address,
+            index=-1,  # TODO
+            output_type="",  # TODO
+            address_name=None,
+            amount=amount)
+        self._is_dummy: Final = is_dummy
+        self._script_bytes: Final = script_bytes
+
+    def __eq__(self, other: Coin.Tx.Io) -> bool:
+        pass  # TODO
+
+    def __hash__(self) -> int:
+        pass  # TODO
+
+    @classmethod
+    def deserialize(
+            cls,
+            source_data: DeserializedDict,
+            coin: Optional[Coin] = None,
+            **options) -> Optional[Coin.Tx.Io]:
+        return None
 
     @property
     def isDummy(self) -> bool:
         return self._is_dummy
 
     @property
-    def amount(self) -> int:
-        return self._amount
-
-    @property
     def amountBytes(self) -> bytes:
         return self._coin.Script.integerToBytes(
-            self._amount,
+            self._address.amount,
             self._AMOUNT_LENGTH,
             safe=True)
 
+    @serializable
     @property
     def scriptBytes(self) -> bytes:
         return self._script_bytes
@@ -140,28 +161,31 @@ class _MutableInput(_MutableIo):
             hash_type: int,
             sequence: int,
             **kwargs) -> None:
-        super().__init__(utxo.coin, utxo.amount, **kwargs)
-        self._utxo = utxo
-        self._utxo_id_bytes = utxo_id_bytes
-        self._hash_type = hash_type
-        self._sequence = sequence
+        super().__init__(utxo.coin, utxo.address, amount=utxo.amount, **kwargs)
+        self._utxo: Final = utxo
+        self._utxo_id_bytes: Final = utxo_id_bytes
+        self._hash_type: Final = hash_type
+        self._sequence: Final = sequence
 
         self._script_sig_bytes = b""
         self._witness_bytes = b""
 
     def __eq__(self, other: Coin.TxFactory.MutableTx.Input):
+        # TODO
         return (
                 isinstance(other, self.__class__)
                 and self._utxo_id_bytes == other._utxo_id_bytes
         )
 
     def __hash__(self) -> int:
+        # TODO
         return hash((self._utxo_id_bytes, ))
 
     @property
     def isWitness(self) -> bool:
         return self._utxo.address.type.value.isWitness
 
+    @serializable
     @property
     def utxo(self) -> Coin.Tx.Utxo:
         return self._utxo
@@ -170,6 +194,7 @@ class _MutableInput(_MutableIo):
     def utxoIdBytes(self) -> bytes:
         return self._utxo_id_bytes
 
+    @serializable
     @property
     def hashType(self) -> int:
         return self._hash_type
@@ -181,6 +206,7 @@ class _MutableInput(_MutableIo):
             self._HASH_TYPE_LENGTH,
             safe=True)
 
+    @serializable
     @property
     def sequence(self) -> int:
         return self._sequence
@@ -205,10 +231,4 @@ class _MutableInput(_MutableIo):
 
 
 class _MutableOutput(_MutableIo):
-    def __init__(
-            self,
-            address: Coin.Address,
-            amount: int,
-            **kwargs) -> None:
-        super().__init__(address.coin, amount, **kwargs)
-        self._address = address
+    pass

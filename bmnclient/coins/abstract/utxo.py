@@ -78,7 +78,7 @@ class _Utxo(Serializable):
         if self._address is not None:
             raise AttributeError(
                 "already associated with address '{}'"
-                    .format(self._address.name))
+                .format(self._address.name))
         self._address = address
         if self._script_type is None:
             self._script_type = self._address.type.value.scriptType

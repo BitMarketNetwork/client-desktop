@@ -18,8 +18,8 @@ class TxBroadcastPendingDialog(AbstractDialog):
             mtx: Coin.TxFactory.MutableTx) -> None:
         super().__init__(manager, mtx)
         self._mtx = mtx
-        self._qml_properties["tx"] = self._mtx.coin.Tx.model
-        self._qml_properties["coin"] = self._mtx.coin
+        self._qml_properties["tx"] = self._mtx.model
+        self._qml_properties["coin"] = self._mtx.coin.model
 
     def onRejected(self) -> None:
         self._manager.context.exit(0)
