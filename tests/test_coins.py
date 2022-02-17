@@ -202,8 +202,8 @@ class TestCoins(TestCase):
         hash_check_count = 0
 
         # noinspection PyUnusedLocal
-        for (address, type_, version, hash_) in address_list:
-            address = coin.Address.decode(coin, name=address)
+        for (name, type_, version, hash_) in address_list:
+            address = coin.Address.createFromName(coin, name=name)
             if type_ is None:
                 self.assertIsNone(address)
             else:

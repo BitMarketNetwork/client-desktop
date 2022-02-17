@@ -282,7 +282,7 @@ class _Address(Serializable):
             cls,
             coin: Coin,
             **kwargs) -> Optional[Coin.Address]:
-        return cls.decode(coin, **kwargs)
+        return cls.createFromName(coin, **kwargs)
 
     @classproperty
     def hrp(cls) -> str:  # noqa
@@ -296,6 +296,24 @@ class _Address(Serializable):
     def coin(self) -> Coin:
         return self._coin
 
+    @serializable
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def hash(self) -> bytes:
+        if self.__hash is None:
+            self.__hash = self._deriveHash()
+        return self.__hash
+
+    def _deriveHash(self) -> bytes:
+        raise NotImplementedError
+
+    @property
+    def type(self) -> Coin.Address.Type:
+        return self._type
+
     @classmethod
     def create(
             cls,
@@ -306,26 +324,8 @@ class _Address(Serializable):
             **kwargs) -> Optional[Coin.Address]:
         raise NotImplementedError
 
-    @serializable
-    @property
-    def name(self) -> str:
-        return self._name
-
-    def _deriveHash(self) -> bytes:
-        raise NotImplementedError
-
-    @property
-    def hash(self) -> bytes:
-        if self.__hash is None:
-            self.__hash = self._deriveHash()
-        return self.__hash
-
-    @property
-    def type(self) -> Coin.Address.Type:
-        return self._type
-
     @classmethod
-    def decode(
+    def createFromName(
             cls,
             coin: Coin,
             *,
@@ -337,8 +337,24 @@ class _Address(Serializable):
     def createNullData(
             cls,
             coin: Coin,
+            *,
+            name: Optional[str] = None,
             **kwargs) -> Coin.Address:
         raise NotImplementedError
+
+    @classmethod
+    def _create(
+            cls,
+            coin: Coin,
+            *,
+            is_null_data: bool,
+            name: Optional[str],
+            **kwargs) -> Optional[Coin.Address]:
+        # noinspection PyProtectedMember
+        return coin._allocateAddress(
+            is_null_data=is_null_data,
+            name=name,
+            **kwargs)
 
     @property
     def isNullData(self) -> bool:

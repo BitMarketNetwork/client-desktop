@@ -33,7 +33,7 @@ class _Io(Serializable):
                 self._coin,
                 amount=amount)
         else:
-            address = self._coin.Address.decode(
+            address = self._coin.Address.createFromName(
                 self._coin,
                 name=address_name,
                 amount=amount)

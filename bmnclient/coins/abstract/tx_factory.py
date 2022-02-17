@@ -122,7 +122,7 @@ class _TxFactory:
             address = None
             self._logger.debug("Input address: *")
         else:
-            address = self._coin.Address.decode(self._coin, name=name)
+            address = self._coin.Address.createFromName(self._coin, name=name)
             if address is not None:
                 self._logger.debug("Input address: %s", address.name)
             else:
@@ -144,7 +144,7 @@ class _TxFactory:
         if not name:
             address = None
         else:
-            address = self._coin.Address.decode(self._coin, name=name)
+            address = self._coin.Address.createFromName(self._coin, name=name)
 
         if address is None:
             self._logger.warning("Receiver address '%s' is invalid.", name)

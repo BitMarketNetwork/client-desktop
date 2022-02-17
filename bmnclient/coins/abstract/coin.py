@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from typing import TYPE_CHECKING
+from weakref import WeakValueDictionary
 
 from .address import _Address
 from .script import _Script
@@ -94,6 +95,8 @@ class Coin(Serializable):
             model_factory: Optional[Callable[[object], object]] = None) -> None:
         super().__init__(row_id=row_id)
 
+        # noinspection PyTypeChecker
+        self._address_heap: Dict[str, Coin.Address] = WeakValueDictionary()
         self._model_factory = model_factory
         self.__state_hash = 0
         self.__old_state_hash = 0
@@ -627,3 +630,19 @@ class Coin(Serializable):
     @property
     def txFactory(self) -> TxFactory:
         return self._tx_factory
+
+    def _allocateAddress(
+            self,
+            is_null_data: bool,
+            name: Optional[str],
+            **kwargs) -> Optional[Coin.Address]:
+        if is_null_data:
+            # always create new object for unnamed addresses
+            return self.Address(self, name=name, **kwargs)
+        assert name
+        address = self._address_heap.get(name)
+        if address is not None:
+            return address
+        address = self.Address(self, name=name, **kwargs)
+        self._address_heap[name] = address
+        return address

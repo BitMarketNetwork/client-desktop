@@ -78,9 +78,7 @@ class AddressAmountModel(AbstractAddressAmountModel):
     def update(self) -> None:
         super().update()
         for tx in self._address.txList:
-            # noinspection PyUnresolvedReferences
             tx.model.amount.update()
-            # noinspection PyUnresolvedReferences
             tx.model.feeAmount.update()
 
     def _getValue(self) -> Optional[int]:
