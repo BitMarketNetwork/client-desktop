@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from .tx_io import _Io, _MutableInput, _MutableOutput
 from .utxo import _Utxo
+from ...debug import Debug
 from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
@@ -53,6 +54,7 @@ class _Tx(Serializable):
             is_coinbase: bool,
             input_list: Iterable[Coin.Tx.Io],
             output_list: Iterable[Coin.Tx.Io]) -> None:
+        Debug.assertObjectCaller(coin, "_allocateTx")
         super().__init__(row_id=row_id)
 
         self._coin = coin
@@ -102,6 +104,14 @@ class _Tx(Serializable):
             elif isinstance(value, cls.Io):
                 return value
         return super()._deserializeProperty(key, value, coin, **options)
+
+    @classmethod
+    def _deserializeFactory(
+            cls,
+            coin: Coin,
+            **kwargs) -> Optional[Coin.Address]:
+        # noinspection PyProtectedMember
+        return coin._allocateTx(**kwargs)
 
     @property
     def model(self) -> Optional[Coin.Tx.Interface]:

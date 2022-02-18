@@ -97,6 +97,9 @@ class Coin(Serializable):
 
         # noinspection PyTypeChecker
         self._address_heap: Dict[str, Coin.Address] = WeakValueDictionary()
+        # noinspection PyTypeChecker
+        self._tx_heap: Dict[str, Coin.Tx] = WeakValueDictionary()
+
         self._model_factory = model_factory
         self.__state_hash = 0
         self.__old_state_hash = 0
@@ -641,8 +644,15 @@ class Coin(Serializable):
             return self.Address(self, name=name, **kwargs)
         assert name
         address = self._address_heap.get(name)
-        if address is not None:
-            return address
-        address = self.Address(self, name=name, **kwargs)
-        self._address_heap[name] = address
+        if address is None:
+            address = self.Address(self, name=name, **kwargs)
+            self._address_heap[name] = address
         return address
+
+    def _allocateTx(self, *, name: str, **kwargs) -> Optional[Coin.Tx]:
+        assert name
+        tx = self._tx_heap.get(name)
+        if tx is None:
+            tx = self.Tx(self, name=name, **kwargs)
+            self._tx_heap[name] = tx
+        return tx

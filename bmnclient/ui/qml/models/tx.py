@@ -3,21 +3,21 @@ from __future__ import annotations
 from enum import auto
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    Property as QProperty, \
-    QDateTime, \
-    QModelIndex, \
-    QObject, \
-    Qt, \
-    Signal as QSignal
+from PySide6.QtCore import (
+    Property as QProperty,
+    QDateTime,
+    QModelIndex,
+    QObject,
+    Qt,
+    Signal as QSignal)
 
 from . import AbstractCoinStateModel, AbstractModel
 from .amount import AbstractAmountModel
-from .list import \
-    AbstractConcatenateModel, \
-    AbstractListModel, \
-    AbstractListSortedModel, \
-    RoleEnum
+from .list import (
+    AbstractConcatenateModel,
+    AbstractListModel,
+    AbstractListSortedModel,
+    RoleEnum)
 from ....coin_interfaces import TxInterface
 
 if TYPE_CHECKING:

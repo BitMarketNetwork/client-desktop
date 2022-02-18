@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from enum import auto, Enum
+from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 from ..hd import HdNode
 from ...crypto.secp256k1 import PrivateKey, PublicKey
+from ...debug import Debug
 from ...utils.class_property import classproperty
 from ...utils.serialize import Serializable, serializable
 
@@ -185,6 +186,7 @@ class _Address(Serializable):
             utxo_list: Optional[Iterable[Coin.Tx.Utxo]] = None,
             history_first_offset: str = "",
             history_last_offset: str = "") -> None:
+        Debug.assertObjectCaller(coin, "_allocateAddress")
         super().__init__(row_id=row_id)
 
         self._coin = coin
