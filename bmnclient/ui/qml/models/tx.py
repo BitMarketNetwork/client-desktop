@@ -88,9 +88,9 @@ class TxAmountModel(AbstractTxAmountModel):
     def update(self) -> None:
         super().update()
         for io in self._tx.inputList:
-            io.address.model.amount.update()
+            io.model.amount.update()
         for io in self._tx.outputList:
-            io.address.model.amount.update()
+            io.model.amount.update()
 
     def _getValue(self) -> Optional[int]:
         return self._tx.amount
