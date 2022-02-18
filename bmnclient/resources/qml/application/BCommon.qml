@@ -56,7 +56,7 @@ QtObject {
 
     readonly property QtObject addressItemTemplate: QtObject {
         readonly property string name: "unknown_address"
-        readonly property QtObject amount: _base.amountTemplate
+        readonly property QtObject balance: _base.amountTemplate
         readonly property QtObject state: QtObject {
             readonly property string label: ""
             readonly property bool isReadOnly: false

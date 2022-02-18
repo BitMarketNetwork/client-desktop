@@ -17,7 +17,7 @@ BControl {
             text: _base.coin.fullName
         }
         BAmountLabel {
-            amount: _base.coin.amount
+            amount: _base.coin.balance
         }
         BContextMenuToolButton {
             font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.huge

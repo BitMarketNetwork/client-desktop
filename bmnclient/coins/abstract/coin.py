@@ -39,7 +39,7 @@ class _Interface:
     def afterSetFiatRate(self) -> None:
         raise NotImplementedError
 
-    def afterUpdateAmount(self) -> None:
+    def afterUpdateBalance(self) -> None:
         raise NotImplementedError
 
     def afterUpdateUtxoList(self) -> None:
@@ -116,7 +116,7 @@ class Coin(Serializable):
         self._status = 0
 
         self._fiat_rate = FiatRate(0, NoneFiatCurrency)
-        self._amount = 0
+        self._balance = 0
 
         self._hd_node_list: Dict[int, HdNode] = {}
 
@@ -349,7 +349,7 @@ class Coin(Serializable):
 
     def toFiatAmount(self, value: Optional[int] = None) -> Optional[int]:
         if value is None:
-            value = self._amount
+            value = self._balance
         value *= self._fiat_rate.value
         value //= self.Currency.decimalDivisor
         if self._fiat_rate.currencyType.isValidValue(value):
@@ -365,14 +365,14 @@ class Coin(Serializable):
         return value if self.Currency.isValidValue(value) else None
 
     @property
-    def amount(self) -> int:
-        return self._amount
+    def balance(self) -> int:
+        return self._balance
 
-    def updateAmount(self) -> None:
-        a = sum(a.amount for a in self._address_list if not a.isReadOnly)
-        self._amount = a
+    def updateBalance(self) -> None:
+        a = sum(a.balance for a in self._address_list if not a.isReadOnly)
+        self._balance = a
         if self._model:
-            self._model.afterUpdateAmount()
+            self._model.afterUpdateBalance()
 
     def updateUtxoList(self) -> None:
         self._tx_factory.updateUtxoList()
@@ -560,7 +560,7 @@ class Coin(Serializable):
         if self._model:
             self._model.afterAppendAddress(address)
 
-        self.updateAmount()
+        self.updateBalance()
         return True
 
     @property

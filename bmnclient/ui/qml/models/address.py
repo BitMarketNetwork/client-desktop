@@ -35,7 +35,7 @@ class AbstractAddressStateModel(AbstractCoinStateModel):
         self._address = address
 
 
-class AbstractAddressAmountModel(AbstractAmountModel):
+class AbstractAddressBalanceModel(AbstractAmountModel):
     def __init__(
             self,
             application: QmlApplication,
@@ -74,7 +74,7 @@ class AddressStateModel(AbstractAddressStateModel):
             self._coin.txFactory.setInputAddressName(self._address.name)
 
 
-class AddressAmountModel(AbstractAddressAmountModel):
+class AddressBalanceModel(AbstractAddressBalanceModel):
     def update(self) -> None:
         super().update()
         for tx in self._address.txList:
@@ -82,7 +82,7 @@ class AddressAmountModel(AbstractAddressAmountModel):
             tx.model.feeAmount.update()
 
     def _getValue(self) -> Optional[int]:
-        return self._address.amount
+        return self._address.balance
 
 
 class AddressModel(AddressInterface, AbstractModel):
@@ -96,10 +96,10 @@ class AddressModel(AddressInterface, AbstractModel):
             database=application.database,
             address=address)
 
-        self._amount_model = AddressAmountModel(
+        self._balance_model = AddressBalanceModel(
             self._application,
             self._address)
-        self.connectModelUpdate(self._amount_model)
+        self.connectModelUpdate(self._balance_model)
 
         self._state_model = AddressStateModel(
             self._application,
@@ -116,8 +116,8 @@ class AddressModel(AddressInterface, AbstractModel):
         return self._address.name
 
     @QProperty(QObject, constant=True)
-    def amount(self) -> AddressAmountModel:
-        return self._amount_model
+    def balance(self) -> AddressBalanceModel:
+        return self._balance_model
 
     @QProperty(QObject, constant=True)
     def state(self) -> AddressStateModel:
@@ -135,9 +135,9 @@ class AddressModel(AddressInterface, AbstractModel):
             self._application,
             self._tx_list_model)
 
-    def afterSetAmount(self) -> None:
-        self._amount_model.update()
-        super().afterSetAmount()
+    def afterSetBalance(self) -> None:
+        self._balance_model.update()
+        super().afterSetBalance()
 
     def afterSetLabel(self) -> None:
         self._state_model.update()
@@ -189,7 +189,7 @@ class AddressModel(AddressInterface, AbstractModel):
 class AddressListModel(AbstractListModel):
     class Role(RoleEnum):
         NAME: Final = auto()
-        AMOUNT: Final = auto()
+        BALANCE: Final = auto()
         STATE: Final = auto()
         TX_LIST: Final = auto()
 
@@ -197,9 +197,9 @@ class AddressListModel(AbstractListModel):
         Role.NAME: (
             b"name",
             lambda a: a.model.name),
-        Role.AMOUNT: (
-            b"amount",
-            lambda a: a.model.amount),
+        Role.BALANCE: (
+            b"balance",
+            lambda a: a.model.balance),
         Role.STATE: (
             b"state",
             lambda a: a.model.state),

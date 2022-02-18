@@ -59,7 +59,7 @@ class CoinInterface(_AbstractInterface, Coin.Interface):
     def afterSetFiatRate(self) -> None:
         pass
 
-    def afterUpdateAmount(self) -> None:
+    def afterUpdateBalance(self) -> None:
         pass
 
     def afterUpdateUtxoList(self) -> None:
@@ -101,7 +101,7 @@ class AddressInterface(_AbstractInterface, Coin.Address.Interface):
         except self._database.TransactionInEffectError:
             pass
 
-    def afterSetAmount(self) -> None:
+    def afterSetBalance(self) -> None:
         self._save()
 
     def afterSetLabel(self) -> None:

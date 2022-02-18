@@ -407,8 +407,8 @@ class AddressListTable(AbstractTable, name="addresses"):
         NAME: Final = ColumnDefinition(
             "name",
             "TEXT NOT NULL")
-        AMOUNT: Final = ColumnDefinition(
-            "amount",
+        BALANCE: Final = ColumnDefinition(
+            "balance",
             "INTEGER NOT NULL")
         TX_COUNT: Final = ColumnDefinition(
             "tx_count",

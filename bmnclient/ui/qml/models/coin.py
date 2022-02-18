@@ -102,14 +102,14 @@ class CoinServerDataModel(AbstractCoinStateModel):
         return self.locale.integerToString(height)
 
 
-class CoinAmountModel(AbstractAmountModel):
+class CoinBalanceModel(AbstractAmountModel):
     def update(self) -> None:
         super().update()
         for address in self._coin.addressList:
-            address.model.amount.update()
+            address.model.balance.update()
 
     def _getValue(self) -> Optional[int]:
-        return self._coin.amount
+        return self._coin.balance
 
 
 class CoinReceiveManagerModel(AbstractCoinStateModel):
@@ -216,10 +216,10 @@ class CoinModel(CoinInterface, AbstractModel):
             database=application.database,
             coin=coin)
 
-        self._amount_model = CoinAmountModel(
+        self._balance_model = CoinBalanceModel(
             self._application,
             self._coin)
-        self.connectModelUpdate(self._amount_model)
+        self.connectModelUpdate(self._balance_model)
 
         self._state_model = CoinStateModel(
             self._application,
@@ -259,8 +259,8 @@ class CoinModel(CoinInterface, AbstractModel):
         return self._coin.iconPath
 
     @QProperty(QObject, constant=True)
-    def amount(self) -> CoinAmountModel:
-        return self._amount_model
+    def balance(self) -> CoinBalanceModel:
+        return self._balance_model
 
     @QProperty(QObject, constant=True)
     def state(self) -> CoinStateModel:
@@ -310,13 +310,13 @@ class CoinModel(CoinInterface, AbstractModel):
         super().afterSetStatus()
 
     def afterSetFiatRate(self) -> None:
-        self._amount_model.update()
+        self._balance_model.update()
         self._coin.txFactory.model.update()
         super().afterSetFiatRate()
 
-    def afterUpdateAmount(self) -> None:
-        self._amount_model.update()
-        super().afterUpdateAmount()
+    def afterUpdateBalance(self) -> None:
+        self._balance_model.update()
+        super().afterUpdateBalance()
 
     def afterUpdateUtxoList(self) -> None:
         self._coin.txFactory.model.update()
@@ -342,7 +342,7 @@ class CoinListModel(AbstractListModel):
         SHORT_NAME: Final = auto()
         FULL_NAME: Final = auto()
         ICON_PATH: Final = auto()
-        AMOUNT: Final = auto()
+        BALANCE: Final = auto()
         STATE: Final = auto()
         SERVER_DATA: Final = auto()
         ADDRESS_LIST: Final = auto()
@@ -361,9 +361,9 @@ class CoinListModel(AbstractListModel):
         Role.ICON_PATH: (
             b"iconPath",
             lambda c: c.model.iconPath),
-        Role.AMOUNT: (
-            b"amount",
-            lambda c: c.model.amount),
+        Role.BALANCE: (
+            b"balance",
+            lambda c: c.model.balance),
         Role.STATE: (
             b"state",
             lambda c: c.model.state),

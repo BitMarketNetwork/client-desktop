@@ -318,7 +318,7 @@ class AddressInfoApiQuery(AbstractApiQuery):
 
         parser = AddressInfoParser()
         parser(value)
-        self._address.amount = parser.amount
+        self._address.balance = parser.balance
         self._address.txCount = parser.txCount
 
 
@@ -359,7 +359,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery):
         if self.statusCode != 200 or value is None:
             return
 
-        if self._address.txCount == 0 and self._address.amount == 0:
+        if self._address.txCount == 0 and self._address.balance == 0:
             self._hd_iterator.markCurrentAddress(True)
         else:
             self._hd_iterator.markCurrentAddress(False)

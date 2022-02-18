@@ -122,7 +122,7 @@ class _Interface:
         super().__init__(*args, **kwargs)
         self._address = address
 
-    def afterSetAmount(self) -> None:
+    def afterSetBalance(self) -> None:
         raise NotImplementedError
 
     def afterSetLabel(self) -> None:
@@ -177,7 +177,7 @@ class _Address(Serializable):
             type_: Coin.Address.Type,
             data: bytes = b"",
             key: Optional[KeyType] = None,
-            amount: int = 0,
+            balance: int = 0,
             tx_count: int = 0,
             label: str = "",
             comment: str = "",
@@ -195,7 +195,7 @@ class _Address(Serializable):
         self._type = type_
         self._data = data
         self._key = key
-        self._amount = amount
+        self._balance = balance
         self._label = label
         self._comment = comment
         self._is_tx_input = bool(is_tx_input)
@@ -468,16 +468,16 @@ class _Address(Serializable):
 
     @serializable
     @property
-    def amount(self) -> int:
-        return self._amount
+    def balance(self) -> int:
+        return self._balance
 
-    @amount.setter
-    def amount(self, value: int) -> None:
-        if self._amount != value:
-            self._amount = value
+    @balance.setter
+    def balance(self, value: int) -> None:
+        if self._balance != value:
+            self._balance = value
             if self._model:
-                self._model.afterSetAmount()
-            self._coin.updateAmount()
+                self._model.afterSetBalance()
+            self._coin.updateBalance()
 
     @serializable
     @property
@@ -572,7 +572,7 @@ class _Address(Serializable):
             self._model.afterSetUtxoList()
         self._coin.updateUtxoList()
 
-        self.amount = sum(u.amount for u in self._utxo_list)
+        self.balance = sum(u.amount for u in self._utxo_list)
 
     @serializable
     @property
