@@ -46,10 +46,12 @@ BDialog {
                 model: _base.tx.inputList
                 delegate: BAddressItem {
                     address: model.address
+                    amount: model.amount
                     // TODO contextMenu: _base.contextMenu
                 }
                 templateDelegate: BAddressItem {
                     address: BCommon.addressItemTemplate
+                    amount: BCommon.amount
                     // TODO contextMenu: _base.contextMenu
                 }
             }
@@ -59,10 +61,12 @@ BDialog {
                 model: _base.tx.outputList
                 delegate: BAddressItem {
                     address: model.address
+                    amount: model.amount
                     // TODO contextMenu: _base.contextMenu
                 }
                 templateDelegate: BAddressItem {
                     address: BCommon.addressItemTemplate
+                    amount: BCommon.amount
                     // TODO contextMenu: _base.contextMenu
                 }
             }

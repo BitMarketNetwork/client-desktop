@@ -12,10 +12,12 @@ BPane {
         model: _base.coin.addressList
         delegate: BAddressItem {
             address: model
+            amount: model.balance
             contextMenu: _contextMenu
         }
         templateDelegate: BAddressItem {
             address: BCommon.addressItemTemplate
+            amount: BCommon.addressItemTemplate.balance
         }
     }
 

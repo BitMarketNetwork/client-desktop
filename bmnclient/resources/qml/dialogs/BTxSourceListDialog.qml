@@ -31,6 +31,7 @@ BDialog {
             model: _base.sourceList
             delegate: BAddressItem {
                 address: model
+                amount: model.balance
                 checkable: true
                 enabled: !_selectAll.checked
                 onCheckedChanged: {
@@ -42,6 +43,7 @@ BDialog {
             }
             templateDelegate: BAddressItem {
                 address: BCommon.addressItemTemplate
+                amount: BCommon.addressItemTemplate.balance
                 checkable: true
             }
         }

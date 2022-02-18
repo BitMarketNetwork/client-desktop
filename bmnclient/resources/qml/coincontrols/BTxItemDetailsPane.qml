@@ -45,10 +45,12 @@ BPane {
                 model: _base.tx.inputList
                 delegate: BAddressItem {
                     address: model.address
+                    amount: model.amount
                     // TODO contextMenu: _base.contextMenu
                 }
                 templateDelegate: BAddressItem {
                     address: BCommon.addressItemTemplate
+                    amount: BCommon.amountTemplate
                     // TODO contextMenu: _base.contextMenu
                 }
             }
@@ -58,10 +60,12 @@ BPane {
                 model: _base.tx.outputList
                 delegate: BAddressItem {
                     address: model.address
+                    amount: model.amount
                     // TODO contextMenu: _base.contextMenu
                 }
                 templateDelegate: BAddressItem {
                     address: BCommon.addressItemTemplate
+                    amount: BCommon.amountTemplate
                     // TODO contextMenu: _base.contextMenu
                 }
             }
