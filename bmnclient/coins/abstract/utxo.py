@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from functools import lru_cache
+from functools import cached_property
 from typing import TYPE_CHECKING
 
 from ..utils import CoinUtils
@@ -8,7 +8,7 @@ from ...utils.serialize import Serializable, serializable
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Optional
+    from typing import Final, Optional
     from .coin import Coin
     from ...utils.serialize import DeserializedDict
 
@@ -26,7 +26,7 @@ class _Utxo(Serializable):
         super().__init__()
         self._coin = coin
         self._address: Optional[Coin.Address] = None
-        self._name = name
+        self._name: Final = name
         self._height = height
         self._index = index
         self._amount = amount
@@ -88,8 +88,7 @@ class _Utxo(Serializable):
     def name(self) -> str:
         return self._name
 
-    @property
-    @lru_cache()
+    @cached_property
     def nameHuman(self) -> str:
         return self._coin.Tx.toNameHuman(self._name)
 

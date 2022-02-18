@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import cached_property
 from typing import TYPE_CHECKING
 
 from ...utils.serialize import Serializable, serializable
@@ -22,45 +23,38 @@ class _Io(Serializable):
             address_name: Optional[str],
             amount: int) -> None:
         super().__init__(row_id=row_id)
-        self._coin: Final = coin
+        if address is not None:
+            assert not address_name
+            assert coin is address.coin
+        elif not address_name:
+            address = coin.Address.createNullData(coin)
+        else:
+            address = coin.Address.createFromName(coin, name=address_name)
+            if address is None:
+                address = coin.Address.createNullData(
+                    coin,
+                    name=address_name or "UNKNOWN")
+
         self._index: Final = index
         self._output_type: Final = output_type
-
-        if address is not None:
-            assert not address_name  # TODO and amount == 0
-        elif not address_name:
-            address = self._coin.Address.createNullData(
-                self._coin,
-                amount=amount)
-        else:
-            address = self._coin.Address.createFromName(
-                self._coin,
-                name=address_name,
-                amount=amount)
-            if address is None:
-                address = self._coin.Address.createNullData(
-                    self._coin,
-                    name=address_name or "UNKNOWN",
-                    amount=amount)
-        self._address = address
+        self._address: Final = address
+        self._amount: Final = amount
 
     def __eq__(self, other: Coin.Tx.Io) -> bool:
         return (
                 isinstance(other, self.__class__)
-                and self._coin == other._coin
                 and self._index == other.index
                 and self._output_type == other._output_type
                 and self._address == other.address
-                and self._address.amount == other._address.amount
+                and self._amount == other._amount
         )
 
     def __hash__(self) -> int:
         return hash((
-            self._coin,
             self._index,
             self._output_type,
             self._address,
-            self._address.amount
+            self._amount
         ))
 
     @classmethod
@@ -94,7 +88,7 @@ class _Io(Serializable):
     @serializable
     @property
     def amount(self) -> int:
-        return self._address.amount
+        return self._amount
 
 
 class _MutableIo(_Io):
@@ -102,27 +96,31 @@ class _MutableIo(_Io):
 
     def __init__(
             self,
-            coin: Coin,
-            address: Optional[Coin.Address],
+            address: Coin.Address,
             *,
             amount: int,
-            script_bytes: bytes,
             is_dummy: bool = False):
         super().__init__(
-            coin,
+            address.coin,
             address,
             index=-1,  # TODO
             output_type="",  # TODO
             address_name=None,
             amount=amount)
         self._is_dummy: Final = is_dummy
-        self._script_bytes: Final = script_bytes
 
     def __eq__(self, other: Coin.Tx.Io) -> bool:
-        pass  # TODO
+        return (
+            isinstance(other, self.__class__)
+            and self._is_dummy == other._is_dummy
+            and super().__eq__(other)
+        )
 
     def __hash__(self) -> int:
-        pass  # TODO
+        return hash((
+            self._is_dummy,
+            super().__hash__()
+        ))
 
     @classmethod
     def deserialize(
@@ -132,21 +130,20 @@ class _MutableIo(_Io):
             **options) -> Optional[Coin.Tx.Io]:
         return None
 
+    @cached_property
+    def amountBytes(self) -> bytes:
+        return self._address.coin.Script.integerToBytes(
+            self._amount,
+            self._AMOUNT_LENGTH,
+            safe=True)
+
     @property
     def isDummy(self) -> bool:
         return self._is_dummy
 
-    @property
-    def amountBytes(self) -> bytes:
-        return self._coin.Script.integerToBytes(
-            self._address.amount,
-            self._AMOUNT_LENGTH,
-            safe=True)
-
-    @serializable
-    @property
+    @cached_property
     def scriptBytes(self) -> bytes:
-        return self._script_bytes
+        raise NotImplementedError
 
 
 class _MutableInput(_MutableIo):
@@ -157,13 +154,11 @@ class _MutableInput(_MutableIo):
             self,
             utxo: Coin.Tx.Utxo,
             *,
-            utxo_id_bytes: bytes,
             hash_type: int,
             sequence: int,
             **kwargs) -> None:
-        super().__init__(utxo.coin, utxo.address, amount=utxo.amount, **kwargs)
+        super().__init__(utxo.address, amount=utxo.amount, **kwargs)
         self._utxo: Final = utxo
-        self._utxo_id_bytes: Final = utxo_id_bytes
         self._hash_type: Final = hash_type
         self._sequence: Final = sequence
 
@@ -171,15 +166,25 @@ class _MutableInput(_MutableIo):
         self._witness_bytes = b""
 
     def __eq__(self, other: Coin.TxFactory.MutableTx.Input):
-        # TODO
         return (
                 isinstance(other, self.__class__)
-                and self._utxo_id_bytes == other._utxo_id_bytes
+                and self._utxo == other._utxo
+                and self._hash_type == other._hash_type
+                and self._sequence == other._sequence
+                and super().__eq__(other)
         )
 
     def __hash__(self) -> int:
-        # TODO
-        return hash((self._utxo_id_bytes, ))
+        return hash((
+            self._utxo,
+            self._hash_type,
+            self._sequence,
+            super().__hash__()
+        ))
+
+    @cached_property
+    def scriptBytes(self) -> bytes:
+        raise NotImplementedError
 
     @property
     def isWitness(self) -> bool:
@@ -190,18 +195,18 @@ class _MutableInput(_MutableIo):
     def utxo(self) -> Coin.Tx.Utxo:
         return self._utxo
 
-    @property
+    @cached_property
     def utxoIdBytes(self) -> bytes:
-        return self._utxo_id_bytes
+        raise NotImplementedError
 
     @serializable
     @property
     def hashType(self) -> int:
         return self._hash_type
 
-    @property
+    @cached_property
     def hashTypeBytes(self) -> bytes:
-        return self._coin.Script.integerToBytes(
+        return self._address.coin.Script.integerToBytes(
             self._hash_type,
             self._HASH_TYPE_LENGTH,
             safe=True)
@@ -211,9 +216,9 @@ class _MutableInput(_MutableIo):
     def sequence(self) -> int:
         return self._sequence
 
-    @property
+    @cached_property
     def sequenceBytes(self) -> bytes:
-        return self._coin.Script.integerToBytes(
+        return self._address.coin.Script.integerToBytes(
             self._sequence,
             self._SEQUENCE_LENGTH,
             safe=True)
@@ -231,4 +236,6 @@ class _MutableInput(_MutableIo):
 
 
 class _MutableOutput(_MutableIo):
-    pass
+    @cached_property
+    def scriptBytes(self) -> bytes:
+        raise NotImplementedError

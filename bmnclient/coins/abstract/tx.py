@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from functools import lru_cache
+from functools import cached_property, lru_cache
 from typing import TYPE_CHECKING
 
 from .tx_io import _Io, _MutableInput, _MutableOutput
@@ -10,7 +10,7 @@ from ...debug import Debug
 from ...utils.serialize import Serializable, serializable
 
 if TYPE_CHECKING:
-    from typing import Any, Iterable, List, Optional, Sequence
+    from typing import Any, Final, Iterable, List, Optional, Sequence
     from .coin import Coin
     from ...utils.serialize import DeserializedData, DeserializedDict
 
@@ -57,8 +57,8 @@ class _Tx(Serializable):
         Debug.assertObjectCaller(coin, "_allocateTx")
         super().__init__(row_id=row_id)
 
-        self._coin = coin
-        self._name = name.strip().lower()
+        self._coin: Final = coin
+        self._name: Final = name.strip().lower()
 
         self._height = height
         self._time = time
@@ -126,8 +126,7 @@ class _Tx(Serializable):
     def name(self) -> str:
         return self._name
 
-    @property
-    @lru_cache()
+    @cached_property
     def nameHuman(self) -> str:
         return self.toNameHuman(self._name)
 
@@ -243,8 +242,7 @@ class _MutableTx(_Tx):
     def _deriveName(self) -> Optional[str]:
         raise NotImplementedError
 
-    @property
-    @lru_cache()
+    @cached_property
     def name(self) -> Optional[str]:
         if not self._is_signed or self._is_dummy:
             return None
@@ -290,7 +288,7 @@ class _MutableTx(_Tx):
     def sign(self) -> bool:
         self.__class__.serialize.cache_clear()
         # noinspection PyUnresolvedReferences
-        self.__class__.name.fget.cache_clear()
+        self.__dict__.pop(self.__class__.name.attrname, None)
 
         if not self._is_signed and self._sign():
             self._is_signed = True

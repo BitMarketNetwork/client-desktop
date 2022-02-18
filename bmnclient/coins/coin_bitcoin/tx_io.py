@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import cached_property
 from typing import TYPE_CHECKING
 
 from ..abstract import Coin
@@ -20,37 +21,39 @@ class _MutableInput(Coin.TxFactory.MutableTx.Input):
             *,
             sequence: int = 0xffffffff,
             **kwargs) -> None:
-        utxo_id_bytes = \
-            bytes.fromhex(utxo.name)[::-1] \
-            + (utxo.coin.Script.integerToBytes(utxo.index, 4) or b"\x00" * 4)
-
-        # For P2WPKH witness program, the scriptCode is
-        # 0x1976a914{20-byte-pubkey-hash}88ac.
-        if utxo.scriptType in (
-                utxo.coin.Script.Type.P2WPKH,
-                utxo.coin.Script.Type.P2SH_P2WPKH
-        ):
-            script = utxo.coin.Script.addressToScript(
-                utxo.address,
-                utxo.coin.Script.Type.P2PKH)
-        else:
-            script = utxo.coin.Script.addressToScript(
-                utxo.address,
-                utxo.scriptType)
-        if script:
-            script_bytes = (
-                    utxo.coin.Script.integerToVarInt(len(script))
-                    + script)
-        else:
-            script_bytes = utxo.coin.Script.integerToVarInt(0)
-
         super().__init__(
             utxo,
-            utxo_id_bytes=utxo_id_bytes,
             hash_type=1,  # SIGHASH_ALL
             sequence=sequence,
-            script_bytes=script_bytes,
             **kwargs)
+
+    @cached_property
+    def scriptBytes(self) -> bytes:
+        # For P2WPKH witness program, the scriptCode is
+        # 0x1976a914{20-byte-pubkey-hash}88ac.
+        if self._utxo.scriptType in (
+                self._utxo.coin.Script.Type.P2WPKH,
+                self._utxo.coin.Script.Type.P2SH_P2WPKH
+        ):
+            script = self._utxo.coin.Script.addressToScript(
+                self._utxo.address,
+                self._utxo.coin.Script.Type.P2PKH)
+        else:
+            script = self._utxo.coin.Script.addressToScript(
+                self._utxo.address,
+                self._utxo.scriptType)
+        if not script:
+            return self._utxo.coin.Script.integerToVarInt(0)
+        return (
+                self._utxo.coin.Script.integerToVarInt(len(script))
+                + script)
+
+    @cached_property
+    def utxoIdBytes(self) -> bytes:
+        index = (
+                self._utxo.coin.Script.integerToBytes(self._utxo.index, 4)
+                or b"\x00" * 4)
+        return bytes.fromhex(self._utxo.name)[::-1] + index
 
     def sign(self, hash_: bytes) -> bool:
         if not self._is_dummy:
@@ -133,21 +136,11 @@ class _MutableInput(Coin.TxFactory.MutableTx.Input):
 class _MutableOutput(Coin.TxFactory.MutableTx.Output):
     _AMOUNT_LENGTH = 8
 
-    def __init__(
-            self,
-            address: Bitcoin.Address,
-            amount: int,
-            **kwargs) -> None:
-        script = address.coin.Script.addressToScript(address)
-        if script:
-            script_bytes = (
-                    address.coin.Script.integerToVarInt(len(script))
-                    + script)
-        else:
-            script_bytes = address.coin.Script.integerToVarInt(0)
-        super().__init__(
-            address.coin,
-            address,
-            amount=amount,
-            script_bytes=script_bytes,
-            **kwargs)
+    @cached_property
+    def scriptBytes(self) -> bytes:
+        script = self._address.coin.Script.addressToScript(self._address)
+        if not script:
+            return self._address.coin.Script.integerToVarInt(0)
+        return (
+                self._address.coin.Script.integerToVarInt(len(script))
+                + script)
