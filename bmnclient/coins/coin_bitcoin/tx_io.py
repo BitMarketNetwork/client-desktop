@@ -71,7 +71,7 @@ class _MutableInput(Coin.TxFactory.MutableTx.Input):
                 public_key_data = b"\x00" * PublicKey.uncompressedSize
             else:
                 public_key_data = b"\x00" * PublicKey.compressedSize
-
+        script = self._address.coin.Script
         try:
             if not self._is_dummy:
                 signature = private_key.sign(hash_)
@@ -79,48 +79,48 @@ class _MutableInput(Coin.TxFactory.MutableTx.Input):
                     return False
             else:
                 signature = b"\x00" * PrivateKey.signatureMaxSize
-            signature += self._coin.Script.integerToVarInt(self._hash_type)
+            signature += script.integerToVarInt(self._hash_type)
 
             if self.isWitness:
-                if self.utxo.scriptType == self._coin.Script.Type.P2SH_P2WPKH:
-                    script_sig = self._coin.Script.addressToScript(
+                if self.utxo.scriptType == script.Type.P2SH_P2WPKH:
+                    script_sig = script.addressToScript(
                         self.utxo.address,
-                        self._coin.Script.Type.P2WPKH)
+                        script.Type.P2WPKH)
                     if script_sig is None:
                         return False
-                    script_sig = self._coin.Script.pushData(script_sig)
+                    script_sig = script.pushData(script_sig)
                 else:
                     script_sig = b""
 
                 # A witness field starts with a var_int to indicate the number
                 # of stack items for the txin. It is followed by stack items,
                 # with each item starts with a var_int to indicate the length.
-                wd = self._coin.Script.integerToVarInt(2)
+                wd = script.integerToVarInt(2)
 
                 # 1
-                wd += self._coin.Script.integerToVarInt(len(signature))
+                wd += script.integerToVarInt(len(signature))
                 wd += signature
 
                 # 2
-                wd += self._coin.Script.integerToVarInt(len(public_key_data))
+                wd += script.integerToVarInt(len(public_key_data))
                 wd += public_key_data
             else:
-                if self.utxo.scriptType == self._coin.Script.Type.P2PK:
-                    script_sig = self._coin.Script.pushData(signature)
+                if self.utxo.scriptType == script.Type.P2PK:
+                    script_sig = script.pushData(signature)
                 else:
-                    script_sig = self._coin.Script.pushData(signature)
-                    script_sig += self._coin.Script.pushData(public_key_data)
+                    script_sig = script.pushData(signature)
+                    script_sig += script.pushData(public_key_data)
 
                 # A non-witness program (defined hereinafter) txin MUST be
                 # associated with an empty witness field, represented by a 0x00.
-                wd = self._coin.Script.integerToVarInt(0)
+                wd = script.integerToVarInt(0)
         except TypeError:
             return False
 
         try:
             # noinspection PyAttributeOutsideInit
             self._script_sig_bytes = (
-                    self._coin.Script.integerToVarInt(len(script_sig))
+                    script.integerToVarInt(len(script_sig))
                     + script_sig)
             # noinspection PyAttributeOutsideInit
             self._witness_bytes = wd

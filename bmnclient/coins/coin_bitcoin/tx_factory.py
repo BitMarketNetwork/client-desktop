@@ -26,6 +26,6 @@ class _TxFactory(Coin.TxFactory):
                 self.MutableTx.Input(u, is_dummy=is_dummy)
                 for u in input_list],
             [
-                self.MutableTx.Output(a, v, is_dummy=is_dummy)
+                self.MutableTx.Output(a, amount=v, is_dummy=is_dummy)
                 for a, v in output_list],
             is_dummy=is_dummy)
