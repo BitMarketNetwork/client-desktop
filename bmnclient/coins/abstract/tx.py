@@ -54,7 +54,7 @@ class _Tx(Serializable):
             is_coinbase: bool,
             input_list: Iterable[Coin.Tx.Io],
             output_list: Iterable[Coin.Tx.Io]) -> None:
-        Debug.assertObjectCaller(coin, "_allocateTx")
+        #Debug.assertObjectCaller(coin, "_allocateTx")
         super().__init__(row_id=row_id)
 
         self._coin: Final = coin

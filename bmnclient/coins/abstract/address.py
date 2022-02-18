@@ -186,7 +186,7 @@ class _Address(Serializable):
             utxo_list: Optional[Iterable[Coin.Tx.Utxo]] = None,
             history_first_offset: str = "",
             history_last_offset: str = "") -> None:
-        Debug.assertObjectCaller(coin, "_allocateAddress")
+        #Debug.assertObjectCaller(coin, "_allocateAddress")
         super().__init__(row_id=row_id)
 
         self._coin = coin

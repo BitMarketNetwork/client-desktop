@@ -33,6 +33,7 @@ class Debug(NotImplementedInstance):
 
     @classproperty
     def isEnabled(cls) -> bool:  # noqa
+        assert cls._ENABLED is not None
         return cls._ENABLED
 
     @classmethod
