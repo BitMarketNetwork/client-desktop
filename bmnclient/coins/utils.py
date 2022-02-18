@@ -41,6 +41,17 @@ class CoinUtils(NotImplementedInstance):
         )
 
     @classmethod
+    def txIoToNameKeyTuple(
+            cls,
+            io: Coin.Tx.Io) -> Tuple[ClassStringKeyTuple, ...]:
+        return (
+            *cls.addressToNameKeyTuple(io.address),
+            (None, "io"),
+            ("index", io.index),
+            ("amount", io.amount)
+        )
+
+    @classmethod
     def txFactoryToNameKeyTuple(
             cls,
             factory: Coin.TxFactory) -> Tuple[ClassStringKeyTuple, ...]:

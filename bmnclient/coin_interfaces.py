@@ -165,12 +165,17 @@ class TxInterface(_AbstractInterface, Coin.Tx.Interface):
         self._save()
 
 
-class TxFactoryInterface(_AbstractInterface, Coin.TxFactory.Interface):
-    def __init__(
-            self,
+class TxIoInterface(_AbstractInterface, Coin.Tx.Io.Interface):
+    def __init__(self, *args, io: Coin.Tx.Io, **kwargs) -> None:
+        super().__init__(
             *args,
-            factory: Coin.TxFactory,
-            **kwargs) -> None:
+            io=io,
+            name_key_tuple=CoinUtils.txIoToNameKeyTuple(io),
+            **kwargs)
+
+
+class TxFactoryInterface(_AbstractInterface, Coin.TxFactory.Interface):
+    def __init__(self, *args, factory: Coin.TxFactory, **kwargs) -> None:
         super().__init__(
             *args,
             factory=factory,

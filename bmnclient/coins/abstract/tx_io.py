@@ -11,7 +11,19 @@ if TYPE_CHECKING:
     from ...utils.serialize import DeserializedDict
 
 
+class _Interface:
+    def __init__(
+            self,
+            *args,
+            io: Coin.Tx.Io,
+            **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._io = io
+
+
 class _Io(Serializable):
+    Interface = _Interface
+
     def __init__(
             self,
             coin: Coin,
@@ -40,6 +52,9 @@ class _Io(Serializable):
         self._address: Final = address
         self._amount: Final = amount
 
+        self._model: Optional[Coin.Tx.Io.Interface] = \
+            self.address.coin.model_factory(self)
+
     def __eq__(self, other: Coin.Tx.Io) -> bool:
         return (
                 isinstance(other, self.__class__)
@@ -65,6 +80,10 @@ class _Io(Serializable):
             **options) -> Optional[Coin.Tx.Io]:
         assert coin is not None
         return super().deserialize(source_data, coin, **options)
+
+    @property
+    def model(self) -> Optional[Coin.Tx.Io.Interface]:
+        return self._model
 
     @serializable
     @property

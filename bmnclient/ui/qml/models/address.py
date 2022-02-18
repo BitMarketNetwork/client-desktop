@@ -3,18 +3,18 @@ from __future__ import annotations
 from enum import auto
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    Property as QProperty, \
-    QObject, \
-    Signal as QSignal, \
-    Slot as QSlot
+from PySide6.QtCore import (
+    Property as QProperty,
+    QObject,
+    Signal as QSignal,
+    Slot as QSlot)
 
 from . import AbstractCoinStateModel, AbstractModel
 from .amount import AbstractAmountModel
-from .list import \
-    AbstractListModel, \
-    AbstractListSortedModel, \
-    RoleEnum
+from .list import (
+    AbstractListModel,
+    AbstractListSortedModel,
+    RoleEnum)
 from ....coin_interfaces import AddressInterface
 
 if TYPE_CHECKING:

@@ -6,6 +6,7 @@ from .address import AddressModel
 from .coin import CoinModel
 from .tx import TxModel
 from .tx_factory import TxFactoryModel
+from .tx_io import TxIoModel
 from ....coins.abstract import Coin
 from ....utils import NotImplementedInstance
 
@@ -22,6 +23,7 @@ class ModelsFactory(NotImplementedInstance):
                 Coin,
                 Coin.Address,
                 Coin.Tx,
+                Coin.Tx.Io,
                 Coin.TxFactory]) -> Optional[object]:
         if isinstance(owner, Coin):
             return CoinModel(application, owner)
@@ -31,6 +33,9 @@ class ModelsFactory(NotImplementedInstance):
 
         if isinstance(owner, Coin.Tx):
             return TxModel(application, owner)
+
+        if isinstance(owner, Coin.Tx.Io):
+            return TxIoModel(application, owner)
 
         if isinstance(owner, Coin.TxFactory):
             return TxFactoryModel(application, owner)

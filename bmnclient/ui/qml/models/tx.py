@@ -18,6 +18,7 @@ from .list import (
     AbstractListModel,
     AbstractListSortedModel,
     RoleEnum)
+from .tx_io import TxIoListModel
 from ....coin_interfaces import TxInterface
 
 if TYPE_CHECKING:
@@ -98,17 +99,6 @@ class TxAmountModel(AbstractTxAmountModel):
 class TxFeeAmountModel(AbstractTxAmountModel):
     def _getValue(self) -> Optional[int]:
         return self._tx.feeAmount
-
-
-class TxIoListModel(AbstractListModel):
-    class Role(RoleEnum):
-        ADDRESS: Final = auto()
-
-    ROLE_MAP: Final = {
-        Role.ADDRESS: (
-            b"address",
-            lambda io: io.address.model)
-    }
 
 
 class TxModel(TxInterface, AbstractModel):
