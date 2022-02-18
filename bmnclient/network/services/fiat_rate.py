@@ -12,6 +12,7 @@ from ...currency import (
     FiatCurrency,
     FiatRate,
     UsdFiatCurrency)
+from ...debug import Debug
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -169,7 +170,7 @@ class FiatRateServiceList(ConfigStaticList):
             CoinGeckoFiatRateService,
         )
 
-        if application.isDebugMode:
+        if Debug.isEnabled:
             service_list = (RandomFiatRateService, ) + service_list
 
         super().__init__(

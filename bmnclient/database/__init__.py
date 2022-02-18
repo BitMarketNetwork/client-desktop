@@ -7,6 +7,8 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
+from ..debug import Debug
+
 try:
     import bmnsqlite3 as _engine
 except ImportError:
@@ -19,8 +21,7 @@ from .tables import (
     CoinListTable,
     MetadataTable,
     TxIoListTable,
-    TxListTable
-)
+    TxListTable)
 from .vfs import Vfs
 from ..logger import Logger
 from ..utils.class_property import classproperty
@@ -36,8 +37,7 @@ if TYPE_CHECKING:
         Generator,
         Optional,
         Type,
-        Union
-    )
+        Union)
     from ..application import CoreApplication
 
 
@@ -187,7 +187,7 @@ class Database:
             file_path = self._file_path.resolve(strict=False).as_uri()
             file_path += "?vfs=bmn_vfs"  # TODO
             _engine.vfs_register(Vfs(self._application))
-            _engine.enable_callback_tracebacks(self._application.isDebugMode)
+            _engine.enable_callback_tracebacks(Debug.isEnabled)
 
             # noinspection PyTypeChecker
             # TODO PyTypeChecker:

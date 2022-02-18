@@ -21,6 +21,7 @@ from .config import Config, ConfigKey
 from .currency import FiatCurrencyList, FiatRate
 from .database import Database
 from .database.tables import AddressListTable, CoinListTable, TxListTable
+from .debug import Debug
 from .key_store import KeyStore
 from .language import Language
 from .logger import Logger
@@ -104,6 +105,7 @@ class CommandLine:
         assert isinstance(self._arguments.local_data_path, Path)
         assert isinstance(self._arguments.log_file, Path)
         assert isinstance(self._arguments.debug, bool)
+        assert self._arguments.debug == Debug.isEnabled
         assert isinstance(self._arguments.server_url, str)
         assert isinstance(self._arguments.server_insecure, bool)
 
@@ -129,11 +131,7 @@ class CommandLine:
 
     @property
     def logLevel(self) -> int:
-        return logging.DEBUG if self.isDebugMode else logging.INFO
-
-    @property
-    def isDebugMode(self) -> bool:
-        return self._arguments.debug
+        return logging.DEBUG if Debug.isEnabled else logging.INFO
 
     @property
     def serverUrl(self) -> str:
@@ -302,10 +300,6 @@ class CoreApplication(QObject):
     @property
     def config(self) -> Config:
         return self._config
-
-    @property
-    def isDebugMode(self) -> bool:
-        return self._command_line.isDebugMode
 
     @property
     def exitCode(self) -> int:

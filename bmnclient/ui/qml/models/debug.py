@@ -3,10 +3,12 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    Property as QProperty, \
-    QObject, \
-    Slot as QSlot
+from PySide6.QtCore import (
+    Property as QProperty,
+    QObject,
+    Slot as QSlot)
+
+from ....debug import Debug
 
 if TYPE_CHECKING:
     from . import QmlApplication
@@ -19,7 +21,7 @@ class DebugModel(QObject):
 
     @QProperty(bool, constant=True)
     def isEnabled(self) -> bool:
-        return self._application.isDebugMode
+        return Debug.isEnabled
 
     @QSlot(int)
     def increaseHeight(self, value: int) -> None:
