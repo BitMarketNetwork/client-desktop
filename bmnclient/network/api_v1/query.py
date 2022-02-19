@@ -282,7 +282,7 @@ class CoinsInfoApiQuery(AbstractApiQuery):
                     coin.name)
                 continue
             coin.status = parser.status
-            coin.deserialize(parser.deserializedDict, coin)
+            coin.deserializeUpdate(parser.deserializedDict)
 
 
 class AddressInfoApiQuery(AbstractApiQuery):

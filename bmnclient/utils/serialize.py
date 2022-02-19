@@ -95,6 +95,17 @@ class Serializable:
         }
         return cls._deserialize(*args, **kwargs)
 
+    def deserializeUpdate(
+            self,
+            source_data: DeserializedDict,
+            *args,
+            **options) -> bool:
+        kwargs = {
+            key: self._deserializeProperty(self, key, value, *args, **options)
+            for key, value in source_data.items()
+        }
+        return self._deserializeUpdate(*args, **kwargs)
+
     @classmethod
     def _deserializeProperty(
             cls,
@@ -118,3 +129,6 @@ class Serializable:
     @classmethod
     def _deserialize(cls, *args, **kwargs) -> Optional[Serializable]:
         return cls(*args, **kwargs)
+
+    def _deserializeUpdate(self, *args, **kwargs) -> bool:
+        raise DeserializationNotSupportedError

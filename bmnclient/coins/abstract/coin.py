@@ -141,13 +141,13 @@ class Coin(_CoinSerializable):
     @classmethod
     def _deserializeProperty(
             cls,
+            self: Coin,
             key: str,
             value: DeserializedData,
-            coin: Optional[Coin] = None,
             **options) -> Any:
         if isinstance(value, dict) and key == "address_list":
-            return cls.Address.deserialize(value, coin)
-        return super()._deserializeProperty(key, value, coin, **options)
+            return cls.Address.deserialize(value, self)
+        return super()._deserializeProperty(self, key, value, **options)
 
     @classmethod
     def _deserialize(cls, *args, **kwargs) -> Optional[Coin]:
@@ -164,31 +164,27 @@ class Coin(_CoinSerializable):
             offset: str,
             unverified_offset: str,
             unverified_hash: str,
-            address_list: Optional[List[Address]] = None
-    ) -> Optional[Coin]:
-        if coin.name != name:
-            return None
-
+            address_list: Optional[List[Address]] = None) -> bool:
         if row_id is not None:
-            coin.rowId = row_id
+            self.rowId = row_id
 
         if is_enabled is not None:
-            coin.isEnabled = bool(is_enabled)
+            self.isEnabled = bool(is_enabled)
 
-        coin.beginUpdateState()
+        self.beginUpdateState()
         if True:
-            coin.height = height
-            coin.verifiedHeight = verified_height
-            coin.offset = offset
-            coin.unverifiedOffset = unverified_offset
-            coin.unverifiedHash = unverified_hash
+            self.height = height
+            self.verifiedHeight = verified_height
+            self.offset = offset
+            self.unverifiedOffset = unverified_offset
+            self.unverifiedHash = unverified_hash
 
             if address_list is not None:
-                coin._address_list.clear()  # TODO clear with callback
+                self._address_list.clear()  # TODO compare with new list!
                 for address in address_list:
-                    coin.appendAddress(address)
-        coin.endUpdateState()
-        return coin
+                    self.appendAddress(address)
+        self.endUpdateState()
+        return True
 
     @property
     def model(self) -> Optional[Coin.Interface]:

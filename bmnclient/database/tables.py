@@ -382,7 +382,7 @@ class CoinListTable(AbstractTable, name="coins"):
         if result is None:
             return False
 
-        if coin.deserialize(result, coin) is None:
+        if not coin.deserializeUpdate(result):
             self._database.logDeserializeError(type(coin), result)
             return False
         else:

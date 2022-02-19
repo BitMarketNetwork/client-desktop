@@ -404,7 +404,7 @@ class TestCoins(TestCase):
         # pprint(data, sort_dicts=False)
 
         coin_new = coin_type()
-        coin_type.deserialize(data, coin_new)
+        coin_new.deserializeUpdate(data)
 
         # coin compare
         self.assertEqual(coin.name, coin_new.name)
