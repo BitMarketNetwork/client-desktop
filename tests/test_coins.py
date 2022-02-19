@@ -139,7 +139,7 @@ def fillCoin(
         address = coin.deriveHdAddress(
             account=0,
             is_change=False,
-            amount=randint(1000, 100000),
+            balance=randint(1000, 100000),
             tx_count=randint(1000, 100000),
             label="address label " + str(address_index),
             comment="address comment " + str(address_index),

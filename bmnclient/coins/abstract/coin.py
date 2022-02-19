@@ -150,7 +150,7 @@ class Coin(_CoinSerializable):
         return super()._deserializeProperty(self, key, value, **options)
 
     @classmethod
-    def _deserialize(cls, *args, **kwargs) -> Optional[Coin]:
+    def deserialize(cls, *_, **__) -> Optional[Coin]:
         raise DeserializationNotSupportedError
 
     def _deserializeUpdate(

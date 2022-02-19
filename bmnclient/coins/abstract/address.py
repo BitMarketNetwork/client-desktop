@@ -249,7 +249,7 @@ class _Address(_CoinSerializable):
             allow_hd_path: bool = True,
             **options) -> DeserializedData:
         if key == "key":
-            return self.exportKey(allow_hd_path=options["allow_hd_path"])
+            return self.exportKey(allow_hd_path=allow_hd_path)
         return super()._serializeProperty(key, value, **options)
 
     @classmethod

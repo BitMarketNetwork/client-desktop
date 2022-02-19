@@ -133,10 +133,7 @@ class _MutableIo(_Io):
         ))
 
     @classmethod
-    def _deserialize(
-            cls,
-            *args,
-            **kwargs) -> Optional[Coin.TxFactory.MutableTx.Io]:
+    def deserialize(cls, *_, **__) -> Optional[Coin.TxFactory.MutableTx.Io]:
         raise DeserializationNotSupportedError
 
     @cached_property
