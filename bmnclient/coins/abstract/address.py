@@ -245,6 +245,8 @@ class _Address(_CoinSerializable):
             self,
             key: str,
             value: Any,
+            *,
+            allow_hd_path: bool = True,
             **options) -> DeserializedData:
         if key == "key":
             return self.exportKey(allow_hd_path=options["allow_hd_path"])
@@ -272,10 +274,7 @@ class _Address(_CoinSerializable):
         return super()._deserializeProperty(key, value, coin, **options)
 
     @classmethod
-    def _deserializeFactory(
-            cls,
-            coin: Coin,
-            **kwargs) -> Optional[Coin.Address]:
+    def _deserialize(cls, coin: Coin, **kwargs) -> Optional[Coin.Address]:
         return cls.createFromName(coin, **kwargs)
 
     @classproperty

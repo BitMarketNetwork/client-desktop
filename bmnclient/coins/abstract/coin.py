@@ -13,7 +13,7 @@ from ..hd import HdNode
 from ...crypto.digest import Sha256Digest
 from ...currency import Currency as _Currency, FiatRate, NoneFiatCurrency
 from ...utils.class_property import classproperty
-from ...utils.serialize import serializable
+from ...utils.serialize import DeserializationNotSupportedError, serializable
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, Generator, List, Optional, Union
@@ -150,9 +150,11 @@ class Coin(_CoinSerializable):
         return super()._deserializeProperty(key, value, coin, **options)
 
     @classmethod
-    def _deserializeFactory(
-            cls,
-            coin: Coin,
+    def _deserialize(cls, *args, **kwargs) -> Optional[Coin]:
+        raise DeserializationNotSupportedError
+
+    def _deserializeUpdate(
+            self,
             *,
             row_id: Optional[int] = None,
             name: str,

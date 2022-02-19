@@ -67,9 +67,11 @@ class Serializable:
             self,
             key: str,
             value: Any,
+            *,
+            exclude_subclasses: bool = False,
             **options) -> DeserializedData:
         if isinstance(value, Serializable):
-            if options["exclude_subclasses"]:
+            if exclude_subclasses:
                 return {}
             return value.serialize(**options)
         if isinstance(value, (int, str, type(None))):
@@ -88,14 +90,15 @@ class Serializable:
             *args,
             **options) -> Optional[Serializable]:
         kwargs = {
-            key: cls._deserializeProperty(key, value, *args, **options)
+            key: cls._deserializeProperty(None, key, value, *args, **options)
             for key, value in source_data.items()
         }
-        return cls._deserializeFactory(*args, **kwargs)
+        return cls._deserialize(*args, **kwargs)
 
     @classmethod
     def _deserializeProperty(
             cls,
+            self: Optional[Serializable],
             key: str,
             value: DeserializedData,
             *args,
@@ -104,7 +107,7 @@ class Serializable:
             return value
         if isinstance(value, list):
             return [
-                cls._deserializeProperty(key, v, *args, **options)
+                cls._deserializeProperty(self, key, v, *args, **options)
                 for v in value
             ]
 

@@ -4,7 +4,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING
 
 from .serialize import _CoinSerializable
-from ...utils.serialize import serializable
+from ...utils.serialize import DeserializationNotSupportedError, serializable
 
 if TYPE_CHECKING:
     from typing import Final, Optional
@@ -133,12 +133,11 @@ class _MutableIo(_Io):
         ))
 
     @classmethod
-    def deserialize(
+    def _deserialize(
             cls,
-            source_data: DeserializedDict,
-            coin: Optional[Coin] = None,
-            **options) -> Optional[Coin.Tx.Io]:
-        return None
+            *args,
+            **kwargs) -> Optional[Coin.TxFactory.MutableTx.Io]:
+        raise DeserializationNotSupportedError
 
     @cached_property
     def amountBytes(self) -> bytes:

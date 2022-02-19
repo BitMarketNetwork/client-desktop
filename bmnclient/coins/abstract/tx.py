@@ -98,10 +98,7 @@ class _Tx(_CoinSerializable):
         return super()._deserializeProperty(key, value, coin, **options)
 
     @classmethod
-    def _deserializeFactory(
-            cls,
-            coin: Coin,
-            **kwargs) -> Optional[Coin.Address]:
+    def _deserialize(cls, coin: Coin, **kwargs) -> Optional[Coin.Address]:
         # noinspection PyProtectedMember
         return coin._allocateTx(**kwargs)
 
