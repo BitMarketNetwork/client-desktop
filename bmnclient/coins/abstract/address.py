@@ -3,11 +3,12 @@ from __future__ import annotations
 from enum import Enum, auto
 from typing import TYPE_CHECKING
 
+from .serialize import _CoinSerializable
 from ..hd import HdNode
 from ...crypto.secp256k1 import PrivateKey, PublicKey
 from ...debug import Debug
 from ...utils.class_property import classproperty
-from ...utils.serialize import Serializable, serializable
+from ...utils.serialize import serializable
 
 if TYPE_CHECKING:
     from typing import Any, Iterable, List, Optional, Union
@@ -153,7 +154,7 @@ class _Interface:
         raise NotImplementedError
 
 
-class _Address(Serializable):
+class _Address(_CoinSerializable):
     _NULLDATA_NAME = "NULL_DATA"
     _HRP = "hrp"
 
@@ -248,15 +249,6 @@ class _Address(Serializable):
         if key == "key":
             return self.exportKey(allow_hd_path=options["allow_hd_path"])
         return super()._serializeProperty(key, value, **options)
-
-    @classmethod
-    def deserialize(
-            cls,
-            source_data: DeserializedDict,
-            coin: Optional[Coin] = None,
-            **options) -> Optional[Coin.Address]:
-        assert coin is not None
-        return super().deserialize(source_data, coin, **options)
 
     @classmethod
     def _deserializeProperty(

@@ -4,15 +4,16 @@ from enum import Enum
 from functools import cached_property, lru_cache
 from typing import TYPE_CHECKING
 
+from .serialize import _CoinSerializable
 from .tx_io import _Io, _MutableInput, _MutableOutput
 from .utxo import _Utxo
 from ...debug import Debug
-from ...utils.serialize import Serializable, serializable
+from ...utils.serialize import serializable
 
 if TYPE_CHECKING:
     from typing import Any, Final, Iterable, List, Optional, Sequence
     from .coin import Coin
-    from ...utils.serialize import DeserializedData, DeserializedDict
+    from ...utils.serialize import DeserializedData
 
 
 class _Interface:
@@ -31,7 +32,7 @@ class _Interface:
         raise NotImplementedError
 
 
-class _Tx(Serializable):
+class _Tx(_CoinSerializable):
     class Status(Enum):
         PENDING = 0
         CONFIRMED = 1
@@ -81,15 +82,6 @@ class _Tx(Serializable):
 
     def __hash__(self) -> int:
         return hash((self._coin, self._name, ))
-
-    @classmethod
-    def deserialize(
-            cls,
-            source_data: DeserializedDict,
-            coin: Optional[Coin] = None,
-            **options) -> Optional[Coin.Tx]:
-        assert coin is not None
-        return super().deserialize(source_data, coin, **options)
 
     @classmethod
     def _deserializeProperty(

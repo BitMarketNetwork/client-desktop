@@ -3,12 +3,12 @@ from __future__ import annotations
 from functools import cached_property
 from typing import TYPE_CHECKING
 
-from ...utils.serialize import Serializable, serializable
+from .serialize import _CoinSerializable
+from ...utils.serialize import serializable
 
 if TYPE_CHECKING:
     from typing import Final, Optional
     from .coin import Coin
-    from ...utils.serialize import DeserializedDict
 
 
 class _Interface:
@@ -21,7 +21,7 @@ class _Interface:
         self._io = io
 
 
-class _Io(Serializable):
+class _Io(_CoinSerializable):
     Interface = _Interface
 
     def __init__(
@@ -71,15 +71,6 @@ class _Io(Serializable):
             self._address,
             self._amount
         ))
-
-    @classmethod
-    def deserialize(
-            cls,
-            source_data: DeserializedDict,
-            coin: Optional[Coin] = None,
-            **options) -> Optional[Coin.Tx.Io]:
-        assert coin is not None
-        return super().deserialize(source_data, coin, **options)
 
     @property
     def model(self) -> Optional[Coin.Tx.Io.Interface]:

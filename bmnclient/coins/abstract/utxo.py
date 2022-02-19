@@ -3,17 +3,17 @@ from __future__ import annotations
 from functools import cached_property
 from typing import TYPE_CHECKING
 
+from .serialize import _CoinSerializable
 from ..utils import CoinUtils
-from ...utils.serialize import Serializable, serializable
+from ...utils.serialize import serializable
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
     from typing import Final, Optional
     from .coin import Coin
-    from ...utils.serialize import DeserializedDict
 
 
-class _Utxo(Serializable):
+class _Utxo(_CoinSerializable):
     def __init__(
             self,
             coin: Coin,
@@ -55,15 +55,6 @@ class _Utxo(Serializable):
         return StringUtils.classString(
             self.__class__,
             *CoinUtils.utxoToNameKeyTuple(self))
-
-    @classmethod
-    def deserialize(
-            cls,
-            source_data: DeserializedDict,
-            coin: Optional[Coin] = None,
-            **options) -> Optional[Coin.Tx.Utxo]:
-        assert coin is not None
-        return super().deserialize(source_data, coin, **options)
 
     @property
     def coin(self) -> Coin:

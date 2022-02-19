@@ -43,9 +43,8 @@ class Serializable:
             for name in dir(cls):
                 v = getattr(cls, name)
                 if (
-                        isinstance(v, property) and
-                        hasattr(v.fget, "__serializable") and
-                        getattr(v.fget, "__serializable")
+                        isinstance(v, property)
+                        and getattr(v.fget, "__serializable", None)
                 ):
                     cls.__serialize_map[StringUtils.toSnakeCase(name)] = name
         return cls.__serialize_map
@@ -79,40 +78,40 @@ class Serializable:
             return [self._serializeProperty(key, v, **options) for v in value]
 
         raise TypeError(
-            "cannot serialize value of type '{}'"
+            "can't serialize value of type '{}'"
             .format(str(type(value))))
 
     @classmethod
     def deserialize(
             cls,
             source_data: DeserializedDict,
-            *instance_args,
+            *args,
             **options) -> Optional[Serializable]:
-        instance_kwargs = {
-            key: cls._deserializeProperty(key, value, *instance_args, **options)
+        kwargs = {
+            key: cls._deserializeProperty(key, value, *args, **options)
             for key, value in source_data.items()
         }
-        return cls._deserializeFactory(*instance_args, **instance_kwargs)
+        return cls._deserializeFactory(*args, **kwargs)
 
     @classmethod
     def _deserializeProperty(
             cls,
             key: str,
             value: DeserializedData,
-            *instance_args,
+            *args,
             **options) -> Any:
         if isinstance(value, (int, str, type(None))):
             return value
         if isinstance(value, list):
             return [
-                cls._deserializeProperty(key, v, *instance_args, **options)
+                cls._deserializeProperty(key, v, *args, **options)
                 for v in value
             ]
 
         raise TypeError(
-            "cannot deserialize value of type '{}'"
+            "can't deserialize value of type '{}'"
             .format(str(type(value))))
 
     @classmethod
-    def _deserializeFactory(cls, *args, **kwargs) -> Optional[Serializable]:
+    def _deserialize(cls, *args, **kwargs) -> Optional[Serializable]:
         return cls(*args, **kwargs)

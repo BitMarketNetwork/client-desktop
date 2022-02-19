@@ -6,17 +6,18 @@ from weakref import WeakValueDictionary
 
 from .address import _Address
 from .script import _Script
+from .serialize import _CoinSerializable
 from .tx import _Tx
 from .tx_factory import _TxFactory
 from ..hd import HdNode
 from ...crypto.digest import Sha256Digest
 from ...currency import Currency as _Currency, FiatRate, NoneFiatCurrency
 from ...utils.class_property import classproperty
-from ...utils.serialize import Serializable, serializable
+from ...utils.serialize import serializable
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, Generator, List, Optional, Union
-    from ...utils.serialize import DeserializedData, DeserializedDict
+    from ...utils.serialize import DeserializedData
 
 
 class _Interface:
@@ -58,7 +59,7 @@ class _Interface:
         raise NotImplementedError
 
 
-class Coin(Serializable):
+class Coin(_CoinSerializable):
     _SHORT_NAME = ""
     _FULL_NAME = ""
     _IS_TEST_NET = False
@@ -136,15 +137,6 @@ class Coin(Serializable):
 
     def __hash__(self) -> int:
         return hash((self.name, ))
-
-    @classmethod
-    def deserialize(
-            cls,
-            source_data: DeserializedDict,
-            coin: Optional[Coin] = None,
-            **options) -> Optional[Coin]:
-        assert coin is not None
-        return super().deserialize(source_data, coin, **options)
 
     @classmethod
     def _deserializeProperty(
