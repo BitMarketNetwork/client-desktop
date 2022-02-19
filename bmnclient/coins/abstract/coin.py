@@ -139,6 +139,10 @@ class Coin(_CoinSerializable):
         return hash((self.name, ))
 
     @classmethod
+    def deserialize(cls, *_, **__) -> Optional[Coin]:
+        raise DeserializationNotSupportedError
+
+    @classmethod
     def _deserializeProperty(
             cls,
             self: Coin,
@@ -148,10 +152,6 @@ class Coin(_CoinSerializable):
         if isinstance(value, dict) and key == "address_list":
             return cls.Address.deserialize(value, self)
         return super()._deserializeProperty(self, key, value, **options)
-
-    @classmethod
-    def deserialize(cls, *_, **__) -> Optional[Coin]:
-        raise DeserializationNotSupportedError
 
     def _deserializeUpdate(
             self,

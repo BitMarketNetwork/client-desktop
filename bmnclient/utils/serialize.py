@@ -123,12 +123,12 @@ class Serializable:
             ]
 
         raise TypeError(
-            "can't deserialize value of type '{}'"
-            .format(str(type(value))))
+            "can't deserialize value type '{}' for key '{}'"
+            .format(str(type(value)), key))
 
     @classmethod
     def _deserialize(cls, *args, **kwargs) -> Optional[Serializable]:
         return cls(*args, **kwargs)
 
-    def _deserializeUpdate(self, *args, **kwargs) -> bool:
+    def _deserializeUpdate(self, *_, **__) -> bool:
         raise DeserializationNotSupportedError
