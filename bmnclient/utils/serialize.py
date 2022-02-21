@@ -28,6 +28,20 @@ class Serializable:
     def __init__(self, *args, row_id: int = -1, **kwargs) -> None:
         self.__row_id = row_id
 
+    def __update__(self, *_, **kwargs) -> bool:
+        serialize_map = self.serializeMap
+        for (key, value) in kwargs.items():
+            if key not in serialize_map:
+                raise KeyError(
+                    "unknown property '{}' to deserialization".format(key))
+            v = getattr(self.__class__, serialize_map[key])
+            if v.fset:
+                v.fset(self, value)
+            elif v.fget(self) != value:
+                raise ValueError(
+                    "can't update immutable property '{}'".format(key))
+        return True
+
     @property
     def rowId(self) -> int:
         return self.__row_id
@@ -93,7 +107,7 @@ class Serializable:
             key: cls._deserializeProperty(None, key, value, *args, **options)
             for key, value in source_data.items()
         }
-        return cls._deserialize(*args, **kwargs)
+        return cls(*args, **kwargs)
 
     def deserializeUpdate(
             self,
@@ -104,7 +118,7 @@ class Serializable:
             key: self._deserializeProperty(self, key, value, *args, **options)
             for key, value in source_data.items()
         }
-        return self._deserializeUpdate(*args, **kwargs)
+        return self.__update__(*args, **kwargs)
 
     @classmethod
     def _deserializeProperty(
@@ -125,10 +139,3 @@ class Serializable:
         raise TypeError(
             "can't deserialize value type '{}' for key '{}'"
             .format(str(type(value)), key))
-
-    @classmethod
-    def _deserialize(cls, *args, **kwargs) -> Optional[Serializable]:
-        return cls(*args, **kwargs)
-
-    def _deserializeUpdate(self, *_, **__) -> bool:
-        raise DeserializationNotSupportedError
