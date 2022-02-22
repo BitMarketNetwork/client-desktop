@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import math
 from typing import TYPE_CHECKING
-from weakref import WeakValueDictionary
 
 from .address import _Address
 from .script import _Script
@@ -96,11 +95,6 @@ class Coin(_CoinSerializable):
             model_factory: Optional[Callable[[object], object]] = None) -> None:
         super().__init__(row_id=row_id)
 
-        # noinspection PyTypeChecker
-        self._address_heap: Dict[str, Coin.Address] = WeakValueDictionary()
-        # noinspection PyTypeChecker
-        self._tx_heap: Dict[str, Coin.Tx] = WeakValueDictionary()
-
         self._model_factory = model_factory
         self.__state_hash = 0
         self.__old_state_hash = 0
@@ -138,6 +132,25 @@ class Coin(_CoinSerializable):
     def __hash__(self) -> int:
         return hash((self.name, ))
 
+    def __update__(self, **kwargs) -> bool:
+        row_id = kwargs.pop("row_id", None)
+        if row_id is not None:
+            self.rowId = row_id
+
+        name = kwargs.pop("name", None)
+        if name is not None and name != self._SHORT_NAME:
+            return False
+
+        self.beginUpdateState()
+        address_list = kwargs.pop("address_list", None)
+        if address_list is not None:
+            self._address_list.clear()  # TODO compare with new list!
+            for address in address_list:
+                self.appendAddress(address)
+        result = super().__update__(**kwargs)
+        self.endUpdateState()
+        return result
+
     @classmethod
     def deserialize(cls, *_, **__) -> Optional[Coin]:
         raise DeserializationNotSupportedError
@@ -152,39 +165,6 @@ class Coin(_CoinSerializable):
         if isinstance(value, dict) and key == "address_list":
             return cls.Address.deserialize(value, self)
         return super()._deserializeProperty(self, key, value, **options)
-
-    def _deserializeUpdate(
-            self,
-            *,
-            row_id: Optional[int] = None,
-            name: str,
-            is_enabled: Optional[bool] = None,
-            height: int,
-            verified_height: int,
-            offset: str,
-            unverified_offset: str,
-            unverified_hash: str,
-            address_list: Optional[List[Address]] = None) -> bool:
-        if row_id is not None:
-            self.rowId = row_id
-
-        if is_enabled is not None:
-            self.isEnabled = bool(is_enabled)
-
-        self.beginUpdateState()
-        if True:
-            self.height = height
-            self.verifiedHeight = verified_height
-            self.offset = offset
-            self.unverifiedOffset = unverified_offset
-            self.unverifiedHash = unverified_hash
-
-            if address_list is not None:
-                self._address_list.clear()  # TODO compare with new list!
-                for address in address_list:
-                    self.appendAddress(address)
-        self.endUpdateState()
-        return True
 
     @property
     def model(self) -> Optional[Coin.Interface]:
@@ -623,26 +603,3 @@ class Coin(_CoinSerializable):
     @property
     def txFactory(self) -> TxFactory:
         return self._tx_factory
-
-    def _allocateAddress(
-            self,
-            is_null_data: bool,
-            name: Optional[str],
-            **kwargs) -> Optional[Coin.Address]:
-        if is_null_data:
-            # always create new object for unnamed addresses
-            return self.Address(self, name=name, **kwargs)
-        assert name
-        address = self._address_heap.get(name)
-        if address is None:
-            address = self.Address(self, name=name, **kwargs)
-            self._address_heap[name] = address
-        return address
-
-    def _allocateTx(self, *, name: str, **kwargs) -> Optional[Coin.Tx]:
-        assert name
-        tx = self._tx_heap.get(name)
-        if tx is None:
-            tx = self.Tx(self, name=name, **kwargs)
-            self._tx_heap[name] = tx
-        return tx

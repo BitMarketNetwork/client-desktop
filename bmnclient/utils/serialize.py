@@ -28,7 +28,7 @@ class Serializable:
     def __init__(self, *args, row_id: int = -1, **kwargs) -> None:
         self.__row_id = row_id
 
-    def __update__(self, *_, **kwargs) -> bool:
+    def __update__(self, **kwargs) -> bool:
         serialize_map = self.serializeMap
         for (key, value) in kwargs.items():
             if key not in serialize_map:
@@ -94,8 +94,8 @@ class Serializable:
             return [self._serializeProperty(key, v, **options) for v in value]
 
         raise TypeError(
-            "can't serialize value of type '{}'"
-            .format(str(type(value))))
+            "can't serialize value type '{}' for key '{}'"
+            .format(str(type(value)), key))
 
     @classmethod
     def deserialize(
@@ -104,7 +104,8 @@ class Serializable:
             *args,
             **options) -> Optional[Serializable]:
         kwargs = {
-            key: cls._deserializeProperty(None, key, value, *args, **options)
+            cls.__fixKey(key):
+                cls._deserializeProperty(None, key, value, *args, **options)
             for key, value in source_data.items()
         }
         return cls(*args, **kwargs)
@@ -112,13 +113,13 @@ class Serializable:
     def deserializeUpdate(
             self,
             source_data: DeserializedDict,
-            *args,
             **options) -> bool:
         kwargs = {
-            key: self._deserializeProperty(self, key, value, *args, **options)
+            self.__fixKey(key):
+                self._deserializeProperty(self, key, value, **options)
             for key, value in source_data.items()
         }
-        return self.__update__(*args, **kwargs)
+        return self.__update__(**kwargs)
 
     @classmethod
     def _deserializeProperty(
@@ -139,3 +140,9 @@ class Serializable:
         raise TypeError(
             "can't deserialize value type '{}' for key '{}'"
             .format(str(type(value)), key))
+
+    @classmethod
+    def __fixKey(cls, key: str) -> str:
+        if key == "type":
+            return "type_"
+        return key
