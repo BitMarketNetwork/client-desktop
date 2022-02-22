@@ -346,7 +346,7 @@ class _TxFactory:
         if self._logger.isEnabledFor(logging.DEBUG):
             self._logger.debug(
                 "Signed transaction: %s",
-                self._mtx.serialize().hex())
+                self._mtx.raw().hex())
         return True
 
     def broadcast(self) -> bool:

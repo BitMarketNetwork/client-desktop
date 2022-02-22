@@ -37,7 +37,7 @@ class _MutableTx(Coin.TxFactory.MutableTx):
             **kwargs)
 
     def _deriveName(self) -> Optional[str]:
-        v = Sha256DoubleDigest(self.serialize(with_witness=False)).finalize()
+        v = Sha256DoubleDigest(self.raw(with_witness=False)).finalize()
         return v[::-1].hex()
 
     def _sign(self) -> bool:
@@ -107,7 +107,7 @@ class _MutableTx(Coin.TxFactory.MutableTx):
                 return False
         return True
 
-    def _serialize(self, *, with_witness: bool = True) -> bytes:
+    def _raw(self, *, with_witness: bool = True) -> bytes:
         try:
             input_list = \
                 self._coin.Script.integerToVarInt(len(self._input_list)) \
@@ -141,6 +141,6 @@ class _MutableTx(Coin.TxFactory.MutableTx):
     @property
     def virtualSize(self) -> int:
         if self.isWitness:
-            non_witness_size = len(self.serialize(with_witness=False))
+            non_witness_size = len(self.raw(with_witness=False))
             return ceil((3 * non_witness_size + self.rawSize) / 4)
         return self.rawSize

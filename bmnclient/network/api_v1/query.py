@@ -662,7 +662,7 @@ class TxBroadcastApiQuery(AbstractApiQuery):
 
     def _createData(self) -> Tuple[str, Any]:
         return "tx_broadcast", {
-            "data": self._mtx.serialize().hex()
+            "data": self._mtx.raw().hex()
         }
 
     def _processData(

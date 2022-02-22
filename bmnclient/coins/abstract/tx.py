@@ -55,7 +55,6 @@ class _Tx(_CoinSerializable):
             is_coinbase: bool,
             input_list: Iterable[Coin.Tx.Io],
             output_list: Iterable[Coin.Tx.Io]) -> None:
-        #Debug.assertObjectCaller(coin, "_allocateTx")
         super().__init__(row_id=row_id)
 
         self._coin: Final = coin
@@ -278,7 +277,7 @@ class _MutableTx(_Tx):
         raise NotImplementedError
 
     def sign(self) -> bool:
-        self.__class__.serialize.cache_clear()
+        self.__class__.raw.cache_clear()
         # noinspection PyUnresolvedReferences
         self.__dict__.pop(self.__class__.name.attrname, None)
 
@@ -287,18 +286,18 @@ class _MutableTx(_Tx):
             return True
         return False
 
-    def _serialize(self, *, with_witness: bool = True, **kwargs) -> bytes:
+    def _raw(self, *, with_witness: bool = True, **kwargs) -> bytes:
         raise NotImplementedError
 
     @lru_cache()
-    def serialize(self, *, with_witness: bool = True, **kwargs) -> bytes:
+    def raw(self, *, with_witness: bool = True, **kwargs) -> bytes:
         if not self._is_signed:
             return b""
-        return self._serialize(with_witness=with_witness, **kwargs)
+        return self._raw(with_witness=with_witness, **kwargs)
 
     @property
     def rawSize(self) -> int:
-        return len(self.serialize(with_witness=True))
+        return len(self.raw(with_witness=True))
 
     @property
     def virtualSize(self) -> int:

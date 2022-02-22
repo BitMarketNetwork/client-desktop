@@ -846,10 +846,10 @@ class TestMutableTx(TestCase):
             is_dummy=is_dummy)
         self.assertEqual(is_dummy, mtx.isDummy)
         self.assertFalse(mtx.isSigned)
-        self.assertEqual(b"", mtx.serialize())
+        self.assertEqual(b"", mtx.raw())
         self.assertTrue(mtx.sign())
         self.assertEqual(expected_name, mtx.name)
-        self.assertEqual(expected_data, mtx.serialize().hex())
+        self.assertEqual(expected_data, mtx.raw().hex())
         self.assertEqual(excepted_raw_size, mtx.rawSize)
         self.assertEqual(excepted_virtual_size, mtx.virtualSize)
         return mtx
