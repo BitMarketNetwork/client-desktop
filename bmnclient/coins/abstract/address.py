@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from enum import Enum, auto
 from typing import TYPE_CHECKING
+from weakref import WeakValueDictionary
 
 from .serialize import _CoinSerializable
 from ..hd import HdNode
 from ...crypto.secp256k1 import PrivateKey, PublicKey
-from ...debug import Debug
 from ...utils.class_property import classproperty
 from ...utils.serialize import serializable
 
 if TYPE_CHECKING:
-    from typing import Any, Iterable, List, Optional, Union
+    from typing import Any, Dict, Final, List, Optional, Union
     from .coin import Coin
     from ...utils.serialize import DeserializedData, DeserializedDict
 
@@ -155,6 +155,9 @@ class _Interface:
 
 
 class _Address(_CoinSerializable):
+    __initialized = False
+    __address_heap: Dict[int, WeakValueDictionary] = {}
+
     _NULLDATA_NAME = "NULL_DATA"
     _HRP = "hrp"
 
@@ -169,46 +172,49 @@ class _Address(_CoinSerializable):
     TypeValue = _TypeValue
     Type = Enum
 
-    def __init__(
-            self,
-            coin: Coin,
-            *,
-            row_id: int = -1,
-            name: Optional[str],
-            type_: Coin.Address.Type,
-            data: bytes = b"",
-            key: Optional[KeyType] = None,
-            balance: int = 0,
-            tx_count: int = 0,
-            label: str = "",
-            comment: str = "",
-            is_tx_input: bool = False,
-            tx_list: Optional[Iterable[Coin.Tx]] = None,
-            utxo_list: Optional[Iterable[Coin.Tx.Utxo]] = None,
-            history_first_offset: str = "",
-            history_last_offset: str = "") -> None:
-        #Debug.assertObjectCaller(coin, "_allocateAddress")
+    def __new__(cls, coin: Coin, *args, **kwargs) -> Coin.Address:
+        if kwargs.get("type_") == cls.Type.UNKNOWN:
+            return super(_Address, cls).__new__(cls)
+
+        assert kwargs["name"]
+        heap = cls.__address_heap.get(id(coin))
+        if heap is None:
+            heap = WeakValueDictionary()
+            cls.__address_heap[id(coin)] = heap
+
+        address = heap.get(kwargs["name"])
+        if address is None:
+            address = super(_Address, cls).__new__(cls)
+        heap[kwargs["name"]] = address
+        return address
+
+    def __init__(self, coin: Coin, *, row_id: int = -1, **kwargs) -> None:
+        if self.__initialized:
+            assert self._coin is coin
+            self.__update__(**kwargs)
+            return
+        self.__initialized = True
+
         super().__init__(row_id=row_id)
 
-        self._coin = coin
-        self._name = name or self._NULLDATA_NAME
         self.__hash: Optional[bytes] = None
-        self._type = type_
-        self._data = data
-        self._key = key
-        self._balance = balance
-        self._label = label
-        self._comment = comment
-        self._is_tx_input = bool(is_tx_input)
-        self._tx_count = tx_count  # not linked with self._tx_list
 
-        self._tx_list = (
-            [] if tx_list is None else list(tx_list)
-        )
-        self._utxo_list = (
-            [] if tx_list is None else list(utxo_list)
-        )
+        self._coin: Final = coin
+        self._name: Final[str] = kwargs.get("name") or self._NULLDATA_NAME
+        self._type: Final[Coin.Address.Type] = kwargs["type_"]
+        self._data: Final[bytes] = kwargs.get("data", b"")
+        self._key: Optional[Coin.Address.KeyType] = kwargs.get("key", None)
+        self._balance: int = kwargs.get("balance", 0)
+        self._label: str = kwargs.get("label", "")
+        self._comment: str = kwargs.get("comment", "")
+        self._is_tx_input = bool(kwargs.get("is_tx_input", False))
 
+        self._tx_count: int = kwargs.get("tx_count", 0)
+        self._tx_list: List[Coin.Tx] = list(kwargs.get("tx_list", []))
+        self._utxo_list: List[Coin.Tx.Utxo] = list(kwargs.get("utxo_list", []))
+
+        history_first_offset: str = kwargs.get("history_first_offset", "")
+        history_last_offset: str = kwargs.get("history_last_offset", "")
         if history_first_offset and history_last_offset:
             self._history_first_offset = history_first_offset
             self._history_last_offset = history_last_offset
@@ -250,15 +256,26 @@ class _Address(_CoinSerializable):
             **options) -> DeserializedData:
         if key == "key":
             return self.exportKey(allow_hd_path=allow_hd_path)
+        if key == "type":
+            return value.value.name
         return super()._serializeProperty(key, value, **options)
 
     @classmethod
     def _deserializeProperty(
             cls,
+            self: Optional[Coin.Address],
             key: str,
             value: DeserializedData,
             coin: Optional[Coin] = None,
             **options) -> Any:
+        if coin is None:
+            coin = self._coin
+        if key == "type":
+            for t in cls.Type:
+                if value == t.value.name:
+                    return t
+            # noinspection PyUnresolvedReferences
+            return cls.Type.UNKNOWN
         if isinstance(value, str) and key == "key":
             return cls.importKey(coin, value)
         if key == "tx_list":
@@ -271,11 +288,7 @@ class _Address(_CoinSerializable):
                 return coin.Tx.Utxo.deserialize(value, coin)
             elif isinstance(value, coin.Tx.Utxo):
                 return value
-        return super()._deserializeProperty(key, value, coin, **options)
-
-    @classmethod
-    def _deserialize(cls, coin: Coin, **kwargs) -> Optional[Coin.Address]:
-        return cls.createFromName(coin, **kwargs)
+        return super()._deserializeProperty(self, key, value, coin, **options)
 
     @classproperty
     def hrp(cls) -> str:  # noqa
@@ -303,6 +316,7 @@ class _Address(_CoinSerializable):
     def _deriveHash(self) -> bytes:
         raise NotImplementedError
 
+    @serializable
     @property
     def type(self) -> Coin.Address.Type:
         return self._type
@@ -315,7 +329,7 @@ class _Address(_CoinSerializable):
             type_: Coin.Address.Type,
             key: KeyType,
             **kwargs) -> Optional[Coin.Address]:
-        raise NotImplementedError
+        return cls(coin, type_=type_, key=key, **kwargs)
 
     @classmethod
     def createFromName(
@@ -324,7 +338,7 @@ class _Address(_CoinSerializable):
             *,
             name: str,
             **kwargs) -> Optional[Coin.Address]:
-        raise NotImplementedError
+        return cls(coin, name=name, **kwargs)
 
     @classmethod
     def createNullData(
@@ -333,25 +347,13 @@ class _Address(_CoinSerializable):
             *,
             name: Optional[str] = None,
             **kwargs) -> Coin.Address:
-        raise NotImplementedError
-
-    @classmethod
-    def _create(
-            cls,
-            coin: Coin,
-            *,
-            is_null_data: bool,
-            name: Optional[str],
-            **kwargs) -> Optional[Coin.Address]:
-        # noinspection PyProtectedMember
-        return coin._allocateAddress(
-            is_null_data=is_null_data,
-            name=name,
-            **kwargs)
+        # noinspection PyUnresolvedReferences
+        return cls(coin, name=name, type_=cls.Type.UNKNOWN, **kwargs)
 
     @property
     def isNullData(self) -> bool:
-        raise NotImplementedError
+        # noinspection PyUnresolvedReferences
+        return self._type == self.Type.UNKNOWN
 
     @property
     def data(self) -> bytes:

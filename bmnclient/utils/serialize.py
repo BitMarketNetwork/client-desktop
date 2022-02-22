@@ -29,8 +29,13 @@ class Serializable:
         self.__row_id = row_id
 
     def __update__(self, **kwargs) -> bool:
+        row_id = kwargs.pop("row_id", None)
+        if row_id is not None:
+            self.rowId = row_id
+
         serialize_map = self.serializeMap
         for (key, value) in kwargs.items():
+            key = self.__keyFromKwarg(key)
             if key not in serialize_map:
                 raise KeyError(
                     "unknown property '{}' to deserialization".format(key))
@@ -104,7 +109,7 @@ class Serializable:
             *args,
             **options) -> Optional[Serializable]:
         kwargs = {
-            cls.__fixKey(key):
+            cls.__keyToKwarg(key):
                 cls._deserializeProperty(None, key, value, *args, **options)
             for key, value in source_data.items()
         }
@@ -115,7 +120,7 @@ class Serializable:
             source_data: DeserializedDict,
             **options) -> bool:
         kwargs = {
-            self.__fixKey(key):
+            self.__keyToKwarg(key):
                 self._deserializeProperty(self, key, value, **options)
             for key, value in source_data.items()
         }
@@ -142,7 +147,13 @@ class Serializable:
             .format(str(type(value)), key))
 
     @classmethod
-    def __fixKey(cls, key: str) -> str:
-        if key == "type":
-            return "type_"
+    def __keyToKwarg(cls, key: str) -> str:
+        if key in ("type", ):
+            return key + "_"
+        return key
+
+    @classmethod
+    def __keyFromKwarg(cls, key: str) -> str:
+        if key in ("type_", ):
+            return key[:-1]
         return key

@@ -15,7 +15,15 @@ from ...utils.class_property import classproperty
 from ...utils.serialize import DeserializationNotSupportedError, serializable
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, Generator, List, Optional, Union
+    from typing import (
+        Any,
+        Callable,
+        Dict,
+        Final,
+        Generator,
+        List,
+        Optional,
+        Union)
     from ...utils.serialize import DeserializedData
 
 
@@ -95,7 +103,7 @@ class Coin(_CoinSerializable):
             model_factory: Optional[Callable[[object], object]] = None) -> None:
         super().__init__(row_id=row_id)
 
-        self._model_factory = model_factory
+        self._model_factory: Final = model_factory
         self.__state_hash = 0
         self.__old_state_hash = 0
 
@@ -133,14 +141,6 @@ class Coin(_CoinSerializable):
         return hash((self.name, ))
 
     def __update__(self, **kwargs) -> bool:
-        row_id = kwargs.pop("row_id", None)
-        if row_id is not None:
-            self.rowId = row_id
-
-        name = kwargs.pop("name", None)
-        if name is not None and name != self._SHORT_NAME:
-            return False
-
         self.beginUpdateState()
         address_list = kwargs.pop("address_list", None)
         if address_list is not None:

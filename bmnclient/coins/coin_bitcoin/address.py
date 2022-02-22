@@ -111,13 +111,7 @@ class _Address(Coin.Address):
         if name is None:
             return None
 
-        return cls._create(
-            coin,
-            is_null_data=False,
-            name=name,
-            type_=type_,
-            key=key,
-            **kwargs)
+        return super().create(coin, type_=type_, key=key, name=name, **kwargs)
 
     @classmethod
     def createFromName(
@@ -180,30 +174,7 @@ class _Address(Coin.Address):
         if not type_.value.isValidSize(len(data)):
             return None
 
-        return cls._create(
-            coin,
-            is_null_data=False,
-            name=name,
-            type_=type_,
-            **kwargs)
-
-    @classmethod
-    def createNullData(
-            cls,
-            coin: Bitcoin,
-            *,
-            name: Optional[str] = None,
-            **kwargs) -> Bitcoin.Address:
-        return cls._create(
-            coin,
-            is_null_data=True,
-            name=name,
-            type_=cls.Type.UNKNOWN,
-            **kwargs)
-
-    @property
-    def isNullData(self) -> bool:
-        return self._type == self.Type.UNKNOWN
+        return super().createFromName(coin, type_=type_, name=name, **kwargs)
 
 
 class _TestAddress(_Address):

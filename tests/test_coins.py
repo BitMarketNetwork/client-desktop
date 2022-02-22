@@ -845,6 +845,7 @@ class TestMutableTx(TestCase):
             lock_time=lock_time,
             is_dummy=is_dummy)
         self.assertEqual(is_dummy, mtx.isDummy)
+        self.assertFalse(mtx.isSigned)
         self.assertEqual(b"", mtx.serialize())
         self.assertTrue(mtx.sign())
         self.assertEqual(expected_name, mtx.name)
