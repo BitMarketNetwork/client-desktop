@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum, auto
 from typing import TYPE_CHECKING
 
-from .serialize import _CoinSerializable
+from .object import CoinObject, CoinObjectModel
 from ..hd import HdNode
 from ...crypto.secp256k1 import PrivateKey, PublicKey
 from ...utils.class_property import classproperty
@@ -113,7 +113,7 @@ class _TypeValue:
         return self._hd_purpose
 
 
-class _Interface:
+class _Model(CoinObjectModel):
     def __init__(
             self,
             *args,
@@ -153,7 +153,7 @@ class _Interface:
         raise NotImplementedError
 
 
-class _Address(_CoinSerializable):
+class _Address(CoinObject):
     __initialized = False
 
     _NULLDATA_NAME = "NULL_DATA"
@@ -166,7 +166,7 @@ class _Address(_CoinSerializable):
         BASE58 = auto()
         BECH32 = auto()
 
-    Interface = _Interface
+    Model = _Model
     TypeValue = _TypeValue
     Type = Enum
 
@@ -188,11 +188,10 @@ class _Address(_CoinSerializable):
             return
         self.__initialized = True
 
-        super().__init__(row_id=row_id)
+        super().__init__(coin, row_id=row_id)
 
         self.__hash: Optional[bytes] = None
 
-        self._coin: Final = coin
         self._name: Final[str] = kwargs.get("name") or self._NULLDATA_NAME
         self._type: Final[Coin.Address.Type] = kwargs["type_"]
         self._data: Final[bytes] = kwargs.get("data", b"")
@@ -215,20 +214,16 @@ class _Address(_CoinSerializable):
             self._history_first_offset = ""
             self._history_last_offset = ""
 
-        self._model: Optional[Coin.Address.Interface] = \
-            self._coin.model_factory(self)
-
     def __eq__(self, other: Coin.Address) -> bool:
         return (
-                isinstance(other, self.__class__)
-                and self._coin == other.coin
+                super().__eq__(other)
                 and self._name == other.name
                 and self._type == other._type
         )
 
     def __hash__(self) -> int:
         return hash((
-            self.coin,
+            super().__hash__(),
             self._name,
             self._type
         ))
@@ -286,14 +281,6 @@ class _Address(_CoinSerializable):
     @classproperty
     def hrp(cls) -> str:  # noqa
         return cls._HRP
-
-    @property
-    def model(self) -> Optional[Coin.Address.Interface]:
-        return self._model
-
-    @property
-    def coin(self) -> Coin:
-        return self._coin
 
     @serializable
     @property
@@ -381,6 +368,10 @@ class _Address(_CoinSerializable):
     def key(self) -> Optional[KeyType]:
         return self._key
 
+    @key.setter
+    def key(self, value: Optional[KeyType]) -> None:
+        self._key = value
+
     def exportKey(self, *, allow_hd_path: bool = False) -> Optional[str]:
         if isinstance(self._key, HdNode):
             if allow_hd_path and self._key.isFullPath:
@@ -461,8 +452,7 @@ class _Address(_CoinSerializable):
     def balance(self, value: int) -> None:
         if self._balance != value:
             self._balance = value
-            if self._model:
-                self._model.afterSetBalance()
+            self._callModel("afterSetBalance")
             self._coin.updateBalance()
 
     @serializable
@@ -474,8 +464,7 @@ class _Address(_CoinSerializable):
     def label(self, value: str) -> None:
         if self._label != value:
             self._label = value
-            if self._model:
-                self._model.afterSetLabel()
+            self._callModel("afterSetLabel")
 
     @serializable
     @property
@@ -486,8 +475,7 @@ class _Address(_CoinSerializable):
     def comment(self, value: str) -> None:
         if self._comment != value:
             self._comment = value
-            if self._model:
-                self._model.afterSetComment()
+            self._callModel("afterSetComment")
 
     @serializable
     @property
@@ -498,8 +486,7 @@ class _Address(_CoinSerializable):
     def isTxInput(self, value: bool) -> None:
         if self._is_tx_input != value:
             self._is_tx_input = value
-            if self._model:
-                self._model.afterSetIsTxInput()
+            self._callModel("afterSetIsTxInput")
 
     @property
     def isReadOnly(self) -> bool:
@@ -514,8 +501,7 @@ class _Address(_CoinSerializable):
     def txCount(self, value: int) -> None:
         if self._tx_count != value:
             self._tx_count = value
-            if self._model:
-                self._model.afterSetTxCount()
+            self._callModel("afterSetTxCount")
 
     @serializable
     @property
@@ -533,11 +519,9 @@ class _Address(_CoinSerializable):
                 return True
             return False
 
-        if self._model:
-            self._model.beforeAppendTx(tx)
+        self._callModel("beforeAppendTx", tx)
         self._tx_list.append(tx)
-        if self._model:
-            self._model.afterAppendTx(tx)
+        self._callModel("afterAppendTx", tx)
         return True
 
     @serializable
@@ -554,8 +538,7 @@ class _Address(_CoinSerializable):
             utxo.address = self
         self._utxo_list = utxo_list
 
-        if self._model:
-            self._model.afterSetUtxoList()
+        self._callModel("afterSetUtxoList")
         self._coin.updateUtxoList()
 
         self.balance = sum(u.amount for u in self._utxo_list)
@@ -572,8 +555,7 @@ class _Address(_CoinSerializable):
                 self._clearHistoryOffsets()
             else:
                 self._history_first_offset = value
-                if self._model:
-                    self._model.afterSetHistoryFirstOffset()
+                self._callModel("afterSetHistoryFirstOffset")
 
     @serializable
     @property
@@ -587,12 +569,10 @@ class _Address(_CoinSerializable):
                 self._clearHistoryOffsets()
             else:
                 self._history_last_offset = value
-                if self._model:
-                    self._model.afterSetHistoryLastOffset()
+                self._callModel("afterSetHistoryLastOffset")
 
     def _clearHistoryOffsets(self) -> None:
         self._history_first_offset = ""
         self._history_last_offset = ""
-        if self._model:
-            self._model.afterSetHistoryFirstOffset()
-            self._model.afterSetHistoryLastOffset()
+        self._callModel("afterSetHistoryFirstOffset")
+        self._callModel("afterSetHistoryLastOffset")

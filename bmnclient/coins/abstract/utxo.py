@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import cached_property
 from typing import TYPE_CHECKING
 
-from .serialize import _CoinSerializable
+from .object import CoinObject
 from ..utils import CoinUtils
 from ...utils.serialize import serializable
 from ...utils.string import StringUtils
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from .coin import Coin
 
 
-class _Utxo(_CoinSerializable):
+class _Utxo(CoinObject):
     def __init__(
             self,
             coin: Coin,
@@ -23,8 +23,7 @@ class _Utxo(_CoinSerializable):
             index: int,
             amount: int,
             script_type: Optional[Coin.Script.Type] = None) -> None:
-        super().__init__()
-        self._coin = coin
+        super().__init__(coin)
         self._address: Optional[Coin.Address] = None
         self._name: Final = name
         self._height = height
@@ -34,7 +33,7 @@ class _Utxo(_CoinSerializable):
 
     def __eq__(self, other: Coin.Tx.Utxo) -> bool:
         return (
-                isinstance(other, self.__class__)
+                super().__eq__(other)
                 and self._coin == other._coin
                 and self._name == other._name
                 and self._height == other._height
@@ -44,6 +43,7 @@ class _Utxo(_CoinSerializable):
 
     def __hash__(self) -> int:
         return hash((
+            super().__hash__(),
             self._coin,
             self._name,
             self._height,
@@ -55,10 +55,6 @@ class _Utxo(_CoinSerializable):
         return StringUtils.classString(
             self.__class__,
             *CoinUtils.utxoToNameKeyTuple(self))
-
-    @property
-    def coin(self) -> Coin:
-        return self._coin
 
     @property
     def address(self) -> Optional[Coin.Address]:

@@ -15,7 +15,7 @@ from .list import (
     AbstractListModel,
     AbstractListSortedModel,
     RoleEnum)
-from ....coin_interfaces import AddressInterface
+from ....coin_models import AddressModel as _AddressModel
 
 if TYPE_CHECKING:
     from typing import Final, Optional
@@ -85,7 +85,7 @@ class AddressBalanceModel(AbstractAddressBalanceModel):
         return self._address.balance
 
 
-class AddressModel(AddressInterface, AbstractModel):
+class AddressModel(_AddressModel, AbstractModel):
     def __init__(
             self,
             application: QmlApplication,

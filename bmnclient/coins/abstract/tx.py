@@ -4,18 +4,18 @@ from enum import Enum
 from functools import cached_property, lru_cache
 from typing import TYPE_CHECKING
 
-from .serialize import _CoinSerializable
+from .object import CoinObject, CoinObjectModel
 from .tx_io import _Io, _MutableInput, _MutableOutput
 from .utxo import _Utxo
 from ...utils.serialize import serializable
 
 if TYPE_CHECKING:
-    from typing import Any, Final, Iterable, List, Optional, Sequence
+    from typing import Any, Final, List, Optional, Sequence
     from .coin import Coin
     from ...utils.serialize import DeserializedData
 
 
-class _Interface:
+class _Model(CoinObjectModel):
     def __init__(
             self,
             *args,
@@ -31,7 +31,7 @@ class _Interface:
         raise NotImplementedError
 
 
-class _Tx(_CoinSerializable):
+class _Tx(CoinObject):
     __initialized = False
 
     class Status(Enum):
@@ -39,7 +39,7 @@ class _Tx(_CoinSerializable):
         CONFIRMED = 1
         COMPLETE = 2
 
-    Interface = _Interface
+    Model = _Model
     Io = _Io
     Utxo = _Utxo
 
@@ -62,11 +62,9 @@ class _Tx(_CoinSerializable):
             return
         self.__initialized = True
 
-        super().__init__(row_id=row_id)
+        super().__init__(coin, row_id=row_id)
 
-        self._coin: Final = coin
         self._name: Final[str] = kwargs.get("name").lower()
-
         self._height: int = kwargs.get("height", -1)
         self._time: int = kwargs.get("time", -1)
         self._amount: int = kwargs["amount"]
@@ -76,20 +74,16 @@ class _Tx(_CoinSerializable):
         self._input_list: Final[List[Coin.Tx.Io]] = list(kwargs["input_list"])
         self._output_list: Final[List[Coin.Tx.Io]] = list(kwargs["output_list"])
 
-        self._model: Optional[Coin.Tx.Interface] = \
-            self._coin.model_factory(self)
-
     def __eq__(self, other: Coin.Tx) -> bool:
         return (
-                isinstance(other, self.__class__)
-                and self._coin == other._coin
+                super().__eq__(other)
                 and self._name == other._name
                 and self._input_list == other._input_list
                 and self._output_list == other._output_list
         )
 
     def __hash__(self) -> int:
-        return hash((self._coin, self._name, ))
+        return hash((super().__hash__(), self._name, ))
 
     @classmethod
     def _deserializeProperty(
@@ -105,14 +99,6 @@ class _Tx(_CoinSerializable):
             elif isinstance(value, cls.Io):
                 return value
         return super()._deserializeProperty(self, key, value, coin, **options)
-
-    @property
-    def model(self) -> Optional[Coin.Tx.Interface]:
-        return self._model
-
-    @property
-    def coin(self) -> Coin:
-        return self._coin
 
     @serializable
     @property
@@ -133,8 +119,7 @@ class _Tx(_CoinSerializable):
         if self._height != value:
             assert self._height == -1
             self._height = value
-            if self._model:
-                self._model.afterSetHeight()
+            self._callModel("afterSetHeight")
 
     @property
     def confirmations(self) -> int:
@@ -160,8 +145,7 @@ class _Tx(_CoinSerializable):
     def time(self, value: int) -> None:
         if self._time != value:
             self._time = value
-            if self._model:
-                self._model.afterSetTime()
+            self._callModel("afterSetTime")
 
     @serializable
     @property
@@ -229,23 +213,22 @@ class _MutableTx(_Tx):
         self._is_witness: Final = any(i.isWitness for i in input_list)
         self._is_signed = False
 
-    def __eq__(self, other: _MutableTx) -> bool:
+    def __eq__(self, other: Coin.TxFactory.MutableTx) -> bool:
         return (
-                isinstance(other, self.__class__)
+                super().__eq__(other)
                 and self._is_dummy == other._is_dummy
                 and self._version == other._version
                 and self._lock_time == other._lock_time
                 and self._is_witness == other._is_witness
-                and super().__eq__(other)
         )
 
     def __hash__(self) -> int:
         return hash((
+            super().__hash__(),
             self._is_dummy,
             self._version,
             self._lock_time,
-            self._is_witness,
-            super().__hash__()
+            self._is_witness
         ))
 
     @property

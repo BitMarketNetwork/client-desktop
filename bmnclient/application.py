@@ -36,8 +36,9 @@ from .signal_handler import SignalHandler
 from .version import Product, ProductPaths, Server, Timer
 
 if TYPE_CHECKING:
-    from typing import Callable, List, Optional, Type, Union
+    from typing import List, Optional, Type, Union
     from PySide6.QtCore import QCoreApplication
+    from .coins.abstract import CoinModelFactory
     from .coins.hd import HdNode
 
 
@@ -157,7 +158,7 @@ class CoreApplication(QObject):
             *,
             qt_class: Union[Type[QCoreApplication], Type[QApplication]],
             command_line: CommandLine,
-            model_factory: Optional[Callable[[object], object]] = None) -> None:
+            model_factory: Optional[CoinModelFactory] = None) -> None:
         super().__init__()
 
         self._command_line = command_line
@@ -251,7 +252,7 @@ class CoreApplication(QObject):
 
     def _init_coins(
             self,
-            model_factory: Optional[Callable[[object], object]] = None) -> None:
+            model_factory: Optional[CoinModelFactory] = None) -> None:
         self._fiat_currency_list = FiatCurrencyList(self)
         self._fiat_rate_service_list = FiatRateServiceList(self)
 

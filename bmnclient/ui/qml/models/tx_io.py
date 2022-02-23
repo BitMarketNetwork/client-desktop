@@ -12,7 +12,7 @@ from .amount import AbstractAmountModel
 from .list import (
     AbstractListModel,
     RoleEnum)
-from ....coin_interfaces import TxIoInterface
+from ....coin_models import TxIoModel as _TxIoModel
 
 if TYPE_CHECKING:
     from typing import Final, Optional
@@ -33,7 +33,7 @@ class TxIoAmountModel(AbstractAmountModel):
         return self._io.amount
 
 
-class TxIoModel(TxIoInterface, AbstractModel):
+class TxIoModel(_TxIoModel, AbstractModel):
     def __init__(
             self,
             application: QmlApplication,

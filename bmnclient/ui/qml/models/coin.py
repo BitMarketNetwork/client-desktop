@@ -20,7 +20,7 @@ from .list import \
 from .tx import \
     TxListConcatenateModel, \
     TxListSortedModel
-from ....coin_interfaces import CoinInterface
+from ....coin_models import CoinModel as _CoinModel
 
 if TYPE_CHECKING:
     from typing import Final, Optional
@@ -208,7 +208,7 @@ class CoinManagerModel(AbstractCoinStateModel):
         return True
 
 
-class CoinModel(CoinInterface, AbstractModel):
+class CoinModel(_CoinModel, AbstractModel):
     def __init__(self, application: QmlApplication, coin: Coin) -> None:
         super().__init__(
             application,

@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 from weakref import WeakValueDictionary
 
 from .address import _Address
+from .object import CoinObject, CoinObjectModel
 from .script import _Script
-from .serialize import _CoinSerializable
 from .tx import _Tx
 from .tx_factory import _TxFactory
 from ..hd import HdNode
@@ -18,17 +18,17 @@ from ...utils.serialize import DeserializationNotSupportedError, serializable
 if TYPE_CHECKING:
     from typing import (
         Any,
-        Callable,
         Dict,
         Final,
         Generator,
         List,
         Optional,
         Union)
+    from .object import CoinModelFactory
     from ...utils.serialize import DeserializedData
 
 
-class _Interface:
+class _Model(CoinObjectModel):
     def __init__(self, *args, coin: Coin, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._coin = coin
@@ -67,7 +67,7 @@ class _Interface:
         raise NotImplementedError
 
 
-class Coin(_CoinSerializable):
+class Coin(CoinObject):
     _SHORT_NAME = ""
     _FULL_NAME = ""
     _IS_TEST_NET = False
@@ -79,7 +79,7 @@ class Coin(_CoinSerializable):
 
     _WIF_VERSION = 0x00
 
-    Interface = _Interface
+    Model = _Model
     Currency = _Currency
     Address = _Address
     Tx = _Tx
@@ -101,8 +101,8 @@ class Coin(_CoinSerializable):
             self,
             *,
             row_id: int = -1,
-            model_factory: Optional[Callable[[object], object]] = None) -> None:
-        super().__init__(row_id=row_id)
+            model_factory: Optional[CoinModelFactory] = None) -> None:
+        super().__init__(self, row_id=row_id)
 
         self._model_factory: Final = model_factory
         self.__state_hash = 0
@@ -129,8 +129,6 @@ class Coin(_CoinSerializable):
         self._mempool_cache: Dict[bytes, Coin.MempoolCacheItem] = {}
         self._mempool_cache_access_counter = 0
         self._tx_factory = self.TxFactory(self)
-
-        self._model: Optional[Coin.Interface] = self.model_factory(self)
 
     def __eq__(self, other: Coin) -> bool:
         return (
@@ -167,18 +165,13 @@ class Coin(_CoinSerializable):
             return cls.Address.deserialize(value, self)
         return super()._deserializeProperty(self, key, value, **options)
 
-    @property
-    def model(self) -> Optional[Coin.Interface]:
-        return self._model
-
     def beginUpdateState(self) -> None:
         self.__old_state_hash = self.__state_hash
 
     def endUpdateState(self) -> bool:
         if self.__old_state_hash != self.__state_hash:
             self.__old_state_hash = self.__state_hash
-            if self._model:
-                self._model.afterStateChanged()
+            self._callModel("afterStateChanged")
             return True
         return False
 
@@ -187,10 +180,8 @@ class Coin(_CoinSerializable):
         self.__state_hash = (old_value + 1) & ((1 << 64) - 1)
         return old_value
 
-    def model_factory(self, owner: object) -> Optional[object]:
-        if self._model_factory:
-            return self._model_factory(owner)
-        return None
+    def modelFactory(self, owner: CoinObject) -> Optional[CoinObjectModel]:
+        return self._model_factory(owner) if self._model_factory else None
 
     @serializable
     @property
@@ -235,8 +226,7 @@ class Coin(_CoinSerializable):
     def isEnabled(self, value: bool):
         if self._is_enabled != value:
             self._is_enabled = value
-            if self._model:
-                self._model.afterSetEnabled()
+            self._callModel("afterSetEnabled")
 
     @serializable
     @property
@@ -248,8 +238,7 @@ class Coin(_CoinSerializable):
         if self._height != value:
             self._height = value
             self._updateState()
-            if self._model:
-                self._model.afterSetHeight()
+            self._callModel("afterSetHeight")
 
     @serializable
     @property
@@ -272,8 +261,7 @@ class Coin(_CoinSerializable):
         if self._offset != value:
             self._offset = value
             self._updateState()
-            if self._model:
-                self._model.afterSetOffset()
+            self._callModel("afterSetOffset")
 
     @serializable
     @property
@@ -305,8 +293,7 @@ class Coin(_CoinSerializable):
     def status(self, value: int) -> None:
         if self._status != value:
             self._status = value
-            if self._model:
-                self._model.afterSetStatus()
+            self._callModel("afterSetStatus")
 
     @property
     def fiatRate(self) -> FiatRate:
@@ -315,8 +302,7 @@ class Coin(_CoinSerializable):
     @fiatRate.setter
     def fiatRate(self, fiat_rate: FiatRate) -> None:
         self._fiat_rate = fiat_rate
-        if self._model:
-            self._model.afterSetFiatRate()
+        self._callModel("afterSetFiatRate")
 
     def toFiatAmount(self, value: Optional[int] = None) -> Optional[int]:
         if value is None:
@@ -342,13 +328,11 @@ class Coin(_CoinSerializable):
     def updateBalance(self) -> None:
         a = sum(a.balance for a in self._address_list if not a.isReadOnly)
         self._balance = a
-        if self._model:
-            self._model.afterUpdateBalance()
+        self._callModel("afterUpdateBalance")
 
     def updateUtxoList(self) -> None:
         self._tx_factory.updateUtxoList()
-        if self._model:
-            self._model.afterUpdateUtxoList()
+        self._callModel("afterUpdateUtxoList")
 
     def deriveHdNode(self, root_node: HdNode) -> bool:
         private = root_node.privateKey is not None
@@ -525,11 +509,9 @@ class Coin(_CoinSerializable):
         if self.findAddressByName(address.name) is not None:  # noqa
             return False
 
-        if self._model:
-            self._model.beforeAppendAddress(address)
+        self._callModel("beforeAppendAddress", address)
         self._address_list.append(address)
-        if self._model:
-            self._model.afterAppendAddress(address)
+        self._callModel("afterAppendAddress", address)
 
         self.updateBalance()
         return True
@@ -541,8 +523,7 @@ class Coin(_CoinSerializable):
     @serverData.setter
     def serverData(self, data: dict) -> None:
         self._server_data = data
-        if self._model:
-            self.model.afterSetServerData()
+        self._callModel("afterSetServerData")
 
     def __createAddressListsForMempoolHelper(
             self,

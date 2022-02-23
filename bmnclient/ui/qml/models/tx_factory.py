@@ -11,7 +11,7 @@ from PySide6.QtCore import \
 from . import AbstractCoinStateModel, AbstractModel, ValidStatus
 from .amount import AbstractAmountInputModel, AbstractAmountModel
 from .tx import TxIoListModel
-from ....coin_interfaces import TxFactoryInterface
+from ....coin_models import TxFactoryModel as _TxFactoryModel
 from ..dialogs.tx import TxBroadcastPendingDialog
 if TYPE_CHECKING:
     from typing import Optional, Sequence
@@ -237,7 +237,7 @@ class TxFactorySourceListModel(TxIoListModel):
             self.__stateChanged.emit()
 
 
-class TxFactoryModel(TxFactoryInterface, AbstractModel):
+class TxFactoryModel(_TxFactoryModel, AbstractModel):
     __stateChanged = QSignal()
 
     def __init__(

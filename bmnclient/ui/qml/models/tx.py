@@ -19,7 +19,7 @@ from .list import (
     AbstractListSortedModel,
     RoleEnum)
 from .tx_io import TxIoListModel
-from ....coin_interfaces import TxInterface
+from ....coin_models import TxModel as _TxModel
 
 if TYPE_CHECKING:
     from typing import Final, Optional
@@ -101,7 +101,7 @@ class TxFeeAmountModel(AbstractTxAmountModel):
         return self._tx.feeAmount
 
 
-class TxModel(TxInterface, AbstractModel):
+class TxModel(_TxModel, AbstractModel):
     def __init__(
             self,
             application: QmlApplication,

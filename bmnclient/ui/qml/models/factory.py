@@ -13,18 +13,14 @@ from ....utils import NotImplementedInstance
 if TYPE_CHECKING:
     from typing import Optional, Union
     from .. import QmlApplication
+    from ....coins.abstract import CoinObject, CoinObjectModel
 
 
 class ModelsFactory(NotImplementedInstance):
     @staticmethod
     def create(
             application: QmlApplication,
-            owner: Union[
-                Coin,
-                Coin.Address,
-                Coin.Tx,
-                Coin.Tx.Io,
-                Coin.TxFactory]) -> Optional[object]:
+            owner: CoinObject) -> Optional[CoinObjectModel]:
         if isinstance(owner, Coin):
             return CoinModel(application, owner)
 

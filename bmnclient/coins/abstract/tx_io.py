@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import cached_property
 from typing import TYPE_CHECKING
 
-from .serialize import _CoinSerializable
+from .object import CoinObject, CoinObjectModel
 from ...utils.serialize import DeserializationNotSupportedError, serializable
 
 if TYPE_CHECKING:
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from .coin import Coin
 
 
-class _Interface:
+class _Model(CoinObjectModel):
     def __init__(
             self,
             *args,
@@ -21,8 +21,8 @@ class _Interface:
         self._io = io
 
 
-class _Io(_CoinSerializable):
-    Interface = _Interface
+class _Io(CoinObject):
+    Model = _Model
 
     def __init__(
             self,
@@ -34,7 +34,7 @@ class _Io(_CoinSerializable):
             output_type: str,
             address_name: Optional[str],
             amount: int) -> None:
-        super().__init__(row_id=row_id)
+        super().__init__(coin, row_id=row_id)
         if address is not None:
             assert not address_name
             assert coin is address.coin
@@ -52,12 +52,9 @@ class _Io(_CoinSerializable):
         self._address: Final = address
         self._amount: Final = amount
 
-        self._model: Optional[Coin.Tx.Io.Interface] = \
-            self.address.coin.model_factory(self)
-
     def __eq__(self, other: Coin.Tx.Io) -> bool:
         return (
-                isinstance(other, self.__class__)
+                super().__eq__(other)
                 and self._index == other.index
                 and self._output_type == other._output_type
                 and self._address == other.address
@@ -66,15 +63,12 @@ class _Io(_CoinSerializable):
 
     def __hash__(self) -> int:
         return hash((
+            super().__hash__(),
             self._index,
             self._output_type,
             self._address,
             self._amount
         ))
-
-    @property
-    def model(self) -> Optional[Coin.Tx.Io.Interface]:
-        return self._model
 
     @serializable
     @property
@@ -119,17 +113,16 @@ class _MutableIo(_Io):
             amount=amount)
         self._is_dummy: Final = is_dummy
 
-    def __eq__(self, other: Coin.Tx.Io) -> bool:
+    def __eq__(self, other: Coin.TxFactory.MutableTx.Io) -> bool:
         return (
-            isinstance(other, self.__class__)
+            super().__eq__(other)
             and self._is_dummy == other._is_dummy
-            and super().__eq__(other)
         )
 
     def __hash__(self) -> int:
         return hash((
-            self._is_dummy,
-            super().__hash__()
+            super().__hash__(),
+            self._is_dummy
         ))
 
     @classmethod
@@ -173,19 +166,18 @@ class _MutableInput(_MutableIo):
 
     def __eq__(self, other: Coin.TxFactory.MutableTx.Input):
         return (
-                isinstance(other, self.__class__)
+                super().__eq__(other)
                 and self._utxo == other._utxo
                 and self._hash_type == other._hash_type
                 and self._sequence == other._sequence
-                and super().__eq__(other)
         )
 
     def __hash__(self) -> int:
         return hash((
+            super().__hash__(),
             self._utxo,
             self._hash_type,
-            self._sequence,
-            super().__hash__()
+            self._sequence
         ))
 
     @cached_property

@@ -5,6 +5,7 @@ from itertools import chain
 from typing import TYPE_CHECKING
 from time import time
 
+from .object import CoinObject, CoinObjectModel
 from .tx import _MutableTx
 from ..utils import CoinUtils
 from ...crypto.secp256k1 import PublicKey
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
     SelectedUtxoList = Tuple[List[Coin.Tx.Utxo], int]
 
 
-class _Interface:
+class _Model(CoinObjectModel):
     def __init__(
             self,
             *args,
@@ -38,8 +39,8 @@ class _Interface:
         raise NotImplementedError
 
 
-class _TxFactory:
-    Interface = _Interface
+class _TxFactory(CoinObject):
+    Model = _Model
     MutableTx = _MutableTx
 
     class _SelectedUtxoData:
@@ -52,10 +53,10 @@ class _TxFactory:
             self.virtual_size = -1
 
     def __init__(self, coin: Coin) -> None:
+        super().__init__(coin)
         self._logger = Logger.classLogger(
             self.__class__,
             *CoinUtils.coinToNameKeyTuple(coin))
-        self._coin = coin
 
         self._utxo_list: Sequence[Coin.Tx.Utxo] = []
         self._utxo_amount = 0
@@ -74,9 +75,6 @@ class _TxFactory:
         self._dummy_change_address = self._createDummyChangeAddress()
 
         self._mtx: Optional[Coin.TxFactory.MutableTx] = None
-
-        self._model: Optional[Coin.TxFactory.Interface] = \
-            self._coin.model_factory(self)
 
     def _createDummyChangeAddress(self) -> Optional[Coin.Address]:
         public_key = PublicKey.fromPublicInteger(
@@ -97,14 +95,6 @@ class _TxFactory:
         else:
             self._logger.debug("Dummy change address: %s", address.name)
         return address
-
-    @property
-    def model(self) -> Optional[Coin.TxFactory.Interface]:
-        return self._model
-
-    @property
-    def coin(self) -> Coin:
-        return self._coin
 
     @property
     def name(self) -> Optional[str]:
@@ -135,8 +125,7 @@ class _TxFactory:
 
         self._coin.setTxInputAddress(address)
         self._input_address = address
-        if self._model:
-            self._model.afterSetInputAddress()
+        self._callModel("afterSetInputAddress")
         self.updateUtxoList()
 
         return result
@@ -154,8 +143,7 @@ class _TxFactory:
 
         if self._receiver_address != address:
             self._receiver_address = address
-            if self._model:
-                self._model.afterSetReceiverAddress()
+            self._callModel("afterSetReceiverAddress")
             self._selectUtxoList()
 
         return address is not None
@@ -194,8 +182,7 @@ class _TxFactory:
             value = 0
 
         self._receiver_amount = value
-        if self._model:
-            self._model.afterUpdateState()
+        self._callModel("afterUpdateState")
         return value
 
     @property
@@ -358,8 +345,7 @@ class _TxFactory:
         mtx = self._mtx
 
         self.clear()
-        if self._model:
-            self._model.onBroadcast(mtx)
+        self._callModel("onBroadcast", mtx)
         return True
 
     @staticmethod
@@ -498,8 +484,8 @@ class _TxFactory:
                 "Selected UTXO's",
                 self._utxo_list,
                 self._utxo_amount)
-            if not skip_model_update and self._model:
-                self._model.afterUpdateState()
+            if not skip_model_update:
+                self._callModel("afterUpdateState")
             return raw_size >= 0
 
         fee_amount = 0
@@ -538,8 +524,8 @@ class _TxFactory:
             "Selected UTXO's",
             utxo_list,
             utxo_amount)
-        if not skip_model_update and self._model:
-            self._model.afterUpdateState()
+        if not skip_model_update:
+            self._callModel("afterUpdateState")
         return raw_size >= 0
 
     def updateUtxoList(self) -> None:

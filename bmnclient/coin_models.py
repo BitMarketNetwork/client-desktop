@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from .utils.string import ClassStringKeyTuple
 
 
-class _AbstractInterface:
+class _AbstractModel:
     def __init__(
             self,
             *args,
@@ -28,7 +28,7 @@ class _AbstractInterface:
         self._database = database
 
 
-class CoinInterface(_AbstractInterface, Coin.Interface):
+class CoinModel(_AbstractModel, Coin.Model):
     def __init__(self, *args, coin: Coin, **kwargs) -> None:
         super().__init__(
             *args,
@@ -84,7 +84,7 @@ class CoinInterface(_AbstractInterface, Coin.Interface):
         self._save()
 
 
-class AddressInterface(_AbstractInterface, Coin.Address.Interface):
+class AddressModel(_AbstractModel, Coin.Address.Model):
     def __init__(self, *args, address: Coin.Address, **kwargs) -> None:
         super().__init__(
             *args,
@@ -140,7 +140,7 @@ class AddressInterface(_AbstractInterface, Coin.Address.Interface):
         self._save()
 
 
-class TxInterface(_AbstractInterface, Coin.Tx.Interface):
+class TxModel(_AbstractModel, Coin.Tx.Model):
     def __init__(self, *args, tx: Coin.Tx, **kwargs) -> None:
         super().__init__(
             *args,
@@ -165,7 +165,7 @@ class TxInterface(_AbstractInterface, Coin.Tx.Interface):
         self._save()
 
 
-class TxIoInterface(_AbstractInterface, Coin.Tx.Io.Interface):
+class TxIoModel(_AbstractModel, Coin.Tx.Io.Model):
     def __init__(self, *args, io: Coin.Tx.Io, **kwargs) -> None:
         super().__init__(
             *args,
@@ -174,7 +174,7 @@ class TxIoInterface(_AbstractInterface, Coin.Tx.Io.Interface):
             **kwargs)
 
 
-class TxFactoryInterface(_AbstractInterface, Coin.TxFactory.Interface):
+class TxFactoryModel(_AbstractModel, Coin.TxFactory.Model):
     def __init__(self, *args, factory: Coin.TxFactory, **kwargs) -> None:
         super().__init__(
             *args,
