@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 from .serialize import _CoinSerializable
 from .tx_io import _Io, _MutableInput, _MutableOutput
 from .utxo import _Utxo
-from ...debug import Debug
 from ...utils.serialize import serializable
 
 if TYPE_CHECKING:
@@ -33,6 +32,8 @@ class _Interface:
 
 
 class _Tx(_CoinSerializable):
+    __initialized = False
+
     class Status(Enum):
         PENDING = 0
         CONFIRMED = 1
@@ -42,32 +43,38 @@ class _Tx(_CoinSerializable):
     Io = _Io
     Utxo = _Utxo
 
-    def __init__(
-            self,
-            coin: Coin,
-            *,
-            row_id: int = -1,
-            name: str,
-            height: int = -1,
-            time: int = -1,
-            amount: int,
-            fee_amount: int,
-            is_coinbase: bool,
-            input_list: Iterable[Coin.Tx.Io],
-            output_list: Iterable[Coin.Tx.Io]) -> None:
+    def __new__(cls, coin: Coin, *args, **kwargs) -> Coin.Tx:
+        if not kwargs.get("name"):
+            return super(_Tx, cls).__new__(cls)
+
+        heap = coin.weakValueDictionary("tx_heap")
+        name = kwargs["name"].lower()
+        tx = heap.get(name)
+        if tx is None:
+            tx = super(_Tx, cls).__new__(cls)
+        heap[name] = tx
+        return tx
+
+    def __init__(self, coin: Coin, *, row_id: int = -1, **kwargs) -> None:
+        if self.__initialized:
+            assert self._coin is coin
+            self.__update__(**kwargs)
+            return
+        self.__initialized = True
+
         super().__init__(row_id=row_id)
 
         self._coin: Final = coin
-        self._name: Final = name.strip().lower()
+        self._name: Final[str] = kwargs.get("name").lower()
 
-        self._height = height
-        self._time = time
-        self._amount = amount
-        self._fee_amount = fee_amount
-        self._is_coinbase = bool(is_coinbase)
+        self._height: int = kwargs.get("height", -1)
+        self._time: int = kwargs.get("time", -1)
+        self._amount: int = kwargs["amount"]
+        self._fee_amount: int = kwargs["fee_amount"]
+        self._is_coinbase = bool(kwargs["is_coinbase"])
 
-        self._input_list = list(input_list)
-        self._output_list = list(output_list)
+        self._input_list: Final[List[Coin.Tx.Io]] = list(kwargs["input_list"])
+        self._output_list: Final[List[Coin.Tx.Io]] = list(kwargs["output_list"])
 
         self._model: Optional[Coin.Tx.Interface] = \
             self._coin.model_factory(self)
@@ -77,6 +84,8 @@ class _Tx(_CoinSerializable):
                 isinstance(other, self.__class__)
                 and self._coin == other._coin
                 and self._name == other._name
+                and self._input_list == other._input_list
+                and self._output_list == other._output_list
         )
 
     def __hash__(self) -> int:
@@ -85,6 +94,7 @@ class _Tx(_CoinSerializable):
     @classmethod
     def _deserializeProperty(
             cls,
+            self: Optional[Coin.Tx],
             key: str,
             value: DeserializedData,
             coin: Optional[Coin] = None,
@@ -94,12 +104,7 @@ class _Tx(_CoinSerializable):
                 return cls.Io.deserialize(value, coin, **options)
             elif isinstance(value, cls.Io):
                 return value
-        return super()._deserializeProperty(key, value, coin, **options)
-
-    @classmethod
-    def _deserialize(cls, coin: Coin, **kwargs) -> Optional[Coin.Address]:
-        # noinspection PyProtectedMember
-        return coin._allocateTx(**kwargs)
+        return super()._deserializeProperty(self, key, value, coin, **options)
 
     @property
     def model(self) -> Optional[Coin.Tx.Interface]:
@@ -205,26 +210,43 @@ class _MutableTx(_Tx):
             *,
             version: int,
             lock_time: int,
-            is_dummy: bool = False,
-            time: int = -1,
-            amount: int,
-            fee_amount: int):
-        # TODO move after super().__init__()
-        self._is_dummy = is_dummy
-        self._version = version
-        self._lock_time = lock_time
-        self._is_witness = any(i.isWitness for i in input_list)
-        self._is_signed = False
+            is_dummy: bool = False):
+        amount = sum(i.amount for i in input_list)
+        fee_amount = amount - sum(o.amount for o in output_list)
         super().__init__(
             coin,
-            name="mutable_tx", # TODO
+            name="",
             height=-1,
-            time=time,
+            time=-1,
             amount=amount,
             fee_amount=fee_amount,
             is_coinbase=False,
             input_list=input_list,
             output_list=output_list)
+        self._is_dummy: Final = is_dummy
+        self._version: Final = version
+        self._lock_time: Final = lock_time
+        self._is_witness: Final = any(i.isWitness for i in input_list)
+        self._is_signed = False
+
+    def __eq__(self, other: _MutableTx) -> bool:
+        return (
+                isinstance(other, self.__class__)
+                and self._is_dummy == other._is_dummy
+                and self._version == other._version
+                and self._lock_time == other._lock_time
+                and self._is_witness == other._is_witness
+                and super().__eq__(other)
+        )
+
+    def __hash__(self) -> int:
+        return hash((
+            self._is_dummy,
+            self._version,
+            self._lock_time,
+            self._is_witness,
+            super().__hash__()
+        ))
 
     @property
     def isDummy(self) -> bool:
@@ -238,10 +260,6 @@ class _MutableTx(_Tx):
         if not self._is_signed or self._is_dummy:
             return None
         return self._deriveName()
-
-    @property
-    def coin(self) -> Coin:
-        return self._coin
 
     @property
     def version(self) -> int:
@@ -278,7 +296,6 @@ class _MutableTx(_Tx):
 
     def sign(self) -> bool:
         self.__class__.raw.cache_clear()
-        # noinspection PyUnresolvedReferences
         self.__dict__.pop(self.__class__.name.attrname, None)
 
         if not self._is_signed and self._sign():

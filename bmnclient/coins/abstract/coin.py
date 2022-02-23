@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from typing import TYPE_CHECKING
+from weakref import WeakValueDictionary
 
 from .address import _Address
 from .script import _Script
@@ -603,3 +604,10 @@ class Coin(_CoinSerializable):
     @property
     def txFactory(self) -> TxFactory:
         return self._tx_factory
+
+    def weakValueDictionary(self, name: str):
+        heap = self.__dict__.get(name)
+        if heap is None:
+            heap = WeakValueDictionary()
+            self.__dict__[name] = heap
+        return heap

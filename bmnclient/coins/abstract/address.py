@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from enum import Enum, auto
 from typing import TYPE_CHECKING
-from weakref import WeakValueDictionary
 
 from .serialize import _CoinSerializable
 from ..hd import HdNode
@@ -11,7 +10,7 @@ from ...utils.class_property import classproperty
 from ...utils.serialize import serializable
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Final, List, Optional, Union
+    from typing import Any, Final, List, Optional, Union
     from .coin import Coin
     from ...utils.serialize import DeserializedData, DeserializedDict
 
@@ -156,7 +155,6 @@ class _Interface:
 
 class _Address(_CoinSerializable):
     __initialized = False
-    __address_heap: Dict[int, WeakValueDictionary] = {}
 
     _NULLDATA_NAME = "NULL_DATA"
     _HRP = "hrp"
@@ -173,15 +171,10 @@ class _Address(_CoinSerializable):
     Type = Enum
 
     def __new__(cls, coin: Coin, *args, **kwargs) -> Coin.Address:
-        if kwargs.get("type_") == cls.Type.UNKNOWN:
+        if kwargs.get("type_") == cls.Type.UNKNOWN or not kwargs.get("name"):
             return super(_Address, cls).__new__(cls)
 
-        assert kwargs["name"]
-        heap = cls.__address_heap.get(id(coin))
-        if heap is None:
-            heap = WeakValueDictionary()
-            cls.__address_heap[id(coin)] = heap
-
+        heap = coin.weakValueDictionary("address_heap")
         address = heap.get(kwargs["name"])
         if address is None:
             address = super(_Address, cls).__new__(cls)

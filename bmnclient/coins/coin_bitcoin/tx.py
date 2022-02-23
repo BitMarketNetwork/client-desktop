@@ -107,7 +107,7 @@ class _MutableTx(Coin.TxFactory.MutableTx):
                 return False
         return True
 
-    def _raw(self, *, with_witness: bool = True) -> bytes:
+    def _raw(self, *, with_witness: bool = True, **_) -> bytes:
         try:
             input_list = \
                 self._coin.Script.integerToVarInt(len(self._input_list)) \
