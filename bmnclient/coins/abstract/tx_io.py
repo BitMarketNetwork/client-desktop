@@ -45,7 +45,7 @@ class _Io(CoinObject):
             if address is None:
                 address = coin.Address.createNullData(
                     coin,
-                    name=address_name or "UNKNOWN")
+                    name="~" + address_name.strip()[:10] + "~")
 
         self._index: Final = index
         self._output_type: Final = output_type
@@ -107,8 +107,8 @@ class _MutableIo(_Io):
         super().__init__(
             address.coin,
             address,
-            index=-1,  # TODO
-            output_type="",  # TODO
+            index=-1,
+            output_type=address.type.value.name,
             address_name=None,
             amount=amount)
         self._is_dummy: Final = is_dummy

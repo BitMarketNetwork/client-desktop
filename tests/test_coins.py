@@ -764,6 +764,20 @@ class TestTxFactory(TestCase):
                     self.assertIsNone(txf.changeAddress)
                 self.assertTrue(txf.sign())
                 self.assertIsNotNone(txf.name)
+
+                # noinspection PyProtectedMember
+                self.assertEqual(txf.feeAmount, txf._mtx.feeAmount)
+                if subtract_fee:
+                    # noinspection PyProtectedMember
+                    self.assertEqual(
+                        txf.receiverAmount + txf.changeAmount,
+                        txf._mtx.amount)
+                else:
+                    # noinspection PyProtectedMember
+                    self.assertEqual(
+                        txf.receiverAmount + txf.changeAmount + txf.feeAmount,
+                        txf._mtx.amount)
+
                 self.assertTrue(txf.broadcast())
                 self.assertIsNone(txf.name)
                 if txf.changeAmount > 0:
@@ -852,6 +866,14 @@ class TestMutableTx(TestCase):
         self.assertEqual(expected_data, mtx.raw().hex())
         self.assertEqual(excepted_raw_size, mtx.rawSize)
         self.assertEqual(excepted_virtual_size, mtx.virtualSize)
+
+        self.assertEqual(
+            sum(i.amount for i in input_list),
+            mtx.amount)
+        self.assertEqual(
+            sum(i.amount for i in input_list)
+            - sum(o.amount for o in output_list),
+            mtx.feeAmount)
         return mtx
 
     def test_p2pkh(self) -> None:
@@ -979,7 +1001,7 @@ class TestMutableTx(TestCase):
             excepted_raw_size=224,
             excepted_virtual_size=224)
 
-    # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#native-p2wpkh
+    # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#native-p2wpkh # noqa
     def test_native_p2wpkh(self) -> None:
         def input_list(*, is_dummy: bool) -> Sequence:
             return [

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from enum import IntEnum
-from functools import lru_cache
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import \
@@ -122,7 +121,6 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
             return None
         return self.ROLE_MAP.get(role, None)
 
-    @lru_cache()
     def roleNames(self) -> dict:
         return {k: QByteArray(v[0]) for (k, v) in self.ROLE_MAP.items()}
 
@@ -223,7 +221,6 @@ class AbstractConcatenateModel(QConcatenateTablesProxyModel, ListModelHelper):
         super().__init__()
         ListModelHelper.__init__(self, application)
 
-    @lru_cache()
     def roleNames(self) -> dict:
         return {k: QByteArray(v[0]) for (k, v) in self.ROLE_MAP.items()}
 
