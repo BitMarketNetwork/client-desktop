@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .tx import MutableTx
+from .mutable_tx import MutableTx
 from ..abstract import Coin
 
 if TYPE_CHECKING:

@@ -5,8 +5,8 @@ from itertools import chain
 from typing import TYPE_CHECKING
 from time import time
 
+from .mutable_tx import MutableTx
 from .object import CoinObject, CoinObjectModel
-from .tx import MutableTx
 from ..utils import CoinUtils
 from ...crypto.secp256k1 import PublicKey
 from ...logger import Logger

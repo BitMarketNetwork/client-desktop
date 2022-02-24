@@ -3,7 +3,7 @@ from __future__ import annotations
 from math import ceil
 from typing import TYPE_CHECKING
 
-from .tx_io import MutableInput, MutableOutput
+from .mutable_tx_io import MutableInput, MutableOutput
 from ..abstract import Coin
 from ...crypto.digest import Sha256Digest, Sha256DoubleDigest
 
