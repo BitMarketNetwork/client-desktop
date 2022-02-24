@@ -10,10 +10,12 @@ from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
     from typing import Final, Optional
+    from .address import Address
     from .coin import Coin
+    from .script import Script
 
 
-class _Utxo(CoinObject):
+class Utxo(CoinObject):
     def __init__(
             self,
             coin: Coin,
@@ -22,19 +24,18 @@ class _Utxo(CoinObject):
             height: int,
             index: int,
             amount: int,
-            script_type: Optional[Coin.Script.Type] = None) -> None:
+            script_type: Optional[Script.Type] = None) -> None:
         super().__init__(coin)
-        self._address: Optional[Coin.Address] = None
+        self._address: Optional[Address] = None
         self._name: Final = name
-        self._height = height
-        self._index = index
-        self._amount = amount
+        self._height: Final = height
+        self._index: Final = index
+        self._amount: Final = amount
         self._script_type = script_type
 
-    def __eq__(self, other: Coin.Tx.Utxo) -> bool:
+    def __eq__(self, other: Utxo) -> bool:
         return (
                 super().__eq__(other)
-                and self._coin == other._coin
                 and self._name == other._name
                 and self._height == other._height
                 and self._index == other._index
@@ -44,7 +45,6 @@ class _Utxo(CoinObject):
     def __hash__(self) -> int:
         return hash((
             super().__hash__(),
-            self._coin,
             self._name,
             self._height,
             self._index,
@@ -57,11 +57,11 @@ class _Utxo(CoinObject):
             *CoinUtils.utxoToNameKeyTuple(self))
 
     @property
-    def address(self) -> Optional[Coin.Address]:
+    def address(self) -> Optional[Address]:
         return self._address
 
     @address.setter
-    def address(self, address: Coin.Address) -> None:
+    def address(self, address: Address) -> None:
         if self._address is not None:
             raise AttributeError(
                 "already associated with address '{}'"
@@ -95,5 +95,5 @@ class _Utxo(CoinObject):
         return self._amount
 
     @property
-    def scriptType(self) -> Optional[Coin.Script.Type]:
+    def scriptType(self) -> Optional[Script.Type]:
         return self._script_type

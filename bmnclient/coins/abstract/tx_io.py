@@ -8,26 +8,24 @@ from ...utils.serialize import DeserializationNotSupportedError, serializable
 
 if TYPE_CHECKING:
     from typing import Final, Optional
+    from .address import Address
     from .coin import Coin
+    from .utxo import Utxo
 
 
 class _Model(CoinObjectModel):
-    def __init__(
-            self,
-            *args,
-            io: Coin.Tx.Io,
-            **kwargs) -> None:
+    def __init__(self, *args, io: Io, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._io = io
 
 
-class _Io(CoinObject):
+class Io(CoinObject):
     Model = _Model
 
     def __init__(
             self,
             coin: Coin,
-            address: Optional[Coin.Address] = None,
+            address: Optional[Address] = None,
             *,
             row_id: int = -1,
             index: int,
@@ -52,7 +50,7 @@ class _Io(CoinObject):
         self._address: Final = address
         self._amount: Final = amount
 
-    def __eq__(self, other: Coin.Tx.Io) -> bool:
+    def __eq__(self, other: Io) -> bool:
         return (
                 super().__eq__(other)
                 and self._index == other.index
@@ -86,7 +84,7 @@ class _Io(CoinObject):
         return self._address.name if not self._address.isNullData else None
 
     @property
-    def address(self) -> Coin.Address:
+    def address(self) -> Address:
         return self._address
 
     @serializable
@@ -95,12 +93,12 @@ class _Io(CoinObject):
         return self._amount
 
 
-class _MutableIo(_Io):
+class MutableIo(Io):
     _AMOUNT_LENGTH = 0
 
     def __init__(
             self,
-            address: Coin.Address,
+            address: Address,
             *,
             amount: int,
             is_dummy: bool = False):
@@ -113,7 +111,7 @@ class _MutableIo(_Io):
             amount=amount)
         self._is_dummy: Final = is_dummy
 
-    def __eq__(self, other: Coin.TxFactory.MutableTx.Io) -> bool:
+    def __eq__(self, other: MutableIo) -> bool:
         return (
             super().__eq__(other)
             and self._is_dummy == other._is_dummy
@@ -126,7 +124,7 @@ class _MutableIo(_Io):
         ))
 
     @classmethod
-    def deserialize(cls, *_, **__) -> Optional[Coin.TxFactory.MutableTx.Io]:
+    def deserialize(cls, *_, **__) -> Optional[MutableIo]:
         raise DeserializationNotSupportedError
 
     @cached_property
@@ -145,13 +143,13 @@ class _MutableIo(_Io):
         raise NotImplementedError
 
 
-class _MutableInput(_MutableIo):
+class MutableInput(MutableIo):
     _HASH_TYPE_LENGTH = 0
     _SEQUENCE_LENGTH = 0
 
     def __init__(
             self,
-            utxo: Coin.Tx.Utxo,
+            utxo: Utxo,
             *,
             hash_type: int,
             sequence: int,
@@ -164,7 +162,7 @@ class _MutableInput(_MutableIo):
         self._script_sig_bytes = b""
         self._witness_bytes = b""
 
-    def __eq__(self, other: Coin.TxFactory.MutableTx.Input):
+    def __eq__(self, other: MutableInput):
         return (
                 super().__eq__(other)
                 and self._utxo == other._utxo
@@ -190,7 +188,7 @@ class _MutableInput(_MutableIo):
 
     @serializable
     @property
-    def utxo(self) -> Coin.Tx.Utxo:
+    def utxo(self) -> Utxo:
         return self._utxo
 
     @cached_property
@@ -233,7 +231,7 @@ class _MutableInput(_MutableIo):
         raise NotImplementedError
 
 
-class _MutableOutput(_MutableIo):
+class MutableOutput(MutableIo):
     @cached_property
     def scriptBytes(self) -> bytes:
         raise NotImplementedError

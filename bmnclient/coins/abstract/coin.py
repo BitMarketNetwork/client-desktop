@@ -4,14 +4,14 @@ import math
 from typing import TYPE_CHECKING
 from weakref import WeakValueDictionary
 
-from .address import _Address
+from .address import Address
 from .object import CoinObject, CoinObjectModel
-from .script import _Script
-from .tx import _Tx
-from .tx_factory import _TxFactory
+from .script import Script
+from .tx import Tx
+from .tx_factory import TxFactory
 from ..hd import HdNode
 from ...crypto.digest import Sha256Digest
-from ...currency import Currency as _Currency, FiatRate, NoneFiatCurrency
+from ...currency import Currency, FiatRate, NoneFiatCurrency
 from ...utils.class_property import classproperty
 from ...utils.serialize import DeserializationNotSupportedError, serializable
 
@@ -54,10 +54,10 @@ class _Model(CoinObjectModel):
     def afterUpdateUtxoList(self) -> None:
         raise NotImplementedError
 
-    def beforeAppendAddress(self, address: Coin.Address) -> None:
+    def beforeAppendAddress(self, address: Address) -> None:
         raise NotImplementedError
 
-    def afterAppendAddress(self, address: Coin.Address) -> None:
+    def afterAppendAddress(self, address: Address) -> None:
         raise NotImplementedError
 
     def afterSetServerData(self) -> None:
@@ -80,11 +80,11 @@ class Coin(CoinObject):
     _WIF_VERSION = 0x00
 
     Model = _Model
-    Currency = _Currency
-    Address = _Address
-    Tx = _Tx
-    TxFactory = _TxFactory
-    Script = _Script
+    Currency = Currency
+    Address = Address
+    Tx = Tx
+    TxFactory = TxFactory
+    Script = Script
 
     class MempoolCacheItem:
         __slots__ = ("remote_hash", "access_count")
@@ -124,7 +124,7 @@ class Coin(CoinObject):
 
         self._hd_node_list: Dict[int, HdNode] = {}
 
-        self._address_list: List[Coin.Address] = []
+        self._address_list: List[Address] = []
         self._server_data: Dict[str, Union[int, str]] = {}
         self._mempool_cache: Dict[bytes, Coin.MempoolCacheItem] = {}
         self._mempool_cache_access_counter = 0

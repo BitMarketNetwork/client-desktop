@@ -5,8 +5,8 @@ from functools import cached_property, lru_cache
 from typing import TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
-from .tx_io import _Io, _MutableInput, _MutableOutput
-from .utxo import _Utxo
+from .tx_io import Io, MutableInput, MutableOutput
+from .utxo import Utxo
 from ...utils.serialize import serializable
 
 if TYPE_CHECKING:
@@ -16,11 +16,7 @@ if TYPE_CHECKING:
 
 
 class _Model(CoinObjectModel):
-    def __init__(
-            self,
-            *args,
-            tx: Coin.Tx,
-            **kwargs) -> None:
+    def __init__(self, *args, tx: Tx, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._tx = tx
 
@@ -31,7 +27,7 @@ class _Model(CoinObjectModel):
         raise NotImplementedError
 
 
-class _Tx(CoinObject):
+class Tx(CoinObject):
     __initialized = False
 
     class Status(Enum):
@@ -40,18 +36,18 @@ class _Tx(CoinObject):
         COMPLETE = 2
 
     Model = _Model
-    Io = _Io
-    Utxo = _Utxo
+    Io = Io
+    Utxo = Utxo
 
-    def __new__(cls, coin: Coin, *args, **kwargs) -> Coin.Tx:
+    def __new__(cls, coin: Coin, *args, **kwargs) -> Tx:
         if not kwargs.get("name"):
-            return super(_Tx, cls).__new__(cls)
+            return super(Tx, cls).__new__(cls)
 
         heap = coin.weakValueDictionary("tx_heap")
         name = kwargs["name"].lower()
         tx = heap.get(name)
         if tx is None:
-            tx = super(_Tx, cls).__new__(cls)
+            tx = super(Tx, cls).__new__(cls)
         heap[name] = tx
         return tx
 
@@ -71,15 +67,13 @@ class _Tx(CoinObject):
         self._fee_amount: int = kwargs["fee_amount"]
         self._is_coinbase = bool(kwargs["is_coinbase"])
 
-        self._input_list: Final[List[Coin.Tx.Io]] = list(kwargs["input_list"])
-        self._output_list: Final[List[Coin.Tx.Io]] = list(kwargs["output_list"])
+        self._input_list: Final[List[Io]] = list(kwargs["input_list"])
+        self._output_list: Final[List[Io]] = list(kwargs["output_list"])
 
-    def __eq__(self, other: Coin.Tx) -> bool:
+    def __eq__(self, other: Tx) -> bool:
         return (
                 super().__eq__(other)
                 and self._name == other._name
-                and self._input_list == other._input_list
-                and self._output_list == other._output_list
         )
 
     def __hash__(self) -> int:
@@ -88,7 +82,7 @@ class _Tx(CoinObject):
     @classmethod
     def _deserializeProperty(
             cls,
-            self: Optional[Coin.Tx],
+            self: Optional[Tx],
             key: str,
             value: DeserializedData,
             coin: Optional[Coin] = None,
@@ -164,12 +158,12 @@ class _Tx(CoinObject):
 
     @serializable
     @property
-    def inputList(self) -> List[Coin.Tx.Io]:
+    def inputList(self) -> List[Io]:
         return self._input_list
 
     @serializable
     @property
-    def outputList(self) -> List[Coin.Tx.Io]:
+    def outputList(self) -> List[Io]:
         return self._output_list
 
     @staticmethod
@@ -179,12 +173,12 @@ class _Tx(CoinObject):
         return name[:6] + "..." + name[-6:]
 
 
-class _MutableTx(_Tx):
+class MutableTx(Tx):
     _VERSION_LENGTH = 0
     _LOCK_TIME_LENGTH = 0
 
-    Input = _MutableInput
-    Output = _MutableOutput
+    Input = MutableInput
+    Output = MutableOutput
 
     def __init__(
             self,
@@ -210,16 +204,14 @@ class _MutableTx(_Tx):
         self._is_dummy: Final = is_dummy
         self._version: Final = version
         self._lock_time: Final = lock_time
-        self._is_witness: Final = any(i.isWitness for i in input_list)
         self._is_signed = False
 
-    def __eq__(self, other: Coin.TxFactory.MutableTx) -> bool:
+    def __eq__(self, other: MutableTx) -> bool:
         return (
                 super().__eq__(other)
                 and self._is_dummy == other._is_dummy
                 and self._version == other._version
                 and self._lock_time == other._lock_time
-                and self._is_witness == other._is_witness
         )
 
     def __hash__(self) -> int:
@@ -227,8 +219,7 @@ class _MutableTx(_Tx):
             super().__hash__(),
             self._is_dummy,
             self._version,
-            self._lock_time,
-            self._is_witness
+            self._lock_time
         ))
 
     @property
@@ -266,9 +257,9 @@ class _MutableTx(_Tx):
             self._LOCK_TIME_LENGTH,
             safe=True)
 
-    @property
+    @cached_property
     def isWitness(self) -> bool:
-        return self._is_witness
+        return any(i.isWitness for i in self._input_list)
 
     @property
     def isSigned(self) -> bool:
@@ -279,6 +270,7 @@ class _MutableTx(_Tx):
 
     def sign(self) -> bool:
         self.__class__.raw.cache_clear()
+        # noinspection PyUnresolvedReferences
         self.__dict__.pop(self.__class__.name.attrname, None)
 
         if not self._is_signed and self._sign():

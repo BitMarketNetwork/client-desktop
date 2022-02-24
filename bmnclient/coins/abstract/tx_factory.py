@@ -6,22 +6,24 @@ from typing import TYPE_CHECKING
 from time import time
 
 from .object import CoinObject, CoinObjectModel
-from .tx import _MutableTx
+from .tx import MutableTx
 from ..utils import CoinUtils
 from ...crypto.secp256k1 import PublicKey
 from ...logger import Logger
 
 if TYPE_CHECKING:
     from typing import List, Optional, Sequence, Tuple
+    from .address import Address
     from .coin import Coin
-    SelectedUtxoList = Tuple[List[Coin.Tx.Utxo], int]
+    from .utxo import Utxo
+    SelectedUtxoList = Tuple[List[Utxo], int]
 
 
 class _Model(CoinObjectModel):
     def __init__(
             self,
             *args,
-            factory: Coin.TxFactory,
+            factory: TxFactory,
             **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._factory = factory
@@ -35,19 +37,19 @@ class _Model(CoinObjectModel):
     def afterSetReceiverAddress(self) -> None:
         raise NotImplementedError
 
-    def onBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None:
+    def onBroadcast(self, mtx: MutableTx) -> None:
         raise NotImplementedError
 
 
-class _TxFactory(CoinObject):
+class TxFactory(CoinObject):
     Model = _Model
-    MutableTx = _MutableTx
+    MutableTx = MutableTx
 
     class _SelectedUtxoData:
         __slots__ = ("list", "amount", "raw_size", "virtual_size")
 
         def __init__(self) -> None:
-            self.list: List[Coin.Tx.Utxo] = []
+            self.list: List[Utxo] = []
             self.amount = 0
             self.raw_size = -1
             self.virtual_size = -1
@@ -58,25 +60,25 @@ class _TxFactory(CoinObject):
             self.__class__,
             *CoinUtils.coinToNameKeyTuple(coin))
 
-        self._utxo_list: Sequence[Coin.Tx.Utxo] = []
+        self._utxo_list: Sequence[Utxo] = []
         self._utxo_amount = 0
         self._selected_utxo_data = self._SelectedUtxoData()
 
-        self._input_address: Optional[Coin.Address] = None
+        self._input_address: Optional[Address] = None
 
-        self._receiver_address: Optional[Coin.Address] = None
+        self._receiver_address: Optional[Address] = None
         self._receiver_amount = 0
 
-        self._change_address: Optional[Coin.Address] = None
+        self._change_address: Optional[Address] = None
 
         self._subtract_fee = False
         self._fee_amount_per_byte = 103  # TODO
 
         self._dummy_change_address = self._createDummyChangeAddress()
 
-        self._mtx: Optional[Coin.TxFactory.MutableTx] = None
+        self._mtx: Optional[MutableTx] = None
 
-    def _createDummyChangeAddress(self) -> Optional[Coin.Address]:
+    def _createDummyChangeAddress(self) -> Optional[Address]:
         public_key = PublicKey.fromPublicInteger(
             1,
             None,
@@ -103,7 +105,7 @@ class _TxFactory(CoinObject):
         return None
 
     @property
-    def inputAddress(self) -> Optional[Coin.Address]:
+    def inputAddress(self) -> Optional[Address]:
         return self._input_address
 
     def setInputAddressName(self, name: Optional[str]) -> bool:
@@ -149,11 +151,11 @@ class _TxFactory(CoinObject):
         return address is not None
 
     @property
-    def receiverAddress(self) -> Optional[Coin.Address]:
+    def receiverAddress(self) -> Optional[Address]:
         return self._receiver_address
 
     @property
-    def changeAddress(self) -> Optional[Coin.Address]:
+    def changeAddress(self) -> Optional[Address]:
         return self._change_address
 
     @property
@@ -268,14 +270,10 @@ class _TxFactory(CoinObject):
 
     def _prepare(
             self,
-            input_list: Sequence[Coin.Tx.Utxo],
-            output_list: Sequence[Tuple[Coin.Address, int]],
+            input_list: Sequence[Utxo],
+            output_list: Sequence[Tuple[Address, int]],
             *,
-            is_dummy: bool,
-            time: int = -1,
-            amount: int,
-            fee_amount: int) \
-            -> Optional[Coin.TxFactory.MutableTx]:
+            is_dummy: bool) -> Optional[MutableTx]:
         raise NotImplementedError
 
     def prepare(self) -> bool:
@@ -349,16 +347,14 @@ class _TxFactory(CoinObject):
         return True
 
     @staticmethod
-    def _newUtxoIsBest(
-            old_utxo: Optional[Coin.Tx.Utxo],
-            new_utxo: Coin.Tx.Utxo) -> bool:
+    def _newUtxoIsBest(old_utxo: Optional[Utxo], new_utxo: Utxo) -> bool:
         return old_utxo is None or new_utxo.height < old_utxo.height
 
     @classmethod
     def _findExactUtxo(
             cls,
-            utxo_list: Sequence[Coin.Tx.Utxo],
-            target_amount: int) -> Optional[Coin.Tx.Utxo]:
+            utxo_list: Sequence[Utxo],
+            target_amount: int) -> Optional[Utxo]:
         exact_utxo = None
         for utxo in utxo_list:
             if utxo.amount == target_amount:
@@ -369,7 +365,7 @@ class _TxFactory(CoinObject):
     @classmethod
     def _findOptimalUtxoList(
             cls,
-            utxo_list: Sequence[Coin.Tx.Utxo],
+            utxo_list: Sequence[Utxo],
             target_amount: int) -> SelectedUtxoList:
         # single utxo
         exact_utxo = None
@@ -391,7 +387,7 @@ class _TxFactory(CoinObject):
 
     @staticmethod
     def _findOptimalUtxoListStrategy1(
-            utxo_list: Sequence[Coin.Tx.Utxo],
+            utxo_list: Sequence[Utxo],
             target_amount: int) -> SelectedUtxoList:
         if len(utxo_list) < 2:
             return [], 0
@@ -433,7 +429,7 @@ class _TxFactory(CoinObject):
     @classmethod
     def _findUtxoList(
             cls,
-            utxo_list: Sequence[Coin.Tx.Utxo],
+            utxo_list: Sequence[Utxo],
             target_amount: int) -> SelectedUtxoList:
         if target_amount <= 0:
             return [], 0
@@ -446,7 +442,7 @@ class _TxFactory(CoinObject):
 
     def _calcEstimatedSizes(
             self,
-            utxo_list: Sequence[Coin.Tx.Utxo],
+            utxo_list: Sequence[Utxo],
             utxo_amount: int) -> Tuple[int, int]:
         if not utxo_list or self._receiver_address is None:
             return -1, -1
@@ -549,7 +545,7 @@ class _TxFactory(CoinObject):
     def __logUtxoList(
             self,
             title: str,
-            utxo_list: Sequence[Coin.Tx.Utxo],
+            utxo_list: Sequence[Utxo],
             utxo_amount: int) -> None:
         if not self._logger.isEnabledFor(logging.DEBUG):
             return

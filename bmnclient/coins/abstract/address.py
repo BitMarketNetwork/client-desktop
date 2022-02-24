@@ -12,6 +12,9 @@ from ...utils.serialize import serializable
 if TYPE_CHECKING:
     from typing import Any, Final, List, Optional, Union
     from .coin import Coin
+    from .script import Script
+    from .tx import Tx
+    from .utxo import Utxo
     from ...utils.serialize import DeserializedData, DeserializedDict
 
 
@@ -32,19 +35,19 @@ class _TypeValue:
             name: str,
             version: int,
             size: int,
-            encoding: Optional[Coin.Address.Encoding],
+            encoding: Optional[Address.Encoding],
             is_witness: bool,
-            script_type: Optional[Coin.Script.Type],
+            script_type: Optional[Script.Type],
             hd_purpose: Optional[int]) -> None:
-        self._name = name
-        self._version = version
-        self._size = size
-        self._encoding = encoding
-        self._is_witness = is_witness
-        self._script_type = script_type
-        self._hd_purpose = hd_purpose
+        self._name: Final = name
+        self._version: Final = version
+        self._size: Final = size
+        self._encoding: Final = encoding
+        self._is_witness: Final = is_witness
+        self._script_type: Final = script_type
+        self._hd_purpose: Final = hd_purpose
 
-    def __eq__(self, other: Coin.Address.TypeValue) -> bool:
+    def __eq__(self, other: _TypeValue) -> bool:
         return (
                 isinstance(other, self.__class__)
                 and self._name == other._name
@@ -64,7 +67,7 @@ class _TypeValue:
             self._script_type,
             self._hd_purpose))
 
-    def copy(self, **kwargs) -> Coin.Address.TypeValue:
+    def copy(self, **kwargs) -> _TypeValue:
         return self.__class__(
             name=kwargs.get("name", self._name),
             version=kwargs.get("version", self._version),
@@ -97,7 +100,7 @@ class _TypeValue:
         return self._size
 
     @property
-    def encoding(self) -> Optional[Coin.Address.Encoding]:
+    def encoding(self) -> Optional[Address.Encoding]:
         return self._encoding
 
     @property
@@ -105,7 +108,7 @@ class _TypeValue:
         return self._is_witness
 
     @property
-    def scriptType(self) -> Optional[Coin.Script.Type]:
+    def scriptType(self) -> Optional[Script.Type]:
         return self._script_type
 
     @property
@@ -114,11 +117,7 @@ class _TypeValue:
 
 
 class _Model(CoinObjectModel):
-    def __init__(
-            self,
-            *args,
-            address: Coin.Address,
-            **kwargs) -> None:
+    def __init__(self, *args, address: Address, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._address = address
 
@@ -137,10 +136,10 @@ class _Model(CoinObjectModel):
     def afterSetTxCount(self) -> None:
         raise NotImplementedError
 
-    def beforeAppendTx(self, tx: Coin.Tx) -> None:
+    def beforeAppendTx(self, tx: Tx) -> None:
         raise NotImplementedError
 
-    def afterAppendTx(self, tx: Coin.Tx) -> None:
+    def afterAppendTx(self, tx: Tx) -> None:
         raise NotImplementedError
 
     def afterSetUtxoList(self) -> None:
@@ -153,7 +152,7 @@ class _Model(CoinObjectModel):
         raise NotImplementedError
 
 
-class _Address(CoinObject):
+class Address(CoinObject):
     __initialized = False
 
     _NULLDATA_NAME = "NULL_DATA"
@@ -170,14 +169,14 @@ class _Address(CoinObject):
     TypeValue = _TypeValue
     Type = Enum
 
-    def __new__(cls, coin: Coin, *args, **kwargs) -> Coin.Address:
+    def __new__(cls, coin: Coin, *args, **kwargs) -> Address:
         if kwargs.get("type_") == cls.Type.UNKNOWN or not kwargs.get("name"):
-            return super(_Address, cls).__new__(cls)
+            return super(Address, cls).__new__(cls)
 
         heap = coin.weakValueDictionary("address_heap")
         address = heap.get(kwargs["name"])
         if address is None:
-            address = super(_Address, cls).__new__(cls)
+            address = super(Address, cls).__new__(cls)
         heap[kwargs["name"]] = address
         return address
 
@@ -193,17 +192,17 @@ class _Address(CoinObject):
         self.__hash: Optional[bytes] = None
 
         self._name: Final[str] = kwargs.get("name") or self._NULLDATA_NAME
-        self._type: Final[Coin.Address.Type] = kwargs["type_"]
+        self._type: Final[Address.Type] = kwargs["type_"]
         self._data: Final[bytes] = kwargs.get("data", b"")
-        self._key: Optional[Coin.Address.KeyType] = kwargs.get("key", None)
+        self._key: Optional[Address.KeyType] = kwargs.get("key", None)
         self._balance: int = kwargs.get("balance", 0)
         self._label: str = kwargs.get("label", "")
         self._comment: str = kwargs.get("comment", "")
         self._is_tx_input = bool(kwargs.get("is_tx_input", False))
 
         self._tx_count: int = kwargs.get("tx_count", 0)
-        self._tx_list: List[Coin.Tx] = list(kwargs.get("tx_list", []))
-        self._utxo_list: List[Coin.Tx.Utxo] = list(kwargs.get("utxo_list", []))
+        self._tx_list: List[Tx] = list(kwargs.get("tx_list", []))
+        self._utxo_list: List[Utxo] = list(kwargs.get("utxo_list", []))
 
         history_first_offset: str = kwargs.get("history_first_offset", "")
         history_last_offset: str = kwargs.get("history_last_offset", "")
@@ -214,7 +213,7 @@ class _Address(CoinObject):
             self._history_first_offset = ""
             self._history_last_offset = ""
 
-    def __eq__(self, other: Coin.Address) -> bool:
+    def __eq__(self, other: Address) -> bool:
         return (
                 super().__eq__(other)
                 and self._name == other.name
@@ -251,7 +250,7 @@ class _Address(CoinObject):
     @classmethod
     def _deserializeProperty(
             cls,
-            self: Optional[Coin.Address],
+            self: Optional[Address],
             key: str,
             value: DeserializedData,
             coin: Optional[Coin] = None,
@@ -298,7 +297,7 @@ class _Address(CoinObject):
 
     @serializable
     @property
-    def type(self) -> Coin.Address.Type:
+    def type(self) -> Address.Type:
         return self._type
 
     @classmethod
@@ -306,9 +305,9 @@ class _Address(CoinObject):
             cls,
             coin: Coin,
             *,
-            type_: Coin.Address.Type,
+            type_: Address.Type,
             key: KeyType,
-            **kwargs) -> Optional[Coin.Address]:
+            **kwargs) -> Optional[Address]:
         return cls(coin, type_=type_, key=key, **kwargs)
 
     @classmethod
@@ -317,7 +316,7 @@ class _Address(CoinObject):
             coin: Coin,
             *,
             name: str,
-            **kwargs) -> Optional[Coin.Address]:
+            **kwargs) -> Optional[Address]:
         return cls(coin, name=name, **kwargs)
 
     @classmethod
@@ -326,7 +325,7 @@ class _Address(CoinObject):
             coin: Coin,
             *,
             name: Optional[str] = None,
-            **kwargs) -> Coin.Address:
+            **kwargs) -> Address:
         # noinspection PyUnresolvedReferences
         return cls(coin, name=name, type_=cls.Type.UNKNOWN, **kwargs)
 
@@ -505,10 +504,10 @@ class _Address(CoinObject):
 
     @serializable
     @property
-    def txList(self) -> List[Coin.Tx]:
+    def txList(self) -> List[Tx]:
         return self._tx_list
 
-    def appendTx(self, tx: Coin.Tx) -> bool:
+    def appendTx(self, tx: Tx) -> bool:
         for etx in self._tx_list:
             if tx.name != etx.name:
                 continue
@@ -526,11 +525,11 @@ class _Address(CoinObject):
 
     @serializable
     @property
-    def utxoList(self) -> List[Coin.Tx.Utxo]:
+    def utxoList(self) -> List[Utxo]:
         return self._utxo_list
 
     @utxoList.setter
-    def utxoList(self, utxo_list: List[Coin.Tx.Utxo]) -> None:
+    def utxoList(self, utxo_list: List[Utxo]) -> None:
         if self._utxo_list == utxo_list:
             return
 
