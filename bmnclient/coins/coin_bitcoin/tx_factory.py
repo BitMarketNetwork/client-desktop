@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .tx import _MutableTx
+from .tx import MutableTx
 from ..abstract import Coin
 
 if TYPE_CHECKING:
@@ -10,8 +10,8 @@ if TYPE_CHECKING:
     from . import Bitcoin
 
 
-class _TxFactory(Coin.TxFactory):
-    MutableTx = _MutableTx
+class TxFactory(Coin.TxFactory):
+    MutableTx = MutableTx
 
     def _prepare(
             self,

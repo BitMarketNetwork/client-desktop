@@ -3,7 +3,7 @@ from __future__ import annotations
 from math import ceil
 from typing import TYPE_CHECKING
 
-from .tx_io import _MutableInput, _MutableOutput
+from .tx_io import MutableInput, MutableOutput
 from ..abstract import Coin
 from ...crypto.digest import Sha256Digest, Sha256DoubleDigest
 
@@ -12,13 +12,13 @@ if TYPE_CHECKING:
     from . import Bitcoin
 
 
-class _MutableTx(Coin.TxFactory.MutableTx):
+class MutableTx(Coin.TxFactory.MutableTx):
     _VERSION_LENGTH = 4
     _LOCK_TIME_LENGTH = 4
     _WITNESS_HEADER = b"\x00\x01"
 
-    Input = _MutableInput
-    Output = _MutableOutput
+    Input = MutableInput
+    Output = MutableOutput
 
     def __init__(
             self,
@@ -59,7 +59,7 @@ class _MutableTx(Coin.TxFactory.MutableTx):
             o.amountBytes + o.scriptBytes
             for o in self._output_list)
 
-        if self._is_witness:
+        if self.isWitness:
             output_list_hash = Sha256DoubleDigest(output_list).finalize()
 
             hash_prevouts = b"".join(
@@ -121,7 +121,7 @@ class _MutableTx(Coin.TxFactory.MutableTx):
                     o.amountBytes + o.scriptBytes
                     for o in self._output_list)
 
-            if with_witness and self._is_witness:
+            if with_witness and self.isWitness:
                 witness_list = b"".join(
                     i.witnessBytes
                     for i in self._input_list)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .script import _Script
+from .script import Script
 from ..abstract import Coin
 from ...crypto.base58 import Base58
 from ...crypto.bech32 import Bech32
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from . import Bitcoin
 
 
-class _Address(Coin.Address):
+class Address(Coin.Address):
     _PUBKEY_HASH_PREFIX_LIST = ("1",)
     _SCRIPT_HASH_PREFIX_LIST = ("3",)
     _HRP = "bc"
@@ -33,7 +33,7 @@ class _Address(Coin.Address):
             size=Hash160Digest.size,
             encoding=Coin.Address.Encoding.BASE58,
             is_witness=False,
-            script_type=_Script.Type.P2PKH,
+            script_type=Script.Type.P2PKH,
             hd_purpose=44)  # BIP-0044
         SCRIPT_HASH: Final = Coin.Address.TypeValue(
             name="p2sh",
@@ -41,7 +41,7 @@ class _Address(Coin.Address):
             size=Hash160Digest.size,
             encoding=Coin.Address.Encoding.BASE58,
             is_witness=False,
-            script_type=_Script.Type.P2SH,
+            script_type=Script.Type.P2SH,
             hd_purpose=None)
         WITNESS_V0_KEY_HASH: Final = Coin.Address.TypeValue(
             name="p2wpkh",
@@ -49,7 +49,7 @@ class _Address(Coin.Address):
             size=Hash160Digest.size,
             encoding=Coin.Address.Encoding.BECH32,
             is_witness=True,
-            script_type=_Script.Type.P2WPKH,
+            script_type=Script.Type.P2WPKH,
             hd_purpose=84)  # BIP-0084
         WITNESS_V0_SCRIPT_HASH: Final = Coin.Address.TypeValue(
             name="p2wsh",
@@ -57,7 +57,7 @@ class _Address(Coin.Address):
             size=Sha256Digest.size,
             encoding=Coin.Address.Encoding.BECH32,
             is_witness=True,
-            script_type=_Script.Type.P2WSH,
+            script_type=Script.Type.P2WSH,
             hd_purpose=None)
         WITNESS_UNKNOWN: Final = Coin.Address.TypeValue(
             name="witness_unknown",
@@ -177,22 +177,22 @@ class _Address(Coin.Address):
         return super().createFromName(coin, type_=type_, name=name, **kwargs)
 
 
-class _TestAddress(_Address):
+class TestAddress(Address):
     _PUBKEY_HASH_PREFIX_LIST = ("m", "n")
     _SCRIPT_HASH_PREFIX_LIST = ("2",)
     _HRP = "tb"
 
     class Type(Coin.Address.Type):
         UNKNOWN: Final = \
-            _Address.Type.UNKNOWN.value
+            Address.Type.UNKNOWN.value
         PUBKEY_HASH: Final = \
-            _Address.Type.PUBKEY_HASH.value.copy(version=0x6f)
+            Address.Type.PUBKEY_HASH.value.copy(version=0x6f)
         SCRIPT_HASH: Final = \
-            _Address.Type.SCRIPT_HASH.value.copy(version=0xc4)
+            Address.Type.SCRIPT_HASH.value.copy(version=0xc4)
         WITNESS_V0_KEY_HASH: Final = \
-            _Address.Type.WITNESS_V0_KEY_HASH.value
+            Address.Type.WITNESS_V0_KEY_HASH.value
         WITNESS_V0_SCRIPT_HASH: Final = \
-            _Address.Type.WITNESS_V0_SCRIPT_HASH.value
+            Address.Type.WITNESS_V0_SCRIPT_HASH.value
         WITNESS_UNKNOWN: Final = \
-            _Address.Type.WITNESS_UNKNOWN.value
+            Address.Type.WITNESS_UNKNOWN.value
         DEFAULT = WITNESS_V0_KEY_HASH

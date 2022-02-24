@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from typing import Final
 
 
-class _Address(Bitcoin.Address):
+class Address(Bitcoin.Address):
     _PUBKEY_HASH_PREFIX_LIST = ("L",)
     _SCRIPT_HASH_PREFIX_LIST = ("M",)
     _HRP = "ltc"
