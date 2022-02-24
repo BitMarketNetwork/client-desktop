@@ -259,6 +259,7 @@ class MutableTx(Tx):
 
     @cached_property
     def isWitness(self) -> bool:
+        # noinspection PyUnresolvedReferences
         return any(i.isWitness for i in self._input_list)
 
     @property

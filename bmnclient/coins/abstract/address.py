@@ -170,6 +170,7 @@ class Address(CoinObject):
     Type = Enum
 
     def __new__(cls, coin: Coin, *args, **kwargs) -> Address:
+        # noinspection PyUnresolvedReferences
         if kwargs.get("type_") == cls.Type.UNKNOWN or not kwargs.get("name"):
             return super(Address, cls).__new__(cls)
 
