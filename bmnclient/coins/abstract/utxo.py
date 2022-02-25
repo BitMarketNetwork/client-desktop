@@ -10,12 +10,10 @@ from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
     from typing import Final, Optional
-    from .address import Address
     from .coin import Coin
-    from .script import Script
 
 
-class Utxo(CoinObject):
+class _Utxo(CoinObject):
     def __init__(
             self,
             coin: Coin,
@@ -24,16 +22,16 @@ class Utxo(CoinObject):
             height: int,
             index: int,
             amount: int,
-            script_type: Optional[Script.Type] = None) -> None:
+            script_type: Optional[Coin.Script.Type] = None) -> None:
         super().__init__(coin)
-        self._address: Optional[Address] = None
+        self._address: Optional[Coin.Address] = None
         self._name: Final = name
         self._height: Final = height
         self._index: Final = index
         self._amount: Final = amount
         self._script_type = script_type
 
-    def __eq__(self, other: Utxo) -> bool:
+    def __eq__(self, other: _Utxo) -> bool:
         return (
                 super().__eq__(other)
                 and self._name == other._name
@@ -57,11 +55,11 @@ class Utxo(CoinObject):
             *CoinUtils.utxoToNameKeyTuple(self))
 
     @property
-    def address(self) -> Optional[Address]:
+    def address(self) -> Optional[Coin.Address]:
         return self._address
 
     @address.setter
-    def address(self, address: Address) -> None:
+    def address(self, address: Coin.Address) -> None:
         if self._address is not None:
             raise AttributeError(
                 "already associated with address '{}'"
@@ -95,5 +93,5 @@ class Utxo(CoinObject):
         return self._amount
 
     @property
-    def scriptType(self) -> Optional[Script.Type]:
+    def scriptType(self) -> Optional[Coin.Script.Type]:
         return self._script_type

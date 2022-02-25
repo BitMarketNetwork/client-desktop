@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .mutable_tx import MutableTx
 from ..abstract import Coin
 
 if TYPE_CHECKING:
@@ -10,19 +9,20 @@ if TYPE_CHECKING:
     from . import Bitcoin
 
 
-class TxFactory(Coin.TxFactory):
-    MutableTx = MutableTx
+class _TxFactory(Coin.TxFactory):
+    from .mutable_tx import _MutableTx
+    MutableTx = _MutableTx
+
+    if TYPE_CHECKING:
+        _coin: Bitcoin
 
     def _prepare(
             self,
             input_list: Sequence[Bitcoin.Tx.Utxo],
             output_list: Sequence[Tuple[Bitcoin.Address, int]],
             *,
-            is_dummy: bool,
-            time: int = -1,
-            amount: int,
-            fee_amount: int) \
-            -> Optional[Bitcoin.TxFactory.MutableTx]:
+            is_dummy: bool) \
+            -> Optional[_TxFactory.MutableTx]:
         return self.MutableTx(
             self._coin,
             [

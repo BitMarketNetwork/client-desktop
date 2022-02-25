@@ -3,21 +3,20 @@ from __future__ import annotations
 from functools import cached_property
 from typing import TYPE_CHECKING
 
-from .tx_io import Io
+from .tx_io import _Io
 from ...utils.serialize import DeserializationNotSupportedError, serializable
 
 if TYPE_CHECKING:
     from typing import Final, Optional
-    from .address import Address
-    from .utxo import Utxo
+    from .coin import Coin
 
 
-class MutableIo(Io):
+class _MutableIo(_Io):
     _AMOUNT_LENGTH = 0
 
     def __init__(
             self,
-            address: Address,
+            address: Coin.Address,
             *,
             amount: int,
             is_dummy: bool = False):
@@ -30,7 +29,7 @@ class MutableIo(Io):
             amount=amount)
         self._is_dummy: Final = is_dummy
 
-    def __eq__(self, other: MutableIo) -> bool:
+    def __eq__(self, other: _MutableIo) -> bool:
         return (
                 super().__eq__(other)
                 and self._is_dummy == other._is_dummy
@@ -43,7 +42,7 @@ class MutableIo(Io):
         ))
 
     @classmethod
-    def deserialize(cls, *_, **__) -> Optional[MutableIo]:
+    def deserialize(cls, *_, **__) -> Optional[_MutableIo]:
         raise DeserializationNotSupportedError
 
     @cached_property
@@ -62,13 +61,13 @@ class MutableIo(Io):
         raise NotImplementedError
 
 
-class MutableInput(MutableIo):
+class _MutableInput(_MutableIo):
     _HASH_TYPE_LENGTH = 0
     _SEQUENCE_LENGTH = 0
 
     def __init__(
             self,
-            utxo: Utxo,
+            utxo: Coin.Tx.Utxo,
             *,
             hash_type: int,
             sequence: int,
@@ -81,7 +80,7 @@ class MutableInput(MutableIo):
         self._script_sig_bytes = b""
         self._witness_bytes = b""
 
-    def __eq__(self, other: MutableInput):
+    def __eq__(self, other: _MutableInput):
         return (
                 super().__eq__(other)
                 and self._utxo == other._utxo
@@ -107,7 +106,7 @@ class MutableInput(MutableIo):
 
     @serializable
     @property
-    def utxo(self) -> Utxo:
+    def utxo(self) -> Coin.Tx.Utxo:
         return self._utxo
 
     @cached_property
@@ -150,7 +149,7 @@ class MutableInput(MutableIo):
         raise NotImplementedError
 
 
-class MutableOutput(MutableIo):
+class _MutableOutput(_MutableIo):
     @cached_property
     def scriptBytes(self) -> bytes:
         raise NotImplementedError

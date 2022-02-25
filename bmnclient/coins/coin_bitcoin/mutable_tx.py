@@ -3,28 +3,32 @@ from __future__ import annotations
 from math import ceil
 from typing import TYPE_CHECKING
 
-from .mutable_tx_io import MutableInput, MutableOutput
 from ..abstract import Coin
 from ...crypto.digest import Sha256Digest, Sha256DoubleDigest
 
 if TYPE_CHECKING:
-    from typing import Optional, Sequence
+    from typing import List, Optional, Sequence
     from . import Bitcoin
 
 
-class MutableTx(Coin.TxFactory.MutableTx):
+class _MutableTx(Coin.TxFactory.MutableTx):
     _VERSION_LENGTH = 4
     _LOCK_TIME_LENGTH = 4
     _WITNESS_HEADER = b"\x00\x01"
 
-    Input = MutableInput
-    Output = MutableOutput
+    from .mutable_tx_io import _MutableInput, _MutableOutput
+    Input = _MutableInput
+    Output = _MutableOutput
+
+    if TYPE_CHECKING:
+        _input_list: List[_MutableTx.Input]
+        _output_list: List[_MutableTx.Output]
 
     def __init__(
             self,
             coin: Bitcoin,
-            input_list: Sequence[Input],
-            output_list: Sequence[Output],
+            input_list: Sequence[_MutableTx.Input],
+            output_list: Sequence[_MutableTx.Output],
             *,
             lock_time: int = 0,
             **kwargs) -> None:

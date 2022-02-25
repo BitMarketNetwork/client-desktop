@@ -3,26 +3,26 @@ from __future__ import annotations
 from functools import cached_property, lru_cache
 from typing import TYPE_CHECKING
 
-from .mutable_tx_io import MutableInput, MutableOutput
-from .tx import Tx
+from .tx import _Tx
 
 if TYPE_CHECKING:
     from typing import Final, Optional, Sequence
     from .coin import Coin
 
 
-class MutableTx(Tx):
+class _MutableTx(_Tx):
     _VERSION_LENGTH = 0
     _LOCK_TIME_LENGTH = 0
 
-    Input = MutableInput
-    Output = MutableOutput
+    from .mutable_tx_io import _MutableInput, _MutableOutput
+    Input = _MutableInput
+    Output = _MutableOutput
 
     def __init__(
             self,
             coin: Coin,
-            input_list: Sequence[Input],
-            output_list: Sequence[Output],
+            input_list: Sequence[_MutableTx.Input],
+            output_list: Sequence[_MutableTx.Output],
             *,
             version: int,
             lock_time: int,
@@ -44,7 +44,7 @@ class MutableTx(Tx):
         self._lock_time: Final = lock_time
         self._is_signed = False
 
-    def __eq__(self, other: MutableTx) -> bool:
+    def __eq__(self, other: _MutableTx) -> bool:
         return (
                 super().__eq__(other)
                 and self._is_dummy == other._is_dummy

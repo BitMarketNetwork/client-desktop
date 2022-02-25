@@ -1,12 +1,6 @@
 from __future__ import annotations
 
-from .address import Address
 from ..coin_bitcoin import Bitcoin
-
-
-class Currency(Bitcoin.Currency):
-    _FULL_NAME = "LTC"
-    _UNIT = "LTC"
 
 
 class Litecoin(Bitcoin):
@@ -18,5 +12,9 @@ class Litecoin(Bitcoin):
     _BIP0032_VERSION_PRIVATE_KEY = 0x0488ade4
     _WIF_VERSION = 0xb0
 
-    Currency = Currency
-    Address = Address
+    class Currency(Bitcoin.Currency):
+        _FULL_NAME = "LTC"
+        _UNIT = "LTC"
+
+    from .address import _Address
+    Address = _Address

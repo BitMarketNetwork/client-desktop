@@ -12,9 +12,6 @@ from ...utils.serialize import serializable
 if TYPE_CHECKING:
     from typing import Any, Final, List, Optional, Union
     from .coin import Coin
-    from .script import Script
-    from .tx import Tx
-    from .utxo import Utxo
     from ...utils.serialize import DeserializedData, DeserializedDict
 
 
@@ -35,9 +32,9 @@ class _TypeValue:
             name: str,
             version: int,
             size: int,
-            encoding: Optional[Address.Encoding],
+            encoding: Optional[Coin.Address.Encoding],
             is_witness: bool,
-            script_type: Optional[Script.Type],
+            script_type: Optional[Coin.Script.Type],
             hd_purpose: Optional[int]) -> None:
         self._name: Final = name
         self._version: Final = version
@@ -100,7 +97,7 @@ class _TypeValue:
         return self._size
 
     @property
-    def encoding(self) -> Optional[Address.Encoding]:
+    def encoding(self) -> Optional[Coin.Address.Encoding]:
         return self._encoding
 
     @property
@@ -108,7 +105,7 @@ class _TypeValue:
         return self._is_witness
 
     @property
-    def scriptType(self) -> Optional[Script.Type]:
+    def scriptType(self) -> Optional[Coin.Script.Type]:
         return self._script_type
 
     @property
@@ -117,7 +114,7 @@ class _TypeValue:
 
 
 class _Model(CoinObjectModel):
-    def __init__(self, *args, address: Address, **kwargs) -> None:
+    def __init__(self, *args, address: Coin.Address, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._address = address
 
@@ -136,10 +133,10 @@ class _Model(CoinObjectModel):
     def afterSetTxCount(self) -> None:
         raise NotImplementedError
 
-    def beforeAppendTx(self, tx: Tx) -> None:
+    def beforeAppendTx(self, tx: Coin.Tx) -> None:
         raise NotImplementedError
 
-    def afterAppendTx(self, tx: Tx) -> None:
+    def afterAppendTx(self, tx: Coin.Tx) -> None:
         raise NotImplementedError
 
     def afterSetUtxoList(self) -> None:
@@ -152,7 +149,7 @@ class _Model(CoinObjectModel):
         raise NotImplementedError
 
 
-class Address(CoinObject):
+class _Address(CoinObject):
     __initialized = False
 
     _NULLDATA_NAME = "NULL_DATA"
@@ -169,15 +166,15 @@ class Address(CoinObject):
     TypeValue = _TypeValue
     Type = Enum
 
-    def __new__(cls, coin: Coin, *args, **kwargs) -> Address:
+    def __new__(cls, coin: Coin, *args, **kwargs) -> _Address:
         # noinspection PyUnresolvedReferences
         if kwargs.get("type_") == cls.Type.UNKNOWN or not kwargs.get("name"):
-            return super(Address, cls).__new__(cls)
+            return super(_Address, cls).__new__(cls)
 
         heap = coin.weakValueDictionary("address_heap")
         address = heap.get(kwargs["name"])
         if address is None:
-            address = super(Address, cls).__new__(cls)
+            address = super(_Address, cls).__new__(cls)
         heap[kwargs["name"]] = address
         return address
 
@@ -193,17 +190,17 @@ class Address(CoinObject):
         self.__hash: Optional[bytes] = None
 
         self._name: Final[str] = kwargs.get("name") or self._NULLDATA_NAME
-        self._type: Final[Address.Type] = kwargs["type_"]
+        self._type: Final[_Address.Type] = kwargs["type_"]
         self._data: Final[bytes] = kwargs.get("data", b"")
-        self._key: Optional[Address.KeyType] = kwargs.get("key", None)
+        self._key: Optional[_Address.KeyType] = kwargs.get("key", None)
         self._balance: int = kwargs.get("balance", 0)
         self._label: str = kwargs.get("label", "")
         self._comment: str = kwargs.get("comment", "")
         self._is_tx_input = bool(kwargs.get("is_tx_input", False))
 
         self._tx_count: int = kwargs.get("tx_count", 0)
-        self._tx_list: List[Tx] = list(kwargs.get("tx_list", []))
-        self._utxo_list: List[Utxo] = list(kwargs.get("utxo_list", []))
+        self._tx_list: List[Coin.Tx] = list(kwargs.get("tx_list", []))
+        self._utxo_list: List[Coin.Tx.Utxo] = list(kwargs.get("utxo_list", []))
 
         history_first_offset: str = kwargs.get("history_first_offset", "")
         history_last_offset: str = kwargs.get("history_last_offset", "")
@@ -214,7 +211,7 @@ class Address(CoinObject):
             self._history_first_offset = ""
             self._history_last_offset = ""
 
-    def __eq__(self, other: Address) -> bool:
+    def __eq__(self, other: _Address) -> bool:
         return (
                 super().__eq__(other)
                 and self._name == other.name
@@ -251,7 +248,7 @@ class Address(CoinObject):
     @classmethod
     def _deserializeProperty(
             cls,
-            self: Optional[Address],
+            self: Optional[_Address],
             key: str,
             value: DeserializedData,
             coin: Optional[Coin] = None,
@@ -298,7 +295,7 @@ class Address(CoinObject):
 
     @serializable
     @property
-    def type(self) -> Address.Type:
+    def type(self) -> _Address.Type:
         return self._type
 
     @classmethod
@@ -306,9 +303,9 @@ class Address(CoinObject):
             cls,
             coin: Coin,
             *,
-            type_: Address.Type,
+            type_: _Address.Type,
             key: KeyType,
-            **kwargs) -> Optional[Address]:
+            **kwargs) -> Optional[_Address]:
         return cls(coin, type_=type_, key=key, **kwargs)
 
     @classmethod
@@ -317,7 +314,7 @@ class Address(CoinObject):
             coin: Coin,
             *,
             name: str,
-            **kwargs) -> Optional[Address]:
+            **kwargs) -> Optional[_Address]:
         return cls(coin, name=name, **kwargs)
 
     @classmethod
@@ -326,7 +323,7 @@ class Address(CoinObject):
             coin: Coin,
             *,
             name: Optional[str] = None,
-            **kwargs) -> Address:
+            **kwargs) -> _Address:
         # noinspection PyUnresolvedReferences
         return cls(coin, name=name, type_=cls.Type.UNKNOWN, **kwargs)
 
@@ -505,10 +502,10 @@ class Address(CoinObject):
 
     @serializable
     @property
-    def txList(self) -> List[Tx]:
+    def txList(self) -> List[Coin.Tx]:
         return self._tx_list
 
-    def appendTx(self, tx: Tx) -> bool:
+    def appendTx(self, tx: Coin.Tx) -> bool:
         for etx in self._tx_list:
             if tx.name != etx.name:
                 continue
@@ -526,11 +523,11 @@ class Address(CoinObject):
 
     @serializable
     @property
-    def utxoList(self) -> List[Utxo]:
+    def utxoList(self) -> List[Coin.Tx.Utxo]:
         return self._utxo_list
 
     @utxoList.setter
-    def utxoList(self, utxo_list: List[Utxo]) -> None:
+    def utxoList(self, utxo_list: List[Coin.Tx.Utxo]) -> None:
         if self._utxo_list == utxo_list:
             return
 

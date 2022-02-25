@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from . import Bitcoin
 
 
-class MutableInput(Coin.TxFactory.MutableTx.Input):
+class _MutableInput(Coin.TxFactory.MutableTx.Input):
     _AMOUNT_LENGTH = 8
     _HASH_TYPE_LENGTH = 4
     _SEQUENCE_LENGTH = 4
@@ -133,7 +133,7 @@ class MutableInput(Coin.TxFactory.MutableTx.Input):
             return False
 
 
-class MutableOutput(Coin.TxFactory.MutableTx.Output):
+class _MutableOutput(Coin.TxFactory.MutableTx.Output):
     _AMOUNT_LENGTH = 8
 
     @cached_property

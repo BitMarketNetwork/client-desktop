@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from . import Bitcoin
 
 
-class Script(Coin.Script):
+class _Script(Coin.Script):
     class Type(Coin.Script.Type):
         P2PK = auto()
         P2PKH = auto()
@@ -35,7 +35,7 @@ class Script(Coin.Script):
     def addressToScript(
             cls,
             address: Bitcoin.Address,
-            type_: Optional[Bitcoin.Script.Type] = None) -> Optional[bytes]:
+            type_: Optional[_Script.Type] = None) -> Optional[bytes]:
         if type_ is None:
             type_ = address.type.value.scriptType
 

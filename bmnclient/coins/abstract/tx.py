@@ -5,8 +5,6 @@ from functools import cached_property
 from typing import TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
-from .tx_io import Io
-from .utxo import Utxo
 from ...utils.serialize import serializable
 
 if TYPE_CHECKING:
@@ -16,7 +14,7 @@ if TYPE_CHECKING:
 
 
 class _Model(CoinObjectModel):
-    def __init__(self, *args, tx: Tx, **kwargs) -> None:
+    def __init__(self, *args, tx: Coin.Tx, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._tx = tx
 
@@ -27,7 +25,7 @@ class _Model(CoinObjectModel):
         raise NotImplementedError
 
 
-class Tx(CoinObject):
+class _Tx(CoinObject):
     __initialized = False
 
     class Status(Enum):
@@ -36,18 +34,22 @@ class Tx(CoinObject):
         COMPLETE = 2
 
     Model = _Model
-    Io = Io
-    Utxo = Utxo
 
-    def __new__(cls, coin: Coin, *args, **kwargs) -> Tx:
+    from .tx_io import _Io
+    Io = _Io
+
+    from .utxo import _Utxo
+    Utxo = _Utxo
+
+    def __new__(cls, coin: Coin, *args, **kwargs) -> _Tx:
         if not kwargs.get("name"):
-            return super(Tx, cls).__new__(cls)
+            return super(_Tx, cls).__new__(cls)
 
         heap = coin.weakValueDictionary("tx_heap")
         name = kwargs["name"].lower()
         tx = heap.get(name)
         if tx is None:
-            tx = super(Tx, cls).__new__(cls)
+            tx = super(_Tx, cls).__new__(cls)
         heap[name] = tx
         return tx
 
@@ -67,10 +69,10 @@ class Tx(CoinObject):
         self._fee_amount: int = kwargs["fee_amount"]
         self._is_coinbase = bool(kwargs["is_coinbase"])
 
-        self._input_list: Final[List[Io]] = list(kwargs["input_list"])
-        self._output_list: Final[List[Io]] = list(kwargs["output_list"])
+        self._input_list: Final[List[_Tx.Io]] = list(kwargs["input_list"])
+        self._output_list: Final[List[_Tx.Io]] = list(kwargs["output_list"])
 
-    def __eq__(self, other: Tx) -> bool:
+    def __eq__(self, other: _Tx) -> bool:
         return (
                 super().__eq__(other)
                 and self._name == other._name
@@ -82,7 +84,7 @@ class Tx(CoinObject):
     @classmethod
     def _deserializeProperty(
             cls,
-            self: Optional[Tx],
+            self: Optional[_Tx],
             key: str,
             value: DeserializedData,
             coin: Optional[Coin] = None,
@@ -158,12 +160,12 @@ class Tx(CoinObject):
 
     @serializable
     @property
-    def inputList(self) -> List[Io]:
+    def inputList(self) -> List[_Tx.Io]:
         return self._input_list
 
     @serializable
     @property
-    def outputList(self) -> List[Io]:
+    def outputList(self) -> List[_Tx.Io]:
         return self._output_list
 
     @staticmethod

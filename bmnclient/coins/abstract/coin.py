@@ -4,11 +4,7 @@ import math
 from typing import TYPE_CHECKING
 from weakref import WeakValueDictionary
 
-from .address import Address
 from .object import CoinObject, CoinObjectModel
-from .script import Script
-from .tx import Tx
-from .tx_factory import TxFactory
 from ..hd import HdNode
 from ...crypto.digest import Sha256Digest
 from ...currency import Currency, FiatRate, NoneFiatCurrency
@@ -54,10 +50,10 @@ class _Model(CoinObjectModel):
     def afterUpdateUtxoList(self) -> None:
         raise NotImplementedError
 
-    def beforeAppendAddress(self, address: Address) -> None:
+    def beforeAppendAddress(self, address: Coin.Address) -> None:
         raise NotImplementedError
 
-    def afterAppendAddress(self, address: Address) -> None:
+    def afterAppendAddress(self, address: Coin.Address) -> None:
         raise NotImplementedError
 
     def afterSetServerData(self) -> None:
@@ -81,10 +77,18 @@ class Coin(CoinObject):
 
     Model = _Model
     Currency = Currency
-    Address = Address
-    Tx = Tx
-    TxFactory = TxFactory
-    Script = Script
+
+    from .address import _Address
+    Address = _Address
+
+    from .tx import _Tx
+    Tx = _Tx
+
+    from .tx_factory import _TxFactory
+    TxFactory = _TxFactory
+
+    from .script import _Script
+    Script = _Script
 
     class MempoolCacheItem:
         __slots__ = ("remote_hash", "access_count")
@@ -124,7 +128,7 @@ class Coin(CoinObject):
 
         self._hd_node_list: Dict[int, HdNode] = {}
 
-        self._address_list: List[Address] = []
+        self._address_list: List[Coin.Address] = []
         self._server_data: Dict[str, Union[int, str]] = {}
         self._mempool_cache: Dict[bytes, Coin.MempoolCacheItem] = {}
         self._mempool_cache_access_counter = 0

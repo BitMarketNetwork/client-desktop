@@ -7,23 +7,22 @@ from ...utils.serialize import serializable
 
 if TYPE_CHECKING:
     from typing import Final, Optional
-    from .address import Address
     from .coin import Coin
 
 
 class _Model(CoinObjectModel):
-    def __init__(self, *args, io: Io, **kwargs) -> None:
+    def __init__(self, *args, io: Coin.Tx.Io, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._io = io
 
 
-class Io(CoinObject):
+class _Io(CoinObject):
     Model = _Model
 
     def __init__(
             self,
             coin: Coin,
-            address: Optional[Address] = None,
+            address: Optional[Coin.Address] = None,
             *,
             row_id: int = -1,
             index: int,
@@ -48,7 +47,7 @@ class Io(CoinObject):
         self._address: Final = address
         self._amount: Final = amount
 
-    def __eq__(self, other: Io) -> bool:
+    def __eq__(self, other: _Io) -> bool:
         return (
                 super().__eq__(other)
                 and self._index == other.index
@@ -68,7 +67,7 @@ class Io(CoinObject):
 
     @serializable
     @property
-    def index(self) -> index:
+    def index(self) -> int:
         return self._index
 
     @serializable
@@ -82,7 +81,7 @@ class Io(CoinObject):
         return self._address.name if not self._address.isNullData else None
 
     @property
-    def address(self) -> Address:
+    def address(self) -> Coin.Address:
         return self._address
 
     @serializable

@@ -1,15 +1,6 @@
 from __future__ import annotations
 
-from .address import Address, TestAddress
-from .script import Script
-from .tx_factory import TxFactory
 from ..abstract import Coin
-
-
-class Currency(Coin.Currency):
-    _DECIMAL_SIZE = (0, 8)
-    _FULL_NAME = "BTC"
-    _UNIT = "BTC"
 
 
 class Bitcoin(Coin):
@@ -21,10 +12,19 @@ class Bitcoin(Coin):
     _BIP0032_VERSION_PRIVATE_KEY = 0x0488ade4
     _WIF_VERSION = 0x80
 
-    Currency = Currency
-    Address = Address
-    TxFactory = TxFactory
-    Script = Script
+    class Currency(Coin.Currency):
+        _DECIMAL_SIZE = (0, 8)
+        _FULL_NAME = "BTC"
+        _UNIT = "BTC"
+
+    from .address import _Address
+    Address = _Address
+
+    from .tx_factory import _TxFactory
+    TxFactory = _TxFactory
+
+    from .script import _Script
+    Script = _Script
 
 
 class BitcoinTest(Bitcoin):
@@ -36,4 +36,5 @@ class BitcoinTest(Bitcoin):
     _BIP0032_VERSION_PRIVATE_KEY = 0x04358394
     _WIF_VERSION = 0xef
 
-    Address = TestAddress
+    from .address import _TestAddress
+    Address = _TestAddress
