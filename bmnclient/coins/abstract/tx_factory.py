@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 from itertools import chain
-from typing import TYPE_CHECKING
 from time import time
+from typing import TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
 from ..utils import CoinUtils
@@ -319,9 +319,7 @@ class _TxFactory(CoinObject):
             self._selected_utxo_data.list,
             output_list,
             is_dummy=False,
-            time=int(time()),
-            amount=self.receiverAmount,
-            fee_amount=self.feeAmount)
+            time=int(time()))
         return self._mtx is not None
 
     def sign(self) -> bool:
@@ -455,7 +453,11 @@ class _TxFactory(CoinObject):
                     self._dummy_change_address,
                     self._coin.Currency.maxValue))
 
-        mtx = self._prepare(utxo_list, output_list, is_dummy=True, time=int(time()), amount=self.receiverAmount, fee_amount=self.feeAmount)
+        mtx = self._prepare(
+            utxo_list,
+            output_list,
+            is_dummy=True,
+            time=int(time()))
         if mtx is None or not mtx.sign():
             return -1, -1
         else:

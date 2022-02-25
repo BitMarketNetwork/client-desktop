@@ -26,6 +26,7 @@ class _MutableTx(_Tx):
             *,
             version: int,
             lock_time: int,
+            time: int = -1,
             is_dummy: bool = False):
         amount = sum(i.amount for i in input_list)
         fee_amount = amount - sum(o.amount for o in output_list)
@@ -33,7 +34,7 @@ class _MutableTx(_Tx):
             coin,
             name="",
             height=-1,
-            time=-1,
+            time=time,
             amount=amount,
             fee_amount=fee_amount,
             is_coinbase=False,

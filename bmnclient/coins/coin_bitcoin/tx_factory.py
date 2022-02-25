@@ -21,8 +21,8 @@ class _TxFactory(Coin.TxFactory):
             input_list: Sequence[Bitcoin.Tx.Utxo],
             output_list: Sequence[Tuple[Bitcoin.Address, int]],
             *,
-            is_dummy: bool) \
-            -> Optional[_TxFactory.MutableTx]:
+            time: int = -1,
+            is_dummy: bool) -> Optional[_TxFactory.MutableTx]:
         return self.MutableTx(
             self._coin,
             [
@@ -32,6 +32,4 @@ class _TxFactory(Coin.TxFactory):
                 self.MutableTx.Output(a, amount=v, is_dummy=is_dummy)
                 for a, v in output_list],
             is_dummy=is_dummy,
-            time=time,
-            amount=amount,
-            fee_amount=fee_amount)
+            time=time)
