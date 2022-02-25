@@ -9,10 +9,28 @@ BDialog {
     property var tx // TxModel
     property var coin // TxModel
     property int visibleAddressCount: Math.min(4, Math.max(tx.inputList.rowCount(), tx.outputList.rowCount()))
-    //title: _base.tx.name
+    title: qsTr("Transaction is pending...")
 
     padding: _applicationStyle.padding
     contentItem: BInfoLayout {
+        BInfoLabel {
+            text: qsTr("Coin:")
+        }
+        BInfoValue {
+            text: _base.coin.fullName
+        }
+        BInfoSeparator {}
+
+        BInfoLabel {
+            text: qsTr("Transaction ID:")
+        }
+        BInfoValue {
+            placeholderText: qsTr("None")
+            text: _base.tx.name
+        }
+
+        BInfoSeparator {}
+
         BInfoLabel {
             text: qsTr("Height:")
         }
@@ -27,6 +45,16 @@ BDialog {
         BInfoValue {
             text: _base.tx.state.confirmationsHuman
         }
+
+        BInfoSeparator {}
+
+        BInfoLabel {
+            text: qsTr("Amount:")
+        }
+        BAmountInfoValue {
+            amount: _base.tx.amount
+        }
+
         BInfoSeparator {}
 
         BInfoLabel {
@@ -35,6 +63,15 @@ BDialog {
         BAmountInfoValue {
             amount: _base.tx.feeAmount
         }
+        BInfoSeparator {}
+
+        BInfoLabel {
+            text: qsTr("Time:")
+        }
+        BInfoValue {
+            text: _base.tx.state.timeHuman
+        }
+
         BInfoSeparator {}
 
         BTabBarBox {

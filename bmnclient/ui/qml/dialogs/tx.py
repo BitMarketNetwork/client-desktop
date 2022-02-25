@@ -22,4 +22,4 @@ class TxBroadcastPendingDialog(AbstractDialog):
         self._qml_properties["coin"] = self._mtx.coin.model
 
     def onRejected(self) -> None:
-        self._manager.context.exit(0)
+        self._manager.context.emit()

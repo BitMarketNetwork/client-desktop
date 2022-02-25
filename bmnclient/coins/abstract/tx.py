@@ -217,7 +217,10 @@ class _MutableTx(_Tx):
             *,
             version: int,
             lock_time: int,
-            is_dummy: bool = False):
+            is_dummy: bool = False,
+            time: int = -1,
+            amount: int,
+            fee_amount: int):
         # TODO move after super().__init__()
         self._is_dummy = is_dummy
         self._version = version
@@ -228,9 +231,9 @@ class _MutableTx(_Tx):
             coin,
             name="mutable_tx", # TODO
             height=-1,
-            time=-1,
-            amount=0,  # TODO
-            fee_amount=0,  # TODO,
+            time=time,
+            amount=amount,
+            fee_amount=fee_amount,
             is_coinbase=False,
             input_list=input_list,
             output_list=output_list)

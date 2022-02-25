@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from itertools import chain
 from typing import TYPE_CHECKING
+from time import time
 
 from .tx import _MutableTx
 from ..utils import CoinUtils
@@ -283,7 +284,10 @@ class _TxFactory:
             input_list: Sequence[Coin.Tx.Utxo],
             output_list: Sequence[Tuple[Coin.Address, int]],
             *,
-            is_dummy: bool) \
+            is_dummy: bool,
+            time: int = -1,
+            amount: int,
+            fee_amount: int) \
             -> Optional[Coin.TxFactory.MutableTx]:
         raise NotImplementedError
 
@@ -330,7 +334,10 @@ class _TxFactory:
         self._mtx = self._prepare(
             self._selected_utxo_data.list,
             output_list,
-            is_dummy=False)
+            is_dummy=False,
+            time=int(time()),
+            amount=self.receiverAmount,
+            fee_amount=self.feeAmount)
         return self._mtx is not None
 
     def sign(self) -> bool:
@@ -347,6 +354,7 @@ class _TxFactory:
             return False
         if self._change_address is not None:
             self._coin.appendAddress(self._change_address)
+
         mtx = self._mtx
 
         self.clear()
@@ -464,7 +472,7 @@ class _TxFactory:
                     self._dummy_change_address,
                     self._coin.Currency.maxValue))
 
-        mtx = self._prepare(utxo_list, output_list, is_dummy=True)
+        mtx = self._prepare(utxo_list, output_list, is_dummy=True, time=int(time()), amount=self.receiverAmount, fee_amount=self.feeAmount)
         if mtx is None or not mtx.sign():
             return -1, -1
         else:
