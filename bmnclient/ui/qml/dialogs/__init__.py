@@ -12,9 +12,9 @@ from PySide6.QtCore import \
 from ....logger import Logger
 
 if TYPE_CHECKING:
-    from typing import Dict, Final, List, Optional, Union
+    from typing import Any, Dict, Final, List, Optional, Union
     from .. import QmlContext
-    QmlProperties = Dict[str, Union[str, int]]
+    QmlProperties = Dict[str, Any]
 
 
 class AbstractDialog(QObject):

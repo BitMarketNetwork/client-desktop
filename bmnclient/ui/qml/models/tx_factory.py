@@ -354,7 +354,10 @@ class TxFactoryModel(_TxFactoryModel, AbstractModel):
 
     def onBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None:
         super().onBroadcast(mtx)
-        TxBroadcastPendingDialog(self._application.qmlContext.dialogManager, mtx).open()
+        # noinspection PyTypeChecker
+        TxBroadcastPendingDialog(
+            self._application.qmlContext.dialogManager,
+            mtx).open()
         # TODO show pending dialog
 
     def onBroadcastFinished(
