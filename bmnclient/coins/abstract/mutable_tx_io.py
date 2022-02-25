@@ -47,7 +47,7 @@ class _MutableIo(_Io):
 
     @cached_property
     def amountBytes(self) -> bytes:
-        return self._address.coin.Script.integerToBytes(
+        return self._address.Script.integerToBytes(
             self._amount,
             self._AMOUNT_LENGTH,
             safe=True)
@@ -120,7 +120,7 @@ class _MutableInput(_MutableIo):
 
     @cached_property
     def hashTypeBytes(self) -> bytes:
-        return self._address.coin.Script.integerToBytes(
+        return self._address.Script.integerToBytes(
             self._hash_type,
             self._HASH_TYPE_LENGTH,
             safe=True)
@@ -132,7 +132,7 @@ class _MutableInput(_MutableIo):
 
     @cached_property
     def sequenceBytes(self) -> bytes:
-        return self._address.coin.Script.integerToBytes(
+        return self._address.Script.integerToBytes(
             self._sequence,
             self._SEQUENCE_LENGTH,
             safe=True)

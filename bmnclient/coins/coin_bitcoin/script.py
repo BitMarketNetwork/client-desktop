@@ -10,8 +10,8 @@ if TYPE_CHECKING:
     from . import Bitcoin
 
 
-class _Script(Coin.Script):
-    class Type(Coin.Script.Type):
+class _Script(Coin.Address.Script):
+    class Type(Coin.Address.Script.Type):
         P2PK = auto()
         P2PKH = auto()
         P2SH = auto()
@@ -19,7 +19,7 @@ class _Script(Coin.Script):
         P2WPKH = auto()
         P2WSH = auto()
 
-    class OpCode(Coin.Script.OpCode):
+    class OpCode(Coin.Address.Script.OpCode):
         OP_0: Final = 0x00
         OP_PUSHDATA1: Final = 0x4c
         OP_PUSHDATA2: Final = 0x4d

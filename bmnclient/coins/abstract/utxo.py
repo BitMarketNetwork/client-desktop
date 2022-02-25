@@ -22,7 +22,7 @@ class _Utxo(CoinObject):
             height: int,
             index: int,
             amount: int,
-            script_type: Optional[Coin.Script.Type] = None) -> None:
+            script_type: Optional[Coin.Address.Script.Type] = None) -> None:
         super().__init__(coin)
         self._address: Optional[Coin.Address] = None
         self._name: Final = name
@@ -93,5 +93,5 @@ class _Utxo(CoinObject):
         return self._amount
 
     @property
-    def scriptType(self) -> Optional[Coin.Script.Type]:
+    def scriptType(self) -> Optional[Coin.Address.Script.Type]:
         return self._script_type

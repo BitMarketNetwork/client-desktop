@@ -87,9 +87,6 @@ class Coin(CoinObject):
     from .tx_factory import _TxFactory
     TxFactory = _TxFactory
 
-    from .script import _Script
-    Script = _Script
-
     class MempoolCacheItem:
         __slots__ = ("remote_hash", "access_count")
 

@@ -801,7 +801,7 @@ class TestMutableTx(TestCase):
             *,
             private_key: str,
             address_type: Coin.Address.Type,
-            script_type: Coin.Script.Type,
+            script_type: Coin.Address.Script.Type,
             amount: int,
             sequence: int,
             is_dummy: bool = False) -> Coin.TxFactory.MutableTx.Input:
@@ -885,7 +885,7 @@ class TestMutableTx(TestCase):
                     1,
                     private_key="L3jsepcttyuJK3HKezD4qqRKGtwc8d2d1Nw6vsoPDX9cMcUxqqMv", # noqa
                     address_type=self._coin.Address.Type.PUBKEY_HASH,
-                    script_type=self._coin.Script.Type.P2PKH,
+                    script_type=self._coin.Address.Script.Type.P2PKH,
                     amount=83727960,
                     sequence=0xfffffffe,
                     is_dummy=is_dummy)
@@ -950,7 +950,7 @@ class TestMutableTx(TestCase):
                     2,
                     private_key="5KHxtARu5yr1JECrYGEA2YpCPdh1i9ciEgQayAF8kcqApkGzT9s", # noqa
                     address_type=self._coin.Address.Type.PUBKEY_HASH,
-                    script_type=self._coin.Script.Type.P2PKH,
+                    script_type=self._coin.Address.Script.Type.P2PKH,
                     amount=1,
                     sequence=0xfffffffe,
                     is_dummy=is_dummy)
@@ -1011,7 +1011,7 @@ class TestMutableTx(TestCase):
                     0,
                     private_key="bbc27228ddcb9209d7fd6f36b02f7dfa6252af40bb2f1cbc7a557da8027ff866",  # noqa
                     address_type=self._coin.Address.Type.PUBKEY_HASH,
-                    script_type=self._coin.Script.Type.P2PK,
+                    script_type=self._coin.Address.Script.Type.P2PK,
                     amount=625000000,
                     sequence=0xffffffee,
                     is_dummy=is_dummy),
@@ -1021,7 +1021,7 @@ class TestMutableTx(TestCase):
                     1,
                     private_key="619c335025c7f4012e556c2a58b2506e30b8511b53ade95ea316fd8c3286feb9",  # noqa
                     address_type=self._coin.Address.Type.WITNESS_V0_KEY_HASH,
-                    script_type=self._coin.Script.Type.P2WPKH,
+                    script_type=self._coin.Address.Script.Type.P2WPKH,
                     amount=600000000,
                     sequence=0xffffffff,
                     is_dummy=is_dummy),
@@ -1095,7 +1095,7 @@ class TestMutableTx(TestCase):
                     1,
                     private_key="eb696a065ef48a2192da5b28b694f87544b30fae8327c4510137a922f32c6dcf",  # noqa
                     address_type=self._coin.Address.Type.WITNESS_V0_KEY_HASH,
-                    script_type=self._coin.Script.Type.P2SH_P2WPKH,
+                    script_type=self._coin.Address.Script.Type.P2SH_P2WPKH,
                     amount=1000000000,
                     sequence=0xfffffffe,
                     is_dummy=is_dummy)

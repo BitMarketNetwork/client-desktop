@@ -34,7 +34,7 @@ class _TypeValue:
             size: int,
             encoding: Optional[Coin.Address.Encoding],
             is_witness: bool,
-            script_type: Optional[Coin.Script.Type],
+            script_type: Optional[Coin.Address.Script.Type],
             hd_purpose: Optional[int]) -> None:
         self._name: Final = name
         self._version: Final = version
@@ -105,7 +105,7 @@ class _TypeValue:
         return self._is_witness
 
     @property
-    def scriptType(self) -> Optional[Coin.Script.Type]:
+    def scriptType(self) -> Optional[Coin.Address.Script.Type]:
         return self._script_type
 
     @property
@@ -163,6 +163,10 @@ class _Address(CoinObject):
         BECH32 = auto()
 
     Model = _Model
+
+    from .script import _Script
+    Script = _Script
+
     TypeValue = _TypeValue
     Type = Enum
 

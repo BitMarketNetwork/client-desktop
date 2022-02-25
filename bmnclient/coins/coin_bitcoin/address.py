@@ -18,6 +18,8 @@ class _Address(Coin.Address):
     _SCRIPT_HASH_PREFIX_LIST = ("3",)
     _HRP = "bc"
 
+    Script = _Script
+
     class Type(Coin.Address.Type):
         UNKNOWN: Final = Coin.Address.TypeValue(
             name="unknown",

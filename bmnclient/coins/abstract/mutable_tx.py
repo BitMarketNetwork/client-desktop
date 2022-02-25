@@ -79,7 +79,7 @@ class _MutableTx(_Tx):
 
     @property
     def versionBytes(self) -> bytes:
-        return self._coin.Script.integerToBytes(
+        return self._coin.Address.Script.integerToBytes(
             self._version,
             self._VERSION_LENGTH,
             safe=True)
@@ -90,7 +90,7 @@ class _MutableTx(_Tx):
 
     @property
     def lockTimeBytes(self) -> bytes:
-        return self._coin.Script.integerToBytes(
+        return self._coin.Address.Script.integerToBytes(
             self._lock_time,
             self._LOCK_TIME_LENGTH,
             safe=True)

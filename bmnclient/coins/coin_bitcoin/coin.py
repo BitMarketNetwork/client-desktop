@@ -23,9 +23,6 @@ class Bitcoin(Coin):
     from .tx_factory import _TxFactory
     TxFactory = _TxFactory
 
-    from .script import _Script
-    Script = _Script
-
 
 class BitcoinTest(Bitcoin):
     _SHORT_NAME = "btctest"

@@ -32,26 +32,26 @@ class _MutableInput(Coin.TxFactory.MutableTx.Input):
         # For P2WPKH witness program, the scriptCode is
         # 0x1976a914{20-byte-pubkey-hash}88ac.
         if self._utxo.scriptType in (
-                self._utxo.coin.Script.Type.P2WPKH,
-                self._utxo.coin.Script.Type.P2SH_P2WPKH
+                self._utxo.address.Script.Type.P2WPKH,
+                self._utxo.address.Script.Type.P2SH_P2WPKH
         ):
-            script = self._utxo.coin.Script.addressToScript(
+            script = self._utxo.address.Script.addressToScript(
                 self._utxo.address,
-                self._utxo.coin.Script.Type.P2PKH)
+                self._utxo.address.Script.Type.P2PKH)
         else:
-            script = self._utxo.coin.Script.addressToScript(
+            script = self._utxo.address.Script.addressToScript(
                 self._utxo.address,
                 self._utxo.scriptType)
         if not script:
-            return self._utxo.coin.Script.integerToVarInt(0)
+            return self._utxo.address.Script.integerToVarInt(0)
         return (
-                self._utxo.coin.Script.integerToVarInt(len(script))
+                self._utxo.address.Script.integerToVarInt(len(script))
                 + script)
 
     @cached_property
     def utxoIdBytes(self) -> bytes:
         index = (
-                self._utxo.coin.Script.integerToBytes(self._utxo.index, 4)
+                self._utxo.address.Script.integerToBytes(self._utxo.index, 4)
                 or b"\x00" * 4)
         return bytes.fromhex(self._utxo.name)[::-1] + index
 
@@ -71,7 +71,7 @@ class _MutableInput(Coin.TxFactory.MutableTx.Input):
                 public_key_data = b"\x00" * PublicKey.uncompressedSize
             else:
                 public_key_data = b"\x00" * PublicKey.compressedSize
-        script = self._address.coin.Script
+        script = self._address.Script
         try:
             if not self._is_dummy:
                 signature = private_key.sign(hash_)
@@ -138,9 +138,9 @@ class _MutableOutput(Coin.TxFactory.MutableTx.Output):
 
     @cached_property
     def scriptBytes(self) -> bytes:
-        script = self._address.coin.Script.addressToScript(self._address)
+        script = self._address.Script.addressToScript(self._address)
         if not script:
-            return self._address.coin.Script.integerToVarInt(0)
+            return self._address.Script.integerToVarInt(0)
         return (
-                self._address.coin.Script.integerToVarInt(len(script))
+                self._address.Script.integerToVarInt(len(script))
                 + script)

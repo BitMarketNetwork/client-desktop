@@ -52,9 +52,9 @@ class _MutableTx(Coin.TxFactory.MutableTx):
                     return False
             return True
 
-        input_count = self._coin.Script.integerToVarInt(
+        input_count = self._coin.Address.Script.integerToVarInt(
             len(self._input_list))
-        output_count = self._coin.Script.integerToVarInt(
+        output_count = self._coin.Address.Script.integerToVarInt(
             len(self._output_list))
         if not input_count or not output_count:
             return False
@@ -99,7 +99,8 @@ class _MutableTx(Coin.TxFactory.MutableTx):
                     if current_index == other_index:
                         digest.update(other_input.scriptBytes)
                     else:
-                        digest.update(self._coin.Script.integerToVarInt(0))
+                        digest.update(
+                            self._coin.Address.Script.integerToVarInt(0))
                     digest.update(other_input.sequenceBytes)
                 digest.update(output_count)
                 digest.update(output_list)
@@ -113,17 +114,21 @@ class _MutableTx(Coin.TxFactory.MutableTx):
 
     def _raw(self, *, with_witness: bool = True, **_) -> bytes:
         try:
-            input_list = \
-                self._coin.Script.integerToVarInt(len(self._input_list)) \
+            input_list = (
+                self._coin.Address.Script.integerToVarInt(
+                    len(self._input_list))
                 + b"".join(
                     i.utxoIdBytes + i.scriptSigBytes + i.sequenceBytes
                     for i in self._input_list)
+            )
 
-            output_list = \
-                self._coin.Script.integerToVarInt(len(self._output_list)) \
+            output_list = (
+                self._coin.Address.Script.integerToVarInt(
+                    len(self._output_list))
                 + b"".join(
                     o.amountBytes + o.scriptBytes
                     for o in self._output_list)
+            )
 
             if with_witness and self.isWitness:
                 witness_list = b"".join(
