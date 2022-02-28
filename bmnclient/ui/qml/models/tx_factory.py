@@ -358,7 +358,6 @@ class TxFactoryModel(_TxFactoryModel, AbstractModel):
         TxBroadcastPendingDialog(
             self._application.qmlContext.dialogManager,
             mtx).open()
-        # TODO show pending dialog
 
     def onBroadcastFinished(
             self,

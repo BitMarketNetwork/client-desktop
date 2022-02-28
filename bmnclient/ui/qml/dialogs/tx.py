@@ -16,10 +16,7 @@ class TxBroadcastPendingDialog(AbstractDialog):
             self,
             manager: DialogManager,
             mtx: Coin.TxFactory.MutableTx) -> None:
-        super().__init__(manager, mtx)
+        super().__init__(manager)
         self._mtx = mtx
         self._qml_properties["tx"] = self._mtx.model
         self._qml_properties["coin"] = self._mtx.coin.model
-
-    def onRejected(self) -> None:
-        self._manager.context.emit()

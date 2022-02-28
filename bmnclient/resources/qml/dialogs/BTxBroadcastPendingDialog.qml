@@ -3,11 +3,10 @@ import "../application"
 import "../basiccontrols"
 import "../coincontrols"
 
-// TODO python control
 BDialog {
     id: _base
     property var tx // TxModel
-    property var coin // TxModel
+    property var coin // CoinModel
     title: qsTr("Transaction is pending...")
 
     padding: _applicationStyle.padding
@@ -31,23 +30,6 @@ BDialog {
         BInfoSeparator {}
 
         BInfoLabel {
-            text: qsTr("Height:")
-        }
-        BInfoValue {
-            text: _base.tx.state.heightHuman
-        }
-        BInfoSeparator {}
-
-        BInfoLabel {
-            text: qsTr("Confirmations:")
-        }
-        BInfoValue {
-            text: _base.tx.state.confirmationsHuman
-        }
-
-        BInfoSeparator {}
-
-        BInfoLabel {
             text: qsTr("Amount:")
         }
         BAmountInfoValue {
@@ -65,7 +47,7 @@ BDialog {
         BInfoSeparator {}
 
         BInfoLabel {
-            text: qsTr("Time:")
+            text: qsTr("Broadcast time:")
         }
         BInfoValue {
             text: _base.tx.state.timeHuman
