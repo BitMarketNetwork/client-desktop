@@ -65,6 +65,21 @@ class Cursor(_engine.Cursor):
             self._database.logException(e, query)
             raise
 
+    def isTableExists(self, name: str) -> bool:
+        r = self.execute(
+            "SELECT COUNT(*) FROM \"sqlite_master\""
+            " WHERE \"type\" == ? AND \"name\" == ?",
+            ("table", name))
+        return r.fetchone() is not None
+
+    def isColumnExists(self, table_name: str, name: str) -> bool:
+        if not self.isTableExists(table_name):
+            return False
+        for r in self.execute(f"PRAGMA table_info(\"{table_name}\")"):
+            if len(r) > 2 and r[1] == name:
+                return True
+        return False
+
 
 class Connection(_engine.Connection):
     def __init__(self, *args, database: Database, **kwargs) -> None:
@@ -243,7 +258,7 @@ class Database:
     def transaction(
             self,
             *,
-            suppress_exceptions: bool = False,
+            suppress_exceptions: bool = False
     ) -> Generator[Optional[Cursor], None, None]:
         if not self.isOpen or self.__in_transaction:
             if suppress_exceptions:
