@@ -444,6 +444,17 @@ class AddressListTable(AbstractTable, name="addresses"):
         (Column.COIN_ROW_ID, Column.NAME),
     )
 
+    def upgrade(self, cursor: Cursor, old_version: int) -> None:
+        # don't use identifiers from actual class!
+        if old_version <= 1:
+            self._upgrade_v1(cursor)
+
+    @staticmethod
+    def _upgrade_v1(cursor: Cursor) -> None:
+        if cursor.isColumnExists("addresses", "amount"):
+            cursor.execute(
+                "ALTER TABLE \"addresses\" RENAME \"amount\" TO \"balance\"")
+
     # TODO dynamic interface with coin.txList, address.txList
     def deserializeAll(self, cursor: Cursor, coin: Coin) -> bool:
         assert coin.rowId > 0

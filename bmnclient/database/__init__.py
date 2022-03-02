@@ -98,7 +98,7 @@ class Connection(_engine.Connection):
 
 
 class Database:
-    _VERSION: Final = 1
+    _VERSION: Final = 2
 
     # https://sqlite.org/pragma.html
     _PRAGMA_LIST: Final = (
