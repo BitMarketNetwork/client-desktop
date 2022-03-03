@@ -54,6 +54,15 @@ BPane {
 
         BDialogSeparator {}
 
+        BDialogPromptLabel {
+            text: qsTr("Blockchain explorer:")
+        }
+        BDialogInputComboBox {
+            stateModel: BBackend.settings.blockchainExplorer
+        }
+
+        BDialogSeparator {}
+
         BDialogInputButton {
             BLayout.columnSpan: parent.columns
             BLayout.alignment:

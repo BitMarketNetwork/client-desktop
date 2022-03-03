@@ -36,6 +36,22 @@ class FiatRateServiceModel(AbstractTupleStateModel):
         return False
 
 
+class BlockchainExplorerModel(AbstractTupleStateModel):
+    def __init__(self, application: QmlApplication) -> None:
+        super().__init__(
+            application,
+            tuple(
+                {"name": v.name, "fullName": v.fullName}
+                for v in application.blockchainExplorerList
+            ))
+
+    def _getCurrentItemName(self) -> str:
+        return self._application.blockchainExplorerList.current.name
+
+    def _setCurrentItemName(self, value: str) -> bool:
+        return self._application.blockchainExplorerList.setCurrent(value)
+
+
 class FiatCurrencyModel(AbstractTupleStateModel):
     def __init__(self, application: QmlApplication) -> None:
         super().__init__(
@@ -184,6 +200,7 @@ class SettingsModel(AbstractModel):
 
         self._fiat_rate_service_model = FiatRateServiceModel(self._application)
         self._fiat_currency_service_model = FiatCurrencyModel(self._application)
+        self._blockchain_explorer_model = BlockchainExplorerModel(self._application)
         self._language_model = LanguageModel(self._application)
         self._theme_model = ThemeModel(self._application)
         self._font_model = FontModel(self._application)
@@ -196,6 +213,10 @@ class SettingsModel(AbstractModel):
     @QProperty(QObject, constant=True)
     def fiatCurrency(self) -> FiatCurrencyModel:
         return self._fiat_currency_service_model
+
+    @QProperty(QObject, constant=True)
+    def blockchainExplorer(self) -> BlockchainExplorerModel:
+        return self._blockchain_explorer_model
 
     @QProperty(QObject, constant=True)
     def language(self) -> LanguageModel:
