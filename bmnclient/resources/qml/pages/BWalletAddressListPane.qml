@@ -7,6 +7,8 @@ BPane {
     property string title: qsTr("Addresses (%1)").arg(_list.model.rowCountHuman)
     property var coin // CoinModel
 
+    signal addressTransactionHistory(var address)
+
     contentItem: BAddressListView {
         id: _list
         model: _base.coin.addressList
@@ -35,6 +37,12 @@ BPane {
             text: qsTr("Spend from")
             onTriggered: {
                 _contextMenu.address.state.isTxInput = true
+            }
+        }
+        BMenuItem {
+            text: qsTr("Transaction history")
+            onTriggered: {
+                _base.addressTransactionHistory(_contextMenu.address)
             }
         }
         /*BMenuItem {
