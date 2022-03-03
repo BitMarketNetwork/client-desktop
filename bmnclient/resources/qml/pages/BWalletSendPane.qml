@@ -116,6 +116,17 @@ BPane {
             }
         }
 
+        BDialogPromptLabel {
+            text: qsTr("Use change address:")
+        }
+        BDialogInputSwitch {
+            BLayout.columnSpan: parent.columns - 1
+            // TODO checked
+            onCheckedChanged: {
+                // TODO
+            }
+        }
+
         BDialogSeparator {}
 
         BDialogPromptLabel {
