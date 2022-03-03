@@ -1,3 +1,4 @@
+import QtQuick
 import "../basiccontrols"
 
 BControl {
@@ -18,6 +19,17 @@ BControl {
         }
         BAmountLabel {
             amount: _base.coin.balance
+
+            MouseArea {
+                anchors.fill: parent
+                onDoubleClicked: {
+                    BBackend.clipboard.text = "%1 %2 / %3 %4"
+                                                .arg(coin.amount.valueHuman)
+                                                .arg(coin.amount.unit)
+                                                .arg(coin.amount.fiatValueHuman)
+                                                .arg(coin.amount.fiatUnit)
+                }
+            }
         }
         BContextMenuToolButton {
             font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.huge
