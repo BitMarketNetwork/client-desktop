@@ -5,9 +5,9 @@ BPopup {
     id: _base
     focus: false
     closePolicy: BPopup.NoAutoClose
-    
+
     property alias text: _contentLabel.text
-    
+
     Timer {
         id: timer
         interval: 3000
