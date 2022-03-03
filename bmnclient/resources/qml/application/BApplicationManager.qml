@@ -23,6 +23,26 @@ QtObject {
         }
     }
 
+    property Connections backendClipboardManager: Connections {
+        target: BBackend.clipboard
+
+        function onStateChanged() {
+            let notificaion = createObject(
+                _applicationWindow, 
+                "../basiccontrols/BNotification.qml",
+                { "text": "Copied to clipboard" })
+
+            notificaion.x = _applicationWindow.width / 2 - notificaion.width / 2
+
+            if (notificaion !== null) {
+                notificaion.onClosed.connect(function () {
+                    Qt.callLater(notificaion.destroy)
+                })
+                notificaion.open()
+            }
+        }
+    }
+
     function imagePath(path) {
         return Qt.resolvedUrl("../../images/" + path)
     }
