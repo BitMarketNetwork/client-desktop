@@ -62,7 +62,7 @@ class AbstractBlockchainExplorer:
             return False
 
         values = {
-            k: NetworkUtils.encodeUrlString(v)
+            k: NetworkUtils.quoteUrlQueryItem(v)
             for k, v in values.items()
         }
         url = url.format(**values)

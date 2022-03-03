@@ -17,12 +17,16 @@ class NetworkUtils(NotImplementedInstance):
         return "[{:s}]:{:d}".format(host, port)
 
     @staticmethod
-    def encodeUrlString(source: str) -> Optional[str]:
+    def quoteUrlQueryItem(source: str) -> Optional[str]:
         try:
-            return quote_plus(
-                str(source),
-                encoding="utf-8",
-                errors="strict")
+            return quote_plus(str(source), errors="strict")
+        except UnicodeError:
+            return None
+
+    @staticmethod
+    def quoteUrlPathItem(item: str):
+        try:
+            return quote(item, safe="", errors="strict")
         except UnicodeError:
             return None
 
@@ -54,7 +58,6 @@ class NetworkUtils(NotImplementedInstance):
                     item = quote(
                         item,
                         safe="",
-                        encoding="utf-8",
                         errors="strict")
                 except UnicodeError:
                     return None

@@ -192,8 +192,8 @@ class AbstractQuery:
             if not isinstance(k, str) or not isinstance(v, (str, int)):
                 bad_argument = True
             else:
-                k = NetworkUtils.encodeUrlString(str(k))
-                v = NetworkUtils.encodeUrlString(str(v))
+                k = NetworkUtils.quoteUrlQueryItem(str(k))
+                v = NetworkUtils.quoteUrlQueryItem(str(v))
                 if k is None or v is None:
                     bad_argument = True
             if bad_argument:
