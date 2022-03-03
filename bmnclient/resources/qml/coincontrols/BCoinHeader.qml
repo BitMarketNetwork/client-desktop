@@ -24,10 +24,10 @@ BControl {
                 anchors.fill: parent
                 onDoubleClicked: {
                     BBackend.clipboard.text = "%1 %2 / %3 %4"
-                                                .arg(coin.amount.valueHuman)
-                                                .arg(coin.amount.unit)
-                                                .arg(coin.amount.fiatValueHuman)
-                                                .arg(coin.amount.fiatUnit)
+                                                .arg(_base.coin.balance.valueHuman)
+                                                .arg(_base.coin.balance.unit)
+                                                .arg(_base.coin.balance.fiatValueHuman)
+                                                .arg(_base.coin.balance.fiatUnit)
                 }
             }
         }
