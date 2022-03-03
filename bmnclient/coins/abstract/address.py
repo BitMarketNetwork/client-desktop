@@ -1,20 +1,21 @@
 from __future__ import annotations
 
-from enum import auto, Enum
+from enum import Enum, auto
 from typing import TYPE_CHECKING
 
+from .object import CoinObject, CoinObjectModel
 from ..hd import HdNode
 from ...crypto.secp256k1 import PrivateKey, PublicKey
 from ...utils.class_property import classproperty
-from ...utils.serialize import Serializable, serializable
+from ...utils.serialize import serializable
 
 if TYPE_CHECKING:
-    from typing import Any, Iterable, List, Optional, Union
-    from .coin import AbstractCoin
+    from typing import Any, Final, List, Optional, Union
+    from .coin import Coin
     from ...utils.serialize import DeserializedData, DeserializedDict
 
 
-class _AbstractAddressTypeValue:
+class _TypeValue:
     __slots__ = (
         "_name",
         "_version",
@@ -31,19 +32,19 @@ class _AbstractAddressTypeValue:
             name: str,
             version: int,
             size: int,
-            encoding: Optional[AbstractCoin.Address.Encoding],
+            encoding: Optional[Coin.Address.Encoding],
             is_witness: bool,
-            script_type: Optional[AbstractCoin.Script.Type],
+            script_type: Optional[Coin.Address.Script.Type],
             hd_purpose: Optional[int]) -> None:
-        self._name = name
-        self._version = version
-        self._size = size
-        self._encoding = encoding
-        self._is_witness = is_witness
-        self._script_type = script_type
-        self._hd_purpose = hd_purpose
+        self._name: Final = name
+        self._version: Final = version
+        self._size: Final = size
+        self._encoding: Final = encoding
+        self._is_witness: Final = is_witness
+        self._script_type: Final = script_type
+        self._hd_purpose: Final = hd_purpose
 
-    def __eq__(self, other: AbstractCoin.Address.TypeValue) -> bool:
+    def __eq__(self, other: _TypeValue) -> bool:
         return (
                 isinstance(other, self.__class__)
                 and self._name == other._name
@@ -63,7 +64,7 @@ class _AbstractAddressTypeValue:
             self._script_type,
             self._hd_purpose))
 
-    def copy(self, **kwargs) -> AbstractCoin.Address.TypeValue:
+    def copy(self, **kwargs) -> _TypeValue:
         return self.__class__(
             name=kwargs.get("name", self._name),
             version=kwargs.get("version", self._version),
@@ -96,7 +97,7 @@ class _AbstractAddressTypeValue:
         return self._size
 
     @property
-    def encoding(self) -> Optional[AbstractCoin.Address.Encoding]:
+    def encoding(self) -> Optional[Coin.Address.Encoding]:
         return self._encoding
 
     @property
@@ -104,7 +105,7 @@ class _AbstractAddressTypeValue:
         return self._is_witness
 
     @property
-    def scriptType(self) -> Optional[AbstractCoin.Script.Type]:
+    def scriptType(self) -> Optional[Coin.Address.Script.Type]:
         return self._script_type
 
     @property
@@ -112,16 +113,12 @@ class _AbstractAddressTypeValue:
         return self._hd_purpose
 
 
-class _AbstractAddressInterface:
-    def __init__(
-            self,
-            *args,
-            address: AbstractCoin.Address,
-            **kwargs) -> None:
+class _Model(CoinObjectModel):
+    def __init__(self, *args, address: Coin.Address, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._address = address
 
-    def afterSetAmount(self) -> None:
+    def afterSetBalance(self) -> None:
         raise NotImplementedError
 
     def afterSetLabel(self) -> None:
@@ -136,10 +133,10 @@ class _AbstractAddressInterface:
     def afterSetTxCount(self) -> None:
         raise NotImplementedError
 
-    def beforeAppendTx(self, tx: AbstractCoin.Tx) -> None:
+    def beforeAppendTx(self, tx: Coin.Tx) -> None:
         raise NotImplementedError
 
-    def afterAppendTx(self, tx: AbstractCoin.Tx) -> None:
+    def afterAppendTx(self, tx: Coin.Tx) -> None:
         raise NotImplementedError
 
     def afterSetUtxoList(self) -> None:
@@ -152,7 +149,9 @@ class _AbstractAddressInterface:
         raise NotImplementedError
 
 
-class _AbstractAddress(Serializable):
+class _Address(CoinObject):
+    __initialized = False
+
     _NULLDATA_NAME = "NULL_DATA"
     _HRP = "hrp"
 
@@ -163,49 +162,52 @@ class _AbstractAddress(Serializable):
         BASE58 = auto()
         BECH32 = auto()
 
-    Interface = _AbstractAddressInterface
-    TypeValue = _AbstractAddressTypeValue
+    Model = _Model
+
+    from .script import _Script
+    Script = _Script
+
+    TypeValue = _TypeValue
     Type = Enum
 
-    def __init__(
-            self,
-            coin: AbstractCoin,
-            *,
-            row_id: int = -1,
-            name: Optional[str],
-            type_: AbstractCoin.Address.Type,
-            data: bytes = b"",
-            key: Optional[KeyType] = None,
-            amount: int = 0,
-            tx_count: int = 0,
-            label: str = "",
-            comment: str = "",
-            is_tx_input: bool = False,
-            tx_list: Optional[Iterable[AbstractCoin.Tx]] = None,
-            utxo_list: Optional[Iterable[AbstractCoin.Tx.Utxo]] = None,
-            history_first_offset: str = "",
-            history_last_offset: str = "") -> None:
-        super().__init__(row_id=row_id)
+    def __new__(cls, coin: Coin, *args, **kwargs) -> _Address:
+        # noinspection PyUnresolvedReferences
+        if kwargs.get("type_") == cls.Type.UNKNOWN or not kwargs.get("name"):
+            return super(_Address, cls).__new__(cls)
 
-        self._coin = coin
-        self._name = name or self._NULLDATA_NAME
+        heap = coin.weakValueDictionary("address_heap")
+        address = heap.get(kwargs["name"])
+        if address is None:
+            address = super(_Address, cls).__new__(cls)
+        heap[kwargs["name"]] = address
+        return address
+
+    def __init__(self, coin: Coin, *, row_id: int = -1, **kwargs) -> None:
+        if self.__initialized:
+            assert self._coin is coin
+            self.__update__(**kwargs)
+            return
+        self.__initialized = True
+
+        super().__init__(coin, row_id=row_id)
+
         self.__hash: Optional[bytes] = None
-        self._type = type_
-        self._data = data
-        self._key = key
-        self._amount = amount
-        self._label = label
-        self._comment = comment
-        self._is_tx_input = bool(is_tx_input)
-        self._tx_count = tx_count  # not linked with self._tx_list
 
-        self._tx_list = (
-            [] if tx_list is None else list(tx_list)
-        )
-        self._utxo_list = (
-            [] if tx_list is None else list(utxo_list)
-        )
+        self._name: Final[str] = kwargs.get("name") or self._NULLDATA_NAME
+        self._type: Final[_Address.Type] = kwargs["type_"]
+        self._data: Final[bytes] = kwargs.get("data", b"")
+        self._key: Optional[_Address.KeyType] = kwargs.get("key", None)
+        self._balance: int = kwargs.get("balance", 0)
+        self._label: str = kwargs.get("label", "")
+        self._comment: str = kwargs.get("comment", "")
+        self._is_tx_input = bool(kwargs.get("is_tx_input", False))
 
+        self._tx_count: int = kwargs.get("tx_count", 0)
+        self._tx_list: List[Coin.Tx] = list(kwargs.get("tx_list", []))
+        self._utxo_list: List[Coin.Tx.Utxo] = list(kwargs.get("utxo_list", []))
+
+        history_first_offset: str = kwargs.get("history_first_offset", "")
+        history_last_offset: str = kwargs.get("history_last_offset", "")
         if history_first_offset and history_last_offset:
             self._history_first_offset = history_first_offset
             self._history_last_offset = history_last_offset
@@ -213,20 +215,16 @@ class _AbstractAddress(Serializable):
             self._history_first_offset = ""
             self._history_last_offset = ""
 
-        self._model: Optional[AbstractCoin.Address.Interface] = \
-            self._coin.model_factory(self)
-
-    def __eq__(self, other: AbstractCoin.Address) -> bool:
+    def __eq__(self, other: _Address) -> bool:
         return (
-                isinstance(other, self.__class__)
-                and self._coin == other.coin
+                super().__eq__(other)
                 and self._name == other.name
                 and self._type == other._type
         )
 
     def __hash__(self) -> int:
         return hash((
-            self.coin,
+            super().__hash__(),
             self._name,
             self._type
         ))
@@ -242,27 +240,31 @@ class _AbstractAddress(Serializable):
             self,
             key: str,
             value: Any,
+            *,
+            allow_hd_path: bool = True,
             **options) -> DeserializedData:
         if key == "key":
-            return self.exportKey(allow_hd_path=options["allow_hd_path"])
+            return self.exportKey(allow_hd_path=allow_hd_path)
+        if key == "type":
+            return value.value.name
         return super()._serializeProperty(key, value, **options)
-
-    @classmethod
-    def deserialize(
-            cls,
-            source_data: DeserializedDict,
-            coin: Optional[AbstractCoin] = None,
-            **options) -> Optional[AbstractCoin.Address]:
-        assert coin is not None
-        return super().deserialize(source_data, coin, **options)
 
     @classmethod
     def _deserializeProperty(
             cls,
+            self: Optional[_Address],
             key: str,
             value: DeserializedData,
-            coin: Optional[AbstractCoin] = None,
+            coin: Optional[Coin] = None,
             **options) -> Any:
+        if coin is None:
+            coin = self._coin
+        if key == "type":
+            for t in cls.Type:
+                if value == t.value.name:
+                    return t
+            # noinspection PyUnresolvedReferences
+            return cls.Type.UNKNOWN
         if isinstance(value, str) and key == "key":
             return cls.importKey(coin, value)
         if key == "tx_list":
@@ -275,44 +277,16 @@ class _AbstractAddress(Serializable):
                 return coin.Tx.Utxo.deserialize(value, coin)
             elif isinstance(value, coin.Tx.Utxo):
                 return value
-        return super()._deserializeProperty(key, value, coin, **options)
-
-    @classmethod
-    def _deserializeFactory(
-            cls,
-            coin: AbstractCoin,
-            **kwargs) -> Optional[AbstractCoin.Address]:
-        return cls.decode(coin, **kwargs)
+        return super()._deserializeProperty(self, key, value, coin, **options)
 
     @classproperty
     def hrp(cls) -> str:  # noqa
         return cls._HRP
 
-    @property
-    def model(self) -> Optional[AbstractCoin.Address.Interface]:
-        return self._model
-
-    @property
-    def coin(self) -> AbstractCoin:
-        return self._coin
-
-    @classmethod
-    def create(
-            cls,
-            coin: AbstractCoin,
-            *,
-            type_: AbstractCoin.Address.Type,
-            key: KeyType,
-            **kwargs) -> Optional[AbstractCoin.Address]:
-        raise NotImplementedError
-
     @serializable
     @property
     def name(self) -> str:
         return self._name
-
-    def _deriveHash(self) -> bytes:
-        raise NotImplementedError
 
     @property
     def hash(self) -> bytes:
@@ -320,29 +294,47 @@ class _AbstractAddress(Serializable):
             self.__hash = self._deriveHash()
         return self.__hash
 
+    def _deriveHash(self) -> bytes:
+        raise NotImplementedError
+
+    @serializable
     @property
-    def type(self) -> AbstractCoin.Address.Type:
+    def type(self) -> _Address.Type:
         return self._type
 
     @classmethod
-    def decode(
+    def create(
             cls,
-            coin: AbstractCoin,
+            coin: Coin,
+            *,
+            type_: _Address.Type,
+            key: KeyType,
+            **kwargs) -> Optional[_Address]:
+        return cls(coin, type_=type_, key=key, **kwargs)
+
+    @classmethod
+    def createFromName(
+            cls,
+            coin: Coin,
             *,
             name: str,
-            **kwargs) -> Optional[AbstractCoin.Address]:
-        raise NotImplementedError
+            **kwargs) -> Optional[_Address]:
+        return cls(coin, name=name, **kwargs)
 
     @classmethod
     def createNullData(
             cls,
-            coin: AbstractCoin,
-            **kwargs) -> AbstractCoin.Address:
-        raise NotImplementedError
+            coin: Coin,
+            *,
+            name: Optional[str] = None,
+            **kwargs) -> _Address:
+        # noinspection PyUnresolvedReferences
+        return cls(coin, name=name, type_=cls.Type.UNKNOWN, **kwargs)
 
     @property
     def isNullData(self) -> bool:
-        raise NotImplementedError
+        # noinspection PyUnresolvedReferences
+        return self._type == self.Type.UNKNOWN
 
     @property
     def data(self) -> bytes:
@@ -377,6 +369,10 @@ class _AbstractAddress(Serializable):
     def key(self) -> Optional[KeyType]:
         return self._key
 
+    @key.setter
+    def key(self, value: Optional[KeyType]) -> None:
+        self._key = value
+
     def exportKey(self, *, allow_hd_path: bool = False) -> Optional[str]:
         if isinstance(self._key, HdNode):
             if allow_hd_path and self._key.isFullPath:
@@ -403,7 +399,7 @@ class _AbstractAddress(Serializable):
         return value
 
     @classmethod
-    def importKey(cls, coin: AbstractCoin, value: str) -> Optional[KeyType]:
+    def importKey(cls, coin: Coin, value: str) -> Optional[KeyType]:
         if not value:
             return None
 
@@ -450,16 +446,15 @@ class _AbstractAddress(Serializable):
 
     @serializable
     @property
-    def amount(self) -> int:
-        return self._amount
+    def balance(self) -> int:
+        return self._balance
 
-    @amount.setter
-    def amount(self, value: int) -> None:
-        if self._amount != value:
-            self._amount = value
-            if self._model:
-                self._model.afterSetAmount()
-            self._coin.updateAmount()
+    @balance.setter
+    def balance(self, value: int) -> None:
+        if self._balance != value:
+            self._balance = value
+            self._callModel("afterSetBalance")
+            self._coin.updateBalance()
 
     @serializable
     @property
@@ -470,8 +465,7 @@ class _AbstractAddress(Serializable):
     def label(self, value: str) -> None:
         if self._label != value:
             self._label = value
-            if self._model:
-                self._model.afterSetLabel()
+            self._callModel("afterSetLabel")
 
     @serializable
     @property
@@ -482,8 +476,7 @@ class _AbstractAddress(Serializable):
     def comment(self, value: str) -> None:
         if self._comment != value:
             self._comment = value
-            if self._model:
-                self._model.afterSetComment()
+            self._callModel("afterSetComment")
 
     @serializable
     @property
@@ -494,8 +487,7 @@ class _AbstractAddress(Serializable):
     def isTxInput(self, value: bool) -> None:
         if self._is_tx_input != value:
             self._is_tx_input = value
-            if self._model:
-                self._model.afterSetIsTxInput()
+            self._callModel("afterSetIsTxInput")
 
     @property
     def isReadOnly(self) -> bool:
@@ -510,15 +502,14 @@ class _AbstractAddress(Serializable):
     def txCount(self, value: int) -> None:
         if self._tx_count != value:
             self._tx_count = value
-            if self._model:
-                self._model.afterSetTxCount()
+            self._callModel("afterSetTxCount")
 
     @serializable
     @property
-    def txList(self) -> List[AbstractCoin.Tx]:
+    def txList(self) -> List[Coin.Tx]:
         return self._tx_list
 
-    def appendTx(self, tx: AbstractCoin.Tx) -> bool:
+    def appendTx(self, tx: Coin.Tx) -> bool:
         for etx in self._tx_list:
             if tx.name != etx.name:
                 continue
@@ -529,20 +520,18 @@ class _AbstractAddress(Serializable):
                 return True
             return False
 
-        if self._model:
-            self._model.beforeAppendTx(tx)
+        self._callModel("beforeAppendTx", tx)
         self._tx_list.append(tx)
-        if self._model:
-            self._model.afterAppendTx(tx)
+        self._callModel("afterAppendTx", tx)
         return True
 
     @serializable
     @property
-    def utxoList(self) -> List[AbstractCoin.Tx.Utxo]:
+    def utxoList(self) -> List[Coin.Tx.Utxo]:
         return self._utxo_list
 
     @utxoList.setter
-    def utxoList(self, utxo_list: List[AbstractCoin.Tx.Utxo]) -> None:
+    def utxoList(self, utxo_list: List[Coin.Tx.Utxo]) -> None:
         if self._utxo_list == utxo_list:
             return
 
@@ -550,11 +539,10 @@ class _AbstractAddress(Serializable):
             utxo.address = self
         self._utxo_list = utxo_list
 
-        if self._model:
-            self._model.afterSetUtxoList()
+        self._callModel("afterSetUtxoList")
         self._coin.updateUtxoList()
 
-        self.amount = sum(u.amount for u in self._utxo_list)
+        self.balance = sum(u.amount for u in self._utxo_list)
 
     @serializable
     @property
@@ -568,8 +556,7 @@ class _AbstractAddress(Serializable):
                 self._clearHistoryOffsets()
             else:
                 self._history_first_offset = value
-                if self._model:
-                    self._model.afterSetHistoryFirstOffset()
+                self._callModel("afterSetHistoryFirstOffset")
 
     @serializable
     @property
@@ -583,12 +570,10 @@ class _AbstractAddress(Serializable):
                 self._clearHistoryOffsets()
             else:
                 self._history_last_offset = value
-                if self._model:
-                    self._model.afterSetHistoryLastOffset()
+                self._callModel("afterSetHistoryLastOffset")
 
     def _clearHistoryOffsets(self) -> None:
         self._history_first_offset = ""
         self._history_last_offset = ""
-        if self._model:
-            self._model.afterSetHistoryFirstOffset()
-            self._model.afterSetHistoryLastOffset()
+        self._callModel("afterSetHistoryFirstOffset")
+        self._callModel("afterSetHistoryLastOffset")

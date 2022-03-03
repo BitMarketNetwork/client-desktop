@@ -11,19 +11,19 @@ from PySide6.QtCore import \
 from . import AbstractCoinStateModel, AbstractModel, ValidStatus
 from .amount import AbstractAmountInputModel, AbstractAmountModel
 from .tx import TxIoListModel
-from ....coin_interfaces import TxFactoryInterface
-
+from ....coin_models import TxFactoryModel as _TxFactoryModel
+from ..dialogs.tx import TxBroadcastPendingDialog
 if TYPE_CHECKING:
     from typing import Optional, Sequence
     from .. import QmlApplication
-    from ....coins.abstract.coin import AbstractCoin
+    from ....coins.abstract import Coin
 
 
 class AbstractTxFactoryStateModel(AbstractCoinStateModel):
     def __init__(
             self,
             application: QmlApplication,
-            factory: AbstractCoin.TxFactory) -> None:
+            factory: Coin.TxFactory) -> None:
         super().__init__(application, factory.coin)
         self._factory = factory
 
@@ -50,7 +50,7 @@ class AbstractTxFactoryAmountModel(AbstractAmountModel):
     def __init__(
             self,
             application: QmlApplication,
-            factory: AbstractCoin.TxFactory) -> None:
+            factory: Coin.TxFactory) -> None:
         super().__init__(application, factory.coin)
         self._factory = factory
 
@@ -62,7 +62,7 @@ class AbstractTxFactoryAmountInputModel(AbstractAmountInputModel):
     def __init__(
             self,
             application: QmlApplication,
-            factory: AbstractCoin.TxFactory) -> None:
+            factory: Coin.TxFactory) -> None:
         super().__init__(application, factory.coin)
         self._factory = factory
 
@@ -167,7 +167,7 @@ class TxFactoryReceiverModel(AbstractTxFactoryStateModel):
     def __init__(
             self,
             application: QmlApplication,
-            factory: AbstractCoin.TxFactory) -> None:
+            factory: Coin.TxFactory) -> None:
         super().__init__(application, factory)
         self._first_use = True
 
@@ -237,13 +237,13 @@ class TxFactorySourceListModel(TxIoListModel):
             self.__stateChanged.emit()
 
 
-class TxFactoryModel(TxFactoryInterface, AbstractModel):
+class TxFactoryModel(_TxFactoryModel, AbstractModel):
     __stateChanged = QSignal()
 
     def __init__(
             self,
             application: QmlApplication,
-            factory: AbstractCoin.TxFactory) -> None:
+            factory: Coin.TxFactory) -> None:
         super().__init__(
             application,
             query_scheduler=application.networkQueryScheduler,
@@ -352,13 +352,16 @@ class TxFactoryModel(TxFactoryInterface, AbstractModel):
     def afterSetReceiverAddress(self) -> None:
         self._receiver.update()
 
-    def onBroadcast(self, mtx: AbstractCoin.TxFactory.MutableTx) -> None:
+    def onBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None:
         super().onBroadcast(mtx)
-        # TODO show pending dialog
+        # noinspection PyTypeChecker
+        TxBroadcastPendingDialog(
+            self._application.qmlContext.dialogManager,
+            mtx).open()
 
     def onBroadcastFinished(
             self,
             error_code: int,
-            mtx: AbstractCoin.TxFactory.MutableTx) -> None:
+            mtx: Coin.TxFactory.MutableTx) -> None:
         super().onBroadcastFinished(error_code, mtx)
         # TODO show finished message

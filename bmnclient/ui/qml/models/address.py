@@ -3,25 +3,25 @@ from __future__ import annotations
 from enum import auto
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    Property as QProperty, \
-    QObject, \
-    Signal as QSignal, \
-    Slot as QSlot
+from PySide6.QtCore import (
+    Property as QProperty,
+    QObject,
+    Signal as QSignal,
+    Slot as QSlot)
 
 from . import AbstractCoinStateModel, AbstractModel
 from .amount import AbstractAmountModel
-from .list import \
-    AbstractListModel, \
-    AbstractListSortedModel, \
-    RoleEnum
-from ....coin_interfaces import AddressInterface
+from .list import (
+    AbstractListModel,
+    AbstractListSortedModel,
+    RoleEnum)
+from ....coin_models import AddressModel as _AddressModel
 
 if TYPE_CHECKING:
     from typing import Final, Optional
     from .tx import TxListModel, TxListSortedModel
     from .. import QmlApplication
-    from ....coins.abstract.coin import AbstractCoin
+    from ....coins.abstract import Coin
 
 _TX_NOTIFIED_LIST = []  # TODO tmp
 
@@ -30,16 +30,16 @@ class AbstractAddressStateModel(AbstractCoinStateModel):
     def __init__(
             self,
             application: QmlApplication,
-            address: AbstractCoin.Address) -> None:
+            address: Coin.Address) -> None:
         super().__init__(application, address.coin)
         self._address = address
 
 
-class AbstractAddressAmountModel(AbstractAmountModel):
+class AbstractAddressBalanceModel(AbstractAmountModel):
     def __init__(
             self,
             application: QmlApplication,
-            address: AbstractCoin.Address) -> None:
+            address: Coin.Address) -> None:
         super().__init__(application, address.coin)
         self._address = address
 
@@ -74,34 +74,32 @@ class AddressStateModel(AbstractAddressStateModel):
             self._coin.txFactory.setInputAddressName(self._address.name)
 
 
-class AddressAmountModel(AbstractAddressAmountModel):
+class AddressBalanceModel(AbstractAddressBalanceModel):
     def update(self) -> None:
         super().update()
         for tx in self._address.txList:
-            # noinspection PyUnresolvedReferences
             tx.model.amount.update()
-            # noinspection PyUnresolvedReferences
             tx.model.feeAmount.update()
 
     def _getValue(self) -> Optional[int]:
-        return self._address.amount
+        return self._address.balance
 
 
-class AddressModel(AddressInterface, AbstractModel):
+class AddressModel(_AddressModel, AbstractModel):
     def __init__(
             self,
             application: QmlApplication,
-            address: AbstractCoin.Address) -> None:
+            address: Coin.Address) -> None:
         super().__init__(
             application,
             query_scheduler=application.networkQueryScheduler,
             database=application.database,
             address=address)
 
-        self._amount_model = AddressAmountModel(
+        self._balance_model = AddressBalanceModel(
             self._application,
             self._address)
-        self.connectModelUpdate(self._amount_model)
+        self.connectModelUpdate(self._balance_model)
 
         self._state_model = AddressStateModel(
             self._application,
@@ -118,8 +116,8 @@ class AddressModel(AddressInterface, AbstractModel):
         return self._address.name
 
     @QProperty(QObject, constant=True)
-    def amount(self) -> AddressAmountModel:
-        return self._amount_model
+    def balance(self) -> AddressBalanceModel:
+        return self._balance_model
 
     @QProperty(QObject, constant=True)
     def state(self) -> AddressStateModel:
@@ -137,9 +135,9 @@ class AddressModel(AddressInterface, AbstractModel):
             self._application,
             self._tx_list_model)
 
-    def afterSetAmount(self) -> None:
-        self._amount_model.update()
-        super().afterSetAmount()
+    def afterSetBalance(self) -> None:
+        self._balance_model.update()
+        super().afterSetBalance()
 
     def afterSetLabel(self) -> None:
         self._state_model.update()
@@ -156,11 +154,11 @@ class AddressModel(AddressInterface, AbstractModel):
     def afterSetTxCount(self) -> None:
         super().afterSetTxCount()
 
-    def beforeAppendTx(self, tx: AbstractCoin.Tx) -> None:
+    def beforeAppendTx(self, tx: Coin.Tx) -> None:
         self._tx_list_model.lock(self._tx_list_model.lockInsertRows())
         super().beforeAppendTx(tx)
 
-    def afterAppendTx(self, tx: AbstractCoin.Tx) -> None:
+    def afterAppendTx(self, tx: Coin.Tx) -> None:
         global _TX_NOTIFIED_LIST
         self._tx_list_model.unlock()
 
@@ -191,7 +189,7 @@ class AddressModel(AddressInterface, AbstractModel):
 class AddressListModel(AbstractListModel):
     class Role(RoleEnum):
         NAME: Final = auto()
-        AMOUNT: Final = auto()
+        BALANCE: Final = auto()
         STATE: Final = auto()
         TX_LIST: Final = auto()
 
@@ -199,9 +197,9 @@ class AddressListModel(AbstractListModel):
         Role.NAME: (
             b"name",
             lambda a: a.model.name),
-        Role.AMOUNT: (
-            b"amount",
-            lambda a: a.model.amount),
+        Role.BALANCE: (
+            b"balance",
+            lambda a: a.model.balance),
         Role.STATE: (
             b"state",
             lambda a: a.model.state),

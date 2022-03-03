@@ -20,7 +20,7 @@ if TYPE_CHECKING:
         Union
     )
     from . import Cursor, Database
-    from ..coins.abstract.coin import AbstractCoin
+    from ..coins.abstract import Coin
     from ..utils.serialize import Serializable
 
 
@@ -369,7 +369,7 @@ class CoinListTable(AbstractTable, name="coins"):
             "unverified_hash",
             "TEXT NOT NULL")
 
-    def deserialize(self, cursor: Cursor, coin: AbstractCoin) -> bool:
+    def deserialize(self, cursor: Cursor, coin: Coin) -> bool:
         result = next(
             self._deserialize(
                 cursor,
@@ -382,14 +382,14 @@ class CoinListTable(AbstractTable, name="coins"):
         if result is None:
             return False
 
-        if coin.deserialize(result, coin) is None:
+        if not coin.deserializeUpdate(result):
             self._database.logDeserializeError(type(coin), result)
             return False
         else:
             assert coin.rowId > 0
             return True
 
-    def serialize(self, cursor: Cursor, coin: AbstractCoin) -> None:
+    def serialize(self, cursor: Cursor, coin: Coin) -> None:
         self._serialize(
             cursor,
             coin,
@@ -407,8 +407,11 @@ class AddressListTable(AbstractTable, name="addresses"):
         NAME: Final = ColumnDefinition(
             "name",
             "TEXT NOT NULL")
-        AMOUNT: Final = ColumnDefinition(
-            "amount",
+        TYPE: Final = ColumnDefinition(
+            "type",
+            "TEXT NOT NULL")
+        BALANCE: Final = ColumnDefinition(
+            "balance",
             "INTEGER NOT NULL")
         TX_COUNT: Final = ColumnDefinition(
             "tx_count",
@@ -441,8 +444,19 @@ class AddressListTable(AbstractTable, name="addresses"):
         (Column.COIN_ROW_ID, Column.NAME),
     )
 
+    def upgrade(self, cursor: Cursor, old_version: int) -> None:
+        # don't use identifiers from actual class!
+        if old_version <= 1:
+            self._upgrade_v1(cursor)
+
+    @staticmethod
+    def _upgrade_v1(cursor: Cursor) -> None:
+        if cursor.isColumnExists("addresses", "amount"):
+            cursor.execute(
+                "ALTER TABLE \"addresses\" RENAME \"amount\" TO \"balance\"")
+
     # TODO dynamic interface with coin.txList, address.txList
-    def deserializeAll(self, cursor: Cursor, coin: AbstractCoin) -> bool:
+    def deserializeAll(self, cursor: Cursor, coin: Coin) -> bool:
         assert coin.rowId > 0
 
         error = False
@@ -461,7 +475,7 @@ class AddressListTable(AbstractTable, name="addresses"):
                 coin.appendAddress(address)
         return not error
 
-    def serialize(self, cursor: Cursor, address: AbstractCoin.Address) -> None:
+    def serialize(self, cursor: Cursor, address: Coin.Address) -> None:
         assert address.coin.rowId > 0
         assert not address.isNullData
 
@@ -539,7 +553,7 @@ class TxListTable(AbstractTable, name="transactions"):
     def deserializeAll(
             self,
             cursor: Cursor,
-            address: AbstractCoin.Address) -> bool:
+            address: Coin.Address) -> bool:
         assert address.coin.rowId > 0
         assert address.rowId > 0
 
@@ -583,8 +597,8 @@ class TxListTable(AbstractTable, name="transactions"):
     def serialize(
             self,
             cursor: Cursor,
-            address: Optional[AbstractCoin.Address],
-            tx: AbstractCoin.Tx) -> None:
+            address: Optional[Coin.Address],
+            tx: Coin.Tx) -> None:
         assert tx.coin.rowId > 0
 
         self._serialize(
@@ -657,9 +671,9 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
     def deserializeAll(
             self,
             cursor: Cursor,
-            coin: AbstractCoin,
+            coin: Coin,
             tx_row_id: int,
-            io_type: IoType) -> Tuple[bool, List[AbstractCoin.Tx.Io]]:
+            io_type: IoType) -> Tuple[bool, List[Coin.Tx.Io]]:
         assert coin.rowId > 0
         assert tx_row_id > 0
         io_list = []
@@ -689,9 +703,9 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
     def serialize(
             self,
             cursor: Cursor,
-            tx: AbstractCoin.Tx,
+            tx: Coin.Tx,
             io_type: IoType,
-            io: AbstractCoin.Tx.Io) -> None:
+            io: Coin.Tx.Io) -> None:
         assert tx.rowId > 0
 
         self._serialize(

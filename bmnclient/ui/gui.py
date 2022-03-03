@@ -12,9 +12,10 @@ from ..os_environment import Platform
 from ..version import Timer
 
 if TYPE_CHECKING:
-    from typing import Callable, Iterable, Optional
+    from typing import Iterable, Optional
     from PySide6.QtGui import QClipboard, QFont, QWindow
     from ..application import CommandLine
+    from ..coins.abstract import CoinModelFactory
     MessageType = CoreApplication.MessageType
 
 
@@ -23,7 +24,7 @@ class GuiApplication(CoreApplication):
             self,
             *,
             command_line: CommandLine,
-            model_factory: Optional[Callable[[object], object]] = None) -> None:
+            model_factory: Optional[CoinModelFactory] = None) -> None:
 
         # Warning: Ignoring XDG_SESSION_TYPE=wayland on Gnome. Use
         # QT_QPA_PLATFORM=wayland to run on Wayland anyway.

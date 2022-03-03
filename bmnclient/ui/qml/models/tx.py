@@ -3,34 +3,35 @@ from __future__ import annotations
 from enum import auto
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    Property as QProperty, \
-    QDateTime, \
-    QModelIndex, \
-    QObject, \
-    Qt, \
-    Signal as QSignal
+from PySide6.QtCore import (
+    Property as QProperty,
+    QDateTime,
+    QModelIndex,
+    QObject,
+    Qt,
+    Signal as QSignal)
 
 from . import AbstractCoinStateModel, AbstractModel
 from .amount import AbstractAmountModel
-from .list import \
-    AbstractConcatenateModel, \
-    AbstractListModel, \
-    AbstractListSortedModel, \
-    RoleEnum
-from ....coin_interfaces import TxInterface
+from .list import (
+    AbstractConcatenateModel,
+    AbstractListModel,
+    AbstractListSortedModel,
+    RoleEnum)
+from .tx_io import TxIoListModel
+from ....coin_models import TxModel as _TxModel
 
 if TYPE_CHECKING:
     from typing import Final, Optional
     from .. import QmlApplication
-    from ....coins.abstract.coin import AbstractCoin
+    from ....coins.abstract import Coin
 
 
 class AbstractTxStateModel(AbstractCoinStateModel):
     def __init__(
             self,
             application: QmlApplication,
-            tx: AbstractCoin.Tx) -> None:
+            tx: Coin.Tx) -> None:
         super().__init__(application, tx.coin)
         self._tx = tx
 
@@ -39,7 +40,7 @@ class AbstractTxAmountModel(AbstractAmountModel):
     def __init__(
             self,
             application: QmlApplication,
-            tx: AbstractCoin.Tx) -> None:
+            tx: Coin.Tx) -> None:
         super().__init__(application, tx.coin)
         self._tx = tx
 
@@ -87,9 +88,9 @@ class TxAmountModel(AbstractTxAmountModel):
     def update(self) -> None:
         super().update()
         for io in self._tx.inputList:
-            io.address.model.amount.update()
+            io.model.amount.update()
         for io in self._tx.outputList:
-            io.address.model.amount.update()
+            io.model.amount.update()
 
     def _getValue(self) -> Optional[int]:
         return self._tx.amount
@@ -100,22 +101,11 @@ class TxFeeAmountModel(AbstractTxAmountModel):
         return self._tx.feeAmount
 
 
-class TxIoListModel(AbstractListModel):
-    class Role(RoleEnum):
-        ADDRESS: Final = auto()
-
-    ROLE_MAP: Final = {
-        Role.ADDRESS: (
-            b"address",
-            lambda io: io.address.model)
-    }
-
-
-class TxModel(TxInterface, AbstractModel):
+class TxModel(_TxModel, AbstractModel):
     def __init__(
             self,
             application: QmlApplication,
-            tx: AbstractCoin.Tx) -> None:
+            tx: Coin.Tx) -> None:
         super().__init__(
             application,
             query_scheduler=application.networkQueryScheduler,

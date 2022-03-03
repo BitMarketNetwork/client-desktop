@@ -274,7 +274,7 @@ class AddressInfoParser(AbstractParser):
         self._type = ""
         self._name = ""
         self._tx_count = 0
-        self._amount = 0
+        self._balance = 0
 
     @property
     def type(self) -> str:
@@ -289,14 +289,14 @@ class AddressInfoParser(AbstractParser):
         return self._tx_count
 
     @property
-    def amount(self) -> int:
-        return self._amount
+    def balance(self) -> int:
+        return self._balance
 
     def __call__(self, value: dict) -> None:
         self._type = self.parseKey(value, "type", str)
         self._name = self.parseKey(value, "address", str)
         self._tx_count = self.parseKey(value, "number_of_transactions", int)
-        self._amount = self.parseKey(value, "balance", int)
+        self._balance = self.parseKey(value, "balance", int)
 
 
 class AddressTxParser(AbstractParser):

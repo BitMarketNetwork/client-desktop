@@ -7,15 +7,15 @@ from .coin_litecoin import Litecoin
 from ..utils.static_list import StaticList
 
 if TYPE_CHECKING:
-    from typing import Callable, Iterator, Optional, Union
-    from .abstract.coin import AbstractCoin
+    from typing import Iterator, Optional, Union
+    from .abstract import Coin, CoinModelFactory
 
 
 class CoinList(StaticList):
     def __init__(
             self,
             *,
-            model_factory: Optional[Callable[[object], object]] = None) -> None:
+            model_factory: Optional[CoinModelFactory] = None) -> None:
         super().__init__(
             (
                 Bitcoin(model_factory=model_factory),
@@ -25,8 +25,8 @@ class CoinList(StaticList):
             item_property="name"
         )
 
-    def __iter__(self) -> Iterator[AbstractCoin]:
+    def __iter__(self) -> Iterator[Coin]:
         return super().__iter__()
 
-    def __getitem__(self, value: Union[str, int]) -> Optional[AbstractCoin]:
+    def __getitem__(self, value: Union[str, int]) -> Optional[Coin]:
         return super().__getitem__(value)

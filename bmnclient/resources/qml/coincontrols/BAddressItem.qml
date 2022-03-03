@@ -5,6 +5,7 @@ import "../basiccontrols"
 BItemDelegate {
     id: _base
     property var address // AddressModel
+    property var amount // AmountModel
     property BMenu contextMenu
 
     text: (address.state.label ? address.state.label + " : " : "") + address.name
@@ -36,7 +37,7 @@ BItemDelegate {
         BAmountLabel {
             font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
             font.strikeout: _base.address.state.isReadOnly // TODO tmp
-            amount: _base.address.amount
+            amount: _base.amount
         }
         Loader {
             active: _base.contextMenu

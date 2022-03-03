@@ -175,17 +175,15 @@ BPane {
                 _base.clear()
             }
             onAccepted: {
-                if (_base.coin.txFactory.isValid && _base.coin.txFactory.prepare()) {
+                if (_base.coin.txFactory.isValid && _base.coin.txFactory.prepare() && _base.coin.txFactory.sign()) {
                     let dialog = _applicationManager.createDialog(
                                 "BTxApproveDialog", {
                                     "type": BTxApproveDialog.Type.Prepare,
                                     "coin": _base.coin
                                 })
                     dialog.onAccepted.connect(function () {
-                        if (_base.coin.txFactory.sign()) {
-                            if (_base.coin.txFactory.broadcast()) { // TODO error?
+                        if (_base.coin.txFactory.broadcast()) { // TODO error?
                                 _base.clear()
-                            }
                         } else {
                             // TODO error?
                         }

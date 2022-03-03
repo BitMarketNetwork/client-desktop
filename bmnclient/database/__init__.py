@@ -7,6 +7,8 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
+from ..debug import Debug
+
 try:
     import bmnsqlite3 as _engine
 except ImportError:
@@ -19,8 +21,7 @@ from .tables import (
     CoinListTable,
     MetadataTable,
     TxIoListTable,
-    TxListTable
-)
+    TxListTable)
 from .vfs import Vfs
 from ..logger import Logger
 from ..utils.class_property import classproperty
@@ -36,8 +37,7 @@ if TYPE_CHECKING:
         Generator,
         Optional,
         Type,
-        Union
-    )
+        Union)
     from ..application import CoreApplication
 
 
@@ -65,6 +65,21 @@ class Cursor(_engine.Cursor):
             self._database.logException(e, query)
             raise
 
+    def isTableExists(self, name: str) -> bool:
+        r = self.execute(
+            "SELECT COUNT(*) FROM \"sqlite_master\""
+            " WHERE \"type\" == ? AND \"name\" == ?",
+            ("table", name))
+        return r.fetchone() is not None
+
+    def isColumnExists(self, table_name: str, name: str) -> bool:
+        if not self.isTableExists(table_name):
+            return False
+        for r in self.execute(f"PRAGMA table_info(\"{table_name}\")"):
+            if len(r) > 2 and r[1] == name:
+                return True
+        return False
+
 
 class Connection(_engine.Connection):
     def __init__(self, *args, database: Database, **kwargs) -> None:
@@ -83,7 +98,7 @@ class Connection(_engine.Connection):
 
 
 class Database:
-    _VERSION: Final = 1
+    _VERSION: Final = 2
 
     # https://sqlite.org/pragma.html
     _PRAGMA_LIST: Final = (
@@ -187,7 +202,7 @@ class Database:
             file_path = self._file_path.resolve(strict=False).as_uri()
             file_path += "?vfs=bmn_vfs"  # TODO
             _engine.vfs_register(Vfs(self._application))
-            _engine.enable_callback_tracebacks(self._application.isDebugMode)
+            _engine.enable_callback_tracebacks(Debug.isEnabled)
 
             # noinspection PyTypeChecker
             # TODO PyTypeChecker:
@@ -243,7 +258,7 @@ class Database:
     def transaction(
             self,
             *,
-            suppress_exceptions: bool = False,
+            suppress_exceptions: bool = False
     ) -> Generator[Optional[Cursor], None, None]:
         if not self.isOpen or self.__in_transaction:
             if suppress_exceptions:

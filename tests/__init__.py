@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from PySide6.QtWidgets import QApplication
 
 from bmnclient.application import CommandLine, CoreApplication
+from bmnclient.debug import Debug
 from bmnclient.os_environment import Platform
 from bmnclient.utils.class_property import classproperty
 from bmnclient.version import Product, Timer
@@ -18,6 +19,8 @@ from bmnclient.version import Product, Timer
 if TYPE_CHECKING:
     from typing import Final, Optional
     MessageType = CoreApplication.MessageType
+
+Debug.setState(True)
 
 
 class TestApplication(CoreApplication):
@@ -36,6 +39,7 @@ class TestApplication(CoreApplication):
 
         command_line = [
             "unittest",
+            "--debug",
             "--config-path=" + str(config_path),
             "--temp-path=" + str(temp_path)
         ]

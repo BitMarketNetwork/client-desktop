@@ -20,12 +20,12 @@ from .list import \
 from .tx import \
     TxListConcatenateModel, \
     TxListSortedModel
-from ....coin_interfaces import CoinInterface
+from ....coin_models import CoinModel as _CoinModel
 
 if TYPE_CHECKING:
     from typing import Final, Optional
     from .. import QmlApplication
-    from ....coins.abstract.coin import AbstractCoin
+    from ....coins.abstract import Coin
 
 
 class CoinStateModel(AbstractCoinStateModel):
@@ -102,22 +102,22 @@ class CoinServerDataModel(AbstractCoinStateModel):
         return self.locale.integerToString(height)
 
 
-class CoinAmountModel(AbstractAmountModel):
+class CoinBalanceModel(AbstractAmountModel):
     def update(self) -> None:
         super().update()
         for address in self._coin.addressList:
-            address.model.amount.update()
+            address.model.balance.update()
 
     def _getValue(self) -> Optional[int]:
-        return self._coin.amount
+        return self._coin.balance
 
 
 class CoinReceiveManagerModel(AbstractCoinStateModel):
     __stateChanged = QSignal()
 
-    def __init__(self, application: QmlApplication, coin: AbstractCoin) -> None:
+    def __init__(self, application: QmlApplication, coin: Coin) -> None:
         super().__init__(application, coin)
-        self._address: Optional[AbstractCoin.Address] = None
+        self._address: Optional[Coin.Address] = None
 
     def _getValidStatus(self) -> ValidStatus:
         if self._address is not None:
@@ -190,7 +190,7 @@ class CoinManagerModel(AbstractCoinStateModel):
             address_name: str,
             label: str,
             comment: str) -> bool:
-        address = self._coin.Address.decode(
+        address = self._coin.Address.createFromName(
             self._coin,
             name=address_name,
             label=label,
@@ -203,23 +203,23 @@ class CoinManagerModel(AbstractCoinStateModel):
     # noinspection PyTypeChecker
     @QSlot(str, result=bool)
     def isValidAddress(self, address_name: str) -> bool:
-        if self._coin.Address.decode(self._coin, name=address_name) is None:
+        if not self._coin.Address.createFromName(self._coin, name=address_name):
             return False
         return True
 
 
-class CoinModel(CoinInterface, AbstractModel):
-    def __init__(self, application: QmlApplication, coin: AbstractCoin) -> None:
+class CoinModel(_CoinModel, AbstractModel):
+    def __init__(self, application: QmlApplication, coin: Coin) -> None:
         super().__init__(
             application,
             query_scheduler=application.networkQueryScheduler,
             database=application.database,
             coin=coin)
 
-        self._amount_model = CoinAmountModel(
+        self._balance_model = CoinBalanceModel(
             self._application,
             self._coin)
-        self.connectModelUpdate(self._amount_model)
+        self.connectModelUpdate(self._balance_model)
 
         self._state_model = CoinStateModel(
             self._application,
@@ -259,8 +259,8 @@ class CoinModel(CoinInterface, AbstractModel):
         return self._coin.iconPath
 
     @QProperty(QObject, constant=True)
-    def amount(self) -> CoinAmountModel:
-        return self._amount_model
+    def balance(self) -> CoinBalanceModel:
+        return self._balance_model
 
     @QProperty(QObject, constant=True)
     def state(self) -> CoinStateModel:
@@ -310,23 +310,23 @@ class CoinModel(CoinInterface, AbstractModel):
         super().afterSetStatus()
 
     def afterSetFiatRate(self) -> None:
-        self._amount_model.update()
+        self._balance_model.update()
         self._coin.txFactory.model.update()
         super().afterSetFiatRate()
 
-    def afterUpdateAmount(self) -> None:
-        self._amount_model.update()
-        super().afterUpdateAmount()
+    def afterUpdateBalance(self) -> None:
+        self._balance_model.update()
+        super().afterUpdateBalance()
 
     def afterUpdateUtxoList(self) -> None:
         self._coin.txFactory.model.update()
         super().afterUpdateUtxoList()
 
-    def beforeAppendAddress(self, address: AbstractCoin.Address) -> None:
+    def beforeAppendAddress(self, address: Coin.Address) -> None:
         self._address_list_model.lock(self._address_list_model.lockInsertRows())
         super().beforeAppendAddress(address)
 
-    def afterAppendAddress(self, address: AbstractCoin.Address) -> None:
+    def afterAppendAddress(self, address: Coin.Address) -> None:
         self._address_list_model.unlock()
         # noinspection PyUnresolvedReferences
         self._tx_list_model.addSourceModel(address.model.txList)
@@ -342,7 +342,7 @@ class CoinListModel(AbstractListModel):
         SHORT_NAME: Final = auto()
         FULL_NAME: Final = auto()
         ICON_PATH: Final = auto()
-        AMOUNT: Final = auto()
+        BALANCE: Final = auto()
         STATE: Final = auto()
         SERVER_DATA: Final = auto()
         ADDRESS_LIST: Final = auto()
@@ -361,9 +361,9 @@ class CoinListModel(AbstractListModel):
         Role.ICON_PATH: (
             b"iconPath",
             lambda c: c.model.iconPath),
-        Role.AMOUNT: (
-            b"amount",
-            lambda c: c.model.amount),
+        Role.BALANCE: (
+            b"balance",
+            lambda c: c.model.balance),
         Role.STATE: (
             b"state",
             lambda c: c.model.state),

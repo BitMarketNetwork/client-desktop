@@ -24,7 +24,7 @@ BItemDelegate {
 
             clip: true
             font.pointSize: Math.round(_base.font.pointSize * _applicationStyle.fontPointSizeFactor.small)
-            amount: _base.coin.amount
+            amount: _base.coin.balance
         }
     }
 
@@ -40,7 +40,7 @@ BItemDelegate {
             }
             BAmountLabel {
                 BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                amount: _base.coin.amount
+                amount: _base.coin.balance
             }
         }
     }

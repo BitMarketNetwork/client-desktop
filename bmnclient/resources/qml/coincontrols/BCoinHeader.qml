@@ -18,7 +18,7 @@ BControl {
             text: _base.coin.fullName
         }
         BAmountLabel {
-            amount: _base.coin.amount
+            amount: _base.coin.balance
 
             MouseArea {
                 anchors.fill: parent

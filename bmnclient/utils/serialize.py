@@ -28,6 +28,25 @@ class Serializable:
     def __init__(self, *args, row_id: int = -1, **kwargs) -> None:
         self.__row_id = row_id
 
+    def __update__(self, **kwargs) -> bool:
+        row_id = kwargs.pop("row_id", None)
+        if row_id is not None:
+            self.rowId = row_id
+
+        serialize_map = self.serializeMap
+        for (key, value) in kwargs.items():
+            key = self.__keyFromKwarg(key)
+            if key not in serialize_map:
+                raise KeyError(
+                    "unknown property '{}' to deserialization".format(key))
+            v = getattr(self.__class__, serialize_map[key])
+            if v.fset:
+                v.fset(self, value)
+            elif v.fget(self) != value:
+                raise ValueError(
+                    "can't update immutable property '{}'".format(key))
+        return True
+
     @property
     def rowId(self) -> int:
         return self.__row_id
@@ -43,9 +62,8 @@ class Serializable:
             for name in dir(cls):
                 v = getattr(cls, name)
                 if (
-                        isinstance(v, property) and
-                        hasattr(v.fget, "__serializable") and
-                        getattr(v.fget, "__serializable")
+                        isinstance(v, property)
+                        and getattr(v.fget, "__serializable", None)
                 ):
                     cls.__serialize_map[StringUtils.toSnakeCase(name)] = name
         return cls.__serialize_map
@@ -68,9 +86,11 @@ class Serializable:
             self,
             key: str,
             value: Any,
+            *,
+            exclude_subclasses: bool = False,
             **options) -> DeserializedData:
         if isinstance(value, Serializable):
-            if options["exclude_subclasses"]:
+            if exclude_subclasses:
                 return {}
             return value.serialize(**options)
         if isinstance(value, (int, str, type(None))):
@@ -79,40 +99,61 @@ class Serializable:
             return [self._serializeProperty(key, v, **options) for v in value]
 
         raise TypeError(
-            "cannot serialize value of type '{}'"
-            .format(str(type(value))))
+            "can't serialize value type '{}' for key '{}'"
+            .format(str(type(value)), key))
 
     @classmethod
     def deserialize(
             cls,
             source_data: DeserializedDict,
-            *instance_args,
+            *args,
             **options) -> Optional[Serializable]:
-        instance_kwargs = {
-            key: cls._deserializeProperty(key, value, *instance_args, **options)
+        kwargs = {
+            cls.__keyToKwarg(key):
+                cls._deserializeProperty(None, key, value, *args, **options)
             for key, value in source_data.items()
         }
-        return cls._deserializeFactory(*instance_args, **instance_kwargs)
+        return cls(*args, **kwargs)
+
+    def deserializeUpdate(
+            self,
+            source_data: DeserializedDict,
+            **options) -> bool:
+        kwargs = {
+            self.__keyToKwarg(key):
+                self._deserializeProperty(self, key, value, **options)
+            for key, value in source_data.items()
+        }
+        return self.__update__(**kwargs)
 
     @classmethod
     def _deserializeProperty(
             cls,
+            self: Optional[Serializable],
             key: str,
             value: DeserializedData,
-            *instance_args,
+            *args,
             **options) -> Any:
         if isinstance(value, (int, str, type(None))):
             return value
         if isinstance(value, list):
             return [
-                cls._deserializeProperty(key, v, *instance_args, **options)
+                cls._deserializeProperty(self, key, v, *args, **options)
                 for v in value
             ]
 
         raise TypeError(
-            "cannot deserialize value of type '{}'"
-            .format(str(type(value))))
+            "can't deserialize value type '{}' for key '{}'"
+            .format(str(type(value)), key))
 
     @classmethod
-    def _deserializeFactory(cls, *args, **kwargs) -> Optional[Serializable]:
-        return cls(*args, **kwargs)
+    def __keyToKwarg(cls, key: str) -> str:
+        if key in ("type", ):
+            return key + "_"
+        return key
+
+    @classmethod
+    def __keyFromKwarg(cls, key: str) -> str:
+        if key in ("type_", ):
+            return key[:-1]
+        return key

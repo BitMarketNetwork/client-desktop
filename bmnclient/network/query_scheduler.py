@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from PySide6.QtCore import QTimerEvent
     from .query import AbstractQuery
     from ..application import CoreApplication
-    from ..coins.abstract.coin import AbstractCoin
+    from ..coins.abstract import Coin
 
 
 class NetworkQueryTimer(QObject):
@@ -199,19 +199,19 @@ class NetworkQueryScheduler:
             (self.GLOBAL_NAMESPACE, "updateCoinsInfo"),
             False)
 
-    def updateCoinHdAddressList(self, coin: AbstractCoin) -> None:
+    def updateCoinHdAddressList(self, coin: Coin) -> None:
         self._createRepeatingQuery(
             HdAddressIteratorApiQuery(coin),
             (self.COINS_NAMESPACE, "updateCoinHdAddressList", coin.name),
             False)
 
-    def updateCoinMempool(self, coin: AbstractCoin) -> None:
+    def updateCoinMempool(self, coin: Coin) -> None:
         self._createRepeatingQuery(
             CoinMempoolIteratorApiQuery(coin),
             (self.COINS_NAMESPACE, "updateCoinMempool", coin.name),
             False)
 
-    def updateCoinAddress(self, address: AbstractCoin.Address) -> None:
+    def updateCoinAddress(self, address: Coin.Address) -> None:
         query = AddressTxIteratorApiQuery(
             address,
             mode=AddressTxIteratorApiQuery.Mode.FULL,
@@ -236,7 +236,7 @@ class NetworkQueryScheduler:
     def __pendingUpdateCoinAddress(
             self,
             query: AddressTxIteratorApiQuery,
-            address: AbstractCoin.Address) -> None:
+            address: Coin.Address) -> None:
         if query.nextQuery is not None:
             return
         queue = self._pending_queue["coin_address"]
@@ -246,9 +246,9 @@ class NetworkQueryScheduler:
 
     def broadcastTx(
             self,
-            mtx: AbstractCoin.TxFactory.MutableTx,
+            mtx: Coin.TxFactory.MutableTx,
             finished_callback: Callable[
-                [int, AbstractCoin.TxFactory.MutableTx],
+                [int, Coin.TxFactory.MutableTx],
                 None]) -> bool:
         query = TxBroadcastApiQuery(mtx)
         query.appendFinishedCallback(
@@ -262,9 +262,9 @@ class NetworkQueryScheduler:
     def __onBroadcastTxFinished(
             self,
             query: TxBroadcastApiQuery,
-            mtx: AbstractCoin.TxFactory.MutableTx,
+            mtx: Coin.TxFactory.MutableTx,
             finished_callback: Callable[
-                [int, AbstractCoin.TxFactory.MutableTx],
+                [int, Coin.TxFactory.MutableTx],
                 None]) -> None:
         if query.isSuccess and query.result is not None:
             if query.result.txName != mtx.name:
@@ -275,4 +275,5 @@ class NetworkQueryScheduler:
             self.updateCoinMempool(mtx.coin)
             finished_callback(0, mtx)
         else:
-            finished_callback(2005, mtx)  # TODO convert error code from response
+            # TODO convert error code from response
+            finished_callback(2005, mtx)

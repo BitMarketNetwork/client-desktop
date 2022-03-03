@@ -3,24 +3,25 @@ from __future__ import annotations
 import logging
 import os
 from argparse import ArgumentParser
-from enum import auto, Enum
+from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    QLocale, \
-    QMetaObject, \
-    QObject, \
-    Qt, \
-    Slot as QSlot
+from PySide6.QtCore import (
+    QLocale,
+    QMetaObject,
+    QObject,
+    Qt,
+    Slot as QSlot)
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
-from .coins.currency import FiatCurrencyList, FiatRate
 from .coins.list import CoinList
 from .config import Config, ConfigKey
+from .currency import FiatCurrencyList, FiatRate
 from .database import Database
 from .database.tables import AddressListTable, CoinListTable, TxListTable
+from .debug import Debug
 from .key_store import KeyStore
 from .language import Language
 from .logger import Logger
@@ -35,8 +36,9 @@ from .signal_handler import SignalHandler
 from .version import Product, ProductPaths, Server, Timer
 
 if TYPE_CHECKING:
-    from typing import Callable, List, Optional, Type, Union
+    from typing import List, Optional, Type, Union
     from PySide6.QtCore import QCoreApplication
+    from .coins.abstract import CoinModelFactory
     from .coins.hd import HdNode
 
 
@@ -104,6 +106,7 @@ class CommandLine:
         assert isinstance(self._arguments.local_data_path, Path)
         assert isinstance(self._arguments.log_file, Path)
         assert isinstance(self._arguments.debug, bool)
+        assert self._arguments.debug == Debug.isEnabled
         assert isinstance(self._arguments.server_url, str)
         assert isinstance(self._arguments.server_insecure, bool)
 
@@ -129,11 +132,7 @@ class CommandLine:
 
     @property
     def logLevel(self) -> int:
-        return logging.DEBUG if self.isDebugMode else logging.INFO
-
-    @property
-    def isDebugMode(self) -> bool:
-        return self._arguments.debug
+        return logging.DEBUG if Debug.isEnabled else logging.INFO
 
     @property
     def serverUrl(self) -> str:
@@ -159,7 +158,7 @@ class CoreApplication(QObject):
             *,
             qt_class: Union[Type[QCoreApplication], Type[QApplication]],
             command_line: CommandLine,
-            model_factory: Optional[Callable[[object], object]] = None) -> None:
+            model_factory: Optional[CoinModelFactory] = None) -> None:
         super().__init__()
 
         self._command_line = command_line
@@ -253,7 +252,7 @@ class CoreApplication(QObject):
 
     def _init_coins(
             self,
-            model_factory: Optional[Callable[[object], object]] = None) -> None:
+            model_factory: Optional[CoinModelFactory] = None) -> None:
         self._fiat_currency_list = FiatCurrencyList(self)
         self._fiat_rate_service_list = FiatRateServiceList(self)
 
@@ -302,10 +301,6 @@ class CoreApplication(QObject):
     @property
     def config(self) -> Config:
         return self._config
-
-    @property
-    def isDebugMode(self) -> bool:
-        return self._command_line.isDebugMode
 
     @property
     def exitCode(self) -> int:

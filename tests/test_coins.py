@@ -13,7 +13,7 @@ from bmnclient.language import Locale
 
 if TYPE_CHECKING:
     from typing import List, Optional, Sequence, Type
-    from bmnclient.coins.abstract.coin import AbstractCoin
+    from bmnclient.coins.abstract import Coin
 
 
 BITCOIN_ADDRESS_LIST = (
@@ -121,10 +121,10 @@ LITECOIN_ADDRESS_LIST = (
 
 def fillCoin(
         owner: TestCase,
-        coin: AbstractCoin,
+        coin: Coin,
         *,
         address_count: int = 4,
-        tx_count: int = 4) -> AbstractCoin:
+        tx_count: int = 4) -> Coin:
     root_node = HdNode.deriveRootNode(urandom(64))
     owner.assertIsNotNone(root_node)
 
@@ -139,7 +139,7 @@ def fillCoin(
         address = coin.deriveHdAddress(
             account=0,
             is_change=False,
-            amount=randint(1000, 100000),
+            balance=randint(1000, 100000),
             tx_count=randint(1000, 100000),
             label="address label " + str(address_index),
             comment="address comment " + str(address_index),
@@ -150,21 +150,31 @@ def fillCoin(
         for tx_index in range(1, tx_count + 1):
             input_list = []
             for i in range(1, 3):
+                input_address = coin.deriveHdAddress(
+                    account=1,
+                    is_change=False)
+                owner.assertIsNotNone(input_address)
                 input_list.append(coin.Tx.Io(
                     coin,
                     index=i,
                     output_type="output_type_" + str(i),
-                    address_name=address.name,
+                    address_name=input_address.name,
                     amount=randint(1000, 100000)))
+                owner.assertIs(input_address, input_list[-1].address)
 
             output_list = []
             for i in range(1, 3):
+                output_address = coin.deriveHdAddress(
+                    account=2,
+                    is_change=False)
+                owner.assertIsNotNone(output_address)
                 output_list.append(coin.Tx.Io(
                     coin,
                     index=i,
                     output_type="output_type_" + str(i),
-                    address_name=address.name,
+                    address_name=output_address.name,
                     amount=randint(1000, 100000)))
+                owner.assertIs(output_address, output_list[-1].address)
             output_list.append(coin.Tx.Io(
                 coin,
                 index=4,
@@ -197,13 +207,13 @@ def fillCoin(
 class TestCoins(TestCase):
     def _test_address_decode(
             self,
-            coin: AbstractCoin,
+            coin: Coin,
             address_list: Sequence[tuple]) -> None:
         hash_check_count = 0
 
         # noinspection PyUnusedLocal
-        for (address, type_, version, hash_) in address_list:
-            address = coin.Address.decode(coin, name=address)
+        for (name, type_, version, hash_) in address_list:
+            address = coin.Address.createFromName(coin, name=name)
             if type_ is None:
                 self.assertIsNone(address)
             else:
@@ -344,10 +354,9 @@ class TestCoins(TestCase):
         for limit in range(201):
             coin = Bitcoin()
             for i in range(limit):
-                address = coin.Address(
+                address = coin.Address.createNullData(
                     coin,
-                    name="address_{:06d}".format(i),
-                    type_=coin.Address.Type.UNKNOWN)
+                    name="address_{:06d}".format(i))
                 self.assertTrue(coin.appendAddress(address))
 
             limit = randint(1, 10)
@@ -384,17 +393,16 @@ class TestCoins(TestCase):
 
             # check expired
             for i in range(randint(1, 20)):
-                address = coin.Address(
+                address = coin.Address.createNullData(
                     coin,
-                    name="address_new_{:06d}".format(i),
-                    type_=coin.Address.Type.UNKNOWN)
+                    name="address_new_{:06d}".format(i))
                 self.assertTrue(coin.appendAddress(address))
 
                 mempool_list = coin.createMempoolAddressLists(limit)
                 # noinspection PyProtectedMember
                 self.assertEqual(len(coin._mempool_cache), len(mempool_list))
 
-    def _test_serialization(self, coin_type: Type[AbstractCoin]) -> None:
+    def _test_serialization(self, coin_type: Type[Coin]) -> None:
         coin = fillCoin(self, coin_type())
 
         data = coin.serialize(allow_hd_path=False)
@@ -404,7 +412,7 @@ class TestCoins(TestCase):
         # pprint(data, sort_dicts=False)
 
         coin_new = coin_type()
-        coin_type.deserialize(data, coin_new)
+        coin_new.deserializeUpdate(data)
 
         # coin compare
         self.assertEqual(coin.name, coin_new.name)
@@ -419,9 +427,10 @@ class TestCoins(TestCase):
         for address_index in range(len(coin.addressList)):
             a1 = coin.addressList[address_index]
             a2 = coin_new.addressList[address_index]
+            self.assertIsNot(a1, a2)
             self.assertEqual(a1.name, a2.name)
             self.assertEqual(a1.exportKey(), a2.exportKey())
-            self.assertEqual(a1.amount, a2.amount)
+            self.assertEqual(a1.balance, a2.balance)
             self.assertEqual(a1.txCount, a2.txCount)
             self.assertEqual(a1.label, a2.label)
             self.assertEqual(a1.comment, a2.comment)
@@ -448,13 +457,13 @@ class TestCoins(TestCase):
                     io2 = t2.inputList[io_index]
                     self.assertEqual(io1.outputType, io2.outputType)
                     self.assertEqual(io1.address.name, io2.address.name)
-                    self.assertEqual(io1.address.amount, io2.address.amount)
+                    self.assertEqual(io1.address.balance, io2.address.balance)
                 for io_index in range(len(t1.outputList)):
                     io1 = t1.outputList[io_index]
                     io2 = t2.outputList[io_index]
                     self.assertEqual(io1.outputType, io2.outputType)
                     self.assertEqual(io1.address.name, io2.address.name)
-                    self.assertEqual(io1.address.amount, io2.address.amount)
+                    self.assertEqual(io1.address.balance, io2.address.balance)
 
             # utxo list compare
             self.assertEqual(len(a1.utxoList), len(a2.utxoList))
@@ -575,7 +584,7 @@ class TestTxFactory(TestCase):
                 self.assertEqual(1, len(l))
                 self.assertEqual(i, a)
 
-        # find nearest amount + height test
+        # find the nearest amount + height test
         if True:
             amount_list = list(range(1, 1000, 2)) + list(range(1, 1000, 2))
             shuffle(amount_list)
@@ -755,6 +764,20 @@ class TestTxFactory(TestCase):
                     self.assertIsNone(txf.changeAddress)
                 self.assertTrue(txf.sign())
                 self.assertIsNotNone(txf.name)
+
+                # noinspection PyProtectedMember
+                self.assertEqual(txf.feeAmount, txf._mtx.feeAmount)
+                if subtract_fee:
+                    # noinspection PyProtectedMember
+                    self.assertEqual(
+                        txf.receiverAmount + txf.changeAmount,
+                        txf._mtx.amount)
+                else:
+                    # noinspection PyProtectedMember
+                    self.assertEqual(
+                        txf.receiverAmount + txf.changeAmount + txf.feeAmount,
+                        txf._mtx.amount)
+
                 self.assertTrue(txf.broadcast())
                 self.assertIsNone(txf.name)
                 if txf.changeAmount > 0:
@@ -772,16 +795,16 @@ class TestMutableTx(TestCase):
 
     def _createInput(
             self,
-            coin: AbstractCoin,
+            coin: Coin,
             name: str,
             index: int,
             *,
             private_key: str,
-            address_type: AbstractCoin.Address.Type,
-            script_type: AbstractCoin.Script.Type,
+            address_type: Coin.Address.Type,
+            script_type: Coin.Address.Script.Type,
             amount: int,
             sequence: int,
-            is_dummy: bool = False) -> AbstractCoin.TxFactory.MutableTx.Input:
+            is_dummy: bool = False) -> Coin.TxFactory.MutableTx.Input:
         private_key = coin.Address.importKey(coin, private_key)
         self.assertIsNotNone(private_key)
 
@@ -807,32 +830,28 @@ class TestMutableTx(TestCase):
     @classmethod
     def _createOutput(
             cls,
-            coin: AbstractCoin,
+            coin: Coin,
             *,
             address_name: str,
-            address_type: AbstractCoin.Address.Type,
             amount: int,
-            is_dummy: bool = False) -> AbstractCoin.TxFactory.MutableTx.Output:
-        address = coin.Address(
-            coin,
-            name=address_name,
-            type_=address_type)
+            is_dummy: bool = False) -> Coin.TxFactory.MutableTx.Output:
+        address = coin.Address.createFromName(coin, name=address_name)
         return coin.TxFactory.MutableTx.Output(
             address,
-            amount,
+            amount=amount,
             is_dummy=is_dummy)
 
     def _test_mtx(
             self,
-            input_list: Sequence[AbstractCoin.TxFactory.MutableTx.Input],
-            output_list: Sequence[AbstractCoin.TxFactory.MutableTx.Output],
+            input_list: Sequence[Coin.TxFactory.MutableTx.Input],
+            output_list: Sequence[Coin.TxFactory.MutableTx.Output],
             *,
             lock_time: int,
             is_dummy: bool,
             expected_name: Optional[str],
             expected_data: str,
             excepted_raw_size: int,
-            excepted_virtual_size: int) -> AbstractCoin.TxFactory.MutableTx:
+            excepted_virtual_size: int) -> Coin.TxFactory.MutableTx:
         mtx = self._coin.TxFactory.MutableTx(
             self._coin,
             input_list,
@@ -840,12 +859,21 @@ class TestMutableTx(TestCase):
             lock_time=lock_time,
             is_dummy=is_dummy)
         self.assertEqual(is_dummy, mtx.isDummy)
-        self.assertEqual(b"", mtx.serialize())
+        self.assertFalse(mtx.isSigned)
+        self.assertEqual(b"", mtx.raw())
         self.assertTrue(mtx.sign())
         self.assertEqual(expected_name, mtx.name)
-        self.assertEqual(expected_data, mtx.serialize().hex())
+        self.assertEqual(expected_data, mtx.raw().hex())
         self.assertEqual(excepted_raw_size, mtx.rawSize)
         self.assertEqual(excepted_virtual_size, mtx.virtualSize)
+
+        self.assertEqual(
+            sum(i.amount for i in input_list),
+            mtx.amount)
+        self.assertEqual(
+            sum(i.amount for i in input_list)
+            - sum(o.amount for o in output_list),
+            mtx.feeAmount)
         return mtx
 
     def test_p2pkh(self) -> None:
@@ -857,7 +885,7 @@ class TestMutableTx(TestCase):
                     1,
                     private_key="L3jsepcttyuJK3HKezD4qqRKGtwc8d2d1Nw6vsoPDX9cMcUxqqMv", # noqa
                     address_type=self._coin.Address.Type.PUBKEY_HASH,
-                    script_type=self._coin.Script.Type.P2PKH,
+                    script_type=self._coin.Address.Script.Type.P2PKH,
                     amount=83727960,
                     sequence=0xfffffffe,
                     is_dummy=is_dummy)
@@ -868,13 +896,11 @@ class TestMutableTx(TestCase):
                 self._createOutput(
                     self._coin,
                     address_name="1N8QYQNAD8PLEJjmCGGR8iN1iuR9yXtY1x",  # noqa
-                    address_type=self._coin.Address.Type.PUBKEY_HASH,
                     amount=50000,
                     is_dummy=is_dummy),
                 self._createOutput(
                     self._coin,
                     address_name="1ELReFsTCUY2mfaDTy32qxYiT49z786eFg",  # noqa
-                    address_type=self._coin.Address.Type.PUBKEY_HASH,
                     amount=83658760,
                     is_dummy=is_dummy)
             ]
@@ -924,7 +950,7 @@ class TestMutableTx(TestCase):
                     2,
                     private_key="5KHxtARu5yr1JECrYGEA2YpCPdh1i9ciEgQayAF8kcqApkGzT9s", # noqa
                     address_type=self._coin.Address.Type.PUBKEY_HASH,
-                    script_type=self._coin.Script.Type.P2PKH,
+                    script_type=self._coin.Address.Script.Type.P2PKH,
                     amount=1,
                     sequence=0xfffffffe,
                     is_dummy=is_dummy)
@@ -935,7 +961,6 @@ class TestMutableTx(TestCase):
                 self._createOutput(
                     self._coin,
                     address_name="1ExJJsNLQDNVVM1s1sdyt1o5P3GC5r32UG",  # noqa
-                    address_type=self._coin.Address.Type.PUBKEY_HASH,
                     amount=1,
                     is_dummy=is_dummy)
             ]
@@ -976,7 +1001,7 @@ class TestMutableTx(TestCase):
             excepted_raw_size=224,
             excepted_virtual_size=224)
 
-    # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#native-p2wpkh
+    # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#native-p2wpkh # noqa
     def test_native_p2wpkh(self) -> None:
         def input_list(*, is_dummy: bool) -> Sequence:
             return [
@@ -986,7 +1011,7 @@ class TestMutableTx(TestCase):
                     0,
                     private_key="bbc27228ddcb9209d7fd6f36b02f7dfa6252af40bb2f1cbc7a557da8027ff866",  # noqa
                     address_type=self._coin.Address.Type.PUBKEY_HASH,
-                    script_type=self._coin.Script.Type.P2PK,
+                    script_type=self._coin.Address.Script.Type.P2PK,
                     amount=625000000,
                     sequence=0xffffffee,
                     is_dummy=is_dummy),
@@ -996,7 +1021,7 @@ class TestMutableTx(TestCase):
                     1,
                     private_key="619c335025c7f4012e556c2a58b2506e30b8511b53ade95ea316fd8c3286feb9",  # noqa
                     address_type=self._coin.Address.Type.WITNESS_V0_KEY_HASH,
-                    script_type=self._coin.Script.Type.P2WPKH,
+                    script_type=self._coin.Address.Script.Type.P2WPKH,
                     amount=600000000,
                     sequence=0xffffffff,
                     is_dummy=is_dummy),
@@ -1007,13 +1032,11 @@ class TestMutableTx(TestCase):
                 self._createOutput(
                     self._coin,
                     address_name="1Cu32FVupVCgHkMMRJdYJugxwo2Aprgk7H",  # noqa
-                    address_type=self._coin.Address.Type.PUBKEY_HASH,
                     amount=112340000,
                     is_dummy=is_dummy),
                 self._createOutput(
                     self._coin,
                     address_name="16TZ8J6Q5iZKBWizWzFAYnrsaox5Z5aBRV",  # noqa
-                    address_type=self._coin.Address.Type.PUBKEY_HASH,
                     amount=223450000,
                     is_dummy=is_dummy)
             ]
@@ -1072,7 +1095,7 @@ class TestMutableTx(TestCase):
                     1,
                     private_key="eb696a065ef48a2192da5b28b694f87544b30fae8327c4510137a922f32c6dcf",  # noqa
                     address_type=self._coin.Address.Type.WITNESS_V0_KEY_HASH,
-                    script_type=self._coin.Script.Type.P2SH_P2WPKH,
+                    script_type=self._coin.Address.Script.Type.P2SH_P2WPKH,
                     amount=1000000000,
                     sequence=0xfffffffe,
                     is_dummy=is_dummy)
@@ -1083,13 +1106,11 @@ class TestMutableTx(TestCase):
                 self._createOutput(
                     self._coin,
                     address_name="1Fyxts6r24DpEieygQiNnWxUdb18ANa5p7",  # noqa
-                    address_type=self._coin.Address.Type.PUBKEY_HASH,
                     amount=199996600,
                     is_dummy=is_dummy),
                 self._createOutput(
                     self._coin,
                     address_name="1Q5YjKVj5yQWHBBsyEBamkfph3cA6G9KK8",  # noqa
-                    address_type=self._coin.Address.Type.PUBKEY_HASH,
                     amount=800000000,
                     is_dummy=is_dummy)
             ]

@@ -2,19 +2,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..abstract.coin import AbstractCoin
+from ..abstract import Coin
 from ..coin_bitcoin import Bitcoin
 
 if TYPE_CHECKING:
     from typing import Final
 
 
-class _LitecoinAddress(Bitcoin.Address):
+class _Address(Bitcoin.Address):
     _PUBKEY_HASH_PREFIX_LIST = ("L",)
     _SCRIPT_HASH_PREFIX_LIST = ("M",)
     _HRP = "ltc"
 
-    class Type(AbstractCoin.Address.Type):
+    class Type(Coin.Address.Type):
         UNKNOWN: Final = \
             Bitcoin.Address.Type.UNKNOWN.value
         PUBKEY_HASH: Final = \
