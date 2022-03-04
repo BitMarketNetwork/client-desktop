@@ -86,11 +86,4 @@ QtObject {
         [ qsTr("Confirmed"), Material.Yellow ],
         [ qsTr("Complete") , Material.Green  ]
     ]
-
-    // TODO
-    readonly property var txCoinNameMap: (new Map([
-        [ "btctest",    "btc-testnet"   ],
-        [ "btc",        "btc"           ],
-        [ "ltc",        "ltc"           ]
-    ]))
 }

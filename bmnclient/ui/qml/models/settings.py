@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    Property as QProperty, \
-    QObject, \
-    Signal as QSignal
+from PySide6.QtCore import (
+    Property as QProperty,
+    QObject,
+    Signal as QSignal,
+    Slot as QSlot)
 
 from . import AbstractModel, AbstractStateModel, AbstractTupleStateModel
 from ....config import ConfigKey
@@ -50,6 +51,12 @@ class BlockchainExplorerModel(AbstractTupleStateModel):
 
     def _setCurrentItemName(self, value: str) -> bool:
         return self._application.blockchainExplorerList.setCurrent(value)
+
+    # noinspection PyTypeChecker
+    @QSlot(QObject, result=bool)
+    def browse(self, object_: QObject) -> bool:
+        explorer = self._application.blockchainExplorerList.current()
+        return explorer.browse(object_.owner)
 
 
 class FiatCurrencyModel(AbstractTupleStateModel):

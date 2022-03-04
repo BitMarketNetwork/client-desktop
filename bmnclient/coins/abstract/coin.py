@@ -29,6 +29,10 @@ class _Model(CoinObjectModel):
         super().__init__(*args, **kwargs)
         self._coin = coin
 
+    @property
+    def owner(self) -> Coin:
+        return self._coin
+
     def afterSetEnabled(self) -> None:
         raise NotImplementedError
 

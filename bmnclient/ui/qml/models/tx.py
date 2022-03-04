@@ -175,6 +175,7 @@ class TxListModel(AbstractListModel):
     class Role(RoleEnum):
         ID: Final = auto()
         VISIBLE: Final = auto()  # for TxListConcatenateModel
+        OBJECT: Final = auto()  # TODO temporary, kill
         NAME: Final = auto()
         NAME_HUMAN: Final = auto()
         AMOUNT: Final = auto()
@@ -190,6 +191,9 @@ class TxListModel(AbstractListModel):
         Role.VISIBLE: (
             b"_visible",
             "_visible"),
+        Role.OBJECT: (  # TODO temporary, kill
+            b"object",
+            lambda t: t.model),
         Role.NAME: (
             b"name",
             lambda t: t.model.name),

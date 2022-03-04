@@ -36,9 +36,6 @@ BItemDelegate {
     }
 
     onClicked: {
-        // TODO rework get %1
-        Qt.openUrlExternally(("https://www.blockchain.com/%1/tx/%2")
-            .arg(BCommon.txCoinNameMap.get(_base.coinName))
-            .arg(_base.tx.name))
+        BBackend.settings.blockchainExplorer.browse(_base.tx.object)
     }
 }
