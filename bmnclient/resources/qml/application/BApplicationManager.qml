@@ -28,9 +28,9 @@ QtObject {
 
         function onStateChanged() {
             let notificaion = createObject(
-                _applicationWindow, 
+                _applicationWindow,
                 "../basiccontrols/BNotification.qml",
-                { "text": "Copied to clipboard" })
+                { "text": qsTr("Copied to clipboard") })
 
             notificaion.x = _applicationWindow.width / 2 - notificaion.width / 2
 
