@@ -26,7 +26,7 @@ QtObject {
     property Connections backendClipboardManager: Connections {
         target: BBackend.clipboard
 
-        function onStateChanged() {
+        function onTextChanged() {
             let notificaion = createObject(
                 _applicationWindow,
                 "../basiccontrols/BNotification.qml",

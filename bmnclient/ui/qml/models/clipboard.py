@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 class ClipboardModel(QObject):
     _MODE = QClipboard.Clipboard
     stateChanged = QSignal()
+    textChanged = QSignal()
 
     def __init__(self, application: QmlApplication) -> None:
         super().__init__()
@@ -29,6 +30,7 @@ class ClipboardModel(QObject):
     @text.setter
     def text(self, value: str):
         self._application.clipboard.setText(value, self._MODE)
+        self.textChanged.emit()
 
     def _onChanged(self, mode: QClipboard.Mode):
         if mode == self._MODE:
