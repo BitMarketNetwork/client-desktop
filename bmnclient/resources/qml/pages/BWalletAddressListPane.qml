@@ -1,13 +1,12 @@
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
+import "../dialogs"
 
 BPane {
     id: _base
     property string title: qsTr("Addresses (%1)").arg(_list.model.rowCountHuman)
     property var coin // CoinModel
-
-    signal addressTransactionHistory(var address)
 
     contentItem: BAddressListView {
         id: _list
@@ -42,7 +41,13 @@ BPane {
         BMenuItem {
             text: qsTr("Transaction history")
             onTriggered: {
-                _base.addressTransactionHistory(_contextMenu.address)
+                let dialog = _applicationManager.createDialog(
+                    "BAddressTransactionHistoryDialog", {
+                    "coin" : _base.coin,
+                    "height" : _applicationWindow.height / 2,
+                    "width" : _applicationWindow.width / 2
+                })
+                dialog.open();
             }
         }
         /*BMenuItem {

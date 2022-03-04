@@ -6,7 +6,6 @@ BControl {
     id: _base
     property alias model: _listView.model
     property real smallFontPointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
-    property string coinName
 
     contentItem: BStackLayout {
         id: _stack
@@ -26,7 +25,6 @@ BControl {
 
                 delegate: BAddressTxItem {
                     tx: model
-                    coinName: _base.coinName
                 }
 
                 section.property: "state.timeHuman"

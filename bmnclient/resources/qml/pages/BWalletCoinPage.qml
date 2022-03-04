@@ -22,10 +22,6 @@ BControl {
 
             BWalletAddressListPane {
                 coin: _base.coin
-
-                onAddressTransactionHistory: (address)=> { 
-                    _base.onAddressTransactionHistory(address) 
-                }
             }
             BWalletTxListPane {
                 coin: _base.coin
@@ -53,16 +49,5 @@ BControl {
                 _base.createWatchOnlyAddress()
             }
         }
-    }
-
-    function onAddressTransactionHistory(address) {
-        let dialog = _applicationManager.createDialog(
-            "BAddressTransactionHistoryDialog", {
-                "coin" : coin,
-                "address" : address,
-                "height" : _applicationWindow.height / 2 ,
-                "width" : _applicationWindow.width / 2
-            })
-        dialog.open();
     }
 }

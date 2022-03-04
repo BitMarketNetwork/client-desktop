@@ -6,7 +6,6 @@ import "../basiccontrols"
 BItemDelegate {
     id: _base
     property var tx
-    property string coinName
     property real smallFontPointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
 
     contentItem: BRowLayout {
