@@ -294,6 +294,22 @@ You can check the balance and view transactions only.</source>
     </message>
 </context>
 <context>
+    <name>BAddressTransactionHistoryDialog</name>
+    <message>
+        <location filename="../qml/dialogs/BAddressTransactionHistoryDialog.qml" line="10"/>
+        <source>Transaction history</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BAddressTxListView</name>
+    <message>
+        <location filename="../qml/coincontrols/BAddressTxListView.qml" line="18"/>
+        <source>Transactions not found.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BAlphaDialog</name>
     <message>
         <location filename="../qml/dialogs/BAlphaDialog.qml" line="13"/>
@@ -866,25 +882,30 @@ Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletAddressListPane.qml" line="27"/>
+        <location filename="../qml/pages/BWalletAddressListPane.qml" line="29"/>
         <source>Copy address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletAddressListPane.qml" line="33"/>
+        <location filename="../qml/pages/BWalletAddressListPane.qml" line="35"/>
         <source>Spend from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/BWalletAddressListPane.qml" line="41"/>
+        <source>Transaction history</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>BWalletCoinPage</name>
     <message>
-        <location filename="../qml/pages/BWalletCoinPage.qml" line="41"/>
+        <location filename="../qml/pages/BWalletCoinPage.qml" line="45"/>
         <source>Create a new address...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletCoinPage.qml" line="47"/>
+        <location filename="../qml/pages/BWalletCoinPage.qml" line="51"/>
         <source>Add a watch only address...</source>
         <translation type="unfinished"></translation>
     </message>

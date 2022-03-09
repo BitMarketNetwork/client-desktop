@@ -31,6 +31,8 @@ class ConfigKey(Enum):
     SERVICES_FIAT_RATE: Final = "services.fiat_rate"
     SERVICES_FIAT_CURRENCY: Final = "services.fiat_currency"
 
+    SERVICES_BLOCKCHAIN_EXPLORER: Final = "services.blockchain_explorer"
+
     NETWORK_PROXY_TYPE: Final = "network.proxy.type"
     NETWORK_PROXY_STATE: Final = "network.proxy.state"
     NETWORK_PROXY_HOST: Final = "network.proxy.host"

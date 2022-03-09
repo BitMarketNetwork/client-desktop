@@ -29,6 +29,7 @@ from .network import Network
 from .network.query_manager import NetworkQueryManager
 from .network.query_scheduler import NetworkQueryScheduler
 from .network.server_list import ServerList
+from .network.services.blockchain_explorer import BlockchainExplorerList
 from .network.services.fiat_rate import FiatRateServiceList
 from .os_environment import PlatformPaths
 from .resources import Resources
@@ -255,6 +256,7 @@ class CoreApplication(QObject):
             model_factory: Optional[CoinModelFactory] = None) -> None:
         self._fiat_currency_list = FiatCurrencyList(self)
         self._fiat_rate_service_list = FiatRateServiceList(self)
+        self._blockchain_explorer_list = BlockchainExplorerList(self)
 
         self._coin_list = CoinList(model_factory=model_factory)
         for coin in self._coin_list:
@@ -337,6 +339,10 @@ class CoreApplication(QObject):
     @property
     def fiatRateServiceList(self) -> FiatRateServiceList:
         return self._fiat_rate_service_list
+
+    @property
+    def blockchainExplorerList(self) -> BlockchainExplorerList:
+        return self._blockchain_explorer_list
 
     @property
     def title(self) -> str:

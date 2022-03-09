@@ -339,6 +339,7 @@ class CoinModel(_CoinModel, AbstractModel):
 
 class CoinListModel(AbstractListModel):
     class Role(RoleEnum):
+        OBJECT: Final = auto()  # TODO temporary, kill
         SHORT_NAME: Final = auto()
         FULL_NAME: Final = auto()
         ICON_PATH: Final = auto()
@@ -352,6 +353,9 @@ class CoinListModel(AbstractListModel):
         MANAGER: Final = auto()
 
     ROLE_MAP: Final = {
+        Role.OBJECT: (  # TODO temporary, kill
+            b"object",
+            lambda c: c.model),
         Role.SHORT_NAME: (
             b"name",
             lambda c: c.model.name),

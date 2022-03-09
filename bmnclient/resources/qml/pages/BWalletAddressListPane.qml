@@ -1,6 +1,7 @@
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
+import "../dialogs"
 
 BPane {
     id: _base
@@ -35,6 +36,18 @@ BPane {
             text: qsTr("Spend from")
             onTriggered: {
                 _contextMenu.address.state.isTxInput = true
+            }
+        }
+        BMenuItem {
+            text: qsTr("Transaction history")
+            onTriggered: {
+                let dialog = _applicationManager.createDialog(
+                    "BAddressTransactionHistoryDialog", {
+                    "address" : _contextMenu.address,
+                    "height" : _applicationWindow.height / 2,
+                    "width" : _applicationWindow.width / 2
+                })
+                dialog.open();
             }
         }
         /*BMenuItem {

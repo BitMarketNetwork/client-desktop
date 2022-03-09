@@ -188,12 +188,16 @@ class AddressModel(_AddressModel, AbstractModel):
 
 class AddressListModel(AbstractListModel):
     class Role(RoleEnum):
+        OBJECT: Final = auto()  # TODO temporary, kill
         NAME: Final = auto()
         BALANCE: Final = auto()
         STATE: Final = auto()
         TX_LIST: Final = auto()
 
     ROLE_MAP: Final = {
+        Role.OBJECT: (  # TODO temporary, kill
+            b"object",
+            lambda a: a.model),
         Role.NAME: (
             b"name",
             lambda a: a.model.name),
@@ -205,7 +209,7 @@ class AddressListModel(AbstractListModel):
             lambda a: a.model.state),
         Role.TX_LIST: (
             b"txList",
-            lambda a: a.model.txListSorted)
+            lambda a: a.model.txListSorted())
     }
 
 

@@ -18,6 +18,10 @@ class _Model(CoinObjectModel):
         super().__init__(*args, **kwargs)
         self._tx = tx
 
+    @property
+    def owner(self) -> Coin.Tx:
+        return self._tx
+
     def afterSetHeight(self) -> None:
         raise NotImplementedError
 
