@@ -118,6 +118,10 @@ class _Model(CoinObjectModel):
         super().__init__(*args, **kwargs)
         self._address = address
 
+    @property
+    def owner(self) -> Coin.Address:
+        return self._address
+
     def afterSetBalance(self) -> None:
         raise NotImplementedError
 
