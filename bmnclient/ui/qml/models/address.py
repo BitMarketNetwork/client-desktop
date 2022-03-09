@@ -209,7 +209,7 @@ class AddressListModel(AbstractListModel):
             lambda a: a.model.state),
         Role.TX_LIST: (
             b"txList",
-            lambda a: a.model.txListSorted)
+            lambda a: a.model.txListSorted())
     }
 
 

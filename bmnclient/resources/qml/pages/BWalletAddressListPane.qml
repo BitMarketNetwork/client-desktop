@@ -43,7 +43,7 @@ BPane {
             onTriggered: {
                 let dialog = _applicationManager.createDialog(
                     "BAddressTransactionHistoryDialog", {
-                    "coin" : _base.coin,
+                    "address" : _contextMenu.address,
                     "height" : _applicationWindow.height / 2,
                     "width" : _applicationWindow.width / 2
                 })
