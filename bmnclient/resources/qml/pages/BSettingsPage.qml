@@ -21,4 +21,7 @@ BApplicationPage {
         onClearWallet: {
         }
     }
+
+    BSettingsProxyPane {
+    }
 }

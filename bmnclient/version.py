@@ -58,3 +58,7 @@ class Gui:
     QML_CONTEXT_NAME: Final = "BBackend"
     DEFAULT_THEME_NAME: Final = "light"
     DEFAULT_FONT_POINT_SIZE: Final = 10
+
+
+class Proxy:
+    DEFAULT_PROXY_TYPE: Final = "HTTP"

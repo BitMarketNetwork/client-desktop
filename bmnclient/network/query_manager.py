@@ -7,6 +7,8 @@ from .access_manager import NetworkAccessManager
 from .query import AbstractQuery
 from ..logger import Logger
 
+from PySide6.QtNetwork import QNetworkProxy
+
 if TYPE_CHECKING:
     from typing import List, Optional
 
@@ -31,6 +33,13 @@ class NetworkQueryManager:
     @property
     def name(self) -> str:
         return self._manager.name
+
+    @property
+    def proxy(self) -> QNetworkProxy:
+        return self._manager.proxy
+
+    def proxyUpdate(self, host: str = None, type: str = None) -> None:
+        self._manager.proxyUpdate(host, type)
 
     @property
     def currentQuery(self) -> Optional[AbstractQuery]:

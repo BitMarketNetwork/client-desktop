@@ -137,6 +137,45 @@ class NetworkAccessManager(QNetworkAccessManager):
         return self._name
 
     @property
+    def proxy(self) -> QNetworkProxy:
+        return self._proxy
+
+    def proxyUpdate(self, host: str = None, type: str = None) -> None:
+
+        proxy_type = QNetworkProxy.ProxyType.NoProxy
+        port, username, password = 0, None, None
+
+        d = []
+
+        if host is not None:
+            d = host.split("@")
+
+        if len(d) == 1:
+            host = d[0].split(':')[0]
+            port = int(d[0].split(':')[1])
+        elif len(d) == 2:
+            username = d[0].split(':')[0]
+            password = d[0].split(':')[1]
+            host = d[1].split(':')[0]
+            port = int(d[1].split(':')[1])
+        else:
+            type = None
+
+        self._proxy.setHostName(host)
+        self._proxy.setPort(port)
+        self._proxy.setUser(username)
+        self._proxy.setPassword(password)
+
+        if type == "HTTP":
+            proxy_type = QNetworkProxy.ProxyType.HttpProxy
+        if type == "SOCKS5":
+            proxy_type = QNetworkProxy.ProxyType.Socks5Proxy
+
+        self._proxy.setCapabilities(QNetworkProxy.Capability.TunnelingCapability)
+        self._proxy.setType(proxy_type)
+        self.setProxy(self._proxy)
+
+    @property
     def tlsConfiguration(self) -> QSslConfiguration:
         return self._tls_config
 

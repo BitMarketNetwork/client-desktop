@@ -10,7 +10,7 @@ from PySide6.QtCore import \
 from . import AbstractModel, AbstractStateModel, AbstractTupleStateModel
 from ....config import ConfigKey
 from ....language import Language
-from ....version import Gui
+from ....version import Gui, Proxy
 
 if TYPE_CHECKING:
     from typing import Any, Dict, TypedDict
@@ -70,6 +70,56 @@ class LanguageModel(AbstractTupleStateModel):
             self._application.updateTranslation()
             return True
         return False
+
+
+class ProxyModel(AbstractTupleStateModel):
+
+    __stateChanged = QSignal()
+
+    def __init__(self, application: QmlApplication) -> None:
+        super().__init__(
+            application,
+            tuple(),  # QML controlled
+            config_key=ConfigKey.NETWORK_PROXY_TYPE,
+            default_name=Proxy.DEFAULT_PROXY_TYPE)
+
+        self._proxy_state = self._application.config.get(
+            ConfigKey.NETWORK_PROXY_STATE,
+            bool,
+            False)
+        self._proxy_host = self._application.config.get(
+            ConfigKey.NETWORK_PROXY_HOST,
+            str,
+            "")
+
+    def _isValidName(self, name) -> bool:
+        return bool(name)
+
+    @QProperty(str, notify=__stateChanged)
+    def hostProxy(self) -> str:
+        return self._proxy_host
+
+    @hostProxy.setter
+    def hostProxy(self, value: str) -> None:
+        self._proxy_host = value
+
+    @QProperty(bool, notify=__stateChanged)
+    def enableProxy(self) -> bool:
+        return self._proxy_state
+
+    @enableProxy.setter
+    def enableProxy(self, value: bool) -> None:
+        value = bool(value)
+        self._application.config.set(
+            ConfigKey.NETWORK_PROXY_STATE,
+            value)
+        self._application.config.set(
+            ConfigKey.NETWORK_PROXY_HOST,
+            self._proxy_host)
+        if self._proxy_state != value:
+            self._proxy_state = value
+            self.update()
+        self._application.updateProxy()
 
 
 class ThemeModel(AbstractTupleStateModel):
@@ -188,6 +238,7 @@ class SettingsModel(AbstractModel):
         self._theme_model = ThemeModel(self._application)
         self._font_model = FontModel(self._application)
         self._system_tray_model = SystemTrayModel(self._application)
+        self._proxy_model = ProxyModel(self._application)
 
     @QProperty(QObject, constant=True)
     def fiatRateService(self) -> FiatRateServiceModel:
@@ -212,3 +263,7 @@ class SettingsModel(AbstractModel):
     @QProperty(QObject, constant=True)
     def systemTray(self) -> SystemTrayModel:
         return self._system_tray_model
+
+    @QProperty(QObject, constant=True)
+    def proxy(self) -> ProxyModel:
+        return self._proxy_model
