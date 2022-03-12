@@ -8,7 +8,7 @@ BItemDelegate {
     property var amount // AmountModel
     property BMenu contextMenu
 
-    text: (address.state.label ? address.state.label + " : " : "") + address.name
+    text: (address.state.label ? address.state.label + " : " : "") + address.name + ("[%1]").arg(address.txList.rowCount())
 
     // TODO address.state.isUpdating: show animation
 
