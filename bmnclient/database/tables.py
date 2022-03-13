@@ -4,6 +4,7 @@ from enum import Enum
 from itertools import chain
 from typing import TYPE_CHECKING
 
+from .query import SortOrder
 from ..utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -17,8 +18,7 @@ if TYPE_CHECKING:
         Optional,
         Tuple,
         Type,
-        Union
-    )
+        Union)
     from . import Cursor, Database
     from ..coins.abstract import Coin
     from ..utils.serialize import Serializable
@@ -42,20 +42,15 @@ def _whereColumnList(*source_list: ColumnEnum) -> str:
     return " AND ".join(source_list)
 
 
-def _orderColumnList(*source_list: Dict[ColumnEnum, Order]) -> str:
+def _orderColumnList(*source_list: Dict[ColumnEnum, SortOrder]) -> str:
     source_list = map(
-        lambda t: f"{t[0].value.identifier} {t[1].value}",
+        lambda t: f"{t[0].value.identifier} {t[1]}",
         source_list)
     return _stringList(source_list)
 
 
 def _qmarkList(count: int) -> str:
     return _stringList("?" * count)
-
-
-class Order(Enum):
-    ASC: Final = "ASC"
-    DESC: Final = "DESC"
 
 
 class ColumnEnum(Enum):
@@ -238,7 +233,7 @@ class AbstractTable:
             cursor: Cursor,
             source_type: Type[Serializable],
             key_columns: Dict[Column, Any],
-            order_columns: Dict[Column, Order],
+            order_columns: Dict[Column, SortOrder],
             *,
             limit: int = -1,
             return_key_columns: bool = False,
@@ -565,8 +560,8 @@ class TxListTable(AbstractTable, name="transactions"):
                     self.Column.COIN_ROW_ID: address.coin.rowId
                 },
                 {
-                    self.Column.HEIGHT: Order.ASC,
-                    self.Column.TIME: Order.ASC
+                    self.Column.HEIGHT: SortOrder.ASC,
+                    self.Column.TIME: SortOrder.ASC
                 },
                 address_row_id=address.rowId
         ):
@@ -687,7 +682,7 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
                     self.Column.IO_TYPE: io_type.value
                 },
                 {
-                    self.Column.INDEX: Order.ASC
+                    self.Column.INDEX: SortOrder.ASC
                 }
         ):
             io = coin.Tx.Io.deserialize(result, coin)
