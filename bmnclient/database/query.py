@@ -24,6 +24,10 @@ class Query(NotImplementedInstance):
     def joinSortOrder(cls, source: Iterable[Tuple[Column, SortOrder]]) -> str:
         return cls.join(f"{s[0].identifier} {s[1]}" for s in source)
 
+    @staticmethod
+    def joinQmarkAnd(source: Iterable[Column]) -> str:
+        return " AND ".join(f"{s.identifier} == ?" for s in source)
+
     @classmethod
     def qmark(cls, count: int) -> str:
         return cls.join("?" * count)

@@ -35,11 +35,6 @@ def _columnList(
     return Query.join(source_list)
 
 
-def _whereColumnList(*source_list: ColumnEnum) -> str:
-    source_list = map(lambda s: f"{s.identifier} == ?", source_list)
-    return " AND ".join(source_list)
-
-
 class AbstractTable:
     class ColumnEnum(ColumnEnum):
         ROW_ID: Final = ()
@@ -132,7 +127,7 @@ class AbstractTable:
                 query = (
                     f"SELECT {_columnList(self.ColumnEnum.ROW_ID)}"
                     f" FROM {self.identifier}"
-                    f" WHERE {_whereColumnList(*key_columns.keys())}"
+                    f" WHERE {Query.joinQmarkAnd(key_columns.keys())}"
                     f" LIMIT 1"
                 )
                 for r in cursor.execute(query, (*key_columns.values(), )):
@@ -148,7 +143,7 @@ class AbstractTable:
         query = (
             f"UPDATE {self.identifier}"
             f" SET {_columnList(*data_columns.keys(), with_qmark=True)}"
-            f" WHERE {_whereColumnList(*key_columns.keys())}"
+            f" WHERE {Query.joinQmarkAnd(key_columns.keys())}"
         )
         cursor.execute(query, (*data_columns.values(), *key_columns.values()))
         if cursor.rowcount <= 0:
@@ -241,7 +236,7 @@ class AbstractTable:
             (
                 f"SELECT {_columnList(*column_list)}"
                 f" FROM {self.identifier}"
-                f" WHERE {_whereColumnList(*key_columns.keys())}"
+                f" WHERE {Query.joinQmarkAnd(key_columns.keys())}"
             ),
             [*key_columns.values()]
         )
@@ -719,7 +714,7 @@ class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
             (
                 f"SELECT {_columnList(self.ColumnEnum.TX_ROW_ID)}"
                 f" FROM {self.identifier}"
-                f" WHERE {_whereColumnList(self.ColumnEnum.ADDRESS_ROW_ID)}"
+                f" WHERE {Query.joinQmarkAnd((self.ColumnEnum.ADDRESS_ROW_ID, ))}"
             ),
             [address_row_id]
         )
