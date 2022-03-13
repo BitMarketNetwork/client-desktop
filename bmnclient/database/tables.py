@@ -44,10 +44,6 @@ def _orderColumnList(*source_list: Dict[ColumnEnum, SortOrder]) -> str:
     return Query.join(source_list)
 
 
-def _qmarkList(count: int) -> str:
-    return Query.join("?" * count)
-
-
 class ColumnEnum(Enum):
     pass
 
@@ -157,7 +153,7 @@ class AbstractTable:
         cursor.execute(
             f"INSERT OR IGNORE INTO {self.identifier}"
             f" ({_columnList(*key_columns.keys(), *data_columns.keys())})"
-            f" VALUES({_qmarkList(len(key_columns) + len(data_columns))})",
+            f" VALUES({Query.qmark(len(key_columns) + len(data_columns))})",
             (*key_columns.values(), *data_columns.values()))
 
         if cursor.rowcount > 0:
@@ -748,7 +744,7 @@ class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
         cursor.execute(
             f"INSERT OR IGNORE INTO {self.identifier}"
             f" ({_columnList(*columns)})"
-            f" VALUES({_qmarkList(len(columns))})",
+            f" VALUES({Query.qmark(len(columns))})",
             (address_row_id, tx_row_id))
 
     def statementSelectTransactions(

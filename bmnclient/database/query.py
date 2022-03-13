@@ -18,3 +18,7 @@ class Query(NotImplementedInstance):
     @staticmethod
     def join(source: Iterable[str]) -> str:
         return ", ".join(source)
+
+    @classmethod
+    def qmark(cls, count: int) -> str:
+        return cls.join("?" * count)
