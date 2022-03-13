@@ -14,12 +14,14 @@ if TYPE_CHECKING:
         Dict,
         Final,
         Generator,
+        Iterable,
         List,
         Optional,
         Tuple,
         Type,
         Union)
     from . import Cursor, Database
+    from .column import Column
     from ..coins.abstract import Coin
     from ..utils.serialize import Serializable
 
@@ -36,13 +38,6 @@ def _columnList(
 def _whereColumnList(*source_list: ColumnEnum) -> str:
     source_list = map(lambda s: f"{s.identifier} == ?", source_list)
     return " AND ".join(source_list)
-
-
-def _orderColumnList(*source_list: Dict[ColumnEnum, SortOrder]) -> str:
-    source_list = map(
-        lambda t: f"{t[0].identifier} {t[1]}",
-        source_list)
-    return Query.join(source_list)
 
 
 class AbstractTable:
@@ -195,7 +190,7 @@ class AbstractTable:
             cursor: Cursor,
             source_type: Type[Serializable],
             key_columns: Dict[ColumnEnum, Any],
-            order_columns: Dict[ColumnEnum, SortOrder],
+            order_columns: Iterable[Tuple[Column, SortOrder]] = tuple(),
             *,
             limit: int = -1,
             return_key_columns: bool = False,
@@ -214,7 +209,7 @@ class AbstractTable:
             **options)
 
         if order_columns:
-            query += f" ORDER BY {_orderColumnList(*order_columns.items())}"
+            query += f" ORDER BY {Query.joinSortOrder(order_columns)}"
 
         if limit >= 0:
             query += f" LIMIT ?"
@@ -332,7 +327,6 @@ class CoinListTable(AbstractTable, name="coins"):
                 cursor,
                 type(coin),
                 {self.ColumnEnum.NAME: coin.name},
-                {},
                 limit=1,
                 return_key_columns=True),
             None)
@@ -420,8 +414,7 @@ class AddressListTable(AbstractTable, name="addresses"):
         for result in self._deserialize(
                 cursor,
                 coin.Address,
-                {self.ColumnEnum.COIN_ROW_ID: coin.rowId},
-                {}
+                {self.ColumnEnum.COIN_ROW_ID: coin.rowId}
         ):
             address = coin.Address.deserialize(result, coin)
             if address is None:
@@ -521,10 +514,10 @@ class TxListTable(AbstractTable, name="transactions"):
                 {
                     self.ColumnEnum.COIN_ROW_ID: address.coin.rowId
                 },
-                {
-                    self.ColumnEnum.HEIGHT: SortOrder.ASC,
-                    self.ColumnEnum.TIME: SortOrder.ASC
-                },
+                (
+                        (self.ColumnEnum.HEIGHT, SortOrder.ASC),
+                        (self.ColumnEnum.TIME, SortOrder.ASC)
+                ),
                 address_row_id=address.rowId
         ):
             input_error, result["input_list"] = \
@@ -643,9 +636,9 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
                     self.ColumnEnum.TX_ROW_ID: tx_row_id,
                     self.ColumnEnum.IO_TYPE: io_type.value
                 },
-                {
-                    self.ColumnEnum.INDEX: SortOrder.ASC
-                }
+                (
+                        (self.ColumnEnum.INDEX, SortOrder.ASC),
+                )
         ):
             io = coin.Tx.Io.deserialize(result, coin)
             if io is None:
