@@ -4,6 +4,7 @@ from enum import Enum
 from itertools import chain
 from typing import TYPE_CHECKING
 
+from .column import ColumnEnum
 from .query import Query, SortOrder
 from ..utils.class_property import classproperty
 
@@ -24,59 +25,29 @@ if TYPE_CHECKING:
 
 
 def _columnList(
-        *source_list: ColumnEnum_,
+        *source_list: ColumnEnum,
         with_qmark: bool = False) -> str:
-    source_list = map(lambda s: s.value.identifier, source_list)
+    source_list = map(lambda s: s.identifier, source_list)
     if with_qmark:
         source_list = map(lambda s: f"{s} = ?", source_list)
     return Query.join(source_list)
 
 
-def _whereColumnList(*source_list: ColumnEnum_) -> str:
-    source_list = map(lambda s: f"{s.value.identifier} == ?", source_list)
+def _whereColumnList(*source_list: ColumnEnum) -> str:
+    source_list = map(lambda s: f"{s.identifier} == ?", source_list)
     return " AND ".join(source_list)
 
 
-def _orderColumnList(*source_list: Dict[ColumnEnum_, SortOrder]) -> str:
+def _orderColumnList(*source_list: Dict[ColumnEnum, SortOrder]) -> str:
     source_list = map(
-        lambda t: f"{t[0].value.identifier} {t[1]}",
+        lambda t: f"{t[0].identifier} {t[1]}",
         source_list)
     return Query.join(source_list)
 
 
-class ColumnEnum_(Enum):
-    pass
-
-
-class ColumnDefinition:
-    __slots__ = ("_name", "_identifier", "_definition", "_full_definition")
-
-    def __init__(self, name: str, definition: str) -> None:
-        self._name = name
-        self._identifier = f"\"{self._name}\""
-        self._definition = definition
-        self._full_definition = f"{self._identifier} {self._definition}"
-
-    def __str__(self) -> str:
-        return self._full_definition
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def identifier(self) -> str:
-        return self._identifier
-
-    @property
-    def definition(self) -> str:
-        return self._definition
-
-
 class AbstractTable:
-    class ColumnEnum(ColumnEnum_):
-        # compatible with utils.serialize.Serializable.rowId
-        ROW_ID: Final = ColumnDefinition("row_id", "INTEGER PRIMARY KEY")
+    class ColumnEnum(ColumnEnum):
+        ROW_ID: Final = ()
 
     __NAME: str = ""
     __IDENTIFIER: str = ""
@@ -90,7 +61,7 @@ class AbstractTable:
         cls.__IDENTIFIER = f"\"{cls.__NAME}\""
 
         definition_list = Query.join(chain(
-            (str(c.value) for c in cls.ColumnEnum),
+            (str(c) for c in cls.ColumnEnum),
             (c for c in cls._CONSTRAINT_LIST),
             (f"UNIQUE({_columnList(*c)})" for c in cls._UNIQUE_COLUMN_LIST)
         ))
@@ -137,14 +108,14 @@ class AbstractTable:
 
         def columnsString(columns) -> str:
             return " and ".join(
-                f"'{k.value.name}' == '{str(v)}'" for (k, v) in columns.items()
+                f"'{k.name}' == '{str(v)}'" for (k, v) in columns.items()
             )
 
         if row_id > 0:
             cursor.execute(
                 f"UPDATE {self.identifier}"
                 f" SET {_columnList(*data_columns.keys(), with_qmark=True)}"
-                f" WHERE {self.ColumnEnum.ROW_ID.value.identifier} == ?",
+                f" WHERE {self.ColumnEnum.ROW_ID.identifier} == ?",
                 (*data_columns.values(), row_id))
             if cursor.rowcount > 0:
                 assert cursor.rowcount == 1
@@ -209,8 +180,8 @@ class AbstractTable:
 
         for column in self.ColumnEnum:
             if column not in key_columns and column not in custom_columns:
-                if column.value.name in source_data:
-                    data_columns[column] = source_data[column.value.name]
+                if column.name in source_data:
+                    data_columns[column] = source_data[column.name]
 
         source.rowId = self._insertOrUpdate(
             cursor,
@@ -234,7 +205,7 @@ class AbstractTable:
         column_list = [self.ColumnEnum.ROW_ID]
         for column in self.ColumnEnum:
             if column not in key_columns:
-                if column.value.name in source_type.serializeMap:
+                if column.name in source_type.serializeMap:
                     column_list.append(column)
 
         query, query_args = self._deserializeStatement(
@@ -253,21 +224,21 @@ class AbstractTable:
             if return_key_columns:
                 yield dict(chain(
                     zip(
-                        (c.value.name for c in key_columns.keys()),
+                        (c.name for c in key_columns.keys()),
                         key_columns.values()),
                     zip(
-                        (c.value.name for c in column_list),
+                        (c.name for c in column_list),
                         result)
                 ))
             else:
                 yield dict(zip(
-                    (c.value.name for c in column_list),
+                    (c.name for c in column_list),
                     result)
                 )
 
     def _deserializeStatement(
             self,
-            column_list: List[ColumnEnum_],
+            column_list: List[ColumnEnum],
             key_columns: Dict[ColumnEnum, Any],
             **options
     ) -> Tuple[str, List[Any]]:
@@ -282,10 +253,10 @@ class AbstractTable:
 
 
 class MetadataTable(AbstractTable, name="metadata"):
-    class ColumnEnum(ColumnEnum_):
-        ROW_ID: Final = AbstractTable.ColumnEnum.ROW_ID.value
-        KEY: Final = ColumnDefinition("key", "TEXT NOT NULL UNIQUE")
-        VALUE: Final = ColumnDefinition("value", "TEXT")
+    class ColumnEnum(ColumnEnum):
+        ROW_ID: Final = ()
+        KEY: Final = ("key", "TEXT NOT NULL UNIQUE")
+        VALUE: Final = ("value", "TEXT")
 
     class Key(Enum):
         VERSION: Final = "version"
@@ -300,7 +271,7 @@ class MetadataTable(AbstractTable, name="metadata"):
             cursor.execute(
                 f"SELECT {_columnList(self.ColumnEnum.VALUE)}"
                 f" FROM {self.identifier}"
-                f" WHERE {self.ColumnEnum.KEY.value.identifier} == ?"
+                f" WHERE {self.ColumnEnum.KEY.identifier} == ?"
                 f" LIMIT 1",
                 (key.value, )
             )
@@ -328,30 +299,30 @@ class MetadataTable(AbstractTable, name="metadata"):
 
 
 class CoinListTable(AbstractTable, name="coins"):
-    class ColumnEnum(ColumnEnum_):
-        ROW_ID: Final = AbstractTable.ColumnEnum.ROW_ID.value
+    class ColumnEnum(ColumnEnum):
+        ROW_ID: Final = ()
 
-        NAME: Final = ColumnDefinition(
+        NAME: Final = (
             "name",
             "TEXT NOT NULL UNIQUE")
-        IS_ENABLED: Final = ColumnDefinition(
+        IS_ENABLED: Final = (
             "is_enabled",
             "INTEGER NOT NULL")
 
-        HEIGHT: Final = ColumnDefinition(
+        HEIGHT: Final = (
             "height",
             "INTEGER NOT NULL")
-        VERIFIED_HEIGHT: Final = ColumnDefinition(
+        VERIFIED_HEIGHT: Final = (
             "verified_height",
             "INTEGER NOT NULL")
 
-        OFFSET: Final = ColumnDefinition(
+        OFFSET: Final = (
             "offset",
             "TEXT NOT NULL")
-        UNVERIFIED_OFFSET: Final = ColumnDefinition(
+        UNVERIFIED_OFFSET: Final = (
             "unverified_offset",
             "TEXT NOT NULL")
-        UNVERIFIED_HASH: Final = ColumnDefinition(
+        UNVERIFIED_HASH: Final = (
             "unverified_hash",
             "TEXT NOT NULL")
 
@@ -384,39 +355,39 @@ class CoinListTable(AbstractTable, name="coins"):
 
 
 class AddressListTable(AbstractTable, name="addresses"):
-    class ColumnEnum(ColumnEnum_):
-        ROW_ID: Final = AbstractTable.ColumnEnum.ROW_ID.value
-        COIN_ROW_ID: Final = ColumnDefinition(
+    class ColumnEnum(ColumnEnum):
+        ROW_ID: Final = ()
+        COIN_ROW_ID: Final = (
             "coin_row_id",
             "INTEGER NOT NULL")
 
-        NAME: Final = ColumnDefinition(
+        NAME: Final = (
             "name",
             "TEXT NOT NULL")
-        TYPE: Final = ColumnDefinition(
+        TYPE: Final = (
             "type",
             "TEXT NOT NULL")
-        BALANCE: Final = ColumnDefinition(
+        BALANCE: Final = (
             "balance",
             "INTEGER NOT NULL")
-        TX_COUNT: Final = ColumnDefinition(
+        TX_COUNT: Final = (
             "tx_count",
             "INTEGER NOT NULL")
 
-        LABEL: Final = ColumnDefinition(
+        LABEL: Final = (
             "label",
             "TEXT NOT NULL")
-        COMMENT: Final = ColumnDefinition(
+        COMMENT: Final = (
             "comment",
             "TEXT NOT NULL")
-        KEY: Final = ColumnDefinition(
+        KEY: Final = (
             "key",
             "TEXT")
 
-        HISTORY_FIRST_OFFSET: Final = ColumnDefinition(
+        HISTORY_FIRST_OFFSET: Final = (
             "history_first_offset",
             "TEXT NOT NULL")
-        HISTORY_LAST_OFFSET: Final = ColumnDefinition(
+        HISTORY_LAST_OFFSET: Final = (
             "history_last_offset",
             "TEXT NOT NULL")
 
@@ -477,30 +448,30 @@ class AddressListTable(AbstractTable, name="addresses"):
 
 
 class TxListTable(AbstractTable, name="transactions"):
-    class ColumnEnum(ColumnEnum_):
-        ROW_ID: Final = AbstractTable.ColumnEnum.ROW_ID.value
-        COIN_ROW_ID: Final = ColumnDefinition(
+    class ColumnEnum(ColumnEnum):
+        ROW_ID: Final = ()
+        COIN_ROW_ID: Final = (
             "coin_row_id",
             "INTEGER NOT NULL")
 
-        NAME: Final = ColumnDefinition(
+        NAME: Final = (
             "name",
             "TEXT NOT NULL")
-        HEIGHT: Final = ColumnDefinition(
+        HEIGHT: Final = (
             "height",
             "INTEGER NOT NULL")
-        TIME: Final = ColumnDefinition(
+        TIME: Final = (
             "time",
             "INTEGER NOT NULL")
 
-        AMOUNT: Final = ColumnDefinition(
+        AMOUNT: Final = (
             "amount",
             "INTEGER NOT NULL")
-        FEE_AMOUNT: Final = ColumnDefinition(
+        FEE_AMOUNT: Final = (
             "fee_amount",
             "INTEGER NOT NULL")
 
-        IS_COINBASE: Final = ColumnDefinition(
+        IS_COINBASE: Final = (
             "is_coinbase",
             "INTEGER NOT NULL")
 
@@ -516,7 +487,7 @@ class TxListTable(AbstractTable, name="transactions"):
 
     def _deserializeStatement(
             self,
-            column_list: List[ColumnEnum_],
+            column_list: List[ColumnEnum],
             key_columns: Dict[ColumnEnum, Any],
             *,
             address_row_id: int = -1,
@@ -621,25 +592,25 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
         INPUT: Final = "input"
         OUTPUT: Final = "output"
 
-    class ColumnEnum(ColumnEnum_):
-        ROW_ID: Final = AbstractTable.ColumnEnum.ROW_ID.value
-        TX_ROW_ID: Final = ColumnDefinition(
+    class ColumnEnum(ColumnEnum):
+        ROW_ID: Final = ()
+        TX_ROW_ID: Final = (
             "transaction_row_id",
             "INTEGER NOT NULL")
-        IO_TYPE: Final = ColumnDefinition(
+        IO_TYPE: Final = (
             "io_type",
             "TEXT NOT NULL")  # IoType
-        INDEX: Final = ColumnDefinition(
+        INDEX: Final = (
             "index",
             "INTEGER NOT NULL")
 
-        OUTPUT_TYPE: Final = ColumnDefinition(
+        OUTPUT_TYPE: Final = (
             "output_type",
             "TEXT NOT NULL")
-        ADDRESS_NAME: Final = ColumnDefinition(
+        ADDRESS_NAME: Final = (
             "address_name",
             "TEXT")
-        AMOUNT: Final = ColumnDefinition(
+        AMOUNT: Final = (
             "amount",
             "INTEGER NOT NULL")
 
@@ -706,13 +677,13 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
 
 
 class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
-    class ColumnEnum(ColumnEnum_):
-        ROW_ID: Final = AbstractTable.ColumnEnum.ROW_ID.value
+    class ColumnEnum(ColumnEnum):
+        ROW_ID: Final = ()
 
-        ADDRESS_ROW_ID: Final = ColumnDefinition(
+        ADDRESS_ROW_ID: Final = (
             "address_row_id",
             "INTEGER NOT NULL")
-        TX_ROW_ID: Final = ColumnDefinition(
+        TX_ROW_ID: Final = (
             "tx_row_id",
             "INTEGER NOT NULL")
 

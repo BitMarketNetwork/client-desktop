@@ -266,7 +266,7 @@ class TestDatabase(TestCase):
             coin: Coin) -> List[Tuple[Any]]:
         cursor.execute(
             f"SELECT * FROM {CoinListTable.identifier} WHERE "
-            f" {CoinListTable.ColumnEnum.NAME.value.identifier} == ?",
+            f" {CoinListTable.ColumnEnum.NAME.identifier} == ?",
             (coin.name,))
         r = cursor.fetchall()
         self.assertIsNotNone(r)
@@ -278,7 +278,7 @@ class TestDatabase(TestCase):
             coin: Coin) -> List[Tuple[Any]]:
         cursor.execute(
             f"SELECT * FROM {AddressListTable.identifier} WHERE"
-            f" {AddressListTable.ColumnEnum.COIN_ROW_ID.value.identifier} == ?",
+            f" {AddressListTable.ColumnEnum.COIN_ROW_ID.identifier} == ?",
             (coin.rowId, ))
         r = cursor.fetchall()
         self.assertIsNotNone(r)
@@ -290,7 +290,7 @@ class TestDatabase(TestCase):
             coin: Coin) -> List[Tuple[Any]]:
         cursor.execute(
             f"SELECT * FROM {TxListTable.identifier} WHERE"
-            f" {TxListTable.ColumnEnum.COIN_ROW_ID.value.identifier} == ?",
+            f" {TxListTable.ColumnEnum.COIN_ROW_ID.identifier} == ?",
             (coin.rowId, ))
         r = cursor.fetchall()
         self.assertIsNotNone(r)
@@ -302,7 +302,7 @@ class TestDatabase(TestCase):
             tx: Coin.Tx) -> List[Tuple[Any]]:
         cursor.execute(
             f"SELECT * FROM {TxIoListTable.identifier} WHERE"
-            f" {TxIoListTable.ColumnEnum.TX_ROW_ID.value.identifier} == ?",
+            f" {TxIoListTable.ColumnEnum.TX_ROW_ID.identifier} == ?",
             (tx.rowId, ))
         r = cursor.fetchall()
         self.assertIsNotNone(r)
@@ -312,7 +312,7 @@ class TestDatabase(TestCase):
             self,
             cursor: Cursor,
             tx: Coin.Tx) -> List[Tuple[Any]]:
-        where = AddressTxMapTable.ColumnEnum.TX_ROW_ID.value.identifier
+        where = AddressTxMapTable.ColumnEnum.TX_ROW_ID.identifier
         cursor.execute(
             f"SELECT * FROM {AddressTxMapTable.identifier} WHERE"
             f" {where} == ?",
@@ -325,7 +325,7 @@ class TestDatabase(TestCase):
             self,
             cursor: Cursor,
             address: Coin.Address) -> List[Tuple[Any]]:
-        where = AddressTxMapTable.ColumnEnum.ADDRESS_ROW_ID.value.identifier
+        where = AddressTxMapTable.ColumnEnum.ADDRESS_ROW_ID.identifier
         cursor.execute(
             f"SELECT * FROM {AddressTxMapTable.identifier}"
             f" WHERE {where} == ?",
@@ -369,7 +369,7 @@ class TestDatabase(TestCase):
             coin = coin_list[0]
             c.execute(
                 f"DELETE FROM {CoinListTable.identifier} WHERE "
-                f" {CoinListTable.ColumnEnum.ROW_ID.value.identifier} == ?",
+                f" {CoinListTable.ColumnEnum.ROW_ID.identifier} == ?",
                 (coin.rowId, ))
             self.assertEqual(1, c.rowcount)
             self.assertEqual(0, len(self._select_coin(c, coin)))
@@ -393,7 +393,7 @@ class TestDatabase(TestCase):
             address = coin_list[1].addressList[1]
             c.execute(
                 f"DELETE FROM {AddressListTable.identifier} WHERE "
-                f" {AddressListTable.ColumnEnum.ROW_ID.value.identifier} == ?",
+                f" {AddressListTable.ColumnEnum.ROW_ID.identifier} == ?",
                 (address.rowId, ))
             self.assertEqual(1, c.rowcount)
             self.assertEqual(
@@ -405,7 +405,7 @@ class TestDatabase(TestCase):
             tx = coin_list[1].addressList[2].txList[2]
             c.execute(
                 f"DELETE FROM {TxListTable.identifier} WHERE "
-                f" {TxListTable.ColumnEnum.ROW_ID.value.identifier} == ?",
+                f" {TxListTable.ColumnEnum.ROW_ID.identifier} == ?",
                 (tx.rowId, ))
             self.assertEqual(1, c.rowcount)
             self.assertEqual(
