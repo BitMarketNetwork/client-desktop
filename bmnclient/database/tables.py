@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 def _columnList(
-        *source_list: ColumnEnum,
+        *source_list: ColumnEnum_,
         with_qmark: bool = False) -> str:
     source_list = map(lambda s: s.value.identifier, source_list)
     if with_qmark:
@@ -32,19 +32,19 @@ def _columnList(
     return Query.join(source_list)
 
 
-def _whereColumnList(*source_list: ColumnEnum) -> str:
+def _whereColumnList(*source_list: ColumnEnum_) -> str:
     source_list = map(lambda s: f"{s.value.identifier} == ?", source_list)
     return " AND ".join(source_list)
 
 
-def _orderColumnList(*source_list: Dict[ColumnEnum, SortOrder]) -> str:
+def _orderColumnList(*source_list: Dict[ColumnEnum_, SortOrder]) -> str:
     source_list = map(
         lambda t: f"{t[0].value.identifier} {t[1]}",
         source_list)
     return Query.join(source_list)
 
 
-class ColumnEnum(Enum):
+class ColumnEnum_(Enum):
     pass
 
 
@@ -74,14 +74,14 @@ class ColumnDefinition:
 
 
 class AbstractTable:
-    class Column(ColumnEnum):
+    class ColumnEnum(ColumnEnum_):
         # compatible with utils.serialize.Serializable.rowId
         ROW_ID: Final = ColumnDefinition("row_id", "INTEGER PRIMARY KEY")
 
     __NAME: str = ""
     __IDENTIFIER: str = ""
     _CONSTRAINT_LIST: Tuple[str] = tuple()
-    _UNIQUE_COLUMN_LIST: Tuple[Tuple[Column]] = tuple()
+    _UNIQUE_COLUMN_LIST: Tuple[Tuple[ColumnEnum]] = tuple()
 
     # noinspection PyMethodOverriding
     def __init_subclass__(cls, *args, name: str, **kwargs) -> None:
@@ -90,7 +90,7 @@ class AbstractTable:
         cls.__IDENTIFIER = f"\"{cls.__NAME}\""
 
         definition_list = Query.join(chain(
-            (str(c.value) for c in cls.Column),
+            (str(c.value) for c in cls.ColumnEnum),
             (c for c in cls._CONSTRAINT_LIST),
             (f"UNIQUE({_columnList(*c)})" for c in cls._UNIQUE_COLUMN_LIST)
         ))
@@ -125,8 +125,8 @@ class AbstractTable:
     def _insertOrUpdate(
             self,
             cursor: Cursor,
-            key_columns: Dict[Column, Any],
-            data_columns: Dict[Column, Any],
+            key_columns: Dict[ColumnEnum, Any],
+            data_columns: Dict[ColumnEnum, Any],
             *,
             row_id: int = -1,
             row_id_required: bool = True) -> int:
@@ -144,7 +144,7 @@ class AbstractTable:
             cursor.execute(
                 f"UPDATE {self.identifier}"
                 f" SET {_columnList(*data_columns.keys(), with_qmark=True)}"
-                f" WHERE {self.Column.ROW_ID.value.identifier} == ?",
+                f" WHERE {self.ColumnEnum.ROW_ID.value.identifier} == ?",
                 (*data_columns.values(), row_id))
             if cursor.rowcount > 0:
                 assert cursor.rowcount == 1
@@ -164,7 +164,7 @@ class AbstractTable:
         if row_id_required:
             if row_id <= 0:
                 query = (
-                    f"SELECT {_columnList(self.Column.ROW_ID)}"
+                    f"SELECT {_columnList(self.ColumnEnum.ROW_ID)}"
                     f" FROM {self.identifier}"
                     f" WHERE {_whereColumnList(*key_columns.keys())}"
                     f" LIMIT 1"
@@ -177,7 +177,7 @@ class AbstractTable:
                         "row not found".format(columnsString(key_columns)),
                         query)
         if row_id > 0:
-            key_columns = {self.Column.ROW_ID: row_id}
+            key_columns = {self.ColumnEnum.ROW_ID: row_id}
 
         query = (
             f"UPDATE {self.identifier}"
@@ -194,10 +194,10 @@ class AbstractTable:
             self,
             cursor: Cursor,
             source: Serializable,
-            key_columns: Dict[Column, Any],
-            custom_columns: Optional[Dict[Column, Any]] = None,
+            key_columns: Dict[ColumnEnum, Any],
+            custom_columns: Optional[Dict[ColumnEnum, Any]] = None,
             **options) -> None:
-        assert self.Column.ROW_ID not in key_columns
+        assert self.ColumnEnum.ROW_ID not in key_columns
         source_data = source.serialize(
             exclude_subclasses=True,
             **options)
@@ -207,7 +207,7 @@ class AbstractTable:
         else:
             data_columns = custom_columns.copy()
 
-        for column in self.Column:
+        for column in self.ColumnEnum:
             if column not in key_columns and column not in custom_columns:
                 if column.value.name in source_data:
                     data_columns[column] = source_data[column.value.name]
@@ -223,16 +223,16 @@ class AbstractTable:
             self,
             cursor: Cursor,
             source_type: Type[Serializable],
-            key_columns: Dict[Column, Any],
-            order_columns: Dict[Column, SortOrder],
+            key_columns: Dict[ColumnEnum, Any],
+            order_columns: Dict[ColumnEnum, SortOrder],
             *,
             limit: int = -1,
             return_key_columns: bool = False,
             **options
     ) -> Generator[Dict[str, Union[int, str]], None, None]:
-        assert self.Column.ROW_ID not in key_columns
-        column_list = [self.Column.ROW_ID]
-        for column in self.Column:
+        assert self.ColumnEnum.ROW_ID not in key_columns
+        column_list = [self.ColumnEnum.ROW_ID]
+        for column in self.ColumnEnum:
             if column not in key_columns:
                 if column.value.name in source_type.serializeMap:
                     column_list.append(column)
@@ -267,8 +267,8 @@ class AbstractTable:
 
     def _deserializeStatement(
             self,
-            column_list: List[ColumnEnum],
-            key_columns: Dict[Column, Any],
+            column_list: List[ColumnEnum_],
+            key_columns: Dict[ColumnEnum, Any],
             **options
     ) -> Tuple[str, List[Any]]:
         return (
@@ -282,8 +282,8 @@ class AbstractTable:
 
 
 class MetadataTable(AbstractTable, name="metadata"):
-    class Column(ColumnEnum):
-        ROW_ID: Final = AbstractTable.Column.ROW_ID.value
+    class ColumnEnum(ColumnEnum_):
+        ROW_ID: Final = AbstractTable.ColumnEnum.ROW_ID.value
         KEY: Final = ColumnDefinition("key", "TEXT NOT NULL UNIQUE")
         VALUE: Final = ColumnDefinition("value", "TEXT")
 
@@ -298,9 +298,9 @@ class MetadataTable(AbstractTable, name="metadata"):
             default_value: Optional[int, str] = None) -> Optional[int, str]:
         try:
             cursor.execute(
-                f"SELECT {_columnList(self.Column.VALUE)}"
+                f"SELECT {_columnList(self.ColumnEnum.VALUE)}"
                 f" FROM {self.identifier}"
-                f" WHERE {self.Column.KEY.value.identifier} == ?"
+                f" WHERE {self.ColumnEnum.KEY.value.identifier} == ?"
                 f" LIMIT 1",
                 (key.value, )
             )
@@ -321,15 +321,15 @@ class MetadataTable(AbstractTable, name="metadata"):
     def set(self, cursor: Cursor, key: Key, value: Optional[int, str]) -> None:
         self._insertOrUpdate(
             cursor,
-            {self.Column.KEY: key.value},
-            {self.Column.VALUE: str(value)},
+            {self.ColumnEnum.KEY: key.value},
+            {self.ColumnEnum.VALUE: str(value)},
             row_id_required=False
         )
 
 
 class CoinListTable(AbstractTable, name="coins"):
-    class Column(ColumnEnum):
-        ROW_ID: Final = AbstractTable.Column.ROW_ID.value
+    class ColumnEnum(ColumnEnum_):
+        ROW_ID: Final = AbstractTable.ColumnEnum.ROW_ID.value
 
         NAME: Final = ColumnDefinition(
             "name",
@@ -360,7 +360,7 @@ class CoinListTable(AbstractTable, name="coins"):
             self._deserialize(
                 cursor,
                 type(coin),
-                {self.Column.NAME: coin.name},
+                {self.ColumnEnum.NAME: coin.name},
                 {},
                 limit=1,
                 return_key_columns=True),
@@ -379,13 +379,13 @@ class CoinListTable(AbstractTable, name="coins"):
         self._serialize(
             cursor,
             coin,
-            {self.Column.NAME: coin.name})
+            {self.ColumnEnum.NAME: coin.name})
         assert coin.rowId > 0
 
 
 class AddressListTable(AbstractTable, name="addresses"):
-    class Column(ColumnEnum):
-        ROW_ID: Final = AbstractTable.Column.ROW_ID.value
+    class ColumnEnum(ColumnEnum_):
+        ROW_ID: Final = AbstractTable.ColumnEnum.ROW_ID.value
         COIN_ROW_ID: Final = ColumnDefinition(
             "coin_row_id",
             "INTEGER NOT NULL")
@@ -421,13 +421,13 @@ class AddressListTable(AbstractTable, name="addresses"):
             "TEXT NOT NULL")
 
     _CONSTRAINT_LIST = (
-        f"FOREIGN KEY ({_columnList(Column.COIN_ROW_ID)})"
+        f"FOREIGN KEY ({_columnList(ColumnEnum.COIN_ROW_ID)})"
         f" REFERENCES {CoinListTable.identifier}"
-        f" ({_columnList(CoinListTable.Column.ROW_ID)})"
+        f" ({_columnList(CoinListTable.ColumnEnum.ROW_ID)})"
         f" ON DELETE CASCADE",
     )
     _UNIQUE_COLUMN_LIST = (
-        (Column.COIN_ROW_ID, Column.NAME),
+        (ColumnEnum.COIN_ROW_ID, ColumnEnum.NAME),
     )
 
     def upgrade(self, cursor: Cursor, old_version: int) -> None:
@@ -449,7 +449,7 @@ class AddressListTable(AbstractTable, name="addresses"):
         for result in self._deserialize(
                 cursor,
                 coin.Address,
-                {self.Column.COIN_ROW_ID: coin.rowId},
+                {self.ColumnEnum.COIN_ROW_ID: coin.rowId},
                 {}
         ):
             address = coin.Address.deserialize(result, coin)
@@ -469,16 +469,16 @@ class AddressListTable(AbstractTable, name="addresses"):
             cursor,
             address,
             {
-                self.Column.COIN_ROW_ID: address.coin.rowId,
-                self.Column.NAME: address.name
+                self.ColumnEnum.COIN_ROW_ID: address.coin.rowId,
+                self.ColumnEnum.NAME: address.name
             },
             allow_hd_path=True)
         assert address.rowId > 0
 
 
 class TxListTable(AbstractTable, name="transactions"):
-    class Column(ColumnEnum):
-        ROW_ID: Final = AbstractTable.Column.ROW_ID.value
+    class ColumnEnum(ColumnEnum_):
+        ROW_ID: Final = AbstractTable.ColumnEnum.ROW_ID.value
         COIN_ROW_ID: Final = ColumnDefinition(
             "coin_row_id",
             "INTEGER NOT NULL")
@@ -505,19 +505,19 @@ class TxListTable(AbstractTable, name="transactions"):
             "INTEGER NOT NULL")
 
     _CONSTRAINT_LIST = (
-        f"FOREIGN KEY ({_columnList(Column.COIN_ROW_ID)})"
+        f"FOREIGN KEY ({_columnList(ColumnEnum.COIN_ROW_ID)})"
         f" REFERENCES {CoinListTable.identifier}"
-        f" ({_columnList(CoinListTable.Column.ROW_ID)})"
+        f" ({_columnList(CoinListTable.ColumnEnum.ROW_ID)})"
         f" ON DELETE CASCADE",
     )
     _UNIQUE_COLUMN_LIST = (
-        (Column.COIN_ROW_ID, Column.NAME),
+        (ColumnEnum.COIN_ROW_ID, ColumnEnum.NAME),
     )
 
     def _deserializeStatement(
             self,
-            column_list: List[ColumnEnum],
-            key_columns: Dict[Column, Any],
+            column_list: List[ColumnEnum_],
+            key_columns: Dict[ColumnEnum, Any],
             *,
             address_row_id: int = -1,
             **options
@@ -530,7 +530,7 @@ class TxListTable(AbstractTable, name="transactions"):
             (
                 f"SELECT {_columnList(*column_list)}"
                 f" FROM {self.identifier}"
-                f" WHERE {_columnList(self.Column.ROW_ID)} IN ({where})"
+                f" WHERE {_columnList(self.ColumnEnum.ROW_ID)} IN ({where})"
             ),
             where_args
         )
@@ -548,11 +548,11 @@ class TxListTable(AbstractTable, name="transactions"):
                 cursor,
                 address.coin.Tx,
                 {
-                    self.Column.COIN_ROW_ID: address.coin.rowId
+                    self.ColumnEnum.COIN_ROW_ID: address.coin.rowId
                 },
                 {
-                    self.Column.HEIGHT: SortOrder.ASC,
-                    self.Column.TIME: SortOrder.ASC
+                    self.ColumnEnum.HEIGHT: SortOrder.ASC,
+                    self.ColumnEnum.TIME: SortOrder.ASC
                 },
                 address_row_id=address.rowId
         ):
@@ -591,8 +591,8 @@ class TxListTable(AbstractTable, name="transactions"):
             cursor,
             tx,
             {
-                self.Column.COIN_ROW_ID: tx.coin.rowId,
-                self.Column.NAME: tx.name
+                self.ColumnEnum.COIN_ROW_ID: tx.coin.rowId,
+                self.ColumnEnum.NAME: tx.name
             })
         assert tx.rowId > 0
 
@@ -621,8 +621,8 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
         INPUT: Final = "input"
         OUTPUT: Final = "output"
 
-    class Column(ColumnEnum):
-        ROW_ID: Final = AbstractTable.Column.ROW_ID.value
+    class ColumnEnum(ColumnEnum_):
+        ROW_ID: Final = AbstractTable.ColumnEnum.ROW_ID.value
         TX_ROW_ID: Final = ColumnDefinition(
             "transaction_row_id",
             "INTEGER NOT NULL")
@@ -644,14 +644,14 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
             "INTEGER NOT NULL")
 
     _CONSTRAINT_LIST = (
-        f"FOREIGN KEY ({_columnList(Column.TX_ROW_ID)})"
+        f"FOREIGN KEY ({_columnList(ColumnEnum.TX_ROW_ID)})"
         f" REFERENCES {TxListTable.identifier}"
-        f" ({_columnList(TxListTable.Column.ROW_ID)})"
+        f" ({_columnList(TxListTable.ColumnEnum.ROW_ID)})"
         f" ON DELETE CASCADE",
     )
 
     _UNIQUE_COLUMN_LIST = (
-        (Column.TX_ROW_ID, Column.IO_TYPE, Column.INDEX),
+        (ColumnEnum.TX_ROW_ID, ColumnEnum.IO_TYPE, ColumnEnum.INDEX),
     )
 
     def deserializeAll(
@@ -669,11 +669,11 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
                 cursor,
                 coin.Tx.Io,
                 {
-                    self.Column.TX_ROW_ID: tx_row_id,
-                    self.Column.IO_TYPE: io_type.value
+                    self.ColumnEnum.TX_ROW_ID: tx_row_id,
+                    self.ColumnEnum.IO_TYPE: io_type.value
                 },
                 {
-                    self.Column.INDEX: SortOrder.ASC
+                    self.ColumnEnum.INDEX: SortOrder.ASC
                 }
         ):
             io = coin.Tx.Io.deserialize(result, coin)
@@ -698,16 +698,16 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
             cursor,
             io,
             {
-                self.Column.TX_ROW_ID: tx.rowId,
-                self.Column.IO_TYPE: io_type.value,
-                self.Column.INDEX: io.index
+                self.ColumnEnum.TX_ROW_ID: tx.rowId,
+                self.ColumnEnum.IO_TYPE: io_type.value,
+                self.ColumnEnum.INDEX: io.index
             })
         assert io.rowId > 0
 
 
 class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
-    class Column(ColumnEnum):
-        ROW_ID: Final = AbstractTable.Column.ROW_ID.value
+    class ColumnEnum(ColumnEnum_):
+        ROW_ID: Final = AbstractTable.ColumnEnum.ROW_ID.value
 
         ADDRESS_ROW_ID: Final = ColumnDefinition(
             "address_row_id",
@@ -717,19 +717,19 @@ class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
             "INTEGER NOT NULL")
 
     _CONSTRAINT_LIST = (
-        f"FOREIGN KEY ({_columnList(Column.ADDRESS_ROW_ID)})"
+        f"FOREIGN KEY ({_columnList(ColumnEnum.ADDRESS_ROW_ID)})"
         f" REFERENCES {AddressListTable.identifier}"
-        f" ({_columnList(AddressListTable.Column.ROW_ID)})"
+        f" ({_columnList(AddressListTable.ColumnEnum.ROW_ID)})"
         f" ON DELETE CASCADE",
 
-        f"FOREIGN KEY ({_columnList(Column.TX_ROW_ID)})"
+        f"FOREIGN KEY ({_columnList(ColumnEnum.TX_ROW_ID)})"
         f" REFERENCES {TxListTable.identifier}"
-        f" ({_columnList(TxListTable.Column.ROW_ID)})"
+        f" ({_columnList(TxListTable.ColumnEnum.ROW_ID)})"
         f" ON DELETE CASCADE",
     )
 
     _UNIQUE_COLUMN_LIST = (
-        (Column.ADDRESS_ROW_ID, Column.TX_ROW_ID),
+        (ColumnEnum.ADDRESS_ROW_ID, ColumnEnum.TX_ROW_ID),
     )
 
     def insert(
@@ -739,8 +739,8 @@ class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
         assert address_row_id > 0
         assert tx_row_id > 0
         columns = (
-            self.Column.ADDRESS_ROW_ID,
-            self.Column.TX_ROW_ID)
+            self.ColumnEnum.ADDRESS_ROW_ID,
+            self.ColumnEnum.TX_ROW_ID)
         cursor.execute(
             f"INSERT OR IGNORE INTO {self.identifier}"
             f" ({_columnList(*columns)})"
@@ -753,9 +753,9 @@ class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
         assert address_row_id > 0
         return (
             (
-                f"SELECT {_columnList(self.Column.TX_ROW_ID)}"
+                f"SELECT {_columnList(self.ColumnEnum.TX_ROW_ID)}"
                 f" FROM {self.identifier}"
-                f" WHERE {_whereColumnList(self.Column.ADDRESS_ROW_ID)}"
+                f" WHERE {_whereColumnList(self.ColumnEnum.ADDRESS_ROW_ID)}"
             ),
             [address_row_id]
         )
