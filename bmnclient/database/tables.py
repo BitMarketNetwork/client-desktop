@@ -4,7 +4,7 @@ from enum import Enum
 from itertools import chain
 from typing import TYPE_CHECKING
 
-from .query import SortOrder
+from .query import Query, SortOrder
 from ..utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -13,7 +13,6 @@ if TYPE_CHECKING:
         Dict,
         Final,
         Generator,
-        Iterable,
         List,
         Optional,
         Tuple,
@@ -24,17 +23,13 @@ if TYPE_CHECKING:
     from ..utils.serialize import Serializable
 
 
-def _stringList(source_list: Iterable[str]) -> str:
-    return ", ".join(source_list)
-
-
 def _columnList(
         *source_list: ColumnEnum,
         with_qmark: bool = False) -> str:
     source_list = map(lambda s: s.value.identifier, source_list)
     if with_qmark:
         source_list = map(lambda s: f"{s} = ?", source_list)
-    return _stringList(source_list)
+    return Query.join(source_list)
 
 
 def _whereColumnList(*source_list: ColumnEnum) -> str:
@@ -46,11 +41,11 @@ def _orderColumnList(*source_list: Dict[ColumnEnum, SortOrder]) -> str:
     source_list = map(
         lambda t: f"{t[0].value.identifier} {t[1]}",
         source_list)
-    return _stringList(source_list)
+    return Query.join(source_list)
 
 
 def _qmarkList(count: int) -> str:
-    return _stringList("?" * count)
+    return Query.join("?" * count)
 
 
 class ColumnEnum(Enum):
@@ -98,7 +93,7 @@ class AbstractTable:
         cls.__NAME = name
         cls.__IDENTIFIER = f"\"{cls.__NAME}\""
 
-        definition_list = _stringList(chain(
+        definition_list = Query.join(chain(
             (str(c.value) for c in cls.Column),
             (c for c in cls._CONSTRAINT_LIST),
             (f"UNIQUE({_columnList(*c)})" for c in cls._UNIQUE_COLUMN_LIST)
