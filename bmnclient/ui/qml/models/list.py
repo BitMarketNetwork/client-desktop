@@ -130,6 +130,23 @@ class AbstractItemModel(AbstractModel):
             return 0
         return len(self._source_list)
 
+    def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
+        if parent.isValid():
+            return 0
+        return 4
+
+    def headerData(
+            self,
+            section: int,
+            orientation: Qt.Orientation,
+            role: Qt.ItemDataRole = Qt.DisplayRole) -> Any:
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                return "column" + str(section)
+            if orientation == Qt.Vertical:
+                return "row" + str(section)
+        return None
+
     def data(
             self,
             index: QModelIndex,
@@ -216,6 +233,14 @@ class AbstractItemModel(AbstractModel):
 
 
 class AbstractProxyModel(AbstractModel):
+    pass
+
+
+class AbstractListModel(AbstractItemModel, QAbstractListModel):
+    pass
+
+
+class AbstractTableModel(AbstractItemModel, QAbstractTableModel):
     pass
 
 

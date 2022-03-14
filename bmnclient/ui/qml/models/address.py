@@ -12,8 +12,8 @@ from PySide6.QtCore import (
 from . import AbstractCoinStateModel, AbstractModel
 from .amount import AbstractAmountModel
 from .list import (
-    AbstractListModel,
     AbstractListSortedModel,
+    AbstractTableModel,
     RoleEnum)
 from ....coin_models import AddressModel as _AddressModel
 
@@ -186,7 +186,7 @@ class AddressModel(_AddressModel, AbstractModel):
         super().afterAppendTx(tx)
 
 
-class AddressListModel(AbstractListModel):
+class AddressListModel(AbstractTableModel):
     class Role(RoleEnum):
         OBJECT: Final = auto()  # TODO temporary, kill
         NAME: Final = auto()
