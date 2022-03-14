@@ -28,17 +28,23 @@ BItemDelegate {
             }
         }
         BLabel {
-            BLayout.preferredWidth: parent.width * 0.15
-            BLayout.maximumWidth: parent.width * 0.15
+            BLayout.preferredWidth: parent.width * 0.20
+            BLayout.maximumWidth: parent.width * 0.20
+            elide: BLabel.ElideMiddle
+            maximumLineCount: 20
+            text: _base.address.name
+        }
+        BLabel {
+            BLayout.preferredWidth: parent.width * 0.10
+            BLayout.maximumWidth: parent.width * 0.10
             elide: BLabel.ElideRight
             maximumLineCount: 20
             text: address.state.label
         }
-        BLabel {
-            BLayout.fillWidth: true
-            elide: BLabel.ElideMiddle
-            maximumLineCount: 20
-            text: _base.address.name
+        Item { //spacer
+            BLayout.preferredWidth: parent.width * 0.50
+            BLayout.maximumWidth: parent.width * 0.50
+            BLayout.fillHeight: true
         }
         BAmountLabel {
             font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
@@ -46,8 +52,8 @@ BItemDelegate {
             amount: _base.amount
         }
         Item {
-            BLayout.preferredWidth: parent.width * 0.10
-            BLayout.maximumWidth: parent.width * 0.10
+            BLayout.preferredWidth: parent.width * 0.05
+            BLayout.maximumWidth: parent.width * 0.05
             BLabel {
                 anchors.centerIn: parent
                 elide: BLabel.ElideRight

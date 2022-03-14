@@ -24,17 +24,10 @@ BPane {
         header: BRowLayout {
             width: _list.width
             height: 50
+            
             Item {
-                BLayout.fillWidth: true
-                BLayout.fillHeight: true
-
-                BLabel {
-                    anchors.centerIn: parent
-                    text: qsTr("Label")
-                }
-            }
-            Item {
-                BLayout.fillWidth: true
+                BLayout.preferredWidth: parent.width * 0.20
+                BLayout.maximumWidth: parent.width * 0.20
                 BLayout.fillHeight: true
 
                 BLabel {
@@ -42,28 +35,48 @@ BPane {
                     text: qsTr("Address")
                 }
             }
-            Item { //spacer
-                BLayout.fillWidth: true
-                BLayout.fillHeight: true
-            }
             Item {
-                BLayout.fillWidth: true
+                BLayout.preferredWidth: parent.width * 0.10
+                BLayout.maximumWidth: parent.width * 0.10
                 BLayout.fillHeight: true
 
                 BLabel {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right: parent.right
+                    anchors.centerIn: parent
+                    text: qsTr("Label")
+                }
+            }
+            Item { //spacer
+                BLayout.preferredWidth: parent.width * 0.50
+                BLayout.maximumWidth: parent.width * 0.50
+                BLayout.fillHeight: true
+            }
+            Item {
+                BLayout.preferredWidth: parent.width * 0.05
+                BLayout.maximumWidth: parent.width * 0.05
+                BLayout.fillHeight: true
+
+                BLabel {
+                    //anchors.verticalCenter: parent.verticalCenter
+                    //anchors.right: parent.right
+                    anchors.centerIn: parent
                     text: qsTr("Balance")
                 }
             }
             Item {
-                BLayout.fillWidth: true
+                BLayout.preferredWidth: parent.width * 0.05
+                BLayout.maximumWidth: parent.width * 0.05
                 BLayout.fillHeight: true
 
                 BLabel {
                     anchors.centerIn: parent
                     text: qsTr("Tx")
                 }
+            }
+
+            Item { //spacer
+                BLayout.preferredWidth: parent.width * 0.05
+                BLayout.maximumWidth: parent.width * 0.05
+                BLayout.fillHeight: true
             }
         }
     }
