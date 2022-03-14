@@ -212,9 +212,9 @@ class TxFactorySourceListModel(TxIoListModel):
             source_list: Sequence) -> None:
         super().__init__(application, source_list)
         # noinspection PyUnresolvedReferences
-        self.rowsInserted.connect(lambda **_: self.__stateChanged.emit())
+        self.rowsInserted.connect(lambda *_: self.__stateChanged.emit())
         # noinspection PyUnresolvedReferences
-        self.rowsRemoved.connect(lambda **_: self.__stateChanged.emit())
+        self.rowsRemoved.connect(lambda *_: self.__stateChanged.emit())
 
     @QProperty(bool, notify=__stateChanged)
     def useAllInputs(self) -> bool:

@@ -29,11 +29,11 @@ class RoleEnum(IntEnum):
         return Qt.UserRole + count
 
 
-class ItemModelHelper:
+class AbstractModel(QAbstractItemModel if TYPE_CHECKING else object):
     __rowCountChanged = QSignal()
 
     def __init__(self, application: QmlApplication) -> None:
-        super().__init__()  # QAbstractItemModel
+        super().__init__()
         self._application = application
         # noinspection PyUnresolvedReferences
         self.rowsInserted.connect(lambda *_: self.__rowCountChanged.emit())
@@ -42,12 +42,11 @@ class ItemModelHelper:
 
     @QProperty(str, notify=__rowCountChanged)
     def rowCountHuman(self) -> str:
-        # noinspection PyUnresolvedReferences
         return self._application.language.locale.integerToString(
             self.rowCount())
 
 
-class AbstractItemModel(ItemModelHelper):
+class AbstractItemModel(AbstractModel):
     class _LockRows:
         def __init__(
                 self,
@@ -216,26 +215,26 @@ class AbstractItemModel(ItemModelHelper):
         self.__lock = None
 
 
-class AbstractConcatenateModel(QConcatenateTablesProxyModel, ItemModelHelper):
-    _ROLE_MAP = {}
+class AbstractProxyModel(AbstractModel):
+    pass
 
-    def __init__(self, application: QmlApplication) -> None:
-        super().__init__()
-        ItemModelHelper.__init__(self, application)
 
+class AbstractConcatenateModel(
+        AbstractProxyModel,
+        QConcatenateTablesProxyModel):
     def roleNames(self) -> dict:
         return {k: QByteArray(v[0]) for (k, v) in self._ROLE_MAP.items()}
 
 
-class AbstractListSortedModel(QSortFilterProxyModel, ItemModelHelper):
+class AbstractListSortedModel(AbstractProxyModel, QSortFilterProxyModel):
     def __init__(
             self,
             application: QmlApplication,
             source_model: AbstractListModel,
             sort_role: int,
             sort_order: Qt.SortOrder = Qt.AscendingOrder) -> None:
-        super().__init__()
-        ItemModelHelper.__init__(self, application)
+        super().__init__(application)
+
         # TODO self.setDynamicSortFilter(False)
         self.setSourceModel(source_model)
         self.setSortRole(sort_role)
