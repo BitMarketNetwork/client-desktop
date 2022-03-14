@@ -80,8 +80,8 @@ class AbstractTable:
     def _insertOrUpdate(
             self,
             cursor: Cursor,
-            key_columns: Dict[ColumnEnum, Any],
-            data_columns: Dict[ColumnEnum, Any],
+            key_columns: Dict[Column, Any],
+            data_columns: Dict[Column, Any],
             *,
             row_id: int = -1,
             row_id_required: bool = True) -> int:
@@ -149,8 +149,8 @@ class AbstractTable:
             self,
             cursor: Cursor,
             source: Serializable,
-            key_columns: Dict[ColumnEnum, Any],
-            custom_columns: Optional[Dict[ColumnEnum, Any]] = None,
+            key_columns: Dict[Column, Any],
+            custom_columns: Optional[Dict[Column, Any]] = None,
             **options) -> None:
         assert self.ColumnEnum.ROW_ID not in key_columns
         source_data = source.serialize(
@@ -178,7 +178,7 @@ class AbstractTable:
             self,
             cursor: Cursor,
             source_type: Type[Serializable],
-            key_columns: Dict[ColumnEnum, Any],
+            key_columns: Dict[Column, Any],
             order_columns: Iterable[Tuple[Column, SortOrder]] = tuple(),
             *,
             limit: int = -1,
@@ -222,8 +222,8 @@ class AbstractTable:
 
     def _deserializeStatement(
             self,
-            column_list: List[ColumnEnum],
-            key_columns: Dict[ColumnEnum, Any],
+            column_list: List[Column],
+            key_columns: Dict[Column, Any],
             **options
     ) -> Tuple[str, List[Any]]:
         return (
@@ -469,8 +469,8 @@ class TxListTable(AbstractTable, name="transactions"):
 
     def _deserializeStatement(
             self,
-            column_list: List[ColumnEnum],
-            key_columns: Dict[ColumnEnum, Any],
+            column_list: List[Column],
+            key_columns: Dict[Column, Any],
             *,
             address_row_id: int = -1,
             **options
