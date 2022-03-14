@@ -104,7 +104,7 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
             self._owner.endResetModel()
             return False
 
-    ROLE_MAP = {}
+    _ROLE_MAP = {}
 
     def __init__(
             self,
@@ -119,10 +119,10 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
     def _getRoleValue(self, index: QModelIndex, role) -> Optional[dict]:
         if not 0 <= index.row() < self.rowCount() or not index.isValid():
             return None
-        return self.ROLE_MAP.get(role, None)
+        return self._ROLE_MAP.get(role, None)
 
     def roleNames(self) -> dict:
-        return {k: QByteArray(v[0]) for (k, v) in self.ROLE_MAP.items()}
+        return {k: QByteArray(v[0]) for (k, v) in self._ROLE_MAP.items()}
 
     def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
         if parent.isValid():
@@ -215,14 +215,14 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
 
 
 class AbstractConcatenateModel(QConcatenateTablesProxyModel, ListModelHelper):
-    ROLE_MAP = {}
+    _ROLE_MAP = {}
 
     def __init__(self, application: QmlApplication) -> None:
         super().__init__()
         ListModelHelper.__init__(self, application)
 
     def roleNames(self) -> dict:
-        return {k: QByteArray(v[0]) for (k, v) in self.ROLE_MAP.items()}
+        return {k: QByteArray(v[0]) for (k, v) in self._ROLE_MAP.items()}
 
 
 class AbstractListSortedModel(QSortFilterProxyModel, ListModelHelper):

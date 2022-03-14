@@ -63,7 +63,7 @@ class TxIoListModel(AbstractListModel):
         ADDRESS: Final = auto()
         AMOUNT: Final = auto()
 
-    ROLE_MAP: Final = {
+    _ROLE_MAP: Final = {
         Role.ADDRESS: (
             b"address",
             lambda io: io.model.address),

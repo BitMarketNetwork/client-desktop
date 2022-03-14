@@ -352,7 +352,7 @@ class CoinListModel(AbstractListModel):
         RECEIVE_MANAGER: Final = auto()
         MANAGER: Final = auto()
 
-    ROLE_MAP: Final = {
+    _ROLE_MAP: Final = {
         Role.OBJECT: (  # TODO temporary, kill
             b"object",
             lambda c: c.model),
