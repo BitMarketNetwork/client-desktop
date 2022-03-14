@@ -3,15 +3,17 @@ from __future__ import annotations
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    Property as QProperty, \
-    QAbstractListModel, \
-    QByteArray, \
-    QConcatenateTablesProxyModel, \
-    QModelIndex, \
-    QSortFilterProxyModel, \
-    Qt, \
-    Signal as QSignal
+from PySide6.QtCore import (
+    Property as QProperty,
+    QAbstractItemModel,
+    QAbstractListModel,
+    QAbstractTableModel,
+    QByteArray,
+    QConcatenateTablesProxyModel,
+    QModelIndex,
+    QSortFilterProxyModel,
+    Qt,
+    Signal as QSignal)
 
 if TYPE_CHECKING:
     from typing import Any, List, Optional, Sequence
@@ -27,10 +29,11 @@ class RoleEnum(IntEnum):
         return Qt.UserRole + count
 
 
-class ListModelHelper:
+class ItemModelHelper:
     __rowCountChanged = QSignal()
 
     def __init__(self, application: QmlApplication) -> None:
+        super().__init__()  # QAbstractItemModel
         self._application = application
         # noinspection PyUnresolvedReferences
         self.rowsInserted.connect(lambda *_: self.__rowCountChanged.emit())
@@ -44,11 +47,11 @@ class ListModelHelper:
             self.rowCount())
 
 
-class AbstractListModel(QAbstractListModel, ListModelHelper):
+class AbstractItemModel(ItemModelHelper):
     class _LockRows:
         def __init__(
                 self,
-                owner: AbstractListModel,
+                owner: QAbstractItemModel,
                 first_index: int,
                 count: int) -> None:
             if first_index < 0:
@@ -94,7 +97,7 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
             return False
 
     class LockReset:
-        def __init__(self, owner: AbstractListModel) -> None:
+        def __init__(self, owner: QAbstractItemModel) -> None:
             self._owner = owner
 
         def __enter__(self) -> None:
@@ -110,8 +113,7 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
             self,
             application: QmlApplication,
             source_list: Sequence) -> None:
-        super().__init__()
-        ListModelHelper.__init__(self, application)
+        super().__init__(application)
         self._source_list = source_list
         self._data_list: List[dict] = [{}] * len(self._source_list)
         self.__lock = None
@@ -214,18 +216,18 @@ class AbstractListModel(QAbstractListModel, ListModelHelper):
         self.__lock = None
 
 
-class AbstractConcatenateModel(QConcatenateTablesProxyModel, ListModelHelper):
+class AbstractConcatenateModel(QConcatenateTablesProxyModel, ItemModelHelper):
     _ROLE_MAP = {}
 
     def __init__(self, application: QmlApplication) -> None:
         super().__init__()
-        ListModelHelper.__init__(self, application)
+        ItemModelHelper.__init__(self, application)
 
     def roleNames(self) -> dict:
         return {k: QByteArray(v[0]) for (k, v) in self._ROLE_MAP.items()}
 
 
-class AbstractListSortedModel(QSortFilterProxyModel, ListModelHelper):
+class AbstractListSortedModel(QSortFilterProxyModel, ItemModelHelper):
     def __init__(
             self,
             application: QmlApplication,
@@ -233,7 +235,7 @@ class AbstractListSortedModel(QSortFilterProxyModel, ListModelHelper):
             sort_role: int,
             sort_order: Qt.SortOrder = Qt.AscendingOrder) -> None:
         super().__init__()
-        ListModelHelper.__init__(self, application)
+        ItemModelHelper.__init__(self, application)
         # TODO self.setDynamicSortFilter(False)
         self.setSourceModel(source_model)
         self.setSortRole(sort_role)
