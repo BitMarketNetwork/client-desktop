@@ -5,6 +5,7 @@ BControl {
     id: _base
     property alias model: _listView.model
     property alias delegate: _listView.delegate
+    property alias header: _listView.header
     property alias templateDelegate: _itemTemplate.sourceComponent
     property int visibleItemCount: 0
 

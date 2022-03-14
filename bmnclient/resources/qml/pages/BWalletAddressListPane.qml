@@ -2,6 +2,7 @@ import "../application"
 import "../basiccontrols"
 import "../coincontrols"
 import "../dialogs"
+import QtQuick
 
 BPane {
     id: _base
@@ -11,14 +12,59 @@ BPane {
     contentItem: BAddressListView {
         id: _list
         model: _base.coin.addressList
-        delegate: BAddressItem {
+        delegate: BAddressTableRow{
             address: model
             amount: model.balance
             contextMenu: _contextMenu
         }
-        templateDelegate: BAddressItem {
+        templateDelegate: BAddressTableRow {
             address: BCommon.addressItemTemplate
             amount: BCommon.addressItemTemplate.balance
+        }
+        header: BRowLayout {
+            width: _list.width
+            height: 50
+            Item {
+                BLayout.fillWidth: true
+                BLayout.fillHeight: true
+
+                BLabel {
+                    anchors.centerIn: parent
+                    text: qsTr("Label")
+                }
+            }
+            Item {
+                BLayout.fillWidth: true
+                BLayout.fillHeight: true
+
+                BLabel {
+                    anchors.centerIn: parent
+                    text: qsTr("Address")
+                }
+            }
+            Item { //spacer
+                BLayout.fillWidth: true
+                BLayout.fillHeight: true
+            }
+            Item {
+                BLayout.fillWidth: true
+                BLayout.fillHeight: true
+
+                BLabel {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+                    text: qsTr("Balance")
+                }
+            }
+            Item {
+                BLayout.fillWidth: true
+                BLayout.fillHeight: true
+
+                BLabel {
+                    anchors.centerIn: parent
+                    text: qsTr("Tx")
+                }
+            }
         }
     }
 
