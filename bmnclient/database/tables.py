@@ -26,15 +26,6 @@ if TYPE_CHECKING:
     from ..utils.serialize import Serializable
 
 
-def _columnList(
-        *source_list: ColumnEnum,
-        with_qmark: bool = False) -> str:
-    source_list = map(lambda s: s.identifier, source_list)
-    if with_qmark:
-        source_list = map(lambda s: f"{s} = ?", source_list)
-    return Query.join(source_list)
-
-
 class AbstractTable:
     class ColumnEnum(ColumnEnum):
         ROW_ID: Final = ()
@@ -42,7 +33,7 @@ class AbstractTable:
     __NAME: str = ""
     __IDENTIFIER: str = ""
     _CONSTRAINT_LIST: Tuple[str] = tuple()
-    _UNIQUE_COLUMN_LIST: Tuple[Tuple[ColumnEnum]] = tuple()
+    _UNIQUE_COLUMN_LIST: Tuple[Tuple[Column]] = tuple()
 
     # noinspection PyMethodOverriding
     def __init_subclass__(cls, *args, name: str, **kwargs) -> None:
@@ -53,7 +44,10 @@ class AbstractTable:
         definition_list = Query.join(chain(
             (str(c) for c in cls.ColumnEnum),
             (c for c in cls._CONSTRAINT_LIST),
-            (f"UNIQUE({_columnList(*c)})" for c in cls._UNIQUE_COLUMN_LIST)
+            (
+                f"UNIQUE({Query.joinColumns(c)})"
+                for c in cls._UNIQUE_COLUMN_LIST
+            )
         ))
         cls.__DEFINITION = (
             f"CREATE TABLE IF NOT EXISTS {cls.__IDENTIFIER}"
@@ -104,8 +98,8 @@ class AbstractTable:
         if row_id > 0:
             cursor.execute(
                 f"UPDATE {self.identifier}"
-                f" SET {_columnList(*data_columns.keys(), with_qmark=True)}"
-                f" WHERE {self.ColumnEnum.ROW_ID.identifier} == ?",
+                f" SET {Query.joinColumnsQmark(data_columns.keys())}"
+                f" WHERE {Query.joinColumnsQmark([self.ColumnEnum.ROW_ID])}",
                 (*data_columns.values(), row_id))
             if cursor.rowcount > 0:
                 assert cursor.rowcount == 1
@@ -113,7 +107,7 @@ class AbstractTable:
 
         cursor.execute(
             f"INSERT OR IGNORE INTO {self.identifier}"
-            f" ({_columnList(*key_columns.keys(), *data_columns.keys())})"
+            f" ({Query.joinColumns((*key_columns.keys(), *data_columns.keys()))})"
             f" VALUES({Query.qmark(len(key_columns) + len(data_columns))})",
             (*key_columns.values(), *data_columns.values()))
 
@@ -125,7 +119,7 @@ class AbstractTable:
         if row_id_required:
             if row_id <= 0:
                 query = (
-                    f"SELECT {_columnList(self.ColumnEnum.ROW_ID)}"
+                    f"SELECT {Query.joinColumns([self.ColumnEnum.ROW_ID])}"
                     f" FROM {self.identifier}"
                     f" WHERE {Query.joinQmarkAnd(key_columns.keys())}"
                     f" LIMIT 1"
@@ -142,7 +136,7 @@ class AbstractTable:
 
         query = (
             f"UPDATE {self.identifier}"
-            f" SET {_columnList(*data_columns.keys(), with_qmark=True)}"
+            f" SET {Query.joinColumnsQmark(data_columns.keys())}"
             f" WHERE {Query.joinQmarkAnd(key_columns.keys())}"
         )
         cursor.execute(query, (*data_columns.values(), *key_columns.values()))
@@ -234,7 +228,7 @@ class AbstractTable:
     ) -> Tuple[str, List[Any]]:
         return (
             (
-                f"SELECT {_columnList(*column_list)}"
+                f"SELECT {Query.joinColumns(column_list)}"
                 f" FROM {self.identifier}"
                 f" WHERE {Query.joinQmarkAnd(key_columns.keys())}"
             ),
@@ -259,7 +253,7 @@ class MetadataTable(AbstractTable, name="metadata"):
             default_value: Optional[int, str] = None) -> Optional[int, str]:
         try:
             cursor.execute(
-                f"SELECT {_columnList(self.ColumnEnum.VALUE)}"
+                f"SELECT {Query.joinColumns([self.ColumnEnum.VALUE])}"
                 f" FROM {self.identifier}"
                 f" WHERE {self.ColumnEnum.KEY.identifier} == ?"
                 f" LIMIT 1",
@@ -381,9 +375,9 @@ class AddressListTable(AbstractTable, name="addresses"):
             "TEXT NOT NULL")
 
     _CONSTRAINT_LIST = (
-        f"FOREIGN KEY ({_columnList(ColumnEnum.COIN_ROW_ID)})"
+        f"FOREIGN KEY ({Query.joinColumns([ColumnEnum.COIN_ROW_ID])})"
         f" REFERENCES {CoinListTable.identifier}"
-        f" ({_columnList(CoinListTable.ColumnEnum.ROW_ID)})"
+        f" ({Query.joinColumns([CoinListTable.ColumnEnum.ROW_ID])})"
         f" ON DELETE CASCADE",
     )
     _UNIQUE_COLUMN_LIST = (
@@ -464,9 +458,9 @@ class TxListTable(AbstractTable, name="transactions"):
             "INTEGER NOT NULL")
 
     _CONSTRAINT_LIST = (
-        f"FOREIGN KEY ({_columnList(ColumnEnum.COIN_ROW_ID)})"
+        f"FOREIGN KEY ({Query.joinColumns([ColumnEnum.COIN_ROW_ID])})"
         f" REFERENCES {CoinListTable.identifier}"
-        f" ({_columnList(CoinListTable.ColumnEnum.ROW_ID)})"
+        f" ({Query.joinColumns([CoinListTable.ColumnEnum.ROW_ID])})"
         f" ON DELETE CASCADE",
     )
     _UNIQUE_COLUMN_LIST = (
@@ -487,9 +481,10 @@ class TxListTable(AbstractTable, name="transactions"):
                 address_row_id)
         return (
             (
-                f"SELECT {_columnList(*column_list)}"
+                f"SELECT {Query.joinColumns(column_list)}"
                 f" FROM {self.identifier}"
-                f" WHERE {_columnList(self.ColumnEnum.ROW_ID)} IN ({where})"
+                f" WHERE {Query.joinColumns([self.ColumnEnum.ROW_ID])}"
+                f" IN ({where})"
             ),
             where_args
         )
@@ -603,9 +598,9 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
             "INTEGER NOT NULL")
 
     _CONSTRAINT_LIST = (
-        f"FOREIGN KEY ({_columnList(ColumnEnum.TX_ROW_ID)})"
+        f"FOREIGN KEY ({Query.joinColumns([ColumnEnum.TX_ROW_ID])})"
         f" REFERENCES {TxListTable.identifier}"
-        f" ({_columnList(TxListTable.ColumnEnum.ROW_ID)})"
+        f" ({Query.joinColumns([TxListTable.ColumnEnum.ROW_ID])})"
         f" ON DELETE CASCADE",
     )
 
@@ -676,14 +671,14 @@ class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
             "INTEGER NOT NULL")
 
     _CONSTRAINT_LIST = (
-        f"FOREIGN KEY ({_columnList(ColumnEnum.ADDRESS_ROW_ID)})"
+        f"FOREIGN KEY ({Query.joinColumns([ColumnEnum.ADDRESS_ROW_ID])})"
         f" REFERENCES {AddressListTable.identifier}"
-        f" ({_columnList(AddressListTable.ColumnEnum.ROW_ID)})"
+        f" ({Query.joinColumns([AddressListTable.ColumnEnum.ROW_ID])})"
         f" ON DELETE CASCADE",
 
-        f"FOREIGN KEY ({_columnList(ColumnEnum.TX_ROW_ID)})"
+        f"FOREIGN KEY ({Query.joinColumns([ColumnEnum.TX_ROW_ID])})"
         f" REFERENCES {TxListTable.identifier}"
-        f" ({_columnList(TxListTable.ColumnEnum.ROW_ID)})"
+        f" ({Query.joinColumns([TxListTable.ColumnEnum.ROW_ID])})"
         f" ON DELETE CASCADE",
     )
 
@@ -702,7 +697,7 @@ class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
             self.ColumnEnum.TX_ROW_ID)
         cursor.execute(
             f"INSERT OR IGNORE INTO {self.identifier}"
-            f" ({_columnList(*columns)})"
+            f" ({Query.joinColumns(columns)})"
             f" VALUES({Query.qmark(len(columns))})",
             (address_row_id, tx_row_id))
 
@@ -712,9 +707,9 @@ class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
         assert address_row_id > 0
         return (
             (
-                f"SELECT {_columnList(self.ColumnEnum.TX_ROW_ID)}"
+                f"SELECT {Query.joinColumns([self.ColumnEnum.TX_ROW_ID])}"
                 f" FROM {self.identifier}"
-                f" WHERE {Query.joinQmarkAnd((self.ColumnEnum.ADDRESS_ROW_ID, ))}"
+                f" WHERE {Query.joinQmarkAnd([self.ColumnEnum.ADDRESS_ROW_ID])}"
             ),
             [address_row_id]
         )

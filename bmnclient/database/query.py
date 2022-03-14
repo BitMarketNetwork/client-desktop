@@ -21,6 +21,14 @@ class Query(NotImplementedInstance):
         return ", ".join(source)
 
     @classmethod
+    def joinColumns(cls, source: Iterable[Column]) -> str:
+        return cls.join(s.identifier for s in source)
+
+    @classmethod
+    def joinColumnsQmark(cls, source: Iterable[Column]) -> str:
+        return cls.join(f"{s.identifier} == ?" for s in source)
+
+    @classmethod
     def joinSortOrder(cls, source: Iterable[Tuple[Column, SortOrder]]) -> str:
         return cls.join(f"{s[0].identifier} {s[1]}" for s in source)
 
