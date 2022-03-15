@@ -5,11 +5,20 @@ import "../basiccontrols"
 BTableView {
     id: _base
     
-    property var columnWidthsInPercent
-    
+    property var columnWidth
+
     columnWidthProvider: function (column) { 
         if (_base.model) {
-            return (_base.width * columnWidthsInPercent[column]) / 100
+            if (columnWidth[column] == -1) { //spacer col
+                let spacer_width = _base.width
+                for(let col = 0; col < columnWidth.length; col++) {
+                    if(columnWidth[col] != -1) spacer_width -= columnWidth[col];
+                }
+                return spacer_width
+            } else {
+                return columnWidth[column]
+            }
+            
         } else {
             return 0
         }

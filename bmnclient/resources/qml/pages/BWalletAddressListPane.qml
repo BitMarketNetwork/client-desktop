@@ -43,6 +43,7 @@ BPane {
                 }
             }
         }
+        // TODO sorting controls
     }
     BAddressTableView {
         id: _tableView
@@ -50,7 +51,7 @@ BPane {
         anchors.topMargin: _horizontalHeader.implicitHeight
         model: _base.coin.addressList
 
-        columnWidthsInPercent: [30, 50, 10, 5, 5] // %
+        columnWidth: [355, -1, 150, 65, 50]
         
         delegate: BAddressTableRow {
             implicitWidth: _tableView.columnWidthProvider(column)

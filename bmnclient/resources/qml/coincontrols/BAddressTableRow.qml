@@ -32,7 +32,7 @@ BItemDelegate {
             active: model.column == 0
             sourceComponent: BLabel {
                 elide: BLabel.ElideMiddle
-                maximumLineCount: 20
+                maximumLineCount: 50
                 text: _base.address.name
             }
         }
@@ -46,12 +46,19 @@ BItemDelegate {
             }
         }
         Loader {
-            BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
+            BLayout.fillWidth: true
+            BLayout.fillHeight: true
             active: model.column == 2
-            sourceComponent: BAmountLabel {
-                font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
-                font.strikeout: _base.address.state.isReadOnly // TODO tmp
-                amount: _base.amount
+            sourceComponent: Item {
+                anchors.centerIn: parent
+
+                BAmountLabel {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
+                    font.strikeout: _base.address.state.isReadOnly // TODO tmp
+                    amount: _base.amount
+                }
             }
         }
         Loader {
