@@ -65,19 +65,29 @@ class Cursor(_engine.Cursor):
             self._database.logException(e, query)
             raise
 
-    def isTableExists(self, name: str) -> bool:
-        r = self.execute(
+    def isTableExists(self, table: Union[str, Type[AbstractTable]]) -> bool:
+        table = table.name if issubclass(table, AbstractTable) else str(table)
+        self.execute(
             "SELECT COUNT(*) FROM \"sqlite_master\""
-            " WHERE \"type\" == ? AND \"name\" == ?",
-            ("table", name))
-        return r.fetchone() is not None
+            " WHERE \"type\" == ? AND \"name\" == ?"
+            " LIMIT 1",
+            ("table", table))
+        value = self.fetchone()
+        return value is not None and value[0] > 0
 
-    def isColumnExists(self, table_name: str, name: str) -> bool:
-        if not self.isTableExists(table_name):
+    def isColumnExists(
+            self,
+            table: Union[str, Type[AbstractTable]],
+            name: str) -> bool:
+
+        if not self.isTableExists(table):
             return False
-        for r in self.execute(f"PRAGMA table_info(\"{table_name}\")"):
-            if len(r) > 2 and r[1] == name:
+
+        table = table.name if issubclass(table, AbstractTable) else str(table)
+        for value in self.execute(f"PRAGMA table_info(\"{table}\")"):
+            if len(value) > 2 and value[1] == name:
                 return True
+
         return False
 
 
@@ -357,10 +367,14 @@ class Database:
             assert id(table_type) not in self.__table_list
             self.__table_list[id(table_type)] = table_type(self)
 
-        version = self[MetadataTable].get(
-            cursor,
-            MetadataTable.Key.VERSION,
-            int)
+        if cursor.isTableExists(MetadataTable):
+            version = self[MetadataTable].get(
+                cursor,
+                MetadataTable.Key.VERSION,
+                int)
+        else:
+            version = None
+
         if version is None or version == self._VERSION:
             upgrade = False
         elif version < self._VERSION:
