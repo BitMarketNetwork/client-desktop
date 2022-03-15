@@ -119,12 +119,12 @@ class TestDatabase(TestCase):
         db = self._create(Path("insert_or_update.db"))
         self.assertTrue(db.open())
 
-        keys = {
-            MetadataTable.ColumnEnum.KEY: "key1",
-        }
-        data = {
-            MetadataTable.ColumnEnum.VALUE: "value1"
-        }
+        keys = [
+            (MetadataTable.ColumnEnum.KEY, "key1"),
+        ]
+        data = (
+            (MetadataTable.ColumnEnum.VALUE, "value1"),
+        )
 
         with db.transaction(suppress_exceptions=False) as c:
             # noinspection PyProtectedMember
@@ -203,7 +203,7 @@ class TestDatabase(TestCase):
             db._logger.debug("-" * 80)
 
             # UPDATE + INSERT: invalid row_id
-            keys[MetadataTable.ColumnEnum.KEY] = "key2"
+            keys = [(MetadataTable.ColumnEnum.KEY, "key2")]
             # noinspection PyProtectedMember
             row_id_4 = db[MetadataTable]._insertOrUpdate(
                 c,

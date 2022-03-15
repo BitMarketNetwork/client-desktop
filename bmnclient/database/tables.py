@@ -17,6 +17,7 @@ if TYPE_CHECKING:
         Iterable,
         List,
         Optional,
+        Sequence,
         Tuple,
         Type,
         Union)
@@ -80,36 +81,31 @@ class AbstractTable:
     def _insertOrUpdate(
             self,
             cursor: Cursor,
-            key_columns: Dict[Column, Any],
-            data_columns: Dict[Column, Any],
+            key_columns: Sequence[Tuple[Column, Union[str, int]]],
+            data_columns: Sequence[Tuple[Column, Union[str, int]]],
             *,
             row_id: int = -1,
             row_id_required: bool = True) -> int:
-        assert (
-                set(data_columns.keys()) - set(key_columns.keys())
-                == set(data_columns.keys())
-        )
-
         def columnsString(columns) -> str:
             return " and ".join(
-                f"'{k.name}' == '{str(v)}'" for (k, v) in columns.items()
+                f"'{k.name}' == '{str(v)}'" for (k, v) in columns
             )
 
         if row_id > 0:
             cursor.execute(
                 f"UPDATE {self.identifier}"
-                f" SET {Query.joinColumnsQmark(data_columns.keys())}"
+                f" SET {Query.joinColumnsQmark(c[0] for c in data_columns)}"
                 f" WHERE {Query.joinColumnsQmark([self.ColumnEnum.ROW_ID])}",
-                (*data_columns.values(), row_id))
+                [*(c[1] for c in data_columns), row_id])
             if cursor.rowcount > 0:
                 assert cursor.rowcount == 1
                 return row_id
 
         cursor.execute(
             f"INSERT OR IGNORE INTO {self.identifier}"
-            f" ({Query.joinColumns((*key_columns.keys(), *data_columns.keys()))})"
+            f" ({Query.joinColumns(c[0] for c in chain(key_columns, data_columns))})"
             f" VALUES({Query.qmark(len(key_columns) + len(data_columns))})",
-            (*key_columns.values(), *data_columns.values()))
+            [c[1] for c in chain(key_columns, data_columns)])
 
         if cursor.rowcount > 0:
             assert cursor.rowcount == 1
@@ -121,27 +117,33 @@ class AbstractTable:
                 query = (
                     f"SELECT {Query.joinColumns([self.ColumnEnum.ROW_ID])}"
                     f" FROM {self.identifier}"
-                    f" WHERE {Query.joinQmarkAnd(key_columns.keys())}"
+                    f" WHERE {Query.joinQmarkAnd(c[0] for c in key_columns)}"
                     f" LIMIT 1"
                 )
-                for r in cursor.execute(query, (*key_columns.values(), )):
+                for r in cursor.execute(query, [c[1] for c in key_columns]):
                     row_id = int(r[0])
                     break
                 if row_id <= 0:
                     raise self._database.InsertOrUpdateError(
-                        "row not found".format(columnsString(key_columns)),
+                        "row not found where: {}"
+                        .format(columnsString(key_columns)),
                         query)
         if row_id > 0:
-            key_columns = {self.ColumnEnum.ROW_ID: row_id}
+            key_columns = [(self.ColumnEnum.ROW_ID, row_id)]
 
         query = (
             f"UPDATE {self.identifier}"
-            f" SET {Query.joinColumnsQmark(data_columns.keys())}"
-            f" WHERE {Query.joinQmarkAnd(key_columns.keys())}"
+            f" SET {Query.joinColumnsQmark(c[0] for c in data_columns)}"
+            f" WHERE {Query.joinQmarkAnd(c[0] for c in key_columns)}"
         )
-        cursor.execute(query, (*data_columns.values(), *key_columns.values()))
+        cursor.execute(
+            query,
+            [c[1] for c in chain(data_columns, key_columns)])
         if cursor.rowcount <= 0:
-            raise self._database.InsertOrUpdateError("row not found", query)
+            raise self._database.InsertOrUpdateError(
+                "row not found where: {}"
+                .format(columnsString(key_columns)),
+                query)
 
         return row_id
 
@@ -276,8 +278,8 @@ class MetadataTable(AbstractTable, name="metadata"):
     def set(self, cursor: Cursor, key: Key, value: Optional[int, str]) -> None:
         self._insertOrUpdate(
             cursor,
-            {self.ColumnEnum.KEY: key.value},
-            {self.ColumnEnum.VALUE: str(value)},
+            [(self.ColumnEnum.KEY, key.value)],
+            [(self.ColumnEnum.VALUE, str(value))],
             row_id_required=False
         )
 
