@@ -1,11 +1,10 @@
 from __future__ import annotations
 
+from enum import Enum
 from itertools import chain
 from typing import TYPE_CHECKING
 
-from .column import ColumnEnum
-from .query import Query, SortOrder
-from ..utils.class_property import classproperty
+from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
     from typing import (
@@ -20,9 +19,50 @@ if TYPE_CHECKING:
         Tuple,
         Type,
         Union)
-    from . import Cursor, Database
-    from .column import Column, ColumnValue
-    from ..utils.serialize import Serializable
+    from .. import Cursor, Database
+    from ...utils.serialize import Serializable
+
+
+class SortOrder(str, Enum):
+    ASC: Final = "ASC"
+    DESC: Final = "DESC"
+
+
+class Column:
+    __slots__ = ("_name", "_identifier", "_definition", "_full_definition")
+
+    def __init__(self, name: str, definition: str) -> None:
+        self._name = name
+        self._identifier = f"\"{self._name}\""
+        self._definition = definition
+        self._full_definition = f"{self._identifier} {self._definition}"
+
+    def __str__(self) -> str:
+        return self._full_definition
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def identifier(self) -> str:
+        return self._identifier
+
+    @property
+    def definition(self) -> str:
+        return self._definition
+
+
+class ColumnEnum(Column, Enum):
+    def __init__(
+            self,
+            name: str = "row_id",
+            definition: str = "INTEGER PRIMARY KEY") -> None:
+        super().__init__(name, definition)
+
+
+if TYPE_CHECKING:
+    ColumnValue = Tuple[Column, Union[str, int]]
 
 
 class AbstractTable:
@@ -31,7 +71,8 @@ class AbstractTable:
 
     __NAME: str = ""
     __IDENTIFIER: str = ""
-    _CONSTRAINT_LIST: Tuple[str] = tuple()
+    __DEFINITION: str = ""
+    _CONSTRAINT_LIST: Tuple[str, ...] = tuple()
     _UNIQUE_COLUMN_LIST: Tuple[Tuple[Column]] = tuple()
 
     # noinspection PyMethodOverriding
@@ -40,11 +81,11 @@ class AbstractTable:
         cls.__NAME = name
         cls.__IDENTIFIER = f"\"{cls.__NAME}\""
 
-        definition_list = Query.join(chain(
+        definition_list = cls.join(chain(
             (str(c) for c in cls.ColumnEnum),
             (c for c in cls._CONSTRAINT_LIST),
             (
-                f"UNIQUE({Query.joinColumns(c)})"
+                f"UNIQUE({cls.joinColumns(c)})"
                 for c in cls._UNIQUE_COLUMN_LIST
             )
         ))
@@ -92,19 +133,19 @@ class AbstractTable:
         if row_id > 0:
             cursor.execute(
                 f"UPDATE {self.identifier}"
-                f" SET {Query.joinColumnsQmark(c[0] for c in data_columns)}"
-                f" WHERE {Query.joinColumnsQmark([self.ColumnEnum.ROW_ID])}",
+                f" SET {self.joinColumnsQmark(c[0] for c in data_columns)}"
+                f" WHERE {self.joinColumnsQmark([self.ColumnEnum.ROW_ID])}",
                 [*(c[1] for c in data_columns), row_id])
             if cursor.rowcount > 0:
                 assert cursor.rowcount == 1
                 return row_id
 
-        insert_columns = Query.joinColumns(
+        insert_columns = self.joinColumns(
             c[0] for c in chain(key_columns, data_columns))
         cursor.execute(
             f"INSERT OR IGNORE INTO {self.identifier}"
             f" ({insert_columns})"
-            f" VALUES({Query.qmark(len(key_columns) + len(data_columns))})",
+            f" VALUES({self.qmark(len(key_columns) + len(data_columns))})",
             [c[1] for c in chain(key_columns, data_columns)])
         del insert_columns
 
@@ -116,9 +157,9 @@ class AbstractTable:
         if row_id_required:
             if row_id <= 0:
                 query = (
-                    f"SELECT {Query.joinColumns([self.ColumnEnum.ROW_ID])}"
+                    f"SELECT {self.joinColumns([self.ColumnEnum.ROW_ID])}"
                     f" FROM {self.identifier}"
-                    f" WHERE {Query.joinQmarkAnd(c[0] for c in key_columns)}"
+                    f" WHERE {self.joinQmarkAnd(c[0] for c in key_columns)}"
                     f" LIMIT 1"
                 )
                 for r in cursor.execute(query, [c[1] for c in key_columns]):
@@ -134,8 +175,8 @@ class AbstractTable:
 
         query = (
             f"UPDATE {self.identifier}"
-            f" SET {Query.joinColumnsQmark(c[0] for c in data_columns)}"
-            f" WHERE {Query.joinQmarkAnd(c[0] for c in key_columns)}"
+            f" SET {self.joinColumnsQmark(c[0] for c in data_columns)}"
+            f" WHERE {self.joinQmarkAnd(c[0] for c in key_columns)}"
         )
         cursor.execute(
             query,
@@ -202,7 +243,7 @@ class AbstractTable:
             **options)
 
         if order_columns:
-            query += f" ORDER BY {Query.joinSortOrder(order_columns)}"
+            query += f" ORDER BY {self.joinSortOrder(order_columns)}"
 
         if limit >= 0:
             query += f" LIMIT ?"
@@ -228,13 +269,37 @@ class AbstractTable:
             self,
             column_list: List[Column],
             key_columns: Dict[Column, Any],
-            **options
+            **_options
     ) -> Tuple[str, List[Any]]:
         return (
             (
-                f"SELECT {Query.joinColumns(column_list)}"
+                f"SELECT {self.joinColumns(column_list)}"
                 f" FROM {self.identifier}"
-                f" WHERE {Query.joinQmarkAnd(key_columns.keys())}"
+                f" WHERE {self.joinQmarkAnd(key_columns.keys())}"
             ),
             [*key_columns.values()]
         )
+
+    @staticmethod
+    def join(source: Iterable[str]) -> str:
+        return ", ".join(source)
+
+    @classmethod
+    def joinColumns(cls, source: Iterable[Column]) -> str:
+        return cls.join(s.identifier for s in source)
+
+    @classmethod
+    def joinColumnsQmark(cls, source: Iterable[Column]) -> str:
+        return cls.join(f"{s.identifier} == ?" for s in source)
+
+    @classmethod
+    def joinSortOrder(cls, source: Iterable[Tuple[Column, SortOrder]]) -> str:
+        return cls.join(f"{s[0].identifier} {s[1]}" for s in source)
+
+    @staticmethod
+    def joinQmarkAnd(source: Iterable[Column]) -> str:
+        return " AND ".join(f"{s.identifier} == ?" for s in source)
+
+    @classmethod
+    def qmark(cls, count: int) -> str:
+        return cls.join("?" * count)

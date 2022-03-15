@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .column import ColumnEnum
-from .table import AbstractTable
+from .table import AbstractTable, ColumnEnum
 
 if TYPE_CHECKING:
     from typing import Final
-    from . import Cursor
-    from ..coins.abstract import Coin
+    from .. import Cursor
+    from ...coins.abstract import Coin
 
 
 class CoinListTable(AbstractTable, name="coins"):

@@ -2,15 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .coin import CoinListTable
-from .column import ColumnEnum
-from .query import Query
-from .table import AbstractTable
+from .table import AbstractTable, ColumnEnum
+from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
     from typing import Final
-    from . import Cursor
-    from ..coins.abstract import Coin
+    from .. import Cursor
+    from ...coins.abstract import Coin
 
 
 class AddressListTable(AbstractTable, name="addresses"):
@@ -50,12 +48,17 @@ class AddressListTable(AbstractTable, name="addresses"):
             "history_last_offset",
             "TEXT NOT NULL")
 
-    _CONSTRAINT_LIST = (
-        f"FOREIGN KEY ({Query.joinColumns([ColumnEnum.COIN_ROW_ID])})"
-        f" REFERENCES {CoinListTable.identifier}"
-        f" ({Query.joinColumns([CoinListTable.ColumnEnum.ROW_ID])})"
-        f" ON DELETE CASCADE",
-    )
+    @classproperty
+    def _CONSTRAINT_LIST(cls) -> Tuple[str, ...]:  # noqa
+        from .coin import CoinListTable
+        return (
+            f"FOREIGN KEY ("
+            f"{cls.joinColumns([cls.ColumnEnum.COIN_ROW_ID])})"
+            f" REFERENCES {CoinListTable.identifier} ("
+            f"{cls.joinColumns([CoinListTable.ColumnEnum.ROW_ID])})"
+            f" ON DELETE CASCADE",
+        )
+
     _UNIQUE_COLUMN_LIST = (
         (ColumnEnum.COIN_ROW_ID, ColumnEnum.NAME),
     )

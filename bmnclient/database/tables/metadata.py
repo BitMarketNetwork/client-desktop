@@ -3,13 +3,11 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from .column import ColumnEnum
-from .query import Query
-from .table import AbstractTable
+from .table import AbstractTable, ColumnEnum
 
 if TYPE_CHECKING:
     from typing import Final, Optional, Type, Union
-    from . import Cursor
+    from .. import Cursor
 
 
 class MetadataTable(AbstractTable, name="metadata"):
@@ -29,7 +27,7 @@ class MetadataTable(AbstractTable, name="metadata"):
             default_value: Optional[int, str] = None) -> Optional[int, str]:
         try:
             cursor.execute(
-                f"SELECT {Query.joinColumns([self.ColumnEnum.VALUE])}"
+                f"SELECT {self.joinColumns([self.ColumnEnum.VALUE])}"
                 f" FROM {self.identifier}"
                 f" WHERE {self.ColumnEnum.KEY.identifier} == ?"
                 f" LIMIT 1",
