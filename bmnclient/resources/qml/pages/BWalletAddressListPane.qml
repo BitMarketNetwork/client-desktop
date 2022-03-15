@@ -17,25 +17,30 @@ BPane {
 
         model: ObjectModel {
             id: itemModel
-            BLabel {
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                text: qsTr("Address")
+
+            BControl {
+                BLabel {
+                    anchors.centerIn: parent
+                    text: qsTr("Address")
+                }
             }
-            BLabel {
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                text: qsTr("Label")
+            BControl {
+                BLabel {
+                    anchors.centerIn: parent
+                    text: qsTr("Label")
+                }
             }
-            BLabel {
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                text: qsTr("Balance")
+            BControl {
+                BLabel {
+                    anchors.centerIn: parent
+                    text: qsTr("Balance")
+                }
             }
-            BLabel {
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                text: qsTr("Tx")
+            BControl {
+                BLabel {
+                    anchors.centerIn: parent
+                    text: qsTr("Tx")
+                }
             }
         }
     }
@@ -45,22 +50,15 @@ BPane {
         anchors.topMargin: _horizontalHeader.implicitHeight
         model: _base.coin.addressList
 
-        property var columnWidths: [50, 30, 10, 5, 5] // %
-        columnWidthProvider: function (column) { 
-            if (_tableView.model) {
-                return (_tableView.width * columnWidths[column]) / 100
-            } else {
-                return 0
-            }
-        }
-        onWidthChanged: _tableView.forceLayout()
+        columnWidthsInPercent: [30, 50, 10, 5, 5] // %
+        
         delegate: BAddressTableRow {
             implicitWidth: _tableView.columnWidthProvider(column)
             address: model
             amount: model.balance
             contextMenu: _contextMenu
 
-            Rectangle {
+            Rectangle { // col separator
                 anchors.right: parent.right
                 width: 1
                 height: parent.height
