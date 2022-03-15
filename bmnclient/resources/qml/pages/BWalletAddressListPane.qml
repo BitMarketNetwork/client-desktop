@@ -35,18 +35,17 @@ BPane {
             BLabel {
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
-                text: qsTr("Tx count")
+                text: qsTr("Tx")
             }
         }
     }
     BAddressTableView {
         id: _tableView
         anchors.fill: parent
-        anchors.topMargin: _horizontalHeader.height
+        anchors.topMargin: _horizontalHeader.implicitHeight
         model: _base.coin.addressList
 
-        property var columnWidths: [30, 50, 10, 5, 5] // %
-        
+        property var columnWidths: [50, 30, 10, 5, 5] // %
         columnWidthProvider: function (column) { 
             if (_tableView.model) {
                 return (_tableView.width * columnWidths[column]) / 100
@@ -60,6 +59,14 @@ BPane {
             address: model
             amount: model.balance
             contextMenu: _contextMenu
+
+            Rectangle {
+                anchors.right: parent.right
+                width: 1
+                height: parent.height
+                color: "grey"
+                opacity: 0.5
+            }
         }
     }
 
