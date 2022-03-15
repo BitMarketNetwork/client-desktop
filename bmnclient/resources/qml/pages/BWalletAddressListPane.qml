@@ -6,78 +6,60 @@ import QtQuick
 
 BPane {
     id: _base
-    property string title: qsTr("Addresses (%1)").arg(_list.model.rowCountHuman)
+    property string title: qsTr("Addresses (%1)").arg(_tableView.model.rowCountHuman)
     property var coin // CoinModel
+    
+    BHorizontalHeaderView {
+        id: _horizontalHeader
+        syncView: _tableView
+        anchors.left: _tableView.left
+        width: parent.width
 
-    contentItem: BAddressListView {
-        id: _list
+        model: ObjectModel {
+            id: itemModel
+            BLabel {
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: qsTr("Address")
+            }
+            BLabel {
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: qsTr("Label")
+            }
+            BLabel {
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: qsTr("Balance")
+            }
+            BLabel {
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: qsTr("Tx count")
+            }
+        }
+    }
+    BAddressTableView {
+        id: _tableView
+        anchors.fill: parent
+        anchors.topMargin: _horizontalHeader.height
         model: _base.coin.addressList
-        delegate: BAddressTableRow{
+
+        property var columnWidths: [30, 50, 10, 5, 5] // %
+        
+        columnWidthProvider: function (column) { 
+            if (_tableView.model) {
+                return (_tableView.width * columnWidths[column]) / 100
+            } else {
+                return 0
+            }
+        }
+        onWidthChanged: _tableView.forceLayout()
+        delegate: BAddressTableRow {
+            implicitWidth: _tableView.columnWidthProvider(column)
             address: model
             amount: model.balance
             contextMenu: _contextMenu
-        }
-        templateDelegate: BAddressTableRow {
-            address: BCommon.addressItemTemplate
-            amount: BCommon.addressItemTemplate.balance
-        }
-        header: BRowLayout {
-            width: _list.width
-            height: 50
-            
-            Item {
-                BLayout.preferredWidth: parent.width * 0.20
-                BLayout.maximumWidth: parent.width * 0.20
-                BLayout.fillHeight: true
-
-                BLabel {
-                    anchors.centerIn: parent
-                    text: qsTr("Address")
-                }
-            }
-            Item {
-                BLayout.preferredWidth: parent.width * 0.10
-                BLayout.maximumWidth: parent.width * 0.10
-                BLayout.fillHeight: true
-
-                BLabel {
-                    anchors.centerIn: parent
-                    text: qsTr("Label")
-                }
-            }
-            Item { //spacer
-                BLayout.preferredWidth: parent.width * 0.50
-                BLayout.maximumWidth: parent.width * 0.50
-                BLayout.fillHeight: true
-            }
-            Item {
-                BLayout.preferredWidth: parent.width * 0.05
-                BLayout.maximumWidth: parent.width * 0.05
-                BLayout.fillHeight: true
-
-                BLabel {
-                    //anchors.verticalCenter: parent.verticalCenter
-                    //anchors.right: parent.right
-                    anchors.centerIn: parent
-                    text: qsTr("Balance")
-                }
-            }
-            Item {
-                BLayout.preferredWidth: parent.width * 0.05
-                BLayout.maximumWidth: parent.width * 0.05
-                BLayout.fillHeight: true
-
-                BLabel {
-                    anchors.centerIn: parent
-                    text: qsTr("Tx")
-                }
-            }
-
-            Item { //spacer
-                BLayout.preferredWidth: parent.width * 0.05
-                BLayout.maximumWidth: parent.width * 0.05
-                BLayout.fillHeight: true
-            }
         }
     }
 

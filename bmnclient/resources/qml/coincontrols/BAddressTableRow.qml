@@ -28,31 +28,25 @@ BItemDelegate {
             }
         }
         Loader {
+            BLayout.fillWidth: true
             active: model.column == 0
             sourceComponent: BLabel {
-                BLayout.preferredWidth: parent.width * 0.20
-                BLayout.maximumWidth: parent.width * 0.20
                 elide: BLabel.ElideMiddle
                 maximumLineCount: 20
                 text: _base.address.name
             }
         }
         Loader {
+            BLayout.fillWidth: true
             active: model.column == 1
             sourceComponent: BLabel {
-                BLayout.preferredWidth: parent.width * 0.10
-                BLayout.maximumWidth: parent.width * 0.10
                 elide: BLabel.ElideRight
                 maximumLineCount: 20
                 text: address.state.label
             }
         }
-        /*Item { //spacer
-            BLayout.preferredWidth: parent.width * 0.50
-            BLayout.maximumWidth: parent.width * 0.50
-            BLayout.fillHeight: true
-        }*/
         Loader {
+            BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
             active: model.column == 2
             sourceComponent: BAmountLabel {
                 font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
@@ -61,19 +55,19 @@ BItemDelegate {
             }
         }
         Loader {
+            BLayout.fillWidth: true
+            BLayout.fillHeight: true
             active: model.column == 3
-            sourceComponent: Item {
-                BLayout.preferredWidth: parent.width * 0.05
-                BLayout.maximumWidth: parent.width * 0.05
-                BLabel {
-                    anchors.centerIn: parent
-                    elide: BLabel.ElideRight
-                    maximumLineCount: 4
-                    text: _base.address.txList.rowCount()
-                }
+            sourceComponent: BLabel {
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                elide: BLabel.ElideRight
+                maximumLineCount: 4
+                text: _base.address.txList.rowCount()
             }
         }
         Loader {
+            BLayout.fillWidth: true
             active: model.column == 4 && _base.contextMenu
             sourceComponent: BContextMenuToolButton {
                 menu: null
@@ -86,8 +80,19 @@ BItemDelegate {
     }
 
     onDoubleClicked: {
-        BBackend.clipboard.text = address.name
+        if (model.column === 0) {
+            BBackend.clipboard.text = address.name
+        } else if (model.column === 1) {
+            BBackend.clipboard.text = address.state.label
+        } else if (model.column === 2) {
+            BBackend.clipboard.text = "%1 %2 / %3 %4"
+                .arg(amount.valueHuman)
+                .arg(amount.unit)
+                .arg(amount.fiatValueHuman)
+                .arg(amount.fiatUnit)
+        } else if (model.column === 3) {
+            BBackend.clipboard.text = address.txList.rowCount()
+        }
     }
-
     // TODO right click
 }

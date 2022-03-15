@@ -133,7 +133,7 @@ class AbstractItemModel(AbstractModel):
     def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
         if parent.isValid():
             return 0
-        return 4
+        return 5
 
     def headerData(
             self,
