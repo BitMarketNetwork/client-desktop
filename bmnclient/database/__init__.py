@@ -14,12 +14,12 @@ try:
 except ImportError:
     import sqlite3 as _engine
 
+from .metadata import MetadataTable
 from .tables import (
     AbstractTable,
     AddressListTable,
     AddressTxMapTable,
     CoinListTable,
-    MetadataTable,
     TxIoListTable,
     TxListTable)
 from .vfs import Vfs

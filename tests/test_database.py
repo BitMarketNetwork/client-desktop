@@ -6,14 +6,13 @@ from unittest import TestCase
 
 from bmnclient.coins.list import CoinList
 from bmnclient.database import Cursor, Database
+from bmnclient.database.metadata import MetadataTable
 from bmnclient.database.tables import (
     AddressListTable,
     AddressTxMapTable,
     CoinListTable,
-    MetadataTable,
     TxIoListTable,
-    TxListTable
-)
+    TxListTable)
 from tests import TestApplication
 from tests.test_coins import fillCoin
 
