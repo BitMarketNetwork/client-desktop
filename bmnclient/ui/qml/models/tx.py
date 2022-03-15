@@ -16,7 +16,7 @@ from .amount import AbstractAmountModel
 from .list import (
     AbstractConcatenateModel,
     AbstractListModel,
-    AbstractListSortedModel,
+    AbstractSortedModel,
     RoleEnum)
 from .tx_io import TxIoListModel
 from ....coin_models import TxModel as _TxModel
@@ -246,7 +246,7 @@ class TxListConcatenateModel(AbstractConcatenateModel):
         return True
 
 
-class TxListSortedModel(AbstractListSortedModel):
+class TxListSortedModel(AbstractSortedModel):
     def __init__(
             self,
             application: QmlApplication,

@@ -11,10 +11,7 @@ from PySide6.QtCore import (
 
 from . import AbstractCoinStateModel, AbstractModel
 from .amount import AbstractAmountModel
-from .list import (
-    AbstractListSortedModel,
-    AbstractTableModel,
-    RoleEnum)
+from .list import AbstractSortedModel, AbstractTableModel, RoleEnum
 from ....coin_models import AddressModel as _AddressModel
 
 if TYPE_CHECKING:
@@ -211,9 +208,10 @@ class AddressListModel(AbstractTableModel):
             b"txList",
             lambda a: a.model.txListSorted())
     }
+    _COLUMN_COUNT = 5
 
 
-class AddressListSortedModel(AbstractListSortedModel):
+class AddressListSortedModel(AbstractSortedModel):
     def __init__(
             self,
             application: QmlApplication,

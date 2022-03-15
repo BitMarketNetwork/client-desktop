@@ -107,6 +107,7 @@ class AbstractItemModel(AbstractModel):
             return False
 
     _ROLE_MAP = {}
+    _COLUMN_COUNT = 1
 
     def __init__(
             self,
@@ -133,8 +134,9 @@ class AbstractItemModel(AbstractModel):
     def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
         if parent.isValid():
             return 0
-        return 5
+        return self._COLUMN_COUNT
 
+    # noinspection PyMethodMayBeStatic
     def headerData(
             self,
             section: int,
@@ -183,15 +185,6 @@ class AbstractItemModel(AbstractModel):
         super().beginInsertRows(parent, first_index, last_index)
         for i in range(first_index, last_index + 1):
             self._data_list.insert(i, {})
-
-    def beginMoveRows(
-            self,
-            source_parent: QModelIndex,
-            source_first_index: int,
-            source_last_index: int,
-            destination_parent: QModelIndex,
-            destination_child_index: int) -> bool:
-        return False
 
     def beginRemoveRows(
             self,
@@ -251,7 +244,7 @@ class AbstractConcatenateModel(
         return {k: QByteArray(v[0]) for (k, v) in self._ROLE_MAP.items()}
 
 
-class AbstractListSortedModel(AbstractProxyModel, QSortFilterProxyModel):
+class AbstractSortedModel(AbstractProxyModel, QSortFilterProxyModel):
     def __init__(
             self,
             application: QmlApplication,
