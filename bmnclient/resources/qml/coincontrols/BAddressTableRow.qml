@@ -7,6 +7,7 @@ BItemDelegate {
     property var address // AddressModel
     property var amount // AmountModel
     property BMenu contextMenu
+    property color color: enabled ? Material.foreground : Material.hintTextColor
 
     // TODO address.state.isUpdating: show animation
 
@@ -49,15 +50,44 @@ BItemDelegate {
             BLayout.fillWidth: true
             BLayout.fillHeight: true
             active: model.column == 2
-            sourceComponent: Item {
-                anchors.centerIn: parent
+            sourceComponent: BColumnLayout {
 
-                BAmountLabel {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
-                    font.strikeout: _base.address.state.isReadOnly // TODO tmp
-                    amount: _base.amount
+                BRowLayout {
+                    BLayout.alignment: Qt.AlignRight
+                    BLabel {
+                        BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                        font.bold: true
+                        color: _base.color
+                        font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
+                        font.strikeout: _base.address.state.isReadOnly // TODO tmp
+                        text: _base.amount.valueHuman
+                    }
+                    BLabel {
+                        BLayout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                        color: _base.color
+                        font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
+                        font.strikeout: _base.address.state.isReadOnly // TODO tmp
+                        text: _base.amount.unit
+                    }
+                }
+            
+                BRowLayout {
+                    BLayout.alignment: Qt.AlignRight
+                    BLabel {
+                        BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                        font.bold: true
+                        color: _base.color
+                        font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
+                        font.strikeout: _base.address.state.isReadOnly // TODO tmp
+                        text: _base.amount.fiatValueHuman
+                    }
+                    BLabel {
+                        BLayout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                        color: _base.color
+                        font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
+                        font.strikeout: _base.address.state.isReadOnly // TODO tmp
+                        text: _base.amount.fiatUnit
+                    }
                 }
             }
         }
