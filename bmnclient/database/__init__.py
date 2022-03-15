@@ -14,11 +14,11 @@ try:
 except ImportError:
     import sqlite3 as _engine
 
+from .address import AddressListTable
 from .coin import CoinListTable
 from .metadata import MetadataTable
 from .tables import (
     AbstractTable,
-    AddressListTable,
     AddressTxMapTable,
     TxIoListTable,
     TxListTable)

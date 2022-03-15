@@ -6,10 +6,10 @@ from unittest import TestCase
 
 from bmnclient.coins.list import CoinList
 from bmnclient.database import Cursor, Database
+from bmnclient.database.address import AddressListTable
 from bmnclient.database.coin import CoinListTable
 from bmnclient.database.metadata import MetadataTable
 from bmnclient.database.tables import (
-    AddressListTable,
     AddressTxMapTable,
     TxIoListTable,
     TxListTable)
