@@ -20,7 +20,8 @@ from .coins.list import CoinList
 from .config import Config, ConfigKey
 from .currency import FiatCurrencyList, FiatRate
 from .database import Database
-from .database.tables import AddressListTable, CoinListTable, TxListTable
+from .database.coin import CoinListTable
+from .database.tables import AddressListTable, TxListTable
 from .debug import Debug
 from .key_store import KeyStore
 from .language import Language
