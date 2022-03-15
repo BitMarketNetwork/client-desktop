@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .column import ColumnEnum
-from .tables import AbstractTable
+from .table import AbstractTable
 
 if TYPE_CHECKING:
     from typing import Final

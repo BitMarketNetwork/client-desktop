@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from .column import ColumnEnum
 from .query import Query
-from .tables import AbstractTable
+from .table import AbstractTable
 
 if TYPE_CHECKING:
     from typing import Final, Optional, Type, Union
