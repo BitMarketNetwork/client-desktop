@@ -22,7 +22,7 @@ if TYPE_CHECKING:
         Type,
         Union)
     from . import Cursor, Database
-    from .column import Column
+    from .column import Column, ColumnValue
     from ..coins.abstract import Coin
     from ..utils.serialize import Serializable
 
@@ -81,8 +81,8 @@ class AbstractTable:
     def _insertOrUpdate(
             self,
             cursor: Cursor,
-            key_columns: Sequence[Tuple[Column, Union[str, int]]],
-            data_columns: Sequence[Tuple[Column, Union[str, int]]],
+            key_columns: Sequence[ColumnValue],
+            data_columns: Sequence[ColumnValue],
             *,
             row_id: int = -1,
             row_id_required: bool = True) -> int:
@@ -151,23 +151,24 @@ class AbstractTable:
             self,
             cursor: Cursor,
             source: Serializable,
-            key_columns: Dict[Column, Any],
-            custom_columns: Optional[Dict[Column, Any]] = None,
+            key_columns: Sequence[ColumnValue],
+            custom_columns: Optional[Sequence[ColumnValue]] = None,
             **options) -> None:
-        assert self.ColumnEnum.ROW_ID not in key_columns
-        source_data = source.serialize(
-            exclude_subclasses=True,
-            **options)
-        if custom_columns is None:
-            custom_columns = {}
-            data_columns = {}
+        assert self.ColumnEnum.ROW_ID not in (c[0] for c in key_columns)
+        source_data = source.serialize(exclude_subclasses=True, **options)
+
+        if not custom_columns:
+            custom_columns = []
+            data_columns = []
         else:
-            data_columns = custom_columns.copy()
+            data_columns = [c for c in custom_columns]
 
         for column in self.ColumnEnum:
-            if column not in key_columns and column not in custom_columns:
-                if column.name in source_data:
-                    data_columns[column] = source_data[column.name]
+            if column.name not in source_data:
+                continue
+            if column in (c[0] for c in chain(key_columns, custom_columns)):
+                continue
+            data_columns.append((column, source_data[column.name]))
 
         source.rowId = self._insertOrUpdate(
             cursor,
@@ -335,7 +336,7 @@ class CoinListTable(AbstractTable, name="coins"):
         self._serialize(
             cursor,
             coin,
-            {self.ColumnEnum.NAME: coin.name})
+            [(self.ColumnEnum.NAME, coin.name)])
         assert coin.rowId > 0
 
 
@@ -423,10 +424,10 @@ class AddressListTable(AbstractTable, name="addresses"):
         self._serialize(
             cursor,
             address,
-            {
-                self.ColumnEnum.COIN_ROW_ID: address.coin.rowId,
-                self.ColumnEnum.NAME: address.name
-            },
+            [
+                (self.ColumnEnum.COIN_ROW_ID, address.coin.rowId),
+                (self.ColumnEnum.NAME, address.name)
+            ],
             allow_hd_path=True)
         assert address.rowId > 0
 
@@ -546,10 +547,10 @@ class TxListTable(AbstractTable, name="transactions"):
         self._serialize(
             cursor,
             tx,
-            {
-                self.ColumnEnum.COIN_ROW_ID: tx.coin.rowId,
-                self.ColumnEnum.NAME: tx.name
-            })
+            [
+                (self.ColumnEnum.COIN_ROW_ID, tx.coin.rowId),
+                (self.ColumnEnum.NAME, tx.name)
+            ])
         assert tx.rowId > 0
 
         # TODO delete old list?
@@ -653,11 +654,11 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
         self._serialize(
             cursor,
             io,
-            {
-                self.ColumnEnum.TX_ROW_ID: tx.rowId,
-                self.ColumnEnum.IO_TYPE: io_type.value,
-                self.ColumnEnum.INDEX: io.index
-            })
+            [
+                (self.ColumnEnum.TX_ROW_ID, tx.rowId),
+                (self.ColumnEnum.IO_TYPE, io_type.value),
+                (self.ColumnEnum.INDEX, io.index)
+            ])
         assert io.rowId > 0
 
 

@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Tuple, Union
 
 
 class Column:
@@ -34,3 +38,7 @@ class ColumnEnum(Column, Enum):
             name: str = "row_id",
             definition: str = "INTEGER PRIMARY KEY") -> None:
         super().__init__(name, definition)
+
+
+if TYPE_CHECKING:
+    ColumnValue = Tuple[Column, Union[str, int]]
