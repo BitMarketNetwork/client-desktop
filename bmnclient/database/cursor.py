@@ -35,13 +35,20 @@ class Cursor(_engine.Cursor):
             self._database.logException(e, query)
             raise
 
+    @staticmethod
+    def __tableToName(table: Union[str, Type[AbstractTable]]) -> str:
+        if isinstance(table, str):
+            return table
+        if issubclass(table, AbstractTable) or isinstance(table, AbstractTable):
+            return table.name
+        raise TypeError()
+
     def isTableExists(self, table: Union[str, Type[AbstractTable]]) -> bool:
-        table = table.name if issubclass(table, AbstractTable) else str(table)
         self.execute(
             "SELECT COUNT(*) FROM \"sqlite_master\""
             " WHERE \"type\" == ? AND \"name\" == ?"
             " LIMIT 1",
-            ("table", table))
+            ("table", self.__tableToName(table)))
         value = self.fetchone()
         return value is not None and value[0] > 0
 
@@ -49,13 +56,10 @@ class Cursor(_engine.Cursor):
             self,
             table: Union[str, Type[AbstractTable]],
             name: str) -> bool:
-
         if not self.isTableExists(table):
             return False
-
-        table = table.name if issubclass(table, AbstractTable) else str(table)
-        for value in self.execute(f"PRAGMA table_info(\"{table}\")"):
+        for value in self.execute(
+                f"PRAGMA table_info(\"{self.__tableToName(table)}\")"):
             if len(value) > 2 and value[1] == name:
                 return True
-
         return False

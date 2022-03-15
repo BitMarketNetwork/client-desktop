@@ -87,6 +87,26 @@ class TestDatabase(TestCase):
                 ok = True
             self.assertTrue(ok)
 
+    def test_cursor(self) -> None:
+        db = self._create(Path("cursor.db"))
+        self.assertTrue(db.open())
+
+        with db.transaction(suppress_exceptions=False) as cursor:
+            self.assertTrue(cursor.isTableExists(MetadataTable))
+            self.assertTrue(cursor.isTableExists(MetadataTable.name))
+            self.assertFalse(cursor.isTableExists(MetadataTable.name + "__"))
+
+            self.assertTrue(cursor.isColumnExists(MetadataTable, "key"))
+            self.assertTrue(cursor.isColumnExists(MetadataTable, "value"))
+            self.assertFalse(cursor.isColumnExists(MetadataTable, "key__"))
+            self.assertFalse(cursor.isColumnExists(MetadataTable, "value__"))
+
+            cursor.execute(f"DROP TABLE {MetadataTable.identifier}")
+            self.assertFalse(cursor.isTableExists(MetadataTable))
+            self.assertFalse(cursor.isTableExists(MetadataTable.name))
+            self.assertFalse(cursor.isColumnExists(MetadataTable, "key"))
+            self.assertFalse(cursor.isColumnExists(MetadataTable, "value"))
+
     def test_upgrade(self) -> None:
         db = self._create(Path("upgrade.db"))
         self.assertTrue(db.open())
