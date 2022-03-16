@@ -11,10 +11,7 @@ from PySide6.QtCore import (
 
 from . import AbstractCoinStateModel, AbstractModel
 from .amount import AbstractAmountModel
-from .list import (
-    AbstractListModel,
-    AbstractListSortedModel,
-    RoleEnum)
+from .list import AbstractSortedModel, AbstractTableModel, RoleEnum
 from ....coin_models import AddressModel as _AddressModel
 
 if TYPE_CHECKING:
@@ -186,14 +183,18 @@ class AddressModel(_AddressModel, AbstractModel):
         super().afterAppendTx(tx)
 
 
-class AddressListModel(AbstractListModel):
+class AddressListModel(AbstractTableModel):
     class Role(RoleEnum):
+        OBJECT: Final = auto()  # TODO temporary, kill
         NAME: Final = auto()
         BALANCE: Final = auto()
         STATE: Final = auto()
         TX_LIST: Final = auto()
 
-    ROLE_MAP: Final = {
+    _ROLE_MAP: Final = {
+        Role.OBJECT: (  # TODO temporary, kill
+            b"object",
+            lambda a: a.model),
         Role.NAME: (
             b"name",
             lambda a: a.model.name),
@@ -205,11 +206,12 @@ class AddressListModel(AbstractListModel):
             lambda a: a.model.state),
         Role.TX_LIST: (
             b"txList",
-            lambda a: a.model.txListSorted)
+            lambda a: a.model.txListSorted())
     }
+    _COLUMN_COUNT = 5
 
 
-class AddressListSortedModel(AbstractListSortedModel):
+class AddressListSortedModel(AbstractSortedModel):
     def __init__(
             self,
             application: QmlApplication,

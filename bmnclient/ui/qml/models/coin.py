@@ -3,23 +3,17 @@ from __future__ import annotations
 from enum import auto
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    Property as QProperty, \
-    QObject, \
-    Signal as QSignal, \
-    Slot as QSlot
+from PySide6.QtCore import (
+    Property as QProperty,
+    QObject,
+    Signal as QSignal,
+    Slot as QSlot)
 
 from . import AbstractCoinStateModel, AbstractModel, ValidStatus
-from .address import \
-    AddressListModel, \
-    AddressListSortedModel
+from .address import AddressListModel, AddressListSortedModel
 from .amount import AbstractAmountModel
-from .list import \
-    AbstractListModel, \
-    RoleEnum
-from .tx import \
-    TxListConcatenateModel, \
-    TxListSortedModel
+from .list import AbstractListModel, RoleEnum
+from .tx import TxListConcatenateModel, TxListSortedModel
 from ....coin_models import CoinModel as _CoinModel
 
 if TYPE_CHECKING:
@@ -339,6 +333,7 @@ class CoinModel(_CoinModel, AbstractModel):
 
 class CoinListModel(AbstractListModel):
     class Role(RoleEnum):
+        OBJECT: Final = auto()  # TODO temporary, kill
         SHORT_NAME: Final = auto()
         FULL_NAME: Final = auto()
         ICON_PATH: Final = auto()
@@ -351,7 +346,10 @@ class CoinListModel(AbstractListModel):
         RECEIVE_MANAGER: Final = auto()
         MANAGER: Final = auto()
 
-    ROLE_MAP: Final = {
+    _ROLE_MAP: Final = {
+        Role.OBJECT: (  # TODO temporary, kill
+            b"object",
+            lambda c: c.model),
         Role.SHORT_NAME: (
             b"name",
             lambda c: c.model.name),

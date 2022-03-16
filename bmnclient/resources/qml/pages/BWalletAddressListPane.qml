@@ -1,23 +1,71 @@
+import QtQuick
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
+import "../dialogs"
 
 BPane {
     id: _base
-    property string title: qsTr("Addresses (%1)").arg(_list.model.rowCountHuman)
+    property string title: qsTr("Addresses (%1)").arg(_tableView.model.rowCountHuman)
     property var coin // CoinModel
 
-    contentItem: BAddressListView {
-        id: _list
+    BHorizontalHeaderView {
+        id: _horizontalHeader
+        syncView: _tableView
+        anchors.left: _tableView.left
+        width: parent.width
+
+        model: ObjectModel {
+            id: itemModel
+
+            BControl {
+                BLabel {
+                    anchors.centerIn: parent
+                    text: qsTr("Address")
+                }
+            }
+            BControl {
+                BLabel {
+                    anchors.centerIn: parent
+                    text: qsTr("Label")
+                }
+            }
+            BControl {
+                BLabel {
+                    anchors.centerIn: parent
+                    text: qsTr("Balance")
+                }
+            }
+            BControl {
+                BLabel {
+                    anchors.centerIn: parent
+                    text: qsTr("Tx")
+                }
+            }
+        }
+        // TODO sorting controls
+    }
+    BAddressTableView {
+        id: _tableView
+        anchors.fill: parent
+        anchors.topMargin: _horizontalHeader.implicitHeight
         model: _base.coin.addressList
-        delegate: BAddressItem {
+
+        columnWidth: [355, -1, 150, 65, 50]
+
+        delegate: BAddressTableRow {
+            implicitWidth: _tableView.columnWidthProvider(column)
             address: model
             amount: model.balance
             contextMenu: _contextMenu
-        }
-        templateDelegate: BAddressItem {
-            address: BCommon.addressItemTemplate
-            amount: BCommon.addressItemTemplate.balance
+
+            Rectangle { // col separator
+                anchors.right: parent.right
+                width: 1
+                height: parent.height
+                color: "grey"
+                opacity: 0.5
+            }
         }
     }
 
@@ -35,6 +83,18 @@ BPane {
             text: qsTr("Spend from")
             onTriggered: {
                 _contextMenu.address.state.isTxInput = true
+            }
+        }
+        BMenuItem {
+            text: qsTr("Transaction history")
+            onTriggered: {
+                let dialog = _applicationManager.createDialog(
+                    "BAddressTransactionHistoryDialog", {
+                    "address" : _contextMenu.address,
+                    "height" : _applicationWindow.height / 2,
+                    "width" : _applicationWindow.width / 2
+                })
+                dialog.open();
             }
         }
         /*BMenuItem {

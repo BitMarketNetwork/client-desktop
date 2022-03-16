@@ -31,6 +31,8 @@ class ConfigKey(Enum):
     SERVICES_FIAT_RATE: Final = "services.fiat_rate"
     SERVICES_FIAT_CURRENCY: Final = "services.fiat_currency"
 
+    SERVICES_BLOCKCHAIN_EXPLORER: Final = "services.blockchain_explorer"
+
 
 class Config:
     def __init__(self, file_path: Path) -> None:

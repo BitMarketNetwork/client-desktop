@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    Property as QProperty, \
-    QObject, \
-    Signal as QSignal
+from PySide6.QtCore import (
+    Property as QProperty,
+    QObject,
+    Signal as QSignal,
+    Slot as QSlot)
 
 from . import AbstractModel, AbstractStateModel, AbstractTupleStateModel
 from ....config import ConfigKey
@@ -34,6 +35,28 @@ class FiatRateServiceModel(AbstractTupleStateModel):
             self._application.networkQueryScheduler.updateCurrentFiatCurrency()
             return True
         return False
+
+
+class BlockchainExplorerModel(AbstractTupleStateModel):
+    def __init__(self, application: QmlApplication) -> None:
+        super().__init__(
+            application,
+            tuple(
+                {"name": v.name, "fullName": v.fullName}
+                for v in application.blockchainExplorerList
+            ))
+
+    def _getCurrentItemName(self) -> str:
+        return self._application.blockchainExplorerList.current.name
+
+    def _setCurrentItemName(self, value: str) -> bool:
+        return self._application.blockchainExplorerList.setCurrent(value)
+
+    # noinspection PyTypeChecker
+    @QSlot(QObject, result=bool)
+    def browse(self, object_: QObject) -> bool:
+        explorer = self._application.blockchainExplorerList.current()
+        return explorer.browse(object_.owner)
 
 
 class FiatCurrencyModel(AbstractTupleStateModel):
@@ -184,6 +207,7 @@ class SettingsModel(AbstractModel):
 
         self._fiat_rate_service_model = FiatRateServiceModel(self._application)
         self._fiat_currency_service_model = FiatCurrencyModel(self._application)
+        self._blockchain_explorer_model = BlockchainExplorerModel(self._application)
         self._language_model = LanguageModel(self._application)
         self._theme_model = ThemeModel(self._application)
         self._font_model = FontModel(self._application)
@@ -196,6 +220,10 @@ class SettingsModel(AbstractModel):
     @QProperty(QObject, constant=True)
     def fiatCurrency(self) -> FiatCurrencyModel:
         return self._fiat_currency_service_model
+
+    @QProperty(QObject, constant=True)
+    def blockchainExplorer(self) -> BlockchainExplorerModel:
+        return self._blockchain_explorer_model
 
     @QProperty(QObject, constant=True)
     def language(self) -> LanguageModel:

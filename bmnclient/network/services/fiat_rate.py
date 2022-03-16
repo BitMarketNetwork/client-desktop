@@ -165,22 +165,18 @@ class CoinGeckoFiatRateService(AbstractFiatRateService):
 
 class FiatRateServiceList(ConfigStaticList):
     def __init__(self, application: CoreApplication) -> None:
-        service_list = (
-            NoneFiatRateService,
-            CoinGeckoFiatRateService,
-        )
-
-        if Debug.isEnabled:
-            service_list = (RandomFiatRateService, ) + service_list
-
         super().__init__(
             application.config,
             ConfigKey.SERVICES_FIAT_RATE,
-            service_list,
+            (
+                NoneFiatRateService,
+                CoinGeckoFiatRateService,
+            )
+            + ((RandomFiatRateService, ) if Debug.isEnabled else tuple()),
             default_index=1,
             item_property="name")
         self._logger.debug(
-            "Current fiat rate service is '%s'.",
+            "Current fiat rate service: %s",
             self.current.fullName)
 
     def __iter__(self) -> Iterator[Type[AbstractFiatRateService]]:
