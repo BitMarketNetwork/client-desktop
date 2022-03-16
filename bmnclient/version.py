@@ -14,7 +14,7 @@ class Product:
     MAINTAINER_URL: Final = "https://" + MAINTAINER_DOMAIN + "/"
     NAME: Final = "BitMarket Network Client"
     SHORT_NAME: Final = "bmn-client"
-    VERSION: Final = (0, 13, 0)
+    VERSION: Final = (0, 13, 1)
     VERSION_STRING: Final = ".".join(map(str, VERSION))
     VERSION_UPDATE_STRING = ".".join(map(str, VERSION))
     VERSION_UPDATE_LINK = 'https://github.com/BitMarketNetwork/client-desktop/releases'
