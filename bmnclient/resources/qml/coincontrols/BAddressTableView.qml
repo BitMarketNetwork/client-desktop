@@ -26,7 +26,7 @@ BTableView {
     onWidthChanged: {
         _base.forceLayout()
     }
-    Component.onCompleted: {
-        forceLayout()
+    onVisibleChanged: {
+        _base.forceLayout()
     }
 }
