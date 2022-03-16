@@ -23,6 +23,7 @@ from .models.factory import ModelsFactory
 from .models.key_store import KeyStoreModel
 from .models.password import PasswordModel
 from .models.settings import SettingsModel
+from .models.update import UpdateModel
 from ..gui import GuiApplication
 from ...network.access_manager import NetworkAccessManager
 from ...resources import Resources
@@ -137,6 +138,7 @@ class QmlContext(QObject):
         self._dialog_manager = DialogManager(self)
         self._debug_model = DebugModel(self._application)
         self._password_model = PasswordModel()
+        self._update_model = UpdateModel(self._application)
 
     @QSlot()
     def onCompleted(self) -> None:
@@ -192,3 +194,7 @@ class QmlContext(QObject):
     @QProperty(QObject, constant=True)
     def password(self) -> PasswordModel:
         return self._password_model
+
+    @QProperty(QObject, constant=True)
+    def update(self) -> UpdateModel:
+        return self._update_model

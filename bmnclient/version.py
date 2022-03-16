@@ -14,8 +14,10 @@ class Product:
     MAINTAINER_URL: Final = "https://" + MAINTAINER_DOMAIN + "/"
     NAME: Final = "BitMarket Network Client"
     SHORT_NAME: Final = "bmn-client"
-    VERSION: Final = (0, 13, 1)
+    VERSION: Final = (0, 13, 0)
     VERSION_STRING: Final = ".".join(map(str, VERSION))
+    VERSION_UPDATE_STRING = ".".join(map(str, VERSION))
+    VERSION_UPDATE_LINK = 'https://github.com/BitMarketNetwork/client-desktop/releases'
     ENCODING: Final = "utf-8"
     STRING_SEPARATOR: Final = ":"
     PYTHON_MINIMAL_VERSION: Final = (3, 7, 0)
@@ -39,6 +41,7 @@ class ProductPaths:
 class Timer:
     UI_MESSAGE_TIMEOUT: Final = 10 * 1000
     NETWORK_TRANSFER_TIMEOUT: Final = 30 * 1000
+    UPDATE_NEW_RELEASES_DELAY: Final = 60 * 1000
     UPDATE_FIAT_CURRENCY_DELAY: Final = 60 * 1000
     UPDATE_SERVER_INFO_DELAY: Final = 60 * 1000
     UPDATE_COINS_INFO_DELAY: Final = 20 * 1000

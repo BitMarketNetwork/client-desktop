@@ -1,7 +1,10 @@
+import QtQuick
+import QtQuick.Controls.Material
 import "../application"
 import "../basiccontrols"
 
 BPane {
+    id: _base
     property string title: qsTr("Application")
     property string iconPath: _applicationManager.imagePath("icon-info.svg")
 
@@ -36,6 +39,35 @@ BPane {
             BInfoValue {
                 text: Qt.application.version
             }
+
+            BInfoSeparator {}
+
+            BInfoLabel {
+                text: qsTr("Application update:")
+            }
+
+            BInfoValue {
+                id: _update
+                visible: !BBackend.update.available
+                text: qsTr("Not found")
+            }
+
+            BInfoValue {
+                id: _updateAvailable
+                visible: BBackend.update.available
+                text: BBackend.update.text
+                color: Material.color(Material.Green)
+                MouseArea {
+                    id: mouseHyperlinkArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        Qt.openUrlExternally(BBackend.update.link)
+                    }
+                }
+            }
+
             BInfoSeparator {}
         }
 
@@ -47,7 +79,7 @@ BPane {
 
             font.bold: true
             // TODO year from compile time
-            text: qsTr("Copyright © 2020-2021 %1.\nAll rights reserved.").arg(Qt.application.organization)
+            text: qsTr("Copyright © 2020-2022 %1.\nAll rights reserved.").arg(Qt.application.organization)
             horizontalAlignment: BLabel.AlignHCenter
         }
     }
