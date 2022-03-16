@@ -11,114 +11,114 @@ BItemDelegate {
 
     // TODO address.state.isUpdating: show animation
 
-    contentItem: BRowLayout {
-        Loader {
-            active: _base.checkable
-            sourceComponent: BCheckBox {
-                id: _checkBox
-                Binding {
-                    target: _base
-                    property: "checked"
-                    value: _checkBox.checked
-                }
-                Binding {
-                    target: _checkBox
-                    property: "checked"
-                    value: _base.checked
-                }
+    contentItem: Loader {
+        sourceComponent: {
+            switch (model.column) {
+                case 0:
+                    _addressComponent
+                break;
+                case 1:
+                    _labelComponent
+                break;
+                case 2:
+                    _amountComponent
+                break;
+                case 3:
+                    _txCountComponent
+                break;
+                case 4:
+                    if (_base.contextMenu)
+                        _menuComponent
+                break;
+                default: break;
             }
         }
-        Loader {
-            BLayout.fillWidth: true
-            active: model.column == 0
-            sourceComponent: BLabel {
-                elide: BLabel.ElideMiddle
-                maximumLineCount: 50
-                text: _base.address.name
-            }
-        }
-        Loader {
-            BLayout.fillWidth: true
-            active: model.column == 1
-            sourceComponent: BLabel {
-                elide: BLabel.ElideRight
-                maximumLineCount: 20
-                text: address.state.label
-            }
-        }
-        Loader {
-            BLayout.fillWidth: true
-            BLayout.fillHeight: true
-            active: model.column == 2
-            sourceComponent: BColumnLayout {
+    }
+    Component {
+        id: _addressComponent
 
-                BRowLayout {
-                    BLayout.alignment: Qt.AlignRight
-                    BLabel {
-                        BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                        font.bold: true
-                        color: _base.color
-                        font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
-                        font.strikeout: _base.address.state.isReadOnly // TODO tmp
-                        text: _base.amount.valueHuman
-                    }
-                    BLabel {
-                        BLayout.alignment: Qt.AlignVCenter | Qt.AlignLeft
-                        color: _base.color
-                        font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
-                        font.strikeout: _base.address.state.isReadOnly // TODO tmp
-                        text: _base.amount.unit
-                    }
+        BLabel {
+            elide: BLabel.ElideMiddle
+            maximumLineCount: 50
+            text: _base.address.name
+        }
+    }
+    Component {
+        id: _labelComponent
+
+        BLabel {
+            elide: BLabel.ElideRight
+            maximumLineCount: 20
+            text: address.state.label
+        }
+    }
+    Component {
+        id: _amountComponent
+
+        BColumnLayout {
+            BRowLayout {
+                BLayout.alignment: Qt.AlignRight
+                BLabel {
+                    BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                    font.bold: true
+                    color: _base.color
+                    font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
+                    font.strikeout: _base.address.state.isReadOnly // TODO tmp
+                    text: _base.amount.valueHuman
                 }
-            
-                BRowLayout {
-                    BLayout.alignment: Qt.AlignRight
-                    BLabel {
-                        BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                        font.bold: true
-                        color: _base.color
-                        font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
-                        font.strikeout: _base.address.state.isReadOnly // TODO tmp
-                        text: _base.amount.fiatValueHuman
-                    }
-                    BLabel {
-                        BLayout.alignment: Qt.AlignVCenter | Qt.AlignLeft
-                        color: _base.color
-                        font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
-                        font.strikeout: _base.address.state.isReadOnly // TODO tmp
-                        text: _base.amount.fiatUnit
-                    }
+                BLabel {
+                    BLayout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                    color: _base.color
+                    font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
+                    font.strikeout: _base.address.state.isReadOnly // TODO tmp
+                    text: _base.amount.unit
+                }
+            }
+            BRowLayout {
+                BLayout.alignment: Qt.AlignRight
+                BLabel {
+                    BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                    font.bold: true
+                    color: _base.color
+                    font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
+                    font.strikeout: _base.address.state.isReadOnly // TODO tmp
+                    text: _base.amount.fiatValueHuman
+                }
+                BLabel {
+                    BLayout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                    color: _base.color
+                    font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
+                    font.strikeout: _base.address.state.isReadOnly // TODO tmp
+                    text: _base.amount.fiatUnit
                 }
             }
         }
-        Loader {
-            BLayout.fillWidth: true
-            BLayout.fillHeight: true
-            active: model.column == 3
-            sourceComponent: BLabel {
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                elide: BLabel.ElideRight
-                maximumLineCount: 4
-                text: _base.address.txList.rowCount()
-            }
+    }
+    Component {
+        id: _txCountComponent
+
+        BLabel {
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            elide: BLabel.ElideRight
+            maximumLineCount: 4
+            text: _base.address.txList.rowCount()
         }
-        Loader {
-            BLayout.fillWidth: true
-            active: model.column == 4 && _base.contextMenu
-            sourceComponent: BContextMenuToolButton {
-                menu: null
-                onClicked: {
-                    _base.contextMenu.address = _base.address
-                    toggleMenu(_base.contextMenu)
-                }
+    }
+    Component {
+        id: _menuComponent
+        BContextMenuToolButton {
+            menu: null
+            onClicked: {
+                _base.contextMenu.address = _base.address
+                toggleMenu(_base.contextMenu)
             }
         }
     }
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.RightButton
-        
+
         onClicked: (mouse) => {
             if (mouse.button === Qt.RightButton) {
                 _base.contextMenu.address = _base.address
