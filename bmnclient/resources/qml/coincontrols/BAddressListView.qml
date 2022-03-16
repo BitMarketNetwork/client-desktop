@@ -23,7 +23,7 @@ BControl {
             id: _listView
             implicitWidth: _base.visibleItemCount > 0 ? _itemTemplate.item.implicitWidth : 0
             implicitHeight: _base.visibleItemCount > 0 ? _itemTemplate.item.implicitHeight * _base.visibleItemCount : 0
-           
+
             Loader {
                 id: _itemTemplate
                 visible: false
