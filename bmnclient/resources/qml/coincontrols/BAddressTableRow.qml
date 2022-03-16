@@ -46,10 +46,21 @@ BItemDelegate {
     Component {
         id: _labelComponent
 
-        BLabel {
-            elide: BLabel.ElideRight
-            maximumLineCount: 20
+        BTextField {
+            id: _txtField
             text: address.state.label
+
+            background: Rectangle {
+                color: "transparent"
+                radius: 2
+                border.width: _txtField.activeFocus || _txtField.hovered ? 2 : 1
+                border.color: _txtField.activeFocus ? _base.Material.accentColor : "transparent"
+            }
+            onEditingFinished: {
+                // TODO Write data
+                // TODO Press enter handle
+                //address.state.label.value = _txtField.text
+            }
         }
     }
     Component {
