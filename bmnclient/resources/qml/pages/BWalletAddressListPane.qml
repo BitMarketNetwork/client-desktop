@@ -1,14 +1,14 @@
+import QtQuick
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
 import "../dialogs"
-import QtQuick
 
 BPane {
     id: _base
     property string title: qsTr("Addresses (%1)").arg(_tableView.model.rowCountHuman)
     property var coin // CoinModel
-    
+
     signal spendFromTriggered
 
     BHorizontalHeaderView {
@@ -54,7 +54,7 @@ BPane {
         model: _base.coin.addressList
 
         columnWidth: [355, -1, 150, 65, 50]
-        
+
         delegate: BAddressTableRow {
             implicitWidth: _tableView.columnWidthProvider(column)
             address: model

@@ -4,10 +4,10 @@ import "../basiccontrols"
 
 BTableView {
     id: _base
-    
+
     property var columnWidth
 
-    columnWidthProvider: function (column) { 
+    columnWidthProvider: function (column) {
         if (_base.model) {
             if (columnWidth[column] == -1) { //spacer col
                 let spacer_width = _base.width
@@ -18,7 +18,7 @@ BTableView {
             } else {
                 return columnWidth[column]
             }
-            
+
         } else {
             return 0
         }
