@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterator, MutableSequence
 from enum import Enum
 from itertools import chain
 from typing import TYPE_CHECKING
@@ -62,7 +63,7 @@ class ColumnEnum(Column, Enum):
 
 
 if TYPE_CHECKING:
-    ColumnValue = Tuple[Column, Union[str, int]]
+    ColumnValue = Tuple[Column, Optional[str, int]]
 
 
 class AbstractTable:
@@ -303,3 +304,99 @@ class AbstractTable:
     @classmethod
     def qmark(cls, count: int) -> str:
         return cls.join("?" * count)
+
+
+# Performance: https://www.sqlite.org/autoinc.html
+class RowListProxy(MutableSequence, Iterator):
+    def __init__(
+            self,
+            type_: Type[Serializable],
+            type_args,
+            type_kwargs,
+            table: AbstractTable,
+            where_expression: str,
+            where_args: Sequence[Union[str, int]],
+            order_columns: Sequence[Tuple[Column, SortOrder]]) -> None:
+        self._type = type_
+        self._type_args = type_args
+        self._type_kwargs = type_kwargs
+
+        self._table = table
+        self._where_args = where_args
+
+        self._column_list = []
+        for column in self._table.ColumnEnum:
+            if column.name in self._type.serializeMap:
+                self._column_list.append(column)
+        if self._table.ColumnEnum.ROW_ID not in self._column_list:
+            self._column_list.insert(0, self._table.ColumnEnum.ROW_ID)
+
+        column_expression = Column.expression(self._column_list)
+        order_expression = SortOrder.expression(
+            order_columns if order_columns else
+            [(self._table.ColumnEnum.ROW_ID, SortOrder.ASC)])
+
+        self._query_length = (
+            f"SELECT COUNT(*)"
+            f" FROM {self._table}"
+            f" WHERE {where_expression}")
+        self._query_iter = (
+            f"SELECT {column_expression}"
+            f" FROM {self._table}"
+            f" WHERE {where_expression}"
+            f" ORDER BY {order_expression}")
+        self._query_getitem = (
+            f"SELECT {column_expression}"
+            f" FROM {self._table}"
+            f" WHERE {where_expression}"
+            f" ORDER BY {order_expression}"
+            f" LIMIT 1 OFFSET ?")
+
+    def _deserialize(
+            self,
+            row: Tuple[Optional[str, int]]) -> Optional[Serializable]:
+        return self._type.deserialize(
+            dict(zip((c.name for c in self._column_list), row)),
+            *self._type_args,
+            **self._type_kwargs)
+
+    def __len__(self) -> int:
+        with self._table.database.transaction(allow_in_transaction=True) as c:
+            c.execute(self._query_length, self._where_args)
+            row = c.fetchone()
+            if row:
+                assert isinstance(row[0], int)
+                return row[0]
+        return 0
+
+    def __iter__(self) -> Generator[Serializable, None, None]:
+        with self._table.database.transaction(allow_in_transaction=True) as c:
+            for row in c.execute(self._query_iter, self._where_args):
+                yield self._deserialize(row)
+
+    def __next__(self) -> Serializable:
+        raise NotImplementedError
+
+    def __getitem__(self, index: int) -> Optional[Serializable]:
+        with self._table.database.transaction(allow_in_transaction=True) as c:
+            c.execute(self._query_getitem, (*self._where_args, index))
+            row = c.fetchone()
+            if not row:
+                raise IndexError()
+            return self._deserialize(row)
+
+    def __setitem__(self, index: int, value) -> None:
+        # TODO
+        raise NotImplementedError
+
+    def __delitem__(self, index: int) -> None:
+        # TODO
+        raise NotImplementedError
+
+    def insert(self, index: int, value: Serializable) -> None:
+        # TODO
+        raise NotImplementedError
+
+    def append(self, value: Serializable) -> None:
+        # TODO
+        raise NotImplementedError
