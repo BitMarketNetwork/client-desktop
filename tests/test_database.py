@@ -87,6 +87,11 @@ class TestDatabase(TestCase):
                 ok = True
             self.assertTrue(ok)
 
+        with db.transaction(suppress_exceptions=False) as c1:
+            self.assertIsNotNone(c1)
+            with db.transaction(allow_in_transaction=True) as c2:
+                self.assertIsNotNone(c2)
+
     def test_cursor(self) -> None:
         db = self._create(Path("cursor.db"))
         self.assertTrue(db.open())

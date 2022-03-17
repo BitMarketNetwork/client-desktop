@@ -105,7 +105,7 @@ class Database:
 
         self.__connection: Optional[_engine.Connection] = None
         self.__table_list: Dict[int, AbstractTable] = {}
-        self.__in_transaction = False  # TODO mutex?
+        self.__in_transaction = 0  # TODO mutex?
 
     def __getitem__(self, type_: Type[AbstractTable]) \
             -> Union[
@@ -202,9 +202,13 @@ class Database:
     def transaction(
             self,
             *,
+            allow_in_transaction: bool = False,
             suppress_exceptions: bool = False
     ) -> Generator[Optional[Cursor], None, None]:
-        if not self.isOpen or self.__in_transaction:
+        if (
+                not self.isOpen
+                or (self.__in_transaction > 0 and not allow_in_transaction)
+        ):
             if suppress_exceptions:
                 try:
                     yield None
@@ -214,8 +218,10 @@ class Database:
             else:
                 raise self.TransactionInEffectError
 
-        self.__in_transaction = True
-        self._logger.debug("BEGIN")
+        self.__in_transaction += 1
+        if self.__in_transaction == 1:
+            self._logger.debug("BEGIN")
+
         cursor = self.__connection.cursor()
         commit = False
 
@@ -235,24 +241,26 @@ class Database:
             else:
                 raise
         finally:
-            assert self.isOpen and self.__in_transaction
+            assert self.isOpen and self.__in_transaction > 0
             cursor.close()
-            try:
-                if commit:
-                    self._logger.debug("COMMIT")
-                    self.__connection.commit()
-                else:
-                    self._logger.debug("ROLLBACK")
-                    self.__connection.rollback()
-            except _engine.OperationalError as e:
-                self._logger.error(
-                    "Failed to %s transaction: %s",
-                    "commit" if commit else "rollback",
-                    str(e))
-                if not suppress_exceptions:
-                    raise
 
-            self.__in_transaction = False
+            if self.__in_transaction == 1:
+                try:
+                    if commit:
+                        self._logger.debug("COMMIT")
+                        self.__connection.commit()
+                    else:
+                        self._logger.debug("ROLLBACK")
+                        self.__connection.rollback()
+                except _engine.OperationalError as e:
+                    self._logger.error(
+                        "Failed to %s transaction: %s",
+                        "commit" if commit else "rollback",
+                        str(e))
+                    if not suppress_exceptions:
+                        self.__in_transaction -= 1
+                        raise
+            self.__in_transaction -= 1
 
     def logQuery(self, query: str) -> None:
         self._logger.debug("Query: %s", query)
