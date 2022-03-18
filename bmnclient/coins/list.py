@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from .coin_bitcoin import Bitcoin, BitcoinTest
 from .coin_litecoin import Litecoin
-from ..utils.static_list import StaticList
+from ..utils import StaticList
 
 if TYPE_CHECKING:
     from typing import Iterator, Optional, Union
