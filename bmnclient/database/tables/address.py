@@ -103,8 +103,7 @@ class AddressListTable(AbstractTable, name="addresses"):
             [
                 ColumnValue(self.ColumnEnum.COIN_ROW_ID, address.coin.rowId),
                 ColumnValue(self.ColumnEnum.NAME, address.name)
-            ],
-            allow_hd_path=True)
+            ])
         assert address.rowId > 0
 
     def rowListProxy(self, coin: Coin) -> RowListProxy:

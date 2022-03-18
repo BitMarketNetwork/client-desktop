@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from enum import Flag, auto
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from .class_property import classproperty
 from .string import StringUtils
 
-DeserializedData = Optional[str, int, List, Dict]
+DeserializedData = Optional[Union[str, int, List, Dict]]
 DeserializedDict = Dict[str, DeserializedData]
 
 
@@ -24,6 +25,13 @@ def serializable(
         fget.__data = kwargs
         return function_
     return decorator if function is None else decorator(function)
+
+
+class SerializeFlag(Flag):
+    DATABASE_MODE = auto()
+    PUBLIC_MODE = auto()
+    PRIVATE_MODE = auto()
+    EXCLUDE_SUBCLASSES = auto()
 
 
 class Serializable:
@@ -75,35 +83,28 @@ class Serializable:
 
         return cls.__serialize_map
 
-    def serialize(
-            self,
-            *,
-            exclude_subclasses: bool = False,
-            **options) -> DeserializedDict:
-        result = {}
-        for (key, data) in self.serializeMap.items():
-            result[key] = self._serializeProperty(
+    def serialize(self, flags: SerializeFlag) -> DeserializedDict:
+        return {
+            key: self._serializeProperty(
+                flags,
                 key,
-                getattr(self, data["name"]),
-                exclude_subclasses=exclude_subclasses,
-                **options)
-        return result
+                getattr(self, data["name"]))
+            for (key, data) in self.serializeMap.items()
+        }
 
     def _serializeProperty(
             self,
+            flags: SerializeFlag,
             key: str,
-            value: Any,
-            *,
-            exclude_subclasses: bool = False,
-            **options) -> DeserializedData:
+            value: Any) -> DeserializedData:
         if isinstance(value, Serializable):
-            if exclude_subclasses:
+            if bool(flags & SerializeFlag.EXCLUDE_SUBCLASSES):
                 return {}
-            return value.serialize(**options)
+            return value.serialize(flags)
         if isinstance(value, (int, str, type(None))):
             return value
         if isinstance(value, list):
-            return [self._serializeProperty(key, v, **options) for v in value]
+            return [self._serializeProperty(flags, key, v) for v in value]
 
         raise TypeError(
             "can't serialize value type '{}' for key '{}'"

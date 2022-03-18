@@ -10,6 +10,7 @@ from bmnclient.coins.coin_litecoin import Litecoin
 from bmnclient.coins.hd import HdNode
 from bmnclient.coins.list import CoinList
 from bmnclient.language import Locale
+from bmnclient.utils import SerializeFlag
 
 if TYPE_CHECKING:
     from typing import List, Optional, Sequence, Type
@@ -405,7 +406,7 @@ class TestCoins(TestCase):
     def _test_serialization(self, coin_type: Type[Coin]) -> None:
         coin = fillCoin(self, coin_type())
 
-        data = coin.serialize(allow_hd_path=False)
+        data = coin.serialize(SerializeFlag.PRIVATE_MODE)
         self.assertIsInstance(data, dict)
 
         # from pprint import pprint

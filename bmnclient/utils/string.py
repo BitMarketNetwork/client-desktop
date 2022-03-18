@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from . import NotImplementedInstance
+from .instance import NotImplementedInstance
 
 if TYPE_CHECKING:
     from typing import Optional, Tuple, Type

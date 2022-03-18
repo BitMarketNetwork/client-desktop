@@ -4,6 +4,7 @@ from collections.abc import MutableSequence
 from enum import Enum
 from itertools import chain
 from typing import TYPE_CHECKING
+from ...utils import SerializeFlag
 
 from ...utils.class_property import classproperty
 
@@ -246,10 +247,11 @@ class AbstractTable(metaclass=TableMeta):
             cursor: Cursor,
             source: Serializable,
             key_columns: Sequence[ColumnValue],
-            custom_columns: Optional[Sequence[ColumnValue]] = None,
-            **options) -> None:
+            custom_columns: Optional[Sequence[ColumnValue]] = None) -> None:
         assert self.ColumnEnum.ROW_ID not in (c.column for c in key_columns)
-        source_data = source.serialize(exclude_subclasses=True, **options)
+        source_data = source.serialize(
+            SerializeFlag.DATABASE_MODE |
+            SerializeFlag.EXCLUDE_SUBCLASSES)
 
         if not custom_columns:
             custom_columns = []

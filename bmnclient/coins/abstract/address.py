@@ -7,7 +7,7 @@ from .object import CoinObject, CoinObjectModel
 from ..hd import HdNode
 from ...crypto.secp256k1 import PrivateKey, PublicKey
 from ...database.tables import AddressListTable
-from ...utils import serializable
+from ...utils import serializable, SerializeFlag
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -236,25 +236,24 @@ class _Address(CoinObject):
             self._type
         ))
 
-    def serialize(
-            self,
-            *,
-            allow_hd_path: bool = True,
-            **options) -> DeserializedDict:
-        return super().serialize(allow_hd_path=allow_hd_path, **options)
-
     def _serializeProperty(
             self,
+            flags: SerializeFlag,
             key: str,
-            value: Any,
-            *,
-            allow_hd_path: bool = True,
-            **options) -> DeserializedData:
+            value: Any) -> DeserializedData:
         if key == "key":
-            return self.exportKey(allow_hd_path=allow_hd_path)
+            # TODO temporary, unsecure
+            if bool(flags & SerializeFlag.PUBLIC_MODE):
+                return self.exportKey(allow_hd_path=True)
+            elif bool(flags & SerializeFlag.PRIVATE_MODE):
+                return self.exportKey(allow_hd_path=False)
+            elif bool(flags & SerializeFlag.DATABASE_MODE):
+                return self.exportKey(allow_hd_path=True)
+            else:
+                return ""
         if key == "type":
             return value.value.name
-        return super()._serializeProperty(key, value, **options)
+        return super()._serializeProperty(flags, key, value)
 
     @classmethod
     def _deserializeProperty(
