@@ -5,13 +5,9 @@ from typing import TYPE_CHECKING
 from .coins.abstract import Coin
 from .coins.utils import CoinUtils
 from .database.tables import AddressListTable, CoinListTable, TxListTable
-from .logger import Logger
 
 if TYPE_CHECKING:
-    from typing import Tuple
-    from .database import Database
     from .network.query_scheduler import NetworkQueryScheduler
-    from .utils.string import ClassStringKeyTuple
 
 
 class _AbstractModel:
@@ -19,13 +15,9 @@ class _AbstractModel:
             self,
             *args,
             query_scheduler: NetworkQueryScheduler,
-            database: Database,
-            name_key_tuple: Tuple[ClassStringKeyTuple, ...],
             **kwargs):
         super().__init__(*args, **kwargs)
-        self._logger = Logger.classLogger(self.__class__, *name_key_tuple)
         self._query_scheduler = query_scheduler
-        self._database = database
 
 
 class CoinModel(_AbstractModel, Coin.Model):

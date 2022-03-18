@@ -2,16 +2,31 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...logger import Logger
 from ...utils.serialize import Serializable
 
 if TYPE_CHECKING:
-    from typing import Callable, Final, Optional
+    from typing import Callable, Final, Optional, Tuple
     from .coin import Coin
+    from ...database import Database
     from ...utils.serialize import DeserializedDict
+    from ...utils.string import ClassStringKeyTuple
 
 
 class CoinObjectModel:
-    pass
+    def __init__(
+            self,
+            *args,
+            database: Database,
+            name_key_tuple: Tuple[ClassStringKeyTuple, ...],
+            **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._logger = Logger.classLogger(self.__class__, *name_key_tuple)
+        self._database = database
+
+    @property
+    def database(self) -> Optional[Database]:
+        return self._database
 
 
 class CoinObject(Serializable):
