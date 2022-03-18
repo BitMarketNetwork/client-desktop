@@ -3,7 +3,12 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from .table import AbstractTable, ColumnEnum, ColumnValue, SortOrder
+from .table import (
+    AbstractTable,
+    ColumnEnum,
+    ColumnValue,
+    SortOrder,
+    RowListProxy)
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -53,6 +58,9 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
     _UNIQUE_COLUMN_LIST = (
         (ColumnEnum.TX_ROW_ID, ColumnEnum.IO_TYPE, ColumnEnum.INDEX),
     )
+
+    def rowListProxy(self, *args, **kwargs) -> RowListProxy:
+        raise NotImplementedError
 
     def deserializeAll(
             self,

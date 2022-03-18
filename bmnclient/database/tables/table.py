@@ -155,6 +155,9 @@ class AbstractTable(metaclass=TableMeta):
     def close(self, cursor: Cursor) -> None:
         pass
 
+    def rowListProxy(self, *args, **kwargs) -> RowListProxy:
+        raise NotImplementedError
+
     def _insertOrUpdate(
             self,
             cursor: Cursor,

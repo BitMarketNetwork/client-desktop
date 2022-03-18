@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .table import AbstractTable, Column, ColumnEnum, ColumnValue, SortOrder
+from .table import (
+    AbstractTable,
+    Column,
+    ColumnEnum,
+    ColumnValue,
+    RowListProxy,
+    SortOrder)
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -53,6 +59,9 @@ class TxListTable(AbstractTable, name="transactions"):
     _UNIQUE_COLUMN_LIST = (
         (ColumnEnum.COIN_ROW_ID, ColumnEnum.NAME),
     )
+
+    def rowListProxy(self, *args, **kwargs) -> RowListProxy:
+        raise NotImplementedError
 
     def _deserializeStatement(
             self,

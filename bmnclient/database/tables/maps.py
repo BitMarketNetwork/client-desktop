@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .table import AbstractTable, Column, ColumnEnum, ColumnValue
+from .table import AbstractTable, Column, ColumnEnum, ColumnValue, RowListProxy
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -41,6 +41,9 @@ class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
     _UNIQUE_COLUMN_LIST = (
         (ColumnEnum.ADDRESS_ROW_ID, ColumnEnum.TX_ROW_ID),
     )
+
+    def rowListProxy(self, *args, **kwargs) -> RowListProxy:
+        raise NotImplementedError
 
     def insert(
             self, cursor: Cursor,

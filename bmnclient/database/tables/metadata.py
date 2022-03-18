@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from .table import AbstractTable, ColumnEnum, ColumnValue
+from .table import AbstractTable, ColumnEnum, ColumnValue, RowListProxy
 
 if TYPE_CHECKING:
     from typing import Final, Optional, Type, Union
@@ -18,6 +18,9 @@ class MetadataTable(AbstractTable, name="metadata"):
 
     class Key(Enum):
         VERSION: Final = "version"
+
+    def rowListProxy(self, *args, **kwargs) -> RowListProxy:
+        raise NotImplementedError
 
     def get(
             self,

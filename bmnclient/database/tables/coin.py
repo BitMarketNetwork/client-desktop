@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .table import AbstractTable, ColumnEnum, ColumnValue
+from .table import AbstractTable, ColumnEnum, ColumnValue, RowListProxy
 
 if TYPE_CHECKING:
     from typing import Final
@@ -37,6 +37,9 @@ class CoinListTable(AbstractTable, name="coins"):
         UNVERIFIED_HASH: Final = (
             "unverified_hash",
             "TEXT NOT NULL")
+
+    def rowListProxy(self, *args, **kwargs) -> RowListProxy:
+        raise NotImplementedError
 
     def deserialize(self, cursor: Cursor, coin: Coin) -> bool:
         result = next(
