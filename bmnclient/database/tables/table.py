@@ -165,7 +165,7 @@ class AbstractTable(metaclass=TableMeta):
             row_id_required: bool = True) -> int:
         def columnsString(columns) -> str:
             return " and ".join(
-                f"'{k.name}' == '{str(v)}'" for (k, v) in columns
+                f"'{c.column}' == '{str(c.value)}'" for c in columns
             )
 
         if row_id > 0:
@@ -201,7 +201,7 @@ class AbstractTable(metaclass=TableMeta):
                     f" WHERE {Column.joinWhere(c.column for c in key_columns)}"
                     f" LIMIT 1"
                 )
-                for r in cursor.execute(query, (c.value for c in key_columns)):
+                for r in cursor.execute(query, [c.value for c in key_columns]):
                     row_id = int(r[0])
                     break
                 if row_id <= 0:
@@ -219,7 +219,7 @@ class AbstractTable(metaclass=TableMeta):
         )
         cursor.execute(
             query,
-            (c.value for c in chain(data_columns, key_columns)))
+            [c.value for c in chain(data_columns, key_columns)])
         if cursor.rowcount <= 0:
             raise self._database.InsertOrUpdateError(
                 "row not found where: {}"
