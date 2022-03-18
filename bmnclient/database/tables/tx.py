@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .table import AbstractTable, ColumnEnum, ColumnValue, SortOrder
+from .table import AbstractTable, Column, ColumnEnum, ColumnValue, SortOrder
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Final, List, Optional, Tuple
-    from .table import Column
     from .. import Cursor
     from ...coins.abstract import Coin
 
