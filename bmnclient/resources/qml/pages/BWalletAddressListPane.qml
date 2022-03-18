@@ -51,7 +51,7 @@ BPane {
         anchors.topMargin: _horizontalHeader.implicitHeight
         model: _base.coin.addressList
 
-        columnWidth: [355, -1, 150, 65, 50]
+        columnWidth: [355, -1, 150, 65, 60]
 
         delegate: BAddressTableRow {
             implicitWidth: _tableView.columnWidthProvider(column)
