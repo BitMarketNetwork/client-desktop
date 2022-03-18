@@ -146,6 +146,10 @@ class AbstractTable(metaclass=TableMeta):
     def name(cls) -> str:  # noqa
         return cls.__NAME
 
+    @property
+    def database(self) -> Database:
+        return self._database
+
     def open(self, cursor: Cursor) -> None:
         cursor.execute(repr(self))
 
@@ -327,19 +331,21 @@ class AbstractTable(metaclass=TableMeta):
 class RowListProxy(MutableSequence):
     def __init__(
             self,
+            *,
             type_: Type[Serializable],
-            type_args,
-            type_kwargs,
+            type_args: Optional[Sequence[Any]] = None,
+            type_kwargs: Optional[Dict[str, Any]] = None,
             table: AbstractTable,
-            where_expression: str,
-            where_args: Sequence[Union[str, int]],
-            order_columns: Sequence[Tuple[Column, SortOrder]]) -> None:
+            where_expression: Optional[str] = None,
+            where_args: Optional[Sequence[Union[str, int]]],
+            order_columns: Optional[Sequence[Tuple[Column, SortOrder]]] = None
+    ) -> None:
         self._type = type_
-        self._type_args = type_args
-        self._type_kwargs = type_kwargs
+        self._type_args = type_args if type_args else tuple()
+        self._type_kwargs = type_kwargs if type_kwargs else dict()
 
         self._table = table
-        self._where_args = where_args
+        self._where_args = where_args if where_args else tuple()
 
         self._column_list = []
         for column in self._table.ColumnEnum:
@@ -352,20 +358,22 @@ class RowListProxy(MutableSequence):
         order_expression = SortOrder.join(
             order_columns if order_columns else
             [(self._table.ColumnEnum.ROW_ID, SortOrder.ASC)])
+        if where_expression:
+            where_expression = " WHERE" + where_expression
 
         self._query_length = (
             f"SELECT COUNT(*)"
             f" FROM {self._table}"
-            f" WHERE {where_expression}")
+            f"{where_expression}")
         self._query_iter = (
             f"SELECT {column_expression}"
             f" FROM {self._table}"
-            f" WHERE {where_expression}"
+            f"{where_expression}"
             f" ORDER BY {order_expression}")
         self._query_getitem = (
             f"SELECT {column_expression}"
             f" FROM {self._table}"
-            f" WHERE {where_expression}"
+            f"{where_expression}"
             f" ORDER BY {order_expression}"
             f" LIMIT 1 OFFSET ?")
 
