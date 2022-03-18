@@ -39,15 +39,14 @@ class Column:
         self._full_definition = f"{self._identifier} {self._definition}"
 
     def __str__(self) -> str:
+        return self._identifier
+
+    def __repr__(self) -> str:
         return self._full_definition
 
     @property
     def name(self) -> str:
         return self._name
-
-    @property
-    def identifier(self) -> str:
-        return self._identifier
 
     @property
     def definition(self) -> str:
@@ -66,7 +65,15 @@ if TYPE_CHECKING:
     ColumnValue = Tuple[Column, Optional[str, int]]
 
 
-class AbstractTable:
+class TableMeta(type):
+    def __str__(cls) -> str:
+        return cls.__str__()
+
+    def __repr__(cls) -> str:
+        return cls.__repr__()
+
+
+class AbstractTable(metaclass=TableMeta):
     class ColumnEnum(ColumnEnum):
         ROW_ID: Final = ()
 
@@ -76,14 +83,14 @@ class AbstractTable:
     _CONSTRAINT_LIST: Tuple[str, ...] = tuple()
     _UNIQUE_COLUMN_LIST: Tuple[Tuple[Column]] = tuple()
 
-    # noinspection PyMethodOverriding
-    def __init_subclass__(cls, *args, name: str, **kwargs) -> None:
+    def __init_subclass__(cls, *args, **kwargs) -> None:
+        name = kwargs.pop("name")
         super().__init_subclass__(*args, **kwargs)
         cls.__NAME = name
         cls.__IDENTIFIER = f"\"{cls.__NAME}\""
 
         definition_list = cls.join(chain(
-            (str(c) for c in cls.ColumnEnum),
+            (repr(c) for c in cls.ColumnEnum),
             (c for c in cls._CONSTRAINT_LIST),
             (
                 f"UNIQUE({cls.joinColumns(c)})"
@@ -98,19 +105,20 @@ class AbstractTable:
     def __init__(self, database: Database) -> None:
         self._database = database
 
-    def __str__(self) -> str:
-        return self.__DEFINITION
+    @classmethod
+    def __str__(cls) -> str:
+        return cls.__IDENTIFIER
+
+    @classmethod
+    def __repr__(cls) -> str:
+        return cls.__DEFINITION
 
     @classproperty
     def name(cls) -> str:  # noqa
         return cls.__NAME
 
-    @classproperty
-    def identifier(cls) -> str:  # noqa
-        return cls.__IDENTIFIER
-
     def open(self, cursor: Cursor) -> None:
-        cursor.execute(str(self))
+        cursor.execute(repr(self))
 
     def upgrade(self, cursor: Cursor, old_version: int) -> None:
         pass
@@ -133,7 +141,7 @@ class AbstractTable:
 
         if row_id > 0:
             cursor.execute(
-                f"UPDATE {self.identifier}"
+                f"UPDATE {self}"
                 f" SET {self.joinColumnsQmark(c[0] for c in data_columns)}"
                 f" WHERE {self.joinColumnsQmark([self.ColumnEnum.ROW_ID])}",
                 [*(c[1] for c in data_columns), row_id])
@@ -144,7 +152,7 @@ class AbstractTable:
         insert_columns = self.joinColumns(
             c[0] for c in chain(key_columns, data_columns))
         cursor.execute(
-            f"INSERT OR IGNORE INTO {self.identifier}"
+            f"INSERT OR IGNORE INTO {self}"
             f" ({insert_columns})"
             f" VALUES({self.qmark(len(key_columns) + len(data_columns))})",
             [c[1] for c in chain(key_columns, data_columns)])
@@ -159,7 +167,7 @@ class AbstractTable:
             if row_id <= 0:
                 query = (
                     f"SELECT {self.joinColumns([self.ColumnEnum.ROW_ID])}"
-                    f" FROM {self.identifier}"
+                    f" FROM {self}"
                     f" WHERE {self.joinQmarkAnd(c[0] for c in key_columns)}"
                     f" LIMIT 1"
                 )
@@ -175,7 +183,7 @@ class AbstractTable:
             key_columns = [(self.ColumnEnum.ROW_ID, row_id)]
 
         query = (
-            f"UPDATE {self.identifier}"
+            f"UPDATE {self}"
             f" SET {self.joinColumnsQmark(c[0] for c in data_columns)}"
             f" WHERE {self.joinQmarkAnd(c[0] for c in key_columns)}"
         )
@@ -275,7 +283,7 @@ class AbstractTable:
         return (
             (
                 f"SELECT {self.joinColumns(column_list)}"
-                f" FROM {self.identifier}"
+                f" FROM {self}"
                 f" WHERE {self.joinQmarkAnd(key_columns.keys())}"
             ),
             [*key_columns.values()]
@@ -287,19 +295,19 @@ class AbstractTable:
 
     @classmethod
     def joinColumns(cls, source: Iterable[Column]) -> str:
-        return cls.join(s.identifier for s in source)
+        return cls.join(str(s) for s in source)
 
     @classmethod
     def joinColumnsQmark(cls, source: Iterable[Column]) -> str:
-        return cls.join(f"{s.identifier} == ?" for s in source)
+        return cls.join(f"{s} == ?" for s in source)
 
     @classmethod
     def joinSortOrder(cls, source: Iterable[Tuple[Column, SortOrder]]) -> str:
-        return cls.join(f"{s[0].identifier} {s[1]}" for s in source)
+        return cls.join(f"{s[0]} {s[1]}" for s in source)
 
     @staticmethod
     def joinQmarkAnd(source: Iterable[Column]) -> str:
-        return " AND ".join(f"{s.identifier} == ?" for s in source)
+        return " AND ".join(f"{s} == ?" for s in source)
 
     @classmethod
     def qmark(cls, count: int) -> str:

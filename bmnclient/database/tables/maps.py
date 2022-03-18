@@ -28,12 +28,12 @@ class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
         return (
             f"FOREIGN KEY ("
             f"{cls.joinColumns([cls.ColumnEnum.ADDRESS_ROW_ID])})"
-            f" REFERENCES {AddressListTable.identifier} ("
+            f" REFERENCES {AddressListTable} ("
             f"{cls.joinColumns([AddressListTable.ColumnEnum.ROW_ID])})"
             f" ON DELETE CASCADE",
 
             f"FOREIGN KEY ({cls.joinColumns([cls.ColumnEnum.TX_ROW_ID])})"
-            f" REFERENCES {TxListTable.identifier} ("
+            f" REFERENCES {TxListTable} ("
             f"{cls.joinColumns([TxListTable.ColumnEnum.ROW_ID])})"
             f" ON DELETE CASCADE",
         )
@@ -52,7 +52,7 @@ class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
             self.ColumnEnum.ADDRESS_ROW_ID,
             self.ColumnEnum.TX_ROW_ID)
         cursor.execute(
-            f"INSERT OR IGNORE INTO {self.identifier}"
+            f"INSERT OR IGNORE INTO {self}"
             f" ({self.joinColumns(columns)})"
             f" VALUES({self.qmark(len(columns))})",
             (address_row_id, tx_row_id))
@@ -64,7 +64,7 @@ class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
         return (
             (
                 f"SELECT {self.joinColumns([self.ColumnEnum.TX_ROW_ID])}"
-                f" FROM {self.identifier}"
+                f" FROM {self}"
                 f" WHERE {self.joinQmarkAnd([self.ColumnEnum.ADDRESS_ROW_ID])}"
             ),
             [address_row_id]

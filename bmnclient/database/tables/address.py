@@ -54,7 +54,7 @@ class AddressListTable(AbstractTable, name="addresses"):
         return (
             f"FOREIGN KEY ("
             f"{cls.joinColumns([cls.ColumnEnum.COIN_ROW_ID])})"
-            f" REFERENCES {CoinListTable.identifier} ("
+            f" REFERENCES {CoinListTable} ("
             f"{cls.joinColumns([CoinListTable.ColumnEnum.ROW_ID])})"
             f" ON DELETE CASCADE",
         )

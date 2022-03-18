@@ -46,7 +46,7 @@ class TxListTable(AbstractTable, name="transactions"):
         return (
             f"FOREIGN KEY ("
             f"{cls.joinColumns([cls.ColumnEnum.COIN_ROW_ID])})"
-            f" REFERENCES {CoinListTable.identifier} ("
+            f" REFERENCES {CoinListTable} ("
             f"{cls.joinColumns([CoinListTable.ColumnEnum.ROW_ID])})"
             f" ON DELETE CASCADE",
         )
@@ -71,7 +71,7 @@ class TxListTable(AbstractTable, name="transactions"):
         return (
             (
                 f"SELECT {self.joinColumns(column_list)}"
-                f" FROM {self.identifier}"
+                f" FROM {self}"
                 f" WHERE {self.joinColumns([self.ColumnEnum.ROW_ID])}"
                 f" IN ({where})"
             ),

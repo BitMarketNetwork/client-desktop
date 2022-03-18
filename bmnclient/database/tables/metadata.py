@@ -28,8 +28,8 @@ class MetadataTable(AbstractTable, name="metadata"):
         try:
             cursor.execute(
                 f"SELECT {self.joinColumns([self.ColumnEnum.VALUE])}"
-                f" FROM {self.identifier}"
-                f" WHERE {self.ColumnEnum.KEY.identifier} == ?"
+                f" FROM {self}"
+                f" WHERE {self.ColumnEnum.KEY} == ?"
                 f" LIMIT 1",
                 [key.value])
         except self._database.engine.OperationalError:

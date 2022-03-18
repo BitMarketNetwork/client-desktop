@@ -45,7 +45,7 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
         return (
             f"FOREIGN KEY ("
             f"{cls.joinColumns([cls.ColumnEnum.TX_ROW_ID])})"
-            f" REFERENCES {TxListTable.identifier} ("
+            f" REFERENCES {TxListTable} ("
             f"{cls.joinColumns([TxListTable.ColumnEnum.ROW_ID])})"
             f" ON DELETE CASCADE",
         )

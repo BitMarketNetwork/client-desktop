@@ -106,7 +106,7 @@ class TestDatabase(TestCase):
             self.assertFalse(cursor.isColumnExists(MetadataTable, "key__"))
             self.assertFalse(cursor.isColumnExists(MetadataTable, "value__"))
 
-            cursor.execute(f"DROP TABLE {MetadataTable.identifier}")
+            cursor.execute(f"DROP TABLE {MetadataTable}")
             self.assertFalse(cursor.isTableExists(MetadataTable))
             self.assertFalse(cursor.isTableExists(MetadataTable.name))
             self.assertFalse(cursor.isColumnExists(MetadataTable, "key"))
@@ -289,8 +289,8 @@ class TestDatabase(TestCase):
             cursor: Cursor,
             coin: Coin) -> List[Tuple[Any]]:
         cursor.execute(
-            f"SELECT * FROM {CoinListTable.identifier} WHERE "
-            f" {CoinListTable.ColumnEnum.NAME.identifier} == ?",
+            f"SELECT * FROM {CoinListTable} WHERE "
+            f" {CoinListTable.ColumnEnum.NAME} == ?",
             (coin.name,))
         r = cursor.fetchall()
         self.assertIsNotNone(r)
@@ -301,8 +301,8 @@ class TestDatabase(TestCase):
             cursor: Cursor,
             coin: Coin) -> List[Tuple[Any]]:
         cursor.execute(
-            f"SELECT * FROM {AddressListTable.identifier} WHERE"
-            f" {AddressListTable.ColumnEnum.COIN_ROW_ID.identifier} == ?",
+            f"SELECT * FROM {AddressListTable} WHERE"
+            f" {AddressListTable.ColumnEnum.COIN_ROW_ID} == ?",
             (coin.rowId, ))
         r = cursor.fetchall()
         self.assertIsNotNone(r)
@@ -313,8 +313,8 @@ class TestDatabase(TestCase):
             cursor: Cursor,
             coin: Coin) -> List[Tuple[Any]]:
         cursor.execute(
-            f"SELECT * FROM {TxListTable.identifier} WHERE"
-            f" {TxListTable.ColumnEnum.COIN_ROW_ID.identifier} == ?",
+            f"SELECT * FROM {TxListTable} WHERE"
+            f" {TxListTable.ColumnEnum.COIN_ROW_ID} == ?",
             (coin.rowId, ))
         r = cursor.fetchall()
         self.assertIsNotNone(r)
@@ -325,8 +325,8 @@ class TestDatabase(TestCase):
             cursor: Cursor,
             tx: Coin.Tx) -> List[Tuple[Any]]:
         cursor.execute(
-            f"SELECT * FROM {TxIoListTable.identifier} WHERE"
-            f" {TxIoListTable.ColumnEnum.TX_ROW_ID.identifier} == ?",
+            f"SELECT * FROM {TxIoListTable} WHERE"
+            f" {TxIoListTable.ColumnEnum.TX_ROW_ID} == ?",
             (tx.rowId, ))
         r = cursor.fetchall()
         self.assertIsNotNone(r)
@@ -336,9 +336,9 @@ class TestDatabase(TestCase):
             self,
             cursor: Cursor,
             tx: Coin.Tx) -> List[Tuple[Any]]:
-        where = AddressTxMapTable.ColumnEnum.TX_ROW_ID.identifier
+        where = AddressTxMapTable.ColumnEnum.TX_ROW_ID
         cursor.execute(
-            f"SELECT * FROM {AddressTxMapTable.identifier} WHERE"
+            f"SELECT * FROM {AddressTxMapTable} WHERE"
             f" {where} == ?",
             (tx.rowId, ))
         r = cursor.fetchall()
@@ -349,9 +349,9 @@ class TestDatabase(TestCase):
             self,
             cursor: Cursor,
             address: Coin.Address) -> List[Tuple[Any]]:
-        where = AddressTxMapTable.ColumnEnum.ADDRESS_ROW_ID.identifier
+        where = AddressTxMapTable.ColumnEnum.ADDRESS_ROW_ID
         cursor.execute(
-            f"SELECT * FROM {AddressTxMapTable.identifier}"
+            f"SELECT * FROM {AddressTxMapTable}"
             f" WHERE {where} == ?",
             (address.rowId, ))
         r = cursor.fetchall()
@@ -392,8 +392,8 @@ class TestDatabase(TestCase):
         with db.transaction(suppress_exceptions=False) as c:
             coin = coin_list[0]
             c.execute(
-                f"DELETE FROM {CoinListTable.identifier} WHERE "
-                f" {CoinListTable.ColumnEnum.ROW_ID.identifier} == ?",
+                f"DELETE FROM {CoinListTable} WHERE "
+                f" {CoinListTable.ColumnEnum.ROW_ID} == ?",
                 (coin.rowId, ))
             self.assertEqual(1, c.rowcount)
             self.assertEqual(0, len(self._select_coin(c, coin)))
@@ -416,8 +416,8 @@ class TestDatabase(TestCase):
         with db.transaction(suppress_exceptions=False) as c:
             address = coin_list[1].addressList[1]
             c.execute(
-                f"DELETE FROM {AddressListTable.identifier} WHERE "
-                f" {AddressListTable.ColumnEnum.ROW_ID.identifier} == ?",
+                f"DELETE FROM {AddressListTable} WHERE "
+                f" {AddressListTable.ColumnEnum.ROW_ID} == ?",
                 (address.rowId, ))
             self.assertEqual(1, c.rowcount)
             self.assertEqual(
@@ -428,8 +428,8 @@ class TestDatabase(TestCase):
         with db.transaction(suppress_exceptions=False) as c:
             tx = coin_list[1].addressList[2].txList[2]
             c.execute(
-                f"DELETE FROM {TxListTable.identifier} WHERE "
-                f" {TxListTable.ColumnEnum.ROW_ID.identifier} == ?",
+                f"DELETE FROM {TxListTable} WHERE "
+                f" {TxListTable.ColumnEnum.ROW_ID} == ?",
                 (tx.rowId, ))
             self.assertEqual(1, c.rowcount)
             self.assertEqual(
