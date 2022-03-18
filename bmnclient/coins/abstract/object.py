@@ -4,9 +4,10 @@ from typing import TYPE_CHECKING
 
 from ...logger import Logger
 from ...utils.serialize import Serializable
+from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Callable, Final, Optional, Tuple
+    from typing import Any, Callable, Dict, Final, Optional, Tuple
     from .coin import Coin
     from ...database import Database
     from ...utils.serialize import DeserializedDict
@@ -38,6 +39,7 @@ class CoinObject(Serializable):
         super().__init__(row_id=row_id)
         self._coin: Final = coin
         self.__model: Optional[CoinObject, bool] = False
+        self.__value_events: Dict[str, Tuple[Callable, Callable]] = {}
 
     def __eq__(self, other: CoinObject) -> bool:
         return (
@@ -49,17 +51,40 @@ class CoinObject(Serializable):
         return hash((self._coin, ))
 
     @property
-    def model(self) -> Optional[CoinObjectModel]:
+    def model(self) -> CoinObjectModel:
         if self.__model is False:
             self.__model = self._coin.modelFactory(self)
         return self.__model
 
-    def _callModel(self, callback_name: str, *args, **kwargs) -> bool:
-        model = self.model
-        if model:
-            getattr(model, callback_name)(*args, **kwargs)
-            return True
-        return False
+    def _callModel(self, callback_name: str, *args, **kwargs) -> None:
+        getattr(self.model, callback_name)(*args, **kwargs)
+
+    def _updateValue(
+            self,
+            action: str,
+            name: str,
+            new_value: Any,
+            update_callback: Callable[[object, str, Any], None] = setattr
+    ) -> bool:
+        old_value = getattr(self, name)
+        if old_value == new_value:
+            return False
+
+        events_name = name + "[" + action + "]"
+        events = self.__value_events.get(events_name, None)
+        if not events:
+            assert action in ("update", "set", "append")
+            action = action.capitalize()
+            suffix = StringUtils.toCamelCase(name.strip("_"), first_lower=False)
+            events = (
+                getattr(self.model, "before" + action + suffix),
+                getattr(self.model, "after" + action + suffix))
+            self.__value_events[events_name] = events
+
+        events[0](new_value)
+        update_callback(self, name, new_value)
+        events[1](new_value)
+        return True
 
     @property
     def coin(self) -> Coin:
