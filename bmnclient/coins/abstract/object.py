@@ -3,14 +3,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...logger import Logger
-from ...utils.serialize import Serializable
+from ...utils import Serializable
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, Final, Optional, Tuple
     from .coin import Coin
     from ...database import Database
-    from ...utils.serialize import DeserializedDict
+    from ...utils import DeserializedDict
     from ...utils.string import ClassStringKeyTuple
 
 

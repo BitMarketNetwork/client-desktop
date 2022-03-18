@@ -5,12 +5,12 @@ from functools import cached_property
 from typing import TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
-from ...utils.serialize import serializable
+from ...utils import serializable
 
 if TYPE_CHECKING:
     from typing import Any, Final, List, Optional
     from .coin import Coin
-    from ...utils.serialize import DeserializedData
+    from ...utils import DeserializedData
 
 
 class _Model(CoinObjectModel):

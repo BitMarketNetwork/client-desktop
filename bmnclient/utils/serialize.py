@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from .class_property import classproperty
 from .string import StringUtils
 
-if TYPE_CHECKING:
-    from typing import Any, Dict, List, Optional
-    DeserializedData = Optional[str, int, List, Dict]
-    DeserializedDict = Dict[str, DeserializedData]
+DeserializedData = Optional[str, int, List, Dict]
+DeserializedDict = Dict[str, DeserializedData]
 
 
 class DeserializationNotSupportedError(Exception):
@@ -16,10 +14,16 @@ class DeserializationNotSupportedError(Exception):
         super().__init__("deserialization not supported")
 
 
-def serializable(func: property) -> property:
-    assert isinstance(func, property)
-    getattr(func, "fget").__serializable = True
-    return func
+def serializable(
+        function: Optional[property] = None,
+        **kwargs) -> Union[Callable[[property], property], property]:
+    def decorator(function_: property) -> property:
+        assert isinstance(function_, property)
+        fget = getattr(function_, "fget")
+        fget.__serializable = True
+        fget.__data = kwargs
+        return function_
+    return decorator if function is None else decorator(function)
 
 
 class Serializable:
@@ -39,7 +43,7 @@ class Serializable:
             if key not in serialize_map:
                 raise KeyError(
                     "unknown property '{}' to deserialization".format(key))
-            v = getattr(self.__class__, serialize_map[key])
+            v = getattr(self.__class__, serialize_map[key]["name"])
             if v.fset:
                 v.fset(self, value)
             elif v.fget(self) != value:
@@ -65,7 +69,10 @@ class Serializable:
                         isinstance(v, property)
                         and getattr(v.fget, "__serializable", None)
                 ):
-                    cls.__serialize_map[StringUtils.toSnakeCase(name)] = name
+                    cls.__serialize_map[StringUtils.toSnakeCase(name)] = dict(
+                        name=name,
+                        **getattr(v.fget, "__data", {}))
+
         return cls.__serialize_map
 
     def serialize(
@@ -74,10 +81,10 @@ class Serializable:
             exclude_subclasses: bool = False,
             **options) -> DeserializedDict:
         result = {}
-        for (key, name) in self.serializeMap.items():
+        for (key, data) in self.serializeMap.items():
             result[key] = self._serializeProperty(
                 key,
-                getattr(self, name),
+                getattr(self, data["name"]),
                 exclude_subclasses=exclude_subclasses,
                 **options)
         return result

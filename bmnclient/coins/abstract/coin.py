@@ -10,7 +10,7 @@ from ...crypto.digest import Sha256Digest
 from ...currency import Currency, FiatRate, NoneFiatCurrency
 from ...database.tables import AddressListTable
 from ...utils.class_property import classproperty
-from ...utils.serialize import DeserializationNotSupportedError, serializable
+from ...utils import DeserializationNotSupportedError, serializable
 
 if TYPE_CHECKING:
     from typing import (
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
         Optional,
         Union)
     from .object import CoinModelFactory
-    from ...utils.serialize import DeserializedData
+    from ...utils import DeserializedData
 
 
 class _Model(CoinObjectModel):

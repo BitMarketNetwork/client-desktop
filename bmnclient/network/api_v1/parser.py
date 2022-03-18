@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Final, List, Optional, Type, Union
-    from ...utils.serialize import DeserializedDict
+    from ...utils import DeserializedDict
 
 
 class ParseError(LookupError):

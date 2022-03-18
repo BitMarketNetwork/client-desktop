@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from PySide6.QtNetwork import QSslError
     from ...coins.abstract import Coin
     from ...coins.list import CoinList
-    from ...utils.serialize import DeserializedDict
+    from ...utils import DeserializedDict
     from ...utils.string import ClassStringKeyTuple
 
 

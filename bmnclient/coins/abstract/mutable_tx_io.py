@@ -4,7 +4,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING
 
 from .tx_io import _Io
-from ...utils.serialize import DeserializationNotSupportedError, serializable
+from ...utils import DeserializationNotSupportedError, serializable
 
 if TYPE_CHECKING:
     from typing import Final, Optional

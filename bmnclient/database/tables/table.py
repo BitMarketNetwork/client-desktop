@@ -21,7 +21,7 @@ if TYPE_CHECKING:
         Type,
         Union)
     from .. import Cursor, Database
-    from ...utils.serialize import Serializable
+    from ...utils import Serializable
 
 
 class SortOrder(Enum):

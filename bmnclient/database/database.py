@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from pathlib import Path
     from typing import Dict, Final, Generator, Optional, Type, Union
     from ..application import CoreApplication
-    from ..utils.serialize import Serializable
+    from ..utils import Serializable
 
 
 class Connection(_engine.Connection):

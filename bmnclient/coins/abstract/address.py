@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING
 from .object import CoinObject, CoinObjectModel
 from ..hd import HdNode
 from ...crypto.secp256k1 import PrivateKey, PublicKey
+from ...utils import serializable
 from ...utils.class_property import classproperty
-from ...utils.serialize import serializable
 
 if TYPE_CHECKING:
     from typing import Any, Final, List, Optional, Union
     from .coin import Coin
-    from ...utils.serialize import DeserializedData, DeserializedDict
+    from ...utils import DeserializedData, DeserializedDict
 
 
 class _TypeValue:

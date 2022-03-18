@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from .object import CoinObject
 from ..utils import CoinUtils
-from ...utils.serialize import serializable
+from ...utils import serializable
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:

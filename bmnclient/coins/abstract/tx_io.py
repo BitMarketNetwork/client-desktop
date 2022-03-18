@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
-from ...utils.serialize import serializable
+from ...utils import serializable
 
 if TYPE_CHECKING:
     from typing import Final, Optional
