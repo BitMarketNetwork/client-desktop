@@ -106,3 +106,11 @@ class AddressListTable(AbstractTable, name="addresses"):
             ],
             allow_hd_path=True)
         assert address.rowId > 0
+
+    def rowListProxy(self, coin: Coin) -> RowListProxy:
+        return RowListProxy(
+            type_=coin.Address,
+            type_args=[coin],
+            table=self,
+            where_expression=f"{self.ColumnEnum.COIN_ROW_ID} == ?",
+            where_args=[coin.rowId])
