@@ -8,6 +8,7 @@ from .object import CoinObject, CoinObjectModel
 from ..hd import HdNode
 from ...crypto.digest import Sha256Digest
 from ...currency import Currency, FiatRate, NoneFiatCurrency
+from ...database.tables import AddressListTable
 from ...utils.class_property import classproperty
 from ...utils.serialize import DeserializationNotSupportedError, serializable
 
@@ -48,7 +49,10 @@ class _Model(CoinObjectModel):
     def afterSetFiatRate(self) -> None:
         raise NotImplementedError
 
-    def afterUpdateBalance(self) -> None:
+    def beforeUpdateBalance(self, value: int) -> None:
+        raise NotImplementedError
+
+    def afterUpdateBalance(self, value: int) -> None:
         raise NotImplementedError
 
     def afterUpdateUtxoList(self) -> None:
@@ -331,9 +335,10 @@ class Coin(CoinObject):
         return self._balance
 
     def updateBalance(self) -> None:
-        a = sum(a.balance for a in self._address_list if not a.isReadOnly)
-        self._balance = a
-        self._callModel("afterUpdateBalance")
+        self._updateValue(
+            "update",
+            "_balance",
+            self.model.database[AddressListTable].queryTotalBalance(self))
 
     def updateUtxoList(self) -> None:
         self._tx_factory.updateUtxoList()

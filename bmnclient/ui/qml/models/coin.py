@@ -308,9 +308,12 @@ class CoinModel(_CoinModel, AbstractModel):
         self._coin.txFactory.model.update()
         super().afterSetFiatRate()
 
-    def afterUpdateBalance(self) -> None:
+    def beforeUpdateBalance(self, value: int) -> None:
+        super().beforeUpdateBalance(value)
+
+    def afterUpdateBalance(self, value: int) -> None:
         self._balance_model.update()
-        super().afterUpdateBalance()
+        super().afterUpdateBalance(value)
 
     def afterUpdateUtxoList(self) -> None:
         self._coin.txFactory.model.update()

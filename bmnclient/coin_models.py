@@ -51,7 +51,10 @@ class CoinModel(_AbstractModel, Coin.Model):
     def afterSetFiatRate(self) -> None:
         pass
 
-    def afterUpdateBalance(self) -> None:
+    def beforeUpdateBalance(self, value: int) -> None:
+        pass
+
+    def afterUpdateBalance(self, value: int) -> None:
         pass
 
     def afterUpdateUtxoList(self) -> None:

@@ -114,3 +114,14 @@ class AddressListTable(AbstractTable, name="addresses"):
             table=self,
             where_expression=f"{self.ColumnEnum.COIN_ROW_ID} == ?",
             where_args=[coin.rowId])
+
+    def queryTotalBalance(self, coin: Coin) -> int:
+        with self._database.transaction(allow_in_transaction=True) as c:
+            c.execute(
+                f"SELECT SUM({self.ColumnEnum.BALANCE})"
+                f" FROM {self}"
+                f" WHERE {self.ColumnEnum.COIN_ROW_ID} == ?"
+                f" AND IFNULL({self.ColumnEnum.KEY}, ?) != ? ",
+                [coin.rowId, "", ""])
+            value = c.fetchone()
+        return value[0] if value is not None else 0

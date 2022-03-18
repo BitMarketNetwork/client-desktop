@@ -171,10 +171,10 @@ class Database:
             return False
 
         try:
-            with self.transaction(suppress_exceptions=False) as cursor:
+            with self.transaction() as cursor:
                 for pragma in self._PRAGMA_LIST:
                     cursor.execute("PRAGMA " + pragma)
-            with self.transaction(suppress_exceptions=False) as cursor:
+            with self.transaction() as cursor:
                 self._openTables(cursor)
         except (_engine.Error, _engine.Warning) as e:
             self._logger.error("Failed to prepare database tables: %s", str(e))
@@ -187,7 +187,7 @@ class Database:
         if not self.isOpen:
             return True
         try:
-            with self.transaction(suppress_exceptions=False) as cursor:
+            with self.transaction() as cursor:
                 self._closeTables(cursor)
             self.__connection.close()
         except (_engine.Error, _engine.Warning) as e:
