@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .table import AbstractTable, ColumnEnum, SortOrder
+from .table import AbstractTable, ColumnEnum, ColumnValue, SortOrder
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -45,9 +45,9 @@ class TxListTable(AbstractTable, name="transactions"):
         from .coin import CoinListTable
         return (
             f"FOREIGN KEY ("
-            f"{cls.joinColumns([cls.ColumnEnum.COIN_ROW_ID])})"
+            f"{cls.ColumnEnum.COIN_ROW_ID})"
             f" REFERENCES {CoinListTable} ("
-            f"{cls.joinColumns([CoinListTable.ColumnEnum.ROW_ID])})"
+            f"{CoinListTable.ColumnEnum.ROW_ID})"
             f" ON DELETE CASCADE",
         )
 
@@ -65,15 +65,14 @@ class TxListTable(AbstractTable, name="transactions"):
         from .maps import AddressTxMapTable
 
         assert address_row_id > 0
-        where, where_args = \
+        where_expression, where_args = \
             self._database[AddressTxMapTable].statementSelectTransactions(
                 address_row_id)
         return (
             (
-                f"SELECT {self.joinColumns(column_list)}"
+                f"SELECT {Column.join(column_list)}"
                 f" FROM {self}"
-                f" WHERE {self.joinColumns([self.ColumnEnum.ROW_ID])}"
-                f" IN ({where})"
+                f" WHERE {self.ColumnEnum.ROW_ID} IN ({where_expression})"
             ),
             where_args
         )
@@ -139,8 +138,8 @@ class TxListTable(AbstractTable, name="transactions"):
             cursor,
             tx,
             [
-                (self.ColumnEnum.COIN_ROW_ID, tx.coin.rowId),
-                (self.ColumnEnum.NAME, tx.name)
+                ColumnValue(self.ColumnEnum.COIN_ROW_ID, tx.coin.rowId),
+                ColumnValue(self.ColumnEnum.NAME, tx.name)
             ])
         assert tx.rowId > 0
 

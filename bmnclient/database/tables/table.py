@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterator, MutableSequence
+from collections.abc import MutableSequence
 from enum import Enum
 from itertools import chain
 from typing import TYPE_CHECKING
@@ -24,9 +24,13 @@ if TYPE_CHECKING:
     from ...utils.serialize import Serializable
 
 
-class SortOrder(str, Enum):
+class SortOrder(Enum):
     ASC: Final = "ASC"
     DESC: Final = "DESC"
+
+    @staticmethod
+    def join(source: Iterable[Tuple[Column, SortOrder]]) -> str:
+        return ", ".join(f"{s[0]} {s[1].value}" for s in source)
 
 
 class Column:
@@ -52,6 +56,38 @@ class Column:
     def definition(self) -> str:
         return self._definition
 
+    @staticmethod
+    def join(source: Iterable[Column]) -> str:
+        return ", ".join(str(s) for s in source)
+
+    @classmethod
+    def joinSet(cls, source: Iterable[Column]) -> str:
+        return ", ".join(f"{s} = ?" for s in source)
+
+    @classmethod
+    def joinWhere(
+            cls,
+            source: Iterable[Column],
+            separator: str = "AND",
+            operator: str = "==") -> str:
+        return f" {separator} ".join(f"{s} {operator} ?" for s in source)
+
+
+class ColumnValue:
+    __slots__ = ("_column", "value")
+
+    def __init__(self, column: Column, value: Optional[str, int]) -> None:
+        self._column = column
+        self.value = value
+
+    @property
+    def column(self) -> Column:
+        return self._column
+
+    @classmethod
+    def join(cls, count: int) -> str:
+        return ", ".join("?" * count)
+
 
 class ColumnEnum(Column, Enum):
     def __init__(
@@ -59,10 +95,6 @@ class ColumnEnum(Column, Enum):
             name: str = "row_id",
             definition: str = "INTEGER PRIMARY KEY") -> None:
         super().__init__(name, definition)
-
-
-if TYPE_CHECKING:
-    ColumnValue = Tuple[Column, Optional[str, int]]
 
 
 class TableMeta(type):
@@ -89,13 +121,10 @@ class AbstractTable(metaclass=TableMeta):
         cls.__NAME = name
         cls.__IDENTIFIER = f"\"{cls.__NAME}\""
 
-        definition_list = cls.join(chain(
+        definition_list = ", ".join(chain(
             (repr(c) for c in cls.ColumnEnum),
             (c for c in cls._CONSTRAINT_LIST),
-            (
-                f"UNIQUE({cls.joinColumns(c)})"
-                for c in cls._UNIQUE_COLUMN_LIST
-            )
+            (f"UNIQUE({Column.join(c)})" for c in cls._UNIQUE_COLUMN_LIST)
         ))
         cls.__DEFINITION = (
             f"CREATE TABLE IF NOT EXISTS {cls.__IDENTIFIER}"
@@ -142,20 +171,21 @@ class AbstractTable(metaclass=TableMeta):
         if row_id > 0:
             cursor.execute(
                 f"UPDATE {self}"
-                f" SET {self.joinColumnsQmark(c[0] for c in data_columns)}"
-                f" WHERE {self.joinColumnsQmark([self.ColumnEnum.ROW_ID])}",
-                [*(c[1] for c in data_columns), row_id])
+                f" SET {Column.joinSet(c.column for c in data_columns)}"
+                f" WHERE {self.ColumnEnum.ROW_ID} == ?",
+                [*(c.value for c in data_columns), row_id])
             if cursor.rowcount > 0:
                 assert cursor.rowcount == 1
                 return row_id
 
-        insert_columns = self.joinColumns(
-            c[0] for c in chain(key_columns, data_columns))
+        insert_columns = Column.join(
+            c.column for c in chain(key_columns, data_columns))
         cursor.execute(
             f"INSERT OR IGNORE INTO {self}"
             f" ({insert_columns})"
-            f" VALUES({self.qmark(len(key_columns) + len(data_columns))})",
-            [c[1] for c in chain(key_columns, data_columns)])
+            f" VALUES ("
+            f"{ColumnValue.join(len(key_columns) + len(data_columns))})",
+            [c.value for c in chain(key_columns, data_columns)])
         del insert_columns
 
         if cursor.rowcount > 0:
@@ -166,12 +196,12 @@ class AbstractTable(metaclass=TableMeta):
         if row_id_required:
             if row_id <= 0:
                 query = (
-                    f"SELECT {self.joinColumns([self.ColumnEnum.ROW_ID])}"
+                    f"SELECT {self.ColumnEnum.ROW_ID}"
                     f" FROM {self}"
-                    f" WHERE {self.joinQmarkAnd(c[0] for c in key_columns)}"
+                    f" WHERE {Column.joinWhere(c.column for c in key_columns)}"
                     f" LIMIT 1"
                 )
-                for r in cursor.execute(query, [c[1] for c in key_columns]):
+                for r in cursor.execute(query, (c.value for c in key_columns)):
                     row_id = int(r[0])
                     break
                 if row_id <= 0:
@@ -180,16 +210,16 @@ class AbstractTable(metaclass=TableMeta):
                         .format(columnsString(key_columns)),
                         query)
         if row_id > 0:
-            key_columns = [(self.ColumnEnum.ROW_ID, row_id)]
+            key_columns = [ColumnValue(self.ColumnEnum.ROW_ID, row_id)]
 
         query = (
             f"UPDATE {self}"
-            f" SET {self.joinColumnsQmark(c[0] for c in data_columns)}"
-            f" WHERE {self.joinQmarkAnd(c[0] for c in key_columns)}"
+            f" SET {Column.joinSet(c.column for c in data_columns)}"
+            f" WHERE {Column.joinWhere(c.column for c in key_columns)}"
         )
         cursor.execute(
             query,
-            [c[1] for c in chain(data_columns, key_columns)])
+            (c.value for c in chain(data_columns, key_columns)))
         if cursor.rowcount <= 0:
             raise self._database.InsertOrUpdateError(
                 "row not found where: {}"
@@ -205,7 +235,7 @@ class AbstractTable(metaclass=TableMeta):
             key_columns: Sequence[ColumnValue],
             custom_columns: Optional[Sequence[ColumnValue]] = None,
             **options) -> None:
-        assert self.ColumnEnum.ROW_ID not in (c[0] for c in key_columns)
+        assert self.ColumnEnum.ROW_ID not in (c.column for c in key_columns)
         source_data = source.serialize(exclude_subclasses=True, **options)
 
         if not custom_columns:
@@ -217,7 +247,7 @@ class AbstractTable(metaclass=TableMeta):
         for column in self.ColumnEnum:
             if column.name not in source_data:
                 continue
-            if column in (c[0] for c in chain(key_columns, custom_columns)):
+            if column in (c.column for c in chain(key_columns, custom_columns)):
                 continue
             data_columns.append((column, source_data[column.name]))
 
@@ -252,7 +282,7 @@ class AbstractTable(metaclass=TableMeta):
             **options)
 
         if order_columns:
-            query += f" ORDER BY {self.joinSortOrder(order_columns)}"
+            query += f" ORDER BY {SortOrder.join(order_columns)}"
 
         if limit >= 0:
             query += f" LIMIT ?"
@@ -282,40 +312,16 @@ class AbstractTable(metaclass=TableMeta):
     ) -> Tuple[str, List[Any]]:
         return (
             (
-                f"SELECT {self.joinColumns(column_list)}"
+                f"SELECT {Column.join(column_list)}"
                 f" FROM {self}"
-                f" WHERE {self.joinQmarkAnd(key_columns.keys())}"
+                f" WHERE {Column.joinWhere(key_columns.keys())}"
             ),
             [*key_columns.values()]
         )
 
-    @staticmethod
-    def join(source: Iterable[str]) -> str:
-        return ", ".join(source)
-
-    @classmethod
-    def joinColumns(cls, source: Iterable[Column]) -> str:
-        return cls.join(str(s) for s in source)
-
-    @classmethod
-    def joinColumnsQmark(cls, source: Iterable[Column]) -> str:
-        return cls.join(f"{s} == ?" for s in source)
-
-    @classmethod
-    def joinSortOrder(cls, source: Iterable[Tuple[Column, SortOrder]]) -> str:
-        return cls.join(f"{s[0]} {s[1]}" for s in source)
-
-    @staticmethod
-    def joinQmarkAnd(source: Iterable[Column]) -> str:
-        return " AND ".join(f"{s} == ?" for s in source)
-
-    @classmethod
-    def qmark(cls, count: int) -> str:
-        return cls.join("?" * count)
-
 
 # Performance: https://www.sqlite.org/autoinc.html
-class RowListProxy(MutableSequence, Iterator):
+class RowListProxy(MutableSequence):
     def __init__(
             self,
             type_: Type[Serializable],
@@ -339,8 +345,8 @@ class RowListProxy(MutableSequence, Iterator):
         if self._table.ColumnEnum.ROW_ID not in self._column_list:
             self._column_list.insert(0, self._table.ColumnEnum.ROW_ID)
 
-        column_expression = Column.expression(self._column_list)
-        order_expression = SortOrder.expression(
+        column_expression = Column.join(self._column_list)
+        order_expression = SortOrder.join(
             order_columns if order_columns else
             [(self._table.ColumnEnum.ROW_ID, SortOrder.ASC)])
 

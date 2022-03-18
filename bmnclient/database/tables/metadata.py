@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from .table import AbstractTable, ColumnEnum
+from .table import AbstractTable, ColumnEnum, ColumnValue
 
 if TYPE_CHECKING:
     from typing import Final, Optional, Type, Union
@@ -27,7 +27,7 @@ class MetadataTable(AbstractTable, name="metadata"):
             default_value: Optional[int, str] = None) -> Optional[int, str]:
         try:
             cursor.execute(
-                f"SELECT {self.joinColumns([self.ColumnEnum.VALUE])}"
+                f"SELECT {self.ColumnEnum.VALUE}"
                 f" FROM {self}"
                 f" WHERE {self.ColumnEnum.KEY} == ?"
                 f" LIMIT 1",
@@ -49,6 +49,6 @@ class MetadataTable(AbstractTable, name="metadata"):
     def set(self, cursor: Cursor, key: Key, value: Optional[int, str]) -> None:
         self._insertOrUpdate(
             cursor,
-            [(self.ColumnEnum.KEY, key.value)],
-            [(self.ColumnEnum.VALUE, str(value))],
+            [ColumnValue(self.ColumnEnum.KEY, key.value)],
+            [ColumnValue(self.ColumnEnum.VALUE, str(value))],
             row_id_required=False)

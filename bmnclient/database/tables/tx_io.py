@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from .table import AbstractTable, ColumnEnum, SortOrder
+from .table import AbstractTable, ColumnEnum, ColumnValue, SortOrder
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -44,9 +44,9 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
         from .tx import TxListTable
         return (
             f"FOREIGN KEY ("
-            f"{cls.joinColumns([cls.ColumnEnum.TX_ROW_ID])})"
+            f"{cls.ColumnEnum.TX_ROW_ID})"
             f" REFERENCES {TxListTable} ("
-            f"{cls.joinColumns([TxListTable.ColumnEnum.ROW_ID])})"
+            f"{TxListTable.ColumnEnum.ROW_ID})"
             f" ON DELETE CASCADE",
         )
 
@@ -98,8 +98,8 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
             cursor,
             io,
             [
-                (self.ColumnEnum.TX_ROW_ID, tx.rowId),
-                (self.ColumnEnum.IO_TYPE, io_type.value),
-                (self.ColumnEnum.INDEX, io.index)
+                ColumnValue(self.ColumnEnum.TX_ROW_ID, tx.rowId),
+                ColumnValue(self.ColumnEnum.IO_TYPE, io_type.value),
+                ColumnValue(self.ColumnEnum.INDEX, io.index)
             ])
         assert io.rowId > 0

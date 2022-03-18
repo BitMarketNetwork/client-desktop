@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .table import AbstractTable, ColumnEnum
+from .table import AbstractTable, ColumnEnum, ColumnValue, RowListProxy
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -53,9 +53,9 @@ class AddressListTable(AbstractTable, name="addresses"):
         from .coin import CoinListTable
         return (
             f"FOREIGN KEY ("
-            f"{cls.joinColumns([cls.ColumnEnum.COIN_ROW_ID])})"
+            f"{cls.ColumnEnum.COIN_ROW_ID})"
             f" REFERENCES {CoinListTable} ("
-            f"{cls.joinColumns([CoinListTable.ColumnEnum.ROW_ID])})"
+            f"{CoinListTable.ColumnEnum.ROW_ID})"
             f" ON DELETE CASCADE",
         )
 
@@ -101,8 +101,8 @@ class AddressListTable(AbstractTable, name="addresses"):
             cursor,
             address,
             [
-                (self.ColumnEnum.COIN_ROW_ID, address.coin.rowId),
-                (self.ColumnEnum.NAME, address.name)
+                ColumnValue(self.ColumnEnum.COIN_ROW_ID, address.coin.rowId),
+                ColumnValue(self.ColumnEnum.NAME, address.name)
             ],
             allow_hd_path=True)
         assert address.rowId > 0

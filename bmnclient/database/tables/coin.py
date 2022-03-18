@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .table import AbstractTable, ColumnEnum
+from .table import AbstractTable, ColumnEnum, ColumnValue
 
 if TYPE_CHECKING:
     from typing import Final
@@ -61,5 +61,5 @@ class CoinListTable(AbstractTable, name="coins"):
         self._serialize(
             cursor,
             coin,
-            [(self.ColumnEnum.NAME, coin.name)])
+            [ColumnValue(self.ColumnEnum.NAME, coin.name)])
         assert coin.rowId > 0

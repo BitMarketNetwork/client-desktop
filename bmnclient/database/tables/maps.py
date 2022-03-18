@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .table import AbstractTable, ColumnEnum
+from .table import AbstractTable, Column, ColumnEnum, ColumnValue
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -27,14 +27,14 @@ class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
         from .tx import TxListTable
         return (
             f"FOREIGN KEY ("
-            f"{cls.joinColumns([cls.ColumnEnum.ADDRESS_ROW_ID])})"
+            f"{cls.ColumnEnum.ADDRESS_ROW_ID})"
             f" REFERENCES {AddressListTable} ("
-            f"{cls.joinColumns([AddressListTable.ColumnEnum.ROW_ID])})"
+            f"{AddressListTable.ColumnEnum.ROW_ID})"
             f" ON DELETE CASCADE",
 
-            f"FOREIGN KEY ({cls.joinColumns([cls.ColumnEnum.TX_ROW_ID])})"
+            f"FOREIGN KEY ({cls.ColumnEnum.TX_ROW_ID})"
             f" REFERENCES {TxListTable} ("
-            f"{cls.joinColumns([TxListTable.ColumnEnum.ROW_ID])})"
+            f"{TxListTable.ColumnEnum.ROW_ID})"
             f" ON DELETE CASCADE",
         )
 
@@ -52,9 +52,9 @@ class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
             self.ColumnEnum.ADDRESS_ROW_ID,
             self.ColumnEnum.TX_ROW_ID)
         cursor.execute(
-            f"INSERT OR IGNORE INTO {self}"
-            f" ({self.joinColumns(columns)})"
-            f" VALUES({self.qmark(len(columns))})",
+            f"INSERT OR IGNORE INTO {self} ("
+            f"{Column.join(columns)})"
+            f" VALUES ({ColumnValue.join(len(columns))})",
             (address_row_id, tx_row_id))
 
     def statementSelectTransactions(
@@ -63,9 +63,9 @@ class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
         assert address_row_id > 0
         return (
             (
-                f"SELECT {self.joinColumns([self.ColumnEnum.TX_ROW_ID])}"
+                f"SELECT {self.ColumnEnum.TX_ROW_ID}"
                 f" FROM {self}"
-                f" WHERE {self.joinQmarkAnd([self.ColumnEnum.ADDRESS_ROW_ID])}"
+                f" WHERE {self.ColumnEnum.ADDRESS_ROW_ID} == ?"
             ),
             [address_row_id]
         )
