@@ -162,6 +162,19 @@ class AbstractTable(metaclass=TableMeta):
     def rowListProxy(self, *args, **kwargs) -> RowListProxy:
         raise NotImplementedError
 
+    def update(self, row_id: int, columns: Sequence[ColumnValue]) -> bool:
+        assert row_id > 0
+        with self._database.transaction(allow_in_transaction=True) as c:
+            c.execute(
+                f"UPDATE {self}"
+                f" SET {Column.joinSet(c.column for c in columns)}"
+                f" WHERE {self.ColumnEnum.ROW_ID} == ?",
+                [*(c.value for c in columns), row_id])
+            if c.rowcount > 0:
+                assert c.rowcount == 1
+                return True
+        return False
+
     def _insertOrUpdate(
             self,
             cursor: Cursor,
@@ -175,15 +188,8 @@ class AbstractTable(metaclass=TableMeta):
                 f"'{c.column}' == '{str(c.value)}'" for c in columns
             )
 
-        if row_id > 0:
-            cursor.execute(
-                f"UPDATE {self}"
-                f" SET {Column.joinSet(c.column for c in data_columns)}"
-                f" WHERE {self.ColumnEnum.ROW_ID} == ?",
-                [*(c.value for c in data_columns), row_id])
-            if cursor.rowcount > 0:
-                assert cursor.rowcount == 1
-                return row_id
+        if row_id > 0 and self.update(row_id, data_columns):
+            return row_id
 
         insert_columns = Column.join(
             c.column for c in chain(key_columns, data_columns))
@@ -256,7 +262,7 @@ class AbstractTable(metaclass=TableMeta):
                 continue
             if column in (c.column for c in chain(key_columns, custom_columns)):
                 continue
-            data_columns.append((column, source_data[column.name]))
+            data_columns.append(ColumnValue(column, source_data[column.name]))
 
         source.rowId = self._insertOrUpdate(
             cursor,
@@ -401,7 +407,7 @@ class RowListProxy(MutableSequence):
 
     def __getitem__(self, index: int) -> Optional[Serializable]:
         with self._table.database.transaction(allow_in_transaction=True) as c:
-            c.execute(self._query_getitem, (*self._where_args, index))
+            c.execute(self._query_getitem, [*self._where_args, index])
             row = c.fetchone()
             if not row:
                 raise IndexError()
