@@ -25,6 +25,10 @@ class _Model(CoinObjectModel):
         super().__init__(*args, **kwargs)
         self._factory = factory
 
+    @property
+    def owner(self) -> Coin.TxFactory:
+        return self._factory
+
     def afterUpdateState(self) -> None:
         raise NotImplementedError
 

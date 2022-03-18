@@ -15,6 +15,10 @@ class _Model(CoinObjectModel):
         super().__init__(*args, **kwargs)
         self._io = io
 
+    @property
+    def owner(self) -> Coin.Tx.Io:
+        return self._io
+
 
 class _Io(CoinObject):
     Model = _Model

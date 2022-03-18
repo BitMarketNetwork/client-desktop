@@ -28,6 +28,10 @@ class CoinObjectModel:
     def database(self) -> Optional[Database]:
         return self._database
 
+    @property
+    def owner(self) -> CoinObject:
+        raise NotImplementedError
+
 
 class CoinObject(Serializable):
     def __init__(self, coin: Coin, row_id: int = -1) -> None:
