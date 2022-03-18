@@ -13,25 +13,57 @@ BControl {
     property alias stack: _stack
 
     contentItem: BRowLayout {
-        BListView {
-            id: _list
+        BColumnLayout {
             BLayout.fillHeight: true
+            BLayout.fillWidth: true
+            BListView {
+                id: _list
+                BLayout.fillHeight: true
 
-            visible: count > 0
-            model: _stack.children.length - 1
-            delegate: BItemDelegate {
-                id: _item
-                text: _stack.children[index + 1].title
-                enabled: _stack.children[index + 1].enabled
-                visible: _stack.children[index + 1].enabled
-                icon.source: _stack.children[index + 1].iconPath
-                contentItem: BIconLabel {
-                    display: _item.display
-                    icon: _item.icon
-                    text: _item.text
+                visible: count > 0
+                model: _stack.children.length - 1
+                delegate: BItemDelegate {
+                    id: _item
+                    text: _stack.children[index + 1].title
+                    enabled: _stack.children[index + 1].enabled
+                    visible: _stack.children[index + 1].enabled
+                    icon.source: _stack.children[index + 1].iconPath
+                    contentItem: BIconLabel {
+                        display: _item.display
+                        icon: _item.icon
+                        text: _item.text
+                    }
+                    onClicked: {
+                        _stack.currentIndex = index + 1
+                    }
                 }
-                onClicked: {
-                    _stack.currentIndex = index + 1
+            }
+            Item {
+                BLayout.fillHeight: true
+            }
+            BPane {
+                BLayout.preferredWidth: parent.width
+                BLayout.alignment: Qt.AlignBottom
+                Material.elevation: 1
+                contentItem: BRowLayout {
+                    anchors.fill: parent
+
+                    BIconLabel {
+                        BLayout.alignment: Qt.AlignLeft
+                        BLayout.leftMargin: 5
+                        icon.width: _applicationStyle.icon.normalWidth / 2
+                        icon.height: _applicationStyle.icon.normalHeight / 2
+                        icon.source: _applicationManager.imagePath("check-solid.svg")
+                        text: "Connected"
+                    }
+                    BIconLabel {
+                        BLayout.alignment: Qt.AlignRight
+                        BLayout.rightMargin: 5
+                        icon.width: _applicationStyle.icon.normalWidth / 2
+                        icon.height: _applicationStyle.icon.normalHeight / 2
+                        icon.source: _applicationManager.imagePath("rotate-solid.svg")
+                        text: "Synchronization"
+                    }
                 }
             }
         }
