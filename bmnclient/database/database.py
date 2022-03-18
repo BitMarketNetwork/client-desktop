@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from pathlib import Path
     from typing import Dict, Final, Generator, Optional, Type, Union
     from ..application import CoreApplication
+    from ..utils.serialize import Serializable
 
 
 class Connection(_engine.Connection):
@@ -120,7 +121,7 @@ class Database:
         assert issubclass(type_, AbstractTable)
         table = self.__table_list.get(id(type_))
         if table is None:
-            raise KeyError("table '{}' not found".format(type_.__name__))
+            raise KeyError("table '{}' not found".format(type_.name))
         return table
 
     @classproperty
@@ -284,7 +285,7 @@ class Database:
 
     def logDeserializeError(
             self,
-            type_,
+            type_: Type[Serializable],
             result: Dict[str, Union[int, str]]) -> None:
         self._logger.error(
             "Failed to deserialize '%s' object.\n\t%s",

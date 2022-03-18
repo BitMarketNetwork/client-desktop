@@ -382,9 +382,6 @@ class RowListProxy(MutableSequence, Iterator):
             for row in c.execute(self._query_iter, self._where_args):
                 yield self._deserialize(row)
 
-    def __next__(self) -> Serializable:
-        raise NotImplementedError
-
     def __getitem__(self, index: int) -> Optional[Serializable]:
         with self._table.database.transaction(allow_in_transaction=True) as c:
             c.execute(self._query_getitem, (*self._where_args, index))
