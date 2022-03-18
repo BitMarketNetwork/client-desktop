@@ -2,14 +2,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...database.tables import ColumnValue
 from ...logger import Logger
 from ...utils import Serializable
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, Final, Optional, Tuple
+    from typing import Any, Callable, Dict, Final, Optional, Tuple, Type
     from .coin import Coin
     from ...database import Database
+    from ...database.tables import AbstractTable
     from ...utils import DeserializedDict
     from ...utils.string import ClassStringKeyTuple
 
@@ -35,6 +37,8 @@ class CoinObjectModel:
 
 
 class CoinObject(Serializable):
+    _TABLE_TYPE: Optional[Type[AbstractTable]] = None
+
     def __init__(self, coin: Coin, row_id: int = -1) -> None:
         super().__init__(row_id=row_id)
         self._coin: Final = coin
@@ -56,6 +60,20 @@ class CoinObject(Serializable):
             self.__model = self._coin.modelFactory(self)
         return self.__model
 
+    @property
+    def coin(self) -> Coin:
+        return self._coin
+
+    @classmethod
+    def deserialize(
+            cls,
+            source_data: DeserializedDict,
+            coin: Optional[Coin] = None,
+            **options) -> Optional[CoinObject]:
+        assert coin is not None
+        return super().deserialize(source_data, coin, **options)
+
+    # TODO deprecated
     def _callModel(self, callback_name: str, *args, **kwargs) -> None:
         getattr(self.model, callback_name)(*args, **kwargs)
 
@@ -66,7 +84,8 @@ class CoinObject(Serializable):
             new_value: Any,
             update_callback: Callable[[object, str, Any], None] = setattr
     ) -> bool:
-        old_value = getattr(self, name)
+        private_name = "_" + name
+        old_value = getattr(self, private_name)
         if old_value == new_value:
             return False
 
@@ -82,22 +101,21 @@ class CoinObject(Serializable):
             self.__value_events[events_name] = events
 
         events[0](new_value)
-        update_callback(self, name, new_value)
+        update_callback(self, private_name, new_value)
+
+        if (
+                self.rowId > 0
+                and self._TABLE_TYPE
+                and name in self.serializeMap
+        ):
+            column = self.serializeMap[name].get("column", None)
+            if column:
+                self.model.database[self._TABLE_TYPE].update(
+                    self.rowId,
+                    [ColumnValue(column, new_value)])
+
         events[1](new_value)
         return True
-
-    @property
-    def coin(self) -> Coin:
-        return self._coin
-
-    @classmethod
-    def deserialize(
-            cls,
-            source_data: DeserializedDict,
-            coin: Optional[Coin] = None,
-            **options) -> Optional[CoinObject]:
-        assert coin is not None
-        return super().deserialize(source_data, coin, **options)
 
 
 if TYPE_CHECKING:
