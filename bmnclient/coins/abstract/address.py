@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from .object import CoinObject, CoinObjectModel
 from ..hd import HdNode
 from ...crypto.secp256k1 import PrivateKey, PublicKey
+from ...database.tables import AddressListTable
 from ...utils import serializable
 from ...utils.class_property import classproperty
 
@@ -154,6 +155,8 @@ class _Model(CoinObjectModel):
 
 
 class _Address(CoinObject):
+    _TABLE_TYPE = AddressListTable
+
     __initialized = False
 
     _NULLDATA_NAME = "NULL_DATA"

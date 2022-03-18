@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 
 
 class _MutableIo(_Io):
+    _TABLE_TYPE = None
+
     _AMOUNT_LENGTH = 0
 
     def __init__(

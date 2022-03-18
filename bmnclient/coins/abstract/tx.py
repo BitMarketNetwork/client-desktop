@@ -5,6 +5,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
+from ...database.tables import TxListTable
 from ...utils import serializable
 
 if TYPE_CHECKING:
@@ -30,6 +31,8 @@ class _Model(CoinObjectModel):
 
 
 class _Tx(CoinObject):
+    _TABLE_TYPE = TxListTable
+
     __initialized = False
 
     class Status(Enum):

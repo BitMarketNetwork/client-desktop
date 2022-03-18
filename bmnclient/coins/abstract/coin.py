@@ -8,9 +8,9 @@ from .object import CoinObject, CoinObjectModel
 from ..hd import HdNode
 from ...crypto.digest import Sha256Digest
 from ...currency import Currency, FiatRate, NoneFiatCurrency
-from ...database.tables import AddressListTable
-from ...utils.class_property import classproperty
+from ...database.tables import AddressListTable, CoinListTable
 from ...utils import DeserializationNotSupportedError, serializable
+from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
     from typing import (
@@ -72,6 +72,8 @@ class _Model(CoinObjectModel):
 
 
 class Coin(CoinObject):
+    _TABLE_TYPE = CoinListTable
+
     _SHORT_NAME = ""
     _FULL_NAME = ""
     _IS_TEST_NET = False
@@ -337,7 +339,7 @@ class Coin(CoinObject):
     def updateBalance(self) -> None:
         self._updateValue(
             "update",
-            "_balance",
+            "balance",
             self.model.database[AddressListTable].queryTotalBalance(self))
 
     def updateUtxoList(self) -> None:

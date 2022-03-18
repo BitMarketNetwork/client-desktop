@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 
 
 class _MutableTx(_Tx):
+    _TABLE_TYPE = None
+
     _VERSION_LENGTH = 0
     _LOCK_TIME_LENGTH = 0
 

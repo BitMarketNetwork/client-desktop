@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
+from ...database.tables import TxIoListTable
 from ...utils import serializable
 
 if TYPE_CHECKING:
@@ -21,6 +22,8 @@ class _Model(CoinObjectModel):
 
 
 class _Io(CoinObject):
+    _TABLE_TYPE = TxIoListTable
+
     Model = _Model
 
     def __init__(
