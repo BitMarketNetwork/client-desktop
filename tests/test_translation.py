@@ -2,7 +2,7 @@ from random import shuffle
 from unittest import TestCase
 
 from bmnclient.language import Language
-from tests import TestApplication
+from tests.helpers import TestApplication
 
 
 class TestLanguage(TestCase):

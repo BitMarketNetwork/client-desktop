@@ -6,7 +6,7 @@ from unittest import TestCase
 
 import bmnclient.database.vfs as vfs  # TODO kill
 from bmnclient.database.vfs import VfsFile
-from tests import TestApplication
+from tests.helpers import TestApplication
 
 
 class TestDatabaseVfs(TestCase):

@@ -14,7 +14,7 @@ from bmnclient.database.tables import (
     MetadataTable,
     TxIoListTable,
     TxListTable)
-from tests import TestApplication
+from tests.helpers import TestApplication
 from tests.test_coins import fillCoin
 
 if TYPE_CHECKING:
