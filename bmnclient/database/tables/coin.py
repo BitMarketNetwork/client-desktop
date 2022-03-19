@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .table import AbstractTable, ColumnEnum, ColumnValue, RowListProxy
+from ...utils import DeserializeFlag
 
 if TYPE_CHECKING:
     from typing import Final
@@ -53,7 +54,7 @@ class CoinListTable(AbstractTable, name="coins"):
         if result is None:
             return False
 
-        if not coin.deserializeUpdate(result):
+        if not coin.deserializeUpdate(DeserializeFlag.DATABASE_MODE, result):
             self._database.logDeserializeError(type(coin), result)
             return False
         else:

@@ -9,6 +9,7 @@ from .table import (
     ColumnValue,
     RowListProxy,
     SortOrder)
+from ...utils import DeserializeFlag
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -123,7 +124,10 @@ class TxListTable(AbstractTable, name="transactions"):
             if input_error or output_error:
                 error = True
 
-            tx = address.coin.Tx.deserialize(result, address.coin)
+            tx = address.coin.Tx.deserialize(
+                DeserializeFlag.DATABASE_MODE,
+                result,
+                address.coin)
             if tx is None:
                 error = True
                 self._database.logDeserializeError(address.coin.Tx, result)

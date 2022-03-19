@@ -7,8 +7,9 @@ from .table import (
     AbstractTable,
     ColumnEnum,
     ColumnValue,
-    SortOrder,
-    RowListProxy)
+    RowListProxy,
+    SortOrder)
+from ...utils import DeserializeFlag
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -84,7 +85,10 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
                         (self.ColumnEnum.INDEX, SortOrder.ASC),
                 )
         ):
-            io = coin.Tx.Io.deserialize(result, coin)
+            io = coin.Tx.Io.deserialize(
+                DeserializeFlag.DATABASE_MODE,
+                result,
+                coin)
             if io is None:
                 error = True
                 self._database.logDeserializeError(coin.Tx.Io, result)

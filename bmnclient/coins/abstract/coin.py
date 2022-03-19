@@ -22,7 +22,7 @@ if TYPE_CHECKING:
         Optional,
         Union)
     from .object import CoinModelFactory
-    from ...utils import DeserializedData
+    from ...utils import DeserializeFlag, DeserializedData
 
 
 class _Model(CoinObjectModel):
@@ -162,19 +162,21 @@ class Coin(CoinObject):
         return result
 
     @classmethod
-    def deserialize(cls, *_, **__) -> Optional[Coin]:
+    def deserialize(cls, *_, **__) -> None:
         raise DeserializationNotSupportedError
 
     @classmethod
     def _deserializeProperty(
             cls,
+            flags: DeserializeFlag,
             self: Coin,
             key: str,
             value: DeserializedData,
-            **options) -> Any:
+            *cls_args) -> Any:
         if isinstance(value, dict) and key == "address_list":
-            return cls.Address.deserialize(value, self)
-        return super()._deserializeProperty(self, key, value, **options)
+            coin = cls_args[0] if cls_args else self
+            return cls.Address.deserialize(flags, value, coin)
+        return super()._deserializeProperty(flags, self, key, value, *cls_args)
 
     def beginUpdateState(self) -> None:
         self.__old_state_hash = self.__state_hash

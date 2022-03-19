@@ -10,7 +10,7 @@ from bmnclient.coins.coin_litecoin import Litecoin
 from bmnclient.coins.hd import HdNode
 from bmnclient.coins.list import CoinList
 from bmnclient.language import Locale
-from bmnclient.utils import SerializeFlag
+from bmnclient.utils import DeserializeFlag, SerializeFlag
 
 if TYPE_CHECKING:
     from typing import List, Optional, Sequence, Type
@@ -403,7 +403,10 @@ class TestCoins(TestCase):
                 # noinspection PyProtectedMember
                 self.assertEqual(len(coin._mempool_cache), len(mempool_list))
 
-    def _test_serialization(self, coin_type: Type[Coin]) -> None:
+    def _test_serialization(
+            self,
+            d_flags: DeserializeFlag,
+            coin_type: Type[Coin]) -> None:
         coin = fillCoin(self, coin_type())
 
         data = coin.serialize(SerializeFlag.PRIVATE_MODE)
@@ -413,7 +416,7 @@ class TestCoins(TestCase):
         # pprint(data, sort_dicts=False)
 
         coin_new = coin_type()
-        coin_new.deserializeUpdate(data)
+        coin_new.deserializeUpdate(d_flags, data)
 
         # coin compare
         self.assertEqual(coin.name, coin_new.name)
@@ -478,7 +481,8 @@ class TestCoins(TestCase):
 
     def test_serialization(self) -> None:
         for coin in CoinList():
-            self._test_serialization(coin.__class__)
+            for d_flag in DeserializeFlag:
+                self._test_serialization(d_flag, coin.__class__)
 
 
 class TestTxFactory(TestCase):

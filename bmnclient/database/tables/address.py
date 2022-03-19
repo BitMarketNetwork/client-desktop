@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .table import AbstractTable, ColumnEnum, ColumnValue, RowListProxy
+from ...utils import DeserializeFlag
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -84,7 +85,10 @@ class AddressListTable(AbstractTable, name="addresses"):
                 coin.Address,
                 {self.ColumnEnum.COIN_ROW_ID: coin.rowId}
         ):
-            address = coin.Address.deserialize(result, coin)
+            address = coin.Address.deserialize(
+                DeserializeFlag.DATABASE_MODE,
+                result,
+                coin)
             if address is None:
                 error = True
                 self._database.logDeserializeError(coin.Address, result)

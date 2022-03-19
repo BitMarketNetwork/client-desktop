@@ -7,7 +7,7 @@ from .tx_io import _Io
 from ...utils import DeserializationNotSupportedError, serializable
 
 if TYPE_CHECKING:
-    from typing import Final, Optional
+    from typing import Final
     from .coin import Coin
 
 
@@ -44,7 +44,7 @@ class _MutableIo(_Io):
         ))
 
     @classmethod
-    def deserialize(cls, *_, **__) -> Optional[_MutableIo]:
+    def deserialize(cls, *_, **__) -> None:
         raise DeserializationNotSupportedError
 
     @cached_property

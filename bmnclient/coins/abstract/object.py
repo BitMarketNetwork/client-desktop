@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from ...database.tables import ColumnValue
 from ...logger import Logger
-from ...utils import Serializable
+from ...utils import Serializable, SerializeFlag
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from .coin import Coin
     from ...database import Database
     from ...database.tables import AbstractTable
-    from ...utils import DeserializedDict
     from ...utils.string import ClassStringKeyTuple
 
 
@@ -63,15 +62,6 @@ class CoinObject(Serializable):
     @property
     def coin(self) -> Coin:
         return self._coin
-
-    @classmethod
-    def deserialize(
-            cls,
-            source_data: DeserializedDict,
-            coin: Optional[Coin] = None,
-            **options) -> Optional[CoinObject]:
-        assert coin is not None
-        return super().deserialize(source_data, coin, **options)
 
     # TODO deprecated
     def _callModel(self, callback_name: str, *args, **kwargs) -> None:

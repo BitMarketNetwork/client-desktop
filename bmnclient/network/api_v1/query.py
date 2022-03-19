@@ -20,6 +20,7 @@ from ..utils import NetworkUtils
 from ...coins.hd import HdAddressIterator
 from ...coins.utils import CoinUtils
 from ...logger import Logger
+from ...utils import DeserializeFlag
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, Final, List, Optional, Tuple, Union
@@ -282,7 +283,7 @@ class CoinsInfoApiQuery(AbstractApiQuery):
                     coin.name)
                 continue
             coin.status = parser.status
-            coin.deserializeUpdate(parser.deserializedDict)
+            coin.deserializeUpdate(DeserializeFlag.NORMAL_MODE, parser.result)
 
 
 class AddressInfoApiQuery(AbstractApiQuery):
@@ -431,7 +432,10 @@ class AddressTxIteratorApiQuery(
         parser(value)
 
         for tx in parser.txList:
-            tx_d = self._address.coin.Tx.deserialize(tx, self._address.coin)
+            tx_d = self._address.coin.Tx.deserialize(
+                DeserializeFlag.NORMAL_MODE,
+                tx,
+                self._address.coin)
             if tx_d is not None:
                 self._address.appendTx(tx_d)
             else:
@@ -532,6 +536,7 @@ class AddressUtxoIteratorApiQuery(
 
         for tx in parser.txList:
             tx_d = self._address.coin.Tx.Utxo.deserialize(
+                DeserializeFlag.NORMAL_MODE,
                 tx,
                 self._address.coin)
             if tx_d is not None:
@@ -605,7 +610,10 @@ class CoinMempoolIteratorApiQuery(AbstractApiQuery):
             if address is None:
                 continue
 
-            tx_d = self._coin.Tx.deserialize(tx, self._coin)
+            tx_d = self._coin.Tx.deserialize(
+                DeserializeFlag.NORMAL_MODE,
+                tx,
+                self._coin)
             if tx_d is not None:
                 address.appendTx(tx_d)
             else:

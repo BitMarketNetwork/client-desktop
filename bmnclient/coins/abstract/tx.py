@@ -11,7 +11,7 @@ from ...utils import serializable
 if TYPE_CHECKING:
     from typing import Any, Final, List, Optional
     from .coin import Coin
-    from ...utils import DeserializedData
+    from ...utils import DeserializeFlag, DeserializedData
 
 
 class _Model(CoinObjectModel):
@@ -91,17 +91,18 @@ class _Tx(CoinObject):
     @classmethod
     def _deserializeProperty(
             cls,
+            flags: DeserializeFlag,
             self: Optional[_Tx],
             key: str,
             value: DeserializedData,
-            coin: Optional[Coin] = None,
-            **options) -> Any:
+            *cls_args) -> Any:
         if key in ("input_list", "output_list"):
             if isinstance(value, dict):
-                return cls.Io.deserialize(value, coin, **options)
+                coin = cls_args[0] if cls_args else self
+                return cls.Io.deserialize(flags, value, coin)
             elif isinstance(value, cls.Io):
                 return value
-        return super()._deserializeProperty(self, key, value, coin, **options)
+        return super()._deserializeProperty(flags, self, key, value, *cls_args)
 
     @serializable
     @property

@@ -34,6 +34,11 @@ class SerializeFlag(Flag):
     EXCLUDE_SUBCLASSES = auto()
 
 
+class DeserializeFlag(Flag):
+    DATABASE_MODE = auto()
+    NORMAL_MODE = auto()
+
+
 class Serializable:
     __serialize_map = None
 
@@ -113,23 +118,23 @@ class Serializable:
     @classmethod
     def deserialize(
             cls,
+            flags: DeserializeFlag,
             source_data: DeserializedDict,
-            *args,
-            **options) -> Optional[Serializable]:
-        kwargs = {
+            *cls_args) -> Optional[Serializable]:
+        cls_kwargs = {
             cls.__keyToKwarg(key):
-                cls._deserializeProperty(None, key, value, *args, **options)
+                cls._deserializeProperty(flags, None, key, value, *cls_args)
             for key, value in source_data.items()
         }
-        return cls(*args, **kwargs)
+        return cls(*cls_args, **cls_kwargs)
 
     def deserializeUpdate(
             self,
-            source_data: DeserializedDict,
-            **options) -> bool:
+            flags: DeserializeFlag,
+            source_data: DeserializedDict) -> bool:
         kwargs = {
             self.__keyToKwarg(key):
-                self._deserializeProperty(self, key, value, **options)
+                self._deserializeProperty(flags, self, key, value)
             for key, value in source_data.items()
         }
         return self.__update__(**kwargs)
@@ -137,16 +142,16 @@ class Serializable:
     @classmethod
     def _deserializeProperty(
             cls,
+            flags: DeserializeFlag,
             self: Optional[Serializable],
             key: str,
             value: DeserializedData,
-            *args,
-            **options) -> Any:
+            *cls_args) -> Any:
         if isinstance(value, (int, str, type(None))):
             return value
         if isinstance(value, list):
             return [
-                cls._deserializeProperty(self, key, v, *args, **options)
+                cls._deserializeProperty(flags, self, key, v, *cls_args)
                 for v in value
             ]
 

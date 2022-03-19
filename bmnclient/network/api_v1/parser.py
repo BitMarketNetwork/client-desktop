@@ -20,11 +20,11 @@ class AbstractParser:
             self,
             flags: Optional[AbstractParser.ParseFlag] = None) -> None:
         self._flags = flags
-        self._deserialized_dict: DeserializedDict = {}
+        self._result: DeserializedDict = {}
 
     @property
-    def deserializedDict(self) -> DeserializedDict:
-        return self._deserialized_dict
+    def result(self) -> DeserializedDict:
+        return self._result
 
     @classmethod
     def parseKey(
@@ -237,7 +237,7 @@ class CoinsInfoParser(AbstractParser):
                 coin_info,
                 "status",
                 int)
-            self._deserialized_dict = {
+            self._result = {
                 "name": coin_name,
                 "height": self.parseKey(
                     coin_info,

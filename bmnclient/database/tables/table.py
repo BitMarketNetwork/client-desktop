@@ -4,8 +4,8 @@ from collections.abc import MutableSequence
 from enum import Enum
 from itertools import chain
 from typing import TYPE_CHECKING
-from ...utils import SerializeFlag
 
+from ...utils import DeserializeFlag, SerializeFlag
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -342,15 +342,13 @@ class RowListProxy(MutableSequence):
             *,
             type_: Type[Serializable],
             type_args: Optional[Sequence[Any]] = None,
-            type_kwargs: Optional[Dict[str, Any]] = None,
             table: AbstractTable,
             where_expression: Optional[str] = None,
             where_args: Optional[Sequence[Union[str, int]]],
             order_columns: Optional[Sequence[Tuple[Column, SortOrder]]] = None
     ) -> None:
         self._type = type_
-        self._type_args = type_args if type_args else tuple()
-        self._type_kwargs = type_kwargs if type_kwargs else dict()
+        self._type_args = type_args if type_args else []
 
         self._table = table
         self._where_args = where_args if where_args else tuple()
@@ -389,9 +387,9 @@ class RowListProxy(MutableSequence):
             self,
             row: Tuple[Optional[str, int]]) -> Optional[Serializable]:
         return self._type.deserialize(
+            DeserializeFlag.DATABASE_MODE,
             dict(zip((c.name for c in self._column_list), row)),
-            *self._type_args,
-            **self._type_kwargs)
+            *self._type_args)
 
     def __len__(self) -> int:
         with self._table.database.transaction(allow_in_transaction=True) as c:
