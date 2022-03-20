@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
+from ..utils import CoinUtils
 from ...database.tables import TxIoListTable
 from ...utils import serializable
 
@@ -13,7 +14,10 @@ if TYPE_CHECKING:
 
 class _Model(CoinObjectModel):
     def __init__(self, *args, io: Coin.Tx.Io, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            *args,
+            name_key_tuple=CoinUtils.txIoToNameKeyTuple(io),
+            **kwargs)
         self._io = io
 
     @property

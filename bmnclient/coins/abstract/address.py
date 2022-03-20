@@ -5,9 +5,10 @@ from typing import TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
 from ..hd import HdNode
+from ..utils import CoinUtils
 from ...crypto.secp256k1 import PrivateKey, PublicKey
 from ...database.tables import AddressListTable
-from ...utils import serializable, SerializeFlag
+from ...utils import SerializeFlag, serializable
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -116,7 +117,10 @@ class _TypeValue:
 
 class _Model(CoinObjectModel):
     def __init__(self, *args, address: Coin.Address, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            *args,
+            name_key_tuple=CoinUtils.addressToNameKeyTuple(address),
+            **kwargs)
         self._address = address
 
     @property

@@ -6,6 +6,7 @@ from weakref import WeakValueDictionary
 
 from .object import CoinObject, CoinObjectModel
 from ..hd import HdNode
+from ..utils import CoinUtils
 from ...crypto.digest import Sha256Digest
 from ...currency import Currency, FiatRate, NoneFiatCurrency
 from ...database.tables import AddressListTable, CoinListTable
@@ -27,7 +28,10 @@ if TYPE_CHECKING:
 
 class _Model(CoinObjectModel):
     def __init__(self, *args, coin: Coin, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            *args,
+            name_key_tuple=CoinUtils.coinToNameKeyTuple(coin),
+            **kwargs)
         self._coin = coin
 
     @property

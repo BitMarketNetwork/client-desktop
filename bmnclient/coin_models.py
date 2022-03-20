@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .coins.abstract import Coin
-from .coins.utils import CoinUtils
 from .database.tables import AddressListTable, CoinListTable, TxListTable
 
 if TYPE_CHECKING:
@@ -21,13 +20,6 @@ class _AbstractModel:
 
 
 class CoinModel(_AbstractModel, Coin.Model):
-    def __init__(self, *args, coin: Coin, **kwargs) -> None:
-        super().__init__(
-            *args,
-            coin=coin,
-            name_key_tuple=CoinUtils.coinToNameKeyTuple(coin),
-            **kwargs)
-
     def _save(self) -> None:
         try:
             with self._database.transaction() as cursor:
@@ -56,13 +48,6 @@ class CoinModel(_AbstractModel, Coin.Model):
 
 
 class AddressModel(_AbstractModel, Coin.Address.Model):
-    def __init__(self, *args, address: Coin.Address, **kwargs) -> None:
-        super().__init__(
-            *args,
-            address=address,
-            name_key_tuple=CoinUtils.addressToNameKeyTuple(address),
-            **kwargs)
-
     def _save(self) -> None:
         try:
             with self._database.transaction() as cursor:
@@ -100,13 +85,6 @@ class AddressModel(_AbstractModel, Coin.Address.Model):
 
 
 class TxModel(_AbstractModel, Coin.Tx.Model):
-    def __init__(self, *args, tx: Coin.Tx, **kwargs) -> None:
-        super().__init__(
-            *args,
-            tx=tx,
-            name_key_tuple=CoinUtils.txToNameKeyTuple(tx),
-            **kwargs)
-
     def _save(self) -> None:
         try:
             with self._database.transaction() as cursor:
@@ -125,22 +103,10 @@ class TxModel(_AbstractModel, Coin.Tx.Model):
 
 
 class TxIoModel(_AbstractModel, Coin.Tx.Io.Model):
-    def __init__(self, *args, io: Coin.Tx.Io, **kwargs) -> None:
-        super().__init__(
-            *args,
-            io=io,
-            name_key_tuple=CoinUtils.txIoToNameKeyTuple(io),
-            **kwargs)
+    pass
 
 
 class TxFactoryModel(_AbstractModel, Coin.TxFactory.Model):
-    def __init__(self, *args, factory: Coin.TxFactory, **kwargs) -> None:
-        super().__init__(
-            *args,
-            factory=factory,
-            name_key_tuple=CoinUtils.txFactoryToNameKeyTuple(factory),
-            **kwargs)
-
     def afterUpdateState(self) -> None:
         pass
 

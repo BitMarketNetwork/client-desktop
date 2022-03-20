@@ -5,6 +5,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
+from ..utils import CoinUtils
 from ...database.tables import TxListTable
 from ...utils import serializable
 
@@ -16,7 +17,10 @@ if TYPE_CHECKING:
 
 class _Model(CoinObjectModel):
     def __init__(self, *args, tx: Coin.Tx, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            *args,
+            name_key_tuple=CoinUtils.txToNameKeyTuple(tx),
+            **kwargs)
         self._tx = tx
 
     @property
@@ -25,6 +29,7 @@ class _Model(CoinObjectModel):
 
     def afterSetHeight(self) -> None: pass
     def afterSetTime(self) -> None: pass
+
 
 class _Tx(CoinObject):
     _TABLE_TYPE = TxListTable

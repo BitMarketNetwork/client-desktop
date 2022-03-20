@@ -22,7 +22,10 @@ class _Model(CoinObjectModel):
             *args,
             factory: Coin.TxFactory,
             **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            *args,
+            name_key_tuple=CoinUtils.txFactoryToNameKeyTuple(factory),
+            **kwargs)
         self._factory = factory
 
     @property
