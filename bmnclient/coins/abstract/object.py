@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 from ...database.tables import ColumnValue
 from ...logger import Logger
@@ -8,7 +8,7 @@ from ...utils import Serializable, SerializeFlag
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, Final, Optional, Tuple, Type
+    from typing import Any, Dict, Final, Optional, Tuple, Type
     from .coin import Coin
     from ...database import Database
     from ...database.tables import AbstractTable
@@ -108,5 +108,4 @@ class CoinObject(Serializable):
         return True
 
 
-if TYPE_CHECKING:
-    CoinModelFactory = Callable[[CoinObject], CoinObjectModel]
+CoinModelFactory = Callable[[CoinObject], CoinObjectModel]

@@ -23,12 +23,8 @@ class _Model(CoinObjectModel):
     def owner(self) -> Coin.Tx:
         return self._tx
 
-    def afterSetHeight(self) -> None:
-        raise NotImplementedError
-
-    def afterSetTime(self) -> None:
-        raise NotImplementedError
-
+    def afterSetHeight(self) -> None: pass
+    def afterSetTime(self) -> None: pass
 
 class _Tx(CoinObject):
     _TABLE_TYPE = TxListTable
@@ -50,13 +46,13 @@ class _Tx(CoinObject):
 
     def __new__(cls, coin: Coin, *args, **kwargs) -> _Tx:
         if not kwargs.get("name"):
-            return super(_Tx, cls).__new__(cls)
+            return super().__new__(cls)
 
         heap = coin.weakValueDictionary("tx_heap")
         name = kwargs["name"].lower()
         tx = heap.get(name)
         if tx is None:
-            tx = super(_Tx, cls).__new__(cls)
+            tx = super().__new__(cls)
         heap[name] = tx
         return tx
 

@@ -38,30 +38,9 @@ class CoinModel(_AbstractModel, Coin.Model):
     def afterSetEnabled(self) -> None:
         self._save()
 
-    def afterSetHeight(self) -> None:
-        pass
-
     def afterSetOffset(self) -> None:
         for address in self._coin.addressList:
             self._query_scheduler.updateCoinAddress(address)
-
-    def afterSetStatus(self) -> None:
-        pass
-
-    def afterSetFiatRate(self) -> None:
-        pass
-
-    def beforeUpdateBalance(self, value: int) -> None:
-        pass
-
-    def afterUpdateBalance(self, value: int) -> None:
-        pass
-
-    def afterUpdateUtxoList(self) -> None:
-        pass
-
-    def beforeAppendAddress(self, address: Coin.Address) -> None:
-        pass
 
     def afterAppendAddress(self, address: Coin.Address) -> None:
         if address.rowId <= 0:
@@ -71,9 +50,6 @@ class CoinModel(_AbstractModel, Coin.Model):
             except self._database.TransactionInEffectError:
                 pass
         self._query_scheduler.updateCoinAddress(address)
-
-    def afterSetServerData(self) -> None:
-        pass
 
     def afterStateChanged(self) -> None:
         self._save()
@@ -96,23 +72,14 @@ class AddressModel(_AbstractModel, Coin.Address.Model):
         except self._database.TransactionInEffectError:
             pass
 
-    def afterSetBalance(self) -> None:
-        self._save()
-
     def afterSetLabel(self) -> None:
         self._save()
 
     def afterSetComment(self) -> None:
         self._save()
 
-    def afterSetIsTxInput(self) -> None:
-        pass
-
     def afterSetTxCount(self) -> None:
         self._save()
-
-    def beforeAppendTx(self, tx: Coin.Tx) -> None:
-        pass
 
     def afterAppendTx(self, tx: Coin.Tx) -> None:
         if tx.rowId <= 0:
@@ -124,9 +91,6 @@ class AddressModel(_AbstractModel, Coin.Address.Model):
                         tx)
             except self._database.TransactionInEffectError:
                 pass
-
-    def afterSetUtxoList(self) -> None:
-        pass
 
     def afterSetHistoryFirstOffset(self) -> None:
         self._save()

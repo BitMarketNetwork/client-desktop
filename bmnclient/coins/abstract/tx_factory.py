@@ -29,17 +29,10 @@ class _Model(CoinObjectModel):
     def owner(self) -> Coin.TxFactory:
         return self._factory
 
-    def afterUpdateState(self) -> None:
-        raise NotImplementedError
-
-    def afterSetInputAddress(self) -> None:
-        raise NotImplementedError
-
-    def afterSetReceiverAddress(self) -> None:
-        raise NotImplementedError
-
-    def onBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None:
-        raise NotImplementedError
+    def afterUpdateState(self) -> None: pass
+    def afterSetInputAddress(self) -> None: pass
+    def afterSetReceiverAddress(self) -> None: pass
+    def onBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None: pass
 
 
 class _TxFactory(CoinObject):

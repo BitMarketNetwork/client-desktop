@@ -123,35 +123,16 @@ class _Model(CoinObjectModel):
     def owner(self) -> Coin.Address:
         return self._address
 
-    def afterSetBalance(self) -> None:
-        raise NotImplementedError
-
-    def afterSetLabel(self) -> None:
-        raise NotImplementedError
-
-    def afterSetComment(self) -> None:
-        raise NotImplementedError
-
-    def afterSetIsTxInput(self) -> None:
-        raise NotImplementedError
-
-    def afterSetTxCount(self) -> None:
-        raise NotImplementedError
-
-    def beforeAppendTx(self, tx: Coin.Tx) -> None:
-        raise NotImplementedError
-
-    def afterAppendTx(self, tx: Coin.Tx) -> None:
-        raise NotImplementedError
-
-    def afterSetUtxoList(self) -> None:
-        raise NotImplementedError
-
-    def afterSetHistoryFirstOffset(self) -> None:
-        raise NotImplementedError
-
-    def afterSetHistoryLastOffset(self) -> None:
-        raise NotImplementedError
+    def afterSetBalance(self) -> None: pass
+    def afterSetLabel(self) -> None: pass
+    def afterSetComment(self) -> None: pass
+    def afterSetIsTxInput(self) -> None: pass
+    def afterSetTxCount(self) -> None: pass
+    def beforeAppendTx(self, tx: Coin.Tx) -> None: pass
+    def afterAppendTx(self, tx: Coin.Tx) -> None: pass
+    def afterSetUtxoList(self) -> None: pass
+    def afterSetHistoryFirstOffset(self) -> None: pass
+    def afterSetHistoryLastOffset(self) -> None: pass
 
 
 class _Address(CoinObject):
@@ -180,12 +161,12 @@ class _Address(CoinObject):
     def __new__(cls, coin: Coin, *args, **kwargs) -> _Address:
         # noinspection PyUnresolvedReferences
         if kwargs.get("type_") == cls.Type.UNKNOWN or not kwargs.get("name"):
-            return super(_Address, cls).__new__(cls)
+            return super().__new__(cls)
 
         heap = coin.weakValueDictionary("address_heap")
         address = heap.get(kwargs["name"])
         if address is None:
-            address = super(_Address, cls).__new__(cls)
+            address = super().__new__(cls)
         heap[kwargs["name"]] = address
         return address
 

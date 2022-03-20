@@ -34,41 +34,18 @@ class _Model(CoinObjectModel):
     def owner(self) -> Coin:
         return self._coin
 
-    def afterSetEnabled(self) -> None:
-        raise NotImplementedError
-
-    def afterSetHeight(self) -> None:
-        raise NotImplementedError
-
-    def afterSetOffset(self) -> None:
-        raise NotImplementedError
-
-    def afterSetStatus(self) -> None:
-        raise NotImplementedError
-
-    def afterSetFiatRate(self) -> None:
-        raise NotImplementedError
-
-    def beforeUpdateBalance(self, value: int) -> None:
-        raise NotImplementedError
-
-    def afterUpdateBalance(self, value: int) -> None:
-        raise NotImplementedError
-
-    def afterUpdateUtxoList(self) -> None:
-        raise NotImplementedError
-
-    def beforeAppendAddress(self, address: Coin.Address) -> None:
-        raise NotImplementedError
-
-    def afterAppendAddress(self, address: Coin.Address) -> None:
-        raise NotImplementedError
-
-    def afterSetServerData(self) -> None:
-        raise NotImplementedError
-
-    def afterStateChanged(self) -> None:
-        raise NotImplementedError
+    def afterSetEnabled(self) -> None: pass
+    def afterSetHeight(self) -> None: pass
+    def afterSetOffset(self) -> None: pass
+    def afterSetStatus(self) -> None: pass
+    def afterSetFiatRate(self) -> None: pass
+    def beforeUpdateBalance(self, value: int) -> None: pass
+    def afterUpdateBalance(self, value: int) -> None: pass
+    def afterUpdateUtxoList(self) -> None: pass
+    def beforeAppendAddress(self, address: Coin.Address) -> None: pass
+    def afterAppendAddress(self, address: Coin.Address) -> None: pass
+    def afterSetServerData(self) -> None: pass
+    def afterStateChanged(self) -> None: pass
 
 
 class Coin(CoinObject):
@@ -112,7 +89,7 @@ class Coin(CoinObject):
             self,
             *,
             row_id: int = -1,
-            model_factory: Optional[CoinModelFactory] = None) -> None:
+            model_factory: CoinModelFactory) -> None:
         super().__init__(self, row_id=row_id)
 
         self._model_factory: Final = model_factory
@@ -193,8 +170,8 @@ class Coin(CoinObject):
         self.__state_hash = (old_value + 1) & ((1 << 64) - 1)
         return old_value
 
-    def modelFactory(self, owner: CoinObject) -> Optional[CoinObjectModel]:
-        return self._model_factory(owner) if self._model_factory else None
+    def modelFactory(self, owner: CoinObject) -> CoinObjectModel:
+        return self._model_factory(owner)
 
     @serializable
     @property
