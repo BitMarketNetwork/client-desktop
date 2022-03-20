@@ -159,7 +159,7 @@ class CoreApplication(QObject):
             *,
             qt_class: Union[Type[QCoreApplication], Type[QApplication]],
             command_line: CommandLine,
-            model_factory: Optional[CoinModelFactory] = None) -> None:
+            model_factory: CoinModelFactory) -> None:
         super().__init__()
 
         self._command_line = command_line
@@ -251,9 +251,7 @@ class CoreApplication(QObject):
             self,
             self._network_query_manager)
 
-    def _init_coins(
-            self,
-            model_factory: Optional[CoinModelFactory] = None) -> None:
+    def _init_coins(self, model_factory: CoinModelFactory) -> None:
         self._fiat_currency_list = FiatCurrencyList(self)
         self._fiat_rate_service_list = FiatRateServiceList(self)
         self._blockchain_explorer_list = BlockchainExplorerList(self)

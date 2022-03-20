@@ -11,7 +11,7 @@ from ....coins.abstract import Coin
 from ....utils import NotImplementedInstance
 
 if TYPE_CHECKING:
-    from typing import Optional, Union
+    from typing import Optional
     from .. import QmlApplication
     from ....coins.abstract import CoinObject, CoinObjectModel
 

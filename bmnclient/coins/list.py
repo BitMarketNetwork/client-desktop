@@ -12,10 +12,7 @@ if TYPE_CHECKING:
 
 
 class CoinList(StaticList):
-    def __init__(
-            self,
-            *,
-            model_factory: Optional[CoinModelFactory] = None) -> None:
+    def __init__(self, *, model_factory: CoinModelFactory) -> None:
         super().__init__(
             (
                 Bitcoin(model_factory=model_factory),
