@@ -364,7 +364,7 @@ class TestDatabase(TestCase):
         self.assertTrue(db.open())
 
         # generate
-        coin_list = CoinList()
+        coin_list = CoinList(model_factory=self._application.modelFactory)
         with db.transaction(suppress_exceptions=False) as c:
             self._fill_db(db, c, coin_list)
 

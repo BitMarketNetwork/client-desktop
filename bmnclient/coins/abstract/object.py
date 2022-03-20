@@ -108,4 +108,5 @@ class CoinObject(Serializable):
         return True
 
 
+# TODO deprecated, create class AbstractModelFactory
 CoinModelFactory = Callable[[CoinObject], CoinObjectModel]

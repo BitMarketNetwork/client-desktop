@@ -107,15 +107,6 @@ class TxIoModel(_AbstractModel, Coin.Tx.Io.Model):
 
 
 class TxFactoryModel(_AbstractModel, Coin.TxFactory.Model):
-    def afterUpdateState(self) -> None:
-        pass
-
-    def afterSetInputAddress(self) -> None:
-        pass
-
-    def afterSetReceiverAddress(self) -> None:
-        pass
-
     def onBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None:
         self._query_scheduler.broadcastTx(mtx, self.onBroadcastFinished)
 

@@ -15,6 +15,7 @@ from bmnclient.debug import Debug
 from bmnclient.os_environment import Platform
 from bmnclient.utils.class_property import classproperty
 from bmnclient.version import Product, Timer
+from .coin_models import ModelsFactory
 
 if TYPE_CHECKING:
     from typing import Final, Optional
@@ -50,7 +51,7 @@ class TestApplication(CoreApplication):
         super().__init__(
             qt_class=QApplication,
             command_line=CommandLine(command_line),
-            model_factory=None)
+            model_factory=lambda o: ModelsFactory.create(self, o))
 
     def showMessage(
             self,

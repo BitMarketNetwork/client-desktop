@@ -37,7 +37,7 @@ from .signal_handler import SignalHandler
 from .version import Product, ProductPaths, Server, Timer
 
 if TYPE_CHECKING:
-    from typing import List, Optional, Type, Union
+    from typing import Final, List, Optional, Type, Union
     from PySide6.QtCore import QCoreApplication
     from .coins.abstract import CoinModelFactory
     from .coins.hd import HdNode
@@ -162,8 +162,9 @@ class CoreApplication(QObject):
             model_factory: CoinModelFactory) -> None:
         super().__init__()
 
-        self._command_line = command_line
-        self._logger = Logger.classLogger(self.__class__)
+        self._command_line: Final = command_line
+        self._model_factory: Final = model_factory
+        self._logger: Final = Logger.classLogger(self.__class__)
         self._title = "{} {}".format(Product.NAME, Product.VERSION_STRING)
         self._icon = QIcon(Resources.iconFilePath)
         self._language: Optional[Language] = None
@@ -228,7 +229,7 @@ class CoreApplication(QObject):
 
         self._init_database()
         self._init_network()
-        self._init_coins(model_factory)
+        self._init_coins(self._model_factory)
 
     def _init_database(self) -> None:
         self._database = Database(
@@ -289,6 +290,10 @@ class CoreApplication(QObject):
         elif not self._on_exit_called:
             self._exit_code = code
             self._onExit()
+
+    @property
+    def modelFactory(self) -> CoinModelFactory:
+        return self._model_factory
 
     @property
     def tempPath(self) -> Path:
