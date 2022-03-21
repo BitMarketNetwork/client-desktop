@@ -300,16 +300,10 @@ class CoinModel(_CoinModel, AbstractModel):
         self._state_model.update()
         super().afterSetHeight()
 
-    def afterSetStatus(self) -> None:
-        super().afterSetStatus()
-
     def afterSetFiatRate(self) -> None:
         self._balance_model.update()
         self._coin.txFactory.model.update()
         super().afterSetFiatRate()
-
-    def beforeUpdateBalance(self, value: int) -> None:
-        super().beforeUpdateBalance(value)
 
     def afterUpdateBalance(self, value: int) -> None:
         self._balance_model.update()

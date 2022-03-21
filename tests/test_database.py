@@ -135,61 +135,56 @@ class TestDatabase(TestCaseApplication):
         db = self._create(Path("insert_or_update.db"))
         self.assertTrue(db.open())
 
-        keys = [ColumnValue(MetadataTable.ColumnEnum.KEY, "key1"),]
+        keys = [ColumnValue(MetadataTable.ColumnEnum.KEY, "key1")]
         data = (ColumnValue(MetadataTable.ColumnEnum.VALUE, "value1"), )
 
         # noinspection PyProtectedMember
         logger = db._logger
-        with db.transaction(suppress_exceptions=False) as c:
-            logger.debug("-" * 80)
+        logger.debug("-" * 80)
 
-            # INSERT: new row
-            row_id_1 = db[MetadataTable].save(-1, keys, data)
-            self.assertTrue(row_id_1 > 0)
+        # INSERT: new row
+        row_id_1 = db[MetadataTable].save(-1, keys, data)
+        self.assertTrue(row_id_1 > 0)
 
-            logger.debug("-" * 80)
+        logger.debug("-" * 80)
 
-            # INSERT + SELECT + UPDATE: row exists, only the key value is known,
-            row_id_2 = db[MetadataTable].save(-1, keys, data)
-            self.assertEqual(row_id_1, row_id_2)
+        # INSERT + SELECT + UPDATE: row exists, only the key value is known,
+        row_id_2 = db[MetadataTable].save(-1, keys, data)
+        self.assertEqual(row_id_1, row_id_2)
 
-            logger.debug("-" * 80)
+        logger.debug("-" * 80)
 
-            # UPDATE: row exists, row_id is known
-            row_id_2 = db[MetadataTable].save(row_id_2, keys, data)
-            self.assertEqual(row_id_1, row_id_2)
+        # UPDATE: row exists, row_id is known
+        row_id_2 = db[MetadataTable].save(row_id_2, keys, data)
+        self.assertEqual(row_id_1, row_id_2)
 
-            logger.debug("-" * 80)
+        logger.debug("-" * 80)
 
-            # UPDATE + INSERT: invalid row_id
-            keys = [ColumnValue(MetadataTable.ColumnEnum.KEY, "key2")]
-            row_id_3 = db[MetadataTable].save(row_id_2 * 10000, keys, data)
-            self.assertNotEqual(row_id_3, row_id_2 * 10000)
-            self.assertLess(row_id_2, row_id_3)
+        # UPDATE + INSERT: invalid row_id
+        keys = [ColumnValue(MetadataTable.ColumnEnum.KEY, "key2")]
+        row_id_3 = db[MetadataTable].save(row_id_2 * 10000, keys, data)
+        self.assertNotEqual(row_id_3, row_id_2 * 10000)
+        self.assertLess(row_id_2, row_id_3)
 
-            logger.debug("-" * 80)
+        logger.debug("-" * 80)
 
-            # UPDATE + INSERT + UPDATE: duplicated key and invalid row_id
-            self.assertRaises(
-                Database.SaveError,
-                db[MetadataTable].save,
-                row_id_3 * 10000,
-                keys,
-                data)
+        # UPDATE + INSERT + UPDATE: duplicated key and invalid row_id
+        self.assertRaises(
+            Database.SaveError,
+            db[MetadataTable].save,
+            row_id_3 * 10000,
+            keys,
+            data)
 
-            logger.debug("-" * 80)
+        logger.debug("-" * 80)
 
-            # UPDATE: OK
-            row_id_2 = db[MetadataTable].save(row_id_2, keys, data)
-            self.assertEqual(row_id_1, row_id_2)
+        # UPDATE: OK
+        row_id_2 = db[MetadataTable].save(row_id_2, keys, data)
+        self.assertEqual(row_id_1, row_id_2)
 
-            logger.debug("-" * 80)
+        logger.debug("-" * 80)
 
-    def _fill_db(
-            self,
-            db: Database,
-            cursor: Cursor,
-            coin_list: CoinList) -> None:
+    def _fill_db(self, db: Database, coin_list: CoinList) -> None:
         for coin in coin_list:
             fillCoin(self, coin, address_count=10, tx_count=10)
             db[CoinListTable].serialize(cursor, coin)

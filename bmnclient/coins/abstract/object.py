@@ -27,7 +27,7 @@ class CoinObjectModel:
         self._database = database
 
     @property
-    def database(self) -> Optional[Database]:
+    def database(self) -> Database:
         return self._database
 
     @property

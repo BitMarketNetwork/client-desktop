@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from .table import AbstractTable, ColumnEnum, ColumnValue, RowListProxy
 from ...utils import DeserializeFlag
 from ...utils.class_property import classproperty
+from ...coins.hd import HdNode
 
 if TYPE_CHECKING:
     from typing import Final

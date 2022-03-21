@@ -73,7 +73,7 @@ class Database:
         def query(self) -> Optional[str]:
             return self._query
 
-    class InsertOrUpdateError(Error):
+    class SaveError(Error):
         pass
 
     class TransactionError(Error):
@@ -86,10 +86,7 @@ class Database:
                 query: Optional[str] = None):
             super().__init__(value, query)
 
-    def __init__(
-            self,
-            application: CoreApplication,
-            file_path: Path) -> None:
+    def __init__(self, application: CoreApplication, file_path: Path) -> None:
         self._application = application
         self._file_path = file_path
 

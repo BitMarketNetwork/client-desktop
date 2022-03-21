@@ -148,9 +148,6 @@ class AddressModel(_AddressModel, AbstractModel):
         self._state_model.update()
         super().afterSetIsTxInput()
 
-    def afterSetTxCount(self) -> None:
-        super().afterSetTxCount()
-
     def beforeAppendTx(self, tx: Coin.Tx) -> None:
         self._tx_list_model.lock(self._tx_list_model.lockInsertRows())
         super().beforeAppendTx(tx)
