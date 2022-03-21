@@ -67,13 +67,7 @@ class CoinObject(Serializable):
     def _callModel(self, callback_name: str, *args, **kwargs) -> None:
         getattr(self.model, callback_name)(*args, **kwargs)
 
-    def _updateValue(
-            self,
-            action: str,
-            name: str,
-            new_value: Any,
-            update_callback: Callable[[object, str, Any], None] = setattr
-    ) -> bool:
+    def _updateValue(self, action: str, name: str, new_value: Any) -> bool:
         private_name = "_" + name
         old_value = getattr(self, private_name)
         if old_value == new_value:
@@ -91,7 +85,7 @@ class CoinObject(Serializable):
             self.__value_events[events_name] = events
 
         events[0](new_value)
-        update_callback(self, private_name, new_value)
+        setattr(self, private_name, new_value)
 
         if (
                 self.rowId > 0
@@ -102,7 +96,14 @@ class CoinObject(Serializable):
             if column:
                 self.model.database[self._TABLE_TYPE].update(
                     self.rowId,
-                    [ColumnValue(column, new_value)])
+                    [ColumnValue(
+                        column,
+                        self._serializeProperty(
+                            SerializeFlag.DATABASE_MODE
+                            | SerializeFlag.EXCLUDE_SUBCLASSES,
+                            name,
+                            new_value)
+                    )])
 
         events[1](new_value)
         return True
