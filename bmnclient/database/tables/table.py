@@ -163,6 +163,20 @@ class AbstractTable(metaclass=TableMeta):
     def rowListProxy(self, *args, **kwargs) -> RowListProxy:
         raise NotImplementedError
 
+    def insert(self, columns: Sequence[ColumnValue]) -> int:
+        with self._database.transaction(allow_in_transaction=True) as c:
+            c.execute(
+                f"INSERT OR IGNORE INTO {self} ("
+                f"{Column.join(c.column for c in columns)})"
+                f" VALUES ("
+                f"{ColumnValue.join(len(columns))})",
+                [c.value for c in columns])
+            if c.rowcount > 0:
+                assert c.rowcount == 1
+                assert c.lastrowid > 0
+                return c.lastrowid
+        return -1
+
     def update(self, row_id: int, columns: Sequence[ColumnValue]) -> bool:
         assert row_id > 0
         with self._database.transaction(allow_in_transaction=True) as c:
@@ -176,75 +190,52 @@ class AbstractTable(metaclass=TableMeta):
                 return True
         return False
 
-    def _insertOrUpdate(
+    def save(
             self,
-            cursor: Cursor,
+            row_id: int,
             key_columns: Sequence[ColumnValue],
-            data_columns: Sequence[ColumnValue],
-            *,
-            row_id: int = -1,
-            row_id_required: bool = True) -> int:
-        def columnsString(columns) -> str:
-            return " and ".join(
-                f"'{c.column}' == '{str(c.value)}'" for c in columns
-            )
+            data_columns: Sequence[ColumnValue]) -> int:
+        with self._database.transaction(allow_in_transaction=True) as c:
+            # row id is defined and row found
+            if row_id > 0 and self.update(row_id, data_columns):
+                return row_id
 
-        if row_id > 0 and self.update(row_id, data_columns):
-            return row_id
+            # row id not defined or row id not found (deleted row)
+            new_row_id = self.insert([*chain(key_columns, data_columns)])
+            if new_row_id > 0:
+                return new_row_id
 
-        insert_columns = Column.join(
-            c.column for c in chain(key_columns, data_columns))
-        cursor.execute(
-            f"INSERT OR IGNORE INTO {self}"
-            f" ({insert_columns})"
-            f" VALUES ("
-            f"{ColumnValue.join(len(key_columns) + len(data_columns))})",
-            [c.value for c in chain(key_columns, data_columns)])
-        del insert_columns
+            # row with UNIQUE columns already exists
 
-        if cursor.rowcount > 0:
-            assert cursor.rowcount == 1
-            assert cursor.lastrowid > 0
-            return cursor.lastrowid
-
-        if row_id_required:
+            # row not defined
             if row_id <= 0:
-                query = (
+                c.execute(
                     f"SELECT {self.ColumnEnum.ROW_ID}"
                     f" FROM {self}"
                     f" WHERE {Column.joinWhere(c.column for c in key_columns)}"
-                    f" LIMIT 1"
-                )
-                for r in cursor.execute(query, [c.value for c in key_columns]):
-                    row_id = int(r[0])
-                    break
-                if row_id <= 0:
-                    raise self._database.InsertOrUpdateError(
-                        "row not found where: {}"
-                        .format(columnsString(key_columns)),
-                        query)
-        if row_id > 0:
-            key_columns = [ColumnValue(self.ColumnEnum.ROW_ID, row_id)]
+                    f" LIMIT 1",
+                    [c.value for c in key_columns])
+                value = c.fetchone()
+                if value is None or value[0] <= 0:
+                    row_id = -1
+                else:
+                    row_id = value[0]
 
-        query = (
-            f"UPDATE {self}"
-            f" SET {Column.joinSet(c.column for c in data_columns)}"
-            f" WHERE {Column.joinWhere(c.column for c in key_columns)}"
-        )
-        cursor.execute(
-            query,
-            [c.value for c in chain(data_columns, key_columns)])
-        if cursor.rowcount <= 0:
-            raise self._database.InsertOrUpdateError(
-                "row not found where: {}"
-                .format(columnsString(key_columns)),
-                query)
+            # row id is defined and row found
+            if row_id > 0 and self.update(row_id, data_columns):
+                return row_id
 
-        return row_id
+            raise self._database.SaveError(
+                "row in table '{}' not found where: {}"
+                .format(
+                    self,
+                    " and ".join(
+                        f"{c.column} == '{str(c.value)}'"
+                        for c in key_columns
+                    )))
 
     def _serialize(
             self,
-            cursor: Cursor,
             source: Serializable,
             key_columns: Sequence[ColumnValue],
             custom_columns: Optional[Sequence[ColumnValue]] = None) -> None:

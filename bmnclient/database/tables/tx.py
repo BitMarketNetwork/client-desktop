@@ -147,7 +147,6 @@ class TxListTable(AbstractTable, name="transactions"):
         assert tx.coin.rowId > 0
 
         self._serialize(
-            cursor,
             tx,
             [
                 ColumnValue(self.ColumnEnum.COIN_ROW_ID, tx.coin.rowId),

@@ -107,7 +107,6 @@ class TxIoListTable(AbstractTable, name="transactions_io"):
         assert tx.rowId > 0
 
         self._serialize(
-            cursor,
             io,
             [
                 ColumnValue(self.ColumnEnum.TX_ROW_ID, tx.rowId),

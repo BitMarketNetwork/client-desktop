@@ -119,7 +119,6 @@ class TestCaseApplication(TestCase):
             self._key_store_password))
         self.assertTrue(self._application.keyStore.open(
             self._key_store_password))
-        print("KKK1")
 
     def tearDown(self) -> None:
         self._application.setExitEvent()

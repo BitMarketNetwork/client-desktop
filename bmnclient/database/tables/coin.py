@@ -62,8 +62,5 @@ class CoinListTable(AbstractTable, name="coins"):
             return True
 
     def serialize(self, cursor: Cursor, coin: Coin) -> None:
-        self._serialize(
-            cursor,
-            coin,
-            [ColumnValue(self.ColumnEnum.NAME, coin.name)])
+        self._serialize(coin, [ColumnValue(self.ColumnEnum.NAME, coin.name)])
         assert coin.rowId > 0

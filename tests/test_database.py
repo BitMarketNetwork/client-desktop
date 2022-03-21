@@ -131,137 +131,59 @@ class TestDatabase(TestCaseApplication):
         self.assertTrue(db.close())
         self.assertFalse(db.open())
 
-    def test_insert_or_update(self) -> None:
+    def test_save(self) -> None:
         db = self._create(Path("insert_or_update.db"))
         self.assertTrue(db.open())
 
-        keys = [
-            ColumnValue(MetadataTable.ColumnEnum.KEY, "key1"),
-        ]
-        data = (
-            ColumnValue(MetadataTable.ColumnEnum.VALUE, "value1"),
-        )
+        keys = [ColumnValue(MetadataTable.ColumnEnum.KEY, "key1"),]
+        data = (ColumnValue(MetadataTable.ColumnEnum.VALUE, "value1"), )
 
+        # noinspection PyProtectedMember
+        logger = db._logger
         with db.transaction(suppress_exceptions=False) as c:
-            # noinspection PyProtectedMember
-            db._logger.debug("-" * 80)
+            logger.debug("-" * 80)
 
             # INSERT: new row
-            # noinspection PyProtectedMember
-            row_id_1 = db[MetadataTable]._insertOrUpdate(
-                c,
-                keys,
-                data,
-                row_id=-1,
-                row_id_required=False
-            )
+            row_id_1 = db[MetadataTable].save(-1, keys, data)
             self.assertTrue(row_id_1 > 0)
 
-            # noinspection PyProtectedMember
-            db._logger.debug("-" * 80)
-
-            # INSERT + UPDATE: row exists, only the key value is known
-            # noinspection PyProtectedMember
-            row_id_2 = db[MetadataTable]._insertOrUpdate(
-                c,
-                keys,
-                data,
-                row_id=-1,
-                row_id_required=False
-            )
-            self.assertEqual(-1, row_id_2)
-
-            # noinspection PyProtectedMember
-            db._logger.debug("-" * 80)
+            logger.debug("-" * 80)
 
             # INSERT + SELECT + UPDATE: row exists, only the key value is known,
-            # row_id_required is True
-            # noinspection PyProtectedMember
-            row_id_3 = db[MetadataTable]._insertOrUpdate(
-                c,
-                keys,
-                data,
-                row_id=-1,
-                row_id_required=True
-            )
-            self.assertEqual(row_id_1, row_id_3)
+            row_id_2 = db[MetadataTable].save(-1, keys, data)
+            self.assertEqual(row_id_1, row_id_2)
 
-            # noinspection PyProtectedMember
-            db._logger.debug("-" * 80)
+            logger.debug("-" * 80)
 
             # UPDATE: row exists, row_id is known
-            # noinspection PyProtectedMember
-            row_id_3 = db[MetadataTable]._insertOrUpdate(
-                c,
-                keys,
-                data,
-                row_id=row_id_3,
-                row_id_required=False
-            )
-            self.assertEqual(row_id_1, row_id_3)
+            row_id_2 = db[MetadataTable].save(row_id_2, keys, data)
+            self.assertEqual(row_id_1, row_id_2)
 
-            # noinspection PyProtectedMember
-            db._logger.debug("-" * 80)
-
-            # UPDATE: row exists, row_id is known, row_id_required doesn't
-            # matter
-            # noinspection PyProtectedMember
-            row_id_3 = db[MetadataTable]._insertOrUpdate(
-                c,
-                keys,
-                data,
-                row_id=row_id_3,
-                row_id_required=True
-            )
-            self.assertEqual(row_id_1, row_id_3)
-
-            # noinspection PyProtectedMember
-            db._logger.debug("-" * 80)
+            logger.debug("-" * 80)
 
             # UPDATE + INSERT: invalid row_id
             keys = [ColumnValue(MetadataTable.ColumnEnum.KEY, "key2")]
-            # noinspection PyProtectedMember
-            row_id_4 = db[MetadataTable]._insertOrUpdate(
-                c,
-                keys,
-                data,
-                row_id=row_id_3 * 10000,
-                row_id_required=True
-            )
-            self.assertNotEqual(row_id_4, row_id_3 * 10000)
-            self.assertLess(row_id_3, row_id_4)
+            row_id_3 = db[MetadataTable].save(row_id_2 * 10000, keys, data)
+            self.assertNotEqual(row_id_3, row_id_2 * 10000)
+            self.assertLess(row_id_2, row_id_3)
 
-            # noinspection PyProtectedMember
-            db._logger.debug("-" * 80)
+            logger.debug("-" * 80)
 
             # UPDATE + INSERT + UPDATE: duplicated key and invalid row_id
-            # noinspection PyProtectedMember
             self.assertRaises(
-                Database.engine.OperationalError,
-                db[MetadataTable]._insertOrUpdate,
-                c,
+                Database.SaveError,
+                db[MetadataTable].save,
+                row_id_3 * 10000,
                 keys,
-                data,
-                row_id=row_id_4 * 10000,
-                row_id_required=True
-            )
+                data)
 
-            # noinspection PyProtectedMember
-            db._logger.debug("-" * 80)
+            logger.debug("-" * 80)
 
             # UPDATE: OK
-            # noinspection PyProtectedMember
-            row_id_3 = db[MetadataTable]._insertOrUpdate(
-                c,
-                keys,
-                data,
-                row_id=row_id_3,
-                row_id_required=True
-            )
-            self.assertEqual(row_id_1, row_id_3)
+            row_id_2 = db[MetadataTable].save(row_id_2, keys, data)
+            self.assertEqual(row_id_1, row_id_2)
 
-            # noinspection PyProtectedMember
-            db._logger.debug("-" * 80)
+            logger.debug("-" * 80)
 
     def _fill_db(
             self,

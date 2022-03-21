@@ -103,7 +103,6 @@ class AddressListTable(AbstractTable, name="addresses"):
         assert not address.isNullData
 
         self._serialize(
-            cursor,
             address,
             [
                 ColumnValue(self.ColumnEnum.COIN_ROW_ID, address.coin.rowId),
