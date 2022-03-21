@@ -17,9 +17,10 @@ from .tx import TxListConcatenateModel, TxListSortedModel
 from ....coin_models import CoinModel as _CoinModel
 
 if TYPE_CHECKING:
-    from typing import Final, Optional
+    from typing import Any, Dict, Final, Optional
     from .. import QmlApplication
     from ....coins.abstract import Coin
+    from ....currency import FiatRate
 
 
 class CoinStateModel(AbstractCoinStateModel):
@@ -292,26 +293,26 @@ class CoinModel(_CoinModel, AbstractModel):
     def manager(self) -> CoinManagerModel:
         return self._manager
 
-    def afterSetEnabled(self) -> None:
+    def afterSetIsEnabled(self, value: bool) -> None:
         self._state_model.update()
-        super().afterSetEnabled()
+        super().afterSetIsEnabled(value)
 
-    def afterSetHeight(self) -> None:
+    def afterSetHeight(self, value: int) -> None:
         self._state_model.update()
-        super().afterSetHeight()
+        super().afterSetHeight(value)
 
-    def afterSetFiatRate(self) -> None:
+    def afterSetFiatRate(self, value: FiatRate) -> None:
         self._balance_model.update()
         self._coin.txFactory.model.update()
-        super().afterSetFiatRate()
+        super().afterSetFiatRate(value)
 
     def afterUpdateBalance(self, value: int) -> None:
         self._balance_model.update()
         super().afterUpdateBalance(value)
 
-    def afterUpdateUtxoList(self) -> None:
+    def afterUpdateUtxoList(self, value: None) -> None:
         self._coin.txFactory.model.update()
-        super().afterUpdateUtxoList()
+        super().afterUpdateUtxoList(value)
 
     def beforeAppendAddress(self, address: Coin.Address) -> None:
         self._address_list_model.lock(self._address_list_model.lockInsertRows())
@@ -323,9 +324,9 @@ class CoinModel(_CoinModel, AbstractModel):
         self._tx_list_model.addSourceModel(address.model.txList)
         super().afterAppendAddress(address)
 
-    def afterSetServerData(self) -> None:
+    def afterSetServerData(self, value: Dict[str, Any]) -> None:
         self._server_data_model.update()
-        super().afterSetServerData()
+        super().afterSetServerData(value)
 
 
 class CoinListModel(AbstractListModel):

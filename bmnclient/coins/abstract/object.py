@@ -75,11 +75,22 @@ class CoinObject(Serializable):
     def _callModel(self, callback_name: str, *args, **kwargs) -> None:
         getattr(self.model, callback_name)(*args, **kwargs)
 
-    def _updateValue(self, action: str, name: str, new_value: Any) -> bool:
+    def _updateValue(
+            self,
+            action: str,
+            name: str,
+            new_value: Any,
+            *,
+            force: bool = False,
+            getattr_function: Callable[[object, str], Any] = getattr,
+            setattr_function: Callable[[object, str, Any], None] = setattr
+    ) -> bool:
         private_name = "_" + name
-        old_value = getattr(self, private_name)
-        if old_value == new_value:
-            return False
+
+        if not force:
+            old_value = getattr_function(self, private_name)
+            if old_value == new_value:
+                return False
 
         events_name = name + "[" + action + "]"
         events = self.__value_events.get(events_name, None)
@@ -93,7 +104,7 @@ class CoinObject(Serializable):
             self.__value_events[events_name] = events
 
         events[0](new_value)
-        setattr(self, private_name, new_value)
+        setattr_function(self, private_name, new_value)
 
         if (
                 self.rowId > 0

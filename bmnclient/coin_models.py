@@ -20,19 +20,10 @@ class _AbstractModel:
 
 
 class CoinModel(_AbstractModel, Coin.Model):
-    def _save(self) -> None:
-        try:
-            with self._database.transaction() as cursor:
-                self._database[CoinListTable].serialize(cursor, self._coin)
-        except self._database.TransactionInEffectError:
-            pass
-
-    def afterSetEnabled(self) -> None:
-        self._save()
-
-    def afterSetOffset(self) -> None:
+    def afterSetOffset(self, value: str) -> None:
         for address in self._coin.addressList:
             self._query_scheduler.updateCoinAddress(address)
+        super(_AbstractModel, self).afterSetOffset(value)
 
     def afterAppendAddress(self, address: Coin.Address) -> None:
         if address.rowId <= 0:
@@ -42,9 +33,6 @@ class CoinModel(_AbstractModel, Coin.Model):
             except self._database.TransactionInEffectError:
                 pass
         self._query_scheduler.updateCoinAddress(address)
-
-    def afterStateChanged(self) -> None:
-        self._save()
 
 
 class AddressModel(_AbstractModel, Coin.Address.Model):
