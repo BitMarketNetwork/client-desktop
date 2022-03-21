@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest import TestCase
 
 from bmnclient.coins.list import CoinList
 from bmnclient.database import Cursor, Database
@@ -14,7 +13,7 @@ from bmnclient.database.tables import (
     MetadataTable,
     TxIoListTable,
     TxListTable)
-from tests.helpers import TestApplication
+from tests.helpers import TestCaseApplication
 from tests.test_coins import fillCoin
 
 if TYPE_CHECKING:
@@ -22,15 +21,7 @@ if TYPE_CHECKING:
     from bmnclient.coins.abstract import Coin
 
 
-class TestDatabase(TestCase):
-    def setUp(self) -> None:
-        self._application = TestApplication()
-        self.assertTrue(self._application.keyStore.create("123456"))
-        self.assertTrue(self._application.keyStore.open("123456"))
-
-    def tearDown(self) -> None:
-        self._application.setExitEvent()
-
+class TestDatabase(TestCaseApplication):
     def _create(self, file_name: Path, *, mkdir: bool = True) -> Database:
         path = Path(self._application.tempPath / file_name)
         if mkdir:

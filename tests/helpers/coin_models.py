@@ -21,13 +21,19 @@ class CoinModel(Coin.Model):
             "coin-{:s}-{:08d}.db"
             .format(coin.name, next(self.__class__.__DATABASE_NEXT_INDEX)))
         db_file_path.unlink(missing_ok=True)
-        db = Database(application, db_file_path)
-        if not db.open():
-            raise RuntimeError("failed to open database")
-        super().__init__(coin=coin, database=db)
+
+        super().__init__(
+            coin=coin,
+            database=Database(application, db_file_path))
 
     def __del__(self) -> None:
         self._database.close()
+
+    @property
+    def database(self) -> Database:
+        if not self._database.isOpen and not self._database.open():
+            raise RuntimeError("failed to open database")
+        return self._database
 
 
 class AddressModel(Coin.Address.Model):

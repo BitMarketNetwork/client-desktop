@@ -5,8 +5,10 @@ import os
 import sys
 import time
 from pathlib import Path
+from random import randint
 from tempfile import gettempdir
 from typing import TYPE_CHECKING
+from unittest import TestCase
 
 from PySide6.QtWidgets import QApplication
 
@@ -25,7 +27,7 @@ Debug.setState(True)
 
 
 class TestApplication(CoreApplication):
-    _DATA_PATH: Final = Path(__file__).parent.resolve() / "data"
+    _DATA_PATH: Final = Path(__file__).parent.parent.resolve() / "data"
     _logger_configured = False
 
     def __init__(
@@ -105,3 +107,19 @@ class TestApplication(CoreApplication):
 
 
 TestApplication.configureLogger()
+
+
+class TestCaseApplication(TestCase):
+    def setUp(self) -> None:
+        self._application = TestApplication()
+        self._key_store_password = "".join(
+            str(randint(0, 9)) for _ in range(randint(6, 32)))
+
+        self.assertTrue(self._application.keyStore.create(
+            self._key_store_password))
+        self.assertTrue(self._application.keyStore.open(
+            self._key_store_password))
+        print("KKK1")
+
+    def tearDown(self) -> None:
+        self._application.setExitEvent()

@@ -1,17 +1,10 @@
 from random import shuffle
-from unittest import TestCase
 
 from bmnclient.language import Language
-from tests.helpers import TestApplication
+from tests.helpers import TestCaseApplication
 
 
-class TestLanguage(TestCase):
-    def setUp(self) -> None:
-        self._application = TestApplication()
-
-    def tearDown(self) -> None:
-        self._application.setExitEvent()
-
+class TestLanguage(TestCaseApplication):
     def test(self) -> None:
         translation_list = list(Language.translationList())
         shuffle(translation_list)

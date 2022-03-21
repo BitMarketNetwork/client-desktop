@@ -1,1 +1,1 @@
-from .application import TestApplication
+from .application import TestApplication, TestCaseApplication

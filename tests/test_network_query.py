@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from unittest import TestCase
 
 from PySide6.QtCore import QEventLoop
 from PySide6.QtNetwork import QNetworkReply, QNetworkRequest
 
 from bmnclient.network.access_manager import NetworkAccessManager
 from bmnclient.network.query import AbstractJsonQuery, AbstractQuery
-from tests.helpers import TestApplication
+from tests.helpers import TestApplication, TestCaseApplication
 
 if TYPE_CHECKING:
     from typing import Dict, Optional, Union
@@ -110,13 +109,7 @@ class DefaultJsonPostQuery(DefaultJsonGetQuery):
     _DEFAULT_METHOD = AbstractQuery.Method.POST
 
 
-class TestNetworkQuery(TestCase):
-    def setUp(self) -> None:
-        self._application = TestApplication()
-
-    def tearDown(self) -> None:
-        self._application.setExitEvent()
-
+class TestNetworkQuery(TestCaseApplication):
     def _run_request(self, query: AbstractQuery,) -> None:
         manager = NetworkAccessManager()
 

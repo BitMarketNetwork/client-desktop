@@ -11,6 +11,7 @@ from bmnclient.coins.hd import HdNode
 from bmnclient.coins.list import CoinList
 from bmnclient.language import Locale
 from bmnclient.utils import DeserializeFlag, SerializeFlag
+from tests.helpers import TestCaseApplication
 
 if TYPE_CHECKING:
     from typing import List, Optional, Sequence, Type
@@ -201,11 +202,12 @@ def fillCoin(
             index=randint(10000, 1000000),
             amount=randint(10000, 1000000)) for i in range(1, 3)]
 
+        owner.assertEqual(tx_count, len(address.txList))
         coin.appendAddress(address)
     return coin
 
 
-class TestCoins(TestCase):
+class TestCoins(TestCaseApplication):
     def _test_address_decode(
             self,
             coin: Coin,
@@ -229,13 +231,13 @@ class TestCoins(TestCase):
 
     def test_address_decode(self) -> None:
         self._test_address_decode(
-            Bitcoin(),
+            Bitcoin(model_factory=self._application.modelFactory),
             BITCOIN_ADDRESS_LIST)
         self._test_address_decode(
-            BitcoinTest(),
+            BitcoinTest(model_factory=self._application.modelFactory),
             BITCOIN_TEST_ADDRESS_LIST)
         self._test_address_decode(
-            Litecoin(),
+            Litecoin(model_factory=self._application.modelFactory),
             LITECOIN_ADDRESS_LIST)
 
     def test_string_to_amount(self) -> None:
@@ -353,7 +355,7 @@ class TestCoins(TestCase):
 
     def test_mempool_address_lists(self) -> None:
         for limit in range(201):
-            coin = Bitcoin()
+            coin = Bitcoin(model_factory=self._application.modelFactory)
             for i in range(limit):
                 address = coin.Address.createNullData(
                     coin,
@@ -407,7 +409,9 @@ class TestCoins(TestCase):
             self,
             d_flags: DeserializeFlag,
             coin_type: Type[Coin]) -> None:
-        coin = fillCoin(self, coin_type())
+        coin = fillCoin(
+            self,
+            coin_type(model_factory=self._application.modelFactory))
 
         data = coin.serialize(SerializeFlag.PRIVATE_MODE)
         self.assertIsInstance(data, dict)
@@ -415,7 +419,7 @@ class TestCoins(TestCase):
         # from pprint import pprint
         # pprint(data, sort_dicts=False)
 
-        coin_new = coin_type()
+        coin_new = coin_type(model_factory=self._application.modelFactory)
         coin_new.deserializeUpdate(d_flags, data)
 
         # coin compare
@@ -480,14 +484,15 @@ class TestCoins(TestCase):
                 self.assertEqual(u1.amount, u2.amount)
 
     def test_serialization(self) -> None:
-        for coin in CoinList():
+        for coin in CoinList(model_factory=self._application.modelFactory):
             for d_flag in DeserializeFlag:
                 self._test_serialization(d_flag, coin.__class__)
 
 
-class TestTxFactory(TestCase):
+class TestTxFactory(TestCaseApplication):
     def setUp(self) -> None:
-        self._coin = Bitcoin()
+        super().setUp()
+        self._coin = Bitcoin(model_factory=self._application.modelFactory)
         root_node = HdNode.deriveRootNode(urandom(64))
         self.assertIsNotNone(root_node)
         self.assertTrue(self._coin.deriveHdNode(root_node))
@@ -791,9 +796,10 @@ class TestTxFactory(TestCase):
                 txf.clear()
 
 
-class TestMutableTx(TestCase):
+class TestMutableTx(TestCaseApplication):
     def setUp(self) -> None:
-        self._coin = Bitcoin()
+        super().setUp()
+        self._coin = Bitcoin(model_factory=self._application.modelFactory)
         root_node = HdNode.deriveRootNode(urandom(64))
         self.assertIsNotNone(root_node)
         self.assertTrue(self._coin.deriveHdNode(root_node))
