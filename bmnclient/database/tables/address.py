@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import glob
 from typing import TYPE_CHECKING
 
 from .table import AbstractTable, ColumnEnum, ColumnValue, RowListProxy
@@ -128,3 +129,23 @@ class AddressListTable(AbstractTable, name="addresses"):
                 [coin.rowId, "", ""])
             value = c.fetchone()
         return value[0] if value is not None else 0
+
+    def queryLastHdIndex(self, coin: Coin, prefix: str) -> int:
+        prefix_length = len(prefix) + 1
+        prefix = glob.escape(prefix) + "*"
+        prefix = prefix.replace(
+            HdNode.pathHardenedChars[0],
+            "[" + "".join(HdNode.pathHardenedChars) + "]")
+
+        with self._database.transaction(allow_in_transaction=True) as c:
+            c.execute(
+                f"SELECT MAX(CAST(SUBSTR("
+                f"{self.ColumnEnum.KEY}, {prefix_length}) AS INTEGER))"
+                f" FROM {self}"
+                f" WHERE {self.ColumnEnum.COIN_ROW_ID} == ?"
+                f" AND {self.ColumnEnum.KEY} GLOB ?",
+                [coin.rowId, prefix])
+            value = c.fetchone()
+        if value is None or value[0] is None:
+            return -1
+        return value[0]

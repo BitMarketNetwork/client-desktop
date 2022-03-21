@@ -359,24 +359,15 @@ class Coin(CoinObject):
         return self._hd_node_list
 
     def nextHdIndex(self, purpose: int, account: int, change: int) -> int:
-        index = 0
-        parent_path = (
+        parent_path = HdNode.pathJoin((
             HdNode.toHardenedLevel(purpose),
             HdNode.toHardenedLevel(self._BIP0044_COIN_TYPE),
             HdNode.toHardenedLevel(account),
-            change)
-
-        for address in self._address_list:
-            if not isinstance(address.key, HdNode):
-                continue
-            if address.key.path[:-1] != parent_path:
-                continue
-
-            assert address.key.path[4] == address.key.index
-            if address.key.index >= index:
-                index = address.key.index + 1
-
-        return index
+            change))
+        index = self.model.database[AddressListTable].queryLastHdIndex(
+            self,
+            parent_path + HdNode.pathSeparator)
+        return index + 1
 
     def deriveHdAddress(
             self,

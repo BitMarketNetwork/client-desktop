@@ -9,14 +9,14 @@ from ..crypto.secp256k1 import KeyUtils, PrivateKey, PublicKey
 from ..utils.class_property import classproperty
 
 if TYPE_CHECKING:
-    from typing import \
-        Final, \
-        Generator, \
-        Iterator, \
-        Optional, \
-        Sequence, \
-        Tuple, \
-        Union
+    from typing import (
+        Final,
+        Generator,
+        Iterator,
+        Optional,
+        Sequence,
+        Tuple,
+        Union)
     from .abstract import Coin
 
 
@@ -25,6 +25,7 @@ class HdNode:
     _ROOT_KEY: Final = b"Bitcoin seed"
     _EXTENDED_KEY_SIZE: int = (4 + 1 + 4 + 4 + 32 + 33)
     _HARDENED_MASK = 0x80000000
+    _PATH_HARDENED_CHARS = ("H", "h", "'")
     _PATH_SEPARATOR: Final = "/"
 
     def __init__(
@@ -251,6 +252,10 @@ class HdNode:
         return (value & cls._HARDENED_MASK) == cls._HARDENED_MASK
 
     @classproperty
+    def pathHardenedChars(cls) -> Tuple[str, ...]:  # noqa
+        return cls._PATH_HARDENED_CHARS
+
+    @classproperty
     def pathSeparator(cls) -> str:  # noqa
         return cls._PATH_SEPARATOR
 
@@ -284,7 +289,7 @@ class HdNode:
                     continue
 
                 hardened = False
-                if level[-1] in ("'", "h", "H"):
+                if level[-1] in cls._PATH_HARDENED_CHARS:
                     level = level[:-1]
                     hardened = True
 
@@ -304,7 +309,7 @@ class HdNode:
         except (ValueError, IndexError):
             return None, False
 
-    def pathToString(self, *, hardened_char: str = "H") -> Optional[str]:
+    def pathToString(self, *, hardened_char: str = "") -> Optional[str]:
         return self.pathJoin(
             self._path,
             is_full_path=self.isFullPath,
@@ -316,7 +321,9 @@ class HdNode:
             path: Tuple[int, ...],
             *,
             is_full_path: bool = True,
-            hardened_char: str = "H") -> Optional[str]:
+            hardened_char: str = "") -> Optional[str]:
+        if not hardened_char:
+            hardened_char = cls._PATH_HARDENED_CHARS[0]
         result = []
         if is_full_path:
             result.append("m")
