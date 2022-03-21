@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from ..crypto.base58 import Base58
 from ..crypto.digest import Hash160Digest, Hmac, Sha512Digest
 from ..crypto.secp256k1 import KeyUtils, PrivateKey, PublicKey
+from ..utils.class_property import classproperty
 
 if TYPE_CHECKING:
     from typing import \
@@ -24,6 +25,7 @@ class HdNode:
     _ROOT_KEY: Final = b"Bitcoin seed"
     _EXTENDED_KEY_SIZE: int = (4 + 1 + 4 + 4 + 32 + 33)
     _HARDENED_MASK = 0x80000000
+    _PATH_SEPARATOR: Final = "/"
 
     def __init__(
             self,
@@ -221,12 +223,12 @@ class HdNode:
         if version is None or depth is None or index is None:
             return None
 
-        result = \
-            version \
-            + depth \
-            + self._parent_fingerprint \
-            + index \
-            + self._chain_code
+        result = (
+                version
+                + depth
+                + self._parent_fingerprint
+                + index
+                + self._chain_code)
         if private:
             result += b"\x00" + self.privateKey.data
         else:
@@ -248,6 +250,10 @@ class HdNode:
     def isHardenedLevel(cls, value: int) -> bool:
         return (value & cls._HARDENED_MASK) == cls._HARDENED_MASK
 
+    @classproperty
+    def pathSeparator(cls) -> str:  # noqa
+        return cls._PATH_SEPARATOR
+
     @property
     def path(self) -> Tuple[int, ...]:
         assert isinstance(self._path, tuple)
@@ -261,7 +267,7 @@ class HdNode:
     def pathFromString(
             cls,
             path: str) -> Tuple[Optional[Tuple[int, ...]], bool]:
-        path = path.split("/")
+        path = path.split(cls._PATH_SEPARATOR)
         if not path:
             return tuple(), False
 
@@ -299,18 +305,30 @@ class HdNode:
             return None, False
 
     def pathToString(self, *, hardened_char: str = "H") -> Optional[str]:
+        return self.pathJoin(
+            self._path,
+            is_full_path=self.isFullPath,
+            hardened_char=hardened_char)
+
+    @classmethod
+    def pathJoin(
+            cls,
+            path: Tuple[int, ...],
+            *,
+            is_full_path: bool = True,
+            hardened_char: str = "H") -> Optional[str]:
         result = []
-        if len(self._path) == self._depth:
+        if is_full_path:
             result.append("m")
-        for level in self._path:
+        for level in path:
             if level > 0xffffffff:
                 return None
-            if self.isHardenedLevel(level):
-                level = self.fromHardenedLevel(level)
+            if cls.isHardenedLevel(level):
+                level = cls.fromHardenedLevel(level)
                 result.append(str(level) + hardened_char[0])
             else:
                 result.append(str(level))
-        return "/".join(result)
+        return cls._PATH_SEPARATOR.join(result)
 
     def fromPath(
             self,
