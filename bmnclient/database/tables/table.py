@@ -89,6 +89,23 @@ class ColumnValue:
     def join(cls, count: int) -> str:
         return ", ".join("?" * count)
 
+    @classmethod
+    def fromSerializable(
+            cls,
+            source: Serializable,
+            column_enum: Iterable[ColumnEnum],
+            exclude_columns: Iterable[Column] = tuple()) -> List[ColumnValue]:
+        source_data = source.serialize(
+            SerializeFlag.DATABASE_MODE |
+            SerializeFlag.EXCLUDE_SUBCLASSES)
+        columns: List[ColumnValue] = []
+
+        for column in column_enum:
+            if column.name in source_data and column not in exclude_columns:
+                columns.append(ColumnValue(column, source_data[column.name]))
+
+        return columns
+
 
 class ColumnEnum(Column, Enum):
     def __init__(
@@ -238,11 +255,8 @@ class AbstractTable(metaclass=TableMeta):
             self,
             source: Serializable,
             key_columns: Sequence[ColumnValue],
-            custom_columns: Optional[Sequence[ColumnValue]] = None) -> None:
+            custom_columns: Sequence[ColumnValue] = tuple()) -> bool:
         assert self.ColumnEnum.ROW_ID not in (c.column for c in key_columns)
-        source_data = source.serialize(
-            SerializeFlag.DATABASE_MODE |
-            SerializeFlag.EXCLUDE_SUBCLASSES)
 
         if not custom_columns:
             custom_columns = []
@@ -250,18 +264,12 @@ class AbstractTable(metaclass=TableMeta):
         else:
             data_columns = [c for c in custom_columns]
 
-        for column in self.ColumnEnum:
-            if column.name not in source_data:
-                continue
-            if column in (c.column for c in chain(key_columns, custom_columns)):
-                continue
-            data_columns.append(ColumnValue(column, source_data[column.name]))
+        data_columns += ColumnValue.fromSerializable(
+            source,
+            self.ColumnEnum,
+            (c.column for c in chain(key_columns, custom_columns)))
 
-        source.rowId = self._insertOrUpdate(
-            cursor,
-            key_columns,
-            data_columns,
-            row_id=source.rowId)
+        source.rowId = self.save(source.rowId, key_columns, data_columns)
         assert source.rowId > 0
 
     def _deserialize(
