@@ -8,7 +8,7 @@ from ...utils import Serializable, SerializeFlag
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Final, Optional, Tuple, Type
+    from typing import Any, Dict, Final, Optional, Sequence, Tuple, Type
     from .coin import Coin
     from ...database import Database
     from ...database.tables import AbstractTable
@@ -62,6 +62,14 @@ class CoinObject(Serializable):
     @property
     def coin(self) -> Coin:
         return self._coin
+
+    def save(self) -> None:
+        raise NotImplementedError
+
+    def _save(self, key_columns: Sequence[ColumnValue]) -> None:
+        self.model.database[self._TABLE_TYPE].saveSerializable(
+            self,
+            key_columns)
 
     # TODO deprecated
     def _callModel(self, callback_name: str, *args, **kwargs) -> None:
