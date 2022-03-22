@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from typing import Callable, TYPE_CHECKING
 
 from ...database.tables import ColumnValue
@@ -8,7 +9,7 @@ from ...utils import Serializable, SerializeFlag
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Final, Optional, Sequence, Tuple, Type
+    from typing import Any, Dict, Final, Generator, Optional, Tuple, Type
     from .coin import Coin
     from ...database import Database
     from ...database.tables import AbstractTable
@@ -73,23 +74,12 @@ class CoinObject(Serializable):
     def _callModel(self, callback_name: str, *args, **kwargs) -> None:
         getattr(self.model, callback_name)(*args, **kwargs)
 
-    def _updateValue(
+    @contextmanager
+    def _modelEvent(
             self,
             action: str,
             name: str,
-            new_value: Any,
-            *,
-            force: bool = False,
-            getattr_function: Callable[[object, str], Any] = getattr,
-            setattr_function: Callable[[object, str, Any], None] = setattr
-    ) -> bool:
-        private_name = "_" + name
-
-        if not force:
-            old_value = getattr_function(self, private_name)
-            if old_value == new_value:
-                return False
-
+            *args) -> Generator[None, None, None]:
         events_name = name + "[" + action + "]"
         events = self.__value_events.get(events_name, None)
         if not events:
@@ -100,29 +90,40 @@ class CoinObject(Serializable):
                 getattr(self.model, "before" + action + suffix),
                 getattr(self.model, "after" + action + suffix))
             self.__value_events[events_name] = events
+        events[0](*args)
+        yield None
+        events[1](*args)
 
-        events[0](new_value)
-        setattr_function(self, private_name, new_value)
+    def _updateValue(
+            self,
+            action: str,
+            name: str,
+            new_value: Any) -> bool:
+        private_name = "_" + name
 
-        if (
-                self.rowId > 0
-                and self._TABLE_TYPE
-                and name in self.serializeMap
-        ):
-            column = self.serializeMap[name].get("column", None)
-            if column:
-                self.model.database[self._TABLE_TYPE].update(
-                    self.rowId,
-                    [ColumnValue(
-                        column,
-                        self._serializeProperty(
-                            SerializeFlag.DATABASE_MODE
-                            | SerializeFlag.EXCLUDE_SUBCLASSES,
-                            name,
-                            new_value)
-                    )])
+        old_value = getattr(self, private_name)
+        if old_value == new_value:
+            return False
 
-        events[1](new_value)
+        with self._modelEvent(action, name, new_value):
+            setattr(self, private_name, new_value)
+            if (
+                    self.rowId > 0
+                    and self._TABLE_TYPE
+                    and name in self.serializeMap
+            ):
+                column = self.serializeMap[name].get("column", None)
+                if column:
+                    self.model.database[self._TABLE_TYPE].update(
+                        self.rowId,
+                        [ColumnValue(
+                            column,
+                            self._serializeProperty(
+                                SerializeFlag.DATABASE_MODE
+                                | SerializeFlag.EXCLUDE_SUBCLASSES,
+                                name,
+                                new_value)
+                        )])
         return True
 
 
