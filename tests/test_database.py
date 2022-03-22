@@ -233,20 +233,67 @@ class TestDatabase(TestCaseApplication):
     def _fill_db(self, db: Database, coin_list: CoinList) -> None:
         for coin in coin_list:
             fillCoin(self, coin, address_count=10, tx_count=10)
-            db[CoinListTable].serialize(cursor, coin)
-            for address in coin.addressList:
-                db[AddressListTable].serialize(cursor, address)
+            coin_id = db[CoinListTable].saveSerializable(
+                coin,
+                [],
+                use_row_id=False)
+
+            for address in list(coin.addressList):
+                address_id = db[AddressListTable].saveSerializable(
+                    address,
+                    [
+                        ColumnValue(
+                            AddressListTable.ColumnEnum.COIN_ROW_ID,
+                            coin_id),
+                        ColumnValue(
+                            AddressListTable.ColumnEnum.NAME,
+                            address.name),
+                    ],
+                    use_row_id=False)
+
                 for tx in address.txList:
-                    db[TxListTable].serialize(cursor, address, tx)
+                    tx_id = db[TxListTable].saveSerializable(
+                        tx,
+                        [
+                            ColumnValue(
+                                TxListTable.ColumnEnum.COIN_ROW_ID,
+                                coin_id),
+                            ColumnValue(
+                                TxListTable.ColumnEnum.NAME,
+                                tx.name),
+                        ],
+                        use_row_id=False)
+
+                    db[AddressTxMapTable].associate(address_id, tx_id)
+
+                    for io_type, io_list in (
+                            (TxIoListTable.IoType.INPUT, tx.inputList),
+                            (TxIoListTable.IoType.OUTPUT, tx.outputList)
+                    ):
+                        for io in io_list:
+                            db[TxIoListTable].saveSerializable(
+                                io,
+                                [
+                                    ColumnValue(
+                                        TxIoListTable.ColumnEnum.TX_ROW_ID,
+                                        tx_id),
+                                    ColumnValue(
+                                        TxIoListTable.ColumnEnum.IO_TYPE,
+                                        io_type.value),
+                                    ColumnValue(
+                                        TxIoListTable.ColumnEnum.INDEX,
+                                        io.index)
+                                ],
+                                use_row_id=False)
 
     def _select_coin(
             self,
             cursor: Cursor,
             coin: Coin) -> List[Tuple[Any]]:
         cursor.execute(
-            f"SELECT * FROM {CoinListTable} WHERE "
-            f" {CoinListTable.ColumnEnum.NAME} == ?",
-            (coin.name,))
+            f"SELECT * FROM {CoinListTable}"
+            f" WHERE {CoinListTable.ColumnEnum.NAME} == ?",
+            [coin.name])
         r = cursor.fetchall()
         self.assertIsNotNone(r)
         return r
@@ -256,9 +303,12 @@ class TestDatabase(TestCaseApplication):
             cursor: Cursor,
             coin: Coin) -> List[Tuple[Any]]:
         cursor.execute(
-            f"SELECT * FROM {AddressListTable} WHERE"
-            f" {AddressListTable.ColumnEnum.COIN_ROW_ID} == ?",
-            (coin.rowId, ))
+            f"SELECT * FROM {AddressListTable}"
+            f" WHERE {AddressListTable.ColumnEnum.COIN_ROW_ID} IN ("
+            f"SELECT {CoinListTable.ColumnEnum.ROW_ID}"
+            f" FROM {CoinListTable}"
+            f" WHERE  {CoinListTable.ColumnEnum.NAME} == ?)",
+            [coin.name])
         r = cursor.fetchall()
         self.assertIsNotNone(r)
         return r
@@ -268,9 +318,12 @@ class TestDatabase(TestCaseApplication):
             cursor: Cursor,
             coin: Coin) -> List[Tuple[Any]]:
         cursor.execute(
-            f"SELECT * FROM {TxListTable} WHERE"
-            f" {TxListTable.ColumnEnum.COIN_ROW_ID} == ?",
-            (coin.rowId, ))
+            f"SELECT * FROM {TxListTable}"
+            f" WHERE {TxListTable.ColumnEnum.COIN_ROW_ID} IN ("
+            f"SELECT {CoinListTable.ColumnEnum.ROW_ID}"
+            f" FROM {CoinListTable}"
+            f" WHERE  {CoinListTable.ColumnEnum.NAME} == ?)",
+            [coin.name])
         r = cursor.fetchall()
         self.assertIsNotNone(r)
         return r
@@ -280,9 +333,12 @@ class TestDatabase(TestCaseApplication):
             cursor: Cursor,
             tx: Coin.Tx) -> List[Tuple[Any]]:
         cursor.execute(
-            f"SELECT * FROM {TxIoListTable} WHERE"
-            f" {TxIoListTable.ColumnEnum.TX_ROW_ID} == ?",
-            (tx.rowId, ))
+            f"SELECT * FROM {TxIoListTable}"
+            f" WHERE {TxIoListTable.ColumnEnum.TX_ROW_ID} IN ("
+            f"SELECT {TxListTable.ColumnEnum.ROW_ID}"
+            f" FROM {TxListTable}"
+            f" WHERE {TxListTable.ColumnEnum.NAME} == ?)",
+            [tx.name])
         r = cursor.fetchall()
         self.assertIsNotNone(r)
         return r
@@ -291,11 +347,13 @@ class TestDatabase(TestCaseApplication):
             self,
             cursor: Cursor,
             tx: Coin.Tx) -> List[Tuple[Any]]:
-        where = AddressTxMapTable.ColumnEnum.TX_ROW_ID
         cursor.execute(
-            f"SELECT * FROM {AddressTxMapTable} WHERE"
-            f" {where} == ?",
-            (tx.rowId, ))
+            f"SELECT * FROM {AddressTxMapTable}"
+            f" WHERE {AddressTxMapTable.ColumnEnum.TX_ROW_ID} IN ("
+            f"SELECT {TxListTable.ColumnEnum.ROW_ID}"
+            f" FROM {TxListTable}"
+            f" WHERE {TxListTable.ColumnEnum.NAME} == ?)",
+            [tx.name])
         r = cursor.fetchall()
         self.assertIsNotNone(r)
         return r
@@ -304,11 +362,13 @@ class TestDatabase(TestCaseApplication):
             self,
             cursor: Cursor,
             address: Coin.Address) -> List[Tuple[Any]]:
-        where = AddressTxMapTable.ColumnEnum.ADDRESS_ROW_ID
         cursor.execute(
             f"SELECT * FROM {AddressTxMapTable}"
-            f" WHERE {where} == ?",
-            (address.rowId, ))
+            f" WHERE {AddressTxMapTable.ColumnEnum.ADDRESS_ROW_ID} IN ("
+            f"SELECT {AddressListTable.ColumnEnum.ROW_ID}"
+            f" FROM {AddressListTable}"
+            f" WHERE {AddressListTable.ColumnEnum.NAME} == ?)",
+            [address.name])
         r = cursor.fetchall()
         self.assertIsNotNone(r)
         return r
@@ -319,8 +379,7 @@ class TestDatabase(TestCaseApplication):
 
         # generate
         coin_list = CoinList(model_factory=self._application.modelFactory)
-        with db.transaction(suppress_exceptions=False) as c:
-            self._fill_db(db, c, coin_list)
+        self._fill_db(db, coin_list)
 
         # check
         with db.transaction(suppress_exceptions=False) as c:
@@ -371,9 +430,9 @@ class TestDatabase(TestCaseApplication):
         with db.transaction(suppress_exceptions=False) as c:
             address = coin_list[1].addressList[1]
             c.execute(
-                f"DELETE FROM {AddressListTable} WHERE "
-                f" {AddressListTable.ColumnEnum.ROW_ID} == ?",
-                (address.rowId, ))
+                f"DELETE FROM {AddressListTable}"
+                f" WHERE {AddressListTable.ColumnEnum.NAME} == ?",
+                [address.name])
             self.assertEqual(1, c.rowcount)
             self.assertEqual(
                 0,
@@ -383,9 +442,9 @@ class TestDatabase(TestCaseApplication):
         with db.transaction(suppress_exceptions=False) as c:
             tx = coin_list[1].addressList[2].txList[2]
             c.execute(
-                f"DELETE FROM {TxListTable} WHERE "
-                f" {TxListTable.ColumnEnum.ROW_ID} == ?",
-                (tx.rowId, ))
+                f"DELETE FROM {TxListTable}"
+                f" WHERE {TxListTable.ColumnEnum.NAME} == ?",
+                [tx.name])
             self.assertEqual(1, c.rowcount)
             self.assertEqual(
                 0,
