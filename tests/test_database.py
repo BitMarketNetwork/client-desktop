@@ -108,25 +108,23 @@ class TestDatabase(TestCaseApplication):
         db = self._create(Path("upgrade.db"))
         self.assertTrue(db.open())
 
-        with db.transaction(suppress_exceptions=False) as c:
-            version = db[MetadataTable].get(c, MetadataTable.Key.VERSION, int)
-        self.assertEqual(db.version, version)
+        self.assertEqual(
+            db.version,
+            db[MetadataTable].get(MetadataTable.Key.VERSION, int))
 
-        with db.transaction(suppress_exceptions=False) as c:
-            db[MetadataTable].set(c, MetadataTable.Key.VERSION, -1)
-        with db.transaction(suppress_exceptions=False) as c:
-            version = db[MetadataTable].get(c, MetadataTable.Key.VERSION, int)
-        self.assertEqual(-1, version)
+        db[MetadataTable].set(MetadataTable.Key.VERSION, -1)
+        self.assertEqual(
+            -1,
+            db[MetadataTable].get(MetadataTable.Key.VERSION, int))
 
         self.assertTrue(db.close())
         self.assertTrue(db.open())
 
-        with db.transaction(suppress_exceptions=False) as c:
-            version = db[MetadataTable].get(c, MetadataTable.Key.VERSION, int)
-        self.assertEqual(db.version, version)
+        self.assertEqual(
+            db.version,
+            db[MetadataTable].get(MetadataTable.Key.VERSION, int))
 
-        with db.transaction(suppress_exceptions=False) as c:
-            db[MetadataTable].set(c, MetadataTable.Key.VERSION, db.version + 1)
+        db[MetadataTable].set(MetadataTable.Key.VERSION, db.version + 1)
 
         self.assertTrue(db.close())
         self.assertFalse(db.open())

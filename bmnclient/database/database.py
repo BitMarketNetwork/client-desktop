@@ -308,10 +308,7 @@ class Database:
             self.__table_list[id(table_type)] = table_type(self)
 
         if cursor.isTableExists(MetadataTable):
-            version = self[MetadataTable].get(
-                cursor,
-                MetadataTable.Key.VERSION,
-                int)
+            version = self[MetadataTable].get(MetadataTable.Key.VERSION, int)
         else:
             version = None
 
@@ -337,10 +334,7 @@ class Database:
         for table_type in self._TABLE_TYPE_LIST:
             self.__table_list[id(table_type)].open(cursor)
 
-        self[MetadataTable].set(
-            cursor,
-            MetadataTable.Key.VERSION,
-            self._VERSION)
+        self[MetadataTable].set(MetadataTable.Key.VERSION, self._VERSION)
 
     def _closeTables(self, cursor: Cursor) -> None:
         for table_type in reversed(self._TABLE_TYPE_LIST):
