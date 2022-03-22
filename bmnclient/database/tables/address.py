@@ -4,9 +4,9 @@ import glob
 from typing import TYPE_CHECKING
 
 from .table import AbstractTable, ColumnEnum, ColumnValue, RowListProxy
+from ...coins.hd import HdNode
 from ...utils import DeserializeFlag
 from ...utils.class_property import classproperty
-from ...coins.hd import HdNode
 
 if TYPE_CHECKING:
     from typing import Final
@@ -76,28 +76,6 @@ class AddressListTable(AbstractTable, name="addresses"):
         if cursor.isColumnExists("addresses", "amount"):
             cursor.execute(
                 "ALTER TABLE \"addresses\" RENAME \"amount\" TO \"balance\"")
-
-    # TODO dynamic interface with coin.txList, address.txList
-    def deserializeAll(self, cursor: Cursor, coin: Coin) -> bool:
-        assert coin.rowId > 0
-
-        error = False
-        for result in self._deserialize(
-                cursor,
-                coin.Address,
-                {self.ColumnEnum.COIN_ROW_ID: coin.rowId}
-        ):
-            address = coin.Address.deserialize(
-                DeserializeFlag.DATABASE_MODE,
-                result,
-                coin)
-            if address is None:
-                error = True
-                self._database.logDeserializeError(coin.Address, result)
-            else:
-                assert address.rowId > 0
-                coin.appendAddress(address)
-        return not error
 
     def serialize(self, cursor: Cursor, address: Coin.Address) -> None:
         assert address.coin.rowId > 0

@@ -2,13 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .table import AbstractTable, ColumnEnum, ColumnValue, RowListProxy
-from ...utils import DeserializeFlag
+from .table import AbstractTable, ColumnEnum, RowListProxy
 
 if TYPE_CHECKING:
     from typing import Final
-    from .. import Cursor
-    from ...coins.abstract import Coin
 
 
 class CoinListTable(AbstractTable, name="coins"):
@@ -41,26 +38,3 @@ class CoinListTable(AbstractTable, name="coins"):
 
     def rowListProxy(self, *args, **kwargs) -> RowListProxy:
         raise NotImplementedError
-
-    def deserialize(self, cursor: Cursor, coin: Coin) -> bool:
-        result = next(
-            self._deserialize(
-                cursor,
-                type(coin),
-                {self.ColumnEnum.NAME: coin.name},
-                limit=1,
-                return_key_columns=True),
-            None)
-        if result is None:
-            return False
-
-        if not coin.deserializeUpdate(DeserializeFlag.DATABASE_MODE, result):
-            self._database.logDeserializeError(type(coin), result)
-            return False
-        else:
-            assert coin.rowId > 0
-            return True
-
-    def serialize(self, cursor: Cursor, coin: Coin) -> None:
-        self._serialize(coin, [ColumnValue(self.ColumnEnum.NAME, coin.name)])
-        assert coin.rowId > 0

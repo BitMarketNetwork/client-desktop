@@ -5,7 +5,7 @@ from enum import Enum
 from itertools import chain
 from typing import TYPE_CHECKING
 
-from ...utils import DeserializeFlag, SerializeFlag
+from ...utils import DeserializeFlag, Serializable, SerializeFlag
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -22,7 +22,6 @@ if TYPE_CHECKING:
         Type,
         Union)
     from .. import Cursor, Database
-    from ...utils import Serializable
 
 
 class SortOrder(Enum):
@@ -80,6 +79,9 @@ class ColumnValue:
     def __init__(self, column: Column, value: Optional[str, int]) -> None:
         self._column = column
         self.value = value
+
+    def __repr__(self) -> str:
+        return f"{self._column.name}: {self.value}"
 
     @property
     def column(self) -> Column:
@@ -255,7 +257,7 @@ class AbstractTable(metaclass=TableMeta):
             if row_id <= 0:
                 columns = [
                     self.ColumnEnum.ROW_ID,
-                    *(c.column for c in key_columns)]
+                    *(c.column for c in data_columns)]
                 c.execute(
                     f"SELECT {Column.join(columns)}"
                     f" FROM {self}"
@@ -311,17 +313,20 @@ class AbstractTable(metaclass=TableMeta):
 
         if isinstance(obj, Serializable):
             row_id = self.load(obj.rowId, key_columns, data_columns)
-            obj.deserializeUpdate(
-                DeserializeFlag.DATABASE_MODE,
-                {c.column.name: c.value for c in data_columns})
+            if row_id > 0:
+                obj.deserializeUpdate(
+                    DeserializeFlag.DATABASE_MODE,
+                    {c.column.name: c.value for c in data_columns})
         elif issubclass(obj, Serializable):
             row_id = self.load(-1, key_columns, data_columns)
-            obj = obj.deserialize(
-                DeserializeFlag.DATABASE_MODE,
-                {c.column.name: c.value for c in data_columns},
-                *cls_args)
+            if row_id > 0:
+                obj = obj.deserialize(
+                    DeserializeFlag.DATABASE_MODE,
+                    {c.column.name: c.value for c in data_columns},
+                    *cls_args)
         else:
-            return None
+            row_id = -1
+
         if row_id <= 0:
             return None
 

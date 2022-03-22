@@ -9,7 +9,7 @@ from ..hd import HdNode
 from ..utils import CoinUtils
 from ...crypto.digest import Sha256Digest
 from ...currency import Currency, FiatRate, NoneFiatCurrency
-from ...database.tables import AddressListTable, CoinListTable
+from ...database.tables import AddressListTable, CoinListTable, ColumnValue
 from ...utils import DeserializationNotSupportedError, serializable
 from ...utils.class_property import classproperty
 
@@ -21,6 +21,7 @@ if TYPE_CHECKING:
         Generator,
         List,
         Optional,
+        Sequence,
         Union)
     from .object import CoinModelFactory
     from ...utils import DeserializeFlag, DeserializedData
@@ -155,11 +156,23 @@ class Coin(CoinObject):
     def __update__(self, **kwargs) -> bool:
         address_list = kwargs.pop("address_list", None)
         if address_list is not None:
-            self._address_list.clear()  # TODO compare with new list!
             for address in address_list:
-                self.appendAddress(address)
-        result = super().__update__(**kwargs)
-        return result
+                address.save()
+        return super().__update__(**kwargs)
+
+    def save(self) -> bool:
+        return self.model.database[self._TABLE_TYPE].saveSerializable(
+            self,
+            [ColumnValue(self._TABLE_TYPE.ColumnEnum.NAME, self.name)]) > 0
+
+    def load(self) -> bool:
+        obj = self.model.database[self._TABLE_TYPE].loadSerializable(
+                self,
+                [ColumnValue(self._TABLE_TYPE.ColumnEnum.NAME, self.name)])
+        if obj is not self:
+            return False
+        self.updateBalance()
+        return True
 
     @classmethod
     def deserialize(cls, *_, **__) -> None:

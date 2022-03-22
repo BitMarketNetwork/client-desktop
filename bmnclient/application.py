@@ -20,7 +20,6 @@ from .coins.list import CoinList
 from .config import Config, ConfigKey
 from .currency import FiatCurrencyList, FiatRate
 from .database import Database
-from .database.tables import AddressListTable, CoinListTable, TxListTable
 from .debug import Debug
 from .key_store import KeyStore
 from .language import Language
@@ -415,25 +414,10 @@ class CoreApplication(QObject):
 
     def _loadWalletData(self) -> bool:  # TODO move to coins
         try:
-            with self._database.transaction() as cursor:
+            with self._database.transaction():
                 for coin in self._coin_list:
-                    if not self._database[CoinListTable].deserialize(
-                            cursor,
-                            coin):
-                        self._logger.debug(
-                            "Cannot deserialize coin '%s' from database.",
-                            coin.name)
-                        self._database[CoinListTable].serialize(cursor, coin)
-                        continue
-
-                    self._database[AddressListTable].deserializeAll(
-                            cursor,
-                            coin)
-
-                    for address in coin.addressList:
-                        self._database[TxListTable].deserializeAll(
-                            cursor,
-                            address)
+                    if not coin.load():
+                        coin.save()
         except (Database.engine.Error, Database.engine.Warning) as e:
             self._logger.error(
                 "Failed to read wallet from database: %s",

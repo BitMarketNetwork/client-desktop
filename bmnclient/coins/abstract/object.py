@@ -63,13 +63,11 @@ class CoinObject(Serializable):
     def coin(self) -> Coin:
         return self._coin
 
-    def save(self) -> None:
+    def save(self) -> bool:
         raise NotImplementedError
 
-    def _save(self, key_columns: Sequence[ColumnValue]) -> None:
-        self.model.database[self._TABLE_TYPE].saveSerializable(
-            self,
-            key_columns)
+    def load(self) -> bool:
+        raise NotImplementedError
 
     # TODO deprecated
     def _callModel(self, callback_name: str, *args, **kwargs) -> None:
