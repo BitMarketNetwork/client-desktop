@@ -132,7 +132,7 @@ class TestDatabase(TestCaseApplication):
         self.assertFalse(db.open())
 
     def test_save(self) -> None:
-        db = self._create(Path("insert_or_update.db"))
+        db = self._create(Path("save.db"))
         self.assertTrue(db.open())
 
         keys = [ColumnValue(MetadataTable.ColumnEnum.KEY, "key1")]
@@ -181,6 +181,52 @@ class TestDatabase(TestCaseApplication):
         # UPDATE: OK
         row_id_2 = db[MetadataTable].save(row_id_2, keys, data)
         self.assertEqual(row_id_1, row_id_2)
+
+        logger.debug("-" * 80)
+
+    def test_load(self) -> None:
+        db = self._create(Path("load.db"))
+        self.assertTrue(db.open())
+
+        keys = [ColumnValue(MetadataTable.ColumnEnum.KEY, "key1")]
+        data = (ColumnValue(MetadataTable.ColumnEnum.VALUE, "value1"), )
+
+        # noinspection PyProtectedMember
+        logger = db._logger
+        logger.debug("-" * 80)
+
+        row_id_1 = db[MetadataTable].load(-1, keys, data)
+        self.assertEqual(-1, row_id_1)
+
+        logger.debug("-" * 80)
+
+        row_id_1 = db[MetadataTable].save(-1, keys, data)
+        self.assertTrue(row_id_1 > 0)
+
+        for c in data:
+            c.value = None
+        row_id_2 = db[MetadataTable].load(row_id_1, keys, data)
+        self.assertEqual(row_id_1, row_id_2)
+        for c in data:
+            self.assertIsNotNone(c.value)
+
+        logger.debug("-" * 80)
+
+        for c in data:
+            c.value = None
+        row_id_2 = db[MetadataTable].load(-1, keys, data)
+        self.assertEqual(row_id_1, row_id_2)
+        for c in data:
+            self.assertIsNotNone(c.value)
+
+        logger.debug("-" * 80)
+
+        for c in data:
+            c.value = None
+        row_id_2 = db[MetadataTable].load(row_id_1 * 10000, keys, data)
+        self.assertEqual(row_id_1, row_id_2)
+        for c in data:
+            self.assertIsNotNone(c.value)
 
         logger.debug("-" * 80)
 

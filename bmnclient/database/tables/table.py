@@ -251,6 +251,44 @@ class AbstractTable(metaclass=TableMeta):
                         for c in key_columns
                     )))
 
+    def load(self,
+             row_id: int,
+             key_columns: Sequence[ColumnValue],
+             data_columns: Sequence[ColumnValue]) -> int:
+        with self._database.transaction(allow_in_transaction=True) as c:
+            # select by row_id
+            if row_id > 0:
+                c.execute(
+                    f"SELECT {Column.join(c.column for c in data_columns)}"
+                    f" FROM {self}"
+                    f" WHERE {self.ColumnEnum.ROW_ID} == ?"
+                    f" LIMIT 1",
+                    [row_id])
+                value = c.fetchone()
+                if value is None:
+                    row_id = -1
+
+            # select by key_columns
+            if row_id <= 0:
+                columns = [
+                    self.ColumnEnum.ROW_ID,
+                    *(c.column for c in key_columns)]
+                c.execute(
+                    f"SELECT {Column.join(columns)}"
+                    f" FROM {self}"
+                    f" WHERE {Column.joinWhere(c.column for c in key_columns)}"
+                    f" LIMIT 1",
+                    [c.value for c in key_columns])
+                value = c.fetchone()
+                if value is None or value[0] <= 0:
+                    return -1
+                row_id = value[0]
+                value = value[1:]
+
+        for i in range(len(data_columns)):
+            data_columns[i].value = value[i]
+        return row_id
+
     def _serialize(
             self,
             source: Serializable,
