@@ -89,23 +89,6 @@ class ColumnValue:
     def join(cls, count: int) -> str:
         return ", ".join("?" * count)
 
-    @classmethod
-    def fromSerializable(
-            cls,
-            source: Serializable,
-            column_enum: Iterable[ColumnEnum],
-            exclude_columns: Iterable[Column] = tuple()) -> List[ColumnValue]:
-        source_data = source.serialize(
-            SerializeFlag.DATABASE_MODE |
-            SerializeFlag.EXCLUDE_SUBCLASSES)
-        columns: List[ColumnValue] = []
-
-        for column in column_enum:
-            if column.name in source_data and column not in exclude_columns:
-                columns.append(ColumnValue(column, source_data[column.name]))
-
-        return columns
-
 
 class ColumnEnum(Column, Enum):
     def __init__(
@@ -289,26 +272,61 @@ class AbstractTable(metaclass=TableMeta):
             data_columns[i].value = value[i]
         return row_id
 
-    def _serialize(
+    def saveSerializable(
             self,
-            source: Serializable,
+            obj: Serializable,
             key_columns: Sequence[ColumnValue],
-            custom_columns: Sequence[ColumnValue] = tuple()) -> bool:
+            *,
+            use_row_id: bool = True) -> int:
         assert self.ColumnEnum.ROW_ID not in (c.column for c in key_columns)
 
-        if not custom_columns:
-            custom_columns = []
-            data_columns = []
+        source_data = obj.serialize(
+            SerializeFlag.DATABASE_MODE |
+            SerializeFlag.EXCLUDE_SUBCLASSES)
+        data_columns: List[ColumnValue] = []
+
+        for column in self.ColumnEnum:
+            if column.name in source_data and column not in key_columns:
+                data_columns.append(ColumnValue(
+                    column,
+                    source_data[column.name]))
+
+        if use_row_id:
+            obj.rowId = self.save(obj.rowId, key_columns, data_columns)
+            return obj.rowId
         else:
-            data_columns = [c for c in custom_columns]
+            return self.save(-1, key_columns, data_columns)
 
-        data_columns += ColumnValue.fromSerializable(
-            source,
-            self.ColumnEnum,
-            (c.column for c in chain(key_columns, custom_columns)))
+    def loadSerializable(
+            self,
+            obj: Union[Serializable, Type[Serializable]],
+            key_columns: Sequence[ColumnValue],
+            *cls_args) -> Optional[Serializable]:
+        assert self.ColumnEnum.ROW_ID not in (c.column for c in key_columns)
 
-        source.rowId = self.save(source.rowId, key_columns, data_columns)
-        assert source.rowId > 0
+        data_columns = []
+        for column in self.ColumnEnum:
+            if column.name in obj.serializeMap.keys():
+                data_columns.append(ColumnValue(column, None))
+
+        if isinstance(obj, Serializable):
+            row_id = self.load(obj.rowId, key_columns, data_columns)
+            obj.deserializeUpdate(
+                DeserializeFlag.DATABASE_MODE,
+                {c.column.name: c.value for c in data_columns})
+        elif issubclass(obj, Serializable):
+            row_id = self.load(-1, key_columns, data_columns)
+            obj = obj.deserialize(
+                DeserializeFlag.DATABASE_MODE,
+                {c.column.name: c.value for c in data_columns},
+                *cls_args)
+        else:
+            return None
+        if row_id <= 0:
+            return None
+
+        obj.rowId = row_id
+        return obj
 
     def _deserialize(
             self,
