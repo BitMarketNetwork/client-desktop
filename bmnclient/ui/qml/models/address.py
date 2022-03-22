@@ -132,21 +132,21 @@ class AddressModel(_AddressModel, AbstractModel):
             self._application,
             self._tx_list_model)
 
-    def afterSetBalance(self) -> None:
+    def afterSetBalance(self, value: int) -> None:
         self._balance_model.update()
-        super().afterSetBalance()
+        super().afterSetBalance(value)
 
-    def afterSetLabel(self) -> None:
+    def afterSetLabel(self, value: str) -> None:
         self._state_model.update()
-        super().afterSetLabel()
+        super().afterSetLabel(value)
 
-    def afterSetComment(self) -> None:
+    def afterSetComment(self, value: str) -> None:
         self._state_model.update()
-        super().afterSetComment()
+        super().afterSetComment(value)
 
-    def afterSetIsTxInput(self) -> None:
+    def afterSetIsTxInput(self, value: bool) -> None:
         self._state_model.update()
-        super().afterSetIsTxInput()
+        super().afterSetIsTxInput(value)
 
     def beforeAppendTx(self, tx: Coin.Tx) -> None:
         self._tx_list_model.lock(self._tx_list_model.lockInsertRows())

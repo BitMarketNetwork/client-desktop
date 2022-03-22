@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .coins.abstract import Coin
-from .database.tables import AddressListTable, CoinListTable, TxListTable
+from .database.tables import AddressListTable, TxListTable
 
 if TYPE_CHECKING:
     from .network.query_scheduler import NetworkQueryScheduler
@@ -36,24 +36,6 @@ class CoinModel(_AbstractModel, Coin.Model):
 
 
 class AddressModel(_AbstractModel, Coin.Address.Model):
-    def _save(self) -> None:
-        try:
-            with self._database.transaction() as cursor:
-                self._database[AddressListTable].serialize(
-                    cursor,
-                    self._address)
-        except self._database.TransactionInEffectError:
-            pass
-
-    def afterSetLabel(self) -> None:
-        self._save()
-
-    def afterSetComment(self) -> None:
-        self._save()
-
-    def afterSetTxCount(self) -> None:
-        self._save()
-
     def afterAppendTx(self, tx: Coin.Tx) -> None:
         if tx.rowId <= 0:
             try:
@@ -64,12 +46,6 @@ class AddressModel(_AbstractModel, Coin.Address.Model):
                         tx)
             except self._database.TransactionInEffectError:
                 pass
-
-    def afterSetHistoryFirstOffset(self) -> None:
-        self._save()
-
-    def afterSetHistoryLastOffset(self) -> None:
-        self._save()
 
 
 class TxModel(_AbstractModel, Coin.Tx.Model):

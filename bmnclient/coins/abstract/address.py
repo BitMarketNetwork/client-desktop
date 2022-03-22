@@ -127,16 +127,33 @@ class _Model(CoinObjectModel):
     def owner(self) -> Coin.Address:
         return self._address
 
-    def afterSetBalance(self) -> None: pass
-    def afterSetLabel(self) -> None: pass
-    def afterSetComment(self) -> None: pass
-    def afterSetIsTxInput(self) -> None: pass
-    def afterSetTxCount(self) -> None: pass
+    def beforeSetKey(self, value: Coin.Address.KeyType) -> None: pass
+    def afterSetKey(self, value: Coin.Address.KeyType) -> None: pass
+
+    def beforeSetBalance(self, value: int) -> None: pass
+    def afterSetBalance(self, value: int) -> None: pass
+
+    def beforeSetLabel(self, value: str) -> None: pass
+    def afterSetLabel(self, value: str) -> None: pass
+
+    def beforeSetComment(self, value: str) -> None: pass
+    def afterSetComment(self, value: str) -> None: pass
+
+    def beforeSetIsTxInput(self, value: bool) -> None: pass
+    def afterSetIsTxInput(self, value: bool) -> None: pass
+
+    def beforeSetTxCount(self, value: int) -> None: pass
+    def afterSetTxCount(self, value: int) -> None: pass
     def beforeAppendTx(self, tx: Coin.Tx) -> None: pass
     def afterAppendTx(self, tx: Coin.Tx) -> None: pass
+    def afterSetUtxoList(self) -> None: pass  # TODO
     def afterSetUtxoList(self) -> None: pass
-    def afterSetHistoryFirstOffset(self) -> None: pass
-    def afterSetHistoryLastOffset(self) -> None: pass
+
+    def beforeSetHistoryFirstOffset(self, value: str) -> None: pass
+    def afterSetHistoryFirstOffset(self, value: str) -> None: pass
+
+    def beforeSetHistoryLastOffset(self, value: str) -> None: pass
+    def afterSetHistoryLastOffset(self, value: str) -> None: pass
 
 
 class _Address(CoinObject):
@@ -361,7 +378,7 @@ class _Address(CoinObject):
 
     @key.setter
     def key(self, value: Optional[KeyType]) -> None:
-        self._key = value
+        self._updateValue("set", "key", value)
 
     def exportKey(self, *, allow_hd_path: bool = False) -> Optional[str]:
         if isinstance(self._key, HdNode):
@@ -441,10 +458,8 @@ class _Address(CoinObject):
 
     @balance.setter
     def balance(self, value: int) -> None:
-        if self._balance != value:
-            self._balance = value
-            self._callModel("afterSetBalance")
-            self._coin.updateBalance()
+        self._updateValue("set", "balance", value)
+        self._coin.updateBalance()
 
     @serializable(column=AddressListTable.ColumnEnum.LABEL)
     @property
@@ -453,9 +468,7 @@ class _Address(CoinObject):
 
     @label.setter
     def label(self, value: str) -> None:
-        if self._label != value:
-            self._label = value
-            self._callModel("afterSetLabel")
+        self._updateValue("set", "label", value)
 
     @serializable(column=AddressListTable.ColumnEnum.COMMENT)
     @property
@@ -464,9 +477,7 @@ class _Address(CoinObject):
 
     @comment.setter
     def comment(self, value: str) -> None:
-        if self._comment != value:
-            self._comment = value
-            self._callModel("afterSetComment")
+        self._updateValue("set", "comment", value)
 
     @serializable
     @property
@@ -475,9 +486,7 @@ class _Address(CoinObject):
 
     @isTxInput.setter
     def isTxInput(self, value: bool) -> None:
-        if self._is_tx_input != value:
-            self._is_tx_input = value
-            self._callModel("afterSetIsTxInput")
+        self._updateValue("set", "is_tx_input", value)
 
     @property
     def isReadOnly(self) -> bool:
@@ -490,9 +499,7 @@ class _Address(CoinObject):
 
     @txCount.setter
     def txCount(self, value: int) -> None:
-        if self._tx_count != value:
-            self._tx_count = value
-            self._callModel("afterSetTxCount")
+        self._updateValue("set", "tx_count", value)
 
     @serializable
     @property
@@ -541,12 +548,10 @@ class _Address(CoinObject):
 
     @historyFirstOffset.setter
     def historyFirstOffset(self, value: str):
-        if self._history_first_offset != value:
-            if not value:
-                self._clearHistoryOffsets()
-            else:
-                self._history_first_offset = value
-                self._callModel("afterSetHistoryFirstOffset")
+        with self.model.database.transaction(allow_in_transaction=True):
+            if self._updateValue("set", "history_first_offset", value):
+                if not value:
+                    self.historyLastOffset = ""
 
     @serializable(column=AddressListTable.ColumnEnum.HISTORY_LAST_OFFSET)
     @property
@@ -555,15 +560,7 @@ class _Address(CoinObject):
 
     @historyLastOffset.setter
     def historyLastOffset(self, value: str):
-        if self._history_last_offset != value:
-            if not value:
-                self._clearHistoryOffsets()
-            else:
-                self._history_last_offset = value
-                self._callModel("afterSetHistoryLastOffset")
-
-    def _clearHistoryOffsets(self) -> None:
-        self._history_first_offset = ""
-        self._history_last_offset = ""
-        self._callModel("afterSetHistoryFirstOffset")
-        self._callModel("afterSetHistoryLastOffset")
+        with self.model.database.transaction(allow_in_transaction=True):
+            if self._updateValue("set", "history_last_offset", value):
+                if not value:
+                    self.historyFirstOffset = ""
