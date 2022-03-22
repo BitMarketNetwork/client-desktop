@@ -136,51 +136,36 @@ class TestDatabase(TestCaseApplication):
         keys = [ColumnValue(MetadataTable.ColumnEnum.KEY, "key1")]
         data = (ColumnValue(MetadataTable.ColumnEnum.VALUE, "value1"), )
 
-        # noinspection PyProtectedMember
-        logger = db._logger
-        logger.debug("-" * 80)
+        row_id_1 = db[MetadataTable].save(-1, keys, data, fallback_search=True)
+        self.assertLess(0, row_id_1)
 
-        # INSERT: new row
-        row_id_1 = db[MetadataTable].save(-1, keys, data)
-        self.assertTrue(row_id_1 > 0)
+        self.assertEqual(
+            row_id_1,
+            db[MetadataTable].save(-1, keys, data, fallback_search=True))
+        self.assertEqual(
+            row_id_1,
+            db[MetadataTable].save(row_id_1, keys, data, fallback_search=True))
+        self.assertEqual(
+            row_id_1,
+            db[MetadataTable].save(
+                row_id_1 * 10000,
+                keys,
+                data,
+                fallback_search=True))
 
-        logger.debug("-" * 80)
-
-        # INSERT + SELECT + UPDATE: row exists, only the key value is known,
-        row_id_2 = db[MetadataTable].save(-1, keys, data)
-        self.assertEqual(row_id_1, row_id_2)
-
-        logger.debug("-" * 80)
-
-        # UPDATE: row exists, row_id is known
-        row_id_2 = db[MetadataTable].save(row_id_2, keys, data)
-        self.assertEqual(row_id_1, row_id_2)
-
-        logger.debug("-" * 80)
-
-        # UPDATE + INSERT: invalid row_id
-        keys = [ColumnValue(MetadataTable.ColumnEnum.KEY, "key2")]
-        row_id_3 = db[MetadataTable].save(row_id_2 * 10000, keys, data)
-        self.assertNotEqual(row_id_3, row_id_2 * 10000)
-        self.assertLess(row_id_2, row_id_3)
-
-        logger.debug("-" * 80)
-
-        # UPDATE + INSERT + UPDATE: duplicated key and invalid row_id
-        self.assertRaises(
-            Database.SaveError,
-            db[MetadataTable].save,
-            row_id_3 * 10000,
-            keys,
-            data)
-
-        logger.debug("-" * 80)
-
-        # UPDATE: OK
-        row_id_2 = db[MetadataTable].save(row_id_2, keys, data)
-        self.assertEqual(row_id_1, row_id_2)
-
-        logger.debug("-" * 80)
+        self.assertEqual(
+            -1,
+            db[MetadataTable].save(-1, keys, data, fallback_search=False))
+        self.assertEqual(
+            row_id_1,
+            db[MetadataTable].save(row_id_1, keys, data, fallback_search=False))
+        self.assertEqual(
+            -1,
+            db[MetadataTable].save(
+                row_id_1 * 10000,
+                keys,
+                data,
+                fallback_search=False))
 
     def test_load(self) -> None:
         db = self._create(Path("load.db"))
@@ -189,44 +174,77 @@ class TestDatabase(TestCaseApplication):
         keys = [ColumnValue(MetadataTable.ColumnEnum.KEY, "key1")]
         data = (ColumnValue(MetadataTable.ColumnEnum.VALUE, "value1"), )
 
-        # noinspection PyProtectedMember
-        logger = db._logger
-        logger.debug("-" * 80)
-
-        row_id_1 = db[MetadataTable].load(-1, keys, data)
-        self.assertEqual(-1, row_id_1)
-
-        logger.debug("-" * 80)
+        self.assertEqual(
+            -1,
+            db[MetadataTable].load(-1, keys, data, fallback_search=True))
+        self.assertEqual(
+            -1,
+            db[MetadataTable].load(-1, keys, data, fallback_search=False))
 
         row_id_1 = db[MetadataTable].save(-1, keys, data)
-        self.assertTrue(row_id_1 > 0)
+        self.assertLess(0, row_id_1)
+
+        ####
 
         for c in data:
             c.value = None
-        row_id_2 = db[MetadataTable].load(row_id_1, keys, data)
-        self.assertEqual(row_id_1, row_id_2)
+        self.assertEqual(
+            row_id_1,
+            db[MetadataTable].load(row_id_1, keys, data, fallback_search=True))
         for c in data:
             self.assertIsNotNone(c.value)
-
-        logger.debug("-" * 80)
 
         for c in data:
             c.value = None
-        row_id_2 = db[MetadataTable].load(-1, keys, data)
-        self.assertEqual(row_id_1, row_id_2)
+        self.assertEqual(
+            row_id_1,
+            db[MetadataTable].load(row_id_1, keys, data, fallback_search=False))
         for c in data:
             self.assertIsNotNone(c.value)
 
-        logger.debug("-" * 80)
+        ####
 
         for c in data:
             c.value = None
-        row_id_2 = db[MetadataTable].load(row_id_1 * 10000, keys, data)
-        self.assertEqual(row_id_1, row_id_2)
+        self.assertEqual(
+            row_id_1,
+            db[MetadataTable].load(-1, keys, data, fallback_search=True))
         for c in data:
             self.assertIsNotNone(c.value)
 
-        logger.debug("-" * 80)
+        for c in data:
+            c.value = None
+        self.assertEqual(
+            row_id_1,
+            db[MetadataTable].load(-1, keys, data, fallback_search=False))
+        for c in data:
+            self.assertIsNotNone(c.value)
+
+        ####
+
+        for c in data:
+            c.value = None
+        self.assertEqual(
+            row_id_1,
+            db[MetadataTable].load(
+                row_id_1 * 10000,
+                keys,
+                data,
+                fallback_search=True))
+        for c in data:
+            self.assertIsNotNone(c.value)
+
+        for c in data:
+            c.value = None
+        self.assertEqual(
+            -1,
+            db[MetadataTable].load(
+                row_id_1 * 10000,
+                keys,
+                data,
+                fallback_search=False))
+        for c in data:
+            self.assertIsNone(c.value)
 
     def _fill_db(self, db: Database, coin_list: CoinList) -> None:
         for coin in coin_list:

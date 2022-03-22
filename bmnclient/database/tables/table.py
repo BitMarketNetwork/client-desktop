@@ -183,7 +183,7 @@ class AbstractTable(metaclass=TableMeta):
         assert row_id > 0
         with self._database.transaction(allow_in_transaction=True) as c:
             c.execute(
-                f"UPDATE {self}"
+                f"UPDATE OR IGNORE {self}"
                 f" SET {Column.joinSet(c.column for c in columns)}"
                 f" WHERE {self.ColumnEnum.ROW_ID} == ?",
                 [*(c.value for c in columns), row_id])
@@ -196,38 +196,44 @@ class AbstractTable(metaclass=TableMeta):
             self,
             row_id: int,
             key_columns: Sequence[ColumnValue],
-            data_columns: Sequence[ColumnValue]) -> int:
+            data_columns: Sequence[ColumnValue],
+            *,
+            fallback_search: bool = False) -> int:
         with self._database.transaction(allow_in_transaction=True) as c:
             # row id is defined and row found
-            if row_id > 0 and self.update(row_id, data_columns):
-                return row_id
+            if row_id > 0:
+                if self.update(row_id, data_columns):
+                    return row_id
+                if not fallback_search:
+                    return -1
 
             # row id not defined or row id not found (deleted row)
-            new_row_id = self.insert([*chain(key_columns, data_columns)])
+            new_row_id = self.insert([*key_columns, *data_columns])
             if new_row_id > 0:
                 return new_row_id
+            if not fallback_search:
+                return -1
 
             # row with UNIQUE columns already exists
 
             # row not defined
-            if row_id <= 0:
-                c.execute(
-                    f"SELECT {self.ColumnEnum.ROW_ID}"
-                    f" FROM {self}"
-                    f" WHERE {Column.joinWhere(c.column for c in key_columns)}"
-                    f" LIMIT 1",
-                    [c.value for c in key_columns])
-                value = c.fetchone()
-                if value is None or value[0] <= 0:
-                    row_id = -1
-                else:
-                    row_id = value[0]
+            c.execute(
+                f"SELECT {self.ColumnEnum.ROW_ID}"
+                f" FROM {self}"
+                f" WHERE {Column.joinWhere(c.column for c in key_columns)}"
+                f" LIMIT 1",
+                [c.value for c in key_columns])
+            value = c.fetchone()
+            if value is None or value[0] <= 0:
+                row_id = -1
+            else:
+                row_id = value[0]
 
             # row id is defined and row found
             if row_id > 0 and self.update(row_id, data_columns):
                 return row_id
 
-            raise self._database.SaveError(
+            raise self._database.engine.IntegrityError(
                 "row in table '{}' not found where: {}"
                 .format(
                     self,
@@ -239,7 +245,9 @@ class AbstractTable(metaclass=TableMeta):
     def load(self,
              row_id: int,
              key_columns: Sequence[ColumnValue],
-             data_columns: Sequence[ColumnValue]) -> int:
+             data_columns: Sequence[ColumnValue],
+             *,
+             fallback_search: bool = False) -> int:
         with self._database.transaction(allow_in_transaction=True) as c:
             # select by row_id
             if row_id > 0:
@@ -251,24 +259,24 @@ class AbstractTable(metaclass=TableMeta):
                     [row_id])
                 value = c.fetchone()
                 if value is None:
-                    row_id = -1
+                    if not fallback_search:
+                        return -1
 
             # select by key_columns
-            if row_id <= 0:
-                columns = [
-                    self.ColumnEnum.ROW_ID,
-                    *(c.column for c in data_columns)]
-                c.execute(
-                    f"SELECT {Column.join(columns)}"
-                    f" FROM {self}"
-                    f" WHERE {Column.joinWhere(c.column for c in key_columns)}"
-                    f" LIMIT 1",
-                    [c.value for c in key_columns])
-                value = c.fetchone()
-                if value is None or value[0] <= 0:
-                    return -1
-                row_id = value[0]
-                value = value[1:]
+            columns = [
+                self.ColumnEnum.ROW_ID,
+                *(c.column for c in data_columns)]
+            c.execute(
+                f"SELECT {Column.join(columns)}"
+                f" FROM {self}"
+                f" WHERE {Column.joinWhere(c.column for c in key_columns)}"
+                f" LIMIT 1",
+                [c.value for c in key_columns])
+            value = c.fetchone()
+            if value is None or value[0] <= 0:
+                return -1
+            row_id = value[0]
+            value = value[1:]
 
         for i in range(len(data_columns)):
             data_columns[i].value = value[i]
@@ -279,7 +287,8 @@ class AbstractTable(metaclass=TableMeta):
             obj: Serializable,
             key_columns: Sequence[ColumnValue],
             *,
-            use_row_id: bool = True) -> int:
+            use_row_id: bool = True,
+            fallback_search: bool = False) -> int:
         assert self.ColumnEnum.ROW_ID not in (c.column for c in key_columns)
 
         source_data = obj.serialize(
@@ -293,17 +302,27 @@ class AbstractTable(metaclass=TableMeta):
                     column,
                     source_data[column.name]))
 
+        row_id = self.save(
+            obj.rowId if use_row_id else -1,
+            key_columns,
+            data_columns,
+            fallback_search=fallback_search)
+        if row_id <= 0:
+            raise self._database.engine.IntegrityError(
+                "failed to save serializable object '{}'"
+                .format(obj.__class__.__name__))
         if use_row_id:
-            obj.rowId = self.save(obj.rowId, key_columns, data_columns)
-            return obj.rowId
-        else:
-            return self.save(-1, key_columns, data_columns)
+            obj.rowId = row_id
+
+        return row_id
 
     def loadSerializable(
             self,
             obj: Union[Serializable, Type[Serializable]],
             key_columns: Sequence[ColumnValue],
-            *cls_args) -> Optional[Serializable]:
+            *cls_args,
+            use_row_id: bool = True,
+            fallback_search: bool = False) -> Optional[Serializable]:
         assert self.ColumnEnum.ROW_ID not in (c.column for c in key_columns)
 
         data_columns = []
@@ -312,13 +331,25 @@ class AbstractTable(metaclass=TableMeta):
                 data_columns.append(ColumnValue(column, None))
 
         if isinstance(obj, Serializable):
-            row_id = self.load(obj.rowId, key_columns, data_columns)
+            row_id = self.load(
+                obj.rowId if use_row_id else -1,
+                key_columns,
+                data_columns,
+                fallback_search=fallback_search)
             if row_id > 0:
                 obj.deserializeUpdate(
                     DeserializeFlag.DATABASE_MODE,
                     {c.column.name: c.value for c in data_columns})
+            elif use_row_id and obj.rowId > 0:
+                raise self._database.engine.IntegrityError(
+                    "failed to load serializable object '{}'"
+                    .format(obj.__class__.__name__))
         elif issubclass(obj, Serializable):
-            row_id = self.load(-1, key_columns, data_columns)
+            row_id = self.load(
+                -1,
+                key_columns,
+                data_columns,
+                fallback_search=fallback_search)
             if row_id > 0:
                 obj = obj.deserialize(
                     DeserializeFlag.DATABASE_MODE,
@@ -330,7 +361,8 @@ class AbstractTable(metaclass=TableMeta):
         if row_id <= 0:
             return None
 
-        obj.rowId = row_id
+        if use_row_id:
+            obj.rowId = row_id
         return obj
 
     def _deserialize(

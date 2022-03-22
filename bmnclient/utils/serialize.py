@@ -70,6 +70,8 @@ class Serializable:
 
     @rowId.setter
     def rowId(self, value: int) -> None:
+        if self.__row_id > 0:
+            raise RuntimeError("row id can't be changed")
         self.__row_id = value
 
     @classproperty
