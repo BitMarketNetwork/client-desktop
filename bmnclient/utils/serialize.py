@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import Flag, auto
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 from .class_property import classproperty
 from .string import StringUtils
@@ -108,7 +108,7 @@ class Serializable:
             return value.serialize(flags)
         if isinstance(value, (int, str, type(None))):
             return value
-        if isinstance(value, list):
+        if isinstance(value, Iterable):
             return [self._serializeProperty(flags, key, v) for v in value]
 
         raise TypeError(

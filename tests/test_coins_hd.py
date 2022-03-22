@@ -250,6 +250,8 @@ class TestHd(TestCaseApplication):
 
     def test_hd_address_index(self) -> None:
         coin = Bitcoin(model_factory=self._application.modelFactory)
+        self.assertTrue(coin.save())
+
         root_node = HdNode.deriveRootNode(urandom(64))
         self.assertIsNotNone(root_node)
         self.assertTrue(coin.deriveHdNode(root_node))
@@ -266,7 +268,7 @@ class TestHd(TestCaseApplication):
                         account=account,
                         is_change=is_change)
                     self.assertIsNotNone(address)
-                    coin.appendAddress(address)
+                    self.assertTrue(address.save())
                     self.assertEqual(
                         i + 1,
                         coin.nextHdIndex(purpose, account, change))

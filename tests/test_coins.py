@@ -136,6 +136,7 @@ def fillCoin(
     coin.unverifiedOffset = "u_offset" + str(randint(1000, 100000))
     coin.unverifiedHash = "u_hash" + str(randint(1000, 100000))
     coin.verifiedHeight = randint(1000, 100000)
+    owner.assertTrue(coin.save())
 
     for address_index in range(1, address_count + 1):
         address = coin.deriveHdAddress(
@@ -148,6 +149,7 @@ def fillCoin(
             history_first_offset="first_" + str(randint(1000, 100000)),
             history_last_offset="last_" + str(randint(1000, 100000)))
         owner.assertIsNotNone(address)
+        owner.assertTrue(address.save())
 
         for tx_index in range(1, tx_count + 1):
             input_list = []
@@ -203,7 +205,6 @@ def fillCoin(
             amount=randint(10000, 1000000)) for i in range(1, 3)]
 
         owner.assertEqual(tx_count, len(address.txList))
-        coin.appendAddress(address)
     return coin
 
 
@@ -356,11 +357,12 @@ class TestCoins(TestCaseApplication):
     def test_mempool_address_lists(self) -> None:
         for limit in range(201):
             coin = Bitcoin(model_factory=self._application.modelFactory)
+            self.assertTrue(coin.save())
             for i in range(limit):
                 address = coin.Address.createNullData(
                     coin,
                     name="address_{:06d}".format(i))
-                self.assertTrue(coin.appendAddress(address))
+                self.assertTrue(address.save())
 
             limit = randint(1, 10)
 
@@ -399,7 +401,7 @@ class TestCoins(TestCaseApplication):
                 address = coin.Address.createNullData(
                     coin,
                     name="address_new_{:06d}".format(i))
-                self.assertTrue(coin.appendAddress(address))
+                self.assertTrue(address.save())
 
                 mempool_list = coin.createMempoolAddressLists(limit)
                 # noinspection PyProtectedMember
@@ -420,6 +422,7 @@ class TestCoins(TestCaseApplication):
         # pprint(data, sort_dicts=False)
 
         coin_new = coin_type(model_factory=self._application.modelFactory)
+        self.assertTrue(coin_new.save())
         coin_new.deserializeUpdate(d_flags, data)
 
         # coin compare
@@ -485,6 +488,7 @@ class TestCoins(TestCaseApplication):
 
     def test_serialization(self) -> None:
         for coin in CoinList(model_factory=self._application.modelFactory):
+            self.assertTrue(coin.save())
             for d_flag in DeserializeFlag:
                 self._test_serialization(d_flag, coin.__class__)
 
@@ -496,6 +500,7 @@ class TestTxFactory(TestCaseApplication):
         root_node = HdNode.deriveRootNode(urandom(64))
         self.assertIsNotNone(root_node)
         self.assertTrue(self._coin.deriveHdNode(root_node))
+        self.assertTrue(self._coin.save())
 
     def _createUtxoList(
             self,
@@ -670,7 +675,7 @@ class TestTxFactory(TestCaseApplication):
         self.assertIsNotNone(receiver_address)
 
         self._createUtxoList(address, amount_list)
-        self._coin.appendAddress(address)
+        self.assertTrue(address.save())
         self.assertEqual(1, len(self._coin.addressList))
 
         txf = self._coin.txFactory
