@@ -246,10 +246,9 @@ class AbstractTable(metaclass=TableMeta):
                 "row in table '{}' not found where: {}"
                 .format(
                     self,
-                    " and ".join(
-                        f"{c.column} == '{str(c.value)}'"
-                        for c in key_columns
-                    )))
+                    ", ".join(
+                        f"{c.column} == '{str(c.value)}'" for c in key_columns)
+                ))
 
     def load(self,
              row_id: int,
@@ -291,8 +290,8 @@ class AbstractTable(metaclass=TableMeta):
                 row_id = value[0]
                 value = value[1:]
 
-        for i in range(len(data_columns)):
-            data_columns[i].value = value[i]
+        for c, v in zip(data_columns, value):
+            c.value = v
         return row_id
 
 
@@ -317,7 +316,7 @@ class AbstractSerializableTable(AbstractTable, name=""):
         for name, value in source_data.items():
             column = self.ColumnEnum.get(name)
             if column and column not in key_columns:
-                data_columns.append(ColumnValue( column, value))
+                data_columns.append(ColumnValue(column, value))
 
         row_id = self.save(
             object_.rowId if use_row_id else -1,
@@ -426,21 +425,20 @@ class RowListProxy(MutableSequence):
         self._type_args = type_args if type_args else []
 
         self._table = table
-        self._where_args = where_args if where_args else tuple()
+        self._where_args = where_args if where_args else []
 
-        self._column_list = []
-        for column in self._table.ColumnEnum:
-            if column.name in self._type.serializeMap:
+        self._column_list: List[Column] = [self._table.ColumnEnum.ROW_ID]
+        for name in self._type.serializeMap.keys():
+            column = self._table.ColumnEnum.get(name)
+            if column:
                 self._column_list.append(column)
-        if self._table.ColumnEnum.ROW_ID not in self._column_list:
-            self._column_list.insert(0, self._table.ColumnEnum.ROW_ID)
 
         column_expression = Column.join(self._column_list)
         order_expression = SortOrder.join(
             order_columns if order_columns else
             [(self._table.ColumnEnum.ROW_ID, SortOrder.ASC)])
         if where_expression:
-            where_expression = " WHERE" + where_expression
+            where_expression = " WHERE " + where_expression
 
         self._query_length = (
             f"SELECT COUNT(*)"
@@ -461,10 +459,14 @@ class RowListProxy(MutableSequence):
     def _deserialize(
             self,
             row: Tuple[Optional[str, int]]) -> Optional[Serializable]:
+        it = iter(zip((c.name for c in self._column_list), row))
+        row_id = next(it)[1]
+
         return self._type.deserialize(
             DeserializeFlag.DATABASE_MODE,
-            dict(zip((c.name for c in self._column_list), row)),
-            *self._type_args)
+            dict(it),
+            *self._type_args,
+            row_id=row_id)
 
     def __len__(self) -> int:
         with self._table.database.transaction(allow_in_transaction=True) as c:
@@ -489,17 +491,13 @@ class RowListProxy(MutableSequence):
             return self._deserialize(row)
 
     def __setitem__(self, index: int, value) -> None:
-        # TODO
         raise NotImplementedError
 
     def __delitem__(self, index: int) -> None:
-        # TODO
         raise NotImplementedError
 
     def insert(self, index: int, value: Serializable) -> None:
-        # TODO
         raise NotImplementedError
 
     def append(self, value: Serializable) -> None:
-        # TODO
         raise NotImplementedError
