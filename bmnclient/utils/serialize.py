@@ -42,7 +42,7 @@ class DeserializeFlag(Flag):
 class Serializable:
     __serialize_map = None
 
-    def __init__(self, *args, row_id: int = -1, **kwargs) -> None:
+    def __init__(self, *args, row_id: int, **kwargs) -> None:
         self.__row_id = row_id
 
     def __update__(self, **kwargs) -> bool:
@@ -123,13 +123,14 @@ class Serializable:
             cls,
             flags: DeserializeFlag,
             source_data: DeserializedDict,
-            *cls_args) -> Optional[Serializable]:
+            *cls_args,
+            row_id: int) -> Optional[Serializable]:
         cls_kwargs = {
             cls.__keyToKwarg(key):
-                cls._deserializeProperty(flags, None, key, value, *cls_args)
+                cls.deserializeProperty(flags, None, key, value, *cls_args)
             for key, value in source_data.items()
         }
-        return cls(*cls_args, **cls_kwargs)
+        return cls(*cls_args, row_id=row_id, **cls_kwargs)
 
     def deserializeUpdate(
             self,
