@@ -43,6 +43,8 @@ class Connection(_engine.Connection):
 
 
 class Database:
+    __initialized = False
+
     _VERSION: Final = 2
 
     # https://sqlite.org/pragma.html
@@ -65,7 +67,7 @@ class Database:
     )
 
     class Error(_engine.OperationalError):
-        def __init__(self, value: str, query: Optional[str]):
+        def __init__(self, value: str, query: Optional[str] = None):
             super().__init__(value)
             self._query = query
 
@@ -143,8 +145,11 @@ class Database:
         try:
             file_path = self._file_path.resolve(strict=False).as_uri()
             file_path += "?vfs=bmn_vfs"  # TODO
-            _engine.vfs_register(Vfs(self._application))
-            _engine.enable_callback_tracebacks(Debug.isEnabled)
+
+            if not self.__class__.__initialized:
+                self.__class__.__initialized = True
+                _engine.enable_callback_tracebacks(Debug.isEnabled)
+                _engine.vfs_register(Vfs(self._application))  # TODO
 
             # noinspection PyTypeChecker
             # TODO PyTypeChecker:
