@@ -177,9 +177,6 @@ class AbstractTable(metaclass=TableMeta):
     def close(self, cursor: Cursor) -> None:
         pass
 
-    def rowListProxy(self, *args, **kwargs) -> RowListProxy:
-        raise NotImplementedError
-
     def insert(self, columns: Sequence[ColumnValue]) -> int:
         with self._database.transaction(allow_in_transaction=True) as c:
             c.execute(
@@ -297,16 +294,21 @@ class AbstractTable(metaclass=TableMeta):
             data_columns[i].value = value[i]
         return row_id
 
+
+class AbstractSerializableTable(AbstractTable, name=""):
+    def rowListProxy(self, *args, **kwargs) -> RowListProxy:
+        raise NotImplementedError
+
     def saveSerializable(
             self,
-            obj: Serializable,
+            object_: Serializable,
             key_columns: Sequence[ColumnValue],
             *,
             use_row_id: bool = True,
             fallback_search: bool = False) -> int:
         assert self.ColumnEnum.ROW_ID not in (c.column for c in key_columns)
 
-        source_data = obj.serialize(
+        source_data = object_.serialize(
             SerializeFlag.DATABASE_MODE |
             SerializeFlag.EXCLUDE_SUBCLASSES)
         data_columns: List[ColumnValue] = []
@@ -318,22 +320,22 @@ class AbstractTable(metaclass=TableMeta):
                     source_data[column.name]))
 
         row_id = self.save(
-            obj.rowId if use_row_id else -1,
+            object_.rowId if use_row_id else -1,
             key_columns,
             data_columns,
             fallback_search=fallback_search)
         if row_id <= 0:
             raise self._database.engine.IntegrityError(
                 "failed to save serializable object '{}'"
-                .format(obj.__class__.__name__))
+                .format(object_.__class__.__name__))
         if use_row_id:
-            obj.rowId = row_id
+            object_.rowId = row_id
 
         return row_id
 
     def loadSerializable(
             self,
-            obj: Union[Serializable, Type[Serializable]],
+            object_: Union[Serializable, Type[Serializable]],
             key_columns: Sequence[ColumnValue],
             *cls_args,
             use_row_id: bool = True,
@@ -342,31 +344,31 @@ class AbstractTable(metaclass=TableMeta):
 
         data_columns = []
         for column in self.ColumnEnum:
-            if column.name in obj.serializeMap.keys():
+            if column.name in object_.serializeMap.keys():
                 data_columns.append(ColumnValue(column, None))
 
-        if isinstance(obj, Serializable):
+        if isinstance(object_, Serializable):
             row_id = self.load(
-                obj.rowId if use_row_id else -1,
+                object_.rowId if use_row_id else -1,
                 key_columns,
                 data_columns,
                 fallback_search=fallback_search)
             if row_id > 0:
-                obj.deserializeUpdate(
+                object_.deserializeUpdate(
                     DeserializeFlag.DATABASE_MODE,
                     {c.column.name: c.value for c in data_columns})
-            elif use_row_id and obj.rowId > 0:
+            elif use_row_id and object_.rowId > 0:
                 raise self._database.engine.IntegrityError(
                     "failed to load serializable object '{}'"
-                    .format(obj.__class__.__name__))
-        elif issubclass(obj, Serializable):
+                    .format(object_.__class__.__name__))
+        elif issubclass(object_, Serializable):
             row_id = self.load(
                 -1,
                 key_columns,
                 data_columns,
                 fallback_search=fallback_search)
             if row_id > 0:
-                obj = obj.deserialize(
+                object_ = object_.deserialize(
                     DeserializeFlag.DATABASE_MODE,
                     {c.column.name: c.value for c in data_columns},
                     *cls_args)
@@ -377,69 +379,8 @@ class AbstractTable(metaclass=TableMeta):
             return None
 
         if use_row_id:
-            obj.rowId = row_id
-        return obj
-
-    def _deserialize(
-            self,
-            cursor: Cursor,
-            source_type: Type[Serializable],
-            key_columns: Dict[Column, Any],
-            order_columns: Iterable[Tuple[Column, SortOrder]] = tuple(),
-            *,
-            limit: int = -1,
-            return_key_columns: bool = False,
-            **options
-    ) -> Generator[Dict[str, Union[int, str]], None, None]:
-        assert self.ColumnEnum.ROW_ID not in key_columns
-        column_list = [self.ColumnEnum.ROW_ID]
-        for column in self.ColumnEnum:
-            if column not in key_columns:
-                if column.name in source_type.serializeMap:
-                    column_list.append(column)
-
-        query, query_args = self._deserializeStatement(
-            column_list,
-            key_columns,
-            **options)
-
-        if order_columns:
-            query += f" ORDER BY {SortOrder.join(order_columns)}"
-
-        if limit >= 0:
-            query += f" LIMIT ?"
-            query_args.append(limit)
-
-        for result in cursor.execute(query, query_args):
-            if return_key_columns:
-                yield dict(chain(
-                    zip(
-                        (c.name for c in key_columns.keys()),
-                        key_columns.values()),
-                    zip(
-                        (c.name for c in column_list),
-                        result)
-                ))
-            else:
-                yield dict(zip(
-                    (c.name for c in column_list),
-                    result)
-                )
-
-    def _deserializeStatement(
-            self,
-            column_list: List[Column],
-            key_columns: Dict[Column, Any],
-            **_options
-    ) -> Tuple[str, List[Any]]:
-        return (
-            (
-                f"SELECT {Column.join(column_list)}"
-                f" FROM {self}"
-                f" WHERE {Column.joinWhere(key_columns.keys())}"
-            ),
-            [*key_columns.values()]
-        )
+            object_.rowId = row_id
+        return object_
 
 
 # Performance: https://www.sqlite.org/autoinc.html
@@ -449,7 +390,7 @@ class RowListProxy(MutableSequence):
             *,
             type_: Type[Serializable],
             type_args: Optional[Sequence[Any]] = None,
-            table: AbstractTable,
+            table: AbstractSerializableTable,
             where_expression: Optional[str] = None,
             where_args: Optional[Sequence[Union[str, int]]],
             order_columns: Optional[Sequence[Tuple[Column, SortOrder]]] = None

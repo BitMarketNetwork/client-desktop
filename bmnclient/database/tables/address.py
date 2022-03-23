@@ -3,9 +3,12 @@ from __future__ import annotations
 import glob
 from typing import TYPE_CHECKING
 
-from .table import AbstractTable, ColumnEnum, ColumnValue, RowListProxy
+from .table import (
+    AbstractSerializableTable,
+    ColumnEnum,
+    ColumnValue,
+    RowListProxy)
 from ...coins.hd import HdNode
-from ...utils import DeserializeFlag
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -14,7 +17,7 @@ if TYPE_CHECKING:
     from ...coins.abstract import Coin
 
 
-class AddressListTable(AbstractTable, name="addresses"):
+class AddressListTable(AbstractSerializableTable, name="addresses"):
     class ColumnEnum(ColumnEnum):
         ROW_ID: Final = ()
         COIN_ROW_ID: Final = (

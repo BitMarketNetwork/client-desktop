@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .table import AbstractTable, ColumnEnum, RowListProxy
+from .table import AbstractSerializableTable, ColumnEnum, RowListProxy
 
 if TYPE_CHECKING:
     from typing import Final
 
 
-class CoinListTable(AbstractTable, name="coins"):
+class CoinListTable(AbstractSerializableTable, name="coins"):
     class ColumnEnum(ColumnEnum):
         ROW_ID: Final = ()
 

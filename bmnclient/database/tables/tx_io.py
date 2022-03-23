@@ -4,7 +4,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 from .table import (
-    AbstractTable,
+    AbstractSerializableTable,
     ColumnEnum,
     ColumnValue,
     RowListProxy,
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from ...coins.abstract import Coin
 
 
-class TxIoListTable(AbstractTable, name="transactions_io"):
+class TxIoListTable(AbstractSerializableTable, name="transactions_io"):
     class IoType(Enum):
         INPUT: Final = "input"
         OUTPUT: Final = "output"

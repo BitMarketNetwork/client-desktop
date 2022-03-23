@@ -2,15 +2,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .table import AbstractTable, Column, ColumnEnum, ColumnValue, RowListProxy
+from .table import (
+    AbstractSerializableTable,
+    Column,
+    ColumnEnum,
+    ColumnValue,
+    RowListProxy)
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
     from typing import Any, Final, List, Tuple
-    from .. import Cursor
 
 
-class AddressTxMapTable(AbstractTable, name="address_transaction_map"):
+class AddressTxMapTable(AbstractSerializableTable, name="address_transaction_map"):
     class ColumnEnum(ColumnEnum):
         ROW_ID: Final = ()
 

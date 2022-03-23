@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .table import (
-    AbstractTable,
+    AbstractSerializableTable,
     Column,
     ColumnEnum,
     ColumnValue,
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from ...coins.abstract import Coin
 
 
-class TxListTable(AbstractTable, name="transactions"):
+class TxListTable(AbstractSerializableTable, name="transactions"):
     class ColumnEnum(ColumnEnum):
         ROW_ID: Final = ()
         COIN_ROW_ID: Final = (
