@@ -90,7 +90,7 @@ class _Tx(CoinObject):
         return hash((super().__hash__(), self._name, ))
 
     @classmethod
-    def _deserializeProperty(
+    def deserializeProperty(
             cls,
             flags: DeserializeFlag,
             self: Optional[_Tx],
@@ -103,7 +103,7 @@ class _Tx(CoinObject):
                 return cls.Io.deserialize(flags, value, coin)
             elif isinstance(value, cls.Io):
                 return value
-        return super()._deserializeProperty(flags, self, key, value, *cls_args)
+        return super().deserializeProperty(flags, self, key, value, *cls_args)
 
     @serializable
     @property

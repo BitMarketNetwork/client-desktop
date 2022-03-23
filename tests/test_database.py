@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from bmnclient.coins.list import CoinList
 from bmnclient.database import Cursor, Database
 from bmnclient.database.tables import (
+    AbstractSerializableTable,
     AddressListTable,
     AddressTxMapTable,
     CoinListTable,
@@ -13,6 +14,8 @@ from bmnclient.database.tables import (
     MetadataTable,
     TxIoListTable,
     TxListTable)
+from bmnclient.database.tables.table import ColumnEnum
+from bmnclient.utils import Serializable, serializable
 from tests.helpers import TestCaseApplication
 from tests.test_coins import fillCoin
 
@@ -245,6 +248,115 @@ class TestDatabase(TestCaseApplication):
                 fallback_search=False))
         for c in data:
             self.assertIsNone(c.value)
+
+    def test_serializable(self) -> None:
+        # noinspection PyAbstractClass
+        class Table(AbstractSerializableTable, name="table"):
+            class ColumnEnum(ColumnEnum):
+                ROW_ID = ()
+                V1 = ("v1", "TEXT NOT NULL UNIQUE")
+                V2 = ("v2", "TEXT NOT NULL")
+                V3 = ("v3", "TEXT NOT NULL")
+                V4 = ("v4", "TEXT NOT NULL")
+
+        owner = self
+        db = self._create(Path("serializable.db"))
+        table = Table(db)
+
+        class Object(Serializable):
+            def __init__(self, *, row_id: int = -1, **kwargs) -> None:
+                super().__init__(row_id=row_id)
+                owner.assertGreaterEqual(4, len(kwargs))
+
+                self._v1 = kwargs.get("v1", "1")
+
+                self.result = table.completeSerializable(
+                    self,
+                    row_id,
+                    (
+                        [] if row_id > 0
+                        else [ColumnValue(Table.ColumnEnum.V1, self.v1)]
+                    ),
+                    kwargs)
+
+                self._v2 = kwargs.get("v2", "2")
+                self._v3 = kwargs.get("v3", "3")
+                self._v4 = kwargs.get("v4", "4")
+
+            @serializable
+            @property
+            def v1(self) -> str:
+                return self._v1
+
+            @serializable
+            @property
+            def v2(self) -> str:
+                return self._v2
+
+            @v2.setter
+            def v2(self, v: str) -> None:
+                self._v2 = v
+
+            @serializable
+            @property
+            def v3(self) -> str:
+                return self._v3
+
+            @v3.setter
+            def v3(self, v: str) -> None:
+                self._v3 = v
+
+            @serializable
+            @property
+            def v4(self) -> str:
+                return self._v4
+
+            @v4.setter
+            def v4(self, v: str) -> None:
+                self._v4 = v
+
+        self.assertTrue(db.open())
+        with db.transaction() as c:
+            c.execute(repr(table))
+
+        o1 = Object(v1="100", v2="200", v3="300", v4="400")
+        self.assertEqual(0, o1.result)
+        o1_row_id = table.saveSerializable(o1, [])
+        self.assertLess(0, o1_row_id)
+        self.assertEqual(o1_row_id, o1.rowId)
+        self.assertEqual(o1_row_id, table.saveSerializable(o1, []))
+
+        o2 = table.loadSerializable(
+            Object,
+            [ColumnValue(Table.ColumnEnum.V1, o1.v1)])
+        self.assertIsInstance(o2, Object)
+        self.assertEqual(0, o2.result)
+        self.assertEqual(o1.rowId, o2.rowId)
+        self.assertEqual(o1.v1, o2.v1)
+        self.assertEqual(o1.v2, o2.v2)
+        self.assertEqual(o1.v3, o2.v3)
+        self.assertEqual(o1.v4, o2.v4)
+
+        o2.v2 *= 10
+        self.assertIs(
+            o2,
+            table.loadSerializable(
+                o2,
+                [ColumnValue(Table.ColumnEnum.V1, o1.v1)]))
+        self.assertEqual(0, o1.result)
+        self.assertEqual(o1.v2, o2.v2)
+
+        o3 = Object(v1=o1.v1)
+        self.assertEqual(3, o3.result)
+        self.assertEqual(o1.rowId, o3.rowId)
+        self.assertEqual(o1.v1, o3.v1)
+        self.assertEqual(o1.v2, o3.v2)
+        self.assertEqual(o1.v3, o3.v3)
+        self.assertEqual(o1.v4, o3.v4)
+
+        o4 = Object(v1=o1.v1*100)
+        self.assertEqual(-1, o4.result)
+        self.assertEqual(-1, o4.rowId)
 
     def _fill_db(self, db: Database, coin_list: CoinList) -> None:
         for coin in coin_list:

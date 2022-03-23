@@ -70,9 +70,10 @@ class Serializable:
 
     @rowId.setter
     def rowId(self, value: int) -> None:
-        if self.__row_id > 0:
-            raise RuntimeError("row id can't be changed")
-        self.__row_id = value
+        if self.__row_id != value:
+            if self.__row_id > 0:
+                raise RuntimeError("row id can't be changed")
+            self.__row_id = value
 
     @classproperty
     def serializeMap(cls) -> Dict[str, str]: # noqa
@@ -92,14 +93,14 @@ class Serializable:
 
     def serialize(self, flags: SerializeFlag) -> DeserializedDict:
         return {
-            key: self._serializeProperty(
+            key: self.serializeProperty(
                 flags,
                 key,
                 getattr(self, data["name"]))
             for (key, data) in self.serializeMap.items()
         }
 
-    def _serializeProperty(
+    def serializeProperty(
             self,
             flags: SerializeFlag,
             key: str,
@@ -111,7 +112,7 @@ class Serializable:
         if isinstance(value, (int, str, type(None))):
             return value
         if isinstance(value, Iterable):
-            return [self._serializeProperty(flags, key, v) for v in value]
+            return [self.serializeProperty(flags, key, v) for v in value]
 
         raise TypeError(
             "can't serialize value type '{}' for key '{}'"
@@ -136,13 +137,13 @@ class Serializable:
             source_data: DeserializedDict) -> bool:
         kwargs = {
             self.__keyToKwarg(key):
-                self._deserializeProperty(flags, self, key, value)
+                self.deserializeProperty(flags, self, key, value)
             for key, value in source_data.items()
         }
         return self.__update__(**kwargs)
 
     @classmethod
-    def _deserializeProperty(
+    def deserializeProperty(
             cls,
             flags: DeserializeFlag,
             self: Optional[Serializable],
@@ -153,7 +154,7 @@ class Serializable:
             return value
         if isinstance(value, list):
             return [
-                cls._deserializeProperty(flags, self, key, v, *cls_args)
+                cls.deserializeProperty(flags, self, key, v, *cls_args)
                 for v in value
             ]
 

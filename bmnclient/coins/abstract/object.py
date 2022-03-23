@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from typing import Any, Dict, Final, Generator, Optional, Tuple, Type
     from .coin import Coin
     from ...database import Database
-    from ...database.tables import AbstractTable
+    from ...database.tables import AbstractSerializableTable
     from ...utils.string import ClassStringKeyTuple
 
 
@@ -37,7 +37,7 @@ class CoinObjectModel:
 
 
 class CoinObject(Serializable):
-    _TABLE_TYPE: Optional[Type[AbstractTable]] = None
+    _TABLE_TYPE: Optional[Type[AbstractSerializableTable]] = None
 
     def __init__(self, coin: Coin, row_id: int = -1) -> None:
         super().__init__(row_id=row_id)
@@ -118,7 +118,7 @@ class CoinObject(Serializable):
                         self.rowId,
                         [ColumnValue(
                             column,
-                            self._serializeProperty(
+                            self.serializeProperty(
                                 SerializeFlag.DATABASE_MODE
                                 | SerializeFlag.EXCLUDE_SUBCLASSES,
                                 name,

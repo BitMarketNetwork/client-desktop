@@ -229,21 +229,18 @@ class AbstractTable(metaclass=TableMeta):
             # row with UNIQUE columns already exists
 
             # row not defined
-            c.execute(
-                f"SELECT {self.ColumnEnum.ROW_ID}"
-                f" FROM {self}"
-                f" WHERE {Column.joinWhere(c.column for c in key_columns)}"
-                f" LIMIT 1",
-                [c.value for c in key_columns])
-            value = c.fetchone()
-            if value is None or value[0] <= 0:
-                row_id = -1
-            else:
-                row_id = value[0]
-
-            # row id is defined and row found
-            if row_id > 0 and self.update(row_id, data_columns):
-                return row_id
+            if key_columns:
+                c.execute(
+                    f"SELECT {self.ColumnEnum.ROW_ID}"
+                    f" FROM {self}"
+                    f" WHERE {Column.joinWhere(c.column for c in key_columns)}"
+                    f" LIMIT 1",
+                    [c.value for c in key_columns])
+                value = c.fetchone()
+                if value is not None and value[0] >= 0:
+                    row_id = value[0]
+                    if row_id > 0 and self.update(row_id, data_columns):
+                        return row_id
 
             raise self._database.engine.IntegrityError(
                 "row in table '{}' not found where: {}"
@@ -273,22 +270,26 @@ class AbstractTable(metaclass=TableMeta):
                 if value is None:
                     if not fallback_search:
                         return -1
+                    row_id = -1
 
             # select by key_columns
-            columns = [
-                self.ColumnEnum.ROW_ID,
-                *(c.column for c in data_columns)]
-            c.execute(
-                f"SELECT {Column.join(columns)}"
-                f" FROM {self}"
-                f" WHERE {Column.joinWhere(c.column for c in key_columns)}"
-                f" LIMIT 1",
-                [c.value for c in key_columns])
-            value = c.fetchone()
-            if value is None or value[0] <= 0:
-                return -1
-            row_id = value[0]
-            value = value[1:]
+            if row_id <= 0:
+                if not key_columns:
+                    return -1
+                columns = [
+                    self.ColumnEnum.ROW_ID,
+                    *(c.column for c in data_columns)]
+                c.execute(
+                    f"SELECT {Column.join(columns)}"
+                    f" FROM {self}"
+                    f" WHERE {Column.joinWhere(c.column for c in key_columns)}"
+                    f" LIMIT 1",
+                    [c.value for c in key_columns])
+                value = c.fetchone()
+                if value is None or value[0] <= 0:
+                    return -1
+                row_id = value[0]
+                value = value[1:]
 
         for i in range(len(data_columns)):
             data_columns[i].value = value[i]
@@ -313,11 +314,10 @@ class AbstractSerializableTable(AbstractTable, name=""):
             SerializeFlag.EXCLUDE_SUBCLASSES)
         data_columns: List[ColumnValue] = []
 
-        for column in self.ColumnEnum:
-            if column.name in source_data and column not in key_columns:
-                data_columns.append(ColumnValue(
-                    column,
-                    source_data[column.name]))
+        for name, value in source_data.items():
+            column = self.ColumnEnum.get(name)
+            if column and column not in key_columns:
+                data_columns.append(ColumnValue( column, value))
 
         row_id = self.save(
             object_.rowId if use_row_id else -1,
@@ -343,8 +343,9 @@ class AbstractSerializableTable(AbstractTable, name=""):
         assert self.ColumnEnum.ROW_ID not in (c.column for c in key_columns)
 
         data_columns = []
-        for column in self.ColumnEnum:
-            if column.name in object_.serializeMap.keys():
+        for name in object_.serializeMap.keys():
+            column = self.ColumnEnum.get(name)
+            if column and column not in key_columns:
                 data_columns.append(ColumnValue(column, None))
 
         if isinstance(object_, Serializable):
@@ -357,6 +358,8 @@ class AbstractSerializableTable(AbstractTable, name=""):
                 object_.deserializeUpdate(
                     DeserializeFlag.DATABASE_MODE,
                     {c.column.name: c.value for c in data_columns})
+                if use_row_id:
+                    object_.rowId = row_id
             elif use_row_id and object_.rowId > 0:
                 raise self._database.engine.IntegrityError(
                     "failed to load serializable object '{}'"
@@ -371,16 +374,40 @@ class AbstractSerializableTable(AbstractTable, name=""):
                 object_ = object_.deserialize(
                     DeserializeFlag.DATABASE_MODE,
                     {c.column.name: c.value for c in data_columns},
-                    *cls_args)
+                    *cls_args,
+                    row_id=row_id if use_row_id else -1)
         else:
             row_id = -1
 
-        if row_id <= 0:
-            return None
+        return object_ if row_id > 0 else None
 
-        if use_row_id:
-            object_.rowId = row_id
-        return object_
+    def completeSerializable(
+            self,
+            object_: Serializable,
+            row_id: int,
+            key_columns: Sequence[ColumnValue],
+            kwargs: Dict[str, Any]) -> int:
+        data_columns = []
+        for name in object_.serializeMap.keys():
+            if name not in kwargs:
+                column = self.ColumnEnum.get(name)
+                if column is not None:
+                    data_columns.append(ColumnValue(column, None))
+        if not data_columns:
+            return 0
+
+        row_id = self.load(row_id, key_columns, data_columns)
+        if row_id <= 0:
+            return -1
+
+        object_.rowId = row_id
+        for c in data_columns:
+            kwargs[c.column.name] = object_.deserializeProperty(
+                DeserializeFlag.DATABASE_MODE,
+                object_,
+                c.column.name,
+                c.value)
+        return len(data_columns)
 
 
 # Performance: https://www.sqlite.org/autoinc.html
