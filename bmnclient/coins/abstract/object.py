@@ -9,7 +9,16 @@ from ...utils import Serializable, SerializeFlag
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Final, Generator, Optional, Tuple, Type
+    import logging
+    from typing import (
+        Any,
+        Dict,
+        Final,
+        Generator,
+        Optional,
+        Sequence,
+        Tuple,
+        Type)
     from .coin import Coin
     from ...database import Database
     from ...database.tables import AbstractSerializableTable
@@ -26,6 +35,10 @@ class CoinObjectModel:
         super().__init__(*args, **kwargs)
         self._logger = Logger.classLogger(self.__class__, *name_key_tuple)
         self._database = database
+
+    @property
+    def logger(self) -> logging.Logger:
+        return self._logger
 
     @property
     def database(self) -> Database:

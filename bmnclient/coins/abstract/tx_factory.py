@@ -73,7 +73,7 @@ class _TxFactory(CoinObject):
         self._subtract_fee = False
         self._fee_amount_per_byte = 103  # TODO
 
-        self._dummy_change_address = self._createDummyChangeAddress()
+        self._dummy_change_address: Optional[Coin.Address] = None
 
         self._mtx: Optional[_TxFactory.MutableTx] = None
 
@@ -448,7 +448,9 @@ class _TxFactory(CoinObject):
 
         output_list = [(self._receiver_address, self._receiver_amount)]
         if utxo_amount != self._receiver_amount or not self._subtract_fee:
-            if self._dummy_change_address is not None:
+            if not self._dummy_change_address:
+                self._dummy_change_address = self._createDummyChangeAddress()
+            if self._dummy_change_address:
                 output_list.append((
                     self._dummy_change_address,
                     self._coin.Currency.maxValue))

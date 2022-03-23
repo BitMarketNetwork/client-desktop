@@ -109,7 +109,9 @@ class AddressListTable(AbstractSerializableTable, name="addresses"):
                 f" AND IFNULL({self.ColumnEnum.KEY}, ?) != ? ",
                 [coin.rowId, "", ""])
             value = c.fetchone()
-        return value[0] if value is not None else 0
+        if value is None or value[0] is None:
+            return 0
+        return value[0]
 
     def queryLastHdIndex(self, coin: Coin, prefix: str) -> int:
         prefix_length = len(prefix) + 1

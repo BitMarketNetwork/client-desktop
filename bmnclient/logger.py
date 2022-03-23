@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtCore import qInstallMessageHandler, QtMsgType
 
-from .os_environment import Platform
 from .utils.string import StringUtils
 from .version import Product
 

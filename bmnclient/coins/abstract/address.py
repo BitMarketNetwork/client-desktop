@@ -238,7 +238,7 @@ class _Address(CoinObject):
             self._type
         ))
 
-    def _serializeProperty(
+    def serializeProperty(
             self,
             flags: SerializeFlag,
             key: str,
@@ -255,10 +255,10 @@ class _Address(CoinObject):
                 return ""
         if key == "type":
             return value.value.name
-        return super()._serializeProperty(flags, key, value)
+        return super().serializeProperty(flags, key, value)
 
     @classmethod
-    def _deserializeProperty(
+    def deserializeProperty(
             cls,
             flags: DeserializeFlag,
             self: Optional[_Address],
