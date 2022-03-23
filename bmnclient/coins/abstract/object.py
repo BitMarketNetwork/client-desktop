@@ -112,7 +112,7 @@ class CoinObject(Serializable):
                     and self._TABLE_TYPE
                     and name in self.serializeMap
             ):
-                column = self.serializeMap[name].get("column", None)
+                column = self._TABLE_TYPE.ColumnEnum.get(name)
                 if column:
                     self.model.database[self._TABLE_TYPE].update(
                         self.rowId,

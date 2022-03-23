@@ -290,7 +290,7 @@ class _Address(CoinObject):
     def hrp(cls) -> str:  # noqa
         return cls._HRP
 
-    @serializable(column=AddressListTable.ColumnEnum.NAME)
+    @serializable
     @property
     def name(self) -> str:
         return self._name
@@ -304,7 +304,7 @@ class _Address(CoinObject):
     def _deriveHash(self) -> bytes:
         raise NotImplementedError
 
-    @serializable(column=AddressListTable.ColumnEnum.TYPE)
+    @serializable
     @property
     def type(self) -> _Address.Type:
         return self._type
@@ -371,7 +371,7 @@ class _Address(CoinObject):
             value = None
         return value
 
-    @serializable(column=AddressListTable.ColumnEnum.KEY)
+    @serializable
     @property
     def key(self) -> Optional[KeyType]:
         return self._key
@@ -451,7 +451,7 @@ class _Address(CoinObject):
 
         return PublicKey.fromPublicData(value)
 
-    @serializable(column=AddressListTable.ColumnEnum.BALANCE)
+    @serializable
     @property
     def balance(self) -> int:
         return self._balance
@@ -461,7 +461,7 @@ class _Address(CoinObject):
         self._updateValue("set", "balance", value)
         self._coin.updateBalance()
 
-    @serializable(column=AddressListTable.ColumnEnum.LABEL)
+    @serializable
     @property
     def label(self) -> str:
         return self._label
@@ -470,7 +470,7 @@ class _Address(CoinObject):
     def label(self, value: str) -> None:
         self._updateValue("set", "label", value)
 
-    @serializable(column=AddressListTable.ColumnEnum.COMMENT)
+    @serializable
     @property
     def comment(self) -> str:
         return self._comment
@@ -492,7 +492,7 @@ class _Address(CoinObject):
     def isReadOnly(self) -> bool:
         return self.privateKey is None
 
-    @serializable(column=AddressListTable.ColumnEnum.TX_COUNT)
+    @serializable
     @property
     def txCount(self) -> int:
         return self._tx_count
@@ -541,7 +541,7 @@ class _Address(CoinObject):
 
         self.balance = sum(u.amount for u in self._utxo_list)
 
-    @serializable(column=AddressListTable.ColumnEnum.HISTORY_FIRST_OFFSET)
+    @serializable
     @property
     def historyFirstOffset(self) -> str:
         return self._history_first_offset
@@ -553,7 +553,7 @@ class _Address(CoinObject):
                 if not value:
                     self.historyLastOffset = ""
 
-    @serializable(column=AddressListTable.ColumnEnum.HISTORY_LAST_OFFSET)
+    @serializable
     @property
     def historyLastOffset(self) -> str:
         return self._history_last_offset

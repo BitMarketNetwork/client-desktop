@@ -194,7 +194,7 @@ class Coin(CoinObject):
     def modelFactory(self, owner: CoinObject) -> CoinObjectModel:
         return self._model_factory(owner)
 
-    @serializable(column=CoinListTable.ColumnEnum.NAME)
+    @serializable
     @property
     def name(cls) -> str:  # noqa
         return cls._SHORT_NAME
@@ -228,7 +228,7 @@ class Coin(CoinObject):
         # relative to "resources/images"
         return "coins/" + cls._SHORT_NAME + ".svg"
 
-    @serializable(column=CoinListTable.ColumnEnum.IS_ENABLED)
+    @serializable
     @property
     def isEnabled(self) -> bool:
         return self._is_enabled
@@ -237,7 +237,7 @@ class Coin(CoinObject):
     def isEnabled(self, value: bool):
         self._updateValue("set", "is_enabled", value)
 
-    @serializable(column=CoinListTable.ColumnEnum.HEIGHT)
+    @serializable
     @property
     def height(self) -> int:
         return self._height
@@ -246,7 +246,7 @@ class Coin(CoinObject):
     def height(self, value: int) -> None:
         self._updateValue("set", "height", value)
 
-    @serializable(column=CoinListTable.ColumnEnum.VERIFIED_HEIGHT)
+    @serializable
     @property
     def verifiedHeight(self) -> int:
         return self._verified_height
@@ -255,7 +255,7 @@ class Coin(CoinObject):
     def verifiedHeight(self, value: int) -> None:
         self._updateValue("set", "verified_height", value)
 
-    @serializable(column=CoinListTable.ColumnEnum.OFFSET)
+    @serializable
     @property
     def offset(self) -> str:
         return self._offset
@@ -264,7 +264,7 @@ class Coin(CoinObject):
     def offset(self, value: str) -> None:
         self._updateValue("set", "offset", value)
 
-    @serializable(column=CoinListTable.ColumnEnum.UNVERIFIED_OFFSET)
+    @serializable
     @property
     def unverifiedOffset(self) -> str:
         return self._unverified_offset
@@ -273,7 +273,7 @@ class Coin(CoinObject):
     def unverifiedOffset(self, value: str) -> None:
         self._updateValue("set", "unverified_offset", value)
 
-    @serializable(column=CoinListTable.ColumnEnum.UNVERIFIED_HASH)
+    @serializable
     @property
     def unverifiedHash(self) -> str:
         return self._unverified_hash

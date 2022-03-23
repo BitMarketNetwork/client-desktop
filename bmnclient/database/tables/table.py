@@ -99,6 +99,21 @@ class ColumnEnum(Column, Enum):
             definition: str = "INTEGER PRIMARY KEY") -> None:
         super().__init__(name, definition)
 
+    @classmethod
+    def __getitem__(cls, name: str) -> Column:
+        for column in cls:
+            if column.name == name:
+                return column
+        raise KeyError(
+            f"column with name '{name}' not found in enum '{cls.__name__}'")
+
+    @classmethod
+    def get(cls, name: str) -> Optional[Column]:
+        for column in cls:
+            if column.name == name:
+                return column
+        return None
+
 
 class TableMeta(type):
     def __str__(cls) -> str:
