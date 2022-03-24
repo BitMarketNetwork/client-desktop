@@ -249,7 +249,7 @@ class TestHd(TestCaseApplication):
                         private=False))
 
     def test_hd_address_index(self) -> None:
-        coin = Bitcoin(model_factory=self._application.modelFactory)
+        coin = Bitcoin(row_id=-1, model_factory=self._application.modelFactory)
         self.assertTrue(coin.save())
 
         root_node = HdNode.deriveRootNode(urandom(64))
@@ -523,7 +523,7 @@ class TestHdAddressIterator(TestCaseApplication):
         root_node = HdNode.deriveRootNode(urandom(64))
         self.assertIsNotNone(root_node)
 
-        coin = Bitcoin(model_factory=self._application.modelFactory)
+        coin = Bitcoin(row_id=-1, model_factory=self._application.modelFactory)
         self.assertTrue(coin.deriveHdNode(root_node))
 
         flush = 0

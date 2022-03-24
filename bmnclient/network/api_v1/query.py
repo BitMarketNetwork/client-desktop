@@ -282,7 +282,7 @@ class CoinsInfoApiQuery(AbstractApiQuery):
                     "Coin '%s' not found in server response.",
                     coin.name)
                 continue
-            coin.status = parser.status
+            coin.onlineStatus = parser.onlineStatus
             coin.deserializeUpdate(DeserializeFlag.NORMAL_MODE, parser.result)
 
 

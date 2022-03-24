@@ -221,11 +221,11 @@ class SysinfoParser(AbstractParser):
 class CoinsInfoParser(AbstractParser):
     def __init__(self) -> None:
         super().__init__()
-        self._status = -1
+        self._online_status = -1
 
     @property
-    def status(self) -> int:
-        return self._status
+    def onlineStatus(self) -> int:
+        return self._online_status
 
     def __call__(self, value: dict, coin_name: str) -> bool:
         coin_info = self.parseKey(value, coin_name, dict, {})
@@ -233,7 +233,7 @@ class CoinsInfoParser(AbstractParser):
             return False
 
         try:
-            self._status = self.parseKey(
+            self._online_status = self.parseKey(
                 coin_info,
                 "status",
                 int)

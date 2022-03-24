@@ -52,11 +52,38 @@ class CoinObjectModel:
 class CoinObject(Serializable):
     _TABLE_TYPE: Optional[Type[AbstractSerializableTable]] = None
 
-    def __init__(self, coin: Coin, row_id: int = -1) -> None:
+    def __init__(
+            self,
+            coin: Coin,
+            row_id: int,
+            kwargs,
+            *,
+            complete_key_columns: Sequence[ColumnValue] = tuple()) -> None:
         super().__init__(row_id=row_id)
         self._coin: Final = coin
         self.__model: Optional[CoinObject, bool] = False
         self.__value_events: Dict[str, Tuple[Callable, Callable]] = {}
+
+        if (
+                complete_key_columns
+                and self is not self._coin  # model not ready
+                and self._TABLE_TYPE
+                and self._coin.model.database.isOpen
+        ):
+            table = self._coin.model.database[self._TABLE_TYPE]
+            count = table.completeSerializable(
+                self,
+                row_id,
+                complete_key_columns,
+                kwargs)
+            self._coin.model.logger.debug(
+                "%d columns completed from database for %s: %s",
+                count,
+                self.__class__.__name__,
+                ", ".join(
+                    f"{c.column} = '{str(c.value)}'"
+                    for c in complete_key_columns)
+            )
 
     def __eq__(self, other: CoinObject) -> bool:
         return (

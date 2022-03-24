@@ -232,13 +232,13 @@ class TestCoins(TestCaseApplication):
 
     def test_address_decode(self) -> None:
         self._test_address_decode(
-            Bitcoin(model_factory=self._application.modelFactory),
+            Bitcoin(row_id=-1, model_factory=self._application.modelFactory),
             BITCOIN_ADDRESS_LIST)
         self._test_address_decode(
-            BitcoinTest(model_factory=self._application.modelFactory),
+            BitcoinTest(row_id=-1, model_factory=self._application.modelFactory),
             BITCOIN_TEST_ADDRESS_LIST)
         self._test_address_decode(
-            Litecoin(model_factory=self._application.modelFactory),
+            Litecoin(row_id=-1, model_factory=self._application.modelFactory),
             LITECOIN_ADDRESS_LIST)
 
     def test_string_to_amount(self) -> None:
@@ -356,7 +356,9 @@ class TestCoins(TestCaseApplication):
 
     def test_mempool_address_lists(self) -> None:
         for limit in range(201):
-            coin = Bitcoin(model_factory=self._application.modelFactory)
+            coin = Bitcoin(
+                row_id=-1,
+                model_factory=self._application.modelFactory)
             self.assertTrue(coin.save())
             for i in range(limit):
                 address = coin.Address.createNullData(
@@ -413,7 +415,9 @@ class TestCoins(TestCaseApplication):
             coin_type: Type[Coin]) -> None:
         coin = fillCoin(
             self,
-            coin_type(model_factory=self._application.modelFactory))
+            coin_type(
+                row_id=-1,
+                model_factory=self._application.modelFactory))
 
         data = coin.serialize(SerializeFlag.PRIVATE_MODE)
         self.assertIsInstance(data, dict)
@@ -421,7 +425,9 @@ class TestCoins(TestCaseApplication):
         # from pprint import pprint
         # pprint(data, sort_dicts=False)
 
-        coin_new = coin_type(model_factory=self._application.modelFactory)
+        coin_new = coin_type(
+            row_id=-1,
+            model_factory=self._application.modelFactory)
         self.assertTrue(coin_new.save())
         coin_new.deserializeUpdate(d_flags, data)
 

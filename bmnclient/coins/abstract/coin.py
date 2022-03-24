@@ -57,8 +57,8 @@ class _Model(CoinObjectModel):
     def beforeSetUnverifiedHash(self, value: int) -> None: pass
     def afterSetUnverifiedHash(self, value: int) -> None: pass
 
-    def beforeSetStatus(self, value: int) -> None: pass
-    def afterSetStatus(self, value: int) -> None: pass
+    def beforeSetOnlineStatus(self, value: int) -> None: pass
+    def afterSetOnlineStatus(self, value: int) -> None: pass
 
     def beforeSetFiatRate(self, value: FiatRate) -> None: pass
     def afterSetFiatRate(self, value: FiatRate) -> None: pass
@@ -116,29 +116,35 @@ class Coin(CoinObject):
     def __init__(
             self,
             *,
-            row_id: int = -1,
-            model_factory: CoinModelFactory) -> None:
-        super().__init__(self, row_id=row_id)
+            row_id: int,
+            model_factory: CoinModelFactory,
+            **kwargs) -> None:
+        super().__init__(
+            self,
+            row_id,
+            kwargs,
+            complete_key_columns=[
+                ColumnValue(CoinListTable.ColumnEnum.NAME, self._SHORT_NAME)
+            ])
 
         self._model_factory: Final = model_factory
 
-        self._is_enabled = True
+        self._is_enabled = bool(kwargs.get("is_enabled", True))
 
-        self._height = 0
-        self._verified_height = 0
+        self._height = int(kwargs.get("height", 0))
+        self._verified_height = int(kwargs.get("verified_height", 0))
 
-        self._offset = ""
-        self._unverified_offset = ""
-        self._unverified_hash = ""
+        self._offset = str(kwargs.get("offset", ""))
+        self._unverified_offset = str(kwargs.get("unverified_offset", ""))
+        self._unverified_hash = str(kwargs.get("unverified_hash", ""))
 
-        self._status = 0
+        self._online_status = 0
 
         self._fiat_rate = FiatRate(0, NoneFiatCurrency)
-        self._balance = 0
+        self._balance: Optional[int] = None
 
         self._hd_node_list: Dict[int, HdNode] = {}
 
-        self._address_list: List[Coin.Address] = []
         self._server_data: Dict[str, Union[int, str]] = {}
         self._mempool_cache: Dict[bytes, Coin.MempoolCacheItem] = {}
         self._mempool_cache_access_counter = 0
@@ -158,7 +164,10 @@ class Coin(CoinObject):
         if address_list is not None:
             for address in address_list:
                 address.save()
-        return super().__update__(**kwargs)
+        if super().__update__(**kwargs):
+            self.updateBalance()
+            return True
+        return False
 
     def save(self) -> bool:
         return self.model.database[self._TABLE_TYPE].saveSerializable(
@@ -171,7 +180,6 @@ class Coin(CoinObject):
                 [ColumnValue(self._TABLE_TYPE.ColumnEnum.NAME, self.name)])
         if obj is not self:
             return False
-        self.updateBalance()
         return True
 
     @classmethod
@@ -179,7 +187,7 @@ class Coin(CoinObject):
         raise DeserializationNotSupportedError
 
     @classmethod
-    def _deserializeProperty(
+    def deserializeProperty(
             cls,
             flags: DeserializeFlag,
             self: Coin,
@@ -283,12 +291,12 @@ class Coin(CoinObject):
         self._updateValue("set", "unverified_hash", value)
 
     @property
-    def status(self) -> int:
-        return self._status
+    def onlineStatus(self) -> int:
+        return self._online_status
 
-    @status.setter
-    def status(self, value: int) -> None:
-        self._updateValue("set", "status", value)
+    @onlineStatus.setter
+    def onlineStatus(self, value: int) -> None:
+        self._updateValue("set", "online_status", value)
 
     @property
     def fiatRate(self) -> FiatRate:
@@ -300,6 +308,8 @@ class Coin(CoinObject):
 
     def toFiatAmount(self, value: Optional[int] = None) -> Optional[int]:
         if value is None:
+            if self._balance is None:
+                return 0
             value = self._balance
         value *= self._fiat_rate.value
         value //= self.Currency.decimalDivisor
@@ -317,6 +327,16 @@ class Coin(CoinObject):
 
     @property
     def balance(self) -> int:
+        if self._balance is None:
+            # Cannot query balance from __init__() (model not ready).
+            # Therefore, try to run the query the first time this method is
+            # called.
+            if self.model.database.isOpen:
+                self._balance = (
+                    self.model.database[AddressListTable]
+                    .queryTotalBalance(self))
+            else:
+                self._balance = 0
         return self._balance
 
     def updateBalance(self) -> None:
