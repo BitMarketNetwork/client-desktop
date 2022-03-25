@@ -74,6 +74,7 @@ BPane {
             BLayout.alignment: _applicationStyle.dialogInputAlignment
             orientation: Qt.Horizontal
             amount: _base.coin.txFactory.receiverAmount
+            enabled: _base.coin.txFactory.receiver.validStatus && _inputRecipientAddress.length > 0
         }
         BDialogValidLabel {
             status: _base.coin.txFactory.receiverAmount.validStatus
@@ -100,6 +101,7 @@ BPane {
             orientation: Qt.Horizontal
             amount: _base.coin.txFactory.kibFeeAmount
             defaultButtonText: qsTr("Recommended")
+            enabled: _base.coin.txFactory.receiver.validStatus && _inputRecipientAddress.length > 0
         }
         BDialogValidLabel {
             status: _base.coin.txFactory.kibFeeAmount.validStatus
