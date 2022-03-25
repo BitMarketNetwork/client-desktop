@@ -13,7 +13,8 @@ from .tables import (
     CoinListTable,
     MetadataTable,
     TxIoListTable,
-    TxListTable)
+    TxListTable,
+    UtxoListTable)
 from .vfs import Vfs
 from ..debug import Debug
 from ..logger import Logger
@@ -63,7 +64,8 @@ class Database:
         AddressListTable,
         AddressTxMapTable,
         TxListTable,
-        TxIoListTable
+        TxIoListTable,
+        UtxoListTable
     )
 
     class Error(_engine.OperationalError):
@@ -115,7 +117,8 @@ class Database:
                 CoinListTable,
                 MetadataTable,
                 TxIoListTable,
-                TxListTable
+                TxListTable,
+                UtxoListTable
             ]:
         assert issubclass(type_, AbstractTable)
         table = self.__table_list.get(id(type_))

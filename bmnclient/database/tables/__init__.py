@@ -5,3 +5,4 @@ from .metadata import MetadataTable
 from .table import AbstractSerializableTable, AbstractTable, ColumnValue
 from .tx import TxListTable
 from .tx_io import TxIoListTable
+from .utxo import UtxoListTable
