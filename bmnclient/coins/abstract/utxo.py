@@ -3,40 +3,49 @@ from __future__ import annotations
 from functools import cached_property
 from typing import TYPE_CHECKING
 
-from .object import CoinObject
+from .object import CoinObject, CoinObjectModel
 from ..utils import CoinUtils
+from ...database.tables import UtxoListTable
 from ...utils import serializable
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Final, Optional
+    from typing import Final
     from .coin import Coin
 
 
-class _Utxo(CoinObject):
-    def __init__(
-            self,
-            coin: Coin,
-            *,
-            name: str,
-            height: int,
-            index: int,
-            amount: int,
-            script_type: Optional[Coin.Address.Script.Type] = None) -> None:
-        super().__init__(coin)
-        self._address: Optional[Coin.Address] = None
-        self._name: Final = name
-        self._height: Final = height
-        self._index: Final = index
-        self._amount: Final = amount
-        self._script_type = script_type
+class _Model(CoinObjectModel):
+    def __init__(self, *args, utxo: Coin.Tx.Utxo, **kwargs) -> None:
+        super().__init__(
+            *args,
+            name_key_tuple=CoinUtils.utxoToNameKeyTuple(utxo),
+            **kwargs)
+        self._utxo = utxo
+
+    @property
+    def owner(self) -> Coin.Tx.Utxo:
+        return self._utxo
+
+
+class _Utxo(CoinObject, table_type=UtxoListTable):
+    Model = _Model
+
+    def __init__(self, address: Coin.Address, *, row_id: int, **kwargs) -> None:
+        self._address: Final = address
+        self._name: Final = str(kwargs["name"])
+
+        super().__init__(address.coin, row_id, kwargs)
+
+        self._index: Final = int(kwargs["index"])
+        self._height: Final = int(kwargs["height"])
+        self._amount: Final = int(kwargs["amount"])
 
     def __eq__(self, other: _Utxo) -> bool:
         return (
                 super().__eq__(other)
                 and self._name == other._name
-                and self._height == other._height
                 and self._index == other._index
+                and self._height == other._height
                 and self._amount == other._amount
         )
 
@@ -44,8 +53,8 @@ class _Utxo(CoinObject):
         return hash((
             super().__hash__(),
             self._name,
-            self._height,
             self._index,
+            self._height,
             self._amount
         ))
 
@@ -55,18 +64,8 @@ class _Utxo(CoinObject):
             *CoinUtils.utxoToNameKeyTuple(self))
 
     @property
-    def address(self) -> Optional[Coin.Address]:
+    def address(self) -> Coin.Address:
         return self._address
-
-    @address.setter
-    def address(self, address: Coin.Address) -> None:
-        if self._address is not None:
-            raise AttributeError(
-                "already associated with address '{}'"
-                .format(self._address.name))
-        self._address = address
-        if self._script_type is None:
-            self._script_type = self._address.type.value.scriptType
 
     @serializable
     @property
@@ -93,5 +92,5 @@ class _Utxo(CoinObject):
         return self._amount
 
     @property
-    def scriptType(self) -> Optional[Coin.Address.Script.Type]:
-        return self._script_type
+    def scriptType(self) -> Coin.Address.Script.Type:
+        return self._address.type.value.scriptType

@@ -51,6 +51,11 @@ class TxIoModel(Coin.Tx.Io.Model):
         super().__init__(io=io, database=io.coin.model.database)
 
 
+class UtxoModel(Coin.Tx.Utxo.Model):
+    def __init__(self, utxo: Coin.Tx.Utxo) -> None:
+        super().__init__(utxo=utxo, database=utxo.coin.model.database)
+
+
 class TxFactoryModel(Coin.TxFactory.Model):
     def __init__(self, factory: Coin.TxFactory) -> None:
         super().__init__(factory=factory, database=factory.coin.model.database)
@@ -72,6 +77,9 @@ class ModelsFactory:
 
         if isinstance(owner, Coin.Tx.Io):
             return TxIoModel(owner)
+
+        if isinstance(owner, Coin.Tx.Utxo):
+            return UtxoModel(owner)
 
         if isinstance(owner, Coin.TxFactory):
             return TxFactoryModel(owner)

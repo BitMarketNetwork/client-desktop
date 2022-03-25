@@ -409,6 +409,59 @@ class TestCoins(TestCaseApplication):
                 # noinspection PyProtectedMember
                 self.assertEqual(len(coin._mempool_cache), len(mempool_list))
 
+    def test_utxo(self) -> None:
+        coin = Bitcoin(
+            row_id=-1,
+            model_factory=self._application.modelFactory)
+        root_node = HdNode.deriveRootNode(urandom(64))
+        self.assertTrue(coin.deriveHdNode(root_node))
+        self.assertTrue(coin.save())
+
+        address = coin.deriveHdAddress(account=0, is_change=False)
+        self.assertIsNotNone(address)
+
+        for i in range(100):
+            utxo = coin.Tx.Utxo(
+                address,
+                row_id=-1,
+                name="utxo_" + str(i),
+                index=i,
+                height=i * 1000,
+                amount=i * 10000)
+            self.assertFalse(utxo.save())
+
+        self.assertTrue(address.save())
+        row_id_list = []
+        for i in range(100):
+            utxo = coin.Tx.Utxo(
+                address,
+                row_id=-1,
+                name="utxo_" + str(i),
+                index=i,
+                height=i * 1000,
+                amount=i * 10000)
+            self.assertTrue(utxo.save())
+            self.assertLess(-1, utxo.rowId)
+            row_id_list.append(utxo.rowId)
+
+        for i in range(100):
+            utxo = coin.Tx.Utxo(
+                address,
+                row_id=row_id_list[i],
+                name="utxo_" + str(i))
+            self.assertEqual(i, utxo.index)
+            self.assertEqual(i * 1000, utxo.height)
+            self.assertEqual(i * 10000, utxo.amount)
+
+            utxo = coin.Tx.Utxo(
+                address,
+                row_id=row_id_list[i],
+                name="")
+            self.assertEqual("", utxo.name)
+            self.assertEqual(i, utxo.index)
+            self.assertEqual(i * 1000, utxo.height)
+            self.assertEqual(i * 10000, utxo.amount)
+
     def _test_serialization(
             self,
             d_flags: DeserializeFlag,
