@@ -197,7 +197,7 @@ class Coin(CoinObject):
         if isinstance(value, dict) and key == "address_list":
             coin = cls_args[0] if cls_args else self
             return cls.Address.deserialize(flags, value, coin)
-        return super()._deserializeProperty(flags, self, key, value, *cls_args)
+        return super().deserializeProperty(flags, self, key, value, *cls_args)
 
     def modelFactory(self, owner: CoinObject) -> CoinObjectModel:
         return self._model_factory(owner)
