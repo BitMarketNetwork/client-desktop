@@ -50,7 +50,16 @@ class CoinObjectModel:
 
 
 class CoinObject(Serializable):
-    _TABLE_TYPE: Optional[Type[AbstractSerializableTable]] = None
+    def __init_subclass__(cls, *args, **kwargs) -> None:
+        if (
+                not hasattr(cls, "_CoinObject__TABLE_TYPE")
+                or "table_type" in kwargs
+        ):
+            table_type = kwargs.pop("table_type")
+            super().__init_subclass__(*args, **kwargs)
+            cls.__TABLE_TYPE = table_type
+        else:
+            super().__init_subclass__(*args, **kwargs)
 
     def __init__(
             self,
@@ -58,32 +67,15 @@ class CoinObject(Serializable):
             row_id: int,
             kwargs,
             *,
-            complete_key_columns: Sequence[ColumnValue] = tuple()) -> None:
+            enable_table: bool = True) -> None:
         super().__init__(row_id=row_id)
         self._coin: Final = coin
         self.__model: Optional[CoinObject, bool] = False
         self.__value_events: Dict[str, Tuple[Callable, Callable]] = {}
+        self.__enable_table = enable_table
 
-        if (
-                complete_key_columns
-                and self is not self._coin  # model not ready
-                and self._TABLE_TYPE
-                and self._coin.model.database.isOpen
-        ):
-            table = self._coin.model.database[self._TABLE_TYPE]
-            count = table.completeSerializable(
-                self,
-                row_id,
-                complete_key_columns,
-                kwargs)
-            self._coin.model.logger.debug(
-                "%d columns completed from database for %s: %s",
-                count,
-                self.__class__.__name__,
-                ", ".join(
-                    f"{c.column} = '{str(c.value)}'"
-                    for c in complete_key_columns)
-            )
+        if self is not self._coin and self._isTableAvailable:
+            self._table.completeSerializable(self, row_id, kwargs)
 
     def __eq__(self, other: CoinObject) -> bool:
         return (
@@ -103,6 +95,18 @@ class CoinObject(Serializable):
     @property
     def coin(self) -> Coin:
         return self._coin
+
+    @property
+    def _isTableAvailable(self) -> bool:
+        return (
+                self.__TABLE_TYPE
+                and self.__enable_table
+                and self._coin.model.database.isOpen
+        )
+
+    @property
+    def _table(self) -> AbstractSerializableTable:
+        return self._coin.model.database[self.__TABLE_TYPE]
 
     def save(self) -> bool:
         raise NotImplementedError

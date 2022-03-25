@@ -25,9 +25,7 @@ class _Model(CoinObjectModel):
         return self._io
 
 
-class _Io(CoinObject):
-    _TABLE_TYPE = TxIoListTable
-
+class _Io(CoinObject, table_type=TxIoListTable):
     Model = _Model
 
     def __init__(

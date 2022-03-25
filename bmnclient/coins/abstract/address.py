@@ -156,9 +156,7 @@ class _Model(CoinObjectModel):
     def afterSetHistoryLastOffset(self, value: str) -> None: pass
 
 
-class _Address(CoinObject):
-    _TABLE_TYPE = AddressListTable
-
+class _Address(CoinObject, table_type=AddressListTable):
     __initialized = False
 
     _NULLDATA_NAME = "NULL_DATA"

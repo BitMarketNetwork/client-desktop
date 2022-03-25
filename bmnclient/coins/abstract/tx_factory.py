@@ -38,7 +38,7 @@ class _Model(CoinObjectModel):
     def onBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None: pass
 
 
-class _TxFactory(CoinObject):
+class _TxFactory(CoinObject, table_type=None):
     Model = _Model
 
     from .mutable_tx import _MutableTx

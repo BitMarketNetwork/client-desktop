@@ -11,9 +11,7 @@ if TYPE_CHECKING:
     from .coin import Coin
 
 
-class _MutableIo(_Io):
-    _TABLE_TYPE = None
-
+class _MutableIo(_Io, table_type=None):
     _AMOUNT_LENGTH = 0
 
     def __init__(

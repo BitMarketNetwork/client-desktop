@@ -10,9 +10,7 @@ if TYPE_CHECKING:
     from .coin import Coin
 
 
-class _MutableTx(_Tx):
-    _TABLE_TYPE = None
-
+class _MutableTx(_Tx, table_type=None):
     _VERSION_LENGTH = 0
     _LOCK_TIME_LENGTH = 0
 
