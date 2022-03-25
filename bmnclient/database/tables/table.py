@@ -11,6 +11,7 @@ from ...utils.class_property import classproperty
 if TYPE_CHECKING:
     from typing import (
         Any,
+        Callable,
         Dict,
         Final,
         Generator,
@@ -324,17 +325,27 @@ class AbstractTable(metaclass=TableMeta):
 
 
 class AbstractSerializableTable(AbstractTable, name=""):
+    _KEY_COLUMN_LIST: \
+        Tuple[Tuple[Column, Callable[[Serializable], None], ...]] = tuple()
+
+    def _keyColumns(self, object_: Serializable) -> Tuple[ColumnValue, ...]:
+        columns = tuple(
+            ColumnValue(c[0], c[1](object_))
+            for c in self._KEY_COLUMN_LIST)
+        return tuple() if any(c.value is None for c in columns) else columns
+
     def rowListProxy(self, *args, **kwargs) -> RowListProxy:
         raise NotImplementedError
 
     def saveSerializable(
             self,
             object_: Serializable,
-            key_columns: Sequence[ColumnValue],
             *,
             use_row_id: bool = True,
             fallback_search: bool = False) -> int:
-        assert self.ColumnEnum.ROW_ID not in (c.column for c in key_columns)
+        key_columns = self._keyColumns(object_)
+        if not key_columns:
+            return -1
 
         source_data = object_.serialize(
             SerializeFlag.DATABASE_MODE |
@@ -363,13 +374,13 @@ class AbstractSerializableTable(AbstractTable, name=""):
     def loadSerializable(
             self,
             object_: Union[Serializable, Type[Serializable]],
-            key_columns: Sequence[ColumnValue],
             *cls_args,
             use_row_id: bool = True,
             fallback_search: bool = False) -> Optional[Serializable]:
-        assert self.ColumnEnum.ROW_ID not in (c.column for c in key_columns)
-
-        data_columns = []
+        key_columns = self._keyColumns(object_)
+        if not key_columns:
+            return None
+        data_columns: List[ColumnValue] = []
         for name in object_.serializeMap.keys():
             column = self.ColumnEnum.get(name)
             if column and column not in key_columns:
@@ -412,8 +423,10 @@ class AbstractSerializableTable(AbstractTable, name=""):
             self,
             object_: Serializable,
             row_id: int,
-            key_columns: Sequence[ColumnValue],
             kwargs: Dict[str, Any]) -> int:
+        key_columns = self._keyColumns(object_)
+        if not key_columns:
+            return -1
         data_columns = []
         for name in object_.serializeMap.keys():
             if name not in kwargs:
