@@ -21,30 +21,16 @@ if TYPE_CHECKING:
 class TxListTable(AbstractSerializableTable, name="transactions"):
     class ColumnEnum(ColumnEnum):
         ROW_ID: Final = ()
-        COIN_ROW_ID: Final = (
-            "coin_row_id",
-            "INTEGER NOT NULL")
+        COIN_ROW_ID: Final = ("coin_row_id", "INTEGER NOT NULL")
 
-        NAME: Final = (
-            "name",
-            "TEXT NOT NULL")
-        HEIGHT: Final = (
-            "height",
-            "INTEGER NOT NULL")
-        TIME: Final = (
-            "time",
-            "INTEGER NOT NULL")
+        NAME: Final = ("name", "TEXT NOT NULL")
+        HEIGHT: Final = ("height", "INTEGER NOT NULL")
+        TIME: Final = ("time", "INTEGER NOT NULL")
 
-        AMOUNT: Final = (
-            "amount",
-            "INTEGER NOT NULL")
-        FEE_AMOUNT: Final = (
-            "fee_amount",
-            "INTEGER NOT NULL")
+        AMOUNT: Final = ("amount", "INTEGER NOT NULL")
+        FEE_AMOUNT: Final = ("fee_amount", "INTEGER NOT NULL")
 
-        IS_COINBASE: Final = (
-            "is_coinbase",
-            "INTEGER NOT NULL")
+        IS_COINBASE: Final = ("is_coinbase", "INTEGER NOT NULL")
 
     @classproperty
     def _CONSTRAINT_LIST(cls) -> Tuple[str, ...]:  # noqa
@@ -59,6 +45,16 @@ class TxListTable(AbstractSerializableTable, name="transactions"):
 
     _UNIQUE_COLUMN_LIST = (
         (ColumnEnum.COIN_ROW_ID, ColumnEnum.NAME),
+    )
+
+    _KEY_COLUMN_LIST = (
+        (
+            ColumnEnum.COIN_ROW_ID,
+            lambda o: o.coin.rowId if o.coin.rowId > 0 else None
+        ), (
+            ColumnEnum.NAME,
+            lambda o: o.name
+        )
     )
 
     def rowListProxy(self, *args, **kwargs) -> RowListProxy:

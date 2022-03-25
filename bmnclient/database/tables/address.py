@@ -20,39 +20,19 @@ if TYPE_CHECKING:
 class AddressListTable(AbstractSerializableTable, name="addresses"):
     class ColumnEnum(ColumnEnum):
         ROW_ID: Final = ()
-        COIN_ROW_ID: Final = (
-            "coin_row_id",
-            "INTEGER NOT NULL")
+        COIN_ROW_ID: Final = ("coin_row_id", "INTEGER NOT NULL")
 
-        NAME: Final = (
-            "name",
-            "TEXT NOT NULL")
-        TYPE: Final = (
-            "type",
-            "TEXT NOT NULL")
-        BALANCE: Final = (
-            "balance",
-            "INTEGER NOT NULL")
-        TX_COUNT: Final = (
-            "tx_count",
-            "INTEGER NOT NULL")
+        NAME: Final = ("name", "TEXT NOT NULL")
+        TYPE: Final = ("type", "TEXT NOT NULL")
+        BALANCE: Final = ("balance", "INTEGER NOT NULL")
+        TX_COUNT: Final = ("tx_count", "INTEGER NOT NULL")
 
-        LABEL: Final = (
-            "label",
-            "TEXT NOT NULL")
-        COMMENT: Final = (
-            "comment",
-            "TEXT NOT NULL")
-        KEY: Final = (
-            "key",
-            "TEXT")
+        LABEL: Final = ("label", "TEXT NOT NULL")
+        COMMENT: Final = ("comment", "TEXT NOT NULL")
+        KEY: Final = ("key", "TEXT")
 
-        HISTORY_FIRST_OFFSET: Final = (
-            "history_first_offset",
-            "TEXT NOT NULL")
-        HISTORY_LAST_OFFSET: Final = (
-            "history_last_offset",
-            "TEXT NOT NULL")
+        HISTORY_FIRST_OFFSET: Final = ("history_first_offset", "TEXT NOT NULL")
+        HISTORY_LAST_OFFSET: Final = ("history_last_offset", "TEXT NOT NULL")
 
     @classproperty
     def _CONSTRAINT_LIST(cls) -> Tuple[str, ...]:  # noqa
@@ -68,6 +48,17 @@ class AddressListTable(AbstractSerializableTable, name="addresses"):
     _UNIQUE_COLUMN_LIST = (
         (ColumnEnum.COIN_ROW_ID, ColumnEnum.NAME),
     )
+
+    _KEY_COLUMN_LIST = (
+        (
+            ColumnEnum.COIN_ROW_ID,
+            lambda o: o.coin.rowId if o.coin.rowId > 0 else None
+        ), (
+            ColumnEnum.NAME,
+            lambda o: o.name
+        )
+    )
+
 
     def upgrade(self, cursor: Cursor, old_version: int) -> None:
         # don't use identifiers from actual class!

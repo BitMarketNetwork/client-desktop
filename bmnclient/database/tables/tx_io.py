@@ -25,25 +25,13 @@ class TxIoListTable(AbstractSerializableTable, name="transactions_io"):
 
     class ColumnEnum(ColumnEnum):
         ROW_ID: Final = ()
-        TX_ROW_ID: Final = (
-            "transaction_row_id",
-            "INTEGER NOT NULL")
-        IO_TYPE: Final = (
-            "io_type",
-            "TEXT NOT NULL")  # IoType
-        INDEX: Final = (
-            "index",
-            "INTEGER NOT NULL")
+        TX_ROW_ID: Final = ("transaction_row_id", "INTEGER NOT NULL")
+        IO_TYPE: Final = ("io_type", "TEXT NOT NULL")  # IoType
+        INDEX: Final = ("index", "INTEGER NOT NULL")
 
-        OUTPUT_TYPE: Final = (
-            "output_type",
-            "TEXT NOT NULL")
-        ADDRESS_NAME: Final = (
-            "address_name",
-            "TEXT")
-        AMOUNT: Final = (
-            "amount",
-            "INTEGER NOT NULL")
+        OUTPUT_TYPE: Final = ("output_type", "TEXT NOT NULL")
+        ADDRESS_NAME: Final = ("address_name", "TEXT")
+        AMOUNT: Final = ("amount", "INTEGER NOT NULL")
 
     @classproperty
     def _CONSTRAINT_LIST(cls) -> Tuple[str, ...]:  # noqa
@@ -58,6 +46,19 @@ class TxIoListTable(AbstractSerializableTable, name="transactions_io"):
 
     _UNIQUE_COLUMN_LIST = (
         (ColumnEnum.TX_ROW_ID, ColumnEnum.IO_TYPE, ColumnEnum.INDEX),
+    )
+
+    _KEY_COLUMN_LIST = (
+        (
+            ColumnEnum.TX_ROW_ID,
+            lambda o: o.tx.rowId if o.tx.rowId > 0 else None
+        ), (
+            ColumnEnum.IO_TYPE,
+            lambda o: o.index  # TODO
+        ), (
+            ColumnEnum.INDEX,
+            lambda o: o.index
+        )
     )
 
     def rowListProxy(self, *args, **kwargs) -> RowListProxy:

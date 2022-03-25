@@ -14,16 +14,14 @@ if TYPE_CHECKING:
     from typing import Any, Final, List, Tuple
 
 
-class AddressTxMapTable(AbstractSerializableTable, name="address_transaction_map"):
+class AddressTxMapTable(
+        AbstractSerializableTable,
+        name="address_transaction_map"):
     class ColumnEnum(ColumnEnum):
         ROW_ID: Final = ()
 
-        ADDRESS_ROW_ID: Final = (
-            "address_row_id",
-            "INTEGER NOT NULL")
-        TX_ROW_ID: Final = (
-            "tx_row_id",
-            "INTEGER NOT NULL")
+        ADDRESS_ROW_ID: Final = ("address_row_id", "INTEGER NOT NULL")
+        TX_ROW_ID: Final = ("tx_row_id", "INTEGER NOT NULL")
 
     @classproperty
     def _CONSTRAINT_LIST(cls) -> Tuple[str, ...]:  # noqa
