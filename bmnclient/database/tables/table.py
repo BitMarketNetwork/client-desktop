@@ -449,6 +449,23 @@ class AbstractSerializableTable(AbstractTable, name=""):
                 c.value)
         return len(data_columns)
 
+    def removeSerializable(
+            self,
+            object_: Serializable,
+            *,
+            use_row_id: bool = True,
+            fallback_search: bool = False) -> int:
+        key_columns = self._keyColumns(object_)
+        if not key_columns:
+            return -1
+        result = self.remove(
+            object_.rowId if use_row_id else -1,
+            key_columns,
+            fallback_search=fallback_search)
+        if use_row_id:
+            object_.rowId = -1
+        return result
+
 
 # Performance: https://www.sqlite.org/autoinc.html
 class RowListProxy(MutableSequence):
