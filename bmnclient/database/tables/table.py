@@ -131,7 +131,7 @@ class AbstractTable(metaclass=TableMeta):
     __IDENTIFIER: str = ""
     __DEFINITION: str = ""
     _CONSTRAINT_LIST: Tuple[str, ...] = tuple()
-    _UNIQUE_COLUMN_LIST: Tuple[Tuple[Column]] = tuple()
+    _UNIQUE_COLUMN_LIST: Tuple[Tuple[Column, ...], ...] = tuple()
 
     def __init_subclass__(cls, *args, **kwargs) -> None:
         name = kwargs.pop("name")
@@ -250,12 +250,13 @@ class AbstractTable(metaclass=TableMeta):
                         f"{c.column} == '{str(c.value)}'" for c in key_columns)
                 ))
 
-    def load(self,
-             row_id: int,
-             key_columns: Sequence[ColumnValue],
-             data_columns: Sequence[ColumnValue],
-             *,
-             fallback_search: bool = False) -> int:
+    def load(
+            self,
+            row_id: int,
+            key_columns: Sequence[ColumnValue],
+            data_columns: Sequence[ColumnValue],
+            *,
+            fallback_search: bool = False) -> int:
         with self._database.transaction(allow_in_transaction=True) as c:
             # select by row_id
             if row_id > 0:
@@ -293,6 +294,33 @@ class AbstractTable(metaclass=TableMeta):
         for c, v in zip(data_columns, value):
             c.value = v
         return row_id
+
+    def remove(
+            self,
+            row_id: int,
+            key_columns: Sequence[ColumnValue],
+            *,
+            fallback_search: bool = False) -> bool:
+        with self._database.transaction(allow_in_transaction=True) as c:
+            if row_id > 0:
+                c.execute(
+                    f"DELETE FROM {self}"
+                    f" WHERE {self.ColumnEnum.ROW_ID} == ?"
+                    f" LIMIT 1",
+                    [row_id])
+                if c.rowcount > 0:
+                    assert c.rowcount == 1
+                    return True
+                if not fallback_search:
+                    return False
+            if key_columns:
+                c.execute(
+                    f"DELETE FROM {self}"
+                    f" WHERE {Column.joinWhere(c.column for c in key_columns)}",
+                    [c.value for c in key_columns])
+                if c.rowcount > 0:
+                    return True
+        return False
 
 
 class AbstractSerializableTable(AbstractTable, name=""):
@@ -458,7 +486,7 @@ class RowListProxy(MutableSequence):
 
     def _deserialize(
             self,
-            row: Tuple[Optional[str, int]]) -> Optional[Serializable]:
+            row: Tuple[Optional[str, int], ...]) -> Optional[Serializable]:
         it = iter(zip((c.name for c in self._column_list), row))
         row_id = next(it)[1]
 
