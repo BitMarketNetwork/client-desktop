@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .table import AbstractSerializableTable, ColumnEnum
+from .table import AbstractSerializableTable, ColumnEnum, RowListProxy
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
-    from typing import Final
-    from .table import RowListProxy
+    from typing import Final, Optional
+    from ...coins.abstract import Coin
 
 
 class UtxoListTable(AbstractSerializableTable, name="utxos"):
@@ -45,5 +45,12 @@ class UtxoListTable(AbstractSerializableTable, name="utxos"):
         ),
     )
 
-    def rowListProxy(self, *args, **kwargs) -> RowListProxy:
-        raise NotImplementedError
+    def rowListProxy(self, address: Coin.Address) -> Optional[RowListProxy]:
+        if address.rowId <= 0:
+            return None
+        return RowListProxy(
+            type_=address.coin.Tx.Utxo,
+            type_args=[address],
+            table=self,
+            where_expression=f"{self.ColumnEnum.ADDRESS_ROW_ID} == ?",
+            where_args=[address.rowId])

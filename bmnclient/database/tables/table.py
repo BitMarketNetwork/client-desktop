@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from collections.abc import Sequence
 from enum import Enum
 from itertools import chain
 from typing import TYPE_CHECKING
@@ -12,13 +12,11 @@ if TYPE_CHECKING:
     from typing import (
         Any,
         Callable,
-        Dict,
         Final,
         Generator,
         Iterable,
         List,
         Optional,
-        Sequence,
         Tuple,
         Type,
         Union)
@@ -333,8 +331,8 @@ class AbstractSerializableTable(AbstractTable, name=""):
             for c in self._KEY_COLUMN_LIST)
         return tuple() if any(c.value is None for c in columns) else columns
 
-    def rowListProxy(self, *args, **kwargs) -> RowListProxy:
-        raise NotImplementedError
+    def rowListProxy(self, *args, **kwargs) -> Optional[RowListProxy]:
+        return None
 
     def saveSerializable(
             self,
@@ -462,7 +460,7 @@ class AbstractSerializableTable(AbstractTable, name=""):
 
 
 # Performance: https://www.sqlite.org/autoinc.html
-class RowListProxy(MutableSequence):
+class RowListProxy(Sequence):
     def __init__(
             self,
             *,
@@ -514,11 +512,13 @@ class RowListProxy(MutableSequence):
         it = iter(zip((c.name for c in self._column_list), row))
         row_id = next(it)[1]
 
-        return self._type.deserialize(
+        object_ = self._type.deserialize(
             DeserializeFlag.DATABASE_MODE,
             dict(it),
-            *self._type_args,
-            row_id=row_id)
+            *self._type_args)
+        if object_ is not None:
+            object_.rowId = row_id
+        return object_
 
     def __len__(self) -> int:
         with self._table.database.transaction(allow_in_transaction=True) as c:
@@ -541,15 +541,3 @@ class RowListProxy(MutableSequence):
             if not row:
                 raise IndexError()
             return self._deserialize(row)
-
-    def __setitem__(self, index: int, value) -> None:
-        raise NotImplementedError
-
-    def __delitem__(self, index: int) -> None:
-        raise NotImplementedError
-
-    def insert(self, index: int, value: Serializable) -> None:
-        raise NotImplementedError
-
-    def append(self, value: Serializable) -> None:
-        raise NotImplementedError

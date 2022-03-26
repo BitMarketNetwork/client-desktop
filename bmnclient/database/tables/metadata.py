@@ -18,9 +18,6 @@ class MetadataTable(AbstractTable, name="metadata"):
     class Key(Enum):
         VERSION: Final = "version"
 
-    def rowListProxy(self, *args, **kwargs) -> RowListProxy:
-        raise NotImplementedError
-
     def get(
             self,
             key: Key,

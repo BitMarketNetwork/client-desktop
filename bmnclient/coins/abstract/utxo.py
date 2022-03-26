@@ -30,7 +30,7 @@ class _Model(CoinObjectModel):
 class _Utxo(CoinObject, table_type=UtxoListTable):
     Model = _Model
 
-    def __init__(self, address: Coin.Address,  **kwargs) -> None:
+    def __init__(self, address: Coin.Address, **kwargs) -> None:
         self._address: Final = address
         self._name: Final = str(kwargs["name"])
 

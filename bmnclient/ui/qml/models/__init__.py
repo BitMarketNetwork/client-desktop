@@ -104,7 +104,7 @@ class AbstractTupleStateModel(AbstractStateModel):
                 self.update()
 
     def _isValidName(self, name) -> bool:
-        return name and any(name == v["name"] for v in self._list)
+        return bool(name and any(name == v["name"] for v in self._list))
 
     def _getCurrentItemName(self) -> str:
         if self.__current_name is None:

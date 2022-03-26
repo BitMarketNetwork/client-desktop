@@ -15,9 +15,9 @@ class CoinList(StaticList):
     def __init__(self, *, model_factory: CoinModelFactory) -> None:
         super().__init__(
             (
-                Bitcoin(row_id=-1, model_factory=model_factory),
-                BitcoinTest(row_id=-1, model_factory=model_factory),
-                Litecoin(row_id=-1, model_factory=model_factory)
+                Bitcoin(model_factory=model_factory),
+                BitcoinTest(model_factory=model_factory),
+                Litecoin(model_factory=model_factory)
             ),
             item_property="name"
         )

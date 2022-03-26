@@ -46,10 +46,6 @@ class Serializable:
         self.__row_id = row_id
 
     def __update__(self, **kwargs) -> bool:
-        row_id = kwargs.pop("row_id", None)
-        if row_id is not None:
-            self.rowId = row_id
-
         serialize_map = self.serializeMap
         for (key, value) in kwargs.items():
             key = self.__keyFromKwarg(key)
@@ -123,14 +119,13 @@ class Serializable:
             cls,
             flags: DeserializeFlag,
             source_data: DeserializedDict,
-            *cls_args,
-            row_id: int) -> Optional[Serializable]:
+            *cls_args) -> Optional[Serializable]:
         cls_kwargs = {
             cls.__keyToKwarg(key):
                 cls.deserializeProperty(flags, None, key, value, *cls_args)
             for key, value in source_data.items()
         }
-        return cls(*cls_args, row_id=row_id, **cls_kwargs)
+        return cls(*cls_args, **cls_kwargs)
 
     def deserializeUpdate(
             self,

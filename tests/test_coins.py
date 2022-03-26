@@ -414,47 +414,61 @@ class TestCoins(TestCaseApplication):
         self.assertTrue(coin.deriveHdNode(root_node))
         self.assertTrue(coin.save())
 
-        address = coin.deriveHdAddress(account=0, is_change=False)
-        self.assertIsNotNone(address)
+        address1 = coin.deriveHdAddress(account=0, index=1, is_change=False)
+        address2 = coin.deriveHdAddress(account=0, index=2, is_change=False)
+        self.assertNotEqual(address1, address2)
 
-        for i in range(100):
-            utxo = coin.Tx.Utxo(
+        for address in (address1, address2):
+            for i in range(100):
+                utxo = coin.Tx.Utxo(
+                    address,
+                    name="utxo_" + str(i),
+                    index=i,
+                    height=i * 1000,
+                    amount=i * 10000)
+                self.assertFalse(utxo.save())
+            self.assertTrue(address.save())
+
+        for address in (address1, address2):
+            for i in range(100):
+                utxo = coin.Tx.Utxo(
+                    address,
+                    name="utxo_" + str(i),
+                    index=i,
+                    height=i * 1000,
+                    amount=i * 10000)
+                self.assertTrue(utxo.save())
+                self.assertLess(-1, utxo.rowId)
+
+        for address in (address1, address2):
+            self.assertRaises(
+                KeyError,
+                coin.Tx.Utxo,
                 address,
-                name="utxo_" + str(i),
-                index=i,
-                height=i * 1000,
-                amount=i * 10000)
-            self.assertFalse(utxo.save())
-
-        self.assertTrue(address.save())
-        row_id_list = []
-        for i in range(100):
-            utxo = coin.Tx.Utxo(
-                address,
-                name="utxo_" + str(i),
-                index=i,
-                height=i * 1000,
-                amount=i * 10000)
-            self.assertTrue(utxo.save())
-            self.assertLess(-1, utxo.rowId)
-            row_id_list.append(utxo.rowId)
-
-        self.assertRaises(
-            KeyError,
-            coin.Tx.Utxo,
-            address,
-            name="utxo_X")
+                name="utxo_X")
 
         for i in range(100):
-            utxo = coin.Tx.Utxo(address, name="utxo_" + str(i))
+            utxo = coin.Tx.Utxo(address1, name="utxo_" + str(i))
             self.assertEqual("utxo_" + str(i), utxo.name)
             self.assertEqual(i, utxo.index)
             self.assertEqual(i * 1000, utxo.height)
             self.assertEqual(i * 10000, utxo.amount)
             self.assertLess(0, utxo.rowId)
+
+        self.assertEqual(100, len(address1.utxoList))
+        self.assertEqual(100, len(address2.utxoList))
+
+        for i in range(100):
+            utxo = coin.Tx.Utxo(address1, name="utxo_" + str(i))
             self.assertTrue(utxo.remove())
             self.assertEqual(-1, utxo.rowId)
             self.assertFalse(utxo.remove())
+
+        self.assertEqual(0, len(address1.utxoList))
+        self.assertEqual(100, len(address2.utxoList))
+        for utxo in address2.utxoList:
+            self.assertLess(0, utxo.rowId)
+            self.assertIs(address2, utxo.address)
 
     def _test_serialization(
             self,

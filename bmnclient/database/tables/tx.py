@@ -57,9 +57,6 @@ class TxListTable(AbstractSerializableTable, name="transactions"):
         )
     )
 
-    def rowListProxy(self, *args, **kwargs) -> RowListProxy:
-        raise NotImplementedError
-
     def _deserializeStatement(
             self,
             column_list: List[Column],

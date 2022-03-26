@@ -61,9 +61,6 @@ class TxIoListTable(AbstractSerializableTable, name="transactions_io"):
         )
     )
 
-    def rowListProxy(self, *args, **kwargs) -> RowListProxy:
-        raise NotImplementedError
-
     def deserializeAll(
             self,
             cursor: Cursor,

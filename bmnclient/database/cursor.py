@@ -50,7 +50,7 @@ class Cursor(_engine.Cursor):
             " LIMIT 1",
             ("table", self.__tableToName(table)))
         value = self.fetchone()
-        return value is not None and value[0] > 0
+        return bool(value is not None and value[0] > 0)
 
     def isColumnExists(
             self,

@@ -25,6 +25,3 @@ class CoinListTable(AbstractSerializableTable, name="coins"):
     _KEY_COLUMN_LIST = (
         (ColumnEnum.NAME, lambda o: o.name),
     )
-
-    def rowListProxy(self, *args, **kwargs) -> RowListProxy:
-        raise NotImplementedError
