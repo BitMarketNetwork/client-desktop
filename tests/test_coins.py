@@ -198,7 +198,8 @@ def fillCoin(
                 output_list=output_list))
 
         address.utxoList = [coin.Tx.Utxo(
-            coin,
+            address,
+            row_id=-1,
             name="utxo_" + str(i),
             height=randint(10000, 1000000),
             index=randint(10000, 1000000),
@@ -356,9 +357,7 @@ class TestCoins(TestCaseApplication):
 
     def test_mempool_address_lists(self) -> None:
         for limit in range(201):
-            coin = Bitcoin(
-                row_id=-1,
-                model_factory=self._application.modelFactory)
+            coin = Bitcoin(model_factory=self._application.modelFactory)
             self.assertTrue(coin.save())
             for i in range(limit):
                 address = coin.Address.createNullData(
@@ -410,9 +409,7 @@ class TestCoins(TestCaseApplication):
                 self.assertEqual(len(coin._mempool_cache), len(mempool_list))
 
     def test_utxo(self) -> None:
-        coin = Bitcoin(
-            row_id=-1,
-            model_factory=self._application.modelFactory)
+        coin = Bitcoin(model_factory=self._application.modelFactory)
         root_node = HdNode.deriveRootNode(urandom(64))
         self.assertTrue(coin.deriveHdNode(root_node))
         self.assertTrue(coin.save())
@@ -423,7 +420,6 @@ class TestCoins(TestCaseApplication):
         for i in range(100):
             utxo = coin.Tx.Utxo(
                 address,
-                row_id=-1,
                 name="utxo_" + str(i),
                 index=i,
                 height=i * 1000,
@@ -435,7 +431,6 @@ class TestCoins(TestCaseApplication):
         for i in range(100):
             utxo = coin.Tx.Utxo(
                 address,
-                row_id=-1,
                 name="utxo_" + str(i),
                 index=i,
                 height=i * 1000,
@@ -444,23 +439,22 @@ class TestCoins(TestCaseApplication):
             self.assertLess(-1, utxo.rowId)
             row_id_list.append(utxo.rowId)
 
-        for i in range(100):
-            utxo = coin.Tx.Utxo(
-                address,
-                row_id=row_id_list[i],
-                name="utxo_" + str(i))
-            self.assertEqual(i, utxo.index)
-            self.assertEqual(i * 1000, utxo.height)
-            self.assertEqual(i * 10000, utxo.amount)
+        self.assertRaises(
+            KeyError,
+            coin.Tx.Utxo,
+            address,
+            name="utxo_X")
 
-            utxo = coin.Tx.Utxo(
-                address,
-                row_id=row_id_list[i],
-                name="")
-            self.assertEqual("", utxo.name)
+        for i in range(100):
+            utxo = coin.Tx.Utxo(address, name="utxo_" + str(i))
+            self.assertEqual("utxo_" + str(i), utxo.name)
             self.assertEqual(i, utxo.index)
             self.assertEqual(i * 1000, utxo.height)
             self.assertEqual(i * 10000, utxo.amount)
+            self.assertLess(0, utxo.rowId)
+            self.assertTrue(utxo.remove())
+            self.assertEqual(-1, utxo.rowId)
+            self.assertFalse(utxo.remove())
 
     def _test_serialization(
             self,
@@ -468,9 +462,7 @@ class TestCoins(TestCaseApplication):
             coin_type: Type[Coin]) -> None:
         coin = fillCoin(
             self,
-            coin_type(
-                row_id=-1,
-                model_factory=self._application.modelFactory))
+            coin_type(model_factory=self._application.modelFactory))
 
         data = coin.serialize(SerializeFlag.PRIVATE_MODE)
         self.assertIsInstance(data, dict)
@@ -478,9 +470,7 @@ class TestCoins(TestCaseApplication):
         # from pprint import pprint
         # pprint(data, sort_dicts=False)
 
-        coin_new = coin_type(
-            row_id=-1,
-            model_factory=self._application.modelFactory)
+        coin_new = coin_type(model_factory=self._application.modelFactory)
         self.assertTrue(coin_new.save())
         coin_new.deserializeUpdate(d_flags, data)
 

@@ -306,8 +306,7 @@ class AbstractTable(metaclass=TableMeta):
             if row_id > 0:
                 c.execute(
                     f"DELETE FROM {self}"
-                    f" WHERE {self.ColumnEnum.ROW_ID} == ?"
-                    f" LIMIT 1",
+                    f" WHERE {self.ColumnEnum.ROW_ID} == ?",
                     [row_id])
                 if c.rowcount > 0:
                     assert c.rowcount == 1
@@ -350,8 +349,8 @@ class AbstractSerializableTable(AbstractTable, name=""):
         source_data = object_.serialize(
             SerializeFlag.DATABASE_MODE |
             SerializeFlag.EXCLUDE_SUBCLASSES)
-        data_columns: List[ColumnValue] = []
 
+        data_columns: List[ColumnValue] = []
         for name, value in source_data.items():
             column = self.ColumnEnum.get(name)
             if column and column not in key_columns:
@@ -419,11 +418,7 @@ class AbstractSerializableTable(AbstractTable, name=""):
 
         return object_ if row_id > 0 else None
 
-    def completeSerializable(
-            self,
-            object_: Serializable,
-            row_id: int,
-            kwargs: Dict[str, Any]) -> int:
+    def completeSerializable(self, object_: Serializable, kwargs) -> int:
         key_columns = self._keyColumns(object_)
         if not key_columns:
             return -1
@@ -431,12 +426,12 @@ class AbstractSerializableTable(AbstractTable, name=""):
         for name in object_.serializeMap.keys():
             if name not in kwargs:
                 column = self.ColumnEnum.get(name)
-                if column is not None:
+                if column and column not in key_columns:
                     data_columns.append(ColumnValue(column, None))
         if not data_columns:
             return 0
 
-        row_id = self.load(row_id, key_columns, data_columns)
+        row_id = self.load(-1, key_columns, data_columns)
         if row_id <= 0:
             return -1
 
@@ -454,17 +449,16 @@ class AbstractSerializableTable(AbstractTable, name=""):
             object_: Serializable,
             *,
             use_row_id: bool = True,
-            fallback_search: bool = False) -> int:
-        key_columns = self._keyColumns(object_)
-        if not key_columns:
-            return -1
-        result = self.remove(
-            object_.rowId if use_row_id else -1,
-            key_columns,
-            fallback_search=fallback_search)
+            fallback_search: bool = False) -> bool:
+        if not self.remove(
+                object_.rowId if use_row_id else -1,
+                self._keyColumns(object_),
+                fallback_search=fallback_search):
+            return False
+
         if use_row_id:
             object_.rowId = -1
-        return result
+        return True
 
 
 # Performance: https://www.sqlite.org/autoinc.html

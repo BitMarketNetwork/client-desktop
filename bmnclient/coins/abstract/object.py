@@ -10,15 +10,7 @@ from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
     import logging
-    from typing import (
-        Any,
-        Dict,
-        Final,
-        Generator,
-        Optional,
-        Sequence,
-        Tuple,
-        Type)
+    from typing import Any, Dict, Final, Generator, Optional, Tuple
     from .coin import Coin
     from ...database import Database
     from ...database.tables import AbstractSerializableTable
@@ -64,18 +56,18 @@ class CoinObject(Serializable):
     def __init__(
             self,
             coin: Coin,
-            row_id: int,
             kwargs,
             *,
             enable_table: bool = True) -> None:
-        super().__init__(row_id=row_id)
+        super().__init__(row_id=-1)
         self._coin: Final = coin
         self.__model: Optional[CoinObject, bool] = False
         self.__value_events: Dict[str, Tuple[Callable, Callable]] = {}
         self.__enable_table = enable_table
 
         if self is not self._coin and self._isTableAvailable:
-            self._table.completeSerializable(self, row_id, kwargs)
+            if self._table.completeSerializable(self, kwargs) > 0:
+                assert self.rowId > 0
 
     def __eq__(self, other: CoinObject) -> bool:
         return (
@@ -109,10 +101,22 @@ class CoinObject(Serializable):
         return self._coin.model.database[self.__TABLE_TYPE]
 
     def save(self) -> bool:
-        raise NotImplementedError
+        if self._isTableAvailable and self._table.saveSerializable(self) > 0:
+            assert self.rowId > 0
+            return True
+        return False
 
     def load(self) -> bool:
-        raise NotImplementedError
+        if self._isTableAvailable and self._table.loadSerializable(self):
+            assert self.rowId > 0
+            return True
+        return False
+
+    def remove(self) -> bool:
+        if self._isTableAvailable and self._table.removeSerializable(self):
+            assert self.rowId == -1
+            return True
+        return False
 
     # TODO deprecated
     def _callModel(self, callback_name: str, *args, **kwargs) -> None:

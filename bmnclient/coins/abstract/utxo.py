@@ -30,15 +30,16 @@ class _Model(CoinObjectModel):
 class _Utxo(CoinObject, table_type=UtxoListTable):
     Model = _Model
 
-    def __init__(self, address: Coin.Address, *, row_id: int, **kwargs) -> None:
+    def __init__(self, address: Coin.Address,  **kwargs) -> None:
         self._address: Final = address
         self._name: Final = str(kwargs["name"])
 
-        super().__init__(address.coin, row_id, kwargs)
+        super().__init__(address.coin, kwargs)
 
-        self._index: Final = int(kwargs["index"])
-        self._height: Final = int(kwargs["height"])
-        self._amount: Final = int(kwargs["amount"])
+        self._index: Final = int(kwargs.pop("index"))
+        self._height: Final = int(kwargs.pop("height"))
+        self._amount: Final = int(kwargs.pop("amount"))
+        assert len(kwargs) == 1
 
     def __eq__(self, other: _Utxo) -> bool:
         return (
