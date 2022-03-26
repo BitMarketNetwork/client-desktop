@@ -157,12 +157,12 @@ class CoinObject(Serializable):
             setattr(self, private_name, new_value)
             if (
                     self.rowId > 0
-                    and self._TABLE_TYPE
+                    and self.__TABLE_TYPE
                     and name in self.serializeMap
             ):
-                column = self._TABLE_TYPE.ColumnEnum.get(name)
+                column = self.__TABLE_TYPE.ColumnEnum.get(name)
                 if column:
-                    self.model.database[self._TABLE_TYPE].update(
+                    self.model.database[self.__TABLE_TYPE].update(
                         self.rowId,
                         [ColumnValue(
                             column,

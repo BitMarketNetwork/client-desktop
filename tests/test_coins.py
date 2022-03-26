@@ -358,12 +358,19 @@ class TestCoins(TestCaseApplication):
     def test_mempool_address_lists(self) -> None:
         for limit in range(201):
             coin = Bitcoin(model_factory=self._application.modelFactory)
+            root_node = HdNode.deriveRootNode(urandom(64))
+            self.assertIsNotNone(root_node)
+            self.assertTrue(coin.deriveHdNode(root_node))
             self.assertTrue(coin.save())
+
             for i in range(limit):
-                address = coin.Address.createNullData(
-                    coin,
-                    name="address_{:06d}".format(i))
+                address = coin.deriveHdAddress(
+                    account=0,
+                    index=1000 + i,
+                    is_change=False)
+                self.assertIsNotNone(address)
                 self.assertTrue(address.save())
+            self.assertEqual(limit, len(coin.addressList))
 
             limit = randint(1, 10)
 
@@ -399,9 +406,11 @@ class TestCoins(TestCaseApplication):
 
             # check expired
             for i in range(randint(1, 20)):
-                address = coin.Address.createNullData(
-                    coin,
-                    name="address_new_{:06d}".format(i))
+                address = coin.deriveHdAddress(
+                    account=0,
+                    index=10000 + i,
+                    is_change=False)
+                self.assertIsNotNone(address)
                 self.assertTrue(address.save())
 
                 mempool_list = coin.createMempoolAddressLists(limit)
@@ -569,15 +578,14 @@ class TestTxFactory(TestCaseApplication):
             self,
             address: Bitcoin.Address,
             amount_list: Sequence[int]) -> None:
-        utxo_list: List[Bitcoin.Tx.Utxo] = []
         for i in range(len(amount_list)):
-            utxo_list.append(self._coin.Tx.Utxo(
-                self._coin,
+            utxo = self._coin.Tx.Utxo(
+                address,
                 name=i.to_bytes(32, "big").hex(),
                 height=100 + i,
                 index=0,
-                amount=amount_list[i]))
-        address.utxoList = utxo_list
+                amount=amount_list[i])
+            self.assertTrue(utxo.save())
 
     @classmethod
     def _isLowHeightUtxo(
@@ -594,6 +602,7 @@ class TestTxFactory(TestCaseApplication):
     def test_find_exact_utxo(self) -> None:
         address = self._coin.deriveHdAddress(account=0, is_change=False)
         self.assertIsNotNone(address)
+        self.assertTrue(address.save())
 
         # no utxo
         for r in range(100):
@@ -624,6 +633,9 @@ class TestTxFactory(TestCaseApplication):
                 # noinspection PyProtectedMember
                 utxo = self._coin.TxFactory._findExactUtxo(address.utxoList, 2)
                 self.assertIsNone(utxo)
+                for utxo in address.utxoList:
+                    self.assertTrue(utxo.remove())
+                    self.assertEqual(-1, utxo.rowId)
 
         # multiple utxo
         if True:
@@ -647,6 +659,7 @@ class TestTxFactory(TestCaseApplication):
     def test_find_single_address_single_utxo(self) -> None:
         address = self._coin.deriveHdAddress(account=0, is_change=False)
         self.assertIsNotNone(address)
+        self.assertTrue(address.save())
 
         # find same amount
         if True:
@@ -661,6 +674,10 @@ class TestTxFactory(TestCaseApplication):
                     i)
                 self.assertEqual(1, len(l))
                 self.assertEqual(i, a)
+
+        for utxo in address.utxoList:
+            self.assertTrue(utxo.remove())
+            self.assertEqual(-1, utxo.rowId)
 
         # find the nearest amount + height test
         if True:
@@ -680,6 +697,7 @@ class TestTxFactory(TestCaseApplication):
     def test_find_single_address_multiple_utxo(self) -> None:
         address = self._coin.deriveHdAddress(account=0, is_change=False)
         self.assertIsNotNone(address)
+        self.assertTrue(address.save())
 
         amount_list = list(range(0, 10)) * 4
         shuffle(amount_list)
@@ -703,6 +721,10 @@ class TestTxFactory(TestCaseApplication):
                 amount)
             self.assertEqual(utxo_count, len(l))
             self.assertEqual(result_amount, a)
+
+        for utxo in address.utxoList:
+            self.assertTrue(utxo.remove())
+            self.assertEqual(-1, utxo.rowId)
 
         amount_list = list(range(1, 10))
         shuffle(amount_list)
@@ -731,6 +753,8 @@ class TestTxFactory(TestCaseApplication):
             is_change=False,
             index=1000)
         self.assertIsNotNone(address)
+        self.assertTrue(address.save())
+
         receiver_address = self._coin.deriveHdAddress(
             account=0,
             is_change=False,

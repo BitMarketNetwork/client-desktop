@@ -188,7 +188,7 @@ class _TxFactory(CoinObject, table_type=None):
 
     @property
     def isValidReceiverAmount(self) -> bool:
-        return self._receiver_amount >= 0 and self.isValidChangeAmount
+        return bool(self._receiver_amount >= 0 and self.isValidChangeAmount)
 
     @property
     def subtractFee(self) -> bool:
@@ -347,7 +347,7 @@ class _TxFactory(CoinObject, table_type=None):
     def _newUtxoIsBest(
             old_utxo: Optional[Coin.Tx.Utxo],
             new_utxo: Coin.Tx.Utxo) -> bool:
-        return old_utxo is None or new_utxo.height < old_utxo.height
+        return bool(old_utxo is None or new_utxo.height < old_utxo.height)
 
     @classmethod
     def _findExactUtxo(

@@ -522,8 +522,12 @@ class _Address(CoinObject, table_type=AddressListTable):
 
     @serializable
     @property
-    def utxoList(self) -> List[Coin.Tx.Utxo]:
-        return self._utxo_list
+    def utxoList(self) -> Sequence[Coin.Tx.Utxo]:
+        if self._isTableAvailable:
+            result = self.model.database[UtxoListTable].rowListProxy(self)
+            if result is not None:
+                return result
+        return tuple()
 
     @utxoList.setter
     def utxoList(self, utxo_list: List[Coin.Tx.Utxo]) -> None:
