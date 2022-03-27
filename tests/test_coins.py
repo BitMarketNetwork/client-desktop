@@ -479,6 +479,77 @@ class TestCoins(TestCaseApplication):
             self.assertLess(0, utxo.rowId)
             self.assertIs(address2, utxo.address)
 
+    def test_io(self) -> None:
+        coin = Bitcoin(model_factory=self._application.modelFactory)
+        root_node = HdNode.deriveRootNode(urandom(64))
+        self.assertTrue(coin.deriveHdNode(root_node))
+        self.assertTrue(coin.save())
+
+        for tx_index in range(10):
+            tx = coin.Tx(
+                coin,
+                name="tx_name_" + str(tx_index),
+                height=randint(10000, 1000000),
+                time=randint(10000, 1000000),
+                amount=randint(10000, 1000000),
+                fee_amount=randint(10000, 1000000),
+                is_coinbase=randint(0, 2) == 1,
+                input_list=[],
+                output_list=[])
+            self.assertTrue(tx.save())
+            self.assertEqual(0, len(tx.inputList))
+            self.assertEqual(0, len(tx.outputList))
+
+            for io_type in tx.Io.IoType:
+                for io_index in range(10):
+                    if not io_index:
+                        io_address = coin.deriveHdAddress(
+                            account=hash(io_type),
+                            index=io_index,
+                            is_change=False)
+                        self.assertFalse(io_address.isNullData)
+                    else:
+                        io_address = coin.Address.createNullData(
+                            coin,
+                            name=f"address_{io_type.value}_{io_index}")
+                        self.assertTrue(io_address.isNullData)
+                    self.assertIsNotNone(io_address)
+
+                    io = tx.Io(
+                        tx,
+                        io_type=io_type,
+                        index=io_index,
+                        output_type=f"output_type_{io_type.value}_{io_index}",
+                        address=io_address,
+                        amount=io_index * 100000)
+                    self.assertTrue(io.address)
+                    self.assertEqual(
+                        io_address.isNullData,
+                        io.address.isNullData)
+                    self.assertTrue(io.save())
+                    self.assertLess(-1, io.rowId)
+
+                    io_db = tx.Io(tx, io_type=io_type, index=io_index)
+                    self.assertEqual(io.IoType, io_db.IoType)
+                    self.assertEqual(io.index, io_db.index)
+                    self.assertEqual(io.outputType, io_db.outputType)
+                    self.assertEqual(io.address, io_db.address)
+                    self.assertTrue(io_db.address)
+                    self.assertEqual(
+                        io_address.isNullData,
+                        io_db.address.isNullData)
+                    self.assertLess(0, io_db.rowId)
+
+                    self.assertRaises(
+                        TypeError,
+                        tx.Io,
+                        tx,
+                        io_type=None,
+                        index=0)
+
+            self.assertEqual(10, len(tx.inputList))
+            self.assertEqual(10, len(tx.outputList))
+
     def _test_serialization(
             self,
             d_flags: DeserializeFlag,

@@ -1,36 +1,24 @@
 from __future__ import annotations
 
-from enum import Enum
 from typing import TYPE_CHECKING
 
-from .table import (
-    AbstractSerializableTable,
-    ColumnEnum,
-    ColumnValue,
-    RowListProxy,
-    SortOrder)
-from ...utils import DeserializeFlag
+from .table import AbstractSerializableTable, Column, ColumnEnum, RowListProxy
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
-    from typing import Final, List, Tuple
-    from .. import Cursor
+    from typing import Final, Optional, Tuple
     from ...coins.abstract import Coin
 
 
 class TxIoListTable(AbstractSerializableTable, name="transactions_io"):
-    class IoType(Enum):
-        INPUT: Final = "input"
-        OUTPUT: Final = "output"
-
     class ColumnEnum(ColumnEnum):
         ROW_ID: Final = ()
         TX_ROW_ID: Final = ("transaction_row_id", "INTEGER NOT NULL")
-        IO_TYPE: Final = ("io_type", "TEXT NOT NULL")  # IoType
+        IO_TYPE: Final = ("io_type", "TEXT NOT NULL")  # Coin.Tx.Io.IoType
         INDEX: Final = ("index", "INTEGER NOT NULL")
 
         OUTPUT_TYPE: Final = ("output_type", "TEXT NOT NULL")
-        ADDRESS_NAME: Final = ("address_name", "TEXT")
+        ADDRESS: Final = ("address", "TEXT")
         AMOUNT: Final = ("amount", "INTEGER NOT NULL")
 
     @classproperty
@@ -54,61 +42,28 @@ class TxIoListTable(AbstractSerializableTable, name="transactions_io"):
             lambda o: o.tx.rowId if o.tx.rowId > 0 else None
         ), (
             ColumnEnum.IO_TYPE,
-            lambda o: o.index  # TODO
+            lambda o: o.ioType.value
         ), (
             ColumnEnum.INDEX,
             lambda o: o.index
         )
     )
 
-    def deserializeAll(
+    def rowListProxy(
             self,
-            cursor: Cursor,
-            coin: Coin,
-            tx_row_id: int,
-            io_type: IoType) -> Tuple[bool, List[Coin.Tx.Io]]:
-        assert coin.rowId > 0
-        assert tx_row_id > 0
-        io_list = []
-
-        error = False
-        for result in self._deserialize(
-                cursor,
-                coin.Tx.Io,
-                {
-                    self.ColumnEnum.TX_ROW_ID: tx_row_id,
-                    self.ColumnEnum.IO_TYPE: io_type.value
-                },
-                (
-                        (self.ColumnEnum.INDEX, SortOrder.ASC),
-                )
-        ):
-            io = coin.Tx.Io.deserialize(
-                DeserializeFlag.DATABASE_MODE,
-                result,
-                coin)
-            if io is None:
-                error = True
-                self._database.logDeserializeError(coin.Tx.Io, result)
-            else:
-                assert io.rowId > 0
-                io_list.append(io)
-
-        return not error, io_list
-
-    def serialize(
-            self,
-            cursor: Cursor,
             tx: Coin.Tx,
-            io_type: IoType,
-            io: Coin.Tx.Io) -> None:
-        assert tx.rowId > 0
+            io_type: Optional[Coin.Tx.Io.IoType]) -> Optional[RowListProxy]:
+        if tx.rowId <= 0:
+            return None
+        where_columns = [self.ColumnEnum.TX_ROW_ID]
+        where_args = [tx.rowId]
+        if io_type is not None:
+            where_columns.append(self.ColumnEnum.IO_TYPE)
+            where_args.append(io_type.value)
 
-        self._serialize(
-            io,
-            [
-                ColumnValue(self.ColumnEnum.TX_ROW_ID, tx.rowId),
-                ColumnValue(self.ColumnEnum.IO_TYPE, io_type.value),
-                ColumnValue(self.ColumnEnum.INDEX, io.index)
-            ])
-        assert io.rowId > 0
+        return RowListProxy(
+            type_=tx.Io,
+            type_args=[tx],
+            table=self,
+            where_expression=Column.joinWhere(where_columns),
+            where_args=where_args)
