@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import MutableSequence, Sequence
 from enum import Enum
 from itertools import chain
 from typing import TYPE_CHECKING
@@ -393,8 +393,6 @@ class AbstractSerializableTable(AbstractTable, name=""):
                 object_.deserializeUpdate(
                     DeserializeFlag.DATABASE_MODE,
                     {c.column.name: c.value for c in data_columns})
-                if use_row_id:
-                    object_.rowId = row_id
             elif use_row_id and object_.rowId > 0:
                 raise self._database.engine.IntegrityError(
                     "failed to load serializable object '{}'"
@@ -409,12 +407,15 @@ class AbstractSerializableTable(AbstractTable, name=""):
                 object_ = object_.deserialize(
                     DeserializeFlag.DATABASE_MODE,
                     {c.column.name: c.value for c in data_columns},
-                    *cls_args,
-                    row_id=row_id if use_row_id else -1)
+                    *cls_args)
         else:
-            row_id = -1
+            return None
 
-        return object_ if row_id > 0 else None
+        if row_id <= 0:
+            return None
+        if use_row_id:
+            object_.rowId = row_id
+        return object_
 
     def completeSerializable(self, object_: Serializable, kwargs) -> int:
         key_columns = self._keyColumns(object_)
@@ -460,7 +461,33 @@ class AbstractSerializableTable(AbstractTable, name=""):
 
 
 # Performance: https://www.sqlite.org/autoinc.html
-class RowListProxy(Sequence):
+class EmptyRowListProxy(MutableSequence):
+    def __init__(self, *args, **kwargs) -> None:
+        pass
+
+    def __len__(self) -> int:
+        return 0
+
+    def __iter__(self) -> Iterable[Serializable]:
+        return tuple()
+
+    def __getitem__(self, index: int) -> Serializable:
+        raise IndexError
+
+    def __setitem__(self, index: int, value: Any) -> None:
+        raise NotImplementedError
+
+    def __delitem__(self, index: int) -> None:
+        raise NotImplementedError
+
+    def insert(self, index: int, value: Any) -> None:
+        raise NotImplementedError
+
+    def clear(self) -> int:
+        return 0
+
+
+class RowListProxy(EmptyRowListProxy):
     def __init__(
             self,
             *,
@@ -471,6 +498,7 @@ class RowListProxy(Sequence):
             where_args: Optional[Sequence[Union[str, int]]],
             order_columns: Optional[Sequence[Tuple[Column, SortOrder]]] = None
     ) -> None:
+        super().__init__()
         self._type = type_
         self._type_args = type_args if type_args else []
 
@@ -487,22 +515,24 @@ class RowListProxy(Sequence):
         order_expression = SortOrder.join(
             order_columns if order_columns else
             [(self._table.ColumnEnum.ROW_ID, SortOrder.ASC)])
-        if where_expression:
-            where_expression = " WHERE " + where_expression
+
+        self._where_expression = (
+                " WHERE " + where_expression if where_expression
+                else "")
 
         self._query_length = (
             f"SELECT COUNT(*)"
             f" FROM {self._table}"
-            f"{where_expression}")
+            f"{self._where_expression}")
         self._query_iter = (
             f"SELECT {column_expression}"
             f" FROM {self._table}"
-            f"{where_expression}"
+            f"{self._where_expression}"
             f" ORDER BY {order_expression}")
         self._query_getitem = (
             f"SELECT {column_expression}"
             f" FROM {self._table}"
-            f"{where_expression}"
+            f"{self._where_expression}"
             f" ORDER BY {order_expression}"
             f" LIMIT 1 OFFSET ?")
 
@@ -534,10 +564,24 @@ class RowListProxy(Sequence):
             for row in c.execute(self._query_iter, self._where_args):
                 yield self._deserialize(row)
 
-    def __getitem__(self, index: int) -> Optional[Serializable]:
+    def __getitem__(self, index: int) -> Serializable:
         with self._table.database.transaction(allow_in_transaction=True) as c:
             c.execute(self._query_getitem, [*self._where_args, index])
             row = c.fetchone()
             if not row:
-                raise IndexError()
+                raise IndexError
             return self._deserialize(row)
+
+    def __setitem__(self, index: int, value: Any) -> None:
+        raise NotImplementedError
+
+    def __delitem__(self, index: int) -> None:
+        raise NotImplementedError
+
+    def insert(self, index: int, value: Any) -> None:
+        raise NotImplementedError
+
+    def clear(self) -> int:
+        with self._table.database.transaction(allow_in_transaction=True) as c:
+            c.execute(f"DELETE FROM {self._table}{self._where_expression}")
+            return c.rowcount
