@@ -1,5 +1,7 @@
 # BitMarket Network Client Change Log
 
+## 0.14.0 (xx.03.2022)
+
 * Python 3.8 or later is required.
 * `PySide6` package has been updated to version `6.2.4`.
 * `cryptography` package has been updated to version `36.0.2`.
