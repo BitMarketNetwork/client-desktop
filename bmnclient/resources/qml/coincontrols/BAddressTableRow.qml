@@ -38,6 +38,7 @@ BItemDelegate {
         id: _addressComponent
 
         BLabel {
+            verticalAlignment: Text.AlignVCenter
             elide: BLabel.ElideMiddle
             maximumLineCount: 50
             text: _base.address.name
@@ -47,6 +48,7 @@ BItemDelegate {
         id: _labelComponent
 
         BLabel {
+            verticalAlignment: Text.AlignVCenter
             elide: BLabel.ElideRight
             maximumLineCount: 20
             text: address.state.label
@@ -58,6 +60,7 @@ BItemDelegate {
         BColumnLayout {
             BRowLayout {
                 BLayout.alignment: Qt.AlignRight
+                BLayout.topMargin: 10
                 BLabel {
                     BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
                     font.bold: true
@@ -76,6 +79,7 @@ BItemDelegate {
             }
             BRowLayout {
                 BLayout.alignment: Qt.AlignRight
+                BLayout.bottomMargin: 10
                 BLabel {
                     BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
                     font.bold: true
