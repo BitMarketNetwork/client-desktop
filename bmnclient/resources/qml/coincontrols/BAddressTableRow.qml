@@ -115,6 +115,23 @@ BItemDelegate {
             }
         }
     }
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.RightButton
+
+        onClicked: (mouse) => {
+            if (mouse.button === Qt.RightButton) {
+                _base.contextMenu.address = _base.address
+                _base.contextMenu.popup()
+            }  
+        }
+        onPressAndHold: (mouse) => {
+            if (mouse.source === Qt.MouseEventNotSynthesized) {
+                _base.contextMenu.address = _base.address
+                contextMenu.popup()
+            } 
+        }
+    }
     onDoubleClicked: {
         if (model.column === 0) {
             BBackend.clipboard.text = address.name
@@ -130,5 +147,4 @@ BItemDelegate {
             BBackend.clipboard.text = address.txList.rowCount()
         }
     }
-    // TODO right click
 }
