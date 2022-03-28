@@ -2,9 +2,28 @@
 
 ## 0.14.0 (xx.03.2022)
 
-* Python 3.8 or later is required.
-* `PySide6` package has been updated to version `6.2.4`.
-* `cryptography` package has been updated to version `36.0.2`.
+* Requirements:
+    - Python 3.8 or later is required.
+    - `PySide6` package has been updated to version `6.2.4`.
+    - `cryptography` package has been updated to version `36.0.2`.
+* Database:
+    - Database version changed to `2`.
+* GUI:
+    - Added popup notification for copy to clipboard event.
+    - Settings Page:
+        - Added "Blockchain explorer" option (currently only Blockchain.com).
+    - Addresses Page:
+        - The address list is now in table view.
+        - Displaying the number of transactions for each address.
+        - Copies the context of the selected address cell to the clipboard.
+        - Popup address context menu when right-clicking.
+        - Added "Transaction history" dialog for each address.
+        - Clicking on a transaction in the "Transaction History" dialog opens an
+          external blockchain explorer.
+        - Changing the page to "Send" after selecting "Spend from" in the
+          context menu of an address.
+    - Send Page:
+        - The "amount" fields is disabled if the "Pay to" field is empty.
 
 ## 0.13.1 (08.02.2022)
 
