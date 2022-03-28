@@ -1,5 +1,7 @@
 # BitMarket Network Client Change Log
 
+* Python 3.8 or later is required.
+
 ## 0.13.1 (08.02.2022)
 
 * New command line option `--temp-path`.

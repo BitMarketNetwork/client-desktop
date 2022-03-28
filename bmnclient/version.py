@@ -18,7 +18,7 @@ class Product:
     VERSION_STRING: Final = ".".join(map(str, VERSION))
     ENCODING: Final = "utf-8"
     STRING_SEPARATOR: Final = ":"
-    PYTHON_MINIMAL_VERSION: Final = (3, 7, 0)
+    PYTHON_MINIMAL_VERSION: Final = (3, 8, 0)
 
 
 class ProductPaths:

@@ -19,7 +19,7 @@ don't try to use x86!
 ## Requirements
 
 - GNU Make 4.1+
-- Python 3.7+ with PIP
+- Python 3.8+ with PIP
     * [requirements.txt](requirements.txt)
     * [requirements-dev.txt](requirements-dev.txt)
 - MinGW-w64 8.1+ (for Windows)
@@ -28,7 +28,7 @@ don't try to use x86!
 
 ## Windows Requirements
 
-- **[Python 3.7+ (64-bit) and PIP][python download windows]**:
+- **[Python 3.8+ (64-bit) and PIP][python download windows]**:
 
   For more convenience, add Python to the `PATH` environment variable, this can
   be done by the installer itself. After completing the installation you may
@@ -60,7 +60,7 @@ don't try to use x86!
 
   Install it if you don't want to install any other requirements manually.
 
-- **Python 3.7+**:
+- **Python 3.8+**:
 
   By default, Homebrew installs the latest Python version, some PIP-packages may
   be non-compatible with the latest Python version.
