@@ -7,6 +7,7 @@ BNavigationDrawer {
 
     signal showContextMenu
     signal showWallet
+    signal showChart
     signal showMarket
     signal showAbout
     signal showSettings
@@ -45,6 +46,14 @@ BNavigationDrawer {
         icon.source: _applicationManager.imagePath("icon-wallet.svg")
         onClicked: {
             _base.showWallet()
+        }
+    }
+    BNavigationDrawerItem {
+        checked: true
+        text: qsTr("Chart View")
+        icon.source: _applicationManager.imagePath("chart-pie-solid")
+        onClicked: {
+            _base.showChart()
         }
     }
     BNavigationDrawerItem {

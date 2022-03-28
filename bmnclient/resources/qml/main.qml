@@ -29,14 +29,17 @@ BApplicationWindow {
         onShowWallet: {
             _mainLayout.currentIndex = 0
         }
-        onShowMarket: {
+        onShowChart: {
             _mainLayout.currentIndex = 1
         }
-        onShowAbout: {
+        onShowMarket: {
             _mainLayout.currentIndex = 2
         }
-        onShowSettings: {
+        onShowAbout: {
             _mainLayout.currentIndex = 3
+        }
+        onShowSettings: {
+            _mainLayout.currentIndex = 4
         }
         onQuit: {
             BBackend.onQuitRequest()
@@ -46,14 +49,21 @@ BApplicationWindow {
     BStackLayout {
         id: _mainLayout
         anchors.fill: parent
-        currentIndex: 0
+        currentIndex: 1
 
-        BWalletPage {
-            list.display: _drawer.barsDisplay
+        Loader {
+            active: _mainLayout.currentIndex === 0
+            sourceComponent: BWalletPage {
+                list.display: _drawer.barsDisplay
+            }
+        }
+
+        BChartPage {
+
         }
 
         Loader {
-            active: _mainLayout.currentIndex === 1
+            active: _mainLayout.currentIndex === 2
             sourceComponent: BApplicationPage {
                 placeholderText: "TODO"
                 list.display: _drawer.barsDisplay
@@ -61,7 +71,7 @@ BApplicationWindow {
         }
 
         Loader {
-            active: _mainLayout.currentIndex === 2
+            active: _mainLayout.currentIndex === 3
             sourceComponent: BAboutPage {
                 list.display: _drawer.barsDisplay
             }
