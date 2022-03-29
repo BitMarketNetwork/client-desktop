@@ -92,50 +92,76 @@ BPane {
             amount: _base.coin.txFactory.feeAmount
         }
 
+        BDialogSeparator {}
+
+        BRowLayout {
+            BUnfoldToolButton {
+                id: _spoiler
+            }
+            BLabel {
+                text: qsTr("Advanced options:")
+            }
+        }
+        BRowLayout {
+            BLayout.fillWidth: true
+            BLayout.columnSpan: parent.columns - 1
+        }
+
         BDialogPromptLabel {
-            text: qsTr("per kilobyte:")
+            visible: _spoiler.checked
+            text: qsTr("Price per kilobyte:")
         }
         BAmountInput {
             id: _inputAmount2
             BLayout.alignment: _applicationStyle.dialogInputAlignment
+            visible: _spoiler.checked
             orientation: Qt.Horizontal
             amount: _base.coin.txFactory.kibFeeAmount
             defaultButtonText: qsTr("Recommended")
             enabled: _base.coin.txFactory.receiver.validStatus && _inputRecipientAddress.length > 0
         }
         BDialogValidLabel {
+            visible: _spoiler.checked
             status: _base.coin.txFactory.kibFeeAmount.validStatus
         }
 
         BDialogPromptLabel {
+            visible: _spoiler.checked
             text: qsTr("Subtract fee from amount:")
         }
         BDialogInputSwitch {
             BLayout.columnSpan: parent.columns - 1
+            visible: _spoiler.checked
             checked: _base.coin.txFactory.feeAmount.subtractFromAmount
             onCheckedChanged: {
                 _base.coin.txFactory.feeAmount.subtractFromAmount = checked
             }
         }
 
-        BDialogSeparator {}
+        BDialogSeparator {
+            visible: _spoiler.checked
+        }
 
         BDialogPromptLabel {
+            visible: _spoiler.checked
             text: qsTr("Raw size / Virtual size:")
         }
         BDialogInputLabel {
             BLayout.columnSpan: parent.columns - 1
+            visible: _spoiler.checked
             text: qsTr("%1 / %2 bytes")
                     .arg(_base.coin.txFactory.state.estimatedRawSizeHuman)
                     .arg(_base.coin.txFactory.state.estimatedVirtualSizeHuman)
         }
 
         BDialogPromptLabel {
+            visible: _spoiler.checked
             text: qsTr("Change:")
         }
         BAmountLabel {
             BLayout.columnSpan: parent.columns - 1
             BLayout.alignment: _applicationStyle.dialogInputAlignment
+            visible: _spoiler.checked
             orientation: Qt.Horizontal
             amount: _base.coin.txFactory.changeAmount
         }
