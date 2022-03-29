@@ -24,6 +24,7 @@
           context menu of an address.
     - Send Page:
         - The "amount" fields is disabled if the "Pay to" field is empty.
+        - Advanced fee options are hidden in the "Advanced options" expander.
 
 ## 0.13.1 (08.02.2022)
 
