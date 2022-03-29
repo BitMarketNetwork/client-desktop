@@ -1048,37 +1048,42 @@ Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="96"/>
-        <source>per kilobyte:</source>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="102"/>
+        <source>Advanced options:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="103"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="112"/>
+        <source>Price per kilobyte:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="120"/>
         <source>Recommended</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="111"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="130"/>
         <source>Subtract fee from amount:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="124"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="147"/>
         <source>Raw size / Virtual size:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="128"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="152"/>
         <source>%1 / %2 bytes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="134"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="159"/>
         <source>Change:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="169"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="195"/>
         <source>Prepare...</source>
         <translation type="unfinished"></translation>
     </message>
