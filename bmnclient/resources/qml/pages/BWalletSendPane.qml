@@ -95,6 +95,7 @@ BPane {
         BDialogSeparator {}
 
         BCollapsibleItem {
+            BLayout.preferredWidth: 250
             BLayout.columnSpan: parent.columns - 1
             title: "Advanced options"
 
@@ -120,13 +121,12 @@ BPane {
                     text: qsTr("Subtract fee from amount:")
                 }
                 BDialogInputSwitch {
+                    BLayout.columnSpan: parent.columns - 1
                     checked: _base.coin.txFactory.feeAmount.subtractFromAmount
                     onCheckedChanged: {
                         _base.coin.txFactory.feeAmount.subtractFromAmount = checked
                     }
                 }
-
-                BDialogSeparator {}
 
                 BDialogPromptLabel {
                     text: qsTr("Raw size / Virtual size:")
