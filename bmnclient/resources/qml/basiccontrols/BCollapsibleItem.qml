@@ -8,6 +8,7 @@ BColumnLayout {
 
     property string title
     property alias collapsibleItem: _detailsLoader.sourceComponent
+    // TODO customize title item
 
     BRowLayout {
         BUnfoldToolButton {
@@ -30,7 +31,7 @@ BColumnLayout {
         BLayout.preferredHeight: 0
         BLayout.maximumHeight: BLayout.preferredHeight
 
-        active: false
+        active: true
 
         onLoaded: {
             unfold()
@@ -75,5 +76,9 @@ BColumnLayout {
             _detailsAnimation.to = 0
             _detailsAnimation.restart()
         }
+    }
+
+    Component.onCompleted: {
+        _detailsLoader.showControl(false)
     }
 }

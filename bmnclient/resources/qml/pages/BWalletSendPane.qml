@@ -95,7 +95,6 @@ BPane {
         BDialogSeparator {}
 
         BCollapsibleItem {
-            BLayout.preferredWidth: 250
             BLayout.columnSpan: parent.columns - 1
             title: "Advanced options"
 
