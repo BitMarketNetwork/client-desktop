@@ -1,19 +1,23 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Callable, TYPE_CHECKING
+from typing import (
+    Callable,
+    Final,
+    Generator,
+    Iterable,
+    MutableSequence,
+    TYPE_CHECKING)
 
-from ...database.tables import ColumnValue
+from ...database.tables import ColumnValue, RowListDummyProxy, SerializableTable
 from ...logger import Logger
 from ...utils import Serializable, SerializeFlag
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
     import logging
-    from typing import Any, Dict, Final, Generator, Optional, Tuple
     from .coin import Coin
     from ...database import Database
-    from ...database.tables import AbstractSerializableTable
     from ...utils.string import ClassStringKeyTuple
 
 
@@ -21,16 +25,24 @@ class CoinObjectModel:
     def __init__(
             self,
             *args,
-            database: Database,
-            name_key_tuple: Tuple[ClassStringKeyTuple, ...],
+            name_key_tuple: tuple[ClassStringKeyTuple, ...],
             **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._logger = Logger.classLogger(self.__class__, *name_key_tuple)
-        self._database = database
 
     @property
     def logger(self) -> logging.Logger:
         return self._logger
+
+    @property
+    def owner(self) -> CoinObject:
+        raise NotImplementedError
+
+
+class CoinRootObjectModel(CoinObjectModel):
+    def __init__(self, *args, database: Database, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._database = database
 
     @property
     def database(self) -> Database:
@@ -61,12 +73,13 @@ class CoinObject(Serializable):
             enable_table: bool = True) -> None:
         super().__init__(row_id=-1)
         self._coin: Final = coin
-        self.__model: Optional[CoinObject, bool] = False
-        self.__value_events: Dict[str, Tuple[Callable, Callable]] = {}
+        self.__model: CoinObjectModel | bool | None = False
+        self.__value_events: dict[str, tuple[Callable, Callable]] = {}
         self.__enable_table = enable_table
+        self.__deferred_save_list: list[list[CoinObject]] = []
 
-        if self is not self._coin and self._isTableAvailable:
-            if self._table.completeSerializable(self, kwargs) > 0:
+        if self is not self._coin and (table := self._openTable()):
+            if table.completeSerializable(self, kwargs) > 0:
                 assert self.rowId > 0
 
     def __eq__(self, other: CoinObject) -> bool:
@@ -79,7 +92,7 @@ class CoinObject(Serializable):
         return hash((self._coin, ))
 
     @property
-    def model(self) -> CoinObjectModel:
+    def model(self) -> CoinObjectModel | CoinRootObjectModel:
         if self.__model is False:
             self.__model = self._coin.modelFactory(self)
         return self.__model
@@ -88,32 +101,38 @@ class CoinObject(Serializable):
     def coin(self) -> Coin:
         return self._coin
 
-    @property
-    def _isTableAvailable(self) -> bool:
-        return (
-                self.__TABLE_TYPE
-                and self.__enable_table
-                and self._coin.model.database.isOpen
-        )
+    def associate(self, object_: CoinObject) -> bool:
+        return True
 
-    @property
-    def _table(self) -> AbstractSerializableTable:
-        return self._coin.model.database[self.__TABLE_TYPE]
+    def _appendDeferredSave(
+            self,
+            object_list: Iterable[Callable[[CoinObject], CoinObject]]) -> None:
+        if object_list:
+            self.__deferred_save_list.append([o(self) for o in object_list])
 
     def save(self) -> bool:
-        if self._isTableAvailable and self._table.saveSerializable(self) > 0:
+        if not (table := self._openTable()):
+            return False
+        with self._coin.model.database.transaction(allow_in_transaction=True):
+            if table.saveSerializable(self) <= 0:
+                return False
             assert self.rowId > 0
-            return True
-        return False
+
+            for object_list in self.__deferred_save_list:
+                for object_ in object_list:
+                    if not object_.save() or not self.associate(object_):
+                        return False
+            self.__deferred_save_list.clear()
+        return True
 
     def load(self) -> bool:
-        if self._isTableAvailable and self._table.loadSerializable(self):
+        if (table := self._openTable()) and table.loadSerializable(self):
             assert self.rowId > 0
             return True
         return False
 
     def remove(self) -> bool:
-        if self._isTableAvailable and self._table.removeSerializable(self):
+        if (table := self._openTable()) and table.removeSerializable(self):
             assert self.rowId == -1
             return True
         return False
@@ -146,7 +165,7 @@ class CoinObject(Serializable):
             self,
             action: str,
             name: str,
-            new_value: Any) -> bool:
+            new_value: ...) -> bool:
         private_name = "_" + name
 
         old_value = getattr(self, private_name)
@@ -173,6 +192,31 @@ class CoinObject(Serializable):
                                 new_value)
                         )])
         return True
+
+    def _openTable(
+            self,
+            table_type: type(SerializableTable) | None = None
+    ) -> SerializableTable | None:
+        if table_type is None:
+            table_type = self.__TABLE_TYPE
+        if not table_type or not self.__enable_table:
+            return None
+        if not self._coin.model.database.isOpen:
+            return None
+        return self._coin.model.database[table_type]
+
+    def _rowListProxy(
+            self,
+            table_type: type(SerializableTable),
+            *args,
+            **kwargs
+    ) -> MutableSequence:
+        if (
+                (table := self._openTable(table_type))
+                and (result := table.rowListProxy(self, *args, **kwargs))
+        ):
+            return result
+        return RowListDummyProxy()
 
 
 # TODO deprecated, create class AbstractModelFactory
