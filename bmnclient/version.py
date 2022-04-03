@@ -14,11 +14,11 @@ class Product:
     MAINTAINER_URL: Final = "https://" + MAINTAINER_DOMAIN + "/"
     NAME: Final = "BitMarket Network Client"
     SHORT_NAME: Final = "bmn-client"
-    VERSION: Final = (0, 13, 1)
+    VERSION: Final = (0, 14, 0)
     VERSION_STRING: Final = ".".join(map(str, VERSION))
     ENCODING: Final = "utf-8"
     STRING_SEPARATOR: Final = ":"
-    PYTHON_MINIMAL_VERSION: Final = (3, 7, 0)
+    PYTHON_MINIMAL_VERSION: Final = (3, 8, 0)
 
 
 class ProductPaths:

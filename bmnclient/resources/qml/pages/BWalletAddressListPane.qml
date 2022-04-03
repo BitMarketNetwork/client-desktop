@@ -9,6 +9,8 @@ BPane {
     property string title: qsTr("Addresses (%1)").arg(_tableView.model.rowCountHuman)
     property var coin // CoinModel
 
+    signal spendFromTriggered
+
     BHorizontalHeaderView {
         id: _horizontalHeader
         syncView: _tableView
@@ -51,7 +53,7 @@ BPane {
         anchors.topMargin: _horizontalHeader.implicitHeight
         model: _base.coin.addressList
 
-        columnWidth: [355, -1, 150, 65, 50]
+        columnWidth: [355, -1, 150, 65, 60]
 
         delegate: BAddressTableRow {
             implicitWidth: _tableView.columnWidthProvider(column)
@@ -83,6 +85,7 @@ BPane {
             text: qsTr("Spend from")
             onTriggered: {
                 _contextMenu.address.state.isTxInput = true
+                spendFromTriggered()
             }
         }
         BMenuItem {
