@@ -6,8 +6,10 @@ from .table import (
     AbstractSerializableTable,
     AbstractTable,
     ColumnValue,
-    EmptyRowListProxy,
-    RowListProxy)
+    RowListDummyProxy,
+    RowListProxy,
+    SerializableTable,
+    Table)
 from .tx import TxListTable
 from .tx_io import TxIoListTable
 from .utxo import UtxoListTable

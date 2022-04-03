@@ -41,7 +41,7 @@ class Cursor(_engine.Cursor):
             return table
         if issubclass(table, AbstractTable) or isinstance(table, AbstractTable):
             return table.name
-        raise TypeError()
+        raise TypeError
 
     def isTableExists(self, table: Union[str, Type[AbstractTable]]) -> bool:
         self.execute(

@@ -3,32 +3,21 @@ from __future__ import annotations
 from collections.abc import MutableSequence, Sequence
 from enum import Enum
 from itertools import chain
-from typing import TYPE_CHECKING
+from typing import Callable, Generator, Iterable, TYPE_CHECKING, TypeVar
 
 from ...utils import DeserializeFlag, Serializable, SerializeFlag
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
-    from typing import (
-        Any,
-        Callable,
-        Final,
-        Generator,
-        Iterable,
-        List,
-        Optional,
-        Tuple,
-        Type,
-        Union)
     from .. import Cursor, Database
 
 
 class SortOrder(Enum):
-    ASC: Final = "ASC"
-    DESC: Final = "DESC"
+    ASC = "ASC"
+    DESC = "DESC"
 
     @staticmethod
-    def join(source: Iterable[Tuple[Column, SortOrder]]) -> str:
+    def join(source: Iterable[tuple[Column, SortOrder]]) -> str:
         return ", ".join(f"{s[0]} {s[1].value}" for s in source)
 
 
@@ -75,7 +64,7 @@ class Column:
 class ColumnValue:
     __slots__ = ("_column", "value")
 
-    def __init__(self, column: Column, value: Optional[str, int]) -> None:
+    def __init__(self, column: Column, value: str | int | None) -> None:
         self._column = column
         self.value = value
 
@@ -107,7 +96,7 @@ class ColumnEnum(Column, Enum):
             f"column with name '{name}' not found in enum '{cls.__name__}'")
 
     @classmethod
-    def get(cls, name: str) -> Optional[Column]:
+    def get(cls, name: str) -> Column | None:
         for column in cls:
             if column.name == name:
                 return column
@@ -124,13 +113,13 @@ class TableMeta(type):
 
 class AbstractTable(metaclass=TableMeta):
     class ColumnEnum(ColumnEnum):
-        ROW_ID: Final = ()
+        ROW_ID = ()
 
     __NAME: str = ""
     __IDENTIFIER: str = ""
     __DEFINITION: str = ""
-    _CONSTRAINT_LIST: Tuple[str, ...] = tuple()
-    _UNIQUE_COLUMN_LIST: Tuple[Tuple[Column, ...], ...] = tuple()
+    _CONSTRAINT_LIST: tuple[str, ...] = tuple()
+    _UNIQUE_COLUMN_LIST: tuple[tuple[Column, ...], ...] = tuple()
 
     def __init_subclass__(cls, *args, **kwargs) -> None:
         name = kwargs.pop("name")
@@ -321,17 +310,20 @@ class AbstractTable(metaclass=TableMeta):
         return False
 
 
+Table = TypeVar("Table", bound=AbstractTable)
+
+
 class AbstractSerializableTable(AbstractTable, name=""):
     _KEY_COLUMN_LIST: \
-        Tuple[Tuple[Column, Callable[[Serializable], None], ...]] = tuple()
+        tuple[tuple[Column, Callable[[Serializable], None], ...]] = tuple()
 
-    def _keyColumns(self, object_: Serializable) -> Tuple[ColumnValue, ...]:
+    def _keyColumns(self, object_: Serializable) -> tuple[ColumnValue, ...]:
         columns = tuple(
             ColumnValue(c[0], c[1](object_))
             for c in self._KEY_COLUMN_LIST)
         return tuple() if any(c.value is None for c in columns) else columns
 
-    def rowListProxy(self, *args, **kwargs) -> Optional[RowListProxy]:
+    def rowListProxy(self, *args, **kwargs) -> RowListProxy | None:
         return None
 
     def saveSerializable(
@@ -348,7 +340,7 @@ class AbstractSerializableTable(AbstractTable, name=""):
             SerializeFlag.DATABASE_MODE |
             SerializeFlag.EXCLUDE_SUBCLASSES)
 
-        data_columns: List[ColumnValue] = []
+        data_columns: list[ColumnValue] = []
         for name, value in source_data.items():
             column = self.ColumnEnum.get(name)
             if column and column not in key_columns:
@@ -370,14 +362,14 @@ class AbstractSerializableTable(AbstractTable, name=""):
 
     def loadSerializable(
             self,
-            object_: Union[Serializable, Type[Serializable]],
+            object_: Serializable | type(Serializable),
             *cls_args,
             use_row_id: bool = True,
-            fallback_search: bool = False) -> Optional[Serializable]:
+            fallback_search: bool = False) -> Serializable | None:
         key_columns = self._keyColumns(object_)
         if not key_columns:
             return None
-        data_columns: List[ColumnValue] = []
+        data_columns: list[ColumnValue] = []
         for name in object_.serializeMap.keys():
             column = self.ColumnEnum.get(name)
             if column and column not in key_columns:
@@ -460,8 +452,13 @@ class AbstractSerializableTable(AbstractTable, name=""):
         return True
 
 
+SerializableTable = TypeVar(
+    "SerializableTable",
+    bound=AbstractSerializableTable)
+
+
 # Performance: https://www.sqlite.org/autoinc.html
-class EmptyRowListProxy(MutableSequence):
+class RowListDummyProxy(MutableSequence):
     def __init__(self, *args, **kwargs) -> None:
         pass
 
@@ -474,29 +471,29 @@ class EmptyRowListProxy(MutableSequence):
     def __getitem__(self, index: int) -> Serializable:
         raise IndexError
 
-    def __setitem__(self, index: int, value: Any) -> None:
+    def __setitem__(self, index: int, value: ...) -> None:
         raise NotImplementedError
 
     def __delitem__(self, index: int) -> None:
         raise NotImplementedError
 
-    def insert(self, index: int, value: Any) -> None:
+    def insert(self, index: int, value: ...) -> None:
         raise NotImplementedError
 
     def clear(self) -> int:
         return 0
 
 
-class RowListProxy(EmptyRowListProxy):
+class RowListProxy(RowListDummyProxy):
     def __init__(
             self,
             *,
-            type_: Type[Serializable],
-            type_args: Optional[Sequence[Any]] = None,
-            table: AbstractSerializableTable,
-            where_expression: Optional[str] = None,
-            where_args: Optional[Sequence[Union[str, int]]],
-            order_columns: Optional[Sequence[Tuple[Column, SortOrder]]] = None
+            type_: type(Serializable),
+            type_args: Sequence | None = None,
+            table: SerializableTable,
+            where_expression: str | None = None,
+            where_args: Sequence[str | int] | None,
+            order_columns: Sequence[tuple[Column, SortOrder] | None] = None
     ) -> None:
         super().__init__()
         self._type = type_
@@ -505,7 +502,7 @@ class RowListProxy(EmptyRowListProxy):
         self._table = table
         self._where_args = where_args if where_args else []
 
-        self._column_list: List[Column] = [self._table.ColumnEnum.ROW_ID]
+        self._column_list: list[Column] = [self._table.ColumnEnum.ROW_ID]
         for name in self._type.serializeMap.keys():
             column = self._table.ColumnEnum.get(name)
             if column:
@@ -538,7 +535,7 @@ class RowListProxy(EmptyRowListProxy):
 
     def _deserialize(
             self,
-            row: Tuple[Optional[str, int], ...]) -> Optional[Serializable]:
+            row: tuple[str | int | None, ...]) -> Serializable | None:
         it = iter(zip((c.name for c in self._column_list), row))
         row_id = next(it)[1]
 
@@ -572,13 +569,13 @@ class RowListProxy(EmptyRowListProxy):
                 raise IndexError
             return self._deserialize(row)
 
-    def __setitem__(self, index: int, value: Any) -> None:
+    def __setitem__(self, index: int, value: ...) -> None:
         raise NotImplementedError
 
     def __delitem__(self, index: int) -> None:
         raise NotImplementedError
 
-    def insert(self, index: int, value: Any) -> None:
+    def insert(self, index: int, value: ...) -> None:
         raise NotImplementedError
 
     def clear(self) -> int:
