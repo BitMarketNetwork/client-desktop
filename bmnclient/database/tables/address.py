@@ -7,32 +7,32 @@ from .table import (
     AbstractSerializableTable,
     ColumnEnum,
     ColumnValue,
+    ColumnValueType,
     RowListProxy)
 from ...coins.hd import HdNode
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
-    from typing import Final
     from .. import Cursor
     from ...coins.abstract import Coin
 
 
 class AddressListTable(AbstractSerializableTable, name="addresses"):
     class ColumnEnum(ColumnEnum):
-        ROW_ID: Final = ()
-        COIN_ROW_ID: Final = ("coin_row_id", "INTEGER NOT NULL")
+        ROW_ID = ()
+        COIN_ROW_ID = ("coin_row_id", "INTEGER NOT NULL")
 
-        NAME: Final = ("name", "TEXT NOT NULL")
-        TYPE: Final = ("type", "TEXT NOT NULL")
-        BALANCE: Final = ("balance", "INTEGER NOT NULL")
-        TX_COUNT: Final = ("tx_count", "INTEGER NOT NULL")
+        NAME = ("name", "TEXT NOT NULL")
+        TYPE = ("type", "TEXT NOT NULL")
+        BALANCE = ("balance", "INTEGER NOT NULL")
+        TX_COUNT = ("tx_count", "INTEGER NOT NULL")
 
-        LABEL: Final = ("label", "TEXT NOT NULL")
-        COMMENT: Final = ("comment", "TEXT NOT NULL")
-        KEY: Final = ("key", "TEXT")
+        LABEL = ("label", "TEXT NOT NULL")
+        COMMENT = ("comment", "TEXT NOT NULL")
+        KEY = ("key", "TEXT")
 
-        HISTORY_FIRST_OFFSET: Final = ("history_first_offset", "TEXT NOT NULL")
-        HISTORY_LAST_OFFSET: Final = ("history_last_offset", "TEXT NOT NULL")
+        HISTORY_FIRST_OFFSET = ("history_first_offset", "TEXT NOT NULL")
+        HISTORY_LAST_OFFSET = ("history_last_offset", "TEXT NOT NULL")
 
     @classproperty
     def _CONSTRAINT_LIST(cls) -> Tuple[str, ...]:  # noqa
@@ -59,7 +59,6 @@ class AddressListTable(AbstractSerializableTable, name="addresses"):
         )
     )
 
-
     def upgrade(self, cursor: Cursor, old_version: int) -> None:
         # don't use identifiers from actual class!
         if old_version <= 1:
@@ -71,19 +70,8 @@ class AddressListTable(AbstractSerializableTable, name="addresses"):
             cursor.execute(
                 "ALTER TABLE \"addresses\" RENAME \"amount\" TO \"balance\"")
 
-    def serialize(self, cursor: Cursor, address: Coin.Address) -> None:
-        assert address.coin.rowId > 0
-        assert not address.isNullData
-
-        self._serialize(
-            address,
-            [
-                ColumnValue(self.ColumnEnum.COIN_ROW_ID, address.coin.rowId),
-                ColumnValue(self.ColumnEnum.NAME, address.name)
-            ])
-        assert address.rowId > 0
-
     def rowListProxy(self, coin: Coin) -> RowListProxy:
+        assert coin.rowId > 0
         return RowListProxy(
             type_=coin.Address,
             type_args=[coin],
@@ -92,6 +80,7 @@ class AddressListTable(AbstractSerializableTable, name="addresses"):
             where_args=[coin.rowId])
 
     def queryTotalBalance(self, coin: Coin) -> int:
+        assert coin.rowId > 0
         with self._database.transaction(allow_in_transaction=True) as c:
             c.execute(
                 f"SELECT SUM({self.ColumnEnum.BALANCE})"
@@ -105,6 +94,7 @@ class AddressListTable(AbstractSerializableTable, name="addresses"):
         return value[0]
 
     def queryLastHdIndex(self, coin: Coin, prefix: str) -> int:
+        assert coin.rowId > 0
         prefix_length = len(prefix) + 1
         prefix = glob.escape(prefix) + "*"
         prefix = prefix.replace(
@@ -123,3 +113,55 @@ class AddressListTable(AbstractSerializableTable, name="addresses"):
         if value is None or value[0] is None:
             return -1
         return value[0]
+
+
+class AddressTransactionsTable(
+        AbstractSerializableTable,
+        name="address_transactions"):
+    class ColumnEnum(ColumnEnum):
+        ROW_ID = ()
+
+        ADDRESS_ROW_ID = ("address_row_id", "INTEGER NOT NULL")
+        TX_ROW_ID = ("tx_row_id", "INTEGER NOT NULL")
+
+    @classproperty
+    def _CONSTRAINT_LIST(cls) -> tuple[str, ...]:  # noqa
+        from .tx import TxListTable
+        return (
+            f"FOREIGN KEY ("
+            f"{cls.ColumnEnum.ADDRESS_ROW_ID})"
+            f" REFERENCES {AddressListTable} ("
+            f"{AddressListTable.ColumnEnum.ROW_ID})"
+            f" ON DELETE CASCADE",
+
+            f"FOREIGN KEY ({cls.ColumnEnum.TX_ROW_ID})"
+            f" REFERENCES {TxListTable} ("
+            f"{TxListTable.ColumnEnum.ROW_ID})"
+            f" ON DELETE CASCADE",
+        )
+
+    _UNIQUE_COLUMN_LIST = (
+        (ColumnEnum.ADDRESS_ROW_ID, ColumnEnum.TX_ROW_ID),
+    )
+
+    def associate(self, address: Coin.Address, tx: Coin.Tx) -> bool:
+        assert address.rowId > 0
+        assert tx.rowId > 0
+        return self.insert([
+            ColumnValue(self.ColumnEnum.ADDRESS_ROW_ID, address.rowId),
+            ColumnValue(self.ColumnEnum.TX_ROW_ID, tx.rowId)
+        ]) > 0
+
+    def filter(
+            self,
+            address: Coin.Address) -> tuple[str, list[ColumnValueType]]:
+        assert address.rowId > 0
+        return (
+            (
+                f"{AddressListTable.ColumnEnum.ROW_ID} IN ("
+                f"SELECT {self.ColumnEnum.TX_ROW_ID}"
+                f" FROM {self}"
+                f" WHERE {self.ColumnEnum.ADDRESS_ROW_ID} == ?)"
+            ),
+            [address.rowId]
+        )
