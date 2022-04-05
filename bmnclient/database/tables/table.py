@@ -61,10 +61,13 @@ class Column:
         return f" {separator} ".join(f"{s} {operator} ?" for s in source)
 
 
+ColumnValueType = TypeVar("ColumnValueType", str, int, type(None))
+
+
 class ColumnValue:
     __slots__ = ("_column", "value")
 
-    def __init__(self, column: Column, value: str | int | None) -> None:
+    def __init__(self, column: Column, value: ColumnValueType) -> None:
         self._column = column
         self.value = value
 
