@@ -10,5 +10,5 @@ from .table import (
     SerializableTable,
     Table)
 from .tx import TxsTable
-from .tx_io import TxIoListTable
+from .tx_io import TxIosTable
 from .utxo import UtxoListTable

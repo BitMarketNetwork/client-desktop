@@ -6,23 +6,22 @@ from .table import AbstractSerializableTable, Column, ColumnEnum, RowListProxy
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
-    from typing import Final, Optional, Tuple
     from ...coins.abstract import Coin
 
 
-class TxIoListTable(AbstractSerializableTable, name="transactions_io"):
+class TxIosTable(AbstractSerializableTable, name="transaction_ios"):
     class ColumnEnum(ColumnEnum):
-        ROW_ID: Final = ()
-        TX_ROW_ID: Final = ("transaction_row_id", "INTEGER NOT NULL")
-        IO_TYPE: Final = ("io_type", "TEXT NOT NULL")  # Coin.Tx.Io.IoType
-        INDEX: Final = ("index", "INTEGER NOT NULL")
+        ROW_ID = ()
+        TX_ROW_ID = ("transaction_row_id", "INTEGER NOT NULL")
+        IO_TYPE = ("io_type", "TEXT NOT NULL")  # Coin.Tx.Io.IoType
+        INDEX = ("index", "INTEGER NOT NULL")
 
-        OUTPUT_TYPE: Final = ("output_type", "TEXT NOT NULL")
-        ADDRESS: Final = ("address", "TEXT")
-        AMOUNT: Final = ("amount", "INTEGER NOT NULL")
+        OUTPUT_TYPE = ("output_type", "TEXT NOT NULL")
+        ADDRESS = ("address", "TEXT")
+        AMOUNT = ("amount", "INTEGER NOT NULL")
 
     @classproperty
-    def _CONSTRAINT_LIST(cls) -> Tuple[str, ...]:  # noqa
+    def _CONSTRAINT_LIST(cls) -> tuple[str, ...]:  # noqa
         from .tx import TxsTable
         return (
             f"FOREIGN KEY ("
@@ -52,15 +51,13 @@ class TxIoListTable(AbstractSerializableTable, name="transactions_io"):
     def rowListProxy(
             self,
             tx: Coin.Tx,
-            io_type: Optional[Coin.Tx.Io.IoType]) -> Optional[RowListProxy]:
-        if tx.rowId <= 0:
-            return None
+            io_type: Coin.Tx.Io.IoType | None) -> RowListProxy:
+        assert tx.rowId > 0
         where_columns = [self.ColumnEnum.TX_ROW_ID]
         where_args = [tx.rowId]
         if io_type is not None:
             where_columns.append(self.ColumnEnum.IO_TYPE)
             where_args.append(io_type.value)
-
         return RowListProxy(
             type_=tx.Io,
             type_args=[tx],
