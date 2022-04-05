@@ -6,19 +6,18 @@ from .table import AbstractSerializableTable, ColumnEnum, RowListProxy
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
-    from typing import Final, Optional
     from ...coins.abstract import Coin
 
 
-class UtxoListTable(AbstractSerializableTable, name="utxos"):
+class UtxosTable(AbstractSerializableTable, name="utxos"):
     class ColumnEnum(ColumnEnum):
-        ROW_ID: Final = ()
-        ADDRESS_ROW_ID: Final = ("address_row_id", "INTEGER NOT NULL")
+        ROW_ID = ()
+        ADDRESS_ROW_ID = ("address_row_id", "INTEGER NOT NULL")
 
-        NAME: Final = ("name", "TEXT NOT NULL")
-        INDEX: Final = ("index", "INTEGER NOT NULL")
-        HEIGHT: Final = ("height", "INTEGER NOT NULL")
-        AMOUNT: Final = ("amount", "INTEGER NOT NULL")
+        NAME = ("name", "TEXT NOT NULL")
+        INDEX = ("index", "INTEGER NOT NULL")
+        HEIGHT = ("height", "INTEGER NOT NULL")
+        AMOUNT = ("amount", "INTEGER NOT NULL")
 
     @classproperty
     def _CONSTRAINT_LIST(cls) -> Tuple[str, ...]:  # noqa
@@ -45,12 +44,24 @@ class UtxoListTable(AbstractSerializableTable, name="utxos"):
         ),
     )
 
-    def rowListProxy(self, address: Coin.Address) -> Optional[RowListProxy]:
-        if address.rowId <= 0:
-            return None
+    def rowListProxy(self, address: Coin.Address) -> RowListProxy:
+        assert address.rowId > 0
         return RowListProxy(
             type_=address.coin.Tx.Utxo,
             type_args=[address],
             table=self,
             where_expression=f"{self.ColumnEnum.ADDRESS_ROW_ID} == ?",
             where_args=[address.rowId])
+
+    def queryTotalAmount(self, address: Coin.Address) -> int:
+        assert address.rowId > 0
+        with self._database.transaction(allow_in_transaction=True) as c:
+            c.execute(
+                f"SELECT SUM({self.ColumnEnum.AMOUNT})"
+                f" FROM {self}"
+                f" WHERE {self.ColumnEnum.ADDRESS_ROW_ID} == ?",
+                [address.rowId])
+            value = c.fetchone()
+        if value is None or value[0] is None:
+            return 0
+        return value[0]

@@ -11,4 +11,4 @@ from .table import (
     Table)
 from .tx import TxsTable
 from .tx_io import TxIosTable
-from .utxo import UtxoListTable
+from .utxo import UtxosTable
