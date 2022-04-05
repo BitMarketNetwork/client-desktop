@@ -7,8 +7,8 @@ from bmnclient.coins.list import CoinList
 from bmnclient.database import Cursor, Database
 from bmnclient.database.tables import (
     AbstractSerializableTable,
-    AddressListTable,
-    AddressTxMapTable,
+    AddressTransactionsTable,
+    AddressesTable,
     CoinListTable,
     ColumnValue,
     MetadataTable,
@@ -367,14 +367,14 @@ class TestDatabase(TestCaseApplication):
                 use_row_id=False)
 
             for address in list(coin.addressList):
-                address_id = db[AddressListTable].saveSerializable(
+                address_id = db[AddressesTable].saveSerializable(
                     address,
                     [
                         ColumnValue(
-                            AddressListTable.ColumnEnum.COIN_ROW_ID,
+                            AddressesTable.ColumnEnum.COIN_ROW_ID,
                             coin_id),
                         ColumnValue(
-                            AddressListTable.ColumnEnum.NAME,
+                            AddressesTable.ColumnEnum.NAME,
                             address.name),
                     ],
                     use_row_id=False)
@@ -392,7 +392,7 @@ class TestDatabase(TestCaseApplication):
                         ],
                         use_row_id=False)
 
-                    db[AddressTxMapTable].associate(address_id, tx_id)
+                    db[AddressTransactionsTable].associate(address_id, tx_id)
 
                     for io_type, io_list in (
                             (TxIoListTable.IoType.INPUT, tx.inputList),
@@ -431,8 +431,8 @@ class TestDatabase(TestCaseApplication):
             cursor: Cursor,
             coin: Coin) -> List[Tuple[Any]]:
         cursor.execute(
-            f"SELECT * FROM {AddressListTable}"
-            f" WHERE {AddressListTable.ColumnEnum.COIN_ROW_ID} IN ("
+            f"SELECT * FROM {AddressesTable}"
+            f" WHERE {AddressesTable.ColumnEnum.COIN_ROW_ID} IN ("
             f"SELECT {CoinListTable.ColumnEnum.ROW_ID}"
             f" FROM {CoinListTable}"
             f" WHERE  {CoinListTable.ColumnEnum.NAME} == ?)",
@@ -476,8 +476,8 @@ class TestDatabase(TestCaseApplication):
             cursor: Cursor,
             tx: Coin.Tx) -> List[Tuple[Any]]:
         cursor.execute(
-            f"SELECT * FROM {AddressTxMapTable}"
-            f" WHERE {AddressTxMapTable.ColumnEnum.TX_ROW_ID} IN ("
+            f"SELECT * FROM {AddressTransactionsTable}"
+            f" WHERE {AddressTransactionsTable.ColumnEnum.TX_ROW_ID} IN ("
             f"SELECT {TxListTable.ColumnEnum.ROW_ID}"
             f" FROM {TxListTable}"
             f" WHERE {TxListTable.ColumnEnum.NAME} == ?)",
@@ -491,11 +491,11 @@ class TestDatabase(TestCaseApplication):
             cursor: Cursor,
             address: Coin.Address) -> List[Tuple[Any]]:
         cursor.execute(
-            f"SELECT * FROM {AddressTxMapTable}"
-            f" WHERE {AddressTxMapTable.ColumnEnum.ADDRESS_ROW_ID} IN ("
-            f"SELECT {AddressListTable.ColumnEnum.ROW_ID}"
-            f" FROM {AddressListTable}"
-            f" WHERE {AddressListTable.ColumnEnum.NAME} == ?)",
+            f"SELECT * FROM {AddressTransactionsTable}"
+            f" WHERE {AddressTransactionsTable.ColumnEnum.ADDRESS_ROW_ID} IN ("
+            f"SELECT {AddressesTable.ColumnEnum.ROW_ID}"
+            f" FROM {AddressesTable}"
+            f" WHERE {AddressesTable.ColumnEnum.NAME} == ?)",
             [address.name])
         r = cursor.fetchall()
         self.assertIsNotNone(r)
@@ -558,8 +558,8 @@ class TestDatabase(TestCaseApplication):
         with db.transaction(suppress_exceptions=False) as c:
             address = coin_list[1].addressList[1]
             c.execute(
-                f"DELETE FROM {AddressListTable}"
-                f" WHERE {AddressListTable.ColumnEnum.NAME} == ?",
+                f"DELETE FROM {AddressesTable}"
+                f" WHERE {AddressesTable.ColumnEnum.NAME} == ?",
                 [address.name])
             self.assertEqual(1, c.rowcount)
             self.assertEqual(

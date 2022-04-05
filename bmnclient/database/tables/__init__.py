@@ -1,4 +1,4 @@
-from .address import AddressListTable, AddressTransactionsTable
+from .address import AddressTransactionsTable, AddressesTable
 from .coin import CoinListTable
 from .metadata import MetadataTable
 from .table import (

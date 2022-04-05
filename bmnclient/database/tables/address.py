@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from ...coins.abstract import Coin
 
 
-class AddressListTable(AbstractSerializableTable, name="addresses"):
+class AddressesTable(AbstractSerializableTable, name="addresses"):
     class ColumnEnum(ColumnEnum):
         ROW_ID = ()
         COIN_ROW_ID = ("coin_row_id", "INTEGER NOT NULL")
@@ -130,8 +130,8 @@ class AddressTransactionsTable(
         return (
             f"FOREIGN KEY ("
             f"{cls.ColumnEnum.ADDRESS_ROW_ID})"
-            f" REFERENCES {AddressListTable} ("
-            f"{AddressListTable.ColumnEnum.ROW_ID})"
+            f" REFERENCES {AddressesTable} ("
+            f"{AddressesTable.ColumnEnum.ROW_ID})"
             f" ON DELETE CASCADE",
 
             f"FOREIGN KEY ({cls.ColumnEnum.TX_ROW_ID})"
@@ -158,7 +158,7 @@ class AddressTransactionsTable(
         assert address.rowId > 0
         return (
             (
-                f"{AddressListTable.ColumnEnum.ROW_ID} IN ("
+                f"{AddressesTable.ColumnEnum.ROW_ID} IN ("
                 f"SELECT {self.ColumnEnum.TX_ROW_ID}"
                 f" FROM {self}"
                 f" WHERE {self.ColumnEnum.ADDRESS_ROW_ID} == ?)"

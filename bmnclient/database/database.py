@@ -8,8 +8,8 @@ import bmnsqlite3 as _engine
 from .cursor import Cursor
 from .tables import (
     AbstractTable,
-    AddressListTable,
-    AddressTxMapTable,
+    AddressTransactionsTable,
+    AddressesTable,
     CoinListTable,
     MetadataTable,
     TxIoListTable,

@@ -22,12 +22,12 @@ class UtxoListTable(AbstractSerializableTable, name="utxos"):
 
     @classproperty
     def _CONSTRAINT_LIST(cls) -> Tuple[str, ...]:  # noqa
-        from .address import AddressListTable
+        from .address import AddressesTable
         return (
             f"FOREIGN KEY ("
             f"{cls.ColumnEnum.ADDRESS_ROW_ID})"
-            f" REFERENCES {AddressListTable} ("
-            f"{AddressListTable.ColumnEnum.ROW_ID})"
+            f" REFERENCES {AddressesTable} ("
+            f"{AddressesTable.ColumnEnum.ROW_ID})"
             f" ON DELETE CASCADE",
         )
 
