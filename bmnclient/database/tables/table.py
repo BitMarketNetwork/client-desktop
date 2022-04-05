@@ -125,7 +125,7 @@ class AbstractTable(metaclass=TableMeta):
     _UNIQUE_COLUMN_LIST: tuple[tuple[Column, ...], ...] = tuple()
 
     def __init_subclass__(cls, *args, **kwargs) -> None:
-        name = kwargs.pop("name")
+        name: str = kwargs.pop("name")
         super().__init_subclass__(*args, **kwargs)
         cls.__NAME = name
         cls.__IDENTIFIER = f"\"{cls.__NAME}\""
@@ -469,7 +469,7 @@ class RowListDummyProxy(MutableSequence):
         return 0
 
     def __iter__(self) -> Iterable[Serializable]:
-        return tuple()
+        return iter(tuple())
 
     def __getitem__(self, index: int) -> Serializable:
         raise IndexError
@@ -495,7 +495,7 @@ class RowListProxy(RowListDummyProxy):
             type_args: Sequence | None = None,
             table: SerializableTable,
             where_expression: str | None = None,
-            where_args: Sequence[str | int] | None,
+            where_args: Sequence[ColumnValueType] | None,
             order_columns: Sequence[tuple[Column, SortOrder] | None] = None
     ) -> None:
         super().__init__()
@@ -538,7 +538,7 @@ class RowListProxy(RowListDummyProxy):
 
     def _deserialize(
             self,
-            row: tuple[str | int | None, ...]) -> Serializable | None:
+            row: tuple[ColumnValueType, ...]) -> Serializable | None:
         it = iter(zip((c.name for c in self._column_list), row))
         row_id = next(it)[1]
 
