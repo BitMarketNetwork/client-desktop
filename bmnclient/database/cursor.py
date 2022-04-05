@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 import bmnsqlite3 as _engine
 
 from .tables import AbstractTable
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Type, Union
     from .database import Database
 
 
@@ -25,7 +24,7 @@ class Cursor(_engine.Cursor):
     def executescript(self, query, *args, **kwargs) -> Cursor:
         return self._execute(super().executescript, query, *args, **kwargs)
 
-    def _execute(self, origin: Callable, query, *args, **kwargs) -> Any:
+    def _execute(self, origin: Callable, query, *args, **kwargs) -> ...:
         self._database.logQuery(query)
         try:
             cursor = origin(query, *args, **kwargs)
@@ -36,14 +35,14 @@ class Cursor(_engine.Cursor):
             raise
 
     @staticmethod
-    def __tableToName(table: Union[str, Type[AbstractTable]]) -> str:
+    def __tableToName(table: str | type(AbstractTable)) -> str:
         if isinstance(table, str):
             return table
         if issubclass(table, AbstractTable) or isinstance(table, AbstractTable):
             return table.name
         raise TypeError
 
-    def isTableExists(self, table: Union[str, Type[AbstractTable]]) -> bool:
+    def isTableExists(self, table: str | type(AbstractTable)) -> bool:
         self.execute(
             "SELECT COUNT(*) FROM \"sqlite_master\""
             " WHERE \"type\" == ? AND \"name\" == ?"
@@ -54,7 +53,7 @@ class Cursor(_engine.Cursor):
 
     def isColumnExists(
             self,
-            table: Union[str, Type[AbstractTable]],
+            table: str | type(AbstractTable),
             name: str) -> bool:
         if not self.isTableExists(table):
             return False

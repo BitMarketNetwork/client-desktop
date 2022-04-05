@@ -1,20 +1,21 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import TYPE_CHECKING
+from typing import Final, Generator, TYPE_CHECKING
 
 import bmnsqlite3 as _engine
 
 from .cursor import Cursor
 from .tables import (
     AbstractTable,
-    AddressTransactionsTable,
+    AddressTxsTable,
     AddressesTable,
-    CoinListTable,
+    CoinsTable,
     MetadataTable,
-    TxIoListTable,
-    TxListTable,
-    UtxoListTable)
+    Table,
+    TxIosTable,
+    TxsTable,
+    UtxosTable)
 from .vfs import Vfs
 from ..debug import Debug
 from ..logger import Logger
@@ -23,7 +24,6 @@ from ..version import Product
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from typing import Dict, Final, Generator, Optional, Type, Union
     from ..application import CoreApplication
     from ..utils import Serializable
 
@@ -60,21 +60,21 @@ class Database:
 
     _TABLE_TYPE_LIST: Final = (
         MetadataTable,
-        CoinListTable,
-        AddressListTable,
-        AddressTxMapTable,
-        TxListTable,
-        TxIoListTable,
-        UtxoListTable
+        CoinsTable,
+        AddressesTable,
+        AddressTxsTable,
+        TxsTable,
+        TxIosTable,
+        UtxosTable
     )
 
     class Error(_engine.OperationalError):
-        def __init__(self, value: str, query: Optional[str] = None):
+        def __init__(self, value: str, query: str | None = None):
             super().__init__(value)
             self._query = query
 
         @property
-        def query(self) -> Optional[str]:
+        def query(self) -> str | None:
             return self._query
 
     class SaveError(Error):
@@ -87,7 +87,7 @@ class Database:
         def __init__(
                 self,
                 value: str = "transaction is already in effect",
-                query: Optional[str] = None):
+                query: str | None = None):
             super().__init__(value, query)
 
     def __init__(self, application: CoreApplication, file_path: Path) -> None:
@@ -105,21 +105,11 @@ class Database:
             "SQLite version: %s",
             _engine.sqlite_version)
 
-        self.__connection: Optional[_engine.Connection] = None
-        self.__table_list: Dict[int, AbstractTable] = {}
+        self.__connection: _engine.Connection | None = None
+        self.__table_list: dict[int, AbstractTable] = {}
         self.__in_transaction = 0  # TODO mutex?
 
-    def __getitem__(self, type_: Type[AbstractTable]) \
-            -> Union[
-                AbstractTable,
-                AddressListTable,
-                AddressTxMapTable,
-                CoinListTable,
-                MetadataTable,
-                TxIoListTable,
-                TxListTable,
-                UtxoListTable
-            ]:
+    def __getitem__(self, type_: type(AbstractTable)) -> Table:
         assert issubclass(type_, AbstractTable)
         table = self.__table_list.get(id(type_))
         if table is None:
@@ -210,7 +200,7 @@ class Database:
             *,
             allow_in_transaction: bool = False,
             suppress_exceptions: bool = False
-    ) -> Generator[Optional[Cursor], None, None]:
+    ) -> Generator[Cursor | None, None, None]:
         if (
                 not self.isOpen
                 or (self.__in_transaction > 0 and not allow_in_transaction)
@@ -273,8 +263,8 @@ class Database:
 
     def logException(
             self,
-            e: Union[_engine.Error, _engine.Warning],
-            query: Optional[str] = None) -> None:
+            e: _engine.Error | _engine.Warning,
+            query: str | None = None) -> None:
         if not query and isinstance(e, self.Error):
             query = e.query
 
@@ -290,8 +280,8 @@ class Database:
 
     def logDeserializeError(
             self,
-            type_: Type[Serializable],
-            result: Dict[str, Union[int, str]]) -> None:
+            type_: type(Serializable),
+            result: dict[str, int | str]) -> None:
         self._logger.error(
             "Failed to deserialize '%s' object.\n\t%s",
             str(type_.__name__),
