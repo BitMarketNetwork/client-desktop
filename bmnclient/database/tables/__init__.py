@@ -1,4 +1,4 @@
-from .address import AddressTransactionsTable, AddressesTable
+from .address import AddressTxsTable, AddressesTable
 from .coin import CoinsTable
 from .metadata import MetadataTable
 from .table import (
@@ -9,6 +9,6 @@ from .table import (
     RowListProxy,
     SerializableTable,
     Table)
-from .tx import TxListTable
+from .tx import TxsTable
 from .tx_io import TxIoListTable
 from .utxo import UtxoListTable

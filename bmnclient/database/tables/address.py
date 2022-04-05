@@ -114,7 +114,7 @@ class AddressesTable(AbstractSerializableTable, name="addresses"):
         return value[0]
 
 
-class AddressTransactionsTable(
+class AddressTxsTable(
         AbstractSerializableTable,
         name="address_transactions"):
     class ColumnEnum(ColumnEnum):
@@ -125,7 +125,7 @@ class AddressTransactionsTable(
 
     @classproperty
     def _CONSTRAINT_LIST(cls) -> tuple[str, ...]:  # noqa
-        from .tx import TxListTable
+        from .tx import TxsTable
         return (
             f"FOREIGN KEY ("
             f"{cls.ColumnEnum.ADDRESS_ROW_ID})"
@@ -134,8 +134,8 @@ class AddressTransactionsTable(
             f" ON DELETE CASCADE",
 
             f"FOREIGN KEY ({cls.ColumnEnum.TX_ROW_ID})"
-            f" REFERENCES {TxListTable} ("
-            f"{TxListTable.ColumnEnum.ROW_ID})"
+            f" REFERENCES {TxsTable} ("
+            f"{TxsTable.ColumnEnum.ROW_ID})"
             f" ON DELETE CASCADE",
         )
 
@@ -144,14 +144,14 @@ class AddressTransactionsTable(
     )
 
     def rowListProxy(self, address: Coin.Address) -> RowListProxy:
-        from .tx import TxListTable
+        from .tx import TxsTable
         assert address.rowId > 0
         return RowListProxy(
             type_=address.coin.Tx,
             type_args=[address.coin],
-            table=self.database[TxListTable],
+            table=self.database[TxsTable],
             where_expression=(
-                f"{TxListTable.ColumnEnum.ROW_ID} IN ("
+                f"{TxsTable.ColumnEnum.ROW_ID} IN ("
                 f"SELECT {self.ColumnEnum.TX_ROW_ID}"
                 f" FROM {self}"
                 f" WHERE {self.ColumnEnum.ADDRESS_ROW_ID} == ?)"),

@@ -23,12 +23,12 @@ class TxIoListTable(AbstractSerializableTable, name="transactions_io"):
 
     @classproperty
     def _CONSTRAINT_LIST(cls) -> Tuple[str, ...]:  # noqa
-        from .tx import TxListTable
+        from .tx import TxsTable
         return (
             f"FOREIGN KEY ("
             f"{cls.ColumnEnum.TX_ROW_ID})"
-            f" REFERENCES {TxListTable} ("
-            f"{TxListTable.ColumnEnum.ROW_ID})"
+            f" REFERENCES {TxsTable} ("
+            f"{TxsTable.ColumnEnum.ROW_ID})"
             f" ON DELETE CASCADE",
         )
 

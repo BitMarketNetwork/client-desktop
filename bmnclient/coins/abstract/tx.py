@@ -31,7 +31,7 @@ class _Model(CoinObjectModel):
     def afterSetTime(self) -> None: pass
 
 
-class _Tx(CoinObject, table_type=TxListTable):
+class _Tx(CoinObject, table_type=TxsTable):
     __initialized = False
 
     class Status(Enum):
