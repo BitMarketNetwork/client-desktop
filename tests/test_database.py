@@ -9,7 +9,7 @@ from bmnclient.database.tables import (
     AbstractSerializableTable,
     AddressTransactionsTable,
     AddressesTable,
-    CoinListTable,
+    CoinsTable,
     ColumnValue,
     MetadataTable,
     TxIoListTable,
@@ -361,7 +361,7 @@ class TestDatabase(TestCaseApplication):
     def _fill_db(self, db: Database, coin_list: CoinList) -> None:
         for coin in coin_list:
             fillCoin(self, coin, address_count=10, tx_count=10)
-            coin_id = db[CoinListTable].saveSerializable(
+            coin_id = db[CoinsTable].saveSerializable(
                 coin,
                 [],
                 use_row_id=False)
@@ -419,8 +419,8 @@ class TestDatabase(TestCaseApplication):
             cursor: Cursor,
             coin: Coin) -> List[Tuple[Any]]:
         cursor.execute(
-            f"SELECT * FROM {CoinListTable}"
-            f" WHERE {CoinListTable.ColumnEnum.NAME} == ?",
+            f"SELECT * FROM {CoinsTable}"
+            f" WHERE {CoinsTable.ColumnEnum.NAME} == ?",
             [coin.name])
         r = cursor.fetchall()
         self.assertIsNotNone(r)
@@ -433,9 +433,9 @@ class TestDatabase(TestCaseApplication):
         cursor.execute(
             f"SELECT * FROM {AddressesTable}"
             f" WHERE {AddressesTable.ColumnEnum.COIN_ROW_ID} IN ("
-            f"SELECT {CoinListTable.ColumnEnum.ROW_ID}"
-            f" FROM {CoinListTable}"
-            f" WHERE  {CoinListTable.ColumnEnum.NAME} == ?)",
+            f"SELECT {CoinsTable.ColumnEnum.ROW_ID}"
+            f" FROM {CoinsTable}"
+            f" WHERE  {CoinsTable.ColumnEnum.NAME} == ?)",
             [coin.name])
         r = cursor.fetchall()
         self.assertIsNotNone(r)
@@ -448,9 +448,9 @@ class TestDatabase(TestCaseApplication):
         cursor.execute(
             f"SELECT * FROM {TxListTable}"
             f" WHERE {TxListTable.ColumnEnum.COIN_ROW_ID} IN ("
-            f"SELECT {CoinListTable.ColumnEnum.ROW_ID}"
-            f" FROM {CoinListTable}"
-            f" WHERE  {CoinListTable.ColumnEnum.NAME} == ?)",
+            f"SELECT {CoinsTable.ColumnEnum.ROW_ID}"
+            f" FROM {CoinsTable}"
+            f" WHERE  {CoinsTable.ColumnEnum.NAME} == ?)",
             [coin.name])
         r = cursor.fetchall()
         self.assertIsNotNone(r)
@@ -534,8 +534,8 @@ class TestDatabase(TestCaseApplication):
         with db.transaction(suppress_exceptions=False) as c:
             coin = coin_list[0]
             c.execute(
-                f"DELETE FROM {CoinListTable} WHERE "
-                f" {CoinListTable.ColumnEnum.ROW_ID} == ?",
+                f"DELETE FROM {CoinsTable} WHERE "
+                f" {CoinsTable.ColumnEnum.ROW_ID} == ?",
                 (coin.rowId, ))
             self.assertEqual(1, c.rowcount)
             self.assertEqual(0, len(self._select_coin(c, coin)))

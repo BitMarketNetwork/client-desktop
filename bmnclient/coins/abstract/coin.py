@@ -76,7 +76,7 @@ class _Model(CoinObjectModel):
     def afterSetServerData(self, value: Dict[str, Any]) -> None: pass
 
 
-class Coin(CoinObject, table_type=CoinListTable):
+class Coin(CoinObject, table_type=CoinsTable):
     _SHORT_NAME = ""
     _FULL_NAME = ""
     _IS_TEST_NET = False

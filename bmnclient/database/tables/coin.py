@@ -1,26 +1,21 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from .table import AbstractSerializableTable, ColumnEnum, RowListProxy
-
-if TYPE_CHECKING:
-    from typing import Final
+from .table import AbstractSerializableTable, ColumnEnum
 
 
-class CoinListTable(AbstractSerializableTable, name="coins"):
+class CoinsTable(AbstractSerializableTable, name="coins"):
     class ColumnEnum(ColumnEnum):
-        ROW_ID: Final = ()
+        ROW_ID = ()
 
-        NAME: Final = ("name", "TEXT NOT NULL UNIQUE")
-        IS_ENABLED: Final = ("is_enabled", "INTEGER NOT NULL")
+        NAME = ("name", "TEXT NOT NULL UNIQUE")
+        IS_ENABLED = ("is_enabled", "INTEGER NOT NULL")
 
-        HEIGHT: Final = ("height", "INTEGER NOT NULL")
-        VERIFIED_HEIGHT: Final = ("verified_height", "INTEGER NOT NULL")
+        HEIGHT = ("height", "INTEGER NOT NULL")
+        VERIFIED_HEIGHT = ("verified_height", "INTEGER NOT NULL")
 
-        OFFSET: Final = ("offset", "TEXT NOT NULL")
-        UNVERIFIED_OFFSET: Final = ("unverified_offset", "TEXT NOT NULL")
-        UNVERIFIED_HASH: Final = ("unverified_hash", "TEXT NOT NULL")
+        OFFSET = ("offset", "TEXT NOT NULL")
+        UNVERIFIED_OFFSET = ("unverified_offset", "TEXT NOT NULL")
+        UNVERIFIED_HASH = ("unverified_hash", "TEXT NOT NULL")
 
     _KEY_COLUMN_LIST = (
         (ColumnEnum.NAME, lambda o: o.name),

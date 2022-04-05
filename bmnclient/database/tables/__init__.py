@@ -1,5 +1,5 @@
 from .address import AddressTransactionsTable, AddressesTable
-from .coin import CoinListTable
+from .coin import CoinsTable
 from .metadata import MetadataTable
 from .table import (
     AbstractSerializableTable,

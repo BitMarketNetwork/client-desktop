@@ -36,12 +36,12 @@ class AddressesTable(AbstractSerializableTable, name="addresses"):
 
     @classproperty
     def _CONSTRAINT_LIST(cls) -> Tuple[str, ...]:  # noqa
-        from .coin import CoinListTable
+        from .coin import CoinsTable
         return (
             f"FOREIGN KEY ("
             f"{cls.ColumnEnum.COIN_ROW_ID})"
-            f" REFERENCES {CoinListTable} ("
-            f"{CoinListTable.ColumnEnum.ROW_ID})"
+            f" REFERENCES {CoinsTable} ("
+            f"{CoinsTable.ColumnEnum.ROW_ID})"
             f" ON DELETE CASCADE",
         )
 
