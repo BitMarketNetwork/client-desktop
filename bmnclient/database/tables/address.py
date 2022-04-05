@@ -7,7 +7,6 @@ from .table import (
     AbstractSerializableTable,
     ColumnEnum,
     ColumnValue,
-    ColumnValueType,
     RowListProxy)
 from ...coins.hd import HdNode
 from ...utils.class_property import classproperty
@@ -144,6 +143,20 @@ class AddressTransactionsTable(
         (ColumnEnum.ADDRESS_ROW_ID, ColumnEnum.TX_ROW_ID),
     )
 
+    def rowListProxy(self, address: Coin.Address) -> RowListProxy:
+        from .tx import TxListTable
+        assert address.rowId > 0
+        return RowListProxy(
+            type_=address.coin.Tx,
+            type_args=[address.coin],
+            table=self.database[TxListTable],
+            where_expression=(
+                f"{TxListTable.ColumnEnum.ROW_ID} IN ("
+                f"SELECT {self.ColumnEnum.TX_ROW_ID}"
+                f" FROM {self}"
+                f" WHERE {self.ColumnEnum.ADDRESS_ROW_ID} == ?)"),
+            where_args=[address.rowId])
+
     def associate(self, address: Coin.Address, tx: Coin.Tx) -> bool:
         assert address.rowId > 0
         assert tx.rowId > 0
@@ -151,17 +164,3 @@ class AddressTransactionsTable(
             ColumnValue(self.ColumnEnum.ADDRESS_ROW_ID, address.rowId),
             ColumnValue(self.ColumnEnum.TX_ROW_ID, tx.rowId)
         ]) > 0
-
-    def filter(
-            self,
-            address: Coin.Address) -> tuple[str, list[ColumnValueType]]:
-        assert address.rowId > 0
-        return (
-            (
-                f"{AddressesTable.ColumnEnum.ROW_ID} IN ("
-                f"SELECT {self.ColumnEnum.TX_ROW_ID}"
-                f" FROM {self}"
-                f" WHERE {self.ColumnEnum.ADDRESS_ROW_ID} == ?)"
-            ),
-            [address.rowId]
-        )
