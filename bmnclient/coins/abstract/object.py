@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from enum import IntEnum
 from typing import (
     Callable,
     Final,
@@ -54,14 +55,21 @@ class CoinRootObjectModel(CoinObjectModel):
 
 
 class CoinObject(Serializable):
+    class AssociateResult(IntEnum):
+        FAIL = 0
+        IGNORE = 1
+        SUCCESS = 2
+
     def __init_subclass__(cls, *args, **kwargs) -> None:
         if (
                 not hasattr(cls, "_CoinObject__TABLE_TYPE")
                 or "table_type" in kwargs
         ):
             table_type = kwargs.pop("table_type")
+            associated_table_type = kwargs.pop("associated_table_type", None)
             super().__init_subclass__(*args, **kwargs)
             cls.__TABLE_TYPE = table_type
+            cls.__ASSOCIATED_TABLE_TYPE = associated_table_type
         else:
             super().__init_subclass__(*args, **kwargs)
 
@@ -101,8 +109,14 @@ class CoinObject(Serializable):
     def coin(self) -> Coin:
         return self._coin
 
-    def associate(self, object_: CoinObject) -> bool:
-        return True
+    def associate(self, object_: CoinObject) -> AssociateResult:
+        if not self.__ASSOCIATED_TABLE_TYPE:
+            return self.AssociateResult.IGNORE
+        if not (table := self._openTable(self.__ASSOCIATED_TABLE_TYPE)):
+            return self.AssociateResult.FAIL
+        if not table.associate(self, object_):
+            return self.AssociateResult.FAIL
+        return self.AssociateResult.SUCCESS
 
     def _appendDeferredSave(
             self,
@@ -120,7 +134,9 @@ class CoinObject(Serializable):
 
             for object_list in self.__deferred_save_list:
                 for object_ in object_list:
-                    if not object_.save() or not self.associate(object_):
+                    if not object_.save():
+                        return False
+                    if self.associate(object_) == self.AssociateResult.FAIL:
                         return False
             self.__deferred_save_list.clear()
         return True
@@ -211,11 +227,9 @@ class CoinObject(Serializable):
             *args,
             **kwargs
     ) -> MutableSequence:
-        if (
-                (table := self._openTable(table_type))
-                and (result := table.rowListProxy(self, *args, **kwargs))
-        ):
-            return result
+        if self.rowId > 0 and (table := self._openTable(table_type)):
+            if result := table.rowListProxy(self, *args, **kwargs):
+                return result
         return RowListDummyProxy()
 
 
