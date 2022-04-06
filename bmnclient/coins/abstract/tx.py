@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
 from ..utils import CoinUtils
-from ...database.tables import TxListTable
+from ...database.tables import TxIosTable, TxsTable
 from ...utils import serializable
 
 if TYPE_CHECKING:
@@ -59,7 +59,7 @@ class _Tx(CoinObject, table_type=TxsTable):
         heap[name] = tx
         return tx
 
-    def __init__(self, coin: Coin, *, row_id: int = -1, **kwargs) -> None:
+    def __init__(self, coin: Coin, **kwargs) -> None:
         if self.__initialized:
             assert self._coin is coin
             self.__update__(**kwargs)

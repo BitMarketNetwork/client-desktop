@@ -534,18 +534,18 @@ class AddressUtxoIteratorApiQuery(
         parser = AddressUtxoParser()
         parser(value)
 
-        for tx in parser.txList:
-            tx_d = self._address.coin.Tx.Utxo.deserialize(
+        for utxo in parser.txList:
+            utxo_d = self._address.coin.Tx.Utxo.deserialize(
                 DeserializeFlag.NORMAL_MODE,
-                tx,
+                utxo,
                 self._address.coin)
-            if tx_d is not None:
-                self._utxo_list.append(tx_d)
+            if utxo_d is not None:
+                self._utxo_list.append(utxo_d)
             else:
                 self._logger.warning(
                     "Failed to deserialize UTXO '%s:%i'.",
-                    tx.get("name", "unnamed"),
-                    tx.get("index", -1))
+                    utxo.get("name", "unnamed"),
+                    utxo.get("index", -1))
 
         if parser.lastOffset is None:
             self._address.utxoList = self._utxo_list

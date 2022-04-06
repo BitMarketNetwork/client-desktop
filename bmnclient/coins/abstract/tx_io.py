@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
 from ..utils import CoinUtils
-from ...database.tables import TxIoListTable
+from ...database.tables import TxIosTable
 from ...utils import serializable
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ class _Model(CoinObjectModel):
         return self._io
 
 
-class _Io(CoinObject, table_type=TxIoListTable):
+class _Io(CoinObject, table_type=TxIosTable):
     Model = _Model
 
     class IoType(Enum):

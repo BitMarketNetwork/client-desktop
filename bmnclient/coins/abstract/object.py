@@ -71,7 +71,7 @@ class CoinObject(Serializable):
             kwargs,
             *,
             enable_table: bool = True) -> None:
-        super().__init__(row_id=-1)
+        super().__init__()
         self._coin: Final = coin
         self.__model: CoinObjectModel | bool | None = False
         self.__value_events: dict[str, tuple[Callable, Callable]] = {}

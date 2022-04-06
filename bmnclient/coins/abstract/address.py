@@ -7,7 +7,7 @@ from .object import CoinObject, CoinObjectModel
 from ..hd import HdNode
 from ..utils import CoinUtils
 from ...crypto.secp256k1 import PrivateKey, PublicKey
-from ...database.tables import AddressListTable
+from ...database.tables import AddressTxsTable, AddressesTable, UtxosTable
 from ...utils import SerializeFlag, serializable
 from ...utils.class_property import classproperty
 
@@ -189,7 +189,7 @@ class _Address(CoinObject, table_type=AddressListTable):
         heap[kwargs["name"]] = address
         return address
 
-    def __init__(self, coin: Coin, *, row_id: int = -1, **kwargs) -> None:
+    def __init__(self, coin: Coin, **kwargs) -> None:
         if self.__initialized:
             assert self._coin is coin
             self.__update__(**kwargs)

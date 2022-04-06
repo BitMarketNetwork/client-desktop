@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
 from ..utils import CoinUtils
-from ...database.tables import UtxoListTable
+from ...database.tables import UtxosTable
 from ...utils import serializable
 from ...utils.string import StringUtils
 
@@ -27,7 +27,7 @@ class _Model(CoinObjectModel):
         return self._utxo
 
 
-class _Utxo(CoinObject, table_type=UtxoListTable):
+class _Utxo(CoinObject, table_type=UtxosTable):
     Model = _Model
 
     def __init__(self, address: Coin.Address, **kwargs) -> None:
