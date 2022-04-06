@@ -6,7 +6,11 @@ from typing import TYPE_CHECKING
 from .object import CoinObject, CoinObjectModel
 from ..utils import CoinUtils
 from ...database.tables import UtxosTable
-from ...utils import serializable
+from ...utils import (
+    DeserializeFlag,
+    DeserializedData,
+    SerializeFlag,
+    serializable)
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
@@ -15,9 +19,8 @@ if TYPE_CHECKING:
 
 
 class _Model(CoinObjectModel):
-    def __init__(self, *args, utxo: Coin.Tx.Utxo, **kwargs) -> None:
+    def __init__(self, utxo: Coin.Tx.Utxo, **kwargs) -> None:
         super().__init__(
-            *args,
             name_key_tuple=CoinUtils.utxoToNameKeyTuple(utxo),
             **kwargs)
         self._utxo = utxo
@@ -36,6 +39,8 @@ class _Utxo(CoinObject, table_type=UtxosTable):
 
         super().__init__(address.coin, kwargs)
 
+        self._script_type: Final = kwargs.pop("script_type")
+        assert isinstance(self._script_type, self._coin.Address.Script.Type)
         self._index: Final = int(kwargs.pop("index"))
         self._height: Final = int(kwargs.pop("height"))
         self._amount: Final = int(kwargs.pop("amount"))
@@ -47,8 +52,7 @@ class _Utxo(CoinObject, table_type=UtxosTable):
                 and self._name == other._name
                 and self._index == other._index
                 and self._height == other._height
-                and self._amount == other._amount
-        )
+                and self._amount == other._amount)
 
     def __hash__(self) -> int:
         return hash((
@@ -56,13 +60,37 @@ class _Utxo(CoinObject, table_type=UtxosTable):
             self._name,
             self._index,
             self._height,
-            self._amount
-        ))
+            self._amount))
 
     def __str__(self) -> str:
         return StringUtils.classString(
             self.__class__,
             *CoinUtils.utxoToNameKeyTuple(self))
+
+    def serializeProperty(
+            self,
+            flags: SerializeFlag,
+            key: str,
+            value: ...) -> DeserializedData:
+        if key == "script_type":
+            return value.name
+        return super().serializeProperty(flags, key, value)
+
+    @classmethod
+    def deserializeProperty(
+            cls,
+            flags: DeserializeFlag,
+            self: _Utxo | None,
+            key: str,
+            value: DeserializedData,
+            *cls_args) -> ...:
+        if key == "script_type":
+            address = cls_args[0] if cls_args else self._address
+            for type_ in address.Script.Type:
+                if type_.name == value:
+                    return type_
+            return address.Script.Type.UNKNOWN
+        return super().deserializeProperty(flags, self, key, value, *cls_args)
 
     @property
     def address(self) -> Coin.Address:
@@ -92,6 +120,7 @@ class _Utxo(CoinObject, table_type=UtxosTable):
     def amount(self) -> int:
         return self._amount
 
+    @serializable
     @property
     def scriptType(self) -> Coin.Address.Script.Type:
-        return self._address.type.value.scriptType
+        return self._script_type

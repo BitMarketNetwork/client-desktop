@@ -14,6 +14,7 @@ class UtxosTable(AbstractSerializableTable, name="utxos"):
         ROW_ID = ()
         ADDRESS_ROW_ID = ("address_row_id", "INTEGER NOT NULL")
 
+        SCRIPT_TYPE = ("script_type", "TEXT NOT NULL")
         NAME = ("name", "TEXT NOT NULL")
         INDEX = ("index", "INTEGER NOT NULL")
         HEIGHT = ("height", "INTEGER NOT NULL")

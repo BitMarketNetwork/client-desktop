@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 class _Script(Coin.Address.Script):
     class Type(Coin.Address.Script.Type):
+        UNKNOWN = auto()
         P2PK = auto()
         P2PKH = auto()
         P2SH = auto()
