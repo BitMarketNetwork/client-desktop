@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from os import urandom
 from random import randint, shuffle
-from typing import TYPE_CHECKING
+from typing import Sequence
 from unittest import TestCase
 
+from bmnclient.coins.abstract import Coin
 from bmnclient.coins.coin_bitcoin import Bitcoin, BitcoinTest
 from bmnclient.coins.coin_litecoin import Litecoin
 from bmnclient.coins.hd import HdNode
@@ -12,11 +13,6 @@ from bmnclient.coins.list import CoinList
 from bmnclient.language import Locale
 from bmnclient.utils import DeserializeFlag, SerializeFlag
 from tests.helpers import TestCaseApplication
-
-if TYPE_CHECKING:
-    from typing import List, Optional, Sequence, Type
-    from bmnclient.coins.abstract import Coin
-
 
 BITCOIN_ADDRESS_LIST = (
     (
@@ -152,41 +148,7 @@ def fillCoin(
         owner.assertTrue(address.save())
 
         for tx_index in range(1, tx_count + 1):
-            input_list = []
-            for i in range(1, 3):
-                input_address = coin.deriveHdAddress(
-                    account=1,
-                    is_change=False)
-                owner.assertIsNotNone(input_address)
-                input_list.append(coin.Tx.Io(
-                    coin,
-                    index=i,
-                    output_type="output_type_" + str(i),
-                    address_name=input_address.name,
-                    amount=randint(1000, 100000)))
-                owner.assertIs(input_address, input_list[-1].address)
-
-            output_list = []
-            for i in range(1, 3):
-                output_address = coin.deriveHdAddress(
-                    account=2,
-                    is_change=False)
-                owner.assertIsNotNone(output_address)
-                output_list.append(coin.Tx.Io(
-                    coin,
-                    index=i,
-                    output_type="output_type_" + str(i),
-                    address_name=output_address.name,
-                    amount=randint(1000, 100000)))
-                owner.assertIs(output_address, output_list[-1].address)
-            output_list.append(coin.Tx.Io(
-                coin,
-                index=4,
-                output_type="output_type_nulldata",
-                address_name=None,
-                amount=0))
-
-            address.appendTx(coin.Tx(
+            tx = coin.Tx(
                 coin,
                 name="tx_name_" + str(tx_index) + "_" + address.name,
                 height=randint(10000, 1000000),
@@ -194,16 +156,62 @@ def fillCoin(
                 amount=randint(10000, 1000000),
                 fee_amount=randint(10000, 1000000),
                 is_coinbase=randint(0, 2) == 1,
-                input_list=input_list,
-                output_list=output_list))
+                input_list=[],
+                output_list=[])
+            owner.assertTrue(tx.save())
+            owner.assertEqual(
+                address.AssociateResult.SUCCESS,
+                address.associate(tx))
 
-        address.utxoList = [coin.Tx.Utxo(
-            address,
-            row_id=-1,
-            name="utxo_" + str(i),
-            height=randint(10000, 1000000),
-            index=randint(10000, 1000000),
-            amount=randint(10000, 1000000)) for i in range(1, 3)]
+            for i in range(1, 3):
+                input_address = coin.deriveHdAddress(
+                    account=1,
+                    is_change=False)
+                owner.assertIsNotNone(input_address)
+                io = coin.Tx.Io(
+                    tx,
+                    io_type=coin.Tx.Io.IoType.INPUT,
+                    index=i,
+                    output_type="output_type_" + str(i),
+                    address=input_address,
+                    amount=randint(1000, 100000))
+                owner.assertFalse(io.address.isNullData)
+                owner.assertTrue(io.save())
+
+            for i in range(1, 3):
+                output_address = coin.deriveHdAddress(
+                    account=2,
+                    is_change=False)
+                owner.assertIsNotNone(output_address)
+                io = coin.Tx.Io(
+                    tx,
+                    io_type=coin.Tx.Io.IoType.OUTPUT,
+                    index=i,
+                    output_type="output_type_" + str(i),
+                    address=output_address,
+                    amount=randint(1000, 100000))
+                owner.assertFalse(io.address.isNullData)
+                owner.assertTrue(io.save())
+            io = coin.Tx.Io(
+                tx,
+                io_type=coin.Tx.Io.IoType.OUTPUT,
+                index=4,
+                output_type="output_type_nulldata",
+                address=coin.Address.createNullData(coin),
+                amount=0)
+            owner.assertTrue(io.address.isNullData)
+            owner.assertTrue(io.save())
+
+            address.appendTx(tx)
+
+        for i in range(1, 3):
+            utxo = coin.Tx.Utxo(
+                address,
+                name="utxo_" + str(i),
+                height=randint(10000, 1000000),
+                index=randint(10000, 1000000),
+                amount=randint(10000, 1000000))
+            owner.assertTrue(utxo.save())
 
         owner.assertEqual(tx_count, len(address.txList))
     return coin
@@ -233,13 +241,13 @@ class TestCoins(TestCaseApplication):
 
     def test_address_decode(self) -> None:
         self._test_address_decode(
-            Bitcoin(row_id=-1, model_factory=self._application.modelFactory),
+            Bitcoin(model_factory=self._application.modelFactory),
             BITCOIN_ADDRESS_LIST)
         self._test_address_decode(
-            BitcoinTest(row_id=-1, model_factory=self._application.modelFactory),
+            BitcoinTest(model_factory=self._application.modelFactory),
             BITCOIN_TEST_ADDRESS_LIST)
         self._test_address_decode(
-            Litecoin(row_id=-1, model_factory=self._application.modelFactory),
+            Litecoin(model_factory=self._application.modelFactory),
             LITECOIN_ADDRESS_LIST)
 
     def test_string_to_amount(self) -> None:
@@ -553,7 +561,7 @@ class TestCoins(TestCaseApplication):
     def _test_serialization(
             self,
             d_flags: DeserializeFlag,
-            coin_type: Type[Coin]) -> None:
+            coin_type: type(Coin)) -> None:
         coin = fillCoin(
             self,
             coin_type(model_factory=self._application.modelFactory))
@@ -1022,7 +1030,7 @@ class TestMutableTx(TestCaseApplication):
             *,
             lock_time: int,
             is_dummy: bool,
-            expected_name: Optional[str],
+            expected_name: str | None,
             expected_data: str,
             excepted_raw_size: int,
             excepted_virtual_size: int) -> Coin.TxFactory.MutableTx:

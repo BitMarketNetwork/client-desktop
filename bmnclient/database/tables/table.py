@@ -368,8 +368,10 @@ class AbstractSerializableTable(AbstractTable, name=""):
             object_: Serializable | type(Serializable),
             *cls_args,
             use_row_id: bool = True,
-            fallback_search: bool = False) -> Serializable | None:
-        key_columns = self._keyColumns(object_)
+            fallback_search: bool = False,
+            key_columns: Sequence[ColumnValue] | None = None) -> Serializable | None:
+        if key_columns is None:
+            key_columns = self._keyColumns(object_)
         if not key_columns:
             return None
         data_columns: list[ColumnValue] = []

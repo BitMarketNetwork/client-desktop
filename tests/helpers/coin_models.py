@@ -37,28 +37,23 @@ class CoinModel(Coin.Model):
 
 
 class AddressModel(Coin.Address.Model):
-    def __init__(self, address: Coin.Address) -> None:
-        super().__init__(address=address, database=address.coin.model.database)
+    pass
 
 
 class TxModel(Coin.Tx.Model):
-    def __init__(self, tx: Coin.Tx) -> None:
-        super().__init__(tx=tx, database=tx.coin.model.database)
+    pass
 
 
 class TxIoModel(Coin.Tx.Io.Model):
-    def __init__(self, io: Coin.Tx.Io) -> None:
-        super().__init__(io=io, database=io.coin.model.database)
+    pass
 
 
 class UtxoModel(Coin.Tx.Utxo.Model):
-    def __init__(self, utxo: Coin.Tx.Utxo) -> None:
-        super().__init__(utxo=utxo, database=utxo.coin.model.database)
+    pass
 
 
 class TxFactoryModel(Coin.TxFactory.Model):
-    def __init__(self, factory: Coin.TxFactory) -> None:
-        super().__init__(factory=factory, database=factory.coin.model.database)
+    pass
 
 
 class ModelsFactory:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -7,20 +8,23 @@ from bmnclient.coins.list import CoinList
 from bmnclient.database import Cursor, Database
 from bmnclient.database.tables import (
     AbstractSerializableTable,
-    AddressTransactionsTable,
+    AddressTxsTable,
     AddressesTable,
     CoinsTable,
     ColumnValue,
     MetadataTable,
-    TxIoListTable,
-    TxListTable)
+    TxIosTable,
+    TxsTable)
 from bmnclient.database.tables.table import ColumnEnum
-from bmnclient.utils import Serializable, serializable
+from bmnclient.utils import (
+    DeserializeFlag,
+    Serializable,
+    SerializeFlag,
+    serializable)
 from tests.helpers import TestCaseApplication
 from tests.test_coins import fillCoin
 
 if TYPE_CHECKING:
-    from typing import Any, List, Tuple
     from bmnclient.coins.abstract import Coin
 
 
@@ -259,25 +263,22 @@ class TestDatabase(TestCaseApplication):
                 V3 = ("v3", "TEXT NOT NULL")
                 V4 = ("v4", "TEXT NOT NULL")
 
+            _KEY_COLUMN_LIST = (
+                (ColumnEnum.V1, lambda o: o.v1),
+            )
+
         owner = self
         db = self._create(Path("serializable.db"))
         table = Table(db)
 
         class Object(Serializable):
-            def __init__(self, *, row_id: int = -1, **kwargs) -> None:
-                super().__init__(row_id=row_id)
+            def __init__(self, **kwargs) -> None:
+                super().__init__()
                 owner.assertGreaterEqual(4, len(kwargs))
 
                 self._v1 = kwargs.get("v1", "1")
 
-                self.result = table.completeSerializable(
-                    self,
-                    row_id,
-                    (
-                        [] if row_id > 0
-                        else [ColumnValue(Table.ColumnEnum.V1, self.v1)]
-                    ),
-                    kwargs)
+                self.result = table.completeSerializable(self, kwargs)
 
                 self._v2 = kwargs.get("v2", "2")
                 self._v3 = kwargs.get("v3", "3")
@@ -321,14 +322,14 @@ class TestDatabase(TestCaseApplication):
 
         o1 = Object(v1="100", v2="200", v3="300", v4="400")
         self.assertEqual(0, o1.result)
-        o1_row_id = table.saveSerializable(o1, [])
+        o1_row_id = table.saveSerializable(o1)
         self.assertLess(0, o1_row_id)
         self.assertEqual(o1_row_id, o1.rowId)
-        self.assertEqual(o1_row_id, table.saveSerializable(o1, []))
+        self.assertEqual(o1_row_id, table.saveSerializable(o1))
 
         o2 = table.loadSerializable(
             Object,
-            [ColumnValue(Table.ColumnEnum.V1, o1.v1)])
+            key_columns=[ColumnValue(Table.ColumnEnum.V1, o1.v1)])
         self.assertIsInstance(o2, Object)
         self.assertEqual(0, o2.result)
         self.assertEqual(o1.rowId, o2.rowId)
@@ -338,11 +339,7 @@ class TestDatabase(TestCaseApplication):
         self.assertEqual(o1.v4, o2.v4)
 
         o2.v2 *= 10
-        self.assertIs(
-            o2,
-            table.loadSerializable(
-                o2,
-                [ColumnValue(Table.ColumnEnum.V1, o1.v1)]))
+        self.assertIs(o2, table.loadSerializable(o2))
         self.assertEqual(0, o1.result)
         self.assertEqual(o1.v2, o2.v2)
 
@@ -359,65 +356,66 @@ class TestDatabase(TestCaseApplication):
         self.assertEqual(-1, o4.rowId)
 
     def _fill_db(self, db: Database, coin_list: CoinList) -> None:
-        for coin in coin_list:
-            fillCoin(self, coin, address_count=10, tx_count=10)
-            coin_id = db[CoinsTable].saveSerializable(
-                coin,
-                [],
-                use_row_id=False)
+        for coin_source in coin_list:
+            fillCoin(self, coin_source, address_count=10, tx_count=10)
 
-            for address in list(coin.addressList):
-                address_id = db[AddressesTable].saveSerializable(
-                    address,
-                    [
-                        ColumnValue(
-                            AddressesTable.ColumnEnum.COIN_ROW_ID,
-                            coin_id),
-                        ColumnValue(
-                            AddressesTable.ColumnEnum.NAME,
-                            address.name),
-                    ],
-                    use_row_id=False)
+            data = coin_source.serialize(
+                SerializeFlag.PRIVATE_MODE
+                | SerializeFlag.EXCLUDE_SUBCLASSES)
+            self.assertIsInstance(data, dict)
 
-                for tx in address.txList:
-                    tx_id = db[TxListTable].saveSerializable(
-                        tx,
-                        [
-                            ColumnValue(
-                                TxListTable.ColumnEnum.COIN_ROW_ID,
-                                coin_id),
-                            ColumnValue(
-                                TxListTable.ColumnEnum.NAME,
-                                tx.name),
-                        ],
-                        use_row_id=False)
+            coin = coin_source.__class__(
+                model_factory=self._application.modelFactory)
+            coin.deserializeUpdate(DeserializeFlag.NORMAL_MODE, data)
 
-                    db[AddressTransactionsTable].associate(address_id, tx_id)
+            db[CoinsTable].saveSerializable(coin)
+            self.assertLess(0, coin.rowId)
 
-                    for io_type, io_list in (
-                            (TxIoListTable.IoType.INPUT, tx.inputList),
-                            (TxIoListTable.IoType.OUTPUT, tx.outputList)
-                    ):
-                        for io in io_list:
-                            db[TxIoListTable].saveSerializable(
-                                io,
-                                [
-                                    ColumnValue(
-                                        TxIoListTable.ColumnEnum.TX_ROW_ID,
-                                        tx_id),
-                                    ColumnValue(
-                                        TxIoListTable.ColumnEnum.IO_TYPE,
-                                        io_type.value),
-                                    ColumnValue(
-                                        TxIoListTable.ColumnEnum.INDEX,
-                                        io.index)
-                                ],
-                                use_row_id=False)
+            for address_source in list(coin_source.addressList):
+                data = address_source.serialize(
+                    SerializeFlag.PRIVATE_MODE
+                    | SerializeFlag.EXCLUDE_SUBCLASSES)
+                self.assertIsInstance(data, dict)
+                address = coin.Address.deserialize(
+                    DeserializeFlag.DATABASE_MODE,
+                    data,
+                    coin)
+                self.assertIsNotNone(address)
+                db[AddressesTable].saveSerializable(address)
+                self.assertLess(0, address.rowId)
+
+                for tx_source in address_source.txList:
+                    data = tx_source.serialize(
+                        SerializeFlag.PRIVATE_MODE
+                        | SerializeFlag.EXCLUDE_SUBCLASSES)
+                    self.assertIsInstance(data, dict)
+                    tx = coin.Tx.deserialize(
+                        DeserializeFlag.DATABASE_MODE,
+                        data,
+                        coin)
+                    db[TxsTable].saveSerializable(tx)
+                    self.assertLess(0, tx.rowId)
+
+                    self.assertTrue(db[AddressTxsTable].associate(address, tx))
+
+                    for io_source in chain(
+                            tx_source.inputList,
+                            tx_source.outputList):
+                        data = io_source.serialize(
+                            SerializeFlag.PRIVATE_MODE
+                            | SerializeFlag.EXCLUDE_SUBCLASSES)
+                        self.assertIsInstance(data, dict)
+                        io = coin.Tx.Io.deserialize(
+                            DeserializeFlag.DATABASE_MODE,
+                            data,
+                            tx)
+                        db[TxIosTable].saveSerializable(io)
+                        self.assertLess(0, io.rowId)
 
     def _select_coin(
             self,
             cursor: Cursor,
-            coin: Coin) -> List[Tuple[Any]]:
+            coin: Coin) -> list[tuple[...]]:
         cursor.execute(
             f"SELECT * FROM {CoinsTable}"
             f" WHERE {CoinsTable.ColumnEnum.NAME} == ?",
@@ -429,7 +427,7 @@ class TestDatabase(TestCaseApplication):
     def _select_addresses(
             self,
             cursor: Cursor,
-            coin: Coin) -> List[Tuple[Any]]:
+            coin: Coin) -> list[tuple[...]]:
         cursor.execute(
             f"SELECT * FROM {AddressesTable}"
             f" WHERE {AddressesTable.ColumnEnum.COIN_ROW_ID} IN ("
@@ -444,10 +442,10 @@ class TestDatabase(TestCaseApplication):
     def _select_transactions(
             self,
             cursor: Cursor,
-            coin: Coin) -> List[Tuple[Any]]:
+            coin: Coin) -> list[tuple[...]]:
         cursor.execute(
-            f"SELECT * FROM {TxListTable}"
-            f" WHERE {TxListTable.ColumnEnum.COIN_ROW_ID} IN ("
+            f"SELECT * FROM {TxsTable}"
+            f" WHERE {TxsTable.ColumnEnum.COIN_ROW_ID} IN ("
             f"SELECT {CoinsTable.ColumnEnum.ROW_ID}"
             f" FROM {CoinsTable}"
             f" WHERE  {CoinsTable.ColumnEnum.NAME} == ?)",
@@ -459,13 +457,13 @@ class TestDatabase(TestCaseApplication):
     def _select_transaction_io(
             self,
             cursor: Cursor,
-            tx: Coin.Tx) -> List[Tuple[Any]]:
+            tx: Coin.Tx) -> list[tuple[...]]:
         cursor.execute(
-            f"SELECT * FROM {TxIoListTable}"
-            f" WHERE {TxIoListTable.ColumnEnum.TX_ROW_ID} IN ("
-            f"SELECT {TxListTable.ColumnEnum.ROW_ID}"
-            f" FROM {TxListTable}"
-            f" WHERE {TxListTable.ColumnEnum.NAME} == ?)",
+            f"SELECT * FROM {TxIosTable}"
+            f" WHERE {TxIosTable.ColumnEnum.TX_ROW_ID} IN ("
+            f"SELECT {TxsTable.ColumnEnum.ROW_ID}"
+            f" FROM {TxsTable}"
+            f" WHERE {TxsTable.ColumnEnum.NAME} == ?)",
             [tx.name])
         r = cursor.fetchall()
         self.assertIsNotNone(r)
@@ -474,13 +472,13 @@ class TestDatabase(TestCaseApplication):
     def _select_transaction_address_map(
             self,
             cursor: Cursor,
-            tx: Coin.Tx) -> List[Tuple[Any]]:
+            tx: Coin.Tx) -> list[tuple[...]]:
         cursor.execute(
-            f"SELECT * FROM {AddressTransactionsTable}"
-            f" WHERE {AddressTransactionsTable.ColumnEnum.TX_ROW_ID} IN ("
-            f"SELECT {TxListTable.ColumnEnum.ROW_ID}"
-            f" FROM {TxListTable}"
-            f" WHERE {TxListTable.ColumnEnum.NAME} == ?)",
+            f"SELECT * FROM {AddressTxsTable}"
+            f" WHERE {AddressTxsTable.ColumnEnum.TX_ROW_ID} IN ("
+            f"SELECT {TxsTable.ColumnEnum.ROW_ID}"
+            f" FROM {TxsTable}"
+            f" WHERE {TxsTable.ColumnEnum.NAME} == ?)",
             [tx.name])
         r = cursor.fetchall()
         self.assertIsNotNone(r)
@@ -489,10 +487,10 @@ class TestDatabase(TestCaseApplication):
     def _select_address_transaction_map(
             self,
             cursor: Cursor,
-            address: Coin.Address) -> List[Tuple[Any]]:
+            address: Coin.Address) -> list[tuple[...]]:
         cursor.execute(
-            f"SELECT * FROM {AddressTransactionsTable}"
-            f" WHERE {AddressTransactionsTable.ColumnEnum.ADDRESS_ROW_ID} IN ("
+            f"SELECT * FROM {AddressTxsTable}"
+            f" WHERE {AddressTxsTable.ColumnEnum.ADDRESS_ROW_ID} IN ("
             f"SELECT {AddressesTable.ColumnEnum.ROW_ID}"
             f" FROM {AddressesTable}"
             f" WHERE {AddressesTable.ColumnEnum.NAME} == ?)",
@@ -570,8 +568,8 @@ class TestDatabase(TestCaseApplication):
         with db.transaction(suppress_exceptions=False) as c:
             tx = coin_list[1].addressList[2].txList[2]
             c.execute(
-                f"DELETE FROM {TxListTable}"
-                f" WHERE {TxListTable.ColumnEnum.NAME} == ?",
+                f"DELETE FROM {TxsTable}"
+                f" WHERE {TxsTable.ColumnEnum.NAME} == ?",
                 [tx.name])
             self.assertEqual(1, c.rowcount)
             self.assertEqual(

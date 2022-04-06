@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from enum import Flag, auto
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union
+from typing import Callable, Iterable, Optional, Union
 
 from .class_property import classproperty
 from .string import StringUtils
 
-DeserializedData = Optional[Union[str, int, List, Dict]]
-DeserializedDict = Dict[str, DeserializedData]
+DeserializedData = Optional[Union[str, int, list, dict]]
+DeserializedDict = dict[str, DeserializedData]
 
 
 class DeserializationNotSupportedError(Exception):
@@ -16,8 +16,8 @@ class DeserializationNotSupportedError(Exception):
 
 
 def serializable(
-        function: Optional[property] = None,
-        **kwargs) -> Union[Callable[[property], property], property]:
+        function: property | None = None,
+        **kwargs) -> Callable[[property], property] | property:
     def decorator(function_: property) -> property:
         assert isinstance(function_, property)
         fget = getattr(function_, "fget")
@@ -42,8 +42,8 @@ class DeserializeFlag(Flag):
 class Serializable:
     __serialize_map = None
 
-    def __init__(self, *args, row_id: int, **kwargs) -> None:
-        self.__row_id = row_id
+    def __init__(self, *args, **kwargs) -> None:
+        self.__row_id = -1
 
     def __update__(self, **kwargs) -> bool:
         serialize_map = self.serializeMap
@@ -72,7 +72,7 @@ class Serializable:
             self.__row_id = value
 
     @classproperty
-    def serializeMap(cls) -> Dict[str, str]: # noqa
+    def serializeMap(cls) -> dict[str, str]: # noqa
         if cls.__serialize_map is None:
             cls.__serialize_map = {}
             for name in dir(cls):
@@ -100,7 +100,7 @@ class Serializable:
             self,
             flags: SerializeFlag,
             key: str,
-            value: Any) -> DeserializedData:
+            value: ...) -> DeserializedData:
         if isinstance(value, Serializable):
             if bool(flags & SerializeFlag.EXCLUDE_SUBCLASSES):
                 return {}
@@ -108,7 +108,14 @@ class Serializable:
         if isinstance(value, (int, str, type(None))):
             return value
         if isinstance(value, Iterable):
-            return [self.serializeProperty(flags, key, v) for v in value]
+            return [
+                self.serializeProperty(flags, key, v)
+                for v in value
+                if not (
+                        isinstance(v, Serializable)
+                        and bool(flags & SerializeFlag.EXCLUDE_SUBCLASSES)
+                )
+            ]
 
         raise TypeError(
             "can't serialize value type '{}' for key '{}'"
@@ -119,7 +126,7 @@ class Serializable:
             cls,
             flags: DeserializeFlag,
             source_data: DeserializedDict,
-            *cls_args) -> Optional[Serializable]:
+            *cls_args) -> Serializable | None:
         cls_kwargs = {
             cls.__keyToKwarg(key):
                 cls.deserializeProperty(flags, None, key, value, *cls_args)
@@ -142,13 +149,13 @@ class Serializable:
     def deserializeProperty(
             cls,
             flags: DeserializeFlag,
-            self: Optional[Serializable],
+            self: Serializable | None,
             key: str,
             value: DeserializedData,
-            *cls_args) -> Any:
+            *cls_args) -> ...:
         if isinstance(value, (int, str, type(None))):
             return value
-        if isinstance(value, list):
+        if isinstance(value, Iterable):
             return [
                 cls.deserializeProperty(flags, self, key, v, *cls_args)
                 for v in value
