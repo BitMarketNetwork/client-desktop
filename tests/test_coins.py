@@ -207,6 +207,7 @@ def fillCoin(
         for i in range(1, 3):
             utxo = coin.Tx.Utxo(
                 address,
+                script_type=address.type.value.scriptType,
                 name="utxo_" + str(i),
                 height=randint(10000, 1000000),
                 index=randint(10000, 1000000),
@@ -221,7 +222,7 @@ class TestCoins(TestCaseApplication):
     def _test_address_decode(
             self,
             coin: Coin,
-            address_list: Sequence[tuple]) -> None:
+            address_list: tuple[tuple, ...]) -> None:
         hash_check_count = 0
 
         # noinspection PyUnusedLocal
@@ -439,6 +440,7 @@ class TestCoins(TestCaseApplication):
             for i in range(100):
                 utxo = coin.Tx.Utxo(
                     address,
+                    script_type=address.type.value.scriptType,
                     name="utxo_" + str(i),
                     index=i,
                     height=i * 1000,
@@ -450,6 +452,7 @@ class TestCoins(TestCaseApplication):
             for i in range(100):
                 utxo = coin.Tx.Utxo(
                     address,
+                    script_type=address.type.value.scriptType,
                     name="utxo_" + str(i),
                     index=i,
                     height=i * 1000,
@@ -466,6 +469,7 @@ class TestCoins(TestCaseApplication):
 
         for i in range(100):
             utxo = coin.Tx.Utxo(address1, name="utxo_" + str(i))
+            self.assertEqual(address1.type.value.scriptType, utxo.scriptType)
             self.assertEqual("utxo_" + str(i), utxo.name)
             self.assertEqual(i, utxo.index)
             self.assertEqual(i * 1000, utxo.height)
@@ -573,8 +577,8 @@ class TestCoins(TestCaseApplication):
         # pprint(data, sort_dicts=False)
 
         coin_new = coin_type(model_factory=self._application.modelFactory)
-        self.assertTrue(coin_new.save())
         coin_new.deserializeUpdate(d_flags, data)
+        self.assertTrue(coin_new.save())
 
         # coin compare
         self.assertEqual(coin.name, coin_new.name)
@@ -660,6 +664,7 @@ class TestTxFactory(TestCaseApplication):
         for i in range(len(amount_list)):
             utxo = self._coin.Tx.Utxo(
                 address,
+                script_type=address.type.value.scriptType,
                 name=i.to_bytes(32, "big").hex(),
                 height=100 + i,
                 index=0,
@@ -986,7 +991,7 @@ class TestMutableTx(TestCaseApplication):
             script_type: Coin.Address.Script.Type,
             amount: int,
             sequence: int,
-            is_dummy: bool = False) -> Coin.TxFactory.MutableTx.Input:
+            is_dummy: bool = False) -> dict:
         private_key = coin.Address.importKey(coin, private_key)
         self.assertIsNotNone(private_key)
 
@@ -997,15 +1002,15 @@ class TestMutableTx(TestCaseApplication):
         self.assertIsNotNone(address)
 
         utxo = coin.Tx.Utxo(
-            coin,
+            address,
             name=bytes.fromhex(name)[::-1].hex(),
-            height=1,
             index=index,
+            height=1,
             amount=amount,
             script_type=script_type)
-        utxo.address = address
-        return coin.TxFactory.MutableTx.Input(
-            utxo,
+
+        return dict(
+            utxo=utxo,
             sequence=sequence,
             is_dummy=is_dummy)
 
@@ -1016,17 +1021,17 @@ class TestMutableTx(TestCaseApplication):
             *,
             address_name: str,
             amount: int,
-            is_dummy: bool = False) -> Coin.TxFactory.MutableTx.Output:
+            is_dummy: bool = False) -> dict:
         address = coin.Address.createFromName(coin, name=address_name)
-        return coin.TxFactory.MutableTx.Output(
-            address,
+        return dict(
+            address=address,
             amount=amount,
             is_dummy=is_dummy)
 
     def _test_mtx(
             self,
-            input_list: Sequence[Coin.TxFactory.MutableTx.Input],
-            output_list: Sequence[Coin.TxFactory.MutableTx.Output],
+            input_list: list[dict],
+            output_list: list[dict],
             *,
             lock_time: int,
             is_dummy: bool,
@@ -1036,10 +1041,18 @@ class TestMutableTx(TestCaseApplication):
             excepted_virtual_size: int) -> Coin.TxFactory.MutableTx:
         mtx = self._coin.TxFactory.MutableTx(
             self._coin,
-            input_list,
-            output_list,
             lock_time=lock_time,
             is_dummy=is_dummy)
+        self.assertEqual(0, mtx.amount)
+        self.assertEqual(0, mtx.feeAmount)
+
+        for io in input_list:
+            mtx.appendInput(**io)
+        self.assertEqual(len(input_list), len(mtx.inputList))
+        for io in output_list:
+            mtx.appendOutput(**io)
+        self.assertEqual(len(output_list), len(mtx.outputList))
+
         self.assertEqual(is_dummy, mtx.isDummy)
         self.assertFalse(mtx.isSigned)
         self.assertEqual(b"", mtx.raw())
@@ -1050,16 +1063,16 @@ class TestMutableTx(TestCaseApplication):
         self.assertEqual(excepted_virtual_size, mtx.virtualSize)
 
         self.assertEqual(
-            sum(i.amount for i in input_list),
+            sum(i["utxo"].amount for i in input_list),
             mtx.amount)
         self.assertEqual(
-            sum(i.amount for i in input_list)
-            - sum(o.amount for o in output_list),
+            sum(i["utxo"].amount for i in input_list)
+            - sum(o["amount"] for o in output_list),
             mtx.feeAmount)
         return mtx
 
     def test_p2pkh(self) -> None:
-        def input_list(*, is_dummy: bool) -> Sequence:
+        def input_list(*, is_dummy: bool) -> list[dict]:
             return [
                 self._createInput(
                     self._coin,
@@ -1073,7 +1086,7 @@ class TestMutableTx(TestCaseApplication):
                     is_dummy=is_dummy)
             ]
 
-        def output_list(*, is_dummy: bool) -> Sequence:
+        def output_list(*, is_dummy: bool) -> list[dict]:
             return [
                 self._createOutput(
                     self._coin,
@@ -1124,7 +1137,7 @@ class TestMutableTx(TestCaseApplication):
             excepted_virtual_size=226)
 
     def test_p2pkh_uncompressed(self) -> None:
-        def input_list(*, is_dummy: bool) -> Sequence:
+        def input_list(*, is_dummy: bool) -> list[dict]:
             return [
                 self._createInput(
                     self._coin,
@@ -1138,7 +1151,7 @@ class TestMutableTx(TestCaseApplication):
                     is_dummy=is_dummy)
             ]
 
-        def output_list(*, is_dummy: bool) -> Sequence:
+        def output_list(*, is_dummy: bool) -> list[dict]:
             return [
                 self._createOutput(
                     self._coin,
@@ -1185,7 +1198,7 @@ class TestMutableTx(TestCaseApplication):
 
     # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#native-p2wpkh # noqa
     def test_native_p2wpkh(self) -> None:
-        def input_list(*, is_dummy: bool) -> Sequence:
+        def input_list(*, is_dummy: bool) -> list[dict]:
             return [
                 self._createInput(
                     self._coin,
@@ -1209,7 +1222,7 @@ class TestMutableTx(TestCaseApplication):
                     is_dummy=is_dummy),
             ]
 
-        def output_list(*, is_dummy: bool) -> Sequence:
+        def output_list(*, is_dummy: bool) -> list[dict]:
             return [
                 self._createOutput(
                     self._coin,
@@ -1269,7 +1282,7 @@ class TestMutableTx(TestCaseApplication):
 
     # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#p2sh-p2wpkh
     def test_p2sh_p2wpkh(self) -> None:
-        def input_list(*, is_dummy: bool) -> Sequence:
+        def input_list(*, is_dummy: bool) -> list[dict]:
             return [
                 self._createInput(
                     self._coin,
@@ -1283,7 +1296,7 @@ class TestMutableTx(TestCaseApplication):
                     is_dummy=is_dummy)
                 ]
 
-        def output_list(*, is_dummy: bool) -> Sequence:
+        def output_list(*, is_dummy: bool) -> list[dict]:
             return [
                 self._createOutput(
                     self._coin,
