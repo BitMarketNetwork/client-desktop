@@ -2,23 +2,21 @@ from __future__ import annotations
 
 from enum import Enum
 from functools import cached_property
-from typing import TYPE_CHECKING
+from typing import Final, Sequence, TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
 from ..utils import CoinUtils
 from ...database.tables import TxIosTable, TxsTable
-from ...utils import serializable
+from ...utils import DeserializeFlag, DeserializedData, serializable
+from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Any, Final, List, Optional
     from .coin import Coin
-    from ...utils import DeserializeFlag, DeserializedData
 
 
 class _Model(CoinObjectModel):
-    def __init__(self, *args, tx: Coin.Tx, **kwargs) -> None:
+    def __init__(self, tx: Coin.Tx, **kwargs) -> None:
         super().__init__(
-            *args,
             name_key_tuple=CoinUtils.txToNameKeyTuple(tx),
             **kwargs)
         self._tx = tx
@@ -65,18 +63,18 @@ class _Tx(CoinObject, table_type=TxsTable):
             self.__update__(**kwargs)
             return
         self.__initialized = True
+        self._name: Final = str(kwargs.get("name")).lower()
 
-        super().__init__(coin, row_id=row_id)
+        super().__init__(coin, kwargs)
 
-        self._name: Final[str] = kwargs.get("name").lower()
-        self._height: int = kwargs.get("height", -1)
-        self._time: int = kwargs.get("time", -1)
-        self._amount: int = kwargs["amount"]
-        self._fee_amount: int = kwargs["fee_amount"]
-        self._is_coinbase = bool(kwargs["is_coinbase"])
-
-        self._input_list: Final[List[_Tx.Io]] = list(kwargs["input_list"])
-        self._output_list: Final[List[_Tx.Io]] = list(kwargs["output_list"])
+        self._height = int(kwargs.pop("height", -1))
+        self._time = int(kwargs.pop("time", -1))
+        self._amount = int(kwargs.pop("amount"))
+        self._fee_amount = int(kwargs.pop("fee_amount"))
+        self._is_coinbase = bool(kwargs.pop("is_coinbase"))
+        self._appendDeferredSave(kwargs.pop("input_list", []))
+        self._appendDeferredSave(kwargs.pop("output_list", []))
+        assert len(kwargs) == 1
 
     def __eq__(self, other: _Tx) -> bool:
         return (
@@ -87,20 +85,27 @@ class _Tx(CoinObject, table_type=TxsTable):
     def __hash__(self) -> int:
         return hash((super().__hash__(), self._name, ))
 
+    def __str__(self) -> str:
+        return StringUtils.classString(
+            self.__class__,
+            *CoinUtils.txToNameKeyTuple(self))
+
+    def __update__(self, **kwargs) -> bool:
+        # TODO clear old list
+        self._appendDeferredSave(kwargs.pop("input_list", []))
+        self._appendDeferredSave(kwargs.pop("output_list", []))
+        return super().__update__(**kwargs)
+
     @classmethod
     def deserializeProperty(
             cls,
             flags: DeserializeFlag,
-            self: Optional[_Tx],
+            self: _Tx | None,
             key: str,
             value: DeserializedData,
-            *cls_args) -> Any:
-        if key in ("input_list", "output_list"):
-            if isinstance(value, dict):
-                coin = cls_args[0] if cls_args else self
-                return cls.Io.deserialize(flags, value, coin)
-            elif isinstance(value, cls.Io):
-                return value
+            *cls_args) -> ...:
+        if key in ("input_list", "output_list") and isinstance(value, dict):
+            return lambda tx: cls.Io.deserialize(flags, value, tx)
         return super().deserializeProperty(flags, self, key, value, *cls_args)
 
     @serializable
@@ -167,13 +172,13 @@ class _Tx(CoinObject, table_type=TxsTable):
 
     @serializable
     @property
-    def inputList(self) -> List[_Tx.Io]:
-        return self._input_list
+    def inputList(self) -> Sequence[_Tx.Io]:
+        return self._rowListProxy(TxIosTable, self.Io.IoType.INPUT)
 
     @serializable
     @property
-    def outputList(self) -> List[_Tx.Io]:
-        return self._output_list
+    def outputList(self) -> Sequence[_Tx.Io]:
+        return self._rowListProxy(TxIosTable, self.Io.IoType.OUTPUT)
 
     @staticmethod
     def toNameHuman(name: str) -> str:

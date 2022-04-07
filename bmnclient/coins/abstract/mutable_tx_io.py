@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import TYPE_CHECKING
+from typing import Final, TYPE_CHECKING
 
 from .tx_io import _Io
-from ...utils import DeserializationNotSupportedError, serializable
+from ...utils import serializable
 
 if TYPE_CHECKING:
-    from typing import Final
     from .coin import Coin
 
 
@@ -16,16 +15,19 @@ class _MutableIo(_Io, table_type=None):
 
     def __init__(
             self,
-            address: Coin.Address,
+            mtx: Coin.TxFactory.MutableTx,
             *,
+            io_type: _MutableIo.IoType,
+            index: int,
+            address,
             amount: int,
             is_dummy: bool = False):
         super().__init__(
-            address.coin,
-            address,
-            index=-1,
+            mtx,
+            io_type=io_type,
+            index=index,
             output_type=address.type.value.name,
-            address_name=None,
+            address=address,
             amount=amount)
         self._is_dummy: Final = is_dummy
 
@@ -40,10 +42,6 @@ class _MutableIo(_Io, table_type=None):
             super().__hash__(),
             self._is_dummy
         ))
-
-    @classmethod
-    def deserialize(cls, *_, **__) -> None:
-        raise DeserializationNotSupportedError
 
     @cached_property
     def amountBytes(self) -> bytes:
@@ -67,12 +65,18 @@ class _MutableInput(_MutableIo):
 
     def __init__(
             self,
-            utxo: Coin.Tx.Utxo,
+            mtx: Coin.TxFactory.MutableTx,
             *,
+            utxo: Coin.Tx.Utxo,
             hash_type: int,
             sequence: int,
             **kwargs) -> None:
-        super().__init__(utxo.address, amount=utxo.amount, **kwargs)
+        super().__init__(
+            mtx,
+            io_type=self.IoType.INPUT,
+            address=utxo.address,
+            amount=utxo.amount,
+            **kwargs)
         self._utxo: Final = utxo
         self._hash_type: Final = hash_type
         self._sequence: Final = sequence
@@ -150,6 +154,9 @@ class _MutableInput(_MutableIo):
 
 
 class _MutableOutput(_MutableIo):
+    def __init__(self, mtx: Coin.TxFactory.MutableTx, **kwargs) -> None:
+        super().__init__(mtx, io_type=self.IoType.OUTPUT, **kwargs)
+
     @cached_property
     def scriptBytes(self) -> bytes:
         raise NotImplementedError

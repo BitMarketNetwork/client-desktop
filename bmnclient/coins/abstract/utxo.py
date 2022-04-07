@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import TYPE_CHECKING
+from typing import Final, TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
 from ..utils import CoinUtils
@@ -14,7 +14,6 @@ from ...utils import (
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Final
     from .coin import Coin
 
 
@@ -35,7 +34,7 @@ class _Utxo(CoinObject, table_type=UtxosTable):
 
     def __init__(self, address: Coin.Address, **kwargs) -> None:
         self._address: Final = address
-        self._name: Final = str(kwargs["name"])
+        self._name: Final = str(kwargs["name"]).lower()
 
         super().__init__(address.coin, kwargs)
 

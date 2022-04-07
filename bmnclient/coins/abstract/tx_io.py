@@ -1,23 +1,25 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import Final, TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
 from ..utils import CoinUtils
 from ...database.tables import TxIosTable
-from ...utils import serializable
+from ...utils import (
+    DeserializeFlag,
+    DeserializedData,
+    SerializeFlag,
+    serializable)
+from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Any, Final, Optional
     from .coin import Coin
-    from ...utils import DeserializeFlag, DeserializedData, SerializeFlag
 
 
 class _Model(CoinObjectModel):
-    def __init__(self, *args, io: Coin.Tx.Io, **kwargs) -> None:
+    def __init__(self, io: Coin.Tx.Io, **kwargs) -> None:
         super().__init__(
-            *args,
             name_key_tuple=CoinUtils.txIoToNameKeyTuple(io),
             **kwargs)
         self._io = io
@@ -31,8 +33,8 @@ class _Io(CoinObject, table_type=TxIosTable):
     Model = _Model
 
     class IoType(Enum):
-        INPUT: Final = "input"
-        OUTPUT: Final = "output"
+        INPUT = "input"
+        OUTPUT = "output"
 
     def __init__(self, tx: Coin.Tx, **kwargs) -> None:
         self._tx: Final = tx
@@ -68,11 +70,16 @@ class _Io(CoinObject, table_type=TxIosTable):
             self._amount
         ))
 
+    def __str__(self) -> str:
+        return StringUtils.classString(
+            self.__class__,
+            *CoinUtils.txIoToNameKeyTuple(self))
+
     def serializeProperty(
             self,
             flags: SerializeFlag,
             key: str,
-            value: Any) -> DeserializedData:
+            value: ...) -> DeserializedData:
         if key == "io_type":
             return value.value
         if key == "address":
@@ -83,10 +90,10 @@ class _Io(CoinObject, table_type=TxIosTable):
     def deserializeProperty(
             cls,
             flags: DeserializeFlag,
-            self: Optional[_Io],
+            self: _Io | None,
             key: str,
             value: DeserializedData,
-            *cls_args) -> Any:
+            *cls_args) -> ...:
         if key == "io_type":
             for io_type in cls.IoType:
                 if io_type.value == value:

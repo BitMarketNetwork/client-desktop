@@ -7,7 +7,7 @@ from typing import (
     Final,
     Generator,
     Iterable,
-    MutableSequence,
+    Sequence,
     TYPE_CHECKING)
 
 from ...database.tables import ColumnValue, RowListDummyProxy, SerializableTable
@@ -226,7 +226,7 @@ class CoinObject(Serializable):
             table_type: type(SerializableTable),
             *args,
             **kwargs
-    ) -> MutableSequence:
+    ) -> Sequence:
         if self.rowId > 0 and (table := self._openTable(table_type)):
             if result := table.rowListProxy(self, *args, **kwargs):
                 return result

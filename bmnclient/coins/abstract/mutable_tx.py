@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from functools import cached_property, lru_cache
-from typing import TYPE_CHECKING
+from typing import Final, Sequence, TYPE_CHECKING
 
 from .tx import _Tx
+from ...utils import serializable
 
 if TYPE_CHECKING:
-    from typing import Final, Optional, Sequence
     from .coin import Coin
 
 
@@ -21,29 +21,24 @@ class _MutableTx(_Tx, table_type=None):
     def __init__(
             self,
             coin: Coin,
-            input_list: Sequence[_MutableTx.Input],
-            output_list: Sequence[_MutableTx.Output],
             *,
+            time: int = -1,
             version: int,
             lock_time: int,
-            time: int = -1,
             is_dummy: bool = False):
-        amount = sum(i.amount for i in input_list)
-        fee_amount = amount - sum(o.amount for o in output_list)
         super().__init__(
             coin,
             name="",
-            height=-1,
             time=time,
-            amount=amount,
-            fee_amount=fee_amount,
-            is_coinbase=False,
-            input_list=input_list,
-            output_list=output_list)
+            amount=0,
+            fee_amount=0,
+            is_coinbase=False)
         self._is_dummy: Final = is_dummy
         self._version: Final = version
         self._lock_time: Final = lock_time
         self._is_signed = False
+        self._input_list: list[_MutableTx.Input] = []
+        self._output_list: list[_MutableTx.Output] = []
 
     def __eq__(self, other: _MutableTx) -> bool:
         return (
@@ -51,28 +46,28 @@ class _MutableTx(_Tx, table_type=None):
                 and self._is_dummy == other._is_dummy
                 and self._version == other._version
                 and self._lock_time == other._lock_time
-        )
+                and self._input_list == other._input_list
+                and self._output_list == other._output_list)
 
     def __hash__(self) -> int:
         return hash((
             super().__hash__(),
             self._is_dummy,
             self._version,
-            self._lock_time
-        ))
+            self._lock_time,
+            *(io.__hash__() for io in self._input_list),
+            *(io.__hash__() for io in self._output_list)))
+
+    @cached_property
+    def name(self) -> str | None:
+        if not self._is_signed or self._is_dummy:
+            return None
+        return self._deriveName()
+
 
     @property
     def isDummy(self) -> bool:
         return self._is_dummy
-
-    def _deriveName(self) -> Optional[str]:
-        raise NotImplementedError
-
-    @cached_property
-    def name(self) -> Optional[str]:
-        if not self._is_signed or self._is_dummy:
-            return None
-        return self._deriveName()
 
     @property
     def version(self) -> int:
@@ -134,3 +129,11 @@ class _MutableTx(_Tx, table_type=None):
     @property
     def virtualSize(self) -> int:
         raise NotImplementedError
+
+    def _deriveName(self) -> str | None:
+        raise NotImplementedError
+
+    def _updateAmount(self) -> None:
+        self._amount = sum(i.amount for i in self._input_list)
+        output_amount = sum(o.amount for o in self._output_list)
+        self._fee_amount = self._amount - output_amount
