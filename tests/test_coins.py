@@ -858,18 +858,17 @@ class TestTxFactory(TestCaseApplication):
         self.assertEqual(sum(amount_list), txf.availableAmount)
         self.assertEqual(0, txf.receiverAmount)
 
-        self.assertTrue(txf.setInputAddressName(None))
-        self.assertIsNone(txf.inputAddress)
-        self.assertFalse(txf.setInputAddressName(
-            "BAD_INPUT1"))
-        self.assertIsNone(txf.inputAddress)
-        self.assertTrue(txf.setInputAddressName(
+        txf.inputAddressList.clear()
+        self.assertEqual(0, len(txf.inputAddressList))
+        self.assertFalse(txf.inputAddressList.append("BAD_INPUT1"))
+        self.assertEqual(0, len(txf.inputAddressList))
+        self.assertTrue(txf.inputAddressList.append(
             "3Ps86GT6vHg7dCT5QhcECDFkRaUJbBzqXB"))
-        self.assertIsNotNone(txf.inputAddress)
-        self.assertFalse(txf.setInputAddressName(
-            "BAD_INPUT2"))
-        self.assertIsNone(txf.inputAddress)
-        self.assertTrue(txf.setInputAddressName(None))
+        self.assertEqual(1, len(txf.inputAddressList))
+        self.assertFalse(txf.inputAddressList.append("BAD_INPUT2"))
+        self.assertEqual(1, len(txf.inputAddressList))
+        txf.inputAddressList.clear()
+        self.assertEqual(0, len(txf.inputAddressList))
 
         self.assertEqual(0, txf.setReceiverMaxAmount())
         self.assertFalse(txf.isValidReceiverAmount)
