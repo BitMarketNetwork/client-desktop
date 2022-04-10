@@ -7,7 +7,7 @@ from .table import (
     AbstractSerializableTable,
     ColumnEnum,
     ColumnValue,
-    RowListProxy)
+    SerializableRowList)
 from ...coins.hd import HdNode
 from ...utils.class_property import classproperty
 
@@ -69,9 +69,9 @@ class AddressesTable(AbstractSerializableTable, name="addresses"):
             cursor.execute(
                 "ALTER TABLE \"addresses\" RENAME \"amount\" TO \"balance\"")
 
-    def rowListProxy(self, coin: Coin) -> RowListProxy:
+    def rowList(self, coin: Coin) -> SerializableRowList[Coin.Address]:
         assert coin.rowId > 0
-        return RowListProxy(
+        return SerializableRowList(
             type_=coin.Address,
             type_args=[coin],
             table=self,
@@ -114,9 +114,7 @@ class AddressesTable(AbstractSerializableTable, name="addresses"):
         return value[0]
 
 
-class AddressTxsTable(
-        AbstractSerializableTable,
-        name="address_transactions"):
+class AddressTxsTable(AbstractSerializableTable, name="address_transactions"):
     class ColumnEnum(ColumnEnum):
         ROW_ID = ()
 
@@ -143,10 +141,10 @@ class AddressTxsTable(
         (ColumnEnum.ADDRESS_ROW_ID, ColumnEnum.TX_ROW_ID),
     )
 
-    def rowListProxy(self, address: Coin.Address) -> RowListProxy:
+    def rowList(self, address: Coin.Address) -> SerializableRowList[Coin.Tx]:
         from .tx import TxsTable
         assert address.rowId > 0
-        return RowListProxy(
+        return SerializableRowList(
             type_=address.coin.Tx,
             type_args=[address.coin],
             table=self.database[TxsTable],

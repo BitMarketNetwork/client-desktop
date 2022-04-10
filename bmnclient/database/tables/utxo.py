@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .table import AbstractSerializableTable, ColumnEnum, RowListProxy
+from .table import AbstractSerializableTable, ColumnEnum, SerializableRowList
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -45,9 +45,11 @@ class UtxosTable(AbstractSerializableTable, name="utxos"):
         ),
     )
 
-    def rowListProxy(self, address: Coin.Address) -> RowListProxy:
+    def rowList(
+            self,
+            address: Coin.Address) -> SerializableRowList[Coin.Tx.Utxo]:
         assert address.rowId > 0
-        return RowListProxy(
+        return SerializableRowList(
             type_=address.coin.Tx.Utxo,
             type_args=[address],
             table=self,

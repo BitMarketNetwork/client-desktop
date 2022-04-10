@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 from enum import Flag, auto
-from typing import Callable, Iterable, Optional, TypeVar, Union
+from typing import (
+    Callable,
+    Generator,
+    Generic,
+    Iterable,
+    Optional,
+    TypeVar,
+    Union)
 
 from .class_property import classproperty
 from .string import StringUtils
@@ -179,17 +186,20 @@ class Serializable:
         return key
 
 
-class AbstractSerializableList(MutableSequence):
+_T = TypeVar("_T", bound=Serializable)
+
+
+class AbstractSerializableList(MutableSequence[Generic[_T]]):
     def __init__(self, *args, **kwargs) -> None:
         pass
 
     def __len__(self) -> int:
         raise NotImplementedError
 
-    def __iter__(self) -> Iterable[Serializable]:
+    def __iter__(self) -> Generator[_T, None, None]:
         raise NotImplementedError
 
-    def __getitem__(self, index: int) -> Serializable:
+    def __getitem__(self, index: int) -> _T:
         raise NotImplementedError
 
     def __setitem__(self, index: int, value: ...) -> None:
@@ -200,6 +210,9 @@ class AbstractSerializableList(MutableSequence):
 
     def insert(self, index: int, value: ...) -> None:
         raise NotImplementedError
+
+    def append(self, value: ...) -> None:
+        return self.insert(-1, value)
 
     def clear(self) -> int:
         raise NotImplementedError
@@ -214,10 +227,13 @@ class EmptySerializableList(AbstractSerializableList):
     def __len__(self) -> int:
         return 0
 
-    def __iter__(self) -> Iterable[Serializable]:
-        return iter(tuple())
+    def __iter__(self) -> Iterable[_T]:
+        return self
 
-    def __getitem__(self, index: int) -> Serializable:
+    def __next__(self) -> _T:
+        raise StopIteration
+
+    def __getitem__(self, index: int) -> _T:
         raise IndexError
 
     def __setitem__(self, index: int, value: ...) -> None:

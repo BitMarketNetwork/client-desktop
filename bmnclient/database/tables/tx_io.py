@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .table import AbstractSerializableTable, Column, ColumnEnum, RowListProxy
+from .table import (
+    AbstractSerializableTable,
+    Column,
+    ColumnEnum,
+    SerializableRowList)
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -48,17 +52,18 @@ class TxIosTable(AbstractSerializableTable, name="transaction_ios"):
         )
     )
 
-    def rowListProxy(
+    def rowList(
             self,
             tx: Coin.Tx,
-            io_type: Coin.Tx.Io.IoType | None) -> RowListProxy:
+            io_type: Coin.Tx.Io.IoType | None
+    ) -> SerializableRowList[Coin.Tx.Io]:
         assert tx.rowId > 0
         where_columns = [self.ColumnEnum.TX_ROW_ID]
         where_args = [tx.rowId]
         if io_type is not None:
             where_columns.append(self.ColumnEnum.IO_TYPE)
             where_args.append(io_type.value)
-        return RowListProxy(
+        return SerializableRowList(
             type_=tx.Io,
             type_args=[tx],
             table=self,

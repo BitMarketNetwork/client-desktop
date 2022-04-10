@@ -335,7 +335,7 @@ class AbstractSerializableTable(AbstractTable, name=""):
             for c in self._KEY_COLUMN_LIST)
         return tuple() if any(c.value is None for c in columns) else columns
 
-    def rowListProxy(self, *args, **kwargs) -> SerializableRowList | None:
+    def rowList(self, *args, **kwargs) -> SerializableRowList | None:
         return None
 
     def saveSerializable(
@@ -378,7 +378,8 @@ class AbstractSerializableTable(AbstractTable, name=""):
             *cls_args,
             use_row_id: bool = True,
             fallback_search: bool = False,
-            key_columns: Sequence[ColumnValue] | None = None) -> Serializable | None:
+            key_columns: Sequence[ColumnValue] | None = None
+    ) -> Serializable | None:
         if key_columns is None:
             key_columns = self._keyColumns(object_)
         if not key_columns:
