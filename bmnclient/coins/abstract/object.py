@@ -7,12 +7,16 @@ from typing import (
     Final,
     Generator,
     Iterable,
-    Sequence,
-    TYPE_CHECKING)
+    TYPE_CHECKING,
+    TypeVar)
 
-from ...database.tables import ColumnValue, RowListDummyProxy, SerializableTable
+from ...database.tables import ColumnValue, SerializableTable
 from ...logger import Logger
-from ...utils import Serializable, SerializeFlag
+from ...utils import (
+    EmptySerializableList,
+    Serializable,
+    SerializableList,
+    SerializeFlag)
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
@@ -209,10 +213,11 @@ class CoinObject(Serializable):
                         )])
         return True
 
+    _TableT = TypeVar("_TableT", bound=SerializableTable)
+
     def _openTable(
             self,
-            table_type: type(SerializableTable) | None = None
-    ) -> SerializableTable | None:
+            table_type: type(_TableT) | None = None) -> _TableT | None:
         if table_type is None:
             table_type = self.__TABLE_TYPE
         if not table_type or not self.__enable_table:
@@ -221,16 +226,16 @@ class CoinObject(Serializable):
             return None
         return self._coin.model.database[table_type]
 
-    def _rowListProxy(
+    def _rowList(
             self,
             table_type: type(SerializableTable),
             *args,
             **kwargs
-    ) -> Sequence:
+    ) -> SerializableList:
         if self.rowId > 0 and (table := self._openTable(table_type)):
-            if result := table.rowListProxy(self, *args, **kwargs):
+            if result := table.rowList(self, *args, **kwargs):
                 return result
-        return RowListDummyProxy()
+        return EmptySerializableList()
 
 
 # TODO deprecated, create class AbstractModelFactory

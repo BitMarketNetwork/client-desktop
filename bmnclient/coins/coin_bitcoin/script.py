@@ -36,7 +36,7 @@ class _Script(Coin.Address.Script):
     def addressToScript(
             cls,
             address: Bitcoin.Address,
-            type_: Optional[_Script.Type] = None) -> Optional[bytes]:
+            type_: _Script.Type | None = None) -> Optional[bytes]:
         if type_ is None:
             type_ = address.type.value.scriptType
 
