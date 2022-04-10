@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from enum import Flag, auto
-from typing import Callable, Iterable, Optional, Union
+from typing import Callable, Iterable, Optional, TypeVar, Union
 
 from .class_property import classproperty
 from .string import StringUtils
@@ -176,3 +177,57 @@ class Serializable:
         if key in ("type_", ):
             return key[:-1]
         return key
+
+
+class AbstractSerializableList(MutableSequence):
+    def __init__(self, *args, **kwargs) -> None:
+        pass
+
+    def __len__(self) -> int:
+        raise NotImplementedError
+
+    def __iter__(self) -> Iterable[Serializable]:
+        raise NotImplementedError
+
+    def __getitem__(self, index: int) -> Serializable:
+        raise NotImplementedError
+
+    def __setitem__(self, index: int, value: ...) -> None:
+        raise NotImplementedError
+
+    def __delitem__(self, index: int) -> None:
+        raise NotImplementedError
+
+    def insert(self, index: int, value: ...) -> None:
+        raise NotImplementedError
+
+    def clear(self) -> int:
+        raise NotImplementedError
+
+
+SerializableList = TypeVar(
+    "SerializableList",
+    bound=AbstractSerializableList)
+
+
+class EmptySerializableList(AbstractSerializableList):
+    def __len__(self) -> int:
+        return 0
+
+    def __iter__(self) -> Iterable[Serializable]:
+        return iter(tuple())
+
+    def __getitem__(self, index: int) -> Serializable:
+        raise IndexError
+
+    def __setitem__(self, index: int, value: ...) -> None:
+        raise IndexError
+
+    def __delitem__(self, index: int) -> None:
+        raise IndexError
+
+    def insert(self, index: int, value: ...) -> None:
+        raise IndexError
+
+    def clear(self) -> int:
+        return 0
