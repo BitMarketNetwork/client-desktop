@@ -11,9 +11,9 @@ from typing import (
     TypeVar)
 
 from ...utils import (
-    AbstractSerializableList,
     DeserializeFlag,
     Serializable,
+    SerializableList,
     SerializeFlag)
 from ...utils.class_property import classproperty
 
@@ -123,7 +123,7 @@ class TableMeta(type):
         return cls.__repr__()
 
 
-class AbstractTable(metaclass=TableMeta):
+class Table(metaclass=TableMeta):
     class ColumnEnum(ColumnEnum):
         ROW_ID = ()
 
@@ -322,10 +322,7 @@ class AbstractTable(metaclass=TableMeta):
         return False
 
 
-Table = TypeVar("Table", bound=AbstractTable)
-
-
-class AbstractSerializableTable(AbstractTable, name=""):
+class SerializableTable(Table, name=""):
     _KEY_COLUMN_LIST: \
         tuple[tuple[Column, Callable[[Serializable], None], ...]] = tuple()
 
@@ -467,13 +464,8 @@ class AbstractSerializableTable(AbstractTable, name=""):
         return True
 
 
-SerializableTable = TypeVar(
-    "SerializableTable",
-    bound=AbstractSerializableTable)
-
-
 # Performance: https://www.sqlite.org/autoinc.html
-class SerializableRowList(AbstractSerializableList):
+class SerializableRowList(SerializableList):
     def __init__(
             self,
             *,

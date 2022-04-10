@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from .table import AbstractSerializableTable, ColumnEnum
+from .table import ColumnEnum, SerializableTable
 from ...utils.class_property import classproperty
 
 
-class TxsTable(AbstractSerializableTable, name="transactions"):
+class TxsTable(SerializableTable, name="transactions"):
     class ColumnEnum(ColumnEnum):
         ROW_ID = ()
         COIN_ROW_ID = ("coin_row_id", "INTEGER NOT NULL")

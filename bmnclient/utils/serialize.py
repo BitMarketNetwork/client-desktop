@@ -189,7 +189,7 @@ class Serializable:
 _T = TypeVar("_T", bound=Serializable)
 
 
-class AbstractSerializableList(MutableSequence[Generic[_T]]):
+class SerializableList(MutableSequence[Generic[_T]]):
     def __init__(self, *args, **kwargs) -> None:
         pass
 
@@ -218,12 +218,7 @@ class AbstractSerializableList(MutableSequence[Generic[_T]]):
         raise NotImplementedError
 
 
-SerializableList = TypeVar(
-    "SerializableList",
-    bound=AbstractSerializableList)
-
-
-class EmptySerializableList(AbstractSerializableList):
+class EmptySerializableList(SerializableList):
     def __len__(self) -> int:
         return 0
 

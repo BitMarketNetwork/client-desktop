@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from enum import Enum
 
-from .table import AbstractTable, Column, ColumnEnum, ColumnValue
+from .table import Column, ColumnEnum, ColumnValue, Table
 
 
-class MetadataTable(AbstractTable, name="metadata"):
+class MetadataTable(Table, name="metadata"):
     class ColumnEnum(ColumnEnum):
         ROW_ID = ()
         KEY = ("key", "TEXT NOT NULL UNIQUE")

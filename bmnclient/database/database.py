@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Final, Generator, TYPE_CHECKING
+from typing import Final, Generator, TYPE_CHECKING, TypeVar
 
 import bmnsqlite3 as _engine
 
 from .cursor import Cursor
 from .tables import (
-    AbstractTable,
     AddressTxsTable,
     AddressesTable,
     CoinsTable,
@@ -106,11 +105,13 @@ class Database:
             _engine.sqlite_version)
 
         self.__connection: _engine.Connection | None = None
-        self.__table_list: dict[int, AbstractTable] = {}
+        self.__table_list: dict[int, Table] = {}
         self.__in_transaction = 0  # TODO mutex?
 
-    def __getitem__(self, type_: type(AbstractTable)) -> Table:
-        assert issubclass(type_, AbstractTable)
+    _TableT = TypeVar("_TableT", bound=Table)
+
+    def __getitem__(self, type_: type(_TableT)) -> _TableT:
+        assert issubclass(type_, Table)
         table = self.__table_list.get(id(type_))
         if table is None:
             raise KeyError("table '{}' not found".format(type_.name))

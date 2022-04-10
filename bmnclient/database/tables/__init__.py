@@ -2,8 +2,6 @@ from .address import AddressTxsTable, AddressesTable
 from .coin import CoinsTable
 from .metadata import MetadataTable
 from .table import (
-    AbstractSerializableTable,
-    AbstractTable,
     ColumnValue,
     SerializableRowList,
     SerializableTable,

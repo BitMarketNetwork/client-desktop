@@ -4,10 +4,10 @@ import glob
 from typing import TYPE_CHECKING
 
 from .table import (
-    AbstractSerializableTable,
     ColumnEnum,
     ColumnValue,
-    SerializableRowList)
+    SerializableRowList,
+    SerializableTable)
 from ...coins.hd import HdNode
 from ...utils.class_property import classproperty
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from ...coins.abstract import Coin
 
 
-class AddressesTable(AbstractSerializableTable, name="addresses"):
+class AddressesTable(SerializableTable, name="addresses"):
     class ColumnEnum(ColumnEnum):
         ROW_ID = ()
         COIN_ROW_ID = ("coin_row_id", "INTEGER NOT NULL")
@@ -114,7 +114,7 @@ class AddressesTable(AbstractSerializableTable, name="addresses"):
         return value[0]
 
 
-class AddressTxsTable(AbstractSerializableTable, name="address_transactions"):
+class AddressTxsTable(SerializableTable, name="address_transactions"):
     class ColumnEnum(ColumnEnum):
         ROW_ID = ()
 

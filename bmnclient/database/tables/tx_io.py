@@ -2,18 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .table import (
-    AbstractSerializableTable,
-    Column,
-    ColumnEnum,
-    SerializableRowList)
+from .table import (Column, ColumnEnum, SerializableRowList, SerializableTable)
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
     from ...coins.abstract import Coin
 
 
-class TxIosTable(AbstractSerializableTable, name="transaction_ios"):
+class TxIosTable(SerializableTable, name="transaction_ios"):
     class ColumnEnum(ColumnEnum):
         ROW_ID = ()
         TX_ROW_ID = ("transaction_row_id", "INTEGER NOT NULL")

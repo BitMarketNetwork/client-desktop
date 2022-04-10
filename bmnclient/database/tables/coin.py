@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from .table import AbstractSerializableTable, ColumnEnum
+from .table import ColumnEnum, SerializableTable
 
 
-class CoinsTable(AbstractSerializableTable, name="coins"):
+class CoinsTable(SerializableTable, name="coins"):
     class ColumnEnum(ColumnEnum):
         ROW_ID = ()
 

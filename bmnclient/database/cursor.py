@@ -4,7 +4,7 @@ from typing import Callable, TYPE_CHECKING
 
 import bmnsqlite3 as _engine
 
-from .tables import AbstractTable
+from .tables import Table
 
 if TYPE_CHECKING:
     from .database import Database
@@ -35,14 +35,14 @@ class Cursor(_engine.Cursor):
             raise
 
     @staticmethod
-    def __tableToName(table: str | type(AbstractTable)) -> str:
+    def __tableToName(table: str | type(Table)) -> str:
         if isinstance(table, str):
             return table
-        if issubclass(table, AbstractTable) or isinstance(table, AbstractTable):
+        if issubclass(table, Table) or isinstance(table, Table):
             return table.name
         raise TypeError
 
-    def isTableExists(self, table: str | type(AbstractTable)) -> bool:
+    def isTableExists(self, table: str | type(Table)) -> bool:
         self.execute(
             "SELECT COUNT(*) FROM \"sqlite_master\""
             " WHERE \"type\" == ? AND \"name\" == ?"
@@ -53,7 +53,7 @@ class Cursor(_engine.Cursor):
 
     def isColumnExists(
             self,
-            table: str | type(AbstractTable),
+            table: str | type(Table),
             name: str) -> bool:
         if not self.isTableExists(table):
             return False

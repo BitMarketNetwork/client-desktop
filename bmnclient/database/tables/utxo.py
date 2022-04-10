@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .table import AbstractSerializableTable, ColumnEnum, SerializableRowList
+from .table import ColumnEnum, SerializableRowList, SerializableTable
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
     from ...coins.abstract import Coin
 
 
-class UtxosTable(AbstractSerializableTable, name="utxos"):
+class UtxosTable(SerializableTable, name="utxos"):
     class ColumnEnum(ColumnEnum):
         ROW_ID = ()
         ADDRESS_ROW_ID = ("address_row_id", "INTEGER NOT NULL")
