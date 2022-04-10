@@ -1046,10 +1046,10 @@ class TestMutableTx(TestCaseApplication):
         self.assertEqual(0, mtx.feeAmount)
 
         for io in input_list:
-            mtx.appendInput(**io)
+            mtx.inputList.append(io)
         self.assertEqual(len(input_list), len(mtx.inputList))
         for io in output_list:
-            mtx.appendOutput(**io)
+            mtx.outputList.append(io)
         self.assertEqual(len(output_list), len(mtx.outputList))
 
         self.assertEqual(is_dummy, mtx.isDummy)

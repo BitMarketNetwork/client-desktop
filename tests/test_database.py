@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING
 from bmnclient.coins.list import CoinList
 from bmnclient.database import Cursor, Database
 from bmnclient.database.tables import (
-    AbstractSerializableTable,
     AddressTxsTable,
     AddressesTable,
     CoinsTable,
     ColumnValue,
     MetadataTable,
+    SerializableTable,
     TxIosTable,
     TxsTable)
 from bmnclient.database.tables.table import ColumnEnum
@@ -255,7 +255,7 @@ class TestDatabase(TestCaseApplication):
 
     def test_serializable(self) -> None:
         # noinspection PyAbstractClass
-        class Table(AbstractSerializableTable, name="table"):
+        class Table(SerializableTable, name="table"):
             class ColumnEnum(ColumnEnum):
                 ROW_ID = ()
                 V1 = ("v1", "TEXT NOT NULL UNIQUE")
