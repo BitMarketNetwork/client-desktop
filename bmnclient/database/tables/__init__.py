@@ -5,8 +5,7 @@ from .table import (
     AbstractSerializableTable,
     AbstractTable,
     ColumnValue,
-    RowListDummyProxy,
-    RowListProxy,
+    SerializableRowList,
     SerializableTable,
     Table)
 from .tx import TxsTable

@@ -1,11 +1,20 @@
 from __future__ import annotations
 
-from collections.abc import MutableSequence, Sequence
 from enum import Enum
 from itertools import chain
-from typing import Callable, Generator, Iterable, TYPE_CHECKING, TypeVar
+from typing import (
+    Callable,
+    Generator,
+    Iterable,
+    Sequence,
+    TYPE_CHECKING,
+    TypeVar)
 
-from ...utils import DeserializeFlag, Serializable, SerializeFlag
+from ...utils import (
+    AbstractSerializableList,
+    DeserializeFlag,
+    Serializable,
+    SerializeFlag)
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -326,7 +335,7 @@ class AbstractSerializableTable(AbstractTable, name=""):
             for c in self._KEY_COLUMN_LIST)
         return tuple() if any(c.value is None for c in columns) else columns
 
-    def rowListProxy(self, *args, **kwargs) -> RowListProxy | None:
+    def rowListProxy(self, *args, **kwargs) -> SerializableRowList | None:
         return None
 
     def saveSerializable(
@@ -463,33 +472,7 @@ SerializableTable = TypeVar(
 
 
 # Performance: https://www.sqlite.org/autoinc.html
-class RowListDummyProxy(MutableSequence):
-    def __init__(self, *args, **kwargs) -> None:
-        pass
-
-    def __len__(self) -> int:
-        return 0
-
-    def __iter__(self) -> Iterable[Serializable]:
-        return iter(tuple())
-
-    def __getitem__(self, index: int) -> Serializable:
-        raise IndexError
-
-    def __setitem__(self, index: int, value: ...) -> None:
-        raise NotImplementedError
-
-    def __delitem__(self, index: int) -> None:
-        raise NotImplementedError
-
-    def insert(self, index: int, value: ...) -> None:
-        raise NotImplementedError
-
-    def clear(self) -> int:
-        return 0
-
-
-class RowListProxy(RowListDummyProxy):
+class SerializableRowList(AbstractSerializableList):
     def __init__(
             self,
             *,
