@@ -29,4 +29,5 @@ class UpdateModel(QObject):
         if self._version < version:
             self._version = version
             self._url = url
+            # noinspection PyUnresolvedReferences
             self.__stateChanged.emit()
