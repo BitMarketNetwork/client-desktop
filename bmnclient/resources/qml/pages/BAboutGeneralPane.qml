@@ -48,14 +48,14 @@ BPane {
 
             BInfoValue {
                 id: _update
-                visible: !BBackend.update.available
+                visible: !BBackend.update.isAvailable
                 text: qsTr("Not found")
             }
 
             BInfoValue {
                 id: _updateAvailable
-                visible: BBackend.update.available
-                text: qsTr("New version %s available!").arg(BBackend.update.version)
+                visible: BBackend.update.isAvailable
+                text: qsTr("Version %1 available!").arg(BBackend.update.version)
                 color: Material.color(Material.Green)
                 MouseArea {
                     id: mouseHyperlinkArea

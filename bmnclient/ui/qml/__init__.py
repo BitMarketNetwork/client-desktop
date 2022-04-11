@@ -138,7 +138,7 @@ class QmlContext(QObject):
         self._dialog_manager = DialogManager(self)
         self._debug_model = DebugModel(self._application)
         self._password_model = PasswordModel()
-        self._update_model = UpdateModel(self._application)
+        self._update_model = UpdateModel()
 
     @QSlot()
     def onCompleted(self) -> None:

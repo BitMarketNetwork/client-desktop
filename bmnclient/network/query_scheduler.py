@@ -199,7 +199,7 @@ class NetworkQueryScheduler:
 
     def updateNewReleasesInfo(self) -> None:
         self._createRepeatingQuery(
-            GitHubNewReleasesApiQuery(),
+            GitHubNewReleasesApiQuery(self._application),
             (self.GLOBAL_NAMESPACE, "updateNewReleasesInfo"),
             False)
 

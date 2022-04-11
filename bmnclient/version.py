@@ -20,7 +20,6 @@ class Product:
     SHORT_NAME: Final = "bmn-client"
     VERSION: Final = (0, 13, 1)
     VERSION_STRING: Final = tupleToVersionString(VERSION)
-    VERSION_UPDATE_STRING: Final = tupleToVersionString(VERSION)
     VERSION_UPDATE_URL: Final = \
         "https://github.com/BitMarketNetwork/client-desktop/releases"
     VERSION_UPDATE_API_URL: Final = \
