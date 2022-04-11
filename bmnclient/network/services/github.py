@@ -43,11 +43,10 @@ class GithubNewReleasesApiQuery(AbstractJsonQuery):
         if json_data is None:
             return False
         Product.VERSION_UPDATE_STRING = json_data[0]['tag_name'].replace('v','')
-        Product.VERSION_UPDATE_LINK = json_data[0]['html_url']
+        Product.VERSION_UPDATE_URL = json_data[0]['html_url']
         self._logger.info(
                 "Check update client. Latest version: %s ", Product.VERSION_UPDATE_STRING)
         return True
 
     def _processResponse(self, response: Optional[dict]) -> None:
         return
-

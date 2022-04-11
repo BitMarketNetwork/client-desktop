@@ -35,7 +35,7 @@ class UpdateModel(QObject):
     @QProperty(bool, notify=__stateChanged)
     def available(self) -> bool:
         self._update_version = Product.VERSION_UPDATE_STRING
-        self._update_link = Product.VERSION_UPDATE_LINK
+        self._update_link = Product.VERSION_UPDATE_URL
         if Product.VERSION_STRING != self._update_version:
             return True
         return False

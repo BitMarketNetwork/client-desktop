@@ -16,8 +16,9 @@ class Product:
     SHORT_NAME: Final = "bmn-client"
     VERSION: Final = (0, 13, 1)
     VERSION_STRING: Final = ".".join(map(str, VERSION))
-    VERSION_UPDATE_STRING = ".".join(map(str, VERSION))
-    VERSION_UPDATE_LINK = 'https://github.com/BitMarketNetwork/client-desktop/releases'
+    VERSION_UPDATE_STRING: Final = ".".join(map(str, VERSION))
+    VERSION_UPDATE_URL: Final = \
+        "https://github.com/BitMarketNetwork/client-desktop/releases"
     ENCODING: Final = "utf-8"
     STRING_SEPARATOR: Final = ":"
     PYTHON_MINIMAL_VERSION: Final = (3, 7, 0)
