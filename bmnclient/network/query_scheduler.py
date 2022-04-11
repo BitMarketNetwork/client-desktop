@@ -16,7 +16,7 @@ from .api_v1.query import \
     HdAddressIteratorApiQuery, \
     SysinfoApiQuery, \
     TxBroadcastApiQuery
-from .services.github import GithubNewReleasesApiQuery
+from .services.github import GitHubNewReleasesApiQuery
 from .query_manager import NetworkQueryManager
 from ..logger import Logger
 from ..version import Timer
@@ -199,7 +199,7 @@ class NetworkQueryScheduler:
 
     def updateNewReleasesInfo(self) -> None:
         self._createRepeatingQuery(
-            GithubNewReleasesApiQuery(),
+            GitHubNewReleasesApiQuery(),
             (self.GLOBAL_NAMESPACE, "updateNewReleasesInfo"),
             False)
 

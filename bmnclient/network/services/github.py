@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 import json
+from typing import TYPE_CHECKING
 
-from ...network.query import AbstractJsonQuery, AbstractQuery
+from ...network.query import AbstractJsonQuery
 from ...version import Product
 
 if TYPE_CHECKING:
-    from typing import Dict, Optional, Union
+    from typing import Optional
 
 
-class GithubNewReleasesApiQuery(AbstractJsonQuery):
-    _FULL_NAME = "GithubApi"
+class GitHubNewReleasesApiQuery(AbstractJsonQuery):
+    _FULL_NAME = "GitHubApi"
     _DEFAULT_URL = "https://api.github.com/repos/BitMarketNetwork/client-desktop/releases"
     _DEFAULT_CONTENT_TYPE = "application/vnd.github.v3+json"
 
