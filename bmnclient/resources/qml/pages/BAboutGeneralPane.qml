@@ -55,7 +55,7 @@ BPane {
             BInfoValue {
                 id: _updateAvailable
                 visible: BBackend.update.available
-                text: BBackend.update.text
+                text: qsTr("New version %s available!").arg(BBackend.update.version)
                 color: Material.color(Material.Green)
                 MouseArea {
                     id: mouseHyperlinkArea
@@ -63,7 +63,7 @@ BPane {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        Qt.openUrlExternally(BBackend.update.link)
+                        Qt.openUrlExternally(BBackend.update.url)
                     }
                 }
             }
