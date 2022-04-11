@@ -8,6 +8,10 @@ if TYPE_CHECKING:
     from typing import Final
 
 
+def tupleToVersionString(version: tuple[int, ...]) -> str:
+    return ".".join(map(str, version))
+
+
 class Product:
     MAINTAINER: Final = "BitMarket Network"
     MAINTAINER_DOMAIN: Final = "bitmarket.network"
@@ -15,10 +19,12 @@ class Product:
     NAME: Final = "BitMarket Network Client"
     SHORT_NAME: Final = "bmn-client"
     VERSION: Final = (0, 13, 1)
-    VERSION_STRING: Final = ".".join(map(str, VERSION))
-    VERSION_UPDATE_STRING: Final = ".".join(map(str, VERSION))
+    VERSION_STRING: Final = tupleToVersionString(VERSION)
+    VERSION_UPDATE_STRING: Final = tupleToVersionString(VERSION)
     VERSION_UPDATE_URL: Final = \
         "https://github.com/BitMarketNetwork/client-desktop/releases"
+    VERSION_UPDATE_API_URL: Final = \
+        "https://api.github.com/repos/BitMarketNetwork/client-desktop/releases"
     ENCODING: Final = "utf-8"
     STRING_SEPARATOR: Final = ":"
     PYTHON_MINIMAL_VERSION: Final = (3, 7, 0)
