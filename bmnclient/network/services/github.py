@@ -16,9 +16,30 @@ class GitHubNewReleasesApiQuery(AbstractJsonQuery):
     def __init__(self) -> None:
         super().__init__(name_key_tuple=tuple())
 
-    def _processResponse(self, response: Optional[dict]) -> None:
-        Product.VERSION_UPDATE_STRING = response[0]['tag_name'].replace('v', '')
-        Product.VERSION_UPDATE_URL = response[0]['html_url']
-        self._logger.info(
-            "Check update client. Latest version: %s",
-            Product.VERSION_UPDATE_STRING)
+    def _processResponse(self, response: Optional[dict, list]) -> None:
+        if (
+                not self.isSuccess
+                and not isinstance(response, list)
+                and self.statusCode != 200
+        ):
+            return
+
+        try:
+            version = str(response[0]["tag_name"]).lower().lstrip("v")
+            version = tuple(map(int, version.split(".")))
+            url = str(response[0]["html_url"]) or Product.VERSION_UPDATE_URL
+        except (LookupError, TypeError, ValueError):
+            self._logger.warning("Failed to parse GitHub response.")
+            return
+
+        if version > Product.VERSION:
+            self._logger.info(
+                "New version %s available! %s\n%s",
+                tupleToVersionString(version),
+                url)
+            # TODO notify
+        else:
+            self._logger.debug(
+                "Latest version: %s\n%s",
+                tupleToVersionString(version),
+                url)
