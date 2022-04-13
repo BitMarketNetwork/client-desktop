@@ -16,7 +16,7 @@ from .amount import AbstractAmountModel
 from .list import (
     AbstractConcatenateModel,
     AbstractListModel,
-    AbstractListSortedModel,
+    AbstractSortedModel,
     RoleEnum)
 from .tx_io import TxIoListModel
 from ....coin_models import TxModel as _TxModel
@@ -184,7 +184,7 @@ class TxListModel(AbstractListModel):
         INPUT_LIST: Final = auto()
         OUTPUT_LIST: Final = auto()
 
-    ROLE_MAP: Final = {
+    _ROLE_MAP: Final = {
         Role.ID: (
             b"_id",
             lambda t: t.name),
@@ -219,7 +219,7 @@ class TxListModel(AbstractListModel):
 
 
 class TxListConcatenateModel(AbstractConcatenateModel):
-    ROLE_MAP: Final = TxListModel.ROLE_MAP
+    _ROLE_MAP: Final = TxListModel._ROLE_MAP
 
     def isVisibleRow(self, row_index: int, parent: QModelIndex) -> bool:
         index = self.index(row_index, 0, parent)
@@ -246,7 +246,7 @@ class TxListConcatenateModel(AbstractConcatenateModel):
         return True
 
 
-class TxListSortedModel(AbstractListSortedModel):
+class TxListSortedModel(AbstractSortedModel):
     def __init__(
             self,
             application: QmlApplication,

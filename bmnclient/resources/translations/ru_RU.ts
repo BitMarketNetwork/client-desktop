@@ -4,18 +4,18 @@
 <context>
     <name></name>
     <message>
-        <location filename="../../coins/currency.py" line="21"/>
-        <location filename="../../network/services/fiat_rate.py" line="129"/>
+        <location filename="../../currency/fiat.py" line="21"/>
+        <location filename="../../network/services/fiat_rate.py" line="130"/>
         <source>-- None --</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../coins/currency.py" line="26"/>
+        <location filename="../../currency/fiat.py" line="26"/>
         <source>US Dollar</source>
         <translation>Доллар США</translation>
     </message>
     <message>
-        <location filename="../../coins/currency.py" line="31"/>
+        <location filename="../../currency/fiat.py" line="31"/>
         <source>Euro</source>
         <translation>Евро</translation>
     </message>
@@ -88,12 +88,12 @@ Reset?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/qml/models/address.py" line="172"/>
+        <location filename="../../ui/qml/models/address.py" line="167"/>
         <source>New {coin_name} transaction</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../ui/qml/models/address.py" line="176"/>
+        <location filename="../../ui/qml/models/address.py" line="171"/>
         <source>{tx_name}
 {amount} {unit} / {fiat_amount} {fiat_unit}</source>
         <translation type="unfinished"></translation>
@@ -296,7 +296,7 @@ You can check the balance and view transactions only.</source>
 <context>
     <name>BAddressTransactionHistoryDialog</name>
     <message>
-        <location filename="../qml/dialogs/BAddressTransactionHistoryDialog.qml" line="10"/>
+        <location filename="../qml/dialogs/BAddressTransactionHistoryDialog.qml" line="9"/>
         <source>Transaction history</source>
         <translation type="unfinished"></translation>
     </message>
@@ -304,7 +304,7 @@ You can check the balance and view transactions only.</source>
 <context>
     <name>BAddressTxListView</name>
     <message>
-        <location filename="../qml/coincontrols/BAddressTxListView.qml" line="18"/>
+        <location filename="../qml/coincontrols/BAddressTxListView.qml" line="17"/>
         <source>Transactions not found.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -367,6 +367,14 @@ Please use this version carefully for reference only, as it is intended for demo
     <message>
         <location filename="../qml/application/BApplicationDrawer.qml" line="76"/>
         <source>Quit</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BApplicationManager</name>
+    <message>
+        <location filename="../qml/application/BApplicationManager.qml" line="33"/>
+        <source>Copied to clipboard</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -686,34 +694,39 @@ Please use this version carefully for reference only, as it is intended for demo
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="62"/>
+        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="58"/>
+        <source>Blockchain explorer:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="71"/>
         <source>Backup wallet...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="73"/>
+        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="82"/>
         <source>Restore wallet...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="86"/>
+        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="95"/>
         <source>Clear wallet...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="102"/>
+        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="111"/>
         <source>Reveal Seed Phrase...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="111"/>
+        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="120"/>
         <source>This will destroy all your keys and lead to a risk of losing money! Please make sure that you made a backup.
 
 Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="121"/>
+        <location filename="../qml/pages/BSettingsAdvancedPane.qml" line="130"/>
         <source>Select a preferable font</source>
         <translation type="unfinished"></translation>
     </message>
@@ -826,30 +839,71 @@ Continue?</source>
     </message>
 </context>
 <context>
-    <name>BTxItemDetailsPane</name>
+    <name>BTxBroadcastPendingDialog</name>
     <message>
-        <location filename="../qml/coincontrols/BTxItemDetailsPane.qml" line="16"/>
-        <source>Height:</source>
+        <location filename="../qml/dialogs/BTxBroadcastPendingDialog.qml" line="10"/>
+        <source>Transaction is pending...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/coincontrols/BTxItemDetailsPane.qml" line="24"/>
-        <source>Confirmations:</source>
+        <location filename="../qml/dialogs/BTxBroadcastPendingDialog.qml" line="15"/>
+        <source>Coin:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/coincontrols/BTxItemDetailsPane.qml" line="32"/>
+        <location filename="../qml/dialogs/BTxBroadcastPendingDialog.qml" line="23"/>
+        <source>Transaction ID:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BTxBroadcastPendingDialog.qml" line="26"/>
+        <source>None</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BTxBroadcastPendingDialog.qml" line="33"/>
+        <source>Amount:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/dialogs/BTxBroadcastPendingDialog.qml" line="42"/>
         <source>Fee:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/coincontrols/BTxItemDetailsPane.qml" line="43"/>
+        <location filename="../qml/dialogs/BTxBroadcastPendingDialog.qml" line="50"/>
+        <source>Broadcast time:</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BTxIoView</name>
+    <message>
+        <location filename="../qml/coincontrols/BTxIoView.qml" line="12"/>
         <source>Inputs: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/coincontrols/BTxItemDetailsPane.qml" line="56"/>
+        <location filename="../qml/coincontrols/BTxIoView.qml" line="27"/>
         <source>Outputs: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BTxItemDetailsPane</name>
+    <message>
+        <location filename="../qml/coincontrols/BTxItemDetailsPane.qml" line="15"/>
+        <source>Height:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/coincontrols/BTxItemDetailsPane.qml" line="23"/>
+        <source>Confirmations:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/coincontrols/BTxItemDetailsPane.qml" line="31"/>
+        <source>Fee:</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -877,22 +931,42 @@ Continue?</source>
 <context>
     <name>BWalletAddressListPane</name>
     <message>
-        <location filename="../qml/pages/BWalletAddressListPane.qml" line="7"/>
+        <location filename="../qml/pages/BWalletAddressListPane.qml" line="9"/>
         <source>Addresses (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletAddressListPane.qml" line="29"/>
+        <location filename="../qml/pages/BWalletAddressListPane.qml" line="26"/>
+        <source>Address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/BWalletAddressListPane.qml" line="32"/>
+        <source>Label</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/BWalletAddressListPane.qml" line="38"/>
+        <source>Balance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/BWalletAddressListPane.qml" line="44"/>
+        <source>Tx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/BWalletAddressListPane.qml" line="79"/>
         <source>Copy address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletAddressListPane.qml" line="35"/>
+        <location filename="../qml/pages/BWalletAddressListPane.qml" line="85"/>
         <source>Spend from</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletAddressListPane.qml" line="41"/>
+        <location filename="../qml/pages/BWalletAddressListPane.qml" line="92"/>
         <source>Transaction history</source>
         <translation type="unfinished"></translation>
     </message>
@@ -900,12 +974,12 @@ Continue?</source>
 <context>
     <name>BWalletCoinPage</name>
     <message>
-        <location filename="../qml/pages/BWalletCoinPage.qml" line="45"/>
+        <location filename="../qml/pages/BWalletCoinPage.qml" line="46"/>
         <source>Create a new address...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletCoinPage.qml" line="51"/>
+        <location filename="../qml/pages/BWalletCoinPage.qml" line="52"/>
         <source>Add a watch only address...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -969,42 +1043,47 @@ Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="85"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="86"/>
         <source>Transaction fee:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="95"/>
-        <source>per kilobyte:</source>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="102"/>
+        <source>Advanced options:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="102"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="112"/>
+        <source>Price per kilobyte:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="120"/>
         <source>Recommended</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="109"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="130"/>
         <source>Subtract fee from amount:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="122"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="147"/>
         <source>Raw size / Virtual size:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="126"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="152"/>
         <source>%1 / %2 bytes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="132"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="159"/>
         <source>Change:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/pages/BWalletSendPane.qml" line="167"/>
+        <location filename="../qml/pages/BWalletSendPane.qml" line="195"/>
         <source>Prepare...</source>
         <translation type="unfinished"></translation>
     </message>

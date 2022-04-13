@@ -294,6 +294,7 @@ if USE_QRC != 1:
     ]
 
 hidden_import_list = [
+    "cffi"
 ]
 
 
