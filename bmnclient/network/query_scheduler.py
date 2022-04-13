@@ -16,6 +16,7 @@ from .api_v1.query import \
     HdAddressIteratorApiQuery, \
     SysinfoApiQuery, \
     TxBroadcastApiQuery
+from .services.github import GitHubNewReleasesApiQuery
 from .query_manager import NetworkQueryManager
 from ..logger import Logger
 from ..version import Timer
@@ -70,6 +71,9 @@ class NetworkQueryScheduler:
         ), (
             "updateSysinfo",
             Timer.UPDATE_SERVER_INFO_DELAY
+        ), (
+            "updateNewReleasesInfo",
+            Timer.UPDATE_NEW_RELEASES_DELAY
         ), (
             "updateCoinsInfo",
             Timer.UPDATE_COINS_INFO_DELAY
@@ -191,6 +195,12 @@ class NetworkQueryScheduler:
         self._createRepeatingQuery(
             SysinfoApiQuery(self._application.coinList),
             (self.GLOBAL_NAMESPACE, "updateSysinfo"),
+            False)
+
+    def updateNewReleasesInfo(self) -> None:
+        self._createRepeatingQuery(
+            GitHubNewReleasesApiQuery(self._application),
+            (self.GLOBAL_NAMESPACE, "updateNewReleasesInfo"),
             False)
 
     def updateCoinsInfo(self) -> None:
