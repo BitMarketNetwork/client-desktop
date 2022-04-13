@@ -32,14 +32,17 @@ BApplicationWindow {
         onShowChart: {
             _mainLayout.currentIndex = 1
         }
-        onShowMarket: {
+        onShowBlockchainExplorer: {
             _mainLayout.currentIndex = 2
         }
-        onShowAbout: {
+        onShowMarket: {
             _mainLayout.currentIndex = 3
         }
-        onShowSettings: {
+        onShowAbout: {
             _mainLayout.currentIndex = 4
+        }
+        onShowSettings: {
+            _mainLayout.currentIndex = 5
         }
         onQuit: {
             BBackend.onQuitRequest()
@@ -64,6 +67,11 @@ BApplicationWindow {
 
         Loader {
             active: _mainLayout.currentIndex === 2
+            sourceComponent: BBlockchainExplorerPage {}
+        }
+
+        Loader {
+            active: _mainLayout.currentIndex === 3
             sourceComponent: BApplicationPage {
                 placeholderText: "TODO"
                 list.display: _drawer.barsDisplay
@@ -71,7 +79,7 @@ BApplicationWindow {
         }
 
         Loader {
-            active: _mainLayout.currentIndex === 3
+            active: _mainLayout.currentIndex === 4
             sourceComponent: BAboutPage {
                 list.display: _drawer.barsDisplay
             }

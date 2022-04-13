@@ -8,6 +8,7 @@ BNavigationDrawer {
     signal showContextMenu
     signal showWallet
     signal showChart
+    signal showBlockchainExplorer
     signal showMarket
     signal showAbout
     signal showSettings
@@ -54,6 +55,14 @@ BNavigationDrawer {
         icon.source: _applicationManager.imagePath("chart-pie-solid")
         onClicked: {
             _base.showChart()
+        }
+    }
+    BNavigationDrawerItem {
+        checked: true
+        text: qsTr("Blockchain explorer")
+        icon.source: _applicationManager.imagePath("cubes-solid")
+        onClicked: {
+            _base.showBlockchainExplorer()
         }
     }
     BNavigationDrawerItem {
