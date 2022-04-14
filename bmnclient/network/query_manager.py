@@ -8,7 +8,7 @@ from .query import AbstractQuery
 from ..logger import Logger
 
 from PySide6.QtNetwork import QNetworkProxy
-
+from PySide6.QtCore import QUrl
 if TYPE_CHECKING:
     from typing import List, Optional
 
@@ -38,8 +38,8 @@ class NetworkQueryManager:
     def proxy(self) -> QNetworkProxy:
         return self._manager.proxy
 
-    def proxyUpdate(self, host: str = None, type: str = None) -> None:
-        self._manager.proxyUpdate(host, type)
+    def proxyUpdate(self, url: QUrl = None) -> None:
+        self._manager.proxyUpdate(url)
 
     @property
     def currentQuery(self) -> Optional[AbstractQuery]:
