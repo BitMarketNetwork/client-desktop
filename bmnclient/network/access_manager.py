@@ -3,18 +3,18 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from PySide6.QtNetwork import \
-    QAbstractNetworkCache, \
-    QHttp2Configuration, \
-    QNetworkAccessManager, \
-    QNetworkCacheMetaData, \
-    QNetworkCookieJar, \
-    QNetworkProxy, \
-    QNetworkReply, \
-    QNetworkRequest, \
-    QSsl, \
-    QSslConfiguration, \
-    QSslSocket
+from PySide6.QtNetwork import (
+    QAbstractNetworkCache,
+    QHttp2Configuration,
+    QNetworkAccessManager,
+    QNetworkCacheMetaData,
+    QNetworkCookieJar,
+    QNetworkProxy,
+    QNetworkReply,
+    QNetworkRequest,
+    QSsl,
+    QSslConfiguration,
+    QSslSocket)
 
 from .utils import NetworkUtils
 from ..logger import Logger
@@ -140,19 +140,18 @@ class NetworkAccessManager(QNetworkAccessManager):
     def proxy(self) -> QNetworkProxy:
         return self._proxy
 
-    def proxyUpdate(self, url: QUrl = None) -> None:
-
+    def proxyUpdate(self, url: QUrl | None = None) -> None:
         proxy_type = QNetworkProxy.ProxyType.NoProxy
-        host, port, username, password = '', 0, '', ''
+        host, port, username, password = "", 0, "", ""
 
         if url is not None:
             host = url.host()
             port = url.port()
             username = url.userName()
             password = url.password()
-            if url.scheme() == 'http':
+            if url.scheme() == "http":
                 proxy_type = QNetworkProxy.ProxyType.HttpProxy
-            if url.scheme() == 'socks5':
+            if url.scheme() == "socks5":
                 proxy_type = QNetworkProxy.ProxyType.Socks5Proxy
 
         self._proxy.setHostName(host)

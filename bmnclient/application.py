@@ -11,9 +11,9 @@ from PySide6.QtCore import (
     QLocale,
     QMetaObject,
     QObject,
+    QUrl,
     Qt,
-    Slot as QSlot,
-    QUrl)
+    Slot as QSlot)
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
@@ -376,19 +376,17 @@ class CoreApplication(QObject):
         self._language.install()
 
     def updateProxy(self) -> None:
-
-        type = self._config.get(ConfigKey.NETWORK_PROXY_TYPE, str)
+        type_ = self._config.get(ConfigKey.NETWORK_PROXY_TYPE, str)
         host = self._config.get(ConfigKey.NETWORK_PROXY_HOST, str)
         state = self._config.get(ConfigKey.NETWORK_PROXY_STATE, bool)
         if state:
             self._logger.info("Update proxy %s", host)
-            url = QUrl(type + "://" + host)
+            url = QUrl(type_ + "://" + host)
         else:
             self._logger.info("Proxy disabled")
             url = None
 
         self._network_query_manager.proxyUpdate(url)
-
 
     def showMessage(
             self,
