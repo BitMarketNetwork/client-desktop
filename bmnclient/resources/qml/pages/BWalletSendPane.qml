@@ -98,6 +98,7 @@ BPane {
         BRowLayout {
             id: _advancedOptions
             state: _spoiler.checked ? "EXPANDED" : "COLLAPSED"
+            BLayout.columnSpan: parent.columns
 
             BUnfoldToolButton {
                 id: _spoiler
@@ -108,7 +109,8 @@ BPane {
 
             property variant targets: [ _pricePkLabel, _inputAmount2, _validLabel1,
                                         _subtractLabel, _inputSwitch, _sizesLabel,
-                                        _bytesLabel, _changeLabel, _amountLabel ]
+                                        _bytesLabel, _changeLabel, _amountLabel,
+                                        _inputSeparator ]
             states: [
                 State { name: "EXPANDED" },
                 State { name: "COLLAPSED" }
@@ -122,19 +124,13 @@ BPane {
                     SequentialAnimation {
                         id: collapseAnimation
                         ParallelAnimation {
-                            BNumberAnimation {
-                                targets: _advancedOptions.targets
-                                property: "opacity"
-                                to: 0
-                            }
+                            BNumberAnimation { targets: _advancedOptions.targets; property: "opacity"; to: 0 }
                         }
                         ParallelAnimation {
-                            BNumberAnimation {
-                                targets: _advancedOptions.targets
-                                property: "BLayout.preferredHeight"
-                                to: 0
-                            }
+                            BNumberAnimation { target: _optSeparator; property: "BLayout.preferredHeight"; to: target.implicitHeight }
+                            BNumberAnimation { targets: _advancedOptions.targets; property: "BLayout.preferredHeight"; to: 0 }
                         }
+                        BNumberAnimation { target: _optSeparator; property: "opacity"; to: 1 }
                     }
                 },
                 Transition {
@@ -142,6 +138,7 @@ BPane {
                     to: "EXPANDED"
 
                     SequentialAnimation {
+                        BNumberAnimation { target: _optSeparator; property: "opacity"; to: 0 }
                         ParallelAnimation {
                             BNumberAnimation { target: _pricePkLabel;   property: "BLayout.preferredHeight"; to: target.implicitHeight  }
                             BNumberAnimation { target: _inputAmount2;   property: "BLayout.preferredHeight"; to: target.implicitHeight  }
@@ -152,21 +149,18 @@ BPane {
                             BNumberAnimation { target: _bytesLabel;     property: "BLayout.preferredHeight"; to: target.implicitHeight  }
                             BNumberAnimation { target: _changeLabel;    property: "BLayout.preferredHeight"; to: target.implicitHeight  }
                             BNumberAnimation { target: _amountLabel;    property: "BLayout.preferredHeight"; to: target.implicitHeight  }
+                            BNumberAnimation { target: _inputSeparator; property: "BLayout.preferredHeight"; to: target.implicitHeight  }
+                            BNumberAnimation { target: _optSeparator;   property: "BLayout.preferredHeight"; to: 0 }
                         }
                         ParallelAnimation {
-                            BNumberAnimation {
-                                targets: _advancedOptions.targets
-                                property: "opacity"
-                                to: 1
-                            }
+                            BNumberAnimation { targets: _advancedOptions.targets; property: "opacity"; to: 1 }
                         }
                     }
                 }
             ]
         }
-        BRowLayout {
-            BLayout.fillWidth: true
-            BLayout.columnSpan: parent.columns - 1
+        BDialogSeparator {
+            id: _optSeparator
         }
 
         BDialogPromptLabel {
@@ -209,7 +203,11 @@ BPane {
             }
         }
 
-        BDialogSeparator {}
+        BDialogSeparator {
+            id: _inputSeparator
+            opacity: 0
+            BLayout.preferredHeight: 0
+        }
 
         BDialogPromptLabel {
             id: _sizesLabel
