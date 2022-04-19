@@ -42,13 +42,17 @@ BPane {
         BDialogPromptLabel {
             text: qsTr("Pay from (optional):")
         }
-        BDialogInputTextField {
+        /*BDialogInputTextField {
             id: _inputSourceAddress
             text: _base.coin.txFactory.receiver.inputAddressName
             readOnly: true
             onTextChanged: {
                 _base.coin.txFactory.receiver.inputAddressName = text
             }
+        }*/
+        BAddressesComboBox {
+            BLayout.fillWidth: true
+            model: _base.coin.addressList
         }
         BDialogValidLabel {
             status: BCommon.ValidStatus.Unset // TODO
