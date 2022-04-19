@@ -376,17 +376,19 @@ class CoreApplication(QObject):
         self._language.install()
 
     def updateProxy(self) -> None:
+
         type = self._config.get(ConfigKey.NETWORK_PROXY_TYPE, str)
         host = self._config.get(ConfigKey.NETWORK_PROXY_HOST, str)
         state = self._config.get(ConfigKey.NETWORK_PROXY_STATE, bool)
-        if state and type is not None:
+        if state:
             self._logger.info("Update proxy %s", host)
             url = QUrl(type + "://" + host)
         else:
             self._logger.info("Proxy disabled")
             url = None
 
-        self._network_query_manager.proxy = url
+        self._network_query_manager.proxyUpdate(url)
+
 
     def showMessage(
             self,
