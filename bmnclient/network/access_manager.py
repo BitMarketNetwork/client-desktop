@@ -140,26 +140,25 @@ class NetworkAccessManager(QNetworkAccessManager):
     def proxy(self) -> QNetworkProxy:
         return self._proxy
 
-    def proxyUpdate(self, url: QUrl = None) -> None:
-
+    @proxy.setter
+    def proxy(self, url: QUrl = None) -> None:
         proxy_type = QNetworkProxy.ProxyType.NoProxy
-        host, port, username, password = '', 0, '', ''
+        host, port, username, password = "", 0, "", ""
 
         if url is not None:
             host = url.host()
             port = url.port()
             username = url.userName()
             password = url.password()
-            if url.scheme() == 'http':
+            if url.scheme() == "http":
                 proxy_type = QNetworkProxy.ProxyType.HttpProxy
-            if url.scheme() == 'socks5':
+            if url.scheme() == "socks5":
                 proxy_type = QNetworkProxy.ProxyType.Socks5Proxy
 
         self._proxy.setHostName(host)
         self._proxy.setPort(port)
         self._proxy.setUser(username)
         self._proxy.setPassword(password)
-
         self._proxy.setCapabilities(QNetworkProxy.Capability.TunnelingCapability)
         self._proxy.setType(proxy_type)
         self.setProxy(self._proxy)

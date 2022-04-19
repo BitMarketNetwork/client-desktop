@@ -102,7 +102,12 @@ class ProxyModel(AbstractTupleStateModel):
     def __init__(self, application: QmlApplication) -> None:
         super().__init__(
             application,
-            tuple(),  # QML controlled
+            tuple(
+                {
+                    "name": v["name"],
+                    "fullName": v["fullName"]
+                } for v in Proxy.PROXY_TYPE_LIST
+            ),
             config_key=ConfigKey.NETWORK_PROXY_TYPE,
             default_name=Proxy.DEFAULT_PROXY_TYPE)
 

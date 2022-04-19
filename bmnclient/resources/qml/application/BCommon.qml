@@ -87,12 +87,4 @@ QtObject {
         [ qsTr("Complete") , Material.Green  ]
     ]
 
-    readonly property var proxyList: [{
-            "name": "HTTP",
-            "fullName": qsTr("HTTP")
-        }, {
-            "name": "SOCKS5",
-            "fullName": qsTr("SOCKS5")
-        }]
-
 }

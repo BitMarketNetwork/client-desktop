@@ -12,7 +12,6 @@ BPane {
         }
         BDialogInputComboBox {
             stateModel: BBackend.settings.proxy
-            model: BCommon.proxyList
         }
 
         BDialogPromptLabel {

@@ -20,7 +20,6 @@ class Product:
     SHORT_NAME: Final = "bmn-client"
     VERSION: Final = (0, 14, 0)
     VERSION_STRING: Final = tupleToVersionString(VERSION)
-    VERSION_STRING: Final = tupleToVersionString(VERSION)
     VERSION_UPDATE_URL: Final = \
         "https://github.com/BitMarketNetwork/client-desktop/releases"
     VERSION_UPDATE_API_URL: Final = \
@@ -72,3 +71,11 @@ class Gui:
 
 class Proxy:
     DEFAULT_PROXY_TYPE: Final = "HTTP"
+    PROXY_TYPE_LIST: Final = [{
+            "name": "HTTP",
+            "fullName": "HTTP"
+        },
+        {
+            "name": "SOCKS5",
+            "fullName": "SOCKS5"
+        }]

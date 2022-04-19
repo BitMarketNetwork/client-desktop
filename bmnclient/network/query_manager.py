@@ -38,8 +38,9 @@ class NetworkQueryManager:
     def proxy(self) -> QNetworkProxy:
         return self._manager.proxy
 
-    def proxyUpdate(self, url: QUrl = None) -> None:
-        self._manager.proxyUpdate(url)
+    @proxy.setter
+    def proxy(self, url: QUrl = None) -> None:
+        self._manager.proxy = url
 
     @property
     def currentQuery(self) -> Optional[AbstractQuery]:
