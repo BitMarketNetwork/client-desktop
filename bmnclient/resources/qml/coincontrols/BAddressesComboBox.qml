@@ -23,6 +23,13 @@ BComboBox {
         width: _base.popup.contentItem.viewWidth
         contentItem: BCheckDelegate {
             text: model.name
+
+            onCheckedChanged: {
+                model.state.isTxInput = true
+            }
+            Component.onCompleted: {
+                checked = model.state.isTxInput
+            }
         }
     }
 }
