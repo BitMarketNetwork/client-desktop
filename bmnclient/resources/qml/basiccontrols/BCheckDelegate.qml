@@ -41,5 +41,14 @@ CheckDelegate {
             text: _base.text
         }
     }
-    // TODO: CheckBox indicator
+
+    indicator: BIconImage {
+        x: _base.width - width - _base.rightPadding
+        y: _base.topPadding + _base.availableHeight / 2 - height / 2
+        sourceSize.width: _applicationStyle.icon.normalWidth / 2
+        sourceSize.height: _applicationStyle.icon.normalHeight / 2
+        visible: _base.checked
+        color: Material.theme === Material.Dark ? Material.foreground : "transparent"
+        source: _applicationManager.imagePath("check-solid.svg")
+    }
 }
