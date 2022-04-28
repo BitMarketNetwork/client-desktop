@@ -356,10 +356,10 @@ class Coin(CoinObject, table_type=CoinsTable):
             HdNode.toHardenedLevel(self._BIP0044_COIN_TYPE),
             HdNode.toHardenedLevel(account),
             change))
-        index = self.model.database[AddressesTable].queryLastHdIndex(
-            self,
-            parent_path + HdNode.pathSeparator)
-        return index + 1
+        if t := self._openTable(AddressesTable):
+            index = t.queryLastHdIndex(self, parent_path + HdNode.pathSeparator)
+            return index + 1
+        return -1
 
     def deriveHdAddress(
             self,
@@ -393,6 +393,8 @@ class Coin(CoinObject, table_type=CoinsTable):
                 type_.value.hdPurpose,
                 account,
                 change)
+            if current_index < 0:
+                return None
         else:
             current_index = index
 
