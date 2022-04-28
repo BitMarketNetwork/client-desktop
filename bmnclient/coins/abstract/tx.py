@@ -86,6 +86,14 @@ class _Tx(CoinObject, table_type=TxsTable):
             super().__hash__(),
             self._name))
 
+    def __update__(self, **kwargs) -> bool:
+        self._appendDeferredSave(kwargs.pop("input_list", []))
+        self._appendDeferredSave(kwargs.pop("output_list", []))
+        if not super().__update__(**kwargs):
+            return False
+        # TODO self.updateBalance()
+        return True
+
     def __str__(self) -> str:
         return StringUtils.classString(
             self.__class__,

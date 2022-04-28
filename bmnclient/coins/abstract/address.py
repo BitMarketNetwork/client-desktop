@@ -241,6 +241,14 @@ class _Address(
             self._name,
             self._type))
 
+    def __update__(self, **kwargs) -> bool:
+        self._appendDeferredSave(kwargs.pop("tx_list", []))
+        self._appendDeferredSave(kwargs.pop("utxo_list", []))
+        if not super().__update__(**kwargs):
+            return False
+        # TODO self.updateBalance()
+        return True
+
     def serializeProperty(
             self,
             flags: SerializeFlag,

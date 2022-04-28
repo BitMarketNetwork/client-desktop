@@ -151,19 +151,11 @@ class Coin(CoinObject, table_type=CoinsTable):
             self.name))
 
     def __update__(self, **kwargs) -> bool:
-        address_list = kwargs.pop("address_list", None)
-        if address_list is not None:
-            for address in address_list:
-                address.save()
-        if super().__update__(**kwargs):
-            self.updateBalance()
-            return True
-        return False
-
-    def save(self) -> bool:
-        return self.model.database[self._TABLE_TYPE].saveSerializable(
-            self,
-            [ColumnValue(self._TABLE_TYPE.ColumnEnum.NAME, self.name)]) > 0
+        self._appendDeferredSave(kwargs.pop("address_list", []))
+        if not super().__update__(**kwargs):
+            return False
+        self.updateBalance()
+        return True
 
     def load(self) -> bool:
         obj = self.model.database[self._TABLE_TYPE].loadSerializable(
