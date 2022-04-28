@@ -79,8 +79,7 @@ class _Tx(CoinObject, table_type=TxsTable):
     def __eq__(self, other: _Tx) -> bool:
         return (
                 super().__eq__(other)
-                and self._name == other._name
-        )
+                and self._name == other._name)
 
     def __hash__(self) -> int:
         return hash((super().__hash__(), self._name, ))

@@ -56,8 +56,7 @@ class _Io(CoinObject, table_type=TxIosTable):
                 and self._index == other.index
                 and self._output_type == other._output_type
                 and self._address == other.address
-                and self._amount == other._amount
-        )
+                and self._amount == other._amount)
 
     def __hash__(self) -> int:
         return hash((

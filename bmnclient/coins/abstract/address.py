@@ -233,8 +233,7 @@ class _Address(
         return (
                 super().__eq__(other)
                 and self._name == other.name
-                and self._type == other._type
-        )
+                and self._type == other._type)
 
     def __hash__(self) -> int:
         return hash((

@@ -98,7 +98,7 @@ class _TxFactory(CoinObject, table_type=None):
         return address
 
     @property
-    def name(self) -> Optional[str]:
+    def name(self) -> str | None:
         if self._mtx is not None:
             return self._mtx.name
         return None

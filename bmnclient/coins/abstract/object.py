@@ -95,10 +95,12 @@ class CoinObject(Serializable):
                 assert self.rowId > 0
 
     def __eq__(self, other: CoinObject) -> bool:
-        return (
-                isinstance(other, self.__class__)
-                and self._coin == other._coin
-        )
+        if not isinstance(other, self.__class__):
+            return False
+        if self is not self._coin:
+            if self._coin != other._coin:
+                return False
+        return True
 
     def __hash__(self) -> int:
         return hash((self._coin, ))

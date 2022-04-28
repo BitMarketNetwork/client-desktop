@@ -1,30 +1,26 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from contextlib import contextmanager
+from typing import Final, Generator, TYPE_CHECKING
 from weakref import WeakValueDictionary
 
-from .object import CoinObject, CoinObjectModel
+from .object import CoinObject, CoinRootObjectModel
 from ..hd import HdNode
 from ..utils import CoinUtils
 from ...crypto.digest import Sha256Digest
 from ...currency import Currency, FiatRate, NoneFiatCurrency
-from ...database.tables import AddressListTable, CoinListTable, ColumnValue
-from ...utils import DeserializationNotSupportedError, serializable
+from ...database.tables import AddressesTable, CoinsTable, ColumnValue
+from ...utils import (
+    DeserializationNotSupportedError,
+    DeserializeFlag,
+    DeserializedData,
+    SerializableList,
+    serializable)
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
-    from typing import (
-        Any,
-        Dict,
-        Final,
-        Generator,
-        List,
-        Optional,
-        Sequence,
-        Union)
-    from .object import CoinModelFactory
-    from ...utils import DeserializeFlag, DeserializedData
+    from .object import CoinModelFactory, CoinObjectModel
 
 
 class _Model(CoinObjectModel):
@@ -146,9 +142,8 @@ class Coin(CoinObject, table_type=CoinsTable):
 
     def __eq__(self, other: Coin) -> bool:
         return (
-                isinstance(other, self.__class__)
-                and self.name == other.name
-        )
+                super().__eq__(other)
+                and self.name == other.name)
 
     def __hash__(self) -> int:
         return hash((self.name, ))
