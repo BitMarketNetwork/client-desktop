@@ -64,8 +64,7 @@ class _Io(CoinObject, table_type=TxIosTable):
             self._index,
             self._output_type,
             self._address,
-            self._amount
-        ))
+            self._amount))
 
     def __str__(self) -> str:
         return StringUtils.classString(

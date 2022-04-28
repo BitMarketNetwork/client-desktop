@@ -82,7 +82,9 @@ class _Tx(CoinObject, table_type=TxsTable):
                 and self._name == other._name)
 
     def __hash__(self) -> int:
-        return hash((super().__hash__(), self._name, ))
+        return hash((
+            super().__hash__(),
+            self._name))
 
     def __str__(self) -> str:
         return StringUtils.classString(

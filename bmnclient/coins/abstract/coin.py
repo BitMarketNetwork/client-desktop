@@ -146,7 +146,9 @@ class Coin(CoinObject, table_type=CoinsTable):
                 and self.name == other.name)
 
     def __hash__(self) -> int:
-        return hash((self.name, ))
+        return hash((
+            super().__hash__(),
+            self.name))
 
     def __update__(self, **kwargs) -> bool:
         address_list = kwargs.pop("address_list", None)

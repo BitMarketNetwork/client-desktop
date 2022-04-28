@@ -103,7 +103,9 @@ class CoinObject(Serializable):
         return True
 
     def __hash__(self) -> int:
-        return hash((self._coin, ))
+        if self is not self._coin:
+            return hash((self._coin, ))
+        return 0
 
     @property
     def model(self) -> CoinObjectModel | CoinRootObjectModel:

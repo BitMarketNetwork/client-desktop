@@ -239,8 +239,7 @@ class _Address(
         return hash((
             super().__hash__(),
             self._name,
-            self._type
-        ))
+            self._type))
 
     def serializeProperty(
             self,
