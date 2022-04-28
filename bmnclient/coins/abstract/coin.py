@@ -300,19 +300,18 @@ class Coin(CoinObject, table_type=CoinsTable):
             # Cannot query balance from __init__() (model not ready).
             # Therefore, try to run the query the first time this method is
             # called.
-            if self.model.database.isOpen:
-                self._balance = (
-                    self.model.database[AddressesTable]
-                    .queryTotalBalance(self))
+            if t := self._openTable(AddressesTable):
+                self._balance = t.queryTotalBalance(self)
             else:
                 self._balance = 0
         return self._balance
 
     def updateBalance(self) -> None:
-        self._updateValue(
-            "update",
-            "balance",
-            self.model.database[AddressesTable].queryTotalBalance(self))
+        if t := self._openTable(AddressesTable):
+            value = t.queryTotalBalance(self)
+        else:
+            value = 0
+        self._updateValue("update", "balance", value)
 
     def updateUtxoList(self) -> None:
         self._updateValue(

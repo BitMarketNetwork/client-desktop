@@ -85,8 +85,8 @@ class CoinObject(Serializable):
         self.__enable_table = enable_table
         self.__deferred_save_list: list[list[CoinObject]] = []
 
-        if self is not self._coin and (table := self._openTable()):
-            if table.completeSerializable(self, kwargs) > 0:
+        if self is not self._coin and (t := self._openTable(force=True)):
+            if t.completeSerializable(self, kwargs) > 0:
                 assert self.rowId > 0
 
     def __eq__(self, other: CoinObject) -> bool:
@@ -115,9 +115,9 @@ class CoinObject(Serializable):
     def associate(self, object_: CoinObject) -> bool | None:
         if not self.__ASSOCIATED_TABLE_TYPE:
             return None
-        if not (table := self._openTable(self.__ASSOCIATED_TABLE_TYPE)):
+        if not (t := self._openTable(self.__ASSOCIATED_TABLE_TYPE)):
             return False
-        return table.associate(self, object_)
+        return t.associate(self, object_)
 
     def _appendDeferredSave(
             self,
@@ -126,10 +126,10 @@ class CoinObject(Serializable):
             self.__deferred_save_list.append([o(self) for o in object_list])
 
     def save(self) -> bool:
-        if not (table := self._openTable()):
+        if not (t := self._openTable(force=True)):
             return False
         with self._coin.model.database.transaction(allow_in_transaction=True):
-            if table.saveSerializable(self) <= 0:
+            if t.saveSerializable(self) <= 0:
                 return False
             assert self.rowId > 0
 
@@ -143,13 +143,13 @@ class CoinObject(Serializable):
         return True
 
     def load(self) -> bool:
-        if (table := self._openTable()) and table.loadSerializable(self):
+        if (t := self._openTable(force=True)) and t.loadSerializable(self):
             assert self.rowId > 0
             return True
         return False
 
     def remove(self) -> bool:
-        if (table := self._openTable()) and table.removeSerializable(self):
+        if (t := self._openTable(force=True)) and t.removeSerializable(self):
             assert self.rowId == -1
             return True
         return False
@@ -214,7 +214,11 @@ class CoinObject(Serializable):
 
     def _openTable(
             self,
-            table_type: type(_TableT) | None = None) -> _TableT | None:
+            table_type: type(_TableT) | None = None,
+            *,
+            force: bool = False) -> _TableT | None:
+        if not force and self.rowId <= 0:
+            return None
         if table_type is None:
             table_type = self.__TABLE_TYPE
         if not table_type or not self.__enable_table:
@@ -229,8 +233,8 @@ class CoinObject(Serializable):
             *args,
             **kwargs
     ) -> SerializableList:
-        if self.rowId > 0 and (table := self._openTable(table_type)):
-            if result := table.rowList(self, *args, **kwargs):
+        if t := self._openTable(table_type):
+            if result := t.rowList(self, *args, **kwargs):
                 return result
         return EmptySerializableList()
 

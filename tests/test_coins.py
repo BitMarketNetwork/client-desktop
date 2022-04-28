@@ -159,9 +159,7 @@ def fillCoin(
                 input_list=[],
                 output_list=[])
             owner.assertTrue(tx.save())
-            owner.assertEqual(
-                address.AssociateResult.SUCCESS,
-                address.associate(tx))
+            owner.assertTrue(address.associate(tx))
 
             for i in range(1, 3):
                 input_address = coin.deriveHdAddress(

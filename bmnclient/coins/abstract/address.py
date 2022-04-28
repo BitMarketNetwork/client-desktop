@@ -248,6 +248,34 @@ class _Address(
         # TODO self.updateBalance()
         return True
 
+    @classmethod
+    def create(
+            cls,
+            coin: Coin,
+            *,
+            type_: _Address.Type,
+            key: KeyType,
+            **kwargs) -> _Address | None:
+        return cls(coin, type_=type_, key=key, **kwargs)
+
+    @classmethod
+    def createFromName(
+            cls,
+            coin: Coin,
+            *,
+            name: str,
+            **kwargs) -> _Address | None:
+        return cls(coin, name=name, **kwargs)
+
+    @classmethod
+    def createNullData(
+            cls,
+            coin: Coin,
+            *,
+            name: str | None = None,
+            **kwargs) -> _Address | None:
+        return cls(coin, name=name, type_=cls.Type.UNKNOWN, **kwargs)
+
     def serializeProperty(
             self,
             flags: SerializeFlag,
@@ -311,35 +339,6 @@ class _Address(
     @property
     def type(self) -> _Address.Type:
         return self._type
-
-    @classmethod
-    def create(
-            cls,
-            coin: Coin,
-            *,
-            type_: _Address.Type,
-            key: KeyType,
-            **kwargs) -> _Address | None:
-        return cls(coin, type_=type_, key=key, **kwargs)
-
-    @classmethod
-    def createFromName(
-            cls,
-            coin: Coin,
-            *,
-            name: str,
-            **kwargs) -> _Address | None:
-        return cls(coin, name=name, **kwargs)
-
-    @classmethod
-    def createNullData(
-            cls,
-            coin: Coin,
-            *,
-            name: str | None = None,
-            **kwargs) -> _Address:
-        # noinspection PyUnresolvedReferences
-        return cls(coin, name=name, type_=cls.Type.UNKNOWN, **kwargs)
 
     @property
     def isNullData(self) -> bool:
