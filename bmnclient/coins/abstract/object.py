@@ -59,11 +59,6 @@ class CoinRootObjectModel(CoinObjectModel):
 
 
 class CoinObject(Serializable):
-    class AssociateResult(IntEnum):
-        FAIL = 0
-        IGNORE = 1
-        SUCCESS = 2
-
     def __init_subclass__(cls, *args, **kwargs) -> None:
         if (
                 not hasattr(cls, "_CoinObject__TABLE_TYPE")
@@ -117,14 +112,12 @@ class CoinObject(Serializable):
     def coin(self) -> Coin:
         return self._coin
 
-    def associate(self, object_: CoinObject) -> AssociateResult:
+    def associate(self, object_: CoinObject) -> bool | None:
         if not self.__ASSOCIATED_TABLE_TYPE:
-            return self.AssociateResult.IGNORE
+            return None
         if not (table := self._openTable(self.__ASSOCIATED_TABLE_TYPE)):
-            return self.AssociateResult.FAIL
-        if not table.associate(self, object_):
-            return self.AssociateResult.FAIL
-        return self.AssociateResult.SUCCESS
+            return False
+        return table.associate(self, object_)
 
     def _appendDeferredSave(
             self,
@@ -144,7 +137,7 @@ class CoinObject(Serializable):
                 for object_ in object_list:
                     if not object_.save():
                         return False
-                    if self.associate(object_) == self.AssociateResult.FAIL:
+                    if self.associate(object_) is False:
                         return False
             self.__deferred_save_list.clear()
         return True

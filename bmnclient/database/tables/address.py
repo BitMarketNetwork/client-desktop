@@ -155,7 +155,9 @@ class AddressTxsTable(SerializableTable, name="address_transactions"):
                 f" WHERE {self.ColumnEnum.ADDRESS_ROW_ID} == ?)"),
             where_args=[address.rowId])
 
-    def associate(self, address: Coin.Address, tx: Coin.Tx) -> bool:
+    def associate(self, address: Coin.Address, tx: Coin.Tx) -> bool | None:
+        if not isinstance(tx, address.coin.Tx):
+            return None
         assert address.rowId > 0
         assert tx.rowId > 0
         return self.insert([

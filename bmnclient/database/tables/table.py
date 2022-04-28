@@ -427,7 +427,7 @@ class SerializableTable(Table, name=""):
             return -1
         data_columns = []
         for name in object_.serializeMap.keys():
-            if name not in kwargs:
+            if object_.kwargKeyFromName(name) not in kwargs:
                 column = self.ColumnEnum.get(name)
                 if column and column not in key_columns:
                     data_columns.append(ColumnValue(column, None))
@@ -440,7 +440,7 @@ class SerializableTable(Table, name=""):
 
         object_.rowId = row_id
         for c in data_columns:
-            kwargs[c.column.name] = object_.deserializeProperty(
+            kwargs[object_.kwargKeyFromName(c.column.name)] = object_.deserializeProperty(
                 DeserializeFlag.DATABASE_MODE,
                 object_,
                 c.column.name,

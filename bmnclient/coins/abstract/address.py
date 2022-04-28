@@ -178,7 +178,6 @@ class _Address(
     KeyType = Union[HdNode, PrivateKey, PublicKey]
 
     def __new__(cls, coin: Coin, *args, **kwargs) -> _Address:
-        # noinspection PyUnresolvedReferences
         if kwargs.get("type_") == cls.Type.UNKNOWN or not kwargs.get("name"):
             return super().__new__(cls)
 
