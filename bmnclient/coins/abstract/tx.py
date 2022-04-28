@@ -71,7 +71,7 @@ class _Tx(CoinObject, table_type=TxsTable):
         self._time = int(kwargs.pop("time", -1))
         self._amount = int(kwargs.pop("amount"))
         self._fee_amount = int(kwargs.pop("fee_amount"))
-        self._is_coinbase = bool(kwargs.pop("is_coinbase"))
+        self._is_coinbase: Final = bool(kwargs.pop("is_coinbase"))
         self._appendDeferredSave(kwargs.pop("input_list", []))
         self._appendDeferredSave(kwargs.pop("output_list", []))
         assert len(kwargs) == 1

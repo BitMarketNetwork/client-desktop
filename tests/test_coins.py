@@ -202,8 +202,6 @@ def fillCoin(
             owner.assertTrue(io.address.isNullData)
             owner.assertTrue(io.save())
 
-            address.appendTx(tx)
-
         for i in range(1, 3):
             utxo = coin.Tx.Utxo(
                 address,
@@ -553,7 +551,7 @@ class TestCoins(TestCaseApplication):
                     self.assertLess(0, io_db.rowId)
 
                     self.assertRaises(
-                        TypeError,
+                        AssertionError,
                         tx.Io,
                         tx,
                         io_type=None,

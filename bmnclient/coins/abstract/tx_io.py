@@ -39,8 +39,7 @@ class _Io(CoinObject, table_type=TxIosTable):
     def __init__(self, tx: Coin.Tx, **kwargs) -> None:
         self._tx: Final = tx
         self._io_type: Final[_Io.IoType] = kwargs["io_type"]
-        if not isinstance(self._io_type, self.IoType):
-            raise TypeError("invalid 'io_type' value")
+        assert isinstance(self._io_type, self.IoType)
         self._index: Final = int(kwargs["index"])
 
         super().__init__(tx.coin, kwargs)
@@ -49,7 +48,6 @@ class _Io(CoinObject, table_type=TxIosTable):
         self._address: Final[Coin.Address] = kwargs.pop("address")
         assert isinstance(self._address, self._coin.Address)
         self._amount: Final = int(kwargs.pop("amount"))
-
         assert len(kwargs) == 2
 
     def __eq__(self, other: _Io) -> bool:

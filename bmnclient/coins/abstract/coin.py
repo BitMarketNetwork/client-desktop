@@ -106,7 +106,7 @@ class Coin(CoinObject, table_type=CoinsTable):
         def __init__(
                 self,
                 *,
-                remote_hash: Optional[str] = None,
+                remote_hash: str | None = None,
                 access_count: int = 0) -> None:
             self.remote_hash = remote_hash
             self.access_count = access_count
@@ -114,16 +114,9 @@ class Coin(CoinObject, table_type=CoinsTable):
     def __init__(
             self,
             *,
-            row_id: int,
             model_factory: CoinModelFactory,
             **kwargs) -> None:
-        super().__init__(
-            self,
-            row_id,
-            kwargs,
-            complete_key_columns=[
-                ColumnValue(CoinListTable.ColumnEnum.NAME, self._SHORT_NAME)
-            ])
+        super().__init__(self, kwargs)
 
         self._model_factory: Final = model_factory
 
@@ -136,17 +129,20 @@ class Coin(CoinObject, table_type=CoinsTable):
         self._unverified_offset = str(kwargs.get("unverified_offset", ""))
         self._unverified_hash = str(kwargs.get("unverified_hash", ""))
 
-        self._online_status = 0
+        self._online_status: int = 0
 
         self._fiat_rate = FiatRate(0, NoneFiatCurrency)
-        self._balance: Optional[int] = None
+        self._balance: int | None = None
 
-        self._hd_node_list: Dict[int, HdNode] = {}
+        self._hd_node_list: dict[int, HdNode] = {}
 
-        self._server_data: Dict[str, Union[int, str]] = {}
-        self._mempool_cache: Dict[bytes, Coin.MempoolCacheItem] = {}
+        self._server_data: dict[str, int | str] = {}
+        self._mempool_cache: dict[bytes, Coin.MempoolCacheItem] = {}
         self._mempool_cache_access_counter = 0
         self._tx_factory = self.TxFactory(self)
+
+        self._appendDeferredSave(kwargs.pop("address_list", []))
+        assert len(kwargs) == 0
 
     def __eq__(self, other: Coin) -> bool:
         return (

@@ -56,7 +56,7 @@ class Serializable:
     def __update__(self, **kwargs) -> bool:
         serialize_map = self.serializeMap
         for (key, value) in kwargs.items():
-            key = self.__keyFromKwarg(key)
+            key = self.kwargKeyToName(key)
             if key not in serialize_map:
                 raise KeyError(
                     "unknown property '{}' to deserialization".format(key))
@@ -136,7 +136,7 @@ class Serializable:
             source_data: DeserializedDict,
             *cls_args) -> Serializable | None:
         cls_kwargs = {
-            cls.__keyToKwarg(key):
+            cls.kwargKeyFromName(key):
                 cls.deserializeProperty(flags, None, key, value, *cls_args)
             for key, value in source_data.items()
         }
@@ -147,7 +147,7 @@ class Serializable:
             flags: DeserializeFlag,
             source_data: DeserializedDict) -> bool:
         kwargs = {
-            self.__keyToKwarg(key):
+            self.kwargKeyFromName(key):
                 self.deserializeProperty(flags, self, key, value)
             for key, value in source_data.items()
         }
@@ -174,13 +174,13 @@ class Serializable:
             .format(str(type(value)), key))
 
     @classmethod
-    def __keyToKwarg(cls, key: str) -> str:
+    def kwargKeyFromName(cls, key: str) -> str:
         if key in ("type", ):
             return key + "_"
         return key
 
     @classmethod
-    def __keyFromKwarg(cls, key: str) -> str:
+    def kwargKeyToName(cls, key: str) -> str:
         if key in ("type_", ):
             return key[:-1]
         return key

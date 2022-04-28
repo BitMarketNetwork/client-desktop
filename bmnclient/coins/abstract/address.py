@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import TYPE_CHECKING
+from typing import Final, TYPE_CHECKING, Union
 
 from .object import CoinObject, CoinObjectModel
 from ..hd import HdNode
@@ -12,7 +12,6 @@ from ...utils import SerializeFlag, serializable
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
-    from typing import Any, Final, List, Optional, Union
     from .coin import Coin
     from ...utils import DeserializeFlag, DeserializedData
 
@@ -34,10 +33,10 @@ class _TypeValue:
             name: str,
             version: int,
             size: int,
-            encoding: Optional[Coin.Address.Encoding],
+            encoding: Coin.Address.Encoding | None,
             is_witness: bool,
-            script_type: Optional[Coin.Address.Script.Type],
-            hd_purpose: Optional[int]) -> None:
+            script_type: Coin.Address.Script.Type,
+            hd_purpose: int | None) -> None:
         self._name: Final = name
         self._version: Final = version
         self._size: Final = size
@@ -99,7 +98,7 @@ class _TypeValue:
         return self._size
 
     @property
-    def encoding(self) -> Optional[Coin.Address.Encoding]:
+    def encoding(self) -> Coin.Address.Encoding | None:
         return self._encoding
 
     @property
@@ -107,11 +106,11 @@ class _TypeValue:
         return self._is_witness
 
     @property
-    def scriptType(self) -> Optional[Coin.Address.Script.Type]:
+    def scriptType(self) -> Coin.Address.Script.Type:
         return self._script_type
 
     @property
-    def hdPurpose(self) -> Optional[int]:
+    def hdPurpose(self) -> int | None:
         return self._hd_purpose
 
 
@@ -156,14 +155,14 @@ class _Model(CoinObjectModel):
     def afterSetHistoryLastOffset(self, value: str) -> None: pass
 
 
-class _Address(CoinObject, table_type=AddressListTable):
+class _Address(
+        CoinObject,
+        table_type=AddressesTable,
+        associated_table_type=AddressTxsTable):
     __initialized = False
 
     _NULLDATA_NAME = "NULL_DATA"
     _HRP = "hrp"
-
-    if TYPE_CHECKING:
-        KeyType = Union[HdNode, PrivateKey, PublicKey]
 
     class Encoding(Enum):
         BASE58 = auto()
@@ -176,6 +175,7 @@ class _Address(CoinObject, table_type=AddressListTable):
 
     TypeValue = _TypeValue
     Type = Enum
+    KeyType = Union[HdNode, PrivateKey, PublicKey]
 
     def __new__(cls, coin: Coin, *args, **kwargs) -> _Address:
         # noinspection PyUnresolvedReferences
@@ -196,31 +196,38 @@ class _Address(CoinObject, table_type=AddressListTable):
             return
         self.__initialized = True
 
-        super().__init__(coin, row_id=row_id)
-
-        self.__hash: Optional[bytes] = None
-
-        self._name: Final[str] = kwargs.get("name") or self._NULLDATA_NAME
+        self._name: Final = str(kwargs.get("name") or self._NULLDATA_NAME)
         self._type: Final[_Address.Type] = kwargs["type_"]
-        self._data: Final[bytes] = kwargs.get("data", b"")
-        self._key: Optional[_Address.KeyType] = kwargs.get("key", None)
-        self._balance: int = kwargs.get("balance", 0)
-        self._label: str = kwargs.get("label", "")
-        self._comment: str = kwargs.get("comment", "")
-        self._is_tx_input = bool(kwargs.get("is_tx_input", False))
+        assert isinstance(self._type, self.Type)
 
-        self._tx_count: int = kwargs.get("tx_count", 0)
-        self._tx_list: List[Coin.Tx] = list(kwargs.get("tx_list", []))
-        self._utxo_list: List[Coin.Tx.Utxo] = list(kwargs.get("utxo_list", []))
+        super().__init__(
+            coin,
+            kwargs,
+            enable_table=(self._name and self._type != self.Type.UNKNOWN))
 
-        history_first_offset: str = kwargs.get("history_first_offset", "")
-        history_last_offset: str = kwargs.get("history_last_offset", "")
+        self.__hash: bytes | None = None
+        self._balance = int(kwargs.pop("balance", 0))
+        self._tx_count = int(kwargs.pop("tx_count", 0))
+        self._label = str(kwargs.pop("label", ""))
+        self._comment = str(kwargs.pop("comment", ""))
+
+        self._is_tx_input = bool(kwargs.pop("is_tx_input", False))
+        self._data: Final = bytes(kwargs.pop("data", b""))
+        self._key: _Address.KeyType | None = kwargs.pop("key", None)
+        assert self._key is None or isinstance(self._key, self.KeyType)
+
+        history_first_offset = str(kwargs.pop("history_first_offset", ""))
+        history_last_offset = str(kwargs.pop("history_last_offset", ""))
         if history_first_offset and history_last_offset:
             self._history_first_offset = history_first_offset
             self._history_last_offset = history_last_offset
         else:
             self._history_first_offset = ""
             self._history_last_offset = ""
+
+        self._appendDeferredSave(kwargs.pop("tx_list", []))
+        self._appendDeferredSave(kwargs.pop("utxo_list", []))
+        assert len(kwargs) == 2
 
     def __eq__(self, other: _Address) -> bool:
         return (
@@ -240,7 +247,7 @@ class _Address(CoinObject, table_type=AddressListTable):
             self,
             flags: SerializeFlag,
             key: str,
-            value: Any) -> DeserializedData:
+            value: ...) -> DeserializedData:
         if key == "key":
             # TODO temporary, unsecure
             if bool(flags & SerializeFlag.PUBLIC_MODE):
@@ -259,7 +266,7 @@ class _Address(CoinObject, table_type=AddressListTable):
     def deserializeProperty(
             cls,
             flags: DeserializeFlag,
-            self: Optional[_Address],
+            self: _Address | None,
             key: str,
             value: DeserializedData,
             *cls_args) -> Any:
@@ -314,7 +321,7 @@ class _Address(CoinObject, table_type=AddressListTable):
             *,
             type_: _Address.Type,
             key: KeyType,
-            **kwargs) -> Optional[_Address]:
+            **kwargs) -> _Address | None:
         return cls(coin, type_=type_, key=key, **kwargs)
 
     @classmethod
@@ -323,7 +330,7 @@ class _Address(CoinObject, table_type=AddressListTable):
             coin: Coin,
             *,
             name: str,
-            **kwargs) -> Optional[_Address]:
+            **kwargs) -> _Address | None:
         return cls(coin, name=name, **kwargs)
 
     @classmethod
@@ -331,7 +338,7 @@ class _Address(CoinObject, table_type=AddressListTable):
             cls,
             coin: Coin,
             *,
-            name: Optional[str] = None,
+            name: str | None = None,
             **kwargs) -> _Address:
         # noinspection PyUnresolvedReferences
         return cls(coin, name=name, type_=cls.Type.UNKNOWN, **kwargs)
@@ -346,7 +353,7 @@ class _Address(CoinObject, table_type=AddressListTable):
         return self._data
 
     @classmethod
-    def _publicKey(cls, key: Optional[KeyType]) -> Optional[PublicKey]:
+    def _publicKey(cls, key: KeyType | None) -> PublicKey | None:
         if isinstance(key, HdNode):
             return key.publicKey
         if isinstance(key, PrivateKey):
@@ -356,11 +363,11 @@ class _Address(CoinObject, table_type=AddressListTable):
         return None
 
     @property
-    def publicKey(self) -> Optional[PublicKey]:
+    def publicKey(self) -> PublicKey | None:
         return self._publicKey(self._key)
 
     @property
-    def privateKey(self) -> Optional[PrivateKey]:
+    def privateKey(self) -> PrivateKey | None:
         if isinstance(self._key, HdNode):
             value = self._key.privateKey
         elif isinstance(self._key, PrivateKey):
@@ -371,14 +378,14 @@ class _Address(CoinObject, table_type=AddressListTable):
 
     @serializable
     @property
-    def key(self) -> Optional[KeyType]:
+    def key(self) -> KeyType | None:
         return self._key
 
     @key.setter
-    def key(self, value: Optional[KeyType]) -> None:
+    def key(self, value: KeyType | None) -> None:
         self._updateValue("set", "key", value)
 
-    def exportKey(self, *, allow_hd_path: bool = False) -> Optional[str]:
+    def exportKey(self, *, allow_hd_path: bool = False) -> str | None:
         if isinstance(self._key, HdNode):
             if allow_hd_path and self._key.isFullPath:
                 value = self._key.pathToString()
@@ -404,7 +411,7 @@ class _Address(CoinObject, table_type=AddressListTable):
         return value
 
     @classmethod
-    def importKey(cls, coin: Coin, value: str) -> Optional[KeyType]:
+    def importKey(cls, coin: Coin, value: str) -> KeyType | None:
         if not value:
             return None
 
