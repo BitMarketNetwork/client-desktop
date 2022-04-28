@@ -192,22 +192,20 @@ class CoinObject(Serializable):
         with self._modelEvent(action, name, new_value):
             setattr(self, private_name, new_value)
             if (
-                    self.rowId > 0
-                    and self.__TABLE_TYPE
+                    (table := self._openTable())
                     and name in self.serializeMap
+                    and (column := self.__TABLE_TYPE.ColumnEnum.get(name))
             ):
-                column = self.__TABLE_TYPE.ColumnEnum.get(name)
-                if column:
-                    self.model.database[self.__TABLE_TYPE].update(
-                        self.rowId,
-                        [ColumnValue(
-                            column,
-                            self.serializeProperty(
-                                SerializeFlag.DATABASE_MODE
-                                | SerializeFlag.EXCLUDE_SUBCLASSES,
-                                name,
-                                new_value)
-                        )])
+                table.update(
+                    self.rowId,
+                    [ColumnValue(
+                        column,
+                        self.serializeProperty(
+                            SerializeFlag.DATABASE_MODE
+                            | SerializeFlag.EXCLUDE_SUBCLASSES,
+                            name,
+                            new_value)
+                    )])
         return True
 
     _TableT = TypeVar("_TableT", bound=SerializableTable)
