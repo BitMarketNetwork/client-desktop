@@ -10,9 +10,8 @@ from ..hd import HdNode
 from ..utils import CoinUtils
 from ...crypto.digest import Sha256Digest
 from ...currency import Currency, FiatRate, NoneFiatCurrency
-from ...database.tables import AddressesTable, CoinsTable, ColumnValue
+from ...database.tables import AddressesTable, CoinsTable
 from ...utils import (
-    DeserializationNotSupportedError,
     DeserializeFlag,
     DeserializedData,
     SerializableList,
@@ -68,8 +67,8 @@ class _Model(CoinObjectModel):
     def beforeAppendAddress(self, address: Coin.Address) -> None: pass
     def afterAppendAddress(self, address: Coin.Address) -> None: pass
 
-    def beforeSetServerData(self, value: Dict[str, Any]) -> None: pass
-    def afterSetServerData(self, value: Dict[str, Any]) -> None: pass
+    def beforeSetServerData(self, value: dict[str, ...]) -> None: pass
+    def afterSetServerData(self, value: dict[str, ...]) -> None: pass
 
 
 class Coin(CoinObject, table_type=CoinsTable):
@@ -157,18 +156,6 @@ class Coin(CoinObject, table_type=CoinsTable):
         self.updateBalance()
         return True
 
-    def load(self) -> bool:
-        obj = self.model.database[self._TABLE_TYPE].loadSerializable(
-                self,
-                [ColumnValue(self._TABLE_TYPE.ColumnEnum.NAME, self.name)])
-        if obj is not self:
-            return False
-        return True
-
-    @classmethod
-    def deserialize(cls, *_, **__) -> None:
-        raise DeserializationNotSupportedError
-
     @classmethod
     def deserializeProperty(
             cls,
@@ -176,10 +163,9 @@ class Coin(CoinObject, table_type=CoinsTable):
             self: Coin,
             key: str,
             value: DeserializedData,
-            *cls_args) -> Any:
-        if isinstance(value, dict) and key == "address_list":
-            coin = cls_args[0] if cls_args else self
-            return cls.Address.deserialize(flags, value, coin)
+            *cls_args) -> ...:
+        if key == "address_list" and isinstance(value, dict):
+            return lambda coin: coin.Address.deserialize(flags, value, coin)
         return super().deserializeProperty(flags, self, key, value, *cls_args)
 
     def modelFactory(self, owner: CoinObject) -> CoinObjectModel:
@@ -289,7 +275,7 @@ class Coin(CoinObject, table_type=CoinsTable):
     def fiatRate(self, value: FiatRate) -> None:
         self._updateValue("set", "fiat_rate", value)
 
-    def toFiatAmount(self, value: Optional[int] = None) -> Optional[int]:
+    def toFiatAmount(self, value: int | None = None) -> int | None:
         if value is None:
             if self._balance is None:
                 return 0
@@ -300,7 +286,7 @@ class Coin(CoinObject, table_type=CoinsTable):
             return value
         return None
 
-    def fromFiatAmount(self, value: int) -> Optional[int]:
+    def fromFiatAmount(self, value: int) -> int | None:
         value *= self.Currency.decimalDivisor
         if self._fiat_rate.value:
             value = math.ceil(value / self._fiat_rate.value)
@@ -316,7 +302,7 @@ class Coin(CoinObject, table_type=CoinsTable):
             # called.
             if self.model.database.isOpen:
                 self._balance = (
-                    self.model.database[AddressListTable]
+                    self.model.database[AddressesTable]
                     .queryTotalBalance(self))
             else:
                 self._balance = 0
@@ -326,7 +312,7 @@ class Coin(CoinObject, table_type=CoinsTable):
         self._updateValue(
             "update",
             "balance",
-            self.model.database[AddressListTable].queryTotalBalance(self))
+            self.model.database[AddressesTable].queryTotalBalance(self))
 
     def updateUtxoList(self) -> None:
         self._updateValue(
@@ -362,7 +348,7 @@ class Coin(CoinObject, table_type=CoinsTable):
         return True
 
     @property
-    def hdNodeList(self) -> Dict[int, HdNode]:
+    def hdNodeList(self) -> dict[int, HdNode]:
         return self._hd_node_list
 
     def nextHdIndex(self, purpose: int, account: int, change: int) -> int:
@@ -371,7 +357,7 @@ class Coin(CoinObject, table_type=CoinsTable):
             HdNode.toHardenedLevel(self._BIP0044_COIN_TYPE),
             HdNode.toHardenedLevel(account),
             change))
-        index = self.model.database[AddressListTable].queryLastHdIndex(
+        index = self.model.database[AddressesTable].queryLastHdIndex(
             self,
             parent_path + HdNode.pathSeparator)
         return index + 1
@@ -382,8 +368,8 @@ class Coin(CoinObject, table_type=CoinsTable):
             account: int,
             is_change: bool,
             index: int = -1,
-            type_: Optional[Address.Type] = None,
-            **kwargs) -> Optional[Address]:
+            type_: Address.Type | None = None,
+            **kwargs) -> Address | None:
         type_ = type_ if type_ is not None else self.Address.Type.DEFAULT
         if type_.value.hdPurpose is None:
             return None
@@ -510,17 +496,17 @@ class Coin(CoinObject, table_type=CoinsTable):
         return True
 
     @property
-    def serverData(self) -> Dict[str, Any]:
+    def serverData(self) -> dict[str, ...]:
         return self._server_data
 
     @serverData.setter
-    def serverData(self, value: Dict[str, Any]) -> None:
+    def serverData(self, value: dict[str, ...]) -> None:
         self._updateValue("set", "server_data", value)
 
     def __createAddressListsForMempoolHelper(
             self,
             local_hash: Sha256Digest,
-            address_list: List[str]) -> Dict[str, Any]:
+            address_list: list[str]) -> dict[str, ...]:
         local_hash = local_hash.update(b"\0").finalize()
         cache_value = self._mempool_cache.setdefault(
             local_hash,
@@ -534,7 +520,7 @@ class Coin(CoinObject, table_type=CoinsTable):
 
     def createMempoolAddressLists(
             self,
-            count_per_list: int) -> List[Dict[str, Any]]:
+            count_per_list: int) -> list[dict[str, ...]]:
         self._mempool_cache_access_counter += 1
         result = []
 

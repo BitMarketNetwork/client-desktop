@@ -275,27 +275,20 @@ class _Address(
             self: _Address | None,
             key: str,
             value: DeserializedData,
-            *cls_args) -> Any:
-        coin = cls_args[0] if cls_args else self._coin
+            *cls_args) -> ...:
         if key == "type":
             for t in cls.Type:
                 if value == t.value.name:
                     return t
-            # noinspection PyUnresolvedReferences
             return cls.Type.UNKNOWN
         if isinstance(value, str) and key == "key":
-            return cls.importKey(coin, value)
-        if key == "tx_list":
-            if isinstance(value, dict):
-                return coin.Tx.deserialize(flags, value, coin)
-            elif isinstance(value, coin.Tx):
-                return value
-        if key == "utxo_list":
-            if isinstance(value, dict):
-                return coin.Tx.Utxo.deserialize(flags, value, coin)
-            elif isinstance(value, coin.Tx.Utxo):
-                return value
-        return super()._deserializeProperty(flags, self, key, value, *cls_args)
+            address = cls_args[0] if cls_args else self
+            return cls.importKey(address._coin, value)
+        if key == "tx_list" and isinstance(value, dict):
+            return lambda a: a.coin.Tx.deserialize(flags, value, a.coin)
+        if key == "utxo_list" and isinstance(value, dict):
+            return lambda a: a.coin.Tx.Utxo.deserialize(flags, value, a)
+        return super().deserializeProperty(flags, self, key, value, *cls_args)
 
     @classproperty
     def hrp(cls) -> str:  # noqa
