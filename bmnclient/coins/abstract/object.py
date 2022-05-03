@@ -182,7 +182,9 @@ class CoinObject(Serializable):
             self,
             action: str,
             name: str,
-            new_value: ...) -> bool:
+            new_value: ...,
+            *,
+            on_update: Callable[[], None] | None = None) -> bool:
         private_name = "_" + name
 
         old_value = getattr(self, private_name)
@@ -196,16 +198,23 @@ class CoinObject(Serializable):
                     and name in self.serializeMap
                     and (column := self.__TABLE_TYPE.ColumnEnum.get(name))
             ):
-                table.update(
-                    self.rowId,
-                    [ColumnValue(
-                        column,
-                        self.serializeProperty(
-                            SerializeFlag.DATABASE_MODE
-                            | SerializeFlag.EXCLUDE_SUBCLASSES,
-                            name,
-                            new_value)
-                    )])
+                columns = [ColumnValue(
+                    column,
+                    self.serializeProperty(
+                        SerializeFlag.DATABASE_MODE
+                        | SerializeFlag.EXCLUDE_SUBCLASSES,
+                        name,
+                        new_value)
+                )]
+                if on_update:
+                    with table.database.transaction(allow_in_transaction=True):
+                        table.update(self.rowId, columns)
+                        on_update()
+                else:
+                    table.update(self.rowId, columns)
+            else:
+                if on_update:
+                    on_update()
         return True
 
     _TableT = TypeVar("_TableT", bound=SerializableTable)

@@ -554,10 +554,13 @@ class _Address(
 
     @historyFirstOffset.setter
     def historyFirstOffset(self, value: str):
-        with self.model.database.transaction(allow_in_transaction=True):
-            if self._updateValue("set", "history_first_offset", value):
-                if not value:
-                    self.historyLastOffset = ""
+        def clear() -> None:
+            self.historyLastOffset = ""
+        self._updateValue(
+            "set",
+            "history_first_offset",
+            value,
+            on_update=None if value else clear)
 
     @serializable
     @property
@@ -566,7 +569,10 @@ class _Address(
 
     @historyLastOffset.setter
     def historyLastOffset(self, value: str):
-        with self.model.database.transaction(allow_in_transaction=True):
-            if self._updateValue("set", "history_last_offset", value):
-                if not value:
-                    self.historyFirstOffset = ""
+        def clear() -> None:
+            self.historyFirstOffset = ""
+        self._updateValue(
+            "set",
+            "history_last_offset",
+            value,
+            on_update=None if value else clear)
