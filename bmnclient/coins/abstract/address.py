@@ -9,6 +9,7 @@ from ...crypto.secp256k1 import PrivateKey, PublicKey
 from ...database.tables import AddressTxsTable, AddressesTable, UtxosTable
 from ...utils import SerializeFlag, serializable
 from ...utils.class_property import classproperty
+from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
     from .coin import Coin

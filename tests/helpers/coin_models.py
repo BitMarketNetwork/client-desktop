@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class CoinModel(Coin.Model):
     __DATABASE_NEXT_INDEX = itertools.count(start=1)
 
-    def __init__(self, application: TestApplication, coin: Coin) -> None:
+    def __init__(self, application: TestApplication, *, coin: Coin) -> None:
         # individual database for every coin instance
         db_file_path = application.tempPath
         db_file_path /= (
@@ -24,6 +24,7 @@ class CoinModel(Coin.Model):
 
         super().__init__(
             coin=coin,
+            query_scheduler=application.networkQueryScheduler,
             database=Database(application, db_file_path))
 
     def __del__(self) -> None:
@@ -62,21 +63,21 @@ class ModelsFactory:
             application: TestApplication,
             owner: CoinObject) -> CoinObjectModel:
         if isinstance(owner, Coin):
-            return CoinModel(application, owner)
+            return CoinModel(application, coin=owner)
 
         if isinstance(owner, Coin.Address):
-            return AddressModel(owner)
+            return AddressModel(address=owner)
 
         if isinstance(owner, Coin.Tx):
-            return TxModel(owner)
+            return TxModel(tx=owner)
 
         if isinstance(owner, Coin.Tx.Io):
-            return TxIoModel(owner)
+            return TxIoModel(io=owner)
 
         if isinstance(owner, Coin.Tx.Utxo):
-            return UtxoModel(owner)
+            return UtxoModel(utxo=owner)
 
         if isinstance(owner, Coin.TxFactory):
-            return TxFactoryModel(owner)
+            return TxFactoryModel(factory=owner)
 
-        raise TypeError()
+        raise TypeError

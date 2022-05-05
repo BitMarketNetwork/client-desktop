@@ -16,6 +16,7 @@ from ...utils import (
     SerializableList,
     serializable)
 from ...utils.class_property import classproperty
+from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
     from .object import CoinModelFactory, CoinObjectModel

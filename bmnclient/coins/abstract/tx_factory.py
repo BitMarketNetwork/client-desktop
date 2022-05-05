@@ -53,7 +53,7 @@ class _TxFactory(CoinObject, table_type=None):
             self.__class__,
             *CoinUtils.coinToNameKeyTuple(coin))
 
-        self._utxo_list: Sequence[Coin.Tx.Utxo] = []
+        self._utxo_list: list[Coin.Tx.Utxo] = []
         self._utxo_amount = 0
         self._selected_utxo_data = self._SelectedUtxoData()
 

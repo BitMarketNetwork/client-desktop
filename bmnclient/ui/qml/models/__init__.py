@@ -129,6 +129,8 @@ class AbstractModel(QObject):
     stateChanged = QSignal()
 
     def __init__(self, application: QmlApplication, *args, **kwargs) -> None:
+        assert not kwargs
+        assert not args
         super().__init__()
         self._application = application
         self._update_lock = Lock()
