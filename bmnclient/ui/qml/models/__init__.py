@@ -147,7 +147,7 @@ class AbstractModel(QObject):
         return self._application.language.locale
 
     # TODO check usage
-    def update(self, initiator: Optional[QObject] = None) -> None:
+    def update(self, initiator: QObject | None = None) -> None:
         if self._update_lock.acquire(False):
             for a in self.iterateStateModels():
                 if a is not initiator:

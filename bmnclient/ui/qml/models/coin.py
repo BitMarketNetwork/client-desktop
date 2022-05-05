@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from enum import auto
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import (
@@ -17,7 +16,6 @@ from .tx import TxListConcatenateModel, TxListSortedModel
 from ....coins.abstract import Coin
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Final, Optional
     from .. import QmlApplication
     from ....currency import FiatRate
 
@@ -102,7 +100,7 @@ class CoinBalanceModel(AbstractAmountModel):
         for address in self._coin.addressList:
             address.model.balance.update()
 
-    def _getValue(self) -> Optional[int]:
+    def _getValue(self) -> int | None:
         return self._coin.balance
 
 
@@ -111,7 +109,7 @@ class CoinReceiveManagerModel(AbstractCoinStateModel):
 
     def __init__(self, application: QmlApplication, coin: Coin) -> None:
         super().__init__(application, coin)
-        self._address: Optional[Coin.Address] = None
+        self._address: Coin.Address | None = None
 
     def _getValidStatus(self) -> ValidStatus:
         if self._address is not None:
@@ -225,11 +223,6 @@ class CoinModel(Coin.Model, AbstractModel):
             self._coin)
         self.connectModelUpdate(self._server_data_model)
 
-        self._address_list_model = AddressListModel(
-            self._application,
-            self._coin.addressList)
-        self._tx_list_model = TxListConcatenateModel(self._application)
-
         self._receive_manager = CoinReceiveManagerModel(
             self._application,
             self._coin)
@@ -292,21 +285,29 @@ class CoinModel(Coin.Model, AbstractModel):
     def manager(self) -> CoinManagerModel:
         return self._manager
 
+    @QProperty(QObject, constant=True)
+    def txFactory(self) -> TxFactoryModel:
+        return self._coin.txFactory.model
+
     def afterSetIsEnabled(self, value: bool) -> None:
         self._state_model.update()
+        # noinspection PyUnresolvedReferences
         super().afterSetIsEnabled(value)
 
     def afterSetHeight(self, value: int) -> None:
         self._state_model.update()
+        # noinspection PyUnresolvedReferences
         super().afterSetHeight(value)
 
     def afterSetFiatRate(self, value: FiatRate) -> None:
         self._balance_model.update()
         self._coin.txFactory.model.update()
+        # noinspection PyUnresolvedReferences
         super().afterSetFiatRate(value)
 
     def afterUpdateBalance(self, value: int) -> None:
         self._balance_model.update()
+        # noinspection PyUnresolvedReferences
         super().afterUpdateBalance(value)
 
     def afterUpdateUtxoList(self, value: None) -> None:
@@ -323,61 +324,11 @@ class CoinModel(Coin.Model, AbstractModel):
         self._tx_list_model.addSourceModel(address.model.txList)
         super().afterAppendAddress(address)
 
-    def afterSetServerData(self, value: Dict[str, Any]) -> None:
+    def afterSetServerData(self, value: dict[str, ...]) -> None:
         self._server_data_model.update()
+        # noinspection PyUnresolvedReferences
         super().afterSetServerData(value)
 
 
-class CoinListModel(AbstractListModel):
-    class Role(RoleEnum):
-        OBJECT: Final = auto()  # TODO temporary, kill
-        SHORT_NAME: Final = auto()
-        FULL_NAME: Final = auto()
-        ICON_PATH: Final = auto()
-        BALANCE: Final = auto()
-        STATE: Final = auto()
-        SERVER_DATA: Final = auto()
-        ADDRESS_LIST: Final = auto()
-        TX_LIST: Final = auto()
-        TX_FACTORY: Final = auto()
-        RECEIVE_MANAGER: Final = auto()
-        MANAGER: Final = auto()
-
-    _ROLE_MAP: Final = {
-        Role.OBJECT: (  # TODO temporary, kill
-            b"object",
-            lambda c: c.model),
-        Role.SHORT_NAME: (
-            b"name",
-            lambda c: c.model.name),
-        Role.FULL_NAME: (
-            b"fullName",
-            lambda c: c.model.fullName),
-        Role.ICON_PATH: (
-            b"iconPath",
-            lambda c: c.model.iconPath),
-        Role.BALANCE: (
-            b"balance",
-            lambda c: c.model.balance),
-        Role.STATE: (
-            b"state",
-            lambda c: c.model.state),
-        Role.SERVER_DATA: (
-            b"serverData",
-            lambda c: c.model.serverData),
-        Role.ADDRESS_LIST: (
-            b"addressList",
-            lambda c: c.model.addressListSorted()),
-        Role.TX_LIST: (
-            b"txList",
-            lambda c: c.model.txListSorted()),
-        Role.TX_FACTORY: (
-            b"txFactory",
-            lambda c: c.txFactory.model),
-        Role.RECEIVE_MANAGER: (
-            b"receiveManager",
-            lambda c: c.model.receiveManager),
-        Role.MANAGER: (
-            b"manager",
-            lambda c: c.model.manager)
-    }
+class CoinListModel(AbstractTableModel):
+    pass
