@@ -7,7 +7,6 @@ from weakref import WeakValueDictionary
 
 from .object import CoinObject, CoinRootObjectModel
 from ..hd import HdNode
-from ..utils import CoinUtils
 from ...crypto.digest import Sha256Digest
 from ...currency import Currency, FiatRate, NoneFiatCurrency
 from ...database.tables import AddressesTable, CoinsTable
@@ -22,13 +21,10 @@ if TYPE_CHECKING:
     from .object import CoinModelFactory, CoinObjectModel
 
 
-class _Model(CoinObjectModel):
+class _Model(CoinRootObjectModel):
     def __init__(self, *args, coin: Coin, **kwargs) -> None:
-        super().__init__(
-            *args,
-            name_key_tuple=CoinUtils.coinToNameKeyTuple(coin),
-            **kwargs)
         self._coin = coin
+        super().__init__(*args, **kwargs)
 
     @property
     def owner(self) -> Coin:
@@ -148,6 +144,10 @@ class Coin(CoinObject, table_type=CoinsTable):
         return hash((
             super().__hash__(),
             self.name))
+
+    # TODO cache
+    def __str__(self) -> str:
+        return StringUtils.classString(self.__class__, (None, self.name))
 
     def __update__(self, **kwargs) -> bool:
         self._appendDeferredSave(kwargs.pop("address_list", []))

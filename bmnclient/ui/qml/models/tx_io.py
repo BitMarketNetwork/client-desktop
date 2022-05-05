@@ -41,7 +41,6 @@ class TxIoModel(_TxIoModel, AbstractModel):
         super().__init__(
             application,
             query_scheduler=application.networkQueryScheduler,
-            database=application.database,
             io=io)
 
         self._amount_model = TxIoAmountModel(

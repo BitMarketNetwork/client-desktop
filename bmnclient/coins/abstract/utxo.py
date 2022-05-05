@@ -4,7 +4,6 @@ from functools import cached_property
 from typing import Final, TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
-from ..utils import CoinUtils
 from ...database.tables import UtxosTable
 from ...utils import (
     DeserializeFlag,
@@ -18,11 +17,9 @@ if TYPE_CHECKING:
 
 
 class _Model(CoinObjectModel):
-    def __init__(self, utxo: Coin.Tx.Utxo, **kwargs) -> None:
-        super().__init__(
-            name_key_tuple=CoinUtils.utxoToNameKeyTuple(utxo),
-            **kwargs)
+    def __init__(self, *args, utxo: Coin.Tx.Utxo, **kwargs) -> None:
         self._utxo = utxo
+        super().__init__(*args, **kwargs)
 
     @property
     def owner(self) -> Coin.Tx.Utxo:
@@ -61,10 +58,14 @@ class _Utxo(CoinObject, table_type=UtxosTable):
             self._height,
             self._amount))
 
+    # TODO cache
     def __str__(self) -> str:
         return StringUtils.classString(
             self.__class__,
-            *CoinUtils.utxoToNameKeyTuple(self))
+            (None, self._name),
+            (None, self._index),
+            ("amount", self._amount),
+            parent=self._address)
 
     def serializeProperty(
             self,

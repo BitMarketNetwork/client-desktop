@@ -5,7 +5,6 @@ from typing import Final, TYPE_CHECKING, Union
 
 from .object import CoinObject, CoinObjectModel
 from ..hd import HdNode
-from ..utils import CoinUtils
 from ...crypto.secp256k1 import PrivateKey, PublicKey
 from ...database.tables import AddressTxsTable, AddressesTable, UtxosTable
 from ...utils import SerializeFlag, serializable
@@ -116,11 +115,8 @@ class _TypeValue:
 
 class _Model(CoinObjectModel):
     def __init__(self, *args, address: Coin.Address, **kwargs) -> None:
-        super().__init__(
-            *args,
-            name_key_tuple=CoinUtils.addressToNameKeyTuple(address),
-            **kwargs)
         self._address = address
+        super().__init__(*args, **kwargs)
 
     @property
     def owner(self) -> Coin.Address:
@@ -239,6 +235,19 @@ class _Address(
             super().__hash__(),
             self._name,
             self._type))
+
+    # TODO cache
+    def __str__(self) -> str:
+        return StringUtils.classString(
+            self.__class__,
+            (None, self._name),
+            (
+                "path",
+                self._key.pathToString()
+                if isinstance(self._key, HdNode)
+                else ""
+            ),
+            parent=self.coin)
 
     def __update__(self, **kwargs) -> bool:
         self._appendDeferredSave(kwargs.pop("tx_list", []))

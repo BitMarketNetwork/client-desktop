@@ -9,6 +9,7 @@ from .object import CoinObject, CoinObjectModel
 from ..utils import CoinUtils
 from ...crypto.secp256k1 import PublicKey
 from ...logger import Logger
+from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
     from typing import List, Optional, Sequence, Tuple
@@ -17,16 +18,9 @@ if TYPE_CHECKING:
 
 
 class _Model(CoinObjectModel):
-    def __init__(
-            self,
-            *args,
-            factory: Coin.TxFactory,
-            **kwargs) -> None:
-        super().__init__(
-            *args,
-            name_key_tuple=CoinUtils.txFactoryToNameKeyTuple(factory),
-            **kwargs)
+    def __init__(self, *args, factory: Coin.TxFactory, **kwargs) -> None:
         self._factory = factory
+        super().__init__(*args, **kwargs)
 
     @property
     def owner(self) -> Coin.TxFactory:
@@ -65,17 +59,21 @@ class _TxFactory(CoinObject, table_type=None):
 
         self._input_address: Optional[Coin.Address] = None
 
-        self._receiver_address: Optional[Coin.Address] = None
+        self._receiver_address: Coin.Address | None = None
         self._receiver_amount = 0
 
-        self._change_address: Optional[Coin.Address] = None
+        self._change_address: Coin.Address | None = None
 
         self._subtract_fee = False
         self._fee_amount_per_byte = 103  # TODO
 
-        self._dummy_change_address: Optional[Coin.Address] = None
+        self._dummy_change_address: Coin.Address | None = None
 
-        self._mtx: Optional[_TxFactory.MutableTx] = None
+        self._mtx: _TxFactory.MutableTx | None = None
+
+    # TODO cache
+    def __str__(self) -> str:
+        return StringUtils.classString(self.__class__, parent=self.coin)
 
     def _createDummyChangeAddress(self) -> Optional[Coin.Address]:
         public_key = PublicKey.fromPublicInteger(

@@ -4,7 +4,6 @@ from enum import Enum
 from typing import Final, TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
-from ..utils import CoinUtils
 from ...database.tables import TxIosTable
 from ...utils import (
     DeserializeFlag,
@@ -18,11 +17,9 @@ if TYPE_CHECKING:
 
 
 class _Model(CoinObjectModel):
-    def __init__(self, io: Coin.Tx.Io, **kwargs) -> None:
-        super().__init__(
-            name_key_tuple=CoinUtils.txIoToNameKeyTuple(io),
-            **kwargs)
+    def __init__(self, *args, io: Coin.Tx.Io, **kwargs) -> None:
         self._io = io
+        super().__init__(*args, **kwargs)
 
     @property
     def owner(self) -> Coin.Tx.Io:
@@ -66,10 +63,14 @@ class _Io(CoinObject, table_type=TxIosTable):
             self._address,
             self._amount))
 
+    # TODO cache
     def __str__(self) -> str:
         return StringUtils.classString(
             self.__class__,
-            *CoinUtils.txIoToNameKeyTuple(self))
+            (None, self._io_type.value),
+            ("index", self._index),
+            ("amount", self._amount),
+            parent=self._address)
 
     def serializeProperty(
             self,

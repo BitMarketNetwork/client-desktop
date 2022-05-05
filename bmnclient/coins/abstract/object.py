@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from enum import IntEnum
 from typing import (
     Callable,
     Final,
@@ -27,13 +26,9 @@ if TYPE_CHECKING:
 
 
 class CoinObjectModel:
-    def __init__(
-            self,
-            *args,
-            name_key_tuple: tuple[ClassStringKeyTuple, ...],
-            **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._logger = Logger.classLogger(self.__class__, *name_key_tuple)
+        self._logger = Logger.objectLogger(self.owner)
 
     @property
     def logger(self) -> logging.Logger:
@@ -101,6 +96,9 @@ class CoinObject(Serializable):
         if self is not self._coin:
             return hash((self._coin, ))
         return 0
+
+    def __str__(self) -> str:
+        raise NotImplementedError
 
     @property
     def model(self) -> CoinObjectModel | CoinRootObjectModel:

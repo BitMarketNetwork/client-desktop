@@ -5,7 +5,6 @@ from functools import cached_property
 from typing import Final, Sequence, TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
-from ..utils import CoinUtils
 from ...database.tables import TxIosTable, TxsTable
 from ...utils import DeserializeFlag, DeserializedData, serializable
 from ...utils.string import StringUtils
@@ -15,11 +14,9 @@ if TYPE_CHECKING:
 
 
 class _Model(CoinObjectModel):
-    def __init__(self, tx: Coin.Tx, **kwargs) -> None:
-        super().__init__(
-            name_key_tuple=CoinUtils.txToNameKeyTuple(tx),
-            **kwargs)
+    def __init__(self, *args, tx: Coin.Tx, **kwargs) -> None:
         self._tx = tx
+        super().__init__(*args, **kwargs)
 
     @property
     def owner(self) -> Coin.Tx:
@@ -86,6 +83,13 @@ class _Tx(CoinObject, table_type=TxsTable):
             super().__hash__(),
             self._name))
 
+    # TODO cache
+    def __str__(self) -> str:
+        return StringUtils.classString(
+            self.__class__,
+            (None, self._name),
+            parent=self.coin)
+
     def __update__(self, **kwargs) -> bool:
         self._appendDeferredSave(kwargs.pop("input_list", []))
         self._appendDeferredSave(kwargs.pop("output_list", []))
@@ -93,17 +97,6 @@ class _Tx(CoinObject, table_type=TxsTable):
             return False
         # TODO self.updateBalance()
         return True
-
-    def __str__(self) -> str:
-        return StringUtils.classString(
-            self.__class__,
-            *CoinUtils.txToNameKeyTuple(self))
-
-    def __update__(self, **kwargs) -> bool:
-        # TODO clear old list
-        self._appendDeferredSave(kwargs.pop("input_list", []))
-        self._appendDeferredSave(kwargs.pop("output_list", []))
-        return super().__update__(**kwargs)
 
     @classmethod
     def deserializeProperty(
