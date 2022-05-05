@@ -2,21 +2,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    Property as QProperty, \
-    QObject, \
-    Signal as QSignal, \
-    Slot as QSlot
+from PySide6.QtCore import (
+    Property as QProperty,
+    QObject,
+    Signal as QSignal,
+    Slot as QSlot)
 
 from . import AbstractCoinStateModel, AbstractModel, ValidStatus
 from .amount import AbstractAmountInputModel, AbstractAmountModel
 from .tx import TxIoListModel
-from ....coin_models import TxFactoryModel as _TxFactoryModel
 from ..dialogs.tx import TxBroadcastPendingDialog
+from ....coins.abstract import Coin
+
 if TYPE_CHECKING:
     from typing import Optional, Sequence
     from .. import QmlApplication
-    from ....coins.abstract import Coin
 
 
 class AbstractTxFactoryStateModel(AbstractCoinStateModel):
@@ -237,18 +237,14 @@ class TxFactorySourceListModel(TxIoListModel):
             self.__stateChanged.emit()
 
 
-class TxFactoryModel(_TxFactoryModel, AbstractModel):
+class TxFactoryModel(Coin.TxFactory.Model, AbstractModel):
     __stateChanged = QSignal()
 
     def __init__(
             self,
             application: QmlApplication,
             factory: Coin.TxFactory) -> None:
-        super().__init__(
-            application,
-            query_scheduler=application.networkQueryScheduler,
-            database=application.database,
-            factory=factory)
+        super().__init__(application, factory=factory)
 
         self._state = TxFactoryStateModel(
             self._application,

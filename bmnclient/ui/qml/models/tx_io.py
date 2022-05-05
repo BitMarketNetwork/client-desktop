@@ -34,14 +34,8 @@ class TxIoAmountModel(AbstractAmountModel):
 
 
 class TxIoModel(_TxIoModel, AbstractModel):
-    def __init__(
-            self,
-            application: QmlApplication,
-            io: Coin.Tx.Io) -> None:
-        super().__init__(
-            application,
-            query_scheduler=application.networkQueryScheduler,
-            io=io)
+    def __init__(self, application: QmlApplication, io: Coin.Tx.Io) -> None:
+        super().__init__(application, io=io)
 
         self._amount_model = TxIoAmountModel(
             self._application,

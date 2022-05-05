@@ -87,11 +87,7 @@ class AddressModel(_AddressModel, AbstractModel):
             self,
             application: QmlApplication,
             address: Coin.Address) -> None:
-        super().__init__(
-            application,
-            query_scheduler=application.networkQueryScheduler,
-            database=application.database,
-            address=address)
+        super().__init__(application, address=address)
 
         self._balance_model = AddressBalanceModel(
             self._application,

@@ -102,15 +102,8 @@ class TxFeeAmountModel(AbstractTxAmountModel):
 
 
 class TxModel(_TxModel, AbstractModel):
-    def __init__(
-            self,
-            application: QmlApplication,
-            tx: Coin.Tx) -> None:
-        super().__init__(
-            application,
-            query_scheduler=application.networkQueryScheduler,
-            database=application.database,
-            tx=tx)
+    def __init__(self, application: QmlApplication, tx: Coin.Tx) -> None:
+        super().__init__(application, tx=tx)
 
         self._amount_model = TxAmountModel(
             self._application,

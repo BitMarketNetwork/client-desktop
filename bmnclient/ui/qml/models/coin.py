@@ -14,12 +14,11 @@ from .address import AddressListModel, AddressListSortedModel
 from .amount import AbstractAmountModel
 from .list import AbstractListModel, RoleEnum
 from .tx import TxListConcatenateModel, TxListSortedModel
-from ....coin_models import CoinModel as _CoinModel
+from ....coins.abstract import Coin
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Final, Optional
     from .. import QmlApplication
-    from ....coins.abstract import Coin
     from ....currency import FiatRate
 
 
@@ -203,13 +202,13 @@ class CoinManagerModel(AbstractCoinStateModel):
         return True
 
 
-class CoinModel(_CoinModel, AbstractModel):
+class CoinModel(Coin.Model, AbstractModel):
     def __init__(self, application: QmlApplication, coin: Coin) -> None:
         super().__init__(
             application,
+            coin=coin,
             query_scheduler=application.networkQueryScheduler,
-            database=application.database,
-            coin=coin)
+            database=application.database)
 
         self._balance_model = CoinBalanceModel(
             self._application,

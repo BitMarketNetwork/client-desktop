@@ -73,8 +73,9 @@ class StringUtils(NotImplementedInstance):
 
     @staticmethod
     def classString(
-            cls_: Type,
-            *key_list: ClassStringKeyTuple) -> str:
+            cls_: type(object),
+            *key_list: ClassStringKeyTuple,
+            parent: object | type(object) | None = None) -> str:
         result = []
         for name, value in key_list:
             if name:
@@ -87,6 +88,9 @@ class StringUtils(NotImplementedInstance):
             class_name = class_name[8:]
 
         if result:
-            return class_name + "[" + ":".join(result) + "]"
-        else:
-            return class_name
+            class_name += "[" + ":".join(result) + "]"
+
+        if parent is not None:
+            class_name = str(parent) + "." + class_name
+
+        return class_name
