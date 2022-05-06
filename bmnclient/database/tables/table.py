@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import Enum
 from itertools import chain
 from typing import (
@@ -124,6 +125,28 @@ class TableMeta(type):
 
 
 class Table(metaclass=TableMeta):
+    @dataclass
+    class SaveResult:
+        class Action(Enum):
+            NONE = 0
+            UPDATE = 1
+            INSERT = 2
+
+        row_id: int
+        action: Action
+
+        @property
+        def isNoneAction(self) -> bool:
+            return self.action == self.Action.NONE
+
+        @property
+        def isUpdateAction(self) -> bool:
+            return self.action == self.Action.UPDATE
+
+        @property
+        def isInsertAction(self) -> bool:
+            return self.action == self.Action.INSERT
+
     class ColumnEnum(ColumnEnum):
         ROW_ID = ()
 
@@ -210,21 +233,29 @@ class Table(metaclass=TableMeta):
             key_columns: Sequence[ColumnValue],
             data_columns: Sequence[ColumnValue],
             *,
-            fallback_search: bool = False) -> int:
+            fallback_search: bool = False) -> SaveResult:
         with self._database.transaction(allow_in_transaction=True) as c:
             # row id is defined and row found
             if row_id > 0:
                 if self.update(row_id, data_columns):
-                    return row_id
+                    return self.SaveResult(
+                        row_id,
+                        self.SaveResult.Action.UPDATE)
                 if not fallback_search:
-                    return -1
+                    return self.SaveResult(
+                        -1,
+                        self.SaveResult.Action.NONE)
 
             # row id not defined or row id not found (deleted row)
             new_row_id = self.insert([*key_columns, *data_columns])
             if new_row_id > 0:
-                return new_row_id
+                return self.SaveResult(
+                    new_row_id,
+                    self.SaveResult.Action.INSERT)
             if not fallback_search:
-                return -1
+                return self.SaveResult(
+                    -1,
+                    self.SaveResult.Action.NONE)
 
             # row with UNIQUE columns already exists
 
@@ -240,7 +271,9 @@ class Table(metaclass=TableMeta):
                 if value is not None and value[0] >= 0:
                     row_id = value[0]
                     if row_id > 0 and self.update(row_id, data_columns):
-                        return row_id
+                        return self.SaveResult(
+                            row_id,
+                            self.SaveResult.Action.UPDATE)
 
             raise self._database.engine.IntegrityError(
                 "row in table '{}' not found where: {}"
@@ -355,19 +388,19 @@ class SerializableTable(Table, name=""):
             if column and column not in key_columns:
                 data_columns.append(ColumnValue(column, value))
 
-        row_id = self.save(
+        result = self.save(
             object_.rowId if use_row_id else -1,
             key_columns,
             data_columns,
             fallback_search=fallback_search)
-        if row_id <= 0:
+        if result.row_id <= 0:
             raise self._database.engine.IntegrityError(
                 "failed to save serializable object '{}'"
                 .format(object_.__class__.__name__))
         if use_row_id:
-            object_.rowId = row_id
+            object_.rowId = result.row_id
 
-        return row_id
+        return result.row_id
 
     def loadSerializable(
             self,

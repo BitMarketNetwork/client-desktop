@@ -143,36 +143,41 @@ class TestDatabase(TestCaseApplication):
         keys = [ColumnValue(MetadataTable.ColumnEnum.KEY, "key1")]
         data = (ColumnValue(MetadataTable.ColumnEnum.VALUE, "value1"), )
 
-        row_id_1 = db[MetadataTable].save(-1, keys, data, fallback_search=True)
-        self.assertLess(0, row_id_1)
+        r1 = db[MetadataTable].save(-1, keys, data, fallback_search=True)
+        self.assertLess(0, r1.row_id)
+        self.assertTrue(r1.isInsertAction)
 
-        self.assertEqual(
-            row_id_1,
-            db[MetadataTable].save(-1, keys, data, fallback_search=True))
-        self.assertEqual(
-            row_id_1,
-            db[MetadataTable].save(row_id_1, keys, data, fallback_search=True))
-        self.assertEqual(
-            row_id_1,
-            db[MetadataTable].save(
-                row_id_1 * 10000,
+        r = db[MetadataTable].save(-1, keys, data, fallback_search=True)
+        self.assertEqual(r1.row_id, r.row_id)
+        self.assertTrue(r.isUpdateAction)
+
+        r = db[MetadataTable].save(r1.row_id, keys, data, fallback_search=True)
+        self.assertEqual(r1.row_id, r.row_id)
+        self.assertTrue(r.isUpdateAction)
+
+        r = db[MetadataTable].save(
+                r1.row_id * 10000,
                 keys,
                 data,
-                fallback_search=True))
+                fallback_search=True)
+        self.assertEqual(r1.row_id, r.row_id)
+        self.assertTrue(r.isUpdateAction)
 
-        self.assertEqual(
-            -1,
-            db[MetadataTable].save(-1, keys, data, fallback_search=False))
-        self.assertEqual(
-            row_id_1,
-            db[MetadataTable].save(row_id_1, keys, data, fallback_search=False))
-        self.assertEqual(
-            -1,
-            db[MetadataTable].save(
-                row_id_1 * 10000,
+        r = db[MetadataTable].save(-1, keys, data, fallback_search=False)
+        self.assertEqual(-1, r.row_id)
+        self.assertTrue(r.isNoneAction)
+
+        r = db[MetadataTable].save(r1.row_id, keys, data, fallback_search=False)
+        self.assertEqual(r1.row_id, r.row_id)
+        self.assertTrue(r.isUpdateAction)
+
+        r = db[MetadataTable].save(
+                r1.row_id * 10000,
                 keys,
                 data,
-                fallback_search=False))
+                fallback_search=False)
+        self.assertEqual(-1, r.row_id)
+        self.assertTrue(r.isNoneAction)
 
     def test_load(self) -> None:
         db = self._create(Path("load.db"))
@@ -188,24 +193,24 @@ class TestDatabase(TestCaseApplication):
             -1,
             db[MetadataTable].load(-1, keys, data, fallback_search=False))
 
-        row_id_1 = db[MetadataTable].save(-1, keys, data)
-        self.assertLess(0, row_id_1)
+        r1.row_id = db[MetadataTable].save(-1, keys, data)
+        self.assertLess(0, r1.row_id)
 
         ####
 
         for c in data:
             c.value = None
         self.assertEqual(
-            row_id_1,
-            db[MetadataTable].load(row_id_1, keys, data, fallback_search=True))
+            r1.row_id,
+            db[MetadataTable].load(r1.row_id, keys, data, fallback_search=True))
         for c in data:
             self.assertIsNotNone(c.value)
 
         for c in data:
             c.value = None
         self.assertEqual(
-            row_id_1,
-            db[MetadataTable].load(row_id_1, keys, data, fallback_search=False))
+            r1.row_id,
+            db[MetadataTable].load(r1.row_id, keys, data, fallback_search=False))
         for c in data:
             self.assertIsNotNone(c.value)
 
@@ -214,7 +219,7 @@ class TestDatabase(TestCaseApplication):
         for c in data:
             c.value = None
         self.assertEqual(
-            row_id_1,
+            r1.row_id,
             db[MetadataTable].load(-1, keys, data, fallback_search=True))
         for c in data:
             self.assertIsNotNone(c.value)
@@ -222,7 +227,7 @@ class TestDatabase(TestCaseApplication):
         for c in data:
             c.value = None
         self.assertEqual(
-            row_id_1,
+            r1.row_id,
             db[MetadataTable].load(-1, keys, data, fallback_search=False))
         for c in data:
             self.assertIsNotNone(c.value)
@@ -232,9 +237,9 @@ class TestDatabase(TestCaseApplication):
         for c in data:
             c.value = None
         self.assertEqual(
-            row_id_1,
+            r1.row_id,
             db[MetadataTable].load(
-                row_id_1 * 10000,
+                r1.row_id * 10000,
                 keys,
                 data,
                 fallback_search=True))
@@ -246,7 +251,7 @@ class TestDatabase(TestCaseApplication):
         self.assertEqual(
             -1,
             db[MetadataTable].load(
-                row_id_1 * 10000,
+                r1.row_id * 10000,
                 keys,
                 data,
                 fallback_search=False))
