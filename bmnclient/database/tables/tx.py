@@ -1,7 +1,15 @@
 from __future__ import annotations
 
-from .table import ColumnEnum, SerializableTable
+from typing import Callable, TYPE_CHECKING
+
+from .table import (
+    ColumnEnum,
+    SerializableRowList,
+    SerializableTable)
 from ...utils.class_property import classproperty
+
+if TYPE_CHECKING:
+    from ...coins.abstract import Coin
 
 
 class TxsTable(SerializableTable, name="transactions"):
@@ -42,3 +50,17 @@ class TxsTable(SerializableTable, name="transactions"):
             lambda o: o.name
         )
     )
+
+    def rowList(
+            self,
+            coin: Coin,
+            on_save_row: Callable[[int], None] | None = None
+    ) -> SerializableRowList[Coin.Tx]:
+        assert coin.rowId > 0
+        return SerializableRowList(
+            type_=coin.Tx,
+            type_args=[coin],
+            table=self,
+            where_expression=f"{self.ColumnEnum.COIN_ROW_ID} == ?",
+            where_args=[coin.rowId],
+            on_save_row=on_save_row)

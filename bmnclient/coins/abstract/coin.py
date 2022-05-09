@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-from contextlib import contextmanager
 from typing import Final, Generator, TYPE_CHECKING
 from weakref import WeakValueDictionary
 
@@ -103,11 +102,7 @@ class Coin(CoinObject, table_type=CoinsTable):
             self.remote_hash = remote_hash
             self.access_count = access_count
 
-    def __init__(
-            self,
-            *,
-            model_factory: CoinModelFactory,
-            **kwargs) -> None:
+    def __init__(self, *, model_factory: CoinModelFactory, **kwargs) -> None:
         super().__init__(self, kwargs)
 
         self._model_factory: Final = model_factory
@@ -561,6 +556,10 @@ class Coin(CoinObject, table_type=CoinsTable):
             cache_value.remote_hash = remote_hash
             return True
         return False
+
+    @property
+    def txList(self) -> SerializableList[Tx]:
+        return self._rowList(TxsTable)
 
     @property
     def txFactory(self) -> TxFactory:

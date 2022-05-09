@@ -2,11 +2,15 @@ from __future__ import annotations
 
 from enum import Enum
 from functools import cached_property
-from typing import Final, Sequence, TYPE_CHECKING
+from typing import Final, TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
 from ...database.tables import TxIosTable, TxsTable
-from ...utils import DeserializeFlag, DeserializedData, serializable
+from ...utils import (
+    DeserializeFlag,
+    DeserializedData,
+    SerializableList,
+    serializable)
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
@@ -174,13 +178,13 @@ class _Tx(CoinObject, table_type=TxsTable):
 
     @serializable
     @property
-    def inputList(self) -> Sequence[_Tx.Io]:
-        return self._rowListProxy(TxIosTable, self.Io.IoType.INPUT)
+    def inputList(self) -> SerializableList[_Tx.Io]:
+        return self._rowList(TxIosTable, self.Io.IoType.INPUT)
 
     @serializable
     @property
-    def outputList(self) -> Sequence[_Tx.Io]:
-        return self._rowListProxy(TxIosTable, self.Io.IoType.OUTPUT)
+    def outputList(self) -> SerializableList[_Tx.Io]:
+        return self._rowList(TxIosTable, self.Io.IoType.OUTPUT)
 
     @staticmethod
     def toNameHuman(name: str) -> str:

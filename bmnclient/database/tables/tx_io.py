@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 from .table import (Column, ColumnEnum, SerializableRowList, SerializableTable)
 from ...utils.class_property import classproperty
@@ -51,7 +51,8 @@ class TxIosTable(SerializableTable, name="transaction_ios"):
     def rowList(
             self,
             tx: Coin.Tx,
-            io_type: Coin.Tx.Io.IoType | None
+            io_type: Coin.Tx.Io.IoType | None,
+            on_save_row: Callable[[int], None] | None = None
     ) -> SerializableRowList[Coin.Tx.Io]:
         assert tx.rowId > 0
         where_columns = [self.ColumnEnum.TX_ROW_ID]
@@ -64,4 +65,5 @@ class TxIosTable(SerializableTable, name="transaction_ios"):
             type_args=[tx],
             table=self,
             where_expression=Column.joinWhere(where_columns),
-            where_args=where_args)
+            where_args=where_args,
+            on_save_row=on_save_row)

@@ -7,7 +7,7 @@ from .object import CoinObject, CoinObjectModel
 from ..hd import HdNode
 from ...crypto.secp256k1 import PrivateKey, PublicKey
 from ...database.tables import AddressTxsTable, AddressesTable, UtxosTable
-from ...utils import SerializeFlag, serializable
+from ...utils import SerializableList, SerializeFlag, serializable
 from ...utils.class_property import classproperty
 from ...utils.string import StringUtils
 
@@ -122,6 +122,11 @@ class _Model(CoinObjectModel):
     @property
     def owner(self) -> Coin.Address:
         return self._address
+
+    def afterInsertSelf(self) -> None:
+        self._address.coin.updateBalance()
+        self._address.coin.model.queryScheduler.updateCoinAddress(self._address)
+        super().afterInsertSelf()
 
     def beforeSetKey(self, value: Coin.Address.KeyType) -> None: pass
     def afterSetKey(self, value: Coin.Address.KeyType) -> None: pass

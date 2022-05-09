@@ -385,10 +385,10 @@ class SerializableTable(Table, name=""):
             object_: Serializable,
             *,
             use_row_id: bool = True,
-            fallback_search: bool = True) -> Table.SaveResult:
+            fallback_search: bool = True) -> SerializableTable.SaveResult:
         key_columns = self._keyColumns(object_)
         if not key_columns:
-            return Table.SaveResult()
+            return SerializableTable.SaveResult()
 
         source_data = object_.serialize(
             SerializeFlag.DATABASE_MODE |
@@ -623,13 +623,12 @@ class SerializableRowList(SerializableList):
             object_: Serializable,
             table: SerializableTable,
             result: SerializableTable.SaveResult) -> None:
-        if not self._on_save_row:
-            return
-        if table is not self._table or not result.isInsertAction:
+        if not self._on_save_row or table is not self._table:
             return
         # TODO calculate offset relative to sorting mode
-        index = len(self)
-        self._on_save_row(object_, self, result, index)
+        if result.isInsertAction:
+            index = len(self) - 1  # FIXME
+            self._on_save_row(object_, self, result, index)
 
     def insert(self, index: int, value: ...) -> None:
         raise NotImplementedError

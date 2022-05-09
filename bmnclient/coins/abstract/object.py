@@ -9,7 +9,10 @@ from typing import (
     TYPE_CHECKING,
     TypeVar)
 
-from ...database.tables import ColumnValue, SerializableTable
+from ...database.tables import (
+    ColumnValue,
+    SerializableRowList,
+    SerializableTable)
 from ...logger import Logger
 from ...utils import (
     EmptySerializableList,
@@ -42,6 +45,20 @@ class CoinObjectModel:
         pass
 
     def afterInsertSelf(self) -> None:
+        pass
+
+    def beforeInsertChild(
+            self,
+            object_: CoinObject,
+            row_list: SerializableRowList,
+            index: int) -> None:
+        pass
+
+    def afterInsertChild(
+            self,
+            object_: CoinObject,
+            row_list: SerializableRowList,
+            index: int) -> None:
         pass
 
 
@@ -263,9 +280,24 @@ class CoinObject(Serializable):
             **kwargs
     ) -> SerializableList:
         if t := self._openTable(table_type):
-            if (result := t.rowList(self, *args, **kwargs)) is not None:
+            result = t.rowList(
+                self,
+                *args,
+                on_save_row=self._onSaveRow,
+                **kwargs)
+            if result is not None:
                 return result
         return EmptySerializableList()
+
+    def _onSaveRow(
+            self,
+            object_: CoinObject,
+            row_list: SerializableRowList,
+            result: SerializableTable.SaveResult,
+            index: int):
+        if result.isInsertAction:
+            with self._modelEvent("insert", "child", object_, row_list, index):
+                pass
 
 
 # TODO deprecated, create class AbstractModelFactory

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import glob
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 from .table import (
     ColumnEnum,
@@ -69,14 +69,19 @@ class AddressesTable(SerializableTable, name="addresses"):
             cursor.execute(
                 "ALTER TABLE \"addresses\" RENAME \"amount\" TO \"balance\"")
 
-    def rowList(self, coin: Coin) -> SerializableRowList[Coin.Address]:
+    def rowList(
+            self,
+            coin: Coin,
+            on_save_row: Callable[[int], None] | None = None
+    ) -> SerializableRowList[Coin.Address]:
         assert coin.rowId > 0
         return SerializableRowList(
             type_=coin.Address,
             type_args=[coin],
             table=self,
             where_expression=f"{self.ColumnEnum.COIN_ROW_ID} == ?",
-            where_args=[coin.rowId])
+            where_args=[coin.rowId],
+            on_save_row=on_save_row)
 
     def queryTotalBalance(self, coin: Coin) -> int:
         assert coin.rowId > 0
@@ -141,7 +146,11 @@ class AddressTxsTable(SerializableTable, name="address_transactions"):
         (ColumnEnum.ADDRESS_ROW_ID, ColumnEnum.TX_ROW_ID),
     )
 
-    def rowList(self, address: Coin.Address) -> SerializableRowList[Coin.Tx]:
+    def rowList(
+            self,
+            address: Coin.Address,
+            on_save_row: Callable[[int], None] | None = None
+    ) -> SerializableRowList[Coin.Tx]:
         from .tx import TxsTable
         assert address.rowId > 0
         return SerializableRowList(
@@ -153,7 +162,8 @@ class AddressTxsTable(SerializableTable, name="address_transactions"):
                 f"SELECT {self.ColumnEnum.TX_ROW_ID}"
                 f" FROM {self}"
                 f" WHERE {self.ColumnEnum.ADDRESS_ROW_ID} == ?)"),
-            where_args=[address.rowId])
+            where_args=[address.rowId],
+            on_save_row=on_save_row)
 
     def associate(self, address: Coin.Address, tx: Coin.Tx) -> bool | None:
         if not isinstance(tx, address.coin.Tx):

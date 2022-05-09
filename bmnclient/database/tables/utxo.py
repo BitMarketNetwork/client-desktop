@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 from .table import ColumnEnum, SerializableRowList, SerializableTable
 from ...utils.class_property import classproperty
@@ -47,14 +47,17 @@ class UtxosTable(SerializableTable, name="utxos"):
 
     def rowList(
             self,
-            address: Coin.Address) -> SerializableRowList[Coin.Tx.Utxo]:
+            address: Coin.Address,
+            on_save_row: Callable[[int], None] | None = None
+    ) -> SerializableRowList[Coin.Tx.Utxo]:
         assert address.rowId > 0
         return SerializableRowList(
             type_=address.coin.Tx.Utxo,
             type_args=[address],
             table=self,
             where_expression=f"{self.ColumnEnum.ADDRESS_ROW_ID} == ?",
-            where_args=[address.rowId])
+            where_args=[address.rowId],
+            on_save_row=on_save_row)
 
     def queryTotalAmount(self, address: Coin.Address) -> int:
         assert address.rowId > 0
