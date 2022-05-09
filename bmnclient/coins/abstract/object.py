@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     import logging
     from .coin import Coin
     from ...database import Database
-    from ...utils.string import ClassStringKeyTuple
+    from ...network.query_scheduler import NetworkQueryScheduler
 
 
 class CoinObjectModel:
@@ -38,15 +38,31 @@ class CoinObjectModel:
     def owner(self) -> CoinObject:
         raise NotImplementedError
 
+    def beforeInsertSelf(self) -> None:
+        pass
+
+    def afterInsertSelf(self) -> None:
+        pass
+
 
 class CoinRootObjectModel(CoinObjectModel):
-    def __init__(self, *args, database: Database, **kwargs) -> None:
+    def __init__(
+            self,
+            *args,
+            database: Database,
+            query_scheduler: NetworkQueryScheduler,
+            **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._database = database
+        self._query_scheduler = query_scheduler
 
     @property
     def database(self) -> Database:
         return self._database
+
+    @property
+    def queryScheduler(self) -> NetworkQueryScheduler:
+        return self._query_scheduler
 
     @property
     def owner(self) -> CoinObject:
@@ -127,7 +143,8 @@ class CoinObject(Serializable):
         if not (t := self._openTable(force=True)):
             return False
         with self._coin.model.database.transaction(allow_in_transaction=True):
-            if t.saveSerializable(self) <= 0:
+            result = t.saveSerializable(self)
+            if not result.isSuccess:
                 return False
             assert self.rowId > 0
 
@@ -138,6 +155,9 @@ class CoinObject(Serializable):
                     if self.associate(object_) is False:
                         return False
             self.__deferred_save_list.clear()
+        if result.isInsertAction:
+            with self._modelEvent("insert", "self"):
+                pass
         return True
 
     def load(self) -> bool:
@@ -164,16 +184,20 @@ class CoinObject(Serializable):
             *args) -> Generator[None, None, None]:
         events_name = name + "[" + action + "]"
         events = self.__value_events.get(events_name, None)
+        model = self.model
         if not events:
-            assert action in ("update", "set", "append")
+            assert action in ("update", "set", "insert")
             action = action.capitalize()
             suffix = StringUtils.toCamelCase(name.strip("_"), first_lower=False)
             events = (
-                getattr(self.model, "before" + action + suffix),
-                getattr(self.model, "after" + action + suffix))
+                getattr(model, "before" + action + suffix),
+                getattr(model, "after" + action + suffix))
             self.__value_events[events_name] = events
+
+        model.logger.debug("before event %s: %s", events_name, str(events[0]))
         events[0](*args)
         yield None
+        model.logger.debug("after event %s: %s", events_name, str(events[1]))
         events[1](*args)
 
     def _updateValue(
@@ -239,7 +263,7 @@ class CoinObject(Serializable):
             **kwargs
     ) -> SerializableList:
         if t := self._openTable(table_type):
-            if result := t.rowList(self, *args, **kwargs):
+            if (result := t.rowList(self, *args, **kwargs)) is not None:
                 return result
         return EmptySerializableList()
 

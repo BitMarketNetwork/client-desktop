@@ -133,8 +133,12 @@ class Table(metaclass=TableMeta):
             UPDATE = 1
             INSERT = 2
 
-        row_id: int
-        action: Action
+        row_id: int = -1
+        action: Action = Action.NONE
+
+        @property
+        def isSuccess(self) -> bool:
+            return bool(self.action != self.Action.NONE and self.row_id > 0)
 
         @property
         def isNoneAction(self) -> bool:
@@ -381,10 +385,10 @@ class SerializableTable(Table, name=""):
             object_: Serializable,
             *,
             use_row_id: bool = True,
-            fallback_search: bool = False) -> int:
+            fallback_search: bool = True) -> Table.SaveResult:
         key_columns = self._keyColumns(object_)
         if not key_columns:
-            return -1
+            return Table.SaveResult()
 
         source_data = object_.serialize(
             SerializeFlag.DATABASE_MODE |
@@ -408,11 +412,11 @@ class SerializableTable(Table, name=""):
         if use_row_id:
             object_.rowId = result.row_id
 
-        if not result.isNoneAction and result.row_id > 0:
+        if result.isSuccess:
             for row_list in self._row_list_weak_set:
-                row_list.__save_row__(self, result)
+                row_list.__save_row__(object_, self, result)
 
-        return result.row_id
+        return result
 
     def loadSerializable(
             self,
@@ -523,6 +527,7 @@ class SerializableRowList(SerializableList):
             order_columns: Sequence[tuple[Column, SortOrder] | None] = None,
             on_save_row: Callable[
                              [
+                                 Serializable,
                                  SerializableRowList,
                                  SerializableTable.SaveResult,
                                  int
@@ -615,15 +620,16 @@ class SerializableRowList(SerializableList):
 
     def __save_row__(
             self,
+            object_: Serializable,
             table: SerializableTable,
-            result: SerializableTable.SaveResult) -> int:
+            result: SerializableTable.SaveResult) -> None:
+        if not self._on_save_row:
+            return
         if table is not self._table or not result.isInsertAction:
-            return -1
+            return
         # TODO calculate offset relative to sorting mode
         index = len(self)
-        if self._on_save_row:
-            self._on_save_row(self, result, index)
-        return index
+        self._on_save_row(object_, self, result, index)
 
     def insert(self, index: int, value: ...) -> None:
         raise NotImplementedError
