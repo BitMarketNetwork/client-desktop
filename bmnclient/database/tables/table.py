@@ -10,6 +10,7 @@ from typing import (
     Sequence,
     TYPE_CHECKING,
     TypeVar)
+from weakref import WeakSet
 
 from ...utils import (
     DeserializeFlag,
@@ -359,6 +360,10 @@ class SerializableTable(Table, name=""):
     _KEY_COLUMN_LIST: \
         tuple[tuple[Column, Callable[[Serializable], None], ...]] = tuple()
 
+    def __init__(self, database: Database) -> None:
+        super().__init__(database)
+        self._row_list_weak_set: WeakSet[SerializableRowList] = WeakSet()
+
     def _keyColumns(self, object_: Serializable) -> tuple[ColumnValue, ...]:
         columns = tuple(
             ColumnValue(c[0], c[1](object_))
@@ -366,7 +371,10 @@ class SerializableTable(Table, name=""):
         return tuple() if any(c.value is None for c in columns) else columns
 
     def rowList(self, *args, **kwargs) -> SerializableRowList | None:
-        return None
+        raise NotImplementedError
+
+    def registerRowList(self, row_list: SerializableRowList):
+        self._row_list_weak_set.add(row_list)
 
     def saveSerializable(
             self,
@@ -399,6 +407,10 @@ class SerializableTable(Table, name=""):
                 .format(object_.__class__.__name__))
         if use_row_id:
             object_.rowId = result.row_id
+
+        if not result.isNoneAction and result.row_id > 0:
+            for row_list in self._row_list_weak_set:
+                row_list.__save_row__(self, result)
 
         return result.row_id
 
@@ -473,7 +485,8 @@ class SerializableTable(Table, name=""):
 
         object_.rowId = row_id
         for c in data_columns:
-            kwargs[object_.kwargKeyFromName(c.column.name)] = object_.deserializeProperty(
+            name = object_.kwargKeyFromName(c.column.name)
+            kwargs[name] = object_.deserializeProperty(
                 DeserializeFlag.DATABASE_MODE,
                 object_,
                 c.column.name,
@@ -507,7 +520,15 @@ class SerializableRowList(SerializableList):
             table: SerializableTable,
             where_expression: str | None = None,
             where_args: Sequence[ColumnValueType] | None,
-            order_columns: Sequence[tuple[Column, SortOrder] | None] = None
+            order_columns: Sequence[tuple[Column, SortOrder] | None] = None,
+            on_save_row: Callable[
+                             [
+                                 SerializableRowList,
+                                 SerializableTable.SaveResult,
+                                 int
+                             ],
+                             None
+                         ] | None = None
     ) -> None:
         super().__init__()
         self._type = type_
@@ -546,6 +567,9 @@ class SerializableRowList(SerializableList):
             f"{self._where_expression}"
             f" ORDER BY {order_expression}"
             f" LIMIT 1 OFFSET ?")
+
+        self._on_save_row = on_save_row
+        self._table.registerRowList(self)
 
     def _deserialize(
             self,
@@ -588,6 +612,18 @@ class SerializableRowList(SerializableList):
 
     def __delitem__(self, index: int) -> None:
         raise NotImplementedError
+
+    def __save_row__(
+            self,
+            table: SerializableTable,
+            result: SerializableTable.SaveResult) -> int:
+        if table is not self._table or not result.isInsertAction:
+            return -1
+        # TODO calculate offset relative to sorting mode
+        index = len(self)
+        if self._on_save_row:
+            self._on_save_row(self, result, index)
+        return index
 
     def insert(self, index: int, value: ...) -> None:
         raise NotImplementedError
