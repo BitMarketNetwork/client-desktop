@@ -7,7 +7,6 @@ from ..abstract import Coin
 from ...crypto.digest import Sha256Digest, Sha256DoubleDigest
 
 if TYPE_CHECKING:
-    from typing import List, Optional, Sequence
     from . import Bitcoin
 
 
@@ -40,7 +39,7 @@ class _MutableTx(Coin.TxFactory.MutableTx):
             version=1,
             **kwargs)
 
-    def _deriveName(self) -> Optional[str]:
+    def _deriveName(self) -> str | None:
         v = Sha256DoubleDigest(self.raw(with_witness=False)).finalize()
         return v[::-1].hex()
 

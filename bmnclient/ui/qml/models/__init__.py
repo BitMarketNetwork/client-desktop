@@ -2,16 +2,17 @@ from __future__ import annotations
 
 from enum import IntEnum
 from threading import Lock
-from typing import TYPE_CHECKING
+from typing import Final, Generator, TYPE_CHECKING
 
-from PySide6.QtCore import \
-    Property as QProperty, \
-    QObject, \
-    Signal as QSignal, \
-    SignalInstance as QSignalInstance
+from PySide6.QtCore import (
+    Property as QProperty,
+    QObject,
+    Signal as QSignal,
+    SignalInstance as QSignalInstance,
+    Slot as QSlot)
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Final, Generator, Optional, Tuple
+    from .list import AbstractTableModel
     from .. import QmlApplication
     from ....coins.abstract import Coin
     from ....config import ConfigKey
@@ -63,10 +64,10 @@ class AbstractTupleStateModel(AbstractStateModel):
     def __init__(
             self,
             application: QmlApplication,
-            source_list: Tuple[Dict[str, Any], ...],
+            source_list: tuple[dict[str, ...], ...],
             *,
-            config_key: Optional[ConfigKey] = None,
-            default_name: Optional[str] = None) -> None:
+            config_key: ConfigKey | None = None,
+            default_name: str | None = None) -> None:
         super().__init__(application)
         self._list = source_list
         self._config_key = config_key
@@ -84,7 +85,7 @@ class AbstractTupleStateModel(AbstractStateModel):
             self.__current_name = None
 
     @QProperty(list, constant=True)
-    def list(self) -> Tuple:
+    def list(self) -> tuple:
         return self._list
 
     @QProperty(str, constant=True)
@@ -134,6 +135,15 @@ class AbstractModel(QObject):
         super().__init__()
         self._application = application
         self._update_lock = Lock()
+        self._list_model_list: dict[int, AbstractTableModel] = {}
+
+    def _registerList(self, model: QObject):
+        self._list_model_list[id(model)] = model
+        return model
+
+    @QSlot(QObject, result=None)
+    def closeList(self, model: QObject) -> None:
+        self._list_model_list.pop(id(model))
 
     def iterateStateModels(self) -> Generator[AbstractStateModel, None, None]:
         for a in dir(self):

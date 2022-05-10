@@ -1,20 +1,20 @@
 from __future__ import annotations
 
-from enum import auto, Enum
+from enum import Enum, auto
 from itertools import chain
 from typing import TYPE_CHECKING
 
-from .parser import \
-    AddressInfoParser, \
-    AddressTxParser, \
-    AddressUtxoParser, \
-    BroadcastTxParser, \
-    CoinMempoolParser, \
-    CoinsInfoParser, \
-    ParseError, \
-    ResponseMetaParser, \
-    ResponseParser, \
-    SysinfoParser
+from .parser import (
+    AddressInfoParser,
+    AddressTxParser,
+    AddressUtxoParser,
+    BroadcastTxParser,
+    CoinMempoolParser,
+    CoinsInfoParser,
+    ParseError,
+    ResponseMetaParser,
+    ResponseParser,
+    SysinfoParser)
 from ..query import AbstractJsonQuery
 from ..utils import NetworkUtils
 from ...coins.hd import HdAddressIterator
