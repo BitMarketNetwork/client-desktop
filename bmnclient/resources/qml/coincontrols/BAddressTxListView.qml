@@ -24,7 +24,7 @@ BControl {
                 BLayout.fillHeight: true
 
                 delegate: BAddressTxItem {
-                    tx: model
+                    tx: modelObject
                 }
 
                 section.property: "state.timeHuman"

@@ -6,10 +6,15 @@ import "../dialogs"
 
 BPane {
     id: _base
-    property string title: qsTr("Addresses (%1)").arg(_tableView.model.rowCountHuman)
+    property string title: qsTr("Addresses (%1)").arg(addressList ? addressList.rowCountHuman : "")
     property var coin // CoinModel
+    property var addressList: _base.coin.openAddressList(5)
 
     signal spendFromTriggered
+
+    Component.onDestruction: {
+         _base.coin.closeList(_base.addressList)
+    }
 
     BHorizontalHeaderView {
         id: _horizontalHeader
@@ -51,14 +56,14 @@ BPane {
         id: _tableView
         anchors.fill: parent
         anchors.topMargin: _horizontalHeader.implicitHeight
-        model: _base.coin.addressList
+        model: _base.addressList
 
         columnWidth: [355, -1, 150, 65, 60]
 
         delegate: BAddressTableRow {
             implicitWidth: _tableView.columnWidthProvider(column)
-            address: model
-            amount: model.balance
+            address: modelObject
+            amount: modelObject.balance
             contextMenu: _contextMenu
 
             Rectangle { // col separator
