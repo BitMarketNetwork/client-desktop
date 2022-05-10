@@ -146,14 +146,17 @@ class TestDatabase(TestCaseApplication):
         r1 = db[MetadataTable].save(-1, keys, data, fallback_search=True)
         self.assertLess(0, r1.row_id)
         self.assertTrue(r1.isInsertAction)
+        self.assertTrue(r1.isSuccess)
 
         r = db[MetadataTable].save(-1, keys, data, fallback_search=True)
         self.assertEqual(r1.row_id, r.row_id)
         self.assertTrue(r.isUpdateAction)
+        self.assertTrue(r.isSuccess)
 
         r = db[MetadataTable].save(r1.row_id, keys, data, fallback_search=True)
         self.assertEqual(r1.row_id, r.row_id)
         self.assertTrue(r.isUpdateAction)
+        self.assertTrue(r.isSuccess)
 
         r = db[MetadataTable].save(
                 r1.row_id * 10000,
@@ -162,14 +165,17 @@ class TestDatabase(TestCaseApplication):
                 fallback_search=True)
         self.assertEqual(r1.row_id, r.row_id)
         self.assertTrue(r.isUpdateAction)
+        self.assertTrue(r.isSuccess)
 
         r = db[MetadataTable].save(-1, keys, data, fallback_search=False)
         self.assertEqual(-1, r.row_id)
         self.assertTrue(r.isNoneAction)
+        self.assertFalse(r.isSuccess)
 
         r = db[MetadataTable].save(r1.row_id, keys, data, fallback_search=False)
         self.assertEqual(r1.row_id, r.row_id)
         self.assertTrue(r.isUpdateAction)
+        self.assertTrue(r.isSuccess)
 
         r = db[MetadataTable].save(
                 r1.row_id * 10000,
@@ -178,6 +184,7 @@ class TestDatabase(TestCaseApplication):
                 fallback_search=False)
         self.assertEqual(-1, r.row_id)
         self.assertTrue(r.isNoneAction)
+        self.assertFalse(r.isSuccess)
 
     def test_load(self) -> None:
         db = self._create(Path("load.db"))
@@ -193,8 +200,10 @@ class TestDatabase(TestCaseApplication):
             -1,
             db[MetadataTable].load(-1, keys, data, fallback_search=False))
 
-        r1.row_id = db[MetadataTable].save(-1, keys, data)
+        r1 = db[MetadataTable].save(-1, keys, data)
         self.assertLess(0, r1.row_id)
+        self.assertTrue(r1.isInsertAction)
+        self.assertTrue(r1.isSuccess)
 
         ####
 
@@ -210,7 +219,11 @@ class TestDatabase(TestCaseApplication):
             c.value = None
         self.assertEqual(
             r1.row_id,
-            db[MetadataTable].load(r1.row_id, keys, data, fallback_search=False))
+            db[MetadataTable].load(
+                r1.row_id,
+                keys,
+                data,
+                fallback_search=False))
         for c in data:
             self.assertIsNotNone(c.value)
 
@@ -327,10 +340,12 @@ class TestDatabase(TestCaseApplication):
 
         o1 = Object(v1="100", v2="200", v3="300", v4="400")
         self.assertEqual(0, o1.result)
-        o1_row_id = table.saveSerializable(o1)
-        self.assertLess(0, o1_row_id)
-        self.assertEqual(o1_row_id, o1.rowId)
-        self.assertEqual(o1_row_id, table.saveSerializable(o1))
+        o1_result = table.saveSerializable(o1)
+        self.assertLess(0, o1_result.row_id)
+        self.assertLess(0, o1_result.isSuccess)
+        self.assertLess(0, o1_result.isInsertAction)
+        self.assertEqual(o1_result.row_id, o1.rowId)
+        self.assertEqual(o1_result.row_id, table.saveSerializable(o1).row_id)
 
         o2 = table.loadSerializable(
             Object,

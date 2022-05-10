@@ -478,20 +478,6 @@ class Coin(CoinObject, table_type=CoinsTable):
                 return address
         return None
 
-    def appendAddress(self, address: Address) -> bool:
-        if address is None:
-            return False
-        # TODO tmp, old wrapper
-        if self.findAddressByName(address.name) is not None:  # noqa
-            return False
-
-        self._callModel("beforeAppendAddress", address)
-        self._address_list.append(address)
-        self._callModel("afterAppendAddress", address)
-
-        self.updateBalance()
-        return True
-
     @property
     def serverData(self) -> dict[str, ...]:
         return self._server_data

@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Optional, Tuple, Union
 
 from .instance import NotImplementedInstance
 
-if TYPE_CHECKING:
-    from typing import Optional, Tuple, Type
-    ClassStringKeyTuple = Tuple[Optional[str], Optional[str, int]]
+ClassStringKeyTuple = Tuple[Optional[str], Optional[Union[str, int]]]
 
 
 class StringUtils(NotImplementedInstance):
     @classmethod
-    def stripLeft(cls, source: str, symbol_list: str) -> Tuple[int, str]:
+    def stripLeft(cls, source: str, symbol_list: str) -> tuple[int, str]:
         offset = 0
         for c in source:
             if c not in symbol_list:
@@ -22,7 +20,7 @@ class StringUtils(NotImplementedInstance):
         return offset, source
 
     @classmethod
-    def stripRight(cls, source: str, symbol_list: str) -> Tuple[int, str]:
+    def stripRight(cls, source: str, symbol_list: str) -> tuple[int, str]:
         offset = 0
         for c in reversed(source):
             if c not in symbol_list:
