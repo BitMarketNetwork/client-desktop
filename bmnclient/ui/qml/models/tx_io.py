@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from enum import auto
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import (
@@ -8,17 +7,14 @@ from PySide6.QtCore import (
     QObject)
 
 from . import AbstractModel
+from .abstract import AbstractTableModel
 from .amount import AbstractAmountModel
-from .list import (
-    AbstractListModel,
-    RoleEnum)
-from ....coin_models import TxIoModel as _TxIoModel
+from ....coins.abstract import Coin
 
 if TYPE_CHECKING:
-    from typing import Final, Optional
+    from typing import Optional
     from .address import AddressModel
     from .. import QmlApplication
-    from ....coins.abstract import Coin
 
 
 class TxIoAmountModel(AbstractAmountModel):
@@ -33,7 +29,7 @@ class TxIoAmountModel(AbstractAmountModel):
         return self._io.amount
 
 
-class TxIoModel(_TxIoModel, AbstractModel):
+class TxIoModel(Coin.Tx.Io.Model, AbstractModel):
     def __init__(self, application: QmlApplication, io: Coin.Tx.Io) -> None:
         super().__init__(application, io=io)
 
@@ -51,16 +47,5 @@ class TxIoModel(_TxIoModel, AbstractModel):
         return self._amount_model
 
 
-class TxIoListModel(AbstractListModel):
-    class Role(RoleEnum):
-        ADDRESS: Final = auto()
-        AMOUNT: Final = auto()
-
-    _ROLE_MAP: Final = {
-        Role.ADDRESS: (
-            b"address",
-            lambda io: io.model.address),
-        Role.AMOUNT: (
-            b"amount",
-            lambda io: io.model.amount)
-    }
+class TxIoListModel(AbstractTableModel):
+    pass

@@ -26,8 +26,11 @@ class _Model(CoinObjectModel):
     def owner(self) -> Coin.Tx:
         return self._tx
 
-    def afterSetHeight(self) -> None: pass
-    def afterSetTime(self) -> None: pass
+    def beforeSetHeight(self, value: int) -> None: pass
+    def afterSetHeight(self, value: int) -> None: pass
+
+    def beforeSetTime(self, value: int) -> None: pass
+    def afterSetTime(self, value: int) -> None: pass
 
 
 class _Tx(CoinObject, table_type=TxsTable):
@@ -130,10 +133,7 @@ class _Tx(CoinObject, table_type=TxsTable):
 
     @height.setter
     def height(self, value: int) -> None:
-        if self._height != value:
-            assert self._height == -1
-            self._height = value
-            self._callModel("afterSetHeight")
+        self._updateValue("set", "height", value)
 
     @property
     def confirmations(self) -> int:
@@ -157,9 +157,7 @@ class _Tx(CoinObject, table_type=TxsTable):
 
     @time.setter
     def time(self, value: int) -> None:
-        if self._time != value:
-            self._time = value
-            self._callModel("afterSetTime")
+        self._updateValue("set", "time", value)
 
     @serializable
     @property

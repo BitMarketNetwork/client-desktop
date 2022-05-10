@@ -1,30 +1,22 @@
 from __future__ import annotations
 
-from enum import auto
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import (
     Property as QProperty,
     QDateTime,
-    QModelIndex,
     QObject,
-    Qt,
-    Signal as QSignal)
+    Signal as QSignal,
+    Slot as QSlot)
 
 from . import AbstractCoinStateModel, AbstractModel
+from .abstract import AbstractTableModel
 from .amount import AbstractAmountModel
-from .list import (
-    AbstractConcatenateModel,
-    AbstractListModel,
-    AbstractSortedModel,
-    RoleEnum)
 from .tx_io import TxIoListModel
-from ....coin_models import TxModel as _TxModel
+from ....coins.abstract import Coin
 
 if TYPE_CHECKING:
-    from typing import Final, Optional
     from .. import QmlApplication
-    from ....coins.abstract import Coin
 
 
 class AbstractTxStateModel(AbstractCoinStateModel):
@@ -44,7 +36,7 @@ class AbstractTxAmountModel(AbstractAmountModel):
         super().__init__(application, tx.coin)
         self._tx = tx
 
-    def _getValue(self) -> Optional[int]:
+    def _getValue(self) -> int | None:
         raise NotImplementedError
 
 
@@ -92,16 +84,16 @@ class TxAmountModel(AbstractTxAmountModel):
         for io in self._tx.outputList:
             io.model.amount.update()
 
-    def _getValue(self) -> Optional[int]:
+    def _getValue(self) -> int | None:
         return self._tx.amount
 
 
 class TxFeeAmountModel(AbstractTxAmountModel):
-    def _getValue(self) -> Optional[int]:
+    def _getValue(self) -> int | None:
         return self._tx.feeAmount
 
 
-class TxModel(_TxModel, AbstractModel):
+class TxModel(Coin.Tx.Model, AbstractModel):
     def __init__(self, application: QmlApplication, tx: Coin.Tx) -> None:
         super().__init__(application, tx=tx)
 
@@ -119,13 +111,6 @@ class TxModel(_TxModel, AbstractModel):
             self._application,
             self._tx)
         self.connectModelUpdate(self._state_model)
-
-        self._input_list_model = TxIoListModel(
-            self._application,
-            self._tx.inputList)
-        self._output_list_model = TxIoListModel(
-            self._application,
-            self._tx.outputList)
 
     @QProperty(str, constant=True)
     def name(self) -> str:
@@ -147,143 +132,32 @@ class TxModel(_TxModel, AbstractModel):
     def state(self) -> TxStateModel:
         return self._state_model
 
-    @QProperty(QObject, constant=True)
-    def inputList(self) -> TxIoListModel:
-        return self._input_list_model
+    # noinspection PyTypeChecker
+    @QSlot(int, result=QObject)
+    def openInputList(self, column_count: int) -> TxIoListModel:
+        return self._registerList(TxIoListModel(
+            self._application,
+            self._tx.inputList,
+            column_count))
 
-    @QProperty(QObject, constant=True)
-    def outputList(self) -> TxIoListModel:
-        return self._output_list_model
+    # noinspection PyTypeChecker
+    @QSlot(int, result=QObject)
+    def openOutputList(self, column_count: int) -> TxIoListModel:
+        return self._registerList(TxIoListModel(
+            self._application,
+            self._tx.outputList,
+            column_count))
 
-    def afterSetHeight(self) -> None:
+    def afterSetHeight(self, value: int) -> None:
         self._state_model.update()
-        super().afterSetHeight()
+        # noinspection PyUnresolvedReferences
+        super().afterSetHeight(value)
 
-    def afterSetTime(self) -> None:
+    def afterSetTime(self, value: int) -> None:
         self._state_model.update()
-        super().afterSetTime()
+        # noinspection PyUnresolvedReferences
+        super().afterSetTime(value)
 
 
-class TxListModel(AbstractListModel):
-    class Role(RoleEnum):
-        ID: Final = auto()
-        VISIBLE: Final = auto()  # for TxListConcatenateModel
-        OBJECT: Final = auto()  # TODO temporary, kill
-        NAME: Final = auto()
-        NAME_HUMAN: Final = auto()
-        AMOUNT: Final = auto()
-        FEE_AMOUNT: Final = auto()
-        STATE: Final = auto()
-        INPUT_LIST: Final = auto()
-        OUTPUT_LIST: Final = auto()
-
-    _ROLE_MAP: Final = {
-        Role.ID: (
-            b"_id",
-            lambda t: t.name),
-        Role.VISIBLE: (
-            b"_visible",
-            "_visible"),
-        Role.OBJECT: (  # TODO temporary, kill
-            b"object",
-            lambda t: t.model),
-        Role.NAME: (
-            b"name",
-            lambda t: t.model.name),
-        Role.NAME_HUMAN: (
-            b"nameHuman",
-            lambda t: t.model.nameHuman),
-        Role.AMOUNT: (
-            b"amount",
-            lambda t: t.model.amount),
-        Role.FEE_AMOUNT: (
-            b"feeAmount",
-            lambda t: t.model.feeAmount),
-        Role.STATE: (
-            b"state",
-            lambda t: t.model.state),
-        Role.INPUT_LIST: (
-            b"inputList",
-            lambda t: t.model.inputList),
-        Role.OUTPUT_LIST: (
-            b"outputList",
-            lambda t: t.model.outputList)
-    }
-
-
-class TxListConcatenateModel(AbstractConcatenateModel):
-    _ROLE_MAP: Final = TxListModel._ROLE_MAP
-
-    def isVisibleRow(self, row_index: int, parent: QModelIndex) -> bool:
-        index = self.index(row_index, 0, parent)
-        if self.data(index, TxListModel.Role.VISIBLE):
-            return True
-
-        id_ = self.data(index, TxListModel.Role.ID)
-        for current_row_index in range(self.rowCount()):
-            if current_row_index == row_index:
-                continue
-            current_index = self.index(current_row_index, 0, parent)
-            current_id = self.data(current_index, TxListModel.Role.ID)
-            if current_id == id_:
-                if self.data(current_index, TxListModel.Role.VISIBLE):
-                    return False
-
-        # Note that you should not update the source model through the proxy
-        # model when dynamicSortFilter is true.
-        source_index = self.mapToSource(index)
-        source_index.model().setData(
-            source_index,
-            True,
-            TxListModel.Role.VISIBLE)
-        return True
-
-
-class TxListSortedModel(AbstractSortedModel):
-    def __init__(
-            self,
-            application: QmlApplication,
-            source_model: TxListModel) -> None:
-        super().__init__(
-            application,
-            source_model,
-            TxListModel.Role.NAME,
-            Qt.DescendingOrder)
-
-    def filterAcceptsRow(
-            self,
-            source_row_index: int,
-            source_parent: QModelIndex) -> bool:
-        source_model = self.sourceModel()
-        if isinstance(source_model, TxListConcatenateModel):
-            return source_model.isVisibleRow(source_row_index, source_parent)
-        return True
-
-    def lessThan(
-            self,
-            source_left: QModelIndex,
-            source_right: QModelIndex) -> bool:
-        source_model = self.sourceModel()
-
-        a = source_model.data(source_left, TxListModel.Role.STATE)
-        b = source_model.data(source_right, TxListModel.Role.STATE)
-
-        if a.height == -1 and b.height != -1:
-            return False
-        if a.height != -1 and b.height == -1:
-            return True
-        if a.height < b.height:
-            return True
-        if a.height > b.height:
-            return False
-
-        # TODO sort by server order
-
-        if a.time < b.time:
-            return True
-        if a.time > b.time:
-            return False
-
-        a = source_model.data(source_left, TxListModel.Role.NAME)
-        b = source_model.data(source_right, TxListModel.Role.NAME)
-        return a < b
+class TxListModel(AbstractTableModel):
+    pass
