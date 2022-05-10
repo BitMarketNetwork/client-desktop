@@ -12,8 +12,8 @@ BTabBarBox {
         Math.max(inputList.rowCount(), outputList.rowCount()))
 
     Component.onDestruction: {
-        _base.tx.closeList(_base.inputList)
-        _base.tx.closeList(_base.outputList)
+        tx.closeList(inputList)
+        tx.closeList(outputList)
     }
 
     BAddressListView {

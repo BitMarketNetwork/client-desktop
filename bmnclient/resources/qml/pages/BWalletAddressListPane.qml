@@ -8,12 +8,12 @@ BPane {
     id: _base
     property string title: qsTr("Addresses (%1)").arg(addressList ? addressList.rowCountHuman : "")
     property var coin // CoinModel
-    property var addressList: _base.coin.openAddressList(5)
+    property var addressList: coin.openAddressList(5)
 
     signal spendFromTriggered
 
     Component.onDestruction: {
-         _base.coin.closeList(_base.addressList)
+         coin.closeList(addressList)
     }
 
     BHorizontalHeaderView {

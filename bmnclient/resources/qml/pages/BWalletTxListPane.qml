@@ -6,10 +6,10 @@ BPane {
     id: _base
     property string title: qsTr("History (%1)").arg(txList ? txList.rowCountHuman : "")
     property var coin // CoinModel
-    property var txList: _base.coin.openTxList(1)
+    property var txList: coin.openTxList(1)
 
     Component.onDestruction: {
-        _base.coin.closeList(_base.txList)
+        coin.closeList(txList)
     }
 
     contentItem: BTxListView {

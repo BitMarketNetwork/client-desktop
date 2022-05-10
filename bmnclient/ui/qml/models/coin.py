@@ -281,42 +281,27 @@ class CoinModel(AbstractCoinObjectModel, Coin.Model, AbstractModel):
 
     def afterSetIsEnabled(self, value: bool) -> None:
         self._state_model.update()
-        # noinspection PyUnresolvedReferences
         super().afterSetIsEnabled(value)
 
     def afterSetHeight(self, value: int) -> None:
         self._state_model.update()
-        # noinspection PyUnresolvedReferences
         super().afterSetHeight(value)
 
     def afterSetFiatRate(self, value: FiatRate) -> None:
         self._balance_model.update()
         self._coin.txFactory.model.update()
-        # noinspection PyUnresolvedReferences
         super().afterSetFiatRate(value)
 
     def afterUpdateBalance(self, value: int) -> None:
         self._balance_model.update()
-        # noinspection PyUnresolvedReferences
         super().afterUpdateBalance(value)
 
     def afterUpdateUtxoList(self, value: None) -> None:
         self._coin.txFactory.model.update()
-        super().afterUpdateUtxoList(value)
-
-    def beforeAppendAddress(self, address: Coin.Address) -> None:
-        self._address_list_model.lock(self._address_list_model.lockInsertRows())
-        super().beforeAppendAddress(address)
-
-    def afterAppendAddress(self, address: Coin.Address) -> None:
-        self._address_list_model.unlock()
-        # noinspection PyUnresolvedReferences
-        self._tx_list_model.addSourceModel(address.model.txList)
-        super().afterAppendAddress(address)
+        super().afterUpdateUtxoList()
 
     def afterSetServerData(self, value: dict[str, ...]) -> None:
         self._server_data_model.update()
-        # noinspection PyUnresolvedReferences
         super().afterSetServerData(value)
 
 
