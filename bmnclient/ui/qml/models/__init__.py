@@ -8,8 +8,7 @@ from PySide6.QtCore import (
     Property as QProperty,
     QObject,
     Signal as QSignal,
-    SignalInstance as QSignalInstance,
-    Slot as QSlot)
+    SignalInstance as QSignalInstance)
 
 if TYPE_CHECKING:
     from .abstract import AbstractTableModel
@@ -137,15 +136,6 @@ class AbstractModel(QObject):
         super().__init__()
         self._application = application
         self._update_lock = Lock()
-        self._list_model_list: dict[int, AbstractTableModel] = {}
-
-    def _registerList(self, model: QObject):
-        self._list_model_list[id(model)] = model
-        return model
-
-    @QSlot(QObject, result=None)
-    def closeList(self, model: QObject) -> None:
-        self._list_model_list.pop(id(model))
 
     def iterateStateModels(self) -> Generator[AbstractStateModel, None, None]:
         for a in dir(self):

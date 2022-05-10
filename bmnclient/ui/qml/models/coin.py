@@ -9,10 +9,11 @@ from PySide6.QtCore import (
     Slot as QSlot)
 
 from . import AbstractCoinStateModel, AbstractModel, ValidStatus
-from .address import AddressListModel, AddressListSortedModel
+from .abstract import AbstractCoinObjectModel, AbstractTableModel
+from .address import AddressListModel
 from .amount import AbstractAmountModel
-from .list import AbstractListModel, RoleEnum
-from .tx import TxListConcatenateModel, TxListSortedModel
+from .tx import TxListModel
+from .tx_factory import TxFactoryModel
 from ....coins.abstract import Coin
 
 if TYPE_CHECKING:
@@ -146,13 +147,9 @@ class CoinReceiveManagerModel(AbstractCoinStateModel):
             type_=address_type,
             label=label,
             comment=comment)
-        if self._address is None:
-            self.update()
-            return False
-
-        self._coin.appendAddress(self._address)
+        result = bool(self._address and self._address.save())
         self.update()
-        return True
+        return result
 
     @QSlot()
     def clear(self) -> None:
@@ -187,10 +184,7 @@ class CoinManagerModel(AbstractCoinStateModel):
             name=address_name,
             label=label,
             comment=comment)
-        if address is None:
-            return False
-        self._coin.appendAddress(address)
-        return True
+        return bool(address and address.save())
 
     # noinspection PyTypeChecker
     @QSlot(str, result=bool)
@@ -200,7 +194,7 @@ class CoinManagerModel(AbstractCoinStateModel):
         return True
 
 
-class CoinModel(Coin.Model, AbstractModel):
+class CoinModel(AbstractCoinObjectModel, Coin.Model, AbstractModel):
     def __init__(self, application: QmlApplication, coin: Coin) -> None:
         super().__init__(
             application,
@@ -257,25 +251,21 @@ class CoinModel(Coin.Model, AbstractModel):
     def serverData(self) -> CoinServerDataModel:
         return self._server_data_model
 
-    @QProperty(QObject, constant=True)
-    def addressList(self) -> AddressListModel:
-        return self._address_list_model
-
     # noinspection PyTypeChecker
-    @QSlot(result=QObject)
-    def addressListSorted(self) -> AddressListSortedModel:
-        return AddressListSortedModel(
+    @QSlot(int, result=QObject)
+    def openAddressList(self, column_count: int) -> AddressListModel:
+        return self._registerList(AddressListModel(
             self._application,
-            self._address_list_model)
-
-    @QProperty(QObject, constant=True)
-    def txList(self) -> TxListConcatenateModel:
-        return self._tx_list_model
+            self._coin.addressList,
+            column_count))
 
     # noinspection PyTypeChecker
-    @QSlot(result=QObject)
-    def txListSorted(self) -> TxListSortedModel:
-        return TxListSortedModel(self._application, self._tx_list_model)
+    @QSlot(int, result=QObject)
+    def openTxList(self, column_count: int) -> TxListModel:
+        return self._registerList(TxListModel(
+            self._application,
+            self._coin.txList,
+            column_count))
 
     @QProperty(QObject, constant=True)
     def receiveManager(self) -> CoinReceiveManagerModel:

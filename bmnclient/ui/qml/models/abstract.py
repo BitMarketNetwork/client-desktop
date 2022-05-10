@@ -8,11 +8,53 @@ from PySide6.QtCore import (
     QAbstractTableModel,
     QByteArray,
     QModelIndex,
+    QObject,
     Qt,
-    Signal as QSignal)
+    Signal as QSignal,
+    Slot as QSlot)
 
 if TYPE_CHECKING:
     from .. import QmlApplication
+    from ....coins.abstract import CoinObject
+    from ....database.tables import SerializableRowList
+
+
+class AbstractCoinObjectModel(QObject if TYPE_CHECKING else object):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._list_model_list: dict[int, AbstractTableModel] = {}
+
+    def _registerList(self, model: QObject):
+        self._list_model_list[id(model)] = model
+        return model
+
+    @QSlot(QObject, result=None)
+    def closeList(self, model: QObject) -> None:
+        self._list_model_list.pop(id(model))
+
+    def beforeInsertChild(
+            self,
+            object_: CoinObject,
+            row_list: SerializableRowList,
+            index: int) -> None:
+        for m in self._list_model_list.values():
+            if m.sourceList is row_list:
+                m.lock(m.Lock.INSERT, index, 1)
+                break
+        # noinspection PyUnresolvedReferences
+        super().beforeInsertChild(object_, row_list, index)
+
+    def afterInsertChild(
+            self,
+            object_: CoinObject,
+            row_list: SerializableRowList,
+            index: int) -> None:
+        for m in self._list_model_list.values():
+            if m.sourceList is row_list:
+                m.unlock()
+                break
+        # noinspection PyUnresolvedReferences
+        super().afterInsertChild(object_, row_list, index)
 
 
 class AbstractTableModel(QAbstractTableModel):
@@ -30,7 +72,7 @@ class AbstractTableModel(QAbstractTableModel):
     def __init__(
             self,
             application: QmlApplication,
-            source_list: Sequence,
+            source_list: Sequence[CoinObject],
             column_count: int = 1) -> None:
         super().__init__()
         self._application = application
@@ -42,6 +84,10 @@ class AbstractTableModel(QAbstractTableModel):
         self.rowsInserted.connect(self.__rowCountChanged)
         # noinspection PyUnresolvedReferences
         self.rowsRemoved.connect(self.__rowCountChanged)
+
+    @property
+    def sourceList(self) -> Sequence[CoinObject]:
+        return self._source_list
 
     def roleNames(self) -> dict[Qt.ItemDataRole, QByteArray]:
         return {r.value[0]: r.value[1] for r in self.RoleEnum}
