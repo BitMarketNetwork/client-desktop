@@ -32,6 +32,10 @@ class ModelsFactory(NotImplementedInstance):
         if isinstance(owner, Coin.Tx.Io):
             return TxIoModel(application, owner)
 
+        # TODO
+        if False and isinstance(owner, Coin.Tx.Utxo):
+            return UtxoModel(application, owner)
+
         if isinstance(owner, Coin.TxFactory):
             return TxFactoryModel(application, owner)
 

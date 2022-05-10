@@ -364,7 +364,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery):
             self._hd_iterator.markCurrentAddress(True)
         else:
             self._hd_iterator.markCurrentAddress(False)
-            self._address.coin.appendAddress(self._address)
+            self._address.save()
 
         try:
             next_address = next(self._hd_iterator)
@@ -437,7 +437,8 @@ class AddressTxIteratorApiQuery(
                 tx,
                 self._address.coin)
             if tx_d is not None:
-                self._address.appendTx(tx_d)
+                tx_d.save()
+                self._address.associate(tx_d)
             else:
                 self._logger.warning(
                     "Failed to deserialize transaction '%s'.",
@@ -535,6 +536,9 @@ class AddressUtxoIteratorApiQuery(
         parser(value)
 
         for utxo in parser.txList:
+            # TODO server support
+            utxo["script_type"] = self._address.type.value.scriptType.name
+
             utxo_d = self._address.coin.Tx.Utxo.deserialize(
                 DeserializeFlag.NORMAL_MODE,
                 utxo,
@@ -615,7 +619,8 @@ class CoinMempoolIteratorApiQuery(AbstractApiQuery):
                 tx,
                 self._coin)
             if tx_d is not None:
-                address.appendTx(tx_d)
+                tx_d.save()
+                address.associate(tx_d)
             else:
                 self._logger.warning(
                     "Failed to deserialize unconfirmed transaction '%s'.",

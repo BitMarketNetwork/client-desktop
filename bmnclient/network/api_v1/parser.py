@@ -137,20 +137,21 @@ class TxParser(AbstractParser):
             "is_coinbase": self.parseKey(value, "coinbase", int) != 0,
 
             "input_list": [
-                self._parseIo(i, v) for i, v in enumerate(self.parseKey(
+                self._parseIo(i, v, "input") for i, v in enumerate(self.parseKey(
                     value,
                     "input",
                     list))
             ],
             "output_list": [
-                self._parseIo(i, v) for i, v in enumerate(self.parseKey(
+                self._parseIo(i, v, "output") for i, v in enumerate(self.parseKey(
                     value,
                     "output",
                     list))
             ]
         }
 
-    def _parseIo(self, index: int, item: dict) -> dict:
+    def _parseIo(self, index: int, item: dict, io_type: str) -> dict:
+        # TODO io_type as _Io.IoType.value.
         self.parseKey(
             item,
             "type",
@@ -159,11 +160,12 @@ class TxParser(AbstractParser):
 
         return {
             "index": index,
+            "io_type": io_type,
             "output_type": self.parseKey(
                 item,
                 "output_type",
                 str),
-            "address_name": self.parseKey(
+            "address": self.parseKey(
                 item,
                 "address",
                 str,

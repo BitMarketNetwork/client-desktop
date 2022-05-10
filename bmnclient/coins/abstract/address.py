@@ -496,7 +496,7 @@ class _Address(
     def comment(self, value: str) -> None:
         self._updateValue("set", "comment", value)
 
-    @serializable
+    @serializable  # TODO column
     @property
     def isTxInput(self) -> bool:
         return self._is_tx_input
@@ -520,33 +520,13 @@ class _Address(
 
     @serializable
     @property
-    def txList(self) -> List[Coin.Tx]:
-        return self._tx_list
-
-    def appendTx(self, tx: Coin.Tx) -> bool:
-        for etx in self._tx_list:
-            if tx.name != etx.name:
-                continue
-            if etx.height == -1:
-                etx.height = tx.height
-                etx.time = tx.time
-                # TODO compare/replace input/output list
-                return True
-            return False
-
-        self._callModel("beforeAppendTx", tx)
-        self._tx_list.append(tx)
-        self._callModel("afterAppendTx", tx)
-        return True
+    def txList(self) -> SerializableList[Coin.Tx]:
+        return self._rowList(AddressTxsTable)
 
     @serializable
     @property
-    def utxoList(self) -> Sequence[Coin.Tx.Utxo]:
-        if self._isTableAvailable:
-            result = self.model.database[UtxoListTable].rowListProxy(self)
-            if result is not None:
-                return result
-        return tuple()
+    def utxoList(self) -> SerializableList[Coin.Tx.Utxo]:
+        return self._rowList(UtxosTable)
 
     @utxoList.setter
     def utxoList(self, utxo_list: List[Coin.Tx.Utxo]) -> None:

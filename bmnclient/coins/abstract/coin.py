@@ -8,7 +8,7 @@ from .object import CoinObject, CoinRootObjectModel
 from ..hd import HdNode
 from ...crypto.digest import Sha256Digest
 from ...currency import Currency, FiatRate, NoneFiatCurrency
-from ...database.tables import AddressesTable, CoinsTable
+from ...database.tables import AddressesTable, CoinsTable, TxsTable
 from ...utils import (
     DeserializeFlag,
     DeserializedData,
