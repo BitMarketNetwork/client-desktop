@@ -297,7 +297,7 @@ class CoinObject(Serializable):
             index: int):
         if result.isInsertAction:
             with self._modelEvent("insert", "child", object_, row_list, index):
-                pass
+                row_list.__accept_insert_index__()
 
 
 # TODO deprecated, create class AbstractModelFactory

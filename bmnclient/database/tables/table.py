@@ -10,7 +10,7 @@ from typing import (
     Sequence,
     TYPE_CHECKING,
     TypeVar)
-from weakref import WeakSet
+from weakref import WeakValueDictionary
 
 from ...utils import (
     DeserializeFlag,
@@ -247,9 +247,7 @@ class Table(metaclass=TableMeta):
                         row_id,
                         self.SaveResult.Action.UPDATE)
                 if not fallback_search:
-                    return self.SaveResult(
-                        -1,
-                        self.SaveResult.Action.NONE)
+                    return self.SaveResult()
 
             # row id not defined or row id not found (deleted row)
             new_row_id = self.insert([*key_columns, *data_columns])
@@ -258,9 +256,7 @@ class Table(metaclass=TableMeta):
                     new_row_id,
                     self.SaveResult.Action.INSERT)
             if not fallback_search:
-                return self.SaveResult(
-                    -1,
-                    self.SaveResult.Action.NONE)
+                return self.SaveResult()
 
             # row with UNIQUE columns already exists
 
@@ -366,7 +362,9 @@ class SerializableTable(Table, name=""):
 
     def __init__(self, database: Database) -> None:
         super().__init__(database)
-        self._row_list_weak_set: WeakSet[SerializableRowList] = WeakSet()
+        self._row_list_weak_list: WeakValueDictionary[
+            int, SerializableRowList
+        ] = WeakValueDictionary()
 
     def _keyColumns(self, object_: Serializable) -> tuple[ColumnValue, ...]:
         columns = tuple(
@@ -378,7 +376,7 @@ class SerializableTable(Table, name=""):
         raise NotImplementedError
 
     def registerRowList(self, row_list: SerializableRowList):
-        self._row_list_weak_set.add(row_list)
+        self._row_list_weak_list[id(row_list)] = row_list
 
     def saveSerializable(
             self,
@@ -413,7 +411,7 @@ class SerializableTable(Table, name=""):
             object_.rowId = result.row_id
 
         if result.isSuccess:
-            for row_list in self._row_list_weak_set:
+            for row_list in self._row_list_weak_list.values():
                 row_list.__save_row__(object_, self, result)
 
         return result
@@ -558,20 +556,31 @@ class SerializableRowList(SerializableList):
                 else "")
 
         self._query_length = (
-            f"SELECT COUNT(*)"
-            f" FROM {self._table}"
+            f"SELECT COUNT(*) FROM {self._table}"
             f"{self._where_expression}")
         self._query_iter = (
-            f"SELECT {column_expression}"
-            f" FROM {self._table}"
+            f"SELECT {column_expression} FROM {self._table}"
             f"{self._where_expression}"
             f" ORDER BY {order_expression}")
         self._query_getitem = (
-            f"SELECT {column_expression}"
-            f" FROM {self._table}"
+            f"SELECT {column_expression} FROM {self._table}"
             f"{self._where_expression}"
             f" ORDER BY {order_expression}"
             f" LIMIT 1 OFFSET ?")
+
+        row_number_expression = (
+            f"SELECT"
+            f" ROW_NUMBER() OVER (ORDER BY {order_expression}),"
+            f" {self._table.ColumnEnum.ROW_ID}"
+            f" FROM {self._table}"
+            f"{self._where_expression}"
+        )
+        self._query_row_number = (
+            f"SELECT * FROM ({row_number_expression})"
+            f" WHERE {self._table.ColumnEnum.ROW_ID} == ?")
+
+        # for Qt beginInsertRows/endInsertRows
+        self._pending_insert_index: int = -1
 
         self._on_save_row = on_save_row
         self._table.registerRowList(self)
@@ -593,22 +602,27 @@ class SerializableRowList(SerializableList):
     def __len__(self) -> int:
         with self._table.database.transaction(allow_in_transaction=True) as c:
             c.execute(self._query_length, self._where_args)
-            row = c.fetchone()
-            if row:
-                assert isinstance(row[0], int)
-                return row[0]
+            if row := c.fetchone():
+                row = int(row[0])
+                if row > 0 and self._pending_insert_index >= 0:
+                    return row - 1
+                return row
         return 0
 
     def __iter__(self) -> Generator[Serializable, None, None]:
         with self._table.database.transaction(allow_in_transaction=True) as c:
-            for row in c.execute(self._query_iter, self._where_args):
-                yield self._deserialize(row)
+            for index, row in enumerate(c.execute(
+                    self._query_iter,
+                    self._where_args)):
+                if index != self._pending_insert_index:
+                    yield self._deserialize(row)
 
     def __getitem__(self, index: int) -> Serializable:
+        if 0 <= self._pending_insert_index <= index:
+            index += 1
         with self._table.database.transaction(allow_in_transaction=True) as c:
             c.execute(self._query_getitem, [*self._where_args, index])
-            row = c.fetchone()
-            if not row:
+            if not (row := c.fetchone()):
                 raise IndexError
             return self._deserialize(row)
 
@@ -625,10 +639,27 @@ class SerializableRowList(SerializableList):
             result: SerializableTable.SaveResult) -> None:
         if not self._on_save_row or table is not self._table:
             return
-        # TODO calculate offset relative to sorting mode
-        if result.isInsertAction:
-            index = len(self) - 1  # FIXME
-            self._on_save_row(object_, self, result, index)
+        if not result.isInsertAction:
+            return
+
+        assert self._pending_insert_index < 0
+        with self._table.database.transaction(allow_in_transaction=True) as c:
+            c.execute(
+                self._query_row_number,
+                [*self._where_args, result.row_id])
+            if row := c.fetchone():
+                # one-based to zero-based index
+                self._pending_insert_index = int(row[0]) - 1
+                self._on_save_row(
+                    object_,
+                    self,
+                    result,
+                    self._pending_insert_index)
+                self._pending_insert_index = -1
+
+    def __accept_insert_index__(self) -> None:
+        assert self._pending_insert_index >= 0
+        self._pending_insert_index = -1
 
     def insert(self, index: int, value: ...) -> None:
         raise NotImplementedError

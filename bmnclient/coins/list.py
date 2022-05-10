@@ -17,7 +17,7 @@ class CoinList(StaticList):
             (
                 Bitcoin(model_factory=model_factory),
                 BitcoinTest(model_factory=model_factory),
-                Litecoin(model_factory=model_factory)
+                Litecoin(model_factory=model_factory),
             ),
             item_property="name"
         )
