@@ -12,11 +12,13 @@ from PySide6.QtCore import (
     Slot as QSlot)
 
 if TYPE_CHECKING:
-    from .list import AbstractTableModel
+    from .abstract import AbstractTableModel
     from .. import QmlApplication
     from ....coins.abstract import Coin
     from ....config import ConfigKey
     from ....language import Locale
+
+# TODO move all to .abstract
 
 
 class ValidStatus(IntEnum):
