@@ -1,6 +1,6 @@
 # BitMarket Network Client Change Log
 
-## 0.14.0 (xx.03.2022)
+## 0.14.0 (29.03.2022)
 
 * Requirements:
     - Python 3.8 or later is required.

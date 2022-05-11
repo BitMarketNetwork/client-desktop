@@ -85,7 +85,7 @@ class AbstractApiQuery(AbstractJsonQuery):
     def _createData(self) -> Tuple[str, Any]:
         return "", None
 
-    def _processResponse(self, response: Optional[dict]) -> None:
+    def _processResponse(self, response: Optional[dict, list]) -> None:
         try:
             if response is None:
                 self._logger.debug("Empty response.")
