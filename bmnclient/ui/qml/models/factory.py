@@ -7,6 +7,7 @@ from .coin import CoinModel
 from .tx import TxModel
 from .tx_factory import TxFactoryModel
 from .tx_io import TxIoModel
+from .utxo import UtxoModel
 from ....coins.abstract import Coin
 from ....utils import NotImplementedInstance
 
@@ -32,8 +33,7 @@ class ModelsFactory(NotImplementedInstance):
         if isinstance(owner, Coin.Tx.Io):
             return TxIoModel(application, owner)
 
-        # TODO
-        if False and isinstance(owner, Coin.Tx.Utxo):
+        if isinstance(owner, Coin.Tx.Utxo):
             return UtxoModel(application, owner)
 
         if isinstance(owner, Coin.TxFactory):
