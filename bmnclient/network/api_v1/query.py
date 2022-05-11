@@ -542,7 +542,7 @@ class AddressUtxoIteratorApiQuery(
             utxo_d = self._address.coin.Tx.Utxo.deserialize(
                 DeserializeFlag.NORMAL_MODE,
                 utxo,
-                self._address.coin)
+                self._address)
             if utxo_d is not None:
                 self._utxo_list.append(utxo_d)
             else:

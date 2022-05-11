@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from functools import cached_property, lru_cache
-from typing import Final, Sequence, TYPE_CHECKING
+from typing import Final, Iterable, TYPE_CHECKING, TypeVar
 
 from .tx import _Tx
-from ...utils import serializable
+from ...utils import SerializableList, serializable
 
 if TYPE_CHECKING:
     from .coin import Coin

@@ -17,12 +17,14 @@ class _MutableInput(Coin.TxFactory.MutableTx.Input):
 
     def __init__(
             self,
-            utxo: Bitcoin.Tx.Utxo,
+            mtx: Bitcoin.TxFactory.MutableTx,
             *,
+            utxo: Bitcoin.Tx.Utxo,
             sequence: int = 0xffffffff,
             **kwargs) -> None:
         super().__init__(
-            utxo,
+            mtx,
+            utxo=utxo,
             hash_type=1,  # SIGHASH_ALL
             sequence=sequence,
             **kwargs)
@@ -135,6 +137,9 @@ class _MutableInput(Coin.TxFactory.MutableTx.Input):
 
 class _MutableOutput(Coin.TxFactory.MutableTx.Output):
     _AMOUNT_LENGTH = 8
+
+    def __init__(self, mtx: Bitcoin.TxFactory.MutableTx, **kwargs) -> None:
+        super().__init__(mtx, **kwargs)
 
     @cached_property
     def scriptBytes(self) -> bytes:

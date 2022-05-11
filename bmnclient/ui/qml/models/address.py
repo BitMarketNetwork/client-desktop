@@ -44,6 +44,10 @@ class AbstractAddressBalanceModel(AbstractAmountModel):
 class AddressStateModel(AbstractAddressStateModel):
     __stateChanged = QSignal()
 
+    @QProperty(int, notify=__stateChanged)
+    def txCount(self) -> int:
+        return self._address.txCount
+
     @QProperty(str, notify=__stateChanged)
     def label(self) -> str:
         return self._address.label

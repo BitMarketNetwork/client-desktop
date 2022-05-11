@@ -106,7 +106,7 @@ BItemDelegate {
             verticalAlignment: Text.AlignVCenter
             elide: BLabel.ElideRight
             maximumLineCount: 4
-            text: _base.address.txList.rowCount()
+            text: _base.address.state.txCount
         }
     }
     Component {

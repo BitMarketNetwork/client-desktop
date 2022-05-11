@@ -469,11 +469,12 @@ class Coin(CoinObject, table_type=CoinsTable):
                     continue
             yield address
 
-    def findAddressByName(self, name: str) -> Optional[Address]:
+    # TODO reimplement
+    def findAddressByName(self, name: str) -> Address | None:
         if not name:
             return None
         name = name.strip().casefold()  # TODO tmp, old wrapper
-        for address in self._address_list:
+        for address in self.addressList:
             if name == address.name.casefold():
                 return address
         return None
