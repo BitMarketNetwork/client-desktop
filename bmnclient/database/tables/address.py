@@ -165,12 +165,10 @@ class AddressTxsTable(SerializableTable, name="address_transactions"):
             where_args=[address.rowId],
             on_save_row=on_save_row)
 
-    def associate(self, address: Coin.Address, tx: Coin.Tx) -> bool | None:
+    def associateSerializable(
+            self,
+            address: Coin.Address,
+            tx: Coin.Tx) -> bool | None:
         if not isinstance(tx, address.coin.Tx):
             return None
-        assert address.rowId > 0
-        assert tx.rowId > 0
-        return self.insert([
-            ColumnValue(self.ColumnEnum.ADDRESS_ROW_ID, address.rowId),
-            ColumnValue(self.ColumnEnum.TX_ROW_ID, tx.rowId)
-        ]) > 0
+        return super().associateSerializable(address, tx)

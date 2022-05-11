@@ -148,7 +148,7 @@ class CoinObject(Serializable):
             return None
         if not (t := self._openTable(self.__ASSOCIATED_TABLE_TYPE)):
             return False
-        return t.associate(self, object_)
+        return t.associateSerializable(self, object_)
 
     def _appendDeferredSave(
             self,

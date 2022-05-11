@@ -372,6 +372,14 @@ class SerializableTable(Table, name=""):
             for c in self._KEY_COLUMN_LIST)
         return tuple() if any(c.value is None for c in columns) else columns
 
+    def _updateRowListWeakList(
+            self,
+            object_: Serializable,
+            result: SerializableTable.SaveResult) -> None:
+        if result.isSuccess:
+            for row_list in self._row_list_weak_list.values():
+                row_list.__save_row__(object_, self, result)
+
     def rowList(self, *args, **kwargs) -> SerializableRowList | None:
         raise NotImplementedError
 
@@ -410,10 +418,7 @@ class SerializableTable(Table, name=""):
         if use_row_id:
             object_.rowId = result.row_id
 
-        if result.isSuccess:
-            for row_list in self._row_list_weak_list.values():
-                row_list.__save_row__(object_, self, result)
-
+        self._updateRowListWeakList(object_, result)
         return result
 
     def loadSerializable(
@@ -509,6 +514,24 @@ class SerializableTable(Table, name=""):
 
         if use_row_id:
             object_.rowId = -1
+        return True
+
+    def associateSerializable(
+            self,
+            parent_object: Serializable,
+            child_object: Serializable) -> bool | None:
+        assert parent_object.rowId > 0
+        assert child_object.rowId > 0
+        # TODO fix names
+        if self.insert([
+            ColumnValue(self.ColumnEnum.ADDRESS_ROW_ID, parent_object.rowId),
+            ColumnValue(self.ColumnEnum.TX_ROW_ID, child_object.rowId)
+        ]) <= 0:
+            return False
+
+        self._updateRowListWeakList(
+            child_object,
+            self.SaveResult(child_object.rowId, self.SaveResult.Action.INSERT))
         return True
 
 
@@ -666,5 +689,7 @@ class SerializableRowList(SerializableList):
 
     def clear(self) -> int:
         with self._table.database.transaction(allow_in_transaction=True) as c:
-            c.execute(f"DELETE FROM {self._table}{self._where_expression}")
+            c.execute(
+                f"DELETE FROM {self._table}{self._where_expression}",
+                self._where_args)
             return c.rowcount
