@@ -25,6 +25,7 @@ BColumnLayout {
         BLayout.minimumHeight: BLayout.preferredHeight
         BLayout.preferredHeight: 0
         BLayout.maximumHeight: BLayout.preferredHeight
+        opacity: 0
 
         state: _unfoldBtn.checked ? "unfold" : "fold"
 
