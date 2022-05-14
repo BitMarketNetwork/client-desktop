@@ -168,7 +168,7 @@ class AddressTxsTable(SerializableTable, name="address_transactions"):
     def associateSerializable(
             self,
             address: Coin.Address,
-            tx: Coin.Tx) -> bool | None:
+            tx: Coin.Tx) -> SerializableTable.WriteResult:
         if not isinstance(tx, address.coin.Tx):
-            return None
+            return self.WriteResult()
         return super().associateSerializable(address, tx)

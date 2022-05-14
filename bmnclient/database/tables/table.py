@@ -143,18 +143,19 @@ class TableMeta(type):
 
 class Table(metaclass=TableMeta):
     @dataclass
-    class SaveResult:
+    class WriteResult:
         class Action(Enum):
             NONE = 0
             UPDATE = 1
             INSERT = 2
+            DELETE = 3
 
         row_id: int = -1
         action: Action = Action.NONE
 
         @property
         def isSuccess(self) -> bool:
-            return bool(self.action != self.Action.NONE and self.row_id > 0)
+            return self.action != self.Action.NONE
 
         @property
         def isNoneAction(self) -> bool:
@@ -221,7 +222,7 @@ class Table(metaclass=TableMeta):
     def close(self, cursor: Cursor) -> None:
         pass
 
-    def insert(self, columns: Sequence[ColumnValue]) -> int:
+    def insert(self, columns: Sequence[ColumnValue]) -> WriteResult:
         with self._database.transaction(allow_in_transaction=True) as c:
             c.execute(
                 f"INSERT OR IGNORE INTO {self} ("
@@ -232,10 +233,15 @@ class Table(metaclass=TableMeta):
             if c.rowcount > 0:
                 assert c.rowcount == 1
                 assert c.lastrowid > 0
-                return c.lastrowid
-        return -1
+                return self.WriteResult(
+                    c.lastrowid,
+                    self.WriteResult.Action.INSERT)
+        return self.WriteResult()
 
-    def update(self, row_id: int, columns: Sequence[ColumnValue]) -> bool:
+    def update(
+            self,
+            row_id: int,
+            columns: Sequence[ColumnValue]) -> WriteResult:
         assert row_id > 0
         with self._database.transaction(allow_in_transaction=True) as c:
             c.execute(
@@ -245,8 +251,10 @@ class Table(metaclass=TableMeta):
                 [*(c.value for c in columns), row_id])
             if c.rowcount > 0:
                 assert c.rowcount == 1
-                return True
-        return False
+                return self.WriteResult(
+                    row_id,
+                    self.WriteResult.Action.UPDATE)
+        return self.WriteResult()
 
     def save(
             self,
@@ -254,25 +262,20 @@ class Table(metaclass=TableMeta):
             key_columns: Sequence[ColumnValue],
             data_columns: Sequence[ColumnValue],
             *,
-            fallback_search: bool = False) -> SaveResult:
+            fallback_search: bool = False) -> WriteResult:
         with self._database.transaction(allow_in_transaction=True) as c:
             # row id is defined and row found
             if row_id > 0:
-                if self.update(row_id, data_columns):
-                    return self.SaveResult(
-                        row_id,
-                        self.SaveResult.Action.UPDATE)
+                if (result := self.update(row_id, data_columns)).isSuccess:
+                    return result
                 if not fallback_search:
-                    return self.SaveResult()
+                    return self.WriteResult()
 
             # row id not defined or row id not found (deleted row)
-            new_row_id = self.insert([*key_columns, *data_columns])
-            if new_row_id > 0:
-                return self.SaveResult(
-                    new_row_id,
-                    self.SaveResult.Action.INSERT)
+            if (result := self.insert([*key_columns, *data_columns])).isSuccess:
+                return result
             if not fallback_search:
-                return self.SaveResult()
+                return self.WriteResult()
 
             # row with UNIQUE columns already exists
 
@@ -284,13 +287,11 @@ class Table(metaclass=TableMeta):
                     f" WHERE {Column.joinWhere(c.column for c in key_columns)}"
                     f" LIMIT 1",
                     [c.value for c in key_columns])
-                value = c.fetchone()
-                if value is not None and value[0] >= 0:
-                    row_id = value[0]
-                    if row_id > 0 and self.update(row_id, data_columns):
-                        return self.SaveResult(
-                            row_id,
-                            self.SaveResult.Action.UPDATE)
+                if (value := c.fetchone()) is not None and value[0] > 0:
+                    if (result := self.update(
+                            value[0],
+                            data_columns)).isSuccess:
+                        return result
 
             raise self._database.engine.IntegrityError(
                 "row in table '{}' not found where: {}"
@@ -350,7 +351,7 @@ class Table(metaclass=TableMeta):
             row_id: int,
             key_columns: Sequence[ColumnValue],
             *,
-            fallback_search: bool = False) -> bool:
+            fallback_search: bool = False) -> WriteResult:
         with self._database.transaction(allow_in_transaction=True) as c:
             if row_id > 0:
                 c.execute(
@@ -359,17 +360,21 @@ class Table(metaclass=TableMeta):
                     [row_id])
                 if c.rowcount > 0:
                     assert c.rowcount == 1
-                    return True
+                    return self.WriteResult(
+                        row_id,
+                        self.WriteResult.Action.DELETE)
                 if not fallback_search:
-                    return False
+                    return self.WriteResult()
             if key_columns:
                 c.execute(
                     f"DELETE FROM {self}"
                     f" WHERE {Column.joinWhere(c.column for c in key_columns)}",
                     [c.value for c in key_columns])
                 if c.rowcount > 0:
-                    return True
-        return False
+                    return self.WriteResult(
+                        -1,
+                        self.WriteResult.Action.DELETE)
+        return self.WriteResult()
 
 
 class SerializableTable(Table, name=""):
@@ -391,10 +396,9 @@ class SerializableTable(Table, name=""):
     def _updateRowListWeakList(
             self,
             object_: Serializable,
-            result: SerializableTable.SaveResult) -> None:
-        if result.isSuccess:
-            for row_list in self._row_list_weak_list.values():
-                row_list.__save_row__(object_, self, result)
+            result: SerializableTable.WriteResult) -> None:
+        for row_list in self._row_list_weak_list.values():
+            row_list.__save_row__(object_, self, result)
 
     def rowList(self, *args, **kwargs) -> SerializableRowList | None:
         raise NotImplementedError
@@ -407,10 +411,10 @@ class SerializableTable(Table, name=""):
             object_: Serializable,
             *,
             use_row_id: bool = True,
-            fallback_search: bool = True) -> SerializableTable.SaveResult:
+            fallback_search: bool = True) -> SerializableTable.WriteResult:
         key_columns = self._keyColumns(object_)
         if not key_columns:
-            return SerializableTable.SaveResult()
+            return SerializableTable.WriteResult()
 
         source_data = object_.serialize(
             SerializeFlag.DATABASE_MODE |
@@ -427,13 +431,13 @@ class SerializableTable(Table, name=""):
             key_columns,
             data_columns,
             fallback_search=fallback_search)
-        if result.row_id <= 0:
+        if not result.isSuccess:
             raise self._database.engine.IntegrityError(
                 "failed to save serializable object '{}'"
                 .format(object_.__class__.__name__))
+
         if use_row_id:
             object_.rowId = result.row_id
-
         self._updateRowListWeakList(object_, result)
         return result
 
@@ -521,21 +525,21 @@ class SerializableTable(Table, name=""):
             object_: Serializable,
             *,
             use_row_id: bool = True,
-            fallback_search: bool = False) -> bool:
-        if not self.remove(
+            fallback_search: bool = False) -> SerializableTable.WriteResult:
+        result = self.remove(
                 object_.rowId if use_row_id else -1,
                 self._keyColumns(object_),
-                fallback_search=fallback_search):
-            return False
-
-        if use_row_id:
-            object_.rowId = -1
-        return True
+                fallback_search=fallback_search)
+        if result.isSuccess:
+            if use_row_id:
+                object_.rowId = -1
+            self._updateRowListWeakList(object_, result)
+        return result
 
     def associateSerializable(
             self,
             parent_object: Serializable,
-            child_object: Serializable) -> bool | None:
+            child_object: Serializable) -> SerializableTable.WriteResult:
         assert parent_object.rowId > 0
         assert child_object.rowId > 0
         # TODO fix names
@@ -566,7 +570,7 @@ class SerializableRowList(SerializableList):
                              [
                                  Serializable,
                                  SerializableRowList,
-                                 SerializableTable.SaveResult,
+                                 SerializableTable.WriteResult,
                                  int
                              ],
                              None
@@ -616,7 +620,8 @@ class SerializableRowList(SerializableList):
         )
         self._query_row_number = (
             f"SELECT * FROM ({row_number_expression})"
-            f" WHERE {self._table.ColumnEnum.ROW_ID} == ?")
+            f" WHERE {self._table.ColumnEnum.ROW_ID} == ?"
+            f" LIMIT 1")
 
         # for Qt beginInsertRows/endInsertRows
         self._pending_insert_index: int = -1
@@ -675,7 +680,7 @@ class SerializableRowList(SerializableList):
             self,
             object_: Serializable,
             table: SerializableTable,
-            result: SerializableTable.SaveResult) -> None:
+            result: SerializableTable.WriteResult) -> None:
         if not self._on_save_row or table is not self._table:
             return
         if not result.isInsertAction:
