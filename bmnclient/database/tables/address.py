@@ -4,6 +4,7 @@ import glob
 from typing import TYPE_CHECKING, Callable
 
 from .table import (
+    Column,
     ColumnEnum,
     ColumnValue,
     SerializableRowList,
@@ -123,8 +124,14 @@ class AddressTxsTable(SerializableTable, name="address_transactions"):
     class ColumnEnum(ColumnEnum):
         ROW_ID = ()
 
-        ADDRESS_ROW_ID = ("address_row_id", "INTEGER NOT NULL")
-        TX_ROW_ID = ("tx_row_id", "INTEGER NOT NULL")
+        ADDRESS_ROW_ID = (
+            "address_row_id",
+            "INTEGER NOT NULL",
+            Column.Flags.ASSOCIATE_IS_PARENT)
+        TX_ROW_ID = (
+            "tx_row_id",
+            "INTEGER NOT NULL",
+            Column.Flags.ASSOCIATE_IS_CHILD)
 
     @classproperty
     def _CONSTRAINT_LIST(cls) -> tuple[str, ...]:  # noqa

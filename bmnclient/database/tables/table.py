@@ -542,17 +542,18 @@ class SerializableTable(Table, name=""):
             child_object: Serializable) -> SerializableTable.WriteResult:
         assert parent_object.rowId > 0
         assert child_object.rowId > 0
-        # TODO fix names
-        if self.insert([
-            ColumnValue(self.ColumnEnum.ADDRESS_ROW_ID, parent_object.rowId),
-            ColumnValue(self.ColumnEnum.TX_ROW_ID, child_object.rowId)
-        ]) <= 0:
-            return False
 
-        self._updateRowListWeakList(
-            child_object,
-            self.SaveResult(child_object.rowId, self.SaveResult.Action.INSERT))
-        return True
+        # TODO cache
+        columns = []
+        for column in self.ColumnEnum:
+            if column.flags & column.Flags.ASSOCIATE_IS_PARENT:
+                columns.append(ColumnValue(column, parent_object.rowId))
+            if column.flags & column.Flags.ASSOCIATE_IS_CHILD:
+                columns.append(ColumnValue(column, child_object.rowId))
+
+        if (result := self.insert(columns)).isSuccess:
+            self._updateRowListWeakList(child_object, result)
+        return result
 
 
 # Performance: https://www.sqlite.org/autoinc.html
