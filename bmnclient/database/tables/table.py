@@ -148,14 +148,10 @@ class Table(metaclass=TableMeta):
             NONE = 0
             UPDATE = 1
             INSERT = 2
-            DELETE = 3
+            REMOVE = 3
 
         row_id: int = -1
         action: Action = Action.NONE
-
-        @property
-        def isSuccess(self) -> bool:
-            return self.action != self.Action.NONE
 
         @property
         def isNoneAction(self) -> bool:
@@ -168,6 +164,10 @@ class Table(metaclass=TableMeta):
         @property
         def isInsertAction(self) -> bool:
             return self.action == self.Action.INSERT
+
+        @property
+        def isRemoveAction(self) -> bool:
+            return self.action == self.Action.REMOVE
 
     class ColumnEnum(ColumnEnum):
         ROW_ID = ()
@@ -266,13 +266,15 @@ class Table(metaclass=TableMeta):
         with self._database.transaction(allow_in_transaction=True) as c:
             # row id is defined and row found
             if row_id > 0:
-                if (result := self.update(row_id, data_columns)).isSuccess:
+                result = self.update(row_id, data_columns)
+                if result.isUpdateAction:
                     return result
                 if not fallback_search:
                     return self.WriteResult()
 
             # row id not defined or row id not found (deleted row)
-            if (result := self.insert([*key_columns, *data_columns])).isSuccess:
+            result = self.insert([*key_columns, *data_columns])
+            if result.isInsertAction:
                 return result
             if not fallback_search:
                 return self.WriteResult()
@@ -288,9 +290,8 @@ class Table(metaclass=TableMeta):
                     f" LIMIT 1",
                     [c.value for c in key_columns])
                 if (value := c.fetchone()) is not None and value[0] > 0:
-                    if (result := self.update(
-                            value[0],
-                            data_columns)).isSuccess:
+                    result = self.update(value[0], data_columns)
+                    if result.isUpdateAction:
                         return result
 
             raise self._database.engine.IntegrityError(
@@ -362,7 +363,7 @@ class Table(metaclass=TableMeta):
                     assert c.rowcount == 1
                     return self.WriteResult(
                         row_id,
-                        self.WriteResult.Action.DELETE)
+                        self.WriteResult.Action.REMOVE)
                 if not fallback_search:
                     return self.WriteResult()
             if key_columns:
@@ -373,7 +374,7 @@ class Table(metaclass=TableMeta):
                 if c.rowcount > 0:
                     return self.WriteResult(
                         -1,
-                        self.WriteResult.Action.DELETE)
+                        self.WriteResult.Action.REMOVE)
         return self.WriteResult()
 
 
@@ -431,7 +432,7 @@ class SerializableTable(Table, name=""):
             key_columns,
             data_columns,
             fallback_search=fallback_search)
-        if not result.isSuccess:
+        if result.isNoneAction:
             raise self._database.engine.IntegrityError(
                 "failed to save serializable object '{}'"
                 .format(object_.__class__.__name__))
@@ -530,7 +531,7 @@ class SerializableTable(Table, name=""):
                 object_.rowId if use_row_id else -1,
                 self._keyColumns(object_),
                 fallback_search=fallback_search)
-        if result.isSuccess:
+        if result.isRemoveAction:
             if use_row_id:
                 object_.rowId = -1
             self._updateRowListWeakList(object_, result)
@@ -551,7 +552,7 @@ class SerializableTable(Table, name=""):
             if column.flags & column.Flags.ASSOCIATE_IS_CHILD:
                 columns.append(ColumnValue(column, child_object.rowId))
 
-        if (result := self.insert(columns)).isSuccess:
+        if (result := self.insert(columns)).isInsertAction:
             self._updateRowListWeakList(child_object, result)
         return result
 

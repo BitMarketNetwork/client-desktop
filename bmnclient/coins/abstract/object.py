@@ -148,7 +148,8 @@ class CoinObject(Serializable):
             return None
         if not (t := self._openTable(self.__ASSOCIATED_TABLE_TYPE)):
             return False
-        return t.associateSerializable(self, object_).isSuccess
+        t.associateSerializable(self, object_)
+        return True
 
     def _appendDeferredSave(
             self,
@@ -161,7 +162,7 @@ class CoinObject(Serializable):
             return False
         with self._coin.model.database.transaction(allow_in_transaction=True):
             result = t.saveSerializable(self)
-            if not result.isSuccess:
+            if result.isNoneAction:
                 return False
             assert self.rowId > 0
 
@@ -186,7 +187,7 @@ class CoinObject(Serializable):
     def remove(self) -> bool:
         if (
                 (t := self._openTable(force=True))
-                and t.removeSerializable(self).isSuccess
+                and t.removeSerializable(self).isRemoveAction
         ):
             assert self.rowId == -1
             return True

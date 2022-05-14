@@ -146,17 +146,14 @@ class TestDatabase(TestCaseApplication):
         r1 = db[MetadataTable].save(-1, keys, data, fallback_search=True)
         self.assertLess(0, r1.row_id)
         self.assertTrue(r1.isInsertAction)
-        self.assertTrue(r1.isSuccess)
 
         r = db[MetadataTable].save(-1, keys, data, fallback_search=True)
         self.assertEqual(r1.row_id, r.row_id)
         self.assertTrue(r.isUpdateAction)
-        self.assertTrue(r.isSuccess)
 
         r = db[MetadataTable].save(r1.row_id, keys, data, fallback_search=True)
         self.assertEqual(r1.row_id, r.row_id)
         self.assertTrue(r.isUpdateAction)
-        self.assertTrue(r.isSuccess)
 
         r = db[MetadataTable].save(
                 r1.row_id * 10000,
@@ -165,17 +162,14 @@ class TestDatabase(TestCaseApplication):
                 fallback_search=True)
         self.assertEqual(r1.row_id, r.row_id)
         self.assertTrue(r.isUpdateAction)
-        self.assertTrue(r.isSuccess)
 
         r = db[MetadataTable].save(-1, keys, data, fallback_search=False)
         self.assertEqual(-1, r.row_id)
         self.assertTrue(r.isNoneAction)
-        self.assertFalse(r.isSuccess)
 
         r = db[MetadataTable].save(r1.row_id, keys, data, fallback_search=False)
         self.assertEqual(r1.row_id, r.row_id)
         self.assertTrue(r.isUpdateAction)
-        self.assertTrue(r.isSuccess)
 
         r = db[MetadataTable].save(
                 r1.row_id * 10000,
@@ -184,7 +178,6 @@ class TestDatabase(TestCaseApplication):
                 fallback_search=False)
         self.assertEqual(-1, r.row_id)
         self.assertTrue(r.isNoneAction)
-        self.assertFalse(r.isSuccess)
 
     def test_load(self) -> None:
         db = self._create(Path("load.db"))
@@ -203,7 +196,6 @@ class TestDatabase(TestCaseApplication):
         r1 = db[MetadataTable].save(-1, keys, data)
         self.assertLess(0, r1.row_id)
         self.assertTrue(r1.isInsertAction)
-        self.assertTrue(r1.isSuccess)
 
         ####
 
@@ -342,7 +334,6 @@ class TestDatabase(TestCaseApplication):
         self.assertEqual(0, o1.result)
         o1_result = table.saveSerializable(o1)
         self.assertLess(0, o1_result.row_id)
-        self.assertLess(0, o1_result.isSuccess)
         self.assertLess(0, o1_result.isInsertAction)
         self.assertEqual(o1_result.row_id, o1.rowId)
         self.assertEqual(o1_result.row_id, table.saveSerializable(o1).row_id)
@@ -416,7 +407,9 @@ class TestDatabase(TestCaseApplication):
                     db[TxsTable].saveSerializable(tx)
                     self.assertLess(0, tx.rowId)
 
-                    self.assertTrue(db[AddressTxsTable].associate(address, tx))
+                    self.assertTrue(db[AddressTxsTable].associateSerializable(
+                        address,
+                        tx))
 
                     for io_source in chain(
                             tx_source.inputList,
