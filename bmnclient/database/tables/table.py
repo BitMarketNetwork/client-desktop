@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, IntFlag
 from itertools import chain
 from typing import (
     Callable,
@@ -33,13 +33,24 @@ class SortOrder(Enum):
 
 
 class Column:
-    __slots__ = ("_name", "_identifier", "_definition", "_full_definition")
+    class Flags(IntFlag):
+        NONE = 0x0
+        ASSOCIATE_IS_PARENT = 0x1
+        ASSOCIATE_IS_CHILD = 0x2
 
-    def __init__(self, name: str, definition: str) -> None:
+    __slots__ = (
+        "_name",
+        "_identifier",
+        "_definition",
+        "_full_definition",
+        "_flags")
+
+    def __init__(self, name: str, definition: str, flags: Flags) -> None:
         self._name = name
         self._identifier = f"\"{self._name}\""
         self._definition = definition
         self._full_definition = f"{self._identifier} {self._definition}"
+        self._flags = flags
 
     def __str__(self) -> str:
         return self._identifier
@@ -54,6 +65,10 @@ class Column:
     @property
     def definition(self) -> str:
         return self._definition
+
+    @property
+    def flags(self) -> Flags:
+        return self._flags
 
     @staticmethod
     def join(source: Iterable[Column]) -> str:
@@ -98,8 +113,9 @@ class ColumnEnum(Column, Enum):
     def __init__(
             self,
             name: str = "row_id",
-            definition: str = "INTEGER PRIMARY KEY") -> None:
-        super().__init__(name, definition)
+            definition: str = "INTEGER PRIMARY KEY",
+            flags: Column.Flags = Column.Flags.NONE) -> None:
+        super().__init__(name, definition, flags)
 
     @classmethod
     def __getitem__(cls, name: str) -> Column:
