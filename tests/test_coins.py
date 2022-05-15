@@ -491,6 +491,78 @@ class TestCoins(TestCaseApplication):
             self.assertLess(0, utxo.rowId)
             self.assertIs(address2, utxo.address)
 
+    def test_utxo_2(self) -> None:
+        coin = Bitcoin(model_factory=self._application.modelFactory)
+        root_node = HdNode.deriveRootNode(urandom(64))
+        self.assertTrue(coin.deriveHdNode(root_node))
+        self.assertTrue(coin.save())
+
+        address = coin.deriveHdAddress(account=0, index=1, is_change=False)
+        utxo_list = []
+        for i in range(20):
+            utxo = coin.Tx.Utxo(
+                address,
+                script_type=address.type.value.scriptType,
+                name="utxo_" + str(i),
+                index=i,
+                height=i * 1000,
+                amount=i * 10000)
+            utxo_list.append(utxo)
+        utxo_list_next = utxo_list[10:]
+        utxo_list = utxo_list[:10]
+
+        self.assertTrue(address.save())
+        self.assertEqual(0, len(address.utxoList))
+        for u in utxo_list:
+            self.assertEqual(-1, u.rowId)
+
+        # noinspection PyProtectedMember
+        count = address._updateRowList(address.utxoList, utxo_list)
+        self.assertEqual(10, count)
+        self.assertEqual(10, len(address.utxoList))
+        self.assertEqual(10, len(utxo_list))
+
+        for u in utxo_list:
+            self.assertLess(0, u.rowId)
+
+        # noinspection PyProtectedMember
+        count = address._updateRowList(address.utxoList, utxo_list)
+        self.assertEqual(0, count)
+        self.assertEqual(10, len(address.utxoList))
+        self.assertEqual(10, len(utxo_list))
+        self.assertEqual([*address.utxoList], utxo_list)
+
+        utxo_list = utxo_list[1:-1]
+        # noinspection PyProtectedMember
+        count = address._updateRowList(address.utxoList, utxo_list)
+        self.assertEqual(0, count)
+        self.assertEqual(8, len(address.utxoList))
+        self.assertEqual(8, len(utxo_list))
+        self.assertEqual([*address.utxoList], utxo_list)
+
+        utxo_list.append(utxo_list_next.pop())
+        # noinspection PyProtectedMember
+        count = address._updateRowList(address.utxoList, utxo_list)
+        self.assertEqual(1, count)
+        self.assertEqual(9, len(address.utxoList))
+        self.assertEqual(9, len(utxo_list))
+        self.assertEqual([*address.utxoList], utxo_list)
+
+        utxo_list = utxo_list_next
+        # noinspection PyProtectedMember
+        count = address._updateRowList(address.utxoList, utxo_list)
+        self.assertEqual(9, count)
+        self.assertEqual(9, len(address.utxoList))
+        self.assertEqual(9, len(utxo_list))
+        self.assertEqual([*address.utxoList], utxo_list)
+
+        for u in utxo_list:
+            self.assertLess(0, u.rowId)
+
+        utxo_list.pop()
+        address.utxoList = utxo_list
+        self.assertEqual([*address.utxoList], utxo_list)
+
     def test_io(self) -> None:
         coin = Bitcoin(model_factory=self._application.modelFactory)
         root_node = HdNode.deriveRootNode(urandom(64))
