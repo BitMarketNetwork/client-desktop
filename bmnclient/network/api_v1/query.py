@@ -610,7 +610,7 @@ class CoinMempoolIteratorApiQuery(AbstractApiQuery):
 
     def _processTx(self, tx: DeserializedDict) -> None:
         for tx_io in chain(tx["input_list"], tx["output_list"]):
-            address = self._coin.findAddressByName(tx_io["address_name"])
+            address = self._coin.findAddressByName(tx_io["address"])
             if address is None:
                 continue
 

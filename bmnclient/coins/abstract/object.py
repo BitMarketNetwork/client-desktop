@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from typing import (
     Callable,
+    ContextManager,
     Final,
-    Generator,
     Iterable,
     Sequence,
     TYPE_CHECKING,
@@ -174,13 +174,14 @@ class CoinObject(Serializable):
                 return False
             assert self.rowId > 0
 
+            with ExitStack() as stack:
+                if result.isInsertAction:
+                    stack.enter_context(self._modelEvent("insert", "self"))
+
             for old_list, new_list in self.__deferred_save_list:
                 if self._updateRowList(old_list(), new_list) < 0:
                     return False
             self.__deferred_save_list.clear()
-        if result.isInsertAction:
-            with self._modelEvent("insert", "self"):
-                pass
         return True
 
     def load(self) -> bool:
@@ -198,16 +199,12 @@ class CoinObject(Serializable):
             return True
         return False
 
-    # TODO deprecated
-    def _callModel(self, callback_name: str, *args, **kwargs) -> None:
-        getattr(self.model, callback_name)(*args, **kwargs)
-
     @contextmanager
     def _modelEvent(
             self,
             action: str,
             name: str,
-            *args) -> Generator[None, None, None]:
+            *args) -> ContextManager[None]:
         events_name = name + "[" + action + "]"
         events = self.__value_events.get(events_name, None)
         model = self.model

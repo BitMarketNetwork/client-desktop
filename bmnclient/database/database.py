@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Final, Generator, TYPE_CHECKING, TypeVar
+from typing import ContextManager, Final, TYPE_CHECKING, TypeVar
 
 import bmnsqlite3 as _engine
 
@@ -201,7 +201,7 @@ class Database:
             *,
             allow_in_transaction: bool = False,
             suppress_exceptions: bool = False
-    ) -> Generator[Cursor | None, None, None]:
+    ) -> ContextManager[Cursor | None]:
         if (
                 not self.isOpen
                 or (self.__in_transaction > 0 and not allow_in_transaction)
