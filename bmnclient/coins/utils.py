@@ -10,6 +10,8 @@ if TYPE_CHECKING:
     from .abstract import Coin
     from ..utils.string import ClassStringKeyTuple
 
+# TODO deprecated
+
 
 class CoinUtils(NotImplementedInstance):
     @classmethod
@@ -34,8 +36,7 @@ class CoinUtils(NotImplementedInstance):
     @classmethod
     def mutableTxToNameKeyTuple(
             cls,
-            mtx: Coin.TxFactory.MutableTx) \
-            -> Tuple[ClassStringKeyTuple, ...]:
+            mtx: Coin.TxFactory.MutableTx) -> Tuple[ClassStringKeyTuple, ...]:
         return (
             *cls.coinToNameKeyTuple(mtx.coin),
             (None, mtx.name or "no_name")

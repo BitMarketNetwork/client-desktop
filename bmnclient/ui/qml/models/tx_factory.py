@@ -183,16 +183,19 @@ class TxFactoryReceiverModel(AbstractTxFactoryStateModel):
         self._factory.setReceiverAddressName(value)
         self._first_use = False
 
+    # TODO deprecated, implement inputAddressList
     @QProperty(str, notify=__stateChanged)
     def inputAddressName(self) -> str:
-        if self._factory.inputAddress is not None:
-            return self._factory.inputAddress.name
+        print("123", len(self._factory.inputAddressList))
+        if self._factory.inputAddressList:
+            return self._factory.inputAddressList[0].name
         else:
             return ""
 
     @inputAddressName.setter
     def inputAddressName(self, value: str) -> None:
-        self._factory.setInputAddressName(value)
+        self._factory.inputAddressList.clear()
+        self._factory.inputAddressList.append(value)
 
     def _getValidStatus(self) -> ValidStatus:
         if self._factory.receiverAddress is not None:
@@ -338,15 +341,12 @@ class TxFactoryModel(Coin.TxFactory.Model, AbstractModel):
     def broadcast(self) -> bool:
         return self._factory.broadcast()
 
-    def afterUpdateState(self) -> None:
-        super().afterUpdateState()
-        # TODO
-
     def afterSetInputAddress(self) -> None:
         self._receiver.update()
 
-    def afterSetReceiverAddress(self) -> None:
+    def afterSetReceiverAddress(self, address: Coin.Address) -> None:
         self._receiver.update()
+        super().afterSetReceiverAddress(address)
 
     def onBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None:
         super().onBroadcast(mtx)

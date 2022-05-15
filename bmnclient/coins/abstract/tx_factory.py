@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import MutableSequence
 from itertools import chain
-from time import time
-from typing import TYPE_CHECKING
+from time import time as current_time
+from typing import Iterable, TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
 from ..utils import CoinUtils
@@ -26,10 +27,21 @@ class _Model(CoinObjectModel):
     def owner(self) -> Coin.TxFactory:
         return self._factory
 
-    def afterUpdateState(self) -> None: pass
     def afterSetInputAddress(self) -> None: pass
-    def afterSetReceiverAddress(self) -> None: pass
-    def onBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None: pass
+
+    def beforeSetReceiverAddress(self, address: Coin.Address) -> None: pass
+    def afterSetReceiverAddress(self, address: Coin.Address) -> None: pass
+
+    def onBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None:
+        self._factory.coin.model.queryScheduler.broadcastTx(
+            mtx,
+            self.onBroadcastFinished)
+
+    def onBroadcastFinished(
+            self,
+            error_code: int,
+            mtx: Coin.TxFactory.MutableTx) -> None:
+        self._logger.debug("Result: error_code=%i, tx=%s", error_code, mtx.name)
 
 
 class _TxFactory(CoinObject, table_type=None):
@@ -47,8 +59,67 @@ class _TxFactory(CoinObject, table_type=None):
             self.raw_size = -1
             self.virtual_size = -1
 
+    class InputAddressList(MutableSequence):
+        def __init__(self, tx_factory: _TxFactory) -> None:
+            self._tx_factory = tx_factory
+            self._list: list[Coin.Address] = []
+
+        def __len__(self) -> int:
+            return len(self._list)
+
+        def __iter__(self) -> Iterable[Coin.Address]:
+            return iter(self._list)
+
+        def __getitem__(self, index: int) -> Coin.Address:
+            return self._list[index]
+
+        def __setitem__(self, index: int, address: Coin.Address) -> None:
+            raise NotImplementedError
+
+        def __delitem__(self, index: int) -> None:
+            del self._list[index]
+
+        def insert(self, index: int, address: Coin.Address | str) -> bool:
+            if isinstance(address, str):
+                name = address
+                address = self._tx_factory._coin.findAddressByName(name)
+                if address is None:
+                    self._tx_factory._logger.warning(
+                        "Input address '%s' is invalid.",
+                        name)
+                    return False
+
+            if address.isReadOnly:
+                self._tx_factory._logger.warning(
+                    "Input address '%s' is read only.",
+                    address.name)
+                return False
+
+            if address in self._list:
+                self._tx_factory._logger.info(
+                    "Address '%s' already in input list.",
+                    address.name)
+                return True
+
+            self._tx_factory._logger.debug(
+                "Input address: %s",
+                address.name)
+
+            # TODO self._callModel("afterSetInputAddress")
+            self._list.insert(index, address)
+            self._tx_factory.updateUtxoList()
+            return True
+
+        def append(self, address: Coin.Address | str) -> bool:
+            return self.insert(-1, address)
+
+        def clear(self) -> None:
+            self._tx_factory._logger.debug("Input address: *")
+            self._list.clear()
+            self._tx_factory.updateUtxoList()
+
     def __init__(self, coin: Coin) -> None:
-        super().__init__(coin)
+        super().__init__(coin, {})
         self._logger = Logger.classLogger(
             self.__class__,
             *CoinUtils.coinToNameKeyTuple(coin))
@@ -57,7 +128,7 @@ class _TxFactory(CoinObject, table_type=None):
         self._utxo_amount = 0
         self._selected_utxo_data = self._SelectedUtxoData()
 
-        self._input_address: Optional[Coin.Address] = None
+        self._input_address_list = self.InputAddressList(self)
 
         self._receiver_address: Coin.Address | None = None
         self._receiver_amount = 0
@@ -102,32 +173,8 @@ class _TxFactory(CoinObject, table_type=None):
         return None
 
     @property
-    def inputAddress(self) -> Optional[Coin.Address]:
-        return self._input_address
-
-    def setInputAddressName(self, name: Optional[str]) -> bool:
-        result = True
-
-        if name is None:
-            address = None
-            self._logger.debug("Input address: *")
-        else:
-            address = self._coin.Address.createFromName(self._coin, name=name)
-            if address is not None:
-                self._logger.debug("Input address: %s", address.name)
-            else:
-                self._logger.warning("Input address '%s' is invalid.", name)
-                result = False
-
-        if self._input_address == address:
-            return result
-
-        self._coin.setTxInputAddress(address)
-        self._input_address = address
-        self._callModel("afterSetInputAddress")
-        self.updateUtxoList()
-
-        return result
+    def inputAddressList(self) -> InputAddressList:
+        return self._input_address_list
 
     def setReceiverAddressName(self, name: str) -> bool:
         if not name:
@@ -140,9 +187,7 @@ class _TxFactory(CoinObject, table_type=None):
         else:
             self._logger.debug("Receiver address: %s", address.name)
 
-        if self._receiver_address != address:
-            self._receiver_address = address
-            self._callModel("afterSetReceiverAddress")
+        if self._updateValue("set", "receiver_address", address):
             self._selectUtxoList()
 
         return address is not None
@@ -170,7 +215,7 @@ class _TxFactory(CoinObject, table_type=None):
             self._selectUtxoList()
 
     def setReceiverMaxAmount(self) -> int:
-        if self._selectUtxoList(select_all=True, skip_model_update=True):
+        if self._selectUtxoList(select_all=True):
             value = self._selected_utxo_data.amount
             if not self._subtract_fee:
                 fee_amount = self.feeAmount
@@ -181,7 +226,6 @@ class _TxFactory(CoinObject, table_type=None):
             value = 0
 
         self._receiver_amount = value
-        self._callModel("afterUpdateState")
         return value
 
     @property
@@ -270,6 +314,7 @@ class _TxFactory(CoinObject, table_type=None):
             input_list: Sequence[Coin.Tx.Utxo],
             output_list: Sequence[Tuple[Coin.Address, int]],
             *,
+            time: int = -1,
             is_dummy: bool) -> Optional[_TxFactory.MutableTx]:
         raise NotImplementedError
 
@@ -317,7 +362,7 @@ class _TxFactory(CoinObject, table_type=None):
             self._selected_utxo_data.list,
             output_list,
             is_dummy=False,
-            time=int(time()))
+            time=int(current_time()))
         return self._mtx is not None
 
     def sign(self) -> bool:
@@ -333,7 +378,7 @@ class _TxFactory(CoinObject, table_type=None):
         if self._mtx is None or not self._mtx.isSigned:
             return False
         if self._change_address is not None:
-            self._coin.appendAddress(self._change_address)
+            self._change_address.save()
 
         mtx = self._mtx
 
@@ -457,17 +502,13 @@ class _TxFactory(CoinObject, table_type=None):
             utxo_list,
             output_list,
             is_dummy=True,
-            time=int(time()))
+            time=int(current_time()))
         if mtx is None or not mtx.sign():
             return -1, -1
         else:
             return mtx.rawSize, mtx.virtualSize
 
-    def _selectUtxoList(
-            self,
-            *,
-            select_all: bool = False,
-            skip_model_update: bool = False) -> bool:
+    def _selectUtxoList(self, *, select_all: bool = False) -> bool:
         self._selected_utxo_data = self._SelectedUtxoData()
 
         if select_all:
@@ -483,8 +524,6 @@ class _TxFactory(CoinObject, table_type=None):
                 "Selected UTXO's",
                 self._utxo_list,
                 self._utxo_amount)
-            if not skip_model_update:
-                self._callModel("afterUpdateState")
             return raw_size >= 0
 
         fee_amount = 0
@@ -523,20 +562,16 @@ class _TxFactory(CoinObject, table_type=None):
             "Selected UTXO's",
             utxo_list,
             utxo_amount)
-        if not skip_model_update:
-            self._callModel("afterUpdateState")
         return raw_size >= 0
 
     def updateUtxoList(self) -> None:
-        address_filter = dict(
-            is_read_only=False,
-            with_utxo=True,
-            is_tx_input=True)
+        if self._input_address_list:
+            address_list = self._input_address_list
+        else:
+            address_list = self._coin.addressWithUtxoList
 
-        self._utxo_list = list(chain.from_iterable(
-            a.utxoList
-            for a in self._coin.filterAddressList(**address_filter)))
-
+        self._utxo_list = list(
+            chain.from_iterable(a.utxoList for a in address_list))
         self._utxo_amount = sum(u.amount for u in self._utxo_list)
 
         self.__logUtxoList(

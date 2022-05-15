@@ -18,6 +18,44 @@ class _MutableTx(_Tx, table_type=None):
     Input = _MutableInput
     Output = _MutableOutput
 
+    _ioT = TypeVar("_ioT", Input, Output)
+
+    class IoList(SerializableList[_ioT]):
+        def __init__(
+                self, tx: _MutableTx,
+                type_: type(_MutableTx._ioT)) -> None:
+            self._tx = tx
+            self._type = type_
+            self._list: list[_MutableTx._ioT] = []
+
+        def __len__(self) -> int:
+            return len(self._list)
+
+        def __iter__(self) -> Iterable[_MutableTx._ioT]:
+            return iter(self._list)
+
+        def __getitem__(self, index: int) -> Coin.Address:
+            return self._list[index]
+
+        def __setitem__(self, index: int, io: _MutableTx._ioT) -> None:
+            raise NotImplementedError
+
+        def __delitem__(self, index: int) -> None:
+            raise NotImplementedError
+
+        def insert(self, index: int, value: dict[str, ...]) -> bool:
+            raise NotImplementedError
+
+        def append(self, value: dict[str, ...]) -> _MutableTx._ioT:
+            io = self._type(self._tx, index=len(self._list), **value)
+            self._list.append(io)
+            self._tx._updateAmount()
+            return io
+
+        def clear(self) -> None:
+            self._list.clear()
+            self._tx._updateAmount()
+
     def __init__(
             self,
             coin: Coin,
@@ -37,8 +75,9 @@ class _MutableTx(_Tx, table_type=None):
         self._version: Final = version
         self._lock_time: Final = lock_time
         self._is_signed = False
-        self._input_list: list[_MutableTx.Input] = []
-        self._output_list: list[_MutableTx.Output] = []
+
+        self._input_list = self.IoList(self, self.Input)
+        self._output_list = self.IoList(self, self.Output)
 
     def __eq__(self, other: _MutableTx) -> bool:
         return (
@@ -64,6 +103,15 @@ class _MutableTx(_Tx, table_type=None):
             return None
         return self._deriveName()
 
+    @serializable
+    @property
+    def inputList(self) -> IoList[Input]:
+        return self._input_list
+
+    @serializable
+    @property
+    def outputList(self) -> IoList[Output]:
+        return self._output_list
 
     @property
     def isDummy(self) -> bool:

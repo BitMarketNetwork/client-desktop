@@ -146,7 +146,9 @@ def fillCoin(
             history_last_offset="last_" + str(randint(1000, 100000)))
         owner.assertIsNotNone(address)
         owner.assertFalse(address.isReadOnly)
+        owner.assertIs(None, coin.findAddressByName(address.name))
         owner.assertTrue(address.save())
+        owner.assertIs(address, coin.findAddressByName(address.name))
         owner.assertFalse(address.isReadOnly)
 
         for tx_index in range(1, tx_count + 1):

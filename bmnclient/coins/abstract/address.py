@@ -140,9 +140,6 @@ class _Model(CoinObjectModel):
     def beforeSetComment(self, value: str) -> None: pass
     def afterSetComment(self, value: str) -> None: pass
 
-    def beforeSetIsTxInput(self, value: bool) -> None: pass
-    def afterSetIsTxInput(self, value: bool) -> None: pass
-
     def beforeSetIsReadOnly(self, value: bool) -> None: pass
     def afterSetIsReadOnly(self, value: bool) -> None: pass
 
@@ -211,7 +208,6 @@ class _Address(
         self._label = str(kwargs.pop("label", ""))
         self._comment = str(kwargs.pop("comment", ""))
 
-        self._is_tx_input = bool(kwargs.pop("is_tx_input", False))
         self._data: Final = bytes(kwargs.pop("data", b""))
         self._key: _Address.KeyType | None = kwargs.pop("key", None)
         assert self._key is None or isinstance(self._key, self.KeyType)
@@ -507,15 +503,6 @@ class _Address(
     @comment.setter
     def comment(self, value: str) -> None:
         self._updateValue("set", "comment", value)
-
-    @serializable  # TODO column
-    @property
-    def isTxInput(self) -> bool:
-        return self._is_tx_input
-
-    @isTxInput.setter
-    def isTxInput(self, value: bool) -> None:
-        self._updateValue("set", "is_tx_input", value)
 
     @serializable
     @property

@@ -60,17 +60,6 @@ class AddressStateModel(AbstractAddressStateModel):
     def isUpdating(self) -> bool:
         return False  # TODO self._address.isUpdating
 
-    @QProperty(bool, notify=__stateChanged)
-    def isTxInput(self) -> bool:
-        return self._address.isTxInput
-
-    @isTxInput.setter
-    def isTxInput(self, value: bool):
-        self._address.isTxInput = value
-        # TODO temporary, allow multiple input addresses
-        if self._address.isTxInput:
-            self._coin.txFactory.setInputAddressName(self._address.name)
-
 
 class AddressBalanceModel(AbstractAddressBalanceModel):
     def update(self) -> None:
@@ -131,10 +120,6 @@ class AddressModel(AbstractCoinObjectModel, Coin.Address.Model, AbstractModel):
     def afterSetComment(self, value: str) -> None:
         self._state_model.update()
         super().afterSetComment(value)
-
-    def afterSetIsTxInput(self, value: bool) -> None:
-        self._state_model.update()
-        super().afterSetIsTxInput(value)
 
     def afterAppendTx(self, tx: Coin.Tx) -> None:  # TODO
         global _TX_NOTIFIED_LIST

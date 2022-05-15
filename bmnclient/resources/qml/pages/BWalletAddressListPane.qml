@@ -89,7 +89,7 @@ BPane {
         BMenuItem {
             text: qsTr("Spend from")
             onTriggered: {
-                _contextMenu.address.state.isTxInput = true
+                _base.coin.txFactory.receiver.inputAddressName = _contextMenu.address.name
                 spendFromTriggered()
             }
         }
