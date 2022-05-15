@@ -145,7 +145,9 @@ def fillCoin(
             history_first_offset="first_" + str(randint(1000, 100000)),
             history_last_offset="last_" + str(randint(1000, 100000)))
         owner.assertIsNotNone(address)
+        owner.assertFalse(address.isReadOnly)
         owner.assertTrue(address.save())
+        owner.assertFalse(address.isReadOnly)
 
         for tx_index in range(1, tx_count + 1):
             tx = coin.Tx(
@@ -594,6 +596,7 @@ class TestCoins(TestCaseApplication):
             self.assertEqual(a1.exportKey(), a2.exportKey())
             self.assertEqual(a1.balance, a2.balance)
             self.assertEqual(a1.txCount, a2.txCount)
+            self.assertEqual(a1.isReadOnly, a2.isReadOnly)
             self.assertEqual(a1.label, a2.label)
             self.assertEqual(a1.comment, a2.comment)
             self.assertEqual(a1.historyFirstOffset, a2.historyFirstOffset)
@@ -642,6 +645,49 @@ class TestCoins(TestCaseApplication):
             self.assertTrue(coin.save())
             for d_flag in DeserializeFlag:
                 self._test_serialization(d_flag, coin.__class__)
+
+    def test_is_read_only(self) -> None:
+        for coin in CoinList(model_factory=self._application.modelFactory):
+            self.assertTrue(coin.save())
+            coin = fillCoin(
+                self,
+                coin.__class__(model_factory=self._application.modelFactory))
+
+            data = coin.serialize(SerializeFlag.PRIVATE_MODE)
+            self.assertIsInstance(data, dict)
+
+            coin_new = coin.__class__(
+                model_factory=self._application.modelFactory)
+            coin_new.deserializeUpdate(DeserializeFlag.DATABASE_MODE, data)
+            self.assertTrue(coin_new.save())
+
+            for address in coin.addressList:
+                self.assertFalse(address.isReadOnly)
+
+            for address in coin_new.addressList:
+                self.assertFalse(address.isReadOnly)
+                address.isReadOnly = True
+                self.assertTrue(address.isReadOnly)
+                address.isReadOnly = False
+                self.assertFalse(address.isReadOnly)
+
+                address.key = None
+                self.assertTrue(address.isReadOnly)
+                address.isReadOnly = False
+                self.assertTrue(address.isReadOnly)
+
+            self.assertEqual(
+                len(coin.addressList),
+                len(coin.addressWithUtxoList))
+            self.assertEqual(0, len(coin_new.addressWithUtxoList))
+
+            coin.addressList[0].key = None
+            coin.addressList[1].isReadOnly = True
+            coin.addressList[2].utxoList = []
+
+            self.assertEqual(
+                [*coin.addressList][3:],
+                [*coin.addressWithUtxoList])
 
 
 class TestTxFactory(TestCaseApplication):

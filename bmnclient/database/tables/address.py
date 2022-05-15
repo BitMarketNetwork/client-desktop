@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import glob
-from typing import TYPE_CHECKING, Callable
+from typing import Callable, TYPE_CHECKING
 
 from .table import (
     Column,
@@ -30,6 +30,7 @@ class AddressesTable(SerializableTable, name="addresses"):
         LABEL = ("label", "TEXT NOT NULL")
         COMMENT = ("comment", "TEXT NOT NULL")
         KEY = ("key", "TEXT")
+        IS_READ_ONLY = ("is_read_only", "INTEGER NOT NULL")
 
         HISTORY_FIRST_OFFSET = ("history_first_offset", "TEXT NOT NULL")
         HISTORY_LAST_OFFSET = ("history_last_offset", "TEXT NOT NULL")
@@ -73,15 +74,40 @@ class AddressesTable(SerializableTable, name="addresses"):
     def rowList(
             self,
             coin: Coin,
-            on_save_row: Callable[[int], None] | None = None
+            on_save_row: Callable[[int], None] | None = None,
+            *,
+            is_read_only: bool | None = None,
+            with_utxo: bool | None = None
     ) -> SerializableRowList[Coin.Address]:
         assert coin.rowId > 0
+
+        where_expression = f"{self.ColumnEnum.COIN_ROW_ID} == ?"
+        where_args = [coin.rowId]
+
+        if is_read_only is not None:
+            if is_read_only:
+                where_expression += f" AND {self.ColumnEnum.IS_READ_ONLY} > 0"
+            else:
+                where_expression += f" AND {self.ColumnEnum.IS_READ_ONLY} <= 0"
+
+        if with_utxo is not None:
+            from .utxo import UtxosTable
+            where_expression += (
+                f" AND ("
+                f"SELECT 1 FROM {UtxosTable}"
+                f" WHERE"
+                f" {UtxosTable}.{UtxosTable.ColumnEnum.ADDRESS_ROW_ID}"
+                f" == {self}.{self.ColumnEnum.ROW_ID}"
+                f" LIMIT 1"
+                f") == ?")
+            where_args.append(1 if with_utxo else None)
+
         return SerializableRowList(
             type_=coin.Address,
             type_args=[coin],
             table=self,
-            where_expression=f"{self.ColumnEnum.COIN_ROW_ID} == ?",
-            where_args=[coin.rowId],
+            where_expression=where_expression,
+            where_args=where_args,
             on_save_row=on_save_row)
 
     def queryTotalBalance(self, coin: Coin) -> int:
@@ -118,6 +144,18 @@ class AddressesTable(SerializableTable, name="addresses"):
         if value is None or value[0] is None:
             return -1
         return value[0]
+
+    def queryName(self, coin: Coin, address_name: str) -> Coin.Address | None:
+        assert coin.rowId > 0
+        if not address_name:
+            return None
+        return self.loadSerializable(
+            coin.Address,
+            coin,
+            key_columns=[
+                ColumnValue(self.ColumnEnum.COIN_ROW_ID, coin.rowId),
+                ColumnValue(self.ColumnEnum.NAME, address_name)]
+        )
 
 
 class AddressTxsTable(SerializableTable, name="address_transactions"):

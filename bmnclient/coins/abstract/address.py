@@ -143,6 +143,9 @@ class _Model(CoinObjectModel):
     def beforeSetIsTxInput(self, value: bool) -> None: pass
     def afterSetIsTxInput(self, value: bool) -> None: pass
 
+    def beforeSetIsReadOnly(self, value: bool) -> None: pass
+    def afterSetIsReadOnly(self, value: bool) -> None: pass
+
     def beforeSetTxCount(self, value: int) -> None: pass
     def afterSetTxCount(self, value: int) -> None: pass
 
@@ -212,6 +215,9 @@ class _Address(
         self._data: Final = bytes(kwargs.pop("data", b""))
         self._key: _Address.KeyType | None = kwargs.pop("key", None)
         assert self._key is None or isinstance(self._key, self.KeyType)
+        self._is_read_only = bool(kwargs.pop(
+            "is_read_only",
+            self.privateKey is None))
 
         history_first_offset = str(kwargs.pop("history_first_offset", ""))
         history_last_offset = str(kwargs.pop("history_last_offset", ""))
@@ -400,6 +406,8 @@ class _Address(
     @key.setter
     def key(self, value: KeyType | None) -> None:
         self._updateValue("set", "key", value)
+        if self.privateKey is None:
+            self._updateValue("set", "is_read_only", True)
 
     def exportKey(self, *, allow_hd_path: bool = False) -> str | None:
         if isinstance(self._key, HdNode):
@@ -509,9 +517,15 @@ class _Address(
     def isTxInput(self, value: bool) -> None:
         self._updateValue("set", "is_tx_input", value)
 
+    @serializable
     @property
     def isReadOnly(self) -> bool:
-        return self.privateKey is None
+        return bool(self._is_read_only or self.privateKey is None)
+
+    @isReadOnly.setter
+    def isReadOnly(self, value: bool) -> None:
+        value = bool(value or self.privateKey is None)
+        self._updateValue("set", "is_read_only", value)
 
     @serializable
     @property

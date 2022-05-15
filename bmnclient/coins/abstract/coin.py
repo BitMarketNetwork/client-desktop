@@ -436,39 +436,16 @@ class Coin(CoinObject, table_type=CoinsTable):
     def addressList(self) -> SerializableList[Address]:
         return self._rowList(AddressesTable)
 
-    def filterAddressList(
-            self,
-            *,
-            is_read_only: Optional[bool] = None,
-            is_tx_input: Optional[bool] = None,
-            with_utxo: Optional[bool] = None) -> Generator[Address, None, None]:
-        # TODO temporary
-        tx_input_found = False
-        if is_tx_input:
-            for address in self._address_list:
-                if address.isTxInput:
-                    tx_input_found = True
+    @property
+    def addressWithUtxoList(self) -> SerializableList[Address]:
+        return self._rowList(
+            AddressesTable,
+            is_read_only=False,
+            with_utxo=True)
 
-        for address in self._address_list:
-            if is_read_only is not None:
-                if is_read_only != address.isReadOnly:
-                    continue
-            if tx_input_found and is_tx_input is not None:
-                if is_tx_input != address.isTxInput:
-                    continue
-            if with_utxo is not None:
-                if (len(address.utxoList) > 0) != with_utxo:
-                    continue
-            yield address
-
-    # TODO reimplement
     def findAddressByName(self, name: str) -> Address | None:
-        if not name:
-            return None
-        name = name.strip().casefold()  # TODO tmp, old wrapper
-        for address in self.addressList:
-            if name == address.name.casefold():
-                return address
+        if t := self._openTable(AddressesTable):
+            return t.queryName(self, name)
         return None
 
     @property
