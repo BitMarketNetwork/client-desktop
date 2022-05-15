@@ -128,7 +128,9 @@ class Coin(CoinObject, table_type=CoinsTable):
         self._mempool_cache_access_counter = 0
         self._tx_factory = self.TxFactory(self)
 
-        self._appendDeferredSave(kwargs.pop("address_list", []))
+        self._appendDeferredSave(
+            lambda: self.addressList,
+            kwargs.pop("address_list", []))
         assert len(kwargs) == 0
 
     def __eq__(self, other: Coin) -> bool:
@@ -146,7 +148,9 @@ class Coin(CoinObject, table_type=CoinsTable):
         return StringUtils.classString(self.__class__, (None, self.name))
 
     def __update__(self, **kwargs) -> bool:
-        self._appendDeferredSave(kwargs.pop("address_list", []))
+        self._appendDeferredSave(
+            lambda: self.addressList,
+            kwargs.pop("address_list", []))
         if not super().__update__(**kwargs):
             return False
         self.updateBalance()
@@ -429,20 +433,8 @@ class Coin(CoinObject, table_type=CoinsTable):
 
     @serializable
     @property
-    def addressList(self) -> List[Address]:
-        return self._address_list
-
-    def setTxInputAddress(self, address: Optional[Address]) -> None:
-        # TODO
-        if address is None:
-            for a in self._address_list:
-                a.isTxInput = False
-        else:
-            for a in self._address_list:
-                if a == address:
-                    a.isTxInput = True
-                else:
-                    a.isTxInput = False
+    def addressList(self) -> SerializableList[Address]:
+        return self._rowList(AddressesTable)
 
     def filterAddressList(
             self,

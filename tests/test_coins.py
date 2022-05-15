@@ -422,7 +422,7 @@ class TestCoins(TestCaseApplication):
                 # noinspection PyProtectedMember
                 self.assertEqual(len(coin._mempool_cache), len(mempool_list))
 
-    def test_utxo(self) -> None:
+    def test_utxo_1(self) -> None:
         coin = Bitcoin(model_factory=self._application.modelFactory)
         root_node = HdNode.deriveRootNode(urandom(64))
         self.assertTrue(coin.deriveHdNode(root_node))

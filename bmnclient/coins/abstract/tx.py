@@ -76,8 +76,12 @@ class _Tx(CoinObject, table_type=TxsTable):
         self._amount = int(kwargs.pop("amount"))
         self._fee_amount = int(kwargs.pop("fee_amount"))
         self._is_coinbase: Final = bool(kwargs.pop("is_coinbase"))
-        self._appendDeferredSave(kwargs.pop("input_list", []))
-        self._appendDeferredSave(kwargs.pop("output_list", []))
+        self._appendDeferredSave(
+            lambda: self.inputList,
+            kwargs.pop("input_list", []))
+        self._appendDeferredSave(
+            lambda: self.outputList,
+            kwargs.pop("output_list", []))
         assert len(kwargs) == 1
 
     def __eq__(self, other: _Tx) -> bool:
@@ -98,8 +102,12 @@ class _Tx(CoinObject, table_type=TxsTable):
             parent=self.coin)
 
     def __update__(self, **kwargs) -> bool:
-        self._appendDeferredSave(kwargs.pop("input_list", []))
-        self._appendDeferredSave(kwargs.pop("output_list", []))
+        self._appendDeferredSave(
+            lambda: self.inputList,
+            kwargs.pop("input_list", []))
+        self._appendDeferredSave(
+            lambda: self.outputList,
+            kwargs.pop("output_list", []))
         if not super().__update__(**kwargs):
             return False
         # TODO self.updateBalance()

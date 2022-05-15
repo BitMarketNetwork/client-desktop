@@ -6,6 +6,7 @@ from typing import (
     Final,
     Generator,
     Iterable,
+    Sequence,
     TYPE_CHECKING,
     TypeVar)
 
@@ -111,7 +112,10 @@ class CoinObject(Serializable):
         self.__model: CoinObjectModel | bool | None = False
         self.__value_events: dict[str, tuple[Callable, Callable]] = {}
         self.__enable_table = enable_table
-        self.__deferred_save_list: list[list[CoinObject]] = []
+        self.__deferred_save_list: list[(
+            Callable[[None], SerializableList[CoinObject]],
+            list[CoinObject]
+        )] = []
 
         if self is not self._coin and (t := self._openTable(force=True)):
             if t.completeSerializable(self, kwargs) > 0:
@@ -153,9 +157,13 @@ class CoinObject(Serializable):
 
     def _appendDeferredSave(
             self,
+            old_list: Callable[[None], SerializableList[CoinObject]],
             object_list: Iterable[Callable[[CoinObject], CoinObject]]) -> None:
         if object_list:
-            self.__deferred_save_list.append([o(self) for o in object_list])
+            self.__deferred_save_list.append((
+                old_list,
+                [o(self) for o in object_list]
+            ))
 
     def save(self) -> bool:
         if not (t := self._openTable(force=True)):
@@ -166,12 +174,9 @@ class CoinObject(Serializable):
                 return False
             assert self.rowId > 0
 
-            for object_list in self.__deferred_save_list:
-                for object_ in object_list:
-                    if not object_.save():
-                        return False
-                    if self.associate(object_) is False:
-                        return False
+            for old_list, new_list in self.__deferred_save_list:
+                if self._updateRowList(old_list(), new_list) < 0:
+                    return False
             self.__deferred_save_list.clear()
         if result.isInsertAction:
             with self._modelEvent("insert", "self"):
@@ -302,6 +307,31 @@ class CoinObject(Serializable):
         if result.isInsertAction:
             with self._modelEvent("insert", "child", object_, row_list, index):
                 row_list.__accept_insert_index__()
+
+    def _updateRowList(
+            self,
+            old_list: SerializableList[CoinObject],
+            new_list: Sequence[CoinObject]) -> int:
+        new_map = [False] * len(new_list)
+        for old_item in old_list:
+            found = False
+            for i, new_item in enumerate(new_list):
+                if old_item == new_item:
+                    found = True
+                    new_map[i] = True
+                    break
+            if not found:
+                old_item.remove()
+
+        count = 0
+        for found, new_item in zip(new_map, new_list):
+            if not found:
+                if not new_item.save():
+                    return -1
+                if self.associate(new_item) is False:
+                    return -1
+                count += 1
+        return count
 
 
 # TODO deprecated, create class AbstractModelFactory

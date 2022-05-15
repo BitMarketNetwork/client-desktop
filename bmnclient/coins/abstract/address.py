@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import Final, TYPE_CHECKING, Union
+from typing import Final, Sequence, TYPE_CHECKING, Union
 
 from .object import CoinObject, CoinObjectModel
 from ..hd import HdNode
@@ -145,10 +145,6 @@ class _Model(CoinObjectModel):
 
     def beforeSetTxCount(self, value: int) -> None: pass
     def afterSetTxCount(self, value: int) -> None: pass
-    def beforeAppendTx(self, tx: Coin.Tx) -> None: pass
-    def afterAppendTx(self, tx: Coin.Tx) -> None: pass
-    def afterSetUtxoList(self) -> None: pass  # TODO
-    def afterSetUtxoList(self) -> None: pass
 
     def beforeSetHistoryFirstOffset(self, value: str) -> None: pass
     def afterSetHistoryFirstOffset(self, value: str) -> None: pass
@@ -226,8 +222,12 @@ class _Address(
             self._history_first_offset = ""
             self._history_last_offset = ""
 
-        self._appendDeferredSave(kwargs.pop("tx_list", []))
-        self._appendDeferredSave(kwargs.pop("utxo_list", []))
+        self._appendDeferredSave(
+            lambda: self.txList,
+            kwargs.pop("tx_list", []))
+        self._appendDeferredSave(
+            lambda: self.utxoList,
+            kwargs.pop("utxo_list", []))
         assert len(kwargs) == 2
 
     def __eq__(self, other: _Address) -> bool:
@@ -256,8 +256,12 @@ class _Address(
             parent=self.coin)
 
     def __update__(self, **kwargs) -> bool:
-        self._appendDeferredSave(kwargs.pop("tx_list", []))
-        self._appendDeferredSave(kwargs.pop("utxo_list", []))
+        self._appendDeferredSave(
+            lambda: self.txList,
+            kwargs.pop("tx_list", []))
+        self._appendDeferredSave(
+            lambda: self.utxoList,
+            kwargs.pop("utxo_list", []))
         if not super().__update__(**kwargs):
             return False
         # TODO self.updateBalance()
