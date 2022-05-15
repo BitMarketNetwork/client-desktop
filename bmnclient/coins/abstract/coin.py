@@ -39,8 +39,12 @@ class _Model(CoinRootObjectModel):
     def beforeSetVerifiedHeight(self, value: int) -> None: pass
     def afterSetVerifiedHeight(self, value: int) -> None: pass
 
-    def beforeSetOffset(self, value: str) -> None: pass
-    def afterSetOffset(self, value: str) -> None: pass
+    def beforeSetOffset(self, value: str) -> None:
+        pass
+
+    def afterSetOffset(self, _value: str) -> None:
+        for address in self._coin.addressList:
+            self._query_scheduler.updateCoinAddress(address)
 
     def beforeSetUnverifiedOffset(self, value: int) -> None: pass
     def afterSetUnverifiedOffset(self, value: int) -> None: pass

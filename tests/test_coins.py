@@ -948,22 +948,29 @@ class TestTxFactory(TestCaseApplication):
 
     def test(self) -> None:
         amount_list = list(range(100000, 100100))
-        address = self._coin.deriveHdAddress(
-            account=0,
-            is_change=False,
-            index=1000)
-        self.assertIsNotNone(address)
-        self.assertTrue(address.save())
 
-        receiver_address = self._coin.deriveHdAddress(
-            account=0,
-            is_change=False,
-            index=1001)
-        self.assertIsNotNone(receiver_address)
+        sender_address_list = []
+        for index in range(1000, 1010):
+            address = self._coin.deriveHdAddress(
+                account=0,
+                is_change=False,
+                index=index)
+            self.assertIsNotNone(address)
+            self.assertTrue(address.save())
+            sender_address_list.append(address)
 
-        self._createUtxoList(address, amount_list)
-        self.assertTrue(address.save())
-        self.assertEqual(1, len(self._coin.addressList))
+        receiver_address_list = []
+        for index in range(2000, 2010):
+            address = self._coin.deriveHdAddress(
+                account=0,
+                is_change=False,
+                index=index)
+            self.assertIsNotNone(address)
+            receiver_address_list.append(address)
+
+        self._createUtxoList(sender_address_list[0], amount_list)
+        self.assertTrue(sender_address_list[0].save())
+        self.assertEqual(10, len(self._coin.addressList))
 
         txf = self._coin.txFactory
         txf.updateUtxoList()
@@ -979,7 +986,7 @@ class TestTxFactory(TestCaseApplication):
         self.assertFalse(txf.inputAddressList.append("BAD_INPUT1"))
         self.assertEqual(0, len(txf.inputAddressList))
         self.assertTrue(txf.inputAddressList.append(
-            "3Ps86GT6vHg7dCT5QhcECDFkRaUJbBzqXB"))
+            sender_address_list[1].name))
         self.assertEqual(1, len(txf.inputAddressList))
         self.assertFalse(txf.inputAddressList.append("BAD_INPUT2"))
         self.assertEqual(1, len(txf.inputAddressList))
@@ -990,11 +997,12 @@ class TestTxFactory(TestCaseApplication):
         self.assertFalse(txf.isValidReceiverAmount)
         self.assertFalse(txf.isValidFeeAmount)
         self.assertFalse(txf.setReceiverAddressName("BAD_NAME"))
-        self.assertTrue(txf.setReceiverAddressName(receiver_address.name))
-        self.assertEqual(txf.receiverAddress, receiver_address)
+        self.assertTrue(txf.setReceiverAddressName(
+            receiver_address_list[0].name))
+        self.assertEqual(txf.receiverAddress, receiver_address_list[0])
 
         address_count = len(self._coin.addressList)
-        self.assertEqual(1, address_count)
+        self.assertEqual(10, address_count)
 
         for subtract_fee in (False, True):
             txf.subtractFee = subtract_fee
