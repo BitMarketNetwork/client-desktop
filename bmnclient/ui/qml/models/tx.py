@@ -10,7 +10,7 @@ from PySide6.QtCore import (
     Slot as QSlot)
 
 from . import AbstractCoinStateModel, AbstractModel
-from .abstract import AbstractTableModel
+from .abstract import AbstractCoinObjectModel, AbstractTableModel
 from .amount import AbstractAmountModel
 from .tx_io import TxIoListModel
 from ....coins.abstract import Coin
@@ -93,7 +93,7 @@ class TxFeeAmountModel(AbstractTxAmountModel):
         return self._tx.feeAmount
 
 
-class TxModel(Coin.Tx.Model, AbstractModel):
+class TxModel(AbstractCoinObjectModel, Coin.Tx.Model, AbstractModel):
     def __init__(self, application: QmlApplication, tx: Coin.Tx) -> None:
         super().__init__(application, tx=tx)
 
