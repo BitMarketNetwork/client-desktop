@@ -27,12 +27,16 @@ class _Model(CoinObjectModel):
     def owner(self) -> Coin.TxFactory:
         return self._factory
 
-    def afterSetInputAddress(self) -> None: pass
+    def beforeInsertInputAddress(self, address: Coin.Address) -> None: pass
+    def afterInsertInputAddress(self, address: Coin.Address) -> None: pass
 
     def beforeSetReceiverAddress(self, address: Coin.Address) -> None: pass
     def afterSetReceiverAddress(self, address: Coin.Address) -> None: pass
 
-    def onBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None:
+    def beforeInsertBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None:
+        pass
+
+    def afterInsertBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None:
         self._factory.coin.model.queryScheduler.broadcastTx(
             mtx,
             self.onBroadcastFinished)
@@ -105,9 +109,12 @@ class _TxFactory(CoinObject, table_type=None):
                 "Input address: %s",
                 address.name)
 
-            # TODO self._callModel("afterSetInputAddress")
-            self._list.insert(index, address)
-            self._tx_factory.updateUtxoList()
+            with self._tx_factory._modelEvent(
+                    "insert",
+                    "input_address",
+                    address):
+                self._list.insert(index, address)
+                self._tx_factory.updateUtxoList()
             return True
 
         def append(self, address: Coin.Address | str) -> bool:
@@ -378,12 +385,11 @@ class _TxFactory(CoinObject, table_type=None):
         if self._mtx is None or not self._mtx.isSigned:
             return False
         if self._change_address is not None:
-            self._change_address.save()
+            if not self._change_address.save():
+                return False
 
-        mtx = self._mtx
-
-        self.clear()
-        self._callModel("onBroadcast", mtx)
+        with self._modelEvent("insert", "broadcast", self._mtx):
+            self.clear()
         return True
 
     @staticmethod

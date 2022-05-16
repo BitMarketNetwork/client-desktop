@@ -161,6 +161,7 @@ class TxFactoryChangeAmountModel(AbstractTxFactoryAmountModel):
         return address.name if address is not None else self._NONE_STRING
 
 
+# TODO rename
 class TxFactoryReceiverModel(AbstractTxFactoryStateModel):
     __stateChanged = QSignal()
 
@@ -186,7 +187,6 @@ class TxFactoryReceiverModel(AbstractTxFactoryStateModel):
     # TODO deprecated, implement inputAddressList
     @QProperty(str, notify=__stateChanged)
     def inputAddressName(self) -> str:
-        print("123", len(self._factory.inputAddressList))
         if self._factory.inputAddressList:
             return self._factory.inputAddressList[0].name
         else:
@@ -341,15 +341,16 @@ class TxFactoryModel(Coin.TxFactory.Model, AbstractModel):
     def broadcast(self) -> bool:
         return self._factory.broadcast()
 
-    def afterSetInputAddress(self) -> None:
+    def afterInsertInputAddress(self, address: Coin.Address) -> None:
         self._receiver.update()
+        super().afterInsertInputAddress(address)
 
     def afterSetReceiverAddress(self, address: Coin.Address) -> None:
         self._receiver.update()
         super().afterSetReceiverAddress(address)
 
-    def onBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None:
-        super().onBroadcast(mtx)
+    def afterInsertBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None:
+        super().afterInsertBroadcast(mtx)
         # noinspection PyTypeChecker
         TxBroadcastPendingDialog(
             self._application.qmlContext.dialogManager,
