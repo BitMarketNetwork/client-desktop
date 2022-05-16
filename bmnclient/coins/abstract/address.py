@@ -146,6 +146,12 @@ class _Model(CoinObjectModel):
     def beforeSetTxCount(self, value: int) -> None: pass
     def afterSetTxCount(self, value: int) -> None: pass
 
+    def beforeUpdateUtxoList(self, _utxo_list: Sequence[Coin.Tx.Utxo]) -> None:
+        self._address.coin.model.beforeUpdateUtxoList()
+
+    def afterUpdateUtxoList(self, _utxo_list: Sequence[Coin.Tx.Utxo]) -> None:
+        self._address.coin.model.afterUpdateUtxoList()
+
     def beforeSetHistoryFirstOffset(self, value: str) -> None: pass
     def afterSetHistoryFirstOffset(self, value: str) -> None: pass
 
@@ -534,18 +540,14 @@ class _Address(
         return self._rowList(UtxosTable)
 
     @utxoList.setter
-    def utxoList(self, utxo_list: List[Coin.Tx.Utxo]) -> None:
-        if self._utxo_list == utxo_list:
-            return
-
-        for utxo in utxo_list:
-            utxo.address = self
-        self._utxo_list = utxo_list
-
-        self._callModel("afterSetUtxoList")
-        self._coin.updateUtxoList()
-
-        self.balance = sum(u.amount for u in self._utxo_list)
+    def utxoList(self, utxo_list: Sequence[Coin.Tx.Utxo]) -> None:
+        with self._coin.model.database.transaction(allow_in_transaction=True):
+            if self._updateRowList(self.utxoList, utxo_list) > 0:
+                # FIXME wrong event usage, we should call __enter__() in
+                #  _updateRowList()
+                with self._modelEvent("update", "utxo_list", utxo_list):
+                    if t := self._openTable(UtxosTable):
+                        self.balance = t.queryTotalAmount(self)
 
     @serializable
     @property

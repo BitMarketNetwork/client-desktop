@@ -349,6 +349,10 @@ class TxFactoryModel(Coin.TxFactory.Model, AbstractModel):
         self._receiver.update()
         super().afterSetReceiverAddress(address)
 
+    def afterUpdateUtxoList(self) -> None:
+        self.update()
+        super().afterUpdateUtxoList()
+
     def afterInsertBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None:
         super().afterInsertBroadcast(mtx)
         # noinspection PyTypeChecker

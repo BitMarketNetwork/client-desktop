@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import Final, Generator, TYPE_CHECKING
+from typing import Final, Sequence, TYPE_CHECKING
 from weakref import WeakValueDictionary
 
 from .object import CoinObject, CoinRootObjectModel
@@ -61,11 +61,11 @@ class _Model(CoinRootObjectModel):
     def beforeUpdateBalance(self, value: int) -> None: pass
     def afterUpdateBalance(self, value: int) -> None: pass
 
-    def beforeUpdateUtxoList(self, value: None) -> None: pass
-    def afterUpdateUtxoList(self, value: None) -> None: pass
+    def beforeUpdateUtxoList(self) -> None:
+        pass
 
-    def beforeAppendAddress(self, address: Coin.Address) -> None: pass
-    def afterAppendAddress(self, address: Coin.Address) -> None: pass
+    def afterUpdateUtxoList(self) -> None:
+        self._coin.txFactory.updateUtxoList()
 
     def beforeSetServerData(self, value: dict[str, ...]) -> None: pass
     def afterSetServerData(self, value: dict[str, ...]) -> None: pass
@@ -317,14 +317,6 @@ class Coin(CoinObject, table_type=CoinsTable):
             value = 0
         self._updateValue("update", "balance", value)
 
-    def updateUtxoList(self) -> None:
-        self._updateValue(
-            "update",
-            "utxo_list",
-            None,
-            force=True,
-            setattr_function=lambda *_: self._tx_factory.updateUtxoList())
-
     def deriveHdNode(self, root_node: HdNode) -> bool:
         private = root_node.privateKey is not None
 
@@ -475,6 +467,7 @@ class Coin(CoinObject, table_type=CoinsTable):
             "list": address_list
         }
 
+    # TODO reimplement
     def createMempoolAddressLists(
             self,
             count_per_list: int) -> list[dict[str, ...]]:

@@ -296,10 +296,6 @@ class CoinModel(AbstractCoinObjectModel, Coin.Model, AbstractModel):
         self._balance_model.update()
         super().afterUpdateBalance(value)
 
-    def afterUpdateUtxoList(self, value: None) -> None:
-        self._coin.txFactory.model.update()
-        super().afterUpdateUtxoList()
-
     def afterSetServerData(self, value: dict[str, ...]) -> None:
         self._server_data_model.update()
         super().afterSetServerData(value)

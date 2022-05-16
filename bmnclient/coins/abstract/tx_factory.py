@@ -33,6 +33,9 @@ class _Model(CoinObjectModel):
     def beforeSetReceiverAddress(self, address: Coin.Address) -> None: pass
     def afterSetReceiverAddress(self, address: Coin.Address) -> None: pass
 
+    def beforeUpdateUtxoList(self) -> None: pass
+    def afterUpdateUtxoList(self) -> None: pass
+
     def beforeInsertBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None:
         pass
 
@@ -576,15 +579,17 @@ class _TxFactory(CoinObject, table_type=None):
         else:
             address_list = self._coin.addressWithUtxoList
 
-        self._utxo_list = list(
-            chain.from_iterable(a.utxoList for a in address_list))
-        self._utxo_amount = sum(u.amount for u in self._utxo_list)
+        utxo_list = list(chain.from_iterable(a.utxoList for a in address_list))
+        utxo_amount = sum(u.amount for u in utxo_list)
 
-        self.__logUtxoList(
-            "Available UTXO's",
-            self._utxo_list,
-            self._utxo_amount)
-        self._selectUtxoList()
+        with self._modelEvent("update", "utxo_list"):
+            self._utxo_list = utxo_list
+            self._utxo_amount = utxo_amount
+            self.__logUtxoList(
+                "Available UTXO's",
+                self._utxo_list,
+                self._utxo_amount)
+            self._selectUtxoList()
 
     def __logUtxoList(
             self,
