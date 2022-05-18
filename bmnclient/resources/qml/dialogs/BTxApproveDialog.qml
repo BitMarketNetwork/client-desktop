@@ -126,4 +126,13 @@ BDialog {
             }
         }
     }
+
+    onAccepted: {
+        if (_base.coin.txFactory.broadcast()) {
+            // TODO success message?
+            // TODO Clear BWalletSendPane fields
+        } else {
+            // TODO error?
+        }
+    }
 }
