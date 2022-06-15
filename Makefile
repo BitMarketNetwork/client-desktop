@@ -38,7 +38,6 @@ RMDIR = if exist "$(call NPATH,$(1))" rmdir /S /Q "$(call NPATH,$(1))"
 ENVSUBST_FILE =
 CHMOD_EXEC =
 
-RSYNC = "$(BMN_POSIX_BIN_DIR)rsync.exe" "--rsh=$(BMN_POSIX_BIN_DIR)ssh.exe"
 PYTHON = "$(BMN_PYTHON_BIN_DIR)python.exe"
 RCC = "$(BMN_PYSIDE_BIN_DIR)pyside6-rcc.exe"
 LUPDATE = "$(BMN_PYSIDE_BIN_DIR)pyside6-lupdate.exe"
@@ -64,7 +63,6 @@ RMDIR = $(BMN_POSIX_BIN_DIR)rm -rf "$(call NPATH,$(1))"
 ENVSUBST_FILE = $(BMN_POSIX_BIN_DIR)cat "$(call NPATH,$(1))" | D=$$ $(BMN_POSIX_BIN_DIR)envsubst > "$(call NPATH,$(2))"
 CHMOD_EXEC = $(BMN_POSIX_BIN_DIR)chmod +x "$(call NPATH,$(1))"
 
-RSYNC = $(BMN_POSIX_BIN_DIR)rsync
 ifeq (,$(BMN_PYTHON_BIN_DIR))
 PYTHON = /usr/bin/env python3
 else
@@ -102,15 +100,6 @@ define BMN_VERSION
 $(strip $(shell $(PYTHON) -c \
 'from $(BMN_PACKAGE_NAME) import version;\
 print(str(version.$(1)))\
-'))
-endef
-
-define FILE_MTIME
-$(strip $(shell $(PYTHON) -c \
-'import datetime;import os;\
-mtime=os.stat("$(1)").st_mtime if os.path.exists("$(1)") else 0;\
-mtime=datetime.datetime.utcfromtimestamp(mtime);\
-print(mtime.strftime("%y%m%d_%H%M%S"))\
 '))
 endef
 
@@ -350,20 +339,3 @@ pip-clean:
 	$(call RMDIR,$(BUILD_DIR))
 	$(call RM,$(PIP_DIST_TARGET_WHEEL))
 	$(call RM,$(PIP_DIST_TARGET_SDIST))
-
-.PHONY: pip-upload
-pip-upload:
-	$(RSYNC) $(RSYNC_FLAGS) \
-		"$(PIP_DIST_TARGET_WHEEL)" \
-		"$(PIP_DIST_TARGET_SDIST)" \
-		"$(BMN_UPLOAD_DIR)/"
-
-################################################################################
-
-.PHONY: upload
-upload: DIST_TARGET_NAME := $(notdir $(DIST_TARGET))
-upload: DIST_TARGET_NAME := $(basename $(DIST_TARGET_NAME))-$(call FILE_MTIME,$(DIST_TARGET))$(suffix $(DIST_TARGET_NAME))
-upload:
-	$(RSYNC) $(RSYNC_FLAGS) \
-		"$(DIST_TARGET)" \
-		"$(BMN_UPLOAD_DIR)/$(DIST_TARGET_NAME)"
