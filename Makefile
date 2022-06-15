@@ -125,6 +125,9 @@ export BMN_SHORT_NAME := $(or $(strip \
 export BMN_VERSION_STRING := $(or $(strip \
 	$(call BMN_VERSION,Product.VERSION_STRING)),\
 	$(error BMN_VERSION_STRING not defined.))
+export BMN_PLATFORM_STRING := $(or $(strip \
+	$(call BMN_VERSION,Product.PLATFORM_STRING)),\
+	$(error BMN_PLATFORM_STRING not defined.))
 export BMN_ICON_WINDOWS_FILE_PATH := $(or $(strip \
 	$(call BMN_VERSION,ProductPaths.ICON_WINDOWS_FILE_PATH)),\
 	$(error BMN_ICON_WINDOWS_FILE_PATH not defined.))
