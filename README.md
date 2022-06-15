@@ -22,7 +22,7 @@ don't try to use x86!
 - Python 3.8+ with PIP
     * [requirements.txt](requirements.txt)
     * [requirements-dev.txt](requirements-dev.txt)
-- MinGW-w64 8.1+ (for Windows)
+- MSYS2 + MinGW-w64 2022-06-03+ (for Windows)
 - NSIS 3.06+ (for Windows)
 - AppImage Tool 12 (for Linux)
 
@@ -37,18 +37,15 @@ don't try to use x86!
   $ python -m ensurepip
   ```
 
-- **[MinGW-w64 8.1+][mingw download]**:
+- **[MSYS2 + MinGW-w64 2022-06-03+][msys2 download]**:
 
-  Run the mingw-w64-install.exe. When asked, select:
-    - Version: **8.1.0 (or later)**
-    - Architecture: **x86_64**
-    - Threads: **(any)**
-    - Exception: **(any)**
-    - Build version: **(any)**
+  Run `MSYS2 MSYS` from Applications Menu.
+  ```bash
+  $ pacman -Syu mingw-w64-x86_64-make
+  ```
 
-  For more convenience, add the package bin path (for example
-  `C:\Program Files\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin`) to
-  the `PATH` environment variable.
+  For more convenience, add the `mingw64` bin path (for example
+  `C:\msys64\mingw64\bin`) to the `PATH` environment variable.
 
 - **[NSIS 3.06+][nsis download]**:
 
@@ -247,9 +244,9 @@ bmnclient/resources/images/logo.svg
 https://www.python.org/downloads/windows/
 "Download Python"
 
-[mingw download]:
-https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/installer/mingw-w64-install.exe
-"Download MinGW-w64"
+[msys2 download]:
+https://www.msys2.org
+"Download MSYS2"
 
 [nsis download]:
 https://nsis.sourceforge.io/Download

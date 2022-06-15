@@ -26,7 +26,7 @@ endif
 .LIBPATTERNS =
 .SUFFIXES:
 
-ifneq (,$(findstring mingw32,$(MAKE_HOST)))
+ifneq (,$(findstring mingw32,$(MAKE_HOST))$(findstring Windows,$(MAKE_HOST)))
 PLATFORM := mingw32
 
 EXEC_SUFFIX = .exe
