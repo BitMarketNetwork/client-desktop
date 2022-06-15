@@ -119,7 +119,7 @@ to use `python` instead of `python3`.
   archive**:
 
   ```shell
-  $ git clone git://github.com/BitMarketNetwork/client-desktop.git
+  $ git clone https://github.com/BitMarketNetwork/client-desktop.git
   $ cd client-desktop
   ```
 
