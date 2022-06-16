@@ -26,7 +26,7 @@ def createKeyStorePasswordDialog(manager: DialogManager) -> AbstractDialog:
         return KeyStoreNewPasswordDialog(manager)
 
 
-class PasswordDialog(AbstractPasswordDialog):
+class ConfirmPasswordDialog(AbstractPasswordDialog):
     def __init__(
             self,
             manager: DialogManager,
@@ -51,7 +51,7 @@ class PasswordDialog(AbstractPasswordDialog):
         else:
             # noinspection PyTypeChecker
             text = self.tr("Unknown Key Store error.")
-        ErrorDialog(
+        ConfirmPasswordErrorDialog(
             self._manager,
             self._parent,
             text=text).open()
@@ -60,7 +60,7 @@ class PasswordDialog(AbstractPasswordDialog):
         self._parent.close.emit()
 
 
-class ErrorDialog(AbstractMessageDialog):
+class ConfirmPasswordErrorDialog(AbstractMessageDialog):
     def __init__(
             self,
             manager: DialogManager,
@@ -74,7 +74,7 @@ class ErrorDialog(AbstractMessageDialog):
             text=text)
 
     def onClosed(self) -> None:
-        PasswordDialog(self._manager, self._parent).open()
+        ConfirmPasswordDialog(self._manager, self._parent).open()
 
 
 class KeyStoreErrorDialog(AbstractMessageDialog):
@@ -385,7 +385,7 @@ class RevealSeedPhraseDialog(AbstractSeedPhraseDialog):
             self._qml_properties["readOnly"] = True
 
     def onOpened(self) -> None:
-        PasswordDialog(self._manager, self).open()
+        ConfirmPasswordDialog(self._manager, self).open()
 
 
 class SeedSaltDialog(AbstractDialog):
@@ -452,4 +452,4 @@ class TxApproveDialog(AbstractTxApproveDialog):
             self._qml_properties["readOnly"] = True
 
     def onOpened(self) -> None:
-        PasswordDialog(self._manager, self).open()
+        ConfirmPasswordDialog(self._manager, self).open()
