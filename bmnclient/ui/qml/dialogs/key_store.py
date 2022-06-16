@@ -11,8 +11,8 @@ from PySide6.QtCore import (
 )
 
 from . import AbstractDialog, AbstractMessageDialog, AbstractPasswordDialog
-from ....key_store import GenerateSeedPhrase, KeyStoreError, RestoreSeedPhrase
 from ....coins.abstract.coin import Coin
+from ....key_store import GenerateSeedPhrase, KeyStoreError, RestoreSeedPhrase
 
 if TYPE_CHECKING:
     from typing import Final, Optional
@@ -27,14 +27,7 @@ def createKeyStorePasswordDialog(manager: DialogManager) -> AbstractDialog:
 
 
 class ConfirmPasswordDialog(AbstractPasswordDialog):
-    def __init__(
-            self,
-            manager: DialogManager,
-            parent: AbstractDialog) -> None:
-        super().__init__(
-            manager,
-            parent,
-            title=parent.title) # noqa
+    _QML_NAME = "BKeyStoreConfirmPasswordDialog"
 
     def onPasswordAccepted(self, password: str) -> None:
         result = self._manager.context.keyStore.native.revealSeedPhrase(
@@ -43,17 +36,18 @@ class ConfirmPasswordDialog(AbstractPasswordDialog):
             self._parent.text = result
             return
         if result == KeyStoreError.ERROR_INVALID_PASSWORD:
-            # noinspection PyTypeChecker
+            # noinspection PyUnresolvedReferences
             text = self.tr("Wrong Key Store password.")
         elif result == KeyStoreError.ERROR_SEED_NOT_FOUND:
-            # noinspection PyTypeChecker
+            # noinspection PyUnresolvedReferences
             text = self.tr("Seed Phrase not found.")
         else:
-            # noinspection PyTypeChecker
+            # noinspection PyUnresolvedReferences
             text = self.tr("Unknown Key Store error.")
         ConfirmPasswordErrorDialog(
             self._manager,
             self._parent,
+            title=self.title,  # noqa
             text=text).open()
 
     def onRejected(self) -> None:
@@ -61,18 +55,6 @@ class ConfirmPasswordDialog(AbstractPasswordDialog):
 
 
 class ConfirmPasswordErrorDialog(AbstractMessageDialog):
-    def __init__(
-            self,
-            manager: DialogManager,
-            parent: AbstractDialog,
-            *,
-            text: str):
-        super().__init__(
-            manager,
-            parent,
-            title=parent.title,  # noqa
-            text=text)
-
     def onClosed(self) -> None:
         ConfirmPasswordDialog(self._manager, self._parent).open()
 
