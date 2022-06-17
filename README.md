@@ -51,6 +51,9 @@ don't try to use x86!
 
   This tool is required only if you want to create the distribution package.
 
+  For more convenience, add the `NSIS` bin path (for example
+  `C:\Program Files (x86)\NSIS`) to the `PATH` environment variable.
+
 ## macOS Requirements
 
 - **[Homebrew][homebrew download]**:
