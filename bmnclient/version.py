@@ -14,7 +14,7 @@ class Product:
     MAINTAINER_URL: Final = "https://" + MAINTAINER_DOMAIN + "/"
     NAME: Final = "BitMarket Network Client"
     SHORT_NAME: Final = "bmn-client"
-    VERSION: Final = (0, 14, 0)
+    VERSION: Final = (0, 15, 0)
     VERSION_STRING: Final = tupleToVersionString(VERSION)
     VERSION_UPDATE_URL: Final = \
         "https://github.com/BitMarketNetwork/client-desktop/releases"
