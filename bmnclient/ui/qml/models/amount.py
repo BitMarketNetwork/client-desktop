@@ -29,7 +29,7 @@ class AbstractAmountModel(AbstractCoinStateModel):
             currency_type: Type[Coin.Currency]) -> str:
         return currency_type.toString(value, locale=self.locale)
 
-    @QProperty(str, notify=__stateChanged)
+    @QProperty(int, notify=__stateChanged)
     def value(self) -> int:
         value = self._getValue()
         return 0 if value is None else value

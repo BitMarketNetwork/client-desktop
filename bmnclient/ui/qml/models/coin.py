@@ -6,18 +6,20 @@ from typing import TYPE_CHECKING
 from PySide6.QtCore import (
     Property as QProperty,
     QObject,
+    QModelIndex,
+    Qt,
     Signal as QSignal,
     Slot as QSlot)
 
 from . import AbstractCoinStateModel, AbstractModel, ValidStatus
-from .address import AddressListModel, AddressListSortedModel
+from .address import AddressListModel, AddressListSortedModel, AbstractTableModel
 from .amount import AbstractAmountModel
 from .list import AbstractListModel, RoleEnum
 from .tx import TxListConcatenateModel, TxListSortedModel
 from ....coin_models import CoinModel as _CoinModel
 
 if TYPE_CHECKING:
-    from typing import Final, Optional
+    from typing import Any, Final, Optional
     from .. import QmlApplication
     from ....coins.abstract import Coin
 
@@ -384,3 +386,32 @@ class CoinListModel(AbstractListModel):
             b"manager",
             lambda c: c.model.manager)
     }
+
+class CoinChartModel(AbstractTableModel):
+    _COLUMN_COUNT = 2
+    class Role(RoleEnum):
+        SHORT_NAME: Final = 0
+        BALANCE: Final = 1
+
+    _ROLE_MAP: Final = {
+        Role.SHORT_NAME: (
+            b"name",
+            lambda c: c.model.name),
+        Role.BALANCE: (
+            b"balance",
+            lambda c: c.model.balance.value)
+    }
+
+    def _getRoleValue(self, index: QModelIndex, role) -> Optional[dict]:
+        if not 0 <= index.row() < self.rowCount() or not index.isValid():
+            return None
+        return self._ROLE_MAP.get(index.column(), None)
+
+    def data(
+            self,
+            index: QModelIndex,
+            role: Qt.ItemDataRole = Qt.DisplayRole) -> Any:
+        role_value = self._getRoleValue(index, role)
+        if role_value is None:
+            return None
+        return role_value[1](self._source_list[index.row()])

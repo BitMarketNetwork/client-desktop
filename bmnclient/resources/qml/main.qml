@@ -49,7 +49,7 @@ BApplicationWindow {
     BStackLayout {
         id: _mainLayout
         anchors.fill: parent
-        currentIndex: 1
+        currentIndex: 0
 
         Loader {
             active: _mainLayout.currentIndex === 0
@@ -58,8 +58,11 @@ BApplicationWindow {
             }
         }
 
-        BChartPage {
+        Loader {
+            active: _mainLayout.currentIndex === 1
+            sourceComponent: BChartPage {
 
+            }
         }
 
         Loader {

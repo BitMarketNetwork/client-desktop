@@ -16,23 +16,18 @@ Item {
         backgroundColor: "transparent"
         animationOptions: ChartView.SeriesAnimations
 
-        /*VPieModelMapper {
+        VPieModelMapper {
             series: pieSeries
-            model: BBackend.coinList
-            labelsColumn: 1
-            valuesColumn: 4
-            firstRow: 1
-            rowCount: BBackend.coinList.rowCount()
-        }*/
+            model: BBackend.chartModel
+            labelsColumn: 0
+            valuesColumn: 1
+            rowCount: BBackend.chartModel.rowCount()
+        }
 
         PieSeries {
             id: pieSeries
             size: 0.7
             holeSize: 0.3
-
-            BPieSlice { label: "btc"; value: 10334 }
-            BPieSlice { label: "btc-testnet"; value: 3066 }
-            BPieSlice { label: "ltc"; value: 6111 }
 
             onSliceAdded: (slice) => {
                 slice.labelPosition = PieSlice.LabelInsideNormal
