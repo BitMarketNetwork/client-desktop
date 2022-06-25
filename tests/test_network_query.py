@@ -100,7 +100,7 @@ class DefaultJsonGetQuery(AbstractJsonQuery, QueryHelper):
     def jsonContent(self) -> Optional[dict]:
         return self.test_content
 
-    def _processResponse(self, response: Optional[dict]) -> None:
+    def _processResponse(self, response: Optional[dict, list]) -> None:
         self.response_data = response
         self.event_loop.exit()
 

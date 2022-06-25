@@ -16,64 +16,10 @@ BPane {
          coin.closeList(addressList)
     }
 
-    BHorizontalHeaderView {
-        id: _horizontalHeader
-        syncView: _tableView
-        anchors.left: _tableView.left
-        width: parent.width
-
-        model: ObjectModel {
-            id: itemModel
-
-            BControl {
-                BLabel {
-                    anchors.centerIn: parent
-                    text: qsTr("Address")
-                }
-            }
-            BControl {
-                BLabel {
-                    anchors.centerIn: parent
-                    text: qsTr("Label")
-                }
-            }
-            BControl {
-                BLabel {
-                    anchors.centerIn: parent
-                    text: qsTr("Balance")
-                }
-            }
-            BControl {
-                BLabel {
-                    anchors.centerIn: parent
-                    text: qsTr("Tx")
-                }
-            }
-        }
-        // TODO sorting controls
-    }
-    BAddressTableView {
-        id: _tableView
+    BWalletAddressTable {
+        id: _tableItem
         anchors.fill: parent
-        anchors.topMargin: _horizontalHeader.implicitHeight
         model: _base.addressList
-
-        columnWidth: [355, -1, 150, 65, 60]
-
-        delegate: BAddressTableRow {
-            implicitWidth: _tableView.columnWidthProvider(column)
-            address: modelObject
-            amount: modelObject.balance
-            contextMenu: _contextMenu
-
-            Rectangle { // col separator
-                anchors.right: parent.right
-                width: 1
-                height: parent.height
-                color: "grey"
-                opacity: 0.5
-            }
-        }
     }
 
     BMenu {

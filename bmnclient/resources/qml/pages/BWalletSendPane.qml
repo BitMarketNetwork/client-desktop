@@ -1,3 +1,4 @@
+import QtQuick
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
@@ -95,43 +96,107 @@ BPane {
         BDialogSeparator {}
 
         BRowLayout {
+            id: _advancedOptions
+            state: _spoiler.checked ? "EXPANDED" : "COLLAPSED"
+            BLayout.columnSpan: parent.columns
+
             BUnfoldToolButton {
                 id: _spoiler
             }
             BLabel {
                 text: qsTr("Advanced options:")
             }
+
+            property variant targets: [ _pricePkLabel, _inputAmount2, _validLabel1,
+                                        _subtractLabel, _inputSwitch, _sizesLabel,
+                                        _bytesLabel, _changeLabel, _amountLabel,
+                                        _inputSeparator ]
+            states: [
+                State { name: "EXPANDED" },
+                State { name: "COLLAPSED" }
+            ]
+
+            transitions: [
+                Transition {
+                    from: "EXPANDED"
+                    to: "COLLAPSED"
+
+                    SequentialAnimation {
+                        id: collapseAnimation
+                        ParallelAnimation {
+                            BNumberAnimation { targets: _advancedOptions.targets; property: "opacity"; to: 0 }
+                        }
+                        ParallelAnimation {
+                            BNumberAnimation { target: _optSeparator; property: "BLayout.preferredHeight"; to: target.implicitHeight }
+                            BNumberAnimation { targets: _advancedOptions.targets; property: "BLayout.preferredHeight"; to: 0 }
+                        }
+                        BNumberAnimation { target: _optSeparator; property: "opacity"; to: 1 }
+                    }
+                },
+                Transition {
+                    from: "COLLAPSED"
+                    to: "EXPANDED"
+
+                    SequentialAnimation {
+                        BNumberAnimation { target: _optSeparator; property: "opacity"; to: 0 }
+                        ParallelAnimation {
+                            BNumberAnimation { target: _pricePkLabel;   property: "BLayout.preferredHeight"; to: target.implicitHeight  }
+                            BNumberAnimation { target: _inputAmount2;   property: "BLayout.preferredHeight"; to: target.implicitHeight  }
+                            BNumberAnimation { target: _validLabel1;    property: "BLayout.preferredHeight"; to: target.implicitHeight  }
+                            BNumberAnimation { target: _subtractLabel;  property: "BLayout.preferredHeight"; to: target.implicitHeight  }
+                            BNumberAnimation { target: _inputSwitch;    property: "BLayout.preferredHeight"; to: target.implicitHeight  }
+                            BNumberAnimation { target: _sizesLabel;     property: "BLayout.preferredHeight"; to: target.implicitHeight  }
+                            BNumberAnimation { target: _bytesLabel;     property: "BLayout.preferredHeight"; to: target.implicitHeight  }
+                            BNumberAnimation { target: _changeLabel;    property: "BLayout.preferredHeight"; to: target.implicitHeight  }
+                            BNumberAnimation { target: _amountLabel;    property: "BLayout.preferredHeight"; to: target.implicitHeight  }
+                            BNumberAnimation { target: _inputSeparator; property: "BLayout.preferredHeight"; to: target.implicitHeight  }
+                            BNumberAnimation { target: _optSeparator;   property: "BLayout.preferredHeight"; to: 0 }
+                        }
+                        ParallelAnimation {
+                            BNumberAnimation { targets: _advancedOptions.targets; property: "opacity"; to: 1 }
+                        }
+                    }
+                }
+            ]
         }
-        BRowLayout {
-            BLayout.fillWidth: true
-            BLayout.columnSpan: parent.columns - 1
+        BDialogSeparator {
+            id: _optSeparator
         }
 
         BDialogPromptLabel {
-            visible: _spoiler.checked
+            id: _pricePkLabel
+            BLayout.preferredHeight: 0
+            opacity: 0
             text: qsTr("Price per kilobyte:")
         }
         BAmountInput {
             id: _inputAmount2
+            BLayout.preferredHeight: 0
             BLayout.alignment: _applicationStyle.dialogInputAlignment
-            visible: _spoiler.checked
+            opacity: 0
             orientation: Qt.Horizontal
             amount: _base.coin.txFactory.kibFeeAmount
             defaultButtonText: qsTr("Recommended")
             enabled: _base.coin.txFactory.receiver.validStatus && _inputRecipientAddress.length > 0
         }
         BDialogValidLabel {
-            visible: _spoiler.checked
+            id: _validLabel1
+            BLayout.preferredHeight: 0
+            opacity: 0
             status: _base.coin.txFactory.kibFeeAmount.validStatus
         }
 
         BDialogPromptLabel {
-            visible: _spoiler.checked
+            id: _subtractLabel
+            BLayout.preferredHeight: 0
+            opacity: 0
             text: qsTr("Subtract fee from amount:")
         }
         BDialogInputSwitch {
+            id: _inputSwitch
+            BLayout.preferredHeight: 0
             BLayout.columnSpan: parent.columns - 1
-            visible: _spoiler.checked
+            opacity: 0
             checked: _base.coin.txFactory.feeAmount.subtractFromAmount
             onCheckedChanged: {
                 _base.coin.txFactory.feeAmount.subtractFromAmount = checked
@@ -139,29 +204,39 @@ BPane {
         }
 
         BDialogSeparator {
-            visible: _spoiler.checked
+            id: _inputSeparator
+            opacity: 0
+            BLayout.preferredHeight: 0
         }
 
         BDialogPromptLabel {
-            visible: _spoiler.checked
+            id: _sizesLabel
+            BLayout.preferredHeight: 0
+            opacity: 0
             text: qsTr("Raw size / Virtual size:")
         }
         BDialogInputLabel {
+            id: _bytesLabel
+            BLayout.preferredHeight: 0
             BLayout.columnSpan: parent.columns - 1
-            visible: _spoiler.checked
+            opacity: 0
             text: qsTr("%1 / %2 bytes")
                     .arg(_base.coin.txFactory.state.estimatedRawSizeHuman)
                     .arg(_base.coin.txFactory.state.estimatedVirtualSizeHuman)
         }
 
         BDialogPromptLabel {
-            visible: _spoiler.checked
+            id: _changeLabel
+            BLayout.preferredHeight: 0
+            opacity: 0
             text: qsTr("Change:")
         }
         BAmountLabel {
+            id: _amountLabel
+            BLayout.preferredHeight: 0
             BLayout.columnSpan: parent.columns - 1
             BLayout.alignment: _applicationStyle.dialogInputAlignment
-            visible: _spoiler.checked
+            opacity: 0
             orientation: Qt.Horizontal
             amount: _base.coin.txFactory.changeAmount
         }
@@ -204,19 +279,7 @@ BPane {
             }
             onAccepted: {
                 if (_base.coin.txFactory.isValid && _base.coin.txFactory.prepare() && _base.coin.txFactory.sign()) {
-                    let dialog = _applicationManager.createDialog(
-                                "BTxApproveDialog", {
-                                    "type": BTxApproveDialog.Type.Prepare,
-                                    "coin": _base.coin
-                                })
-                    dialog.onAccepted.connect(function () {
-                        if (_base.coin.txFactory.broadcast()) { // TODO error?
-                                _base.clear()
-                        } else {
-                            // TODO error?
-                        }
-                    })
-                    dialog.open()
+                    BBackend.keyStore.onPrepareTransaction(_base.coin)
                 }
             }
         }
