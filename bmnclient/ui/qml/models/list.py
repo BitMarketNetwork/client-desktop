@@ -11,6 +11,7 @@ from PySide6.QtCore import (
     QByteArray,
     QConcatenateTablesProxyModel,
     QModelIndex,
+    QIdentityProxyModel,
     QSortFilterProxyModel,
     Qt,
     Signal as QSignal)
@@ -234,6 +235,10 @@ class AbstractListModel(AbstractItemModel, QAbstractListModel):
 
 
 class AbstractTableModel(AbstractItemModel, QAbstractTableModel):
+    pass
+
+
+class AbstractIdentityProxyModel(AbstractProxyModel, QIdentityProxyModel):
     pass
 
 
