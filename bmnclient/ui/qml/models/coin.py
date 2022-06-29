@@ -12,7 +12,7 @@ from PySide6.QtCore import (
     Slot as QSlot)
 
 from . import AbstractCoinStateModel, AbstractModel, ValidStatus
-from .address import AddressListModel, AddressListSortedModel, AbstractTableModel
+from .address import AddressListModel, AddressListSortedModel
 from .amount import AbstractAmountModel
 from .list import AbstractListModel, RoleEnum, AbstractIdentityProxyModel
 from .tx import TxListConcatenateModel, TxListSortedModel
