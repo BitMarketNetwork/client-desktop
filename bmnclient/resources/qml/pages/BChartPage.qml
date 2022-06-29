@@ -1,8 +1,9 @@
-import QtCharts
 import QtQuick
+import QtCharts
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
+import "../chartcontrols"
 
 BControl {
     id: _base
@@ -18,13 +19,8 @@ BControl {
             }
         }
 
-        ChartView {
+        BChartView {
             id: _chart
-            anchors.fill: parent
-            legend.visible: false
-            antialiasing: true
-            backgroundColor: "transparent"
-            animationOptions: ChartView.SeriesAnimations
             visible: _pieSeries.sum > 0
 
             VPieModelMapper {
@@ -35,15 +31,8 @@ BControl {
                 rowCount: model.rowCount()
             }
 
-            PieSeries {
+            BPieSeries {
                 id: _pieSeries
-                size: 0.7
-                holeSize: 0.3
-
-                onSliceAdded: (slice) => {
-                    slice.labelPosition = PieSlice.LabelInsideNormal
-                    slice.labelVisible = true
-                }
             }
 
             BLogoImage {
