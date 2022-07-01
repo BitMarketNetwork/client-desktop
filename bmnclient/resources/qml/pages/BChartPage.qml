@@ -8,6 +8,8 @@ import "../chartcontrols"
 BControl {
     id: _base
 
+    signal sliceClicked(string label)
+
     contentItem: BStackLayout {
         id: _stack
         currentIndex: _chart.visible ? 1 : 0
@@ -33,6 +35,10 @@ BControl {
 
             BPieSeries {
                 id: _pieSeries
+
+                onClicked: (slice) => {
+                    _base.sliceClicked(slice.label)
+                }
             }
 
             BLogoImage {

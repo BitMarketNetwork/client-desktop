@@ -49,19 +49,20 @@ BApplicationWindow {
     BStackLayout {
         id: _mainLayout
         anchors.fill: parent
-        currentIndex: 0
+        currentIndex: 1
 
-        Loader {
-            active: _mainLayout.currentIndex === 0
-            sourceComponent: BWalletPage {
-                list.display: _drawer.barsDisplay
-            }
+        BWalletPage {
+            id: _walletPage
+            list.display: _drawer.barsDisplay
         }
 
         Loader {
             active: _mainLayout.currentIndex === 1
             sourceComponent: BChartPage {
-
+                onSliceClicked: (label) => {
+                    _mainLayout.currentIndex = 0
+                    _walletPage.setCurrentCoin(label)
+                }
             }
         }
 

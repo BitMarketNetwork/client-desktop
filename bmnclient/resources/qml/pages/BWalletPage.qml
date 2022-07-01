@@ -100,4 +100,11 @@ BApplicationPage {
         }
         return 0
     }
+
+    function setCurrentCoin(name) {
+        let index = _base.coinToListIndex(name)
+        _base.stack.currentIndex = index
+        _base.stack.children[_base.stack.currentIndex].active = true
+        _base.list.currentIndex = index - 1
+    }
 }
