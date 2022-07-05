@@ -43,6 +43,14 @@ if TYPE_CHECKING:
 
 
 class CommandLine:
+    _LOG_LEVEL_MAP: Final = {
+        "DEBUG": logging.DEBUG,
+        "INFO": logging.INFO,
+        "WARNING": logging.WARNING,
+        "ERROR": logging.ERROR,
+        "CRITICAL": logging.CRITICAL
+    }
+
     def __init__(self, argv: List[str]) -> None:
         self._argv = argv
 
@@ -74,6 +82,13 @@ class CommandLine:
             .format(str(PlatformPaths.applicationTempPath)),
             metavar="PATH")
         parser.add_argument(
+            "--insecure",
+            action="store_true",
+            default=False,
+            help=(
+                "disable database and configuration encryption;"
+                " use only for debug purposes!"))
+        parser.add_argument(
             "-l",
             "--log-file",
             default="stderr",
@@ -81,6 +96,15 @@ class CommandLine:
             help="file that will store the log; can be one of the following"
             " special values: stdout, stderr; by default, it is 'stderr'",
             metavar="FILE")
+        parser.add_argument(
+            "--log-level",
+            default="",
+            type=str,
+            choices=self._LOG_LEVEL_MAP.keys(),
+            help=(
+                "set logging level output;"
+                " by default, it is 'INFO' for normal mode,"
+                " and 'DEBUG' for debug mode."))
         parser.add_argument(
             "-d",
             "--debug",
@@ -104,7 +128,9 @@ class CommandLine:
         self._arguments = parser.parse_args(self._argv[1:])
         assert isinstance(self._arguments.config_path, Path)
         assert isinstance(self._arguments.local_data_path, Path)
+        assert isinstance(self._arguments.insecure, bool)
         assert isinstance(self._arguments.log_file, Path)
+        assert isinstance(self._arguments.log_level, str)
         assert isinstance(self._arguments.debug, bool)
         assert self._arguments.debug == Debug.isEnabled
         assert isinstance(self._arguments.server_url, str)
@@ -127,11 +153,17 @@ class CommandLine:
         return self._arguments.local_data_path
 
     @property
+    def isInsecure(self) -> bool:
+        return self._arguments.insecure
+
+    @property
     def logFilePath(self) -> Path:
         return self._arguments.log_file
 
     @property
     def logLevel(self) -> int:
+        if level := self._LOG_LEVEL_MAP.get(self._arguments.log_level):
+            return level
         return logging.DEBUG if Debug.isEnabled else logging.INFO
 
     @property
@@ -139,7 +171,7 @@ class CommandLine:
         return self._arguments.server_url
 
     @property
-    def allowServerInsecure(self) -> bool:
+    def isServerInsecure(self) -> bool:
         return self._arguments.server_insecure
 
     @classmethod
@@ -239,7 +271,7 @@ class CoreApplication(QObject):
         Network.configure()
 
         self._server_list = ServerList(
-            self._command_line.allowServerInsecure)
+            self._command_line.isServerInsecure)
         if self._command_line.serverUrl:
             self._server_list.appendServer(self._command_line.serverUrl)
         else:
@@ -305,6 +337,10 @@ class CoreApplication(QObject):
     @property
     def config(self) -> Config:
         return self._config
+
+    @property
+    def isInsecure(self) -> bool:
+        return self._command_line.isInsecure
 
     @property
     def exitCode(self) -> int:

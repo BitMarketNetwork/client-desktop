@@ -89,25 +89,27 @@ class VfsFile:
 
         self._is_encrypted = False
         self._salt = b""
-        for object_flag in (
-                SQLITE_OPEN_MAIN_DB,
-                SQLITE_OPEN_MAIN_JOURNAL,
-                SQLITE_OPEN_TEMP_DB,
-                SQLITE_OPEN_TEMP_JOURNAL,
-                SQLITE_OPEN_TRANSIENT_DB,
-                SQLITE_OPEN_SUBJOURNAL,
-                SQLITE_OPEN_SUPER_JOURNAL,
-                SQLITE_OPEN_WAL
-        ):
-            if (sqlite_flags & object_flag) == object_flag:
-                self._is_encrypted = True
-                self._salt = (
-                        object_flag.to_bytes(4, "little")
-                        + Product.SHORT_NAME.encode()
-                        + b"\0" * (BlockDeviceCipher.saltSize - 4)
-                )[:BlockDeviceCipher.saltSize]
-                assert len(self._salt) == BlockDeviceCipher.saltSize
-                break
+
+        if not self._application.isInsecure:
+            for object_flag in (
+                    SQLITE_OPEN_MAIN_DB,
+                    SQLITE_OPEN_MAIN_JOURNAL,
+                    SQLITE_OPEN_TEMP_DB,
+                    SQLITE_OPEN_TEMP_JOURNAL,
+                    SQLITE_OPEN_TRANSIENT_DB,
+                    SQLITE_OPEN_SUBJOURNAL,
+                    SQLITE_OPEN_SUPER_JOURNAL,
+                    SQLITE_OPEN_WAL
+            ):
+                if (sqlite_flags & object_flag) == object_flag:
+                    self._is_encrypted = True
+                    self._salt = (
+                            object_flag.to_bytes(4, "little")
+                            + Product.SHORT_NAME.encode()
+                            + b"\0" * (BlockDeviceCipher.saltSize - 4)
+                    )[:BlockDeviceCipher.saltSize]
+                    assert len(self._salt) == BlockDeviceCipher.saltSize
+                    break
 
         self._sector_size = \
             self._DEFAULT_SECTOR_SIZE if not sector_size else sector_size
