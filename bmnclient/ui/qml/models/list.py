@@ -262,3 +262,58 @@ class AbstractSortedModel(AbstractProxyModel, QSortFilterProxyModel):
         self.setSourceModel(source_model)
         self.setSortRole(sort_role)
         self.sort(0, sort_order)
+
+
+class AbstractPieModel(AbstractIdentityProxyModel):
+    def __init__(
+            self,
+            application: QmlApplication,
+            source_model: AbstractModel,
+            label_role: int,
+            value_role: int) -> None:
+        super().__init__(application)
+
+        self.setSourceModel(source_model)
+        self._label_role = label_role
+        self._value_role = value_role
+
+    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
+        return self.sourceModel().rowCount()
+
+    def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
+        return 2
+
+
+class AbstractPieListModel(AbstractPieModel):
+    def __init__(
+            self,
+            application: QmlApplication,
+            source_model: AbstractListModel,
+            label_role: int,
+            value_role: int) -> None:
+        super().__init__(
+            application,
+            source_model,
+            label_role,
+            value_role)
+
+    def index(
+            self,
+            row: int,
+            column: int,
+            index: QModelIndex = QModelIndex()) -> QModelIndex:
+        if 0 <= row < self.rowCount() and 0 <= column < self.columnCount():
+            return self.createIndex(row, column)
+        return QModelIndex()
+
+    def data(
+            self,
+            index: QModelIndex,
+            role: Qt.ItemDataRole = Qt.DisplayRole) -> Any:
+        if not index.isValid():
+            return None
+        if index.column() == 0:
+            return self.sourceModel().data(index, self._label_role)
+        elif index.column() == 1:
+            return self.sourceModel().data(index, self._value_role).value
+        return None
