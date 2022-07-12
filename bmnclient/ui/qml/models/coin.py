@@ -14,7 +14,7 @@ from PySide6.QtCore import (
 from . import AbstractCoinStateModel, AbstractModel, ValidStatus
 from .address import AddressListModel, AddressListSortedModel
 from .amount import AbstractAmountModel
-from .list import AbstractListModel, RoleEnum, AbstractIdentityProxyModel
+from .list import AbstractListModel, RoleEnum, AbstractPieListModel
 from .tx import TxListConcatenateModel, TxListSortedModel
 from ....coin_models import CoinModel as _CoinModel
 
@@ -388,30 +388,13 @@ class CoinListModel(AbstractListModel):
     }
 
 
-class WalletChartModel(AbstractIdentityProxyModel):
-    def index(
+class WalletChartModel(AbstractPieListModel):
+    def __init__(
             self,
-            row: int,
-            column: int,
-            index: QModelIndex = QModelIndex()) -> QModelIndex:
-        if 0 <= row < self.rowCount() and 0 <= column < self.columnCount():
-            return self.createIndex(row, column)
-        return QModelIndex()
-
-    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
-        return self.sourceModel().rowCount()
-
-    def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
-        return 2
-
-    def data(
-            self,
-            index: QModelIndex,
-            role: Qt.ItemDataRole = Qt.DisplayRole) -> Any:
-        if not index.isValid():
-            return None
-        if index.column() == 0:
-            return self.sourceModel().data(index, CoinListModel.Role.SHORT_NAME)
-        elif index.column() == 1:
-            return self.sourceModel().data(index, CoinListModel.Role.BALANCE).value
-        return None
+            application: QmlApplication,
+            source_model: AbstractListModel) -> None:
+        super().__init__(
+            application,
+            source_model,
+            CoinListModel.Role.SHORT_NAME,
+            CoinListModel.Role.BALANCE)

@@ -132,7 +132,9 @@ class QmlContext(QObject):
         self._coin_list_model = CoinListModel(
             self._application,
             self._application.coinList)
-        self._coin_chart_model = WalletChartModel(self._application)
+        self._coin_chart_model = WalletChartModel(
+            self._application,
+            self._coin_list_model)
         self._clipboard_model = ClipboardModel(self._application)
         self._key_store_model = KeyStoreModel(self._application)
         self._settings_model = SettingsModel(self._application)
@@ -140,8 +142,6 @@ class QmlContext(QObject):
         self._debug_model = DebugModel(self._application)
         self._password_model = PasswordModel()
         self._update_model = UpdateModel()
-
-        self._coin_chart_model.setSourceModel(self._coin_list_model)
 
     @QSlot()
     def onCompleted(self) -> None:
