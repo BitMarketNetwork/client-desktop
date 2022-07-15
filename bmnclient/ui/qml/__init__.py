@@ -17,12 +17,13 @@ from PySide6.QtQuickControls2 import QQuickStyle
 from .dialogs import DialogManager
 from .dialogs.basic import AlphaDialog, QuitDialog
 from .models.clipboard import ClipboardModel
-from .models.coin import CoinListModel
+from .models.coin import CoinListModel, WalletChartModel
 from .models.debug import DebugModel
 from .models.factory import ModelsFactory
 from .models.key_store import KeyStoreModel
 from .models.password import PasswordModel
 from .models.settings import SettingsModel
+from .models.update import UpdateModel
 from ..gui import GuiApplication
 from ...network.access_manager import NetworkAccessManager
 from ...resources import Resources
@@ -131,12 +132,16 @@ class QmlContext(QObject):
         self._coin_list_model = CoinListModel(
             self._application,
             self._application.coinList)
+        self._coin_chart_model = WalletChartModel(
+            self._application,
+            self._coin_list_model)
         self._clipboard_model = ClipboardModel(self._application)
         self._key_store_model = KeyStoreModel(self._application)
         self._settings_model = SettingsModel(self._application)
         self._dialog_manager = DialogManager(self)
         self._debug_model = DebugModel(self._application)
         self._password_model = PasswordModel()
+        self._update_model = UpdateModel()
 
     @QSlot()
     def onCompleted(self) -> None:
@@ -170,6 +175,10 @@ class QmlContext(QObject):
         return self._coin_list_model
 
     @QProperty(QObject, constant=True)
+    def walletChart(self) -> WalletChartModel:
+        return self._coin_chart_model
+
+    @QProperty(QObject, constant=True)
     def clipboard(self) -> ClipboardModel:
         return self._clipboard_model
 
@@ -192,3 +201,7 @@ class QmlContext(QObject):
     @QProperty(QObject, constant=True)
     def password(self) -> PasswordModel:
         return self._password_model
+
+    @QProperty(QObject, constant=True)
+    def update(self) -> UpdateModel:
+        return self._update_model

@@ -6,18 +6,20 @@ from typing import TYPE_CHECKING
 from PySide6.QtCore import (
     Property as QProperty,
     QObject,
+    QModelIndex,
+    Qt,
     Signal as QSignal,
     Slot as QSlot)
 
 from . import AbstractCoinStateModel, AbstractModel, ValidStatus
 from .address import AddressListModel, AddressListSortedModel
 from .amount import AbstractAmountModel
-from .list import AbstractListModel, RoleEnum
+from .list import AbstractListModel, RoleEnum, AbstractPieListModel
 from .tx import TxListConcatenateModel, TxListSortedModel
 from ....coin_models import CoinModel as _CoinModel
 
 if TYPE_CHECKING:
-    from typing import Final, Optional
+    from typing import Any, Final, Optional
     from .. import QmlApplication
     from ....coins.abstract import Coin
 
@@ -384,3 +386,15 @@ class CoinListModel(AbstractListModel):
             b"manager",
             lambda c: c.model.manager)
     }
+
+
+class WalletChartModel(AbstractPieListModel):
+    def __init__(
+            self,
+            application: QmlApplication,
+            source_model: AbstractListModel) -> None:
+        super().__init__(
+            application,
+            source_model,
+            CoinListModel.Role.SHORT_NAME,
+            CoinListModel.Role.BALANCE)

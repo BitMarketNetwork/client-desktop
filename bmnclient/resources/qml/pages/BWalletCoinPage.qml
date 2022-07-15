@@ -16,12 +16,17 @@ BControl {
             contextMenu: _contextMenu
         }
         BTabBarBox {
+            id: _tabBar
             BLayout.fillWidth: true
             BLayout.fillHeight: true
             spacing: _applicationStyle.spacing
 
             BWalletAddressListPane {
                 coin: _base.coin
+
+                onSpendFromTriggered: {
+                    _tabBar.currentIndex = 2
+                }
             }
             BWalletTxListPane {
                 coin: _base.coin

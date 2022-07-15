@@ -1,47 +1,49 @@
-import QtCharts
 import QtQuick
+import QtCharts
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
+import "../chartcontrols"
 
-Item {
+BControl {
     id: _base
 
-    ChartView {
-        id: chart
-        title: "Chart View draft"
-        anchors.fill: parent
-        legend.visible: false
-        antialiasing: true
-        backgroundColor: "transparent"
-        animationOptions: ChartView.SeriesAnimations
+    signal sliceClicked(string label)
 
-        /*VPieModelMapper {
-            series: pieSeries
-            model: BBackend.coinList
-            labelsColumn: 1
-            valuesColumn: 4
-            firstRow: 1
-            rowCount: BBackend.coinList.rowCount()
-        }*/
+    contentItem: BStackLayout {
+        id: _stack
+        currentIndex: _chart.visible ? 1 : 0
 
-        PieSeries {
-            id: pieSeries
-            size: 0.7
-            holeSize: 0.3
-
-            BPieSlice { label: "btc"; value: 10334 }
-            BPieSlice { label: "btc-testnet"; value: 3066 }
-            BPieSlice { label: "ltc"; value: 6111 }
-
-            onSliceAdded: (slice) => {
-                slice.labelPosition = PieSlice.LabelInsideNormal
-                slice.labelVisible = true
+        Loader {
+            active: _stack.currentIndex === 0
+            sourceComponent: BEmptyBox {
+                placeholderText: qsTr("Wallet is empty.")
             }
         }
 
-        BLogoImage {
-            anchors.centerIn: parent
+        BChartView {
+            id: _chart
+            visible: _pieSeries.sum > 0
+
+            VPieModelMapper {
+                series: _pieSeries
+                model: BBackend.walletChart
+                labelsColumn: 0
+                valuesColumn: 1
+                rowCount: model.rowCount()
+            }
+
+            BPieSeries {
+                id: _pieSeries
+
+                onClicked: (slice) => {
+                    _base.sliceClicked(slice.label)
+                }
+            }
+
+            BLogoImage {
+                anchors.centerIn: parent
+            }
         }
     }
 }

@@ -80,5 +80,5 @@ setuptools.setup(
             "bmn-client_debug" + "=" + PACKAGE_NAME + ":main"
         ]
     },
-    python_requires=">= 3.7, < 3.11"
+    python_requires=">= 3.8, < 3.11"
 )

@@ -1,7 +1,8 @@
-.DS_Store
+*.DS_Store
 __pycache__
 /build
 /dist
+/.venv*
 /.tox
 /.idea
 /*.egg-info

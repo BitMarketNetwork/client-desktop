@@ -52,17 +52,21 @@ BApplicationWindow {
     BStackLayout {
         id: _mainLayout
         anchors.fill: parent
-        currentIndex: 1
+        currentIndex: 0
 
-        Loader {
-            active: _mainLayout.currentIndex === 0
-            sourceComponent: BWalletPage {
-                list.display: _drawer.barsDisplay
-            }
+        BWalletPage {
+            id: _walletPage
+            list.display: _drawer.barsDisplay
         }
 
-        BChartPage {
-
+        Loader {
+            active: _mainLayout.currentIndex === 1
+            sourceComponent: BChartPage {
+                onSliceClicked: (label) => {
+                    _mainLayout.currentIndex = 0
+                    _walletPage.setCurrentCoin(label)
+                }
+            }
         }
 
         Loader {

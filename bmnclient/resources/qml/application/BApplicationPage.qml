@@ -18,6 +18,7 @@ BControl {
             BLayout.fillHeight: true
 
             visible: count > 0
+            highlightFollowsCurrentItem: true
             model: _stack.children.length - 1
             delegate: BItemDelegate {
                 id: _item

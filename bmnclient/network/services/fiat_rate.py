@@ -62,7 +62,7 @@ class AbstractFiatRateService(AbstractJsonQuery):
     def fullName(cls) -> str:  # noqa
         return cls._FULL_NAME
 
-    def _processResponse(self, response: Optional[dict]) -> None:
+    def _processResponse(self, response: Optional[dict, list]) -> None:
         if (
                 not self.isSuccess
                 or response is None
@@ -120,7 +120,10 @@ class AbstractFiatRateService(AbstractJsonQuery):
 
         return result
 
-    def _getFiatRate(self, coin_name: str, data: dict) -> Optional[int]:
+    def _getFiatRate(
+            self,
+            coin_name: str,
+            data: Union[dict, list]) -> Optional[int]:
         raise NotImplementedError
 
 
@@ -129,7 +132,10 @@ class NoneFiatRateService(AbstractFiatRateService):
     _FULL_NAME: Final = QObject().tr("-- None --")
     _DEFAULT_URL: Final = None
 
-    def _getFiatRate(self, coin_name: str, data: dict) -> Optional[int]:
+    def _getFiatRate(
+            self,
+            coin_name: str,
+            data: Union[dict, list]) -> Optional[int]:
         return 0
 
 
@@ -138,7 +144,10 @@ class RandomFiatRateService(AbstractFiatRateService):
     _FULL_NAME: Final = "-- random value --"
     _DEFAULT_URL: Final = None
 
-    def _getFiatRate(self, coin_name: str, data: dict) -> Optional[int]:
+    def _getFiatRate(
+            self,
+            coin_name: str,
+            data: Union[dict, list]) -> Optional[int]:
         from random import randrange
         return randrange(0, 1000000) * 10
 
@@ -155,11 +164,14 @@ class CoinGeckoFiatRateService(AbstractFiatRateService):
             "vs_currencies": self._currency_name
         }
 
-    def _getFiatRate(self, coin_name: str, data: dict) -> Optional[int]:
+    def _getFiatRate(
+            self,
+            coin_name: str,
+            data: Union[dict, list]) -> Optional[int]:
         try:
             value = data[coin_name][self._currency_name]
             return int(value * self._currency_type.decimalDivisor)
-        except (KeyError, TypeError):
+        except (LookupError, TypeError):
             return None
 
 
