@@ -128,7 +128,7 @@ BColumnLayout {
 
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status != 200) {
+                if (xhr.status !== 200) {
                     // TODO: Error message
                     return;
                 }
