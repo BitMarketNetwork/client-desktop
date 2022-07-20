@@ -69,9 +69,9 @@ BApplicationWindow {
             }
         }
 
-        Loader {
-            active: _mainLayout.currentIndex === 2
-            sourceComponent: BBlockchainExplorerPage {}
+        BBlockchainExplorerPage {
+            id: _explorerPage
+            list.display: _drawer.barsDisplay
         }
 
         Loader {
