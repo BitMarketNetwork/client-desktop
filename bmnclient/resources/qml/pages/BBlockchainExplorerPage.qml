@@ -3,15 +3,18 @@ import "../application"
 import "../basiccontrols"
 import "../coincontrols"
 
+// TODO: Use BlockchainExplorer python model
 BApplicationPage {
     id: _base
 
     title: qsTr("Wallet")
     placeholderText: qsTr("Select coin from the left list.")
 
+    readonly property var supportedCoins: [ 'btc' ]
+
     list.model: BBackend.coinList
     list.delegate: BCoinItem {
-        visible: model.state.isEnabled
+        visible: supportedCoins.includes(coin.name)
         enabled: model.state.isEnabled
         coin: model
         onClicked: {
