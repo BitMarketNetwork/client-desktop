@@ -133,7 +133,6 @@ BColumnLayout {
                     return;
                 }
                 const response = JSON.parse(xhr.responseText.toString())
-                const currentLocale = BBackend.settings.language.currentName
 
                 _base.hashRateValue = formatNumber(response["hash_rate"], 1e9, "EH/s", 'f', 3)
                 _base.txValue = formatNumber(response["n_tx"], 1, '', '', 0)
