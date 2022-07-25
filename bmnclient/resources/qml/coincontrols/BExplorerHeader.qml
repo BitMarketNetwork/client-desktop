@@ -21,6 +21,7 @@ BColumnLayout {
         padding: _applicationStyle.padding
         contentItem: BRowLayout {
             BIconLabel {
+                id: _icon
                 BLayout.fillWidth: true
                 icon.width: _applicationStyle.icon.largeWidth
                 icon.height: _applicationStyle.icon.largeHeight
@@ -30,9 +31,11 @@ BColumnLayout {
             }
             BTextField {
                 id: transactionInput
-                placeholderText: qsTr("Search your transaction")
+                BLayout.maximumWidth: parent.width - _icon.implicitWidth - _searchBtn.width
+                placeholderText: qsTr("Search your transaction or address")
             }
             BButton { // TODO: icon
+                id: _searchBtn
                 BLayout.leftMargin: 10
                 text: "SEARCH"
                 enabled: transactionInput.text.length > 0
