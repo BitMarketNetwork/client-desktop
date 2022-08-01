@@ -91,8 +91,8 @@ Page {
                         Repeater {
                             model: valList
                             Column {
-                                BLabel { text: address }
-                                BLabel { text: val }
+                                BLabel { text: model.address }
+                                BLabel { text: model.val }
                             }
                         }
                     }
