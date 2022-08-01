@@ -30,17 +30,17 @@ BColumnLayout {
                 text: _base.coin.fullName
             }
             BTextField {
-                id: transactionInput
-                BLayout.maximumWidth: parent.width - _icon.implicitWidth - _searchBtn.width
+                id: _transactionInput
+                BLayout.maximumWidth: parent.width / 2
                 placeholderText: qsTr("Search your transaction or address")
             }
             BButton { // TODO: icon
                 id: _searchBtn
                 BLayout.leftMargin: 10
-                text: "SEARCH"
-                enabled: transactionInput.text.length > 0
+                text: qsTr("SEARCH")
+                enabled: _transactionInput.text.length > 0
                 onClicked: {
-                    _base.searchTx(transactionInput.text)
+                    _base.searchTx(_transactionInput.text)
                 }
             }
         }
