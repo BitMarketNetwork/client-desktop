@@ -366,9 +366,9 @@ class AbstractJsonQuery(AbstractQuery):
                 response = None
                 self._logger.warning("Invalid JSON response: %s", error_message)
 
-        if not isinstance(response, dict):
+        if not isinstance(response, (dict, list)):
             response = None
         self._processResponse(response)
 
-    def _processResponse(self, response: Optional[dict]) -> None:
+    def _processResponse(self, response: Optional[dict, list]) -> None:
         raise NotImplementedError

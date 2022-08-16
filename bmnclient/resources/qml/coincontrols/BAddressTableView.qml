@@ -29,4 +29,7 @@ BTableView {
     onVisibleChanged: {
         _base.forceLayout()
     }
+    Component.onCompleted: {
+        _base.forceLayout()
+    }
 }

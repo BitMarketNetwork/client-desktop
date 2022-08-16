@@ -3,6 +3,7 @@ bmnclient/resources/translations/*.ts
 
 include/*
 PySide?/*.debug
+PySide?/*.qmltypes
 PySide?/*/designer/*
 PySide?/Qt/libexec/*
 
@@ -69,9 +70,28 @@ Qt6DataVisualization*
 QtDataVisualization*
 PySide?*/qml/QtDataVisualization/*
 
-Qt6Labs*
-QtLabs*
-PySide?*/qml/Qt/labs/*
+Qt6LabsAnimation*
+QtLabsAnimation*
+PySide?*/qml/Qt/labs/animation/*
+
+Qt6LabsFolderListModel*
+QtLabsFolderListModel*
+PySide?*/qml/Qt/labs/folderlistmodel/*
+
+PySide?*/qml/Qt/labs/lottieqt/*
+PySide?*/qml/Qt/labs/platform/*
+
+Qt6LabsSettings*
+QtLabsSettings*
+PySide?*/qml/Qt/labs/settings/*
+
+Qt6LabsSharedImage*
+QtLabsSharedImage*
+PySide?*/qml/Qt/labs/sharedimage/*
+
+Qt6LabsWavefrontMesh*
+QtLabsWavefrontMesh*
+PySide?*/qml/Qt/labs/wavefrontmesh/*
 
 Qt6Multimedia*
 QtMultimedia*

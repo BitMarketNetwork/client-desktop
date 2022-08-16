@@ -6,7 +6,8 @@ from PySide6.QtCore import \
     QObject, \
     Slot as QSlot
 
-from ..dialogs.key_store import RevealSeedPhraseDialog
+from ..dialogs.key_store import RevealSeedPhraseDialog, TxApproveDialog
+from ....coins.abstract.coin import Coin
 
 if TYPE_CHECKING:
     from . import QmlApplication
@@ -27,3 +28,8 @@ class KeyStoreModel(QObject):
         # noinspection PyTypeChecker
         RevealSeedPhraseDialog(
             self._application.qmlContext.dialogManager).open()
+
+    @QSlot(QObject)
+    def onPrepareTransaction(self, coin: Coin) -> None:
+        TxApproveDialog(
+            self._application.qmlContext.dialogManager, coin).open()
