@@ -38,6 +38,8 @@ QtObject {
     }
 
     property QtObject icon: QtObject {
+        property int smallWidth: 12
+        property int smallHeight: 12
         property int normalWidth: 24
         property int normalHeight: 24
         property int largeWidth: 48

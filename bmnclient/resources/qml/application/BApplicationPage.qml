@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Material
 import "../basiccontrols"
+import "../controls"
 
 BControl {
     id: _base
@@ -38,33 +39,10 @@ BControl {
                     }
                 }
             }
-            Item {
-                BLayout.fillHeight: true
-            }
-            BPane {
+            BStatusBar {
                 BLayout.preferredWidth: parent.width
                 BLayout.alignment: Qt.AlignBottom
                 Material.elevation: 1
-                contentItem: BRowLayout {
-                    anchors.fill: parent
-
-                    BIconLabel {
-                        BLayout.alignment: Qt.AlignLeft
-                        BLayout.leftMargin: 5
-                        icon.width: _applicationStyle.icon.normalWidth / 2
-                        icon.height: _applicationStyle.icon.normalHeight / 2
-                        icon.source: _applicationManager.imagePath("check-solid.svg")
-                        text: "Connected"
-                    }
-                    BIconLabel {
-                        BLayout.alignment: Qt.AlignRight
-                        BLayout.rightMargin: 5
-                        icon.width: _applicationStyle.icon.normalWidth / 2
-                        icon.height: _applicationStyle.icon.normalHeight / 2
-                        icon.source: _applicationManager.imagePath("rotate-solid.svg")
-                        text: "Synchronization"
-                    }
-                }
             }
         }
         Rectangle {
