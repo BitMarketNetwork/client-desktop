@@ -162,6 +162,7 @@ BDialogLayout {
         id: _label
         readOnly: _base.readOnly
         placeholderText: _base.labelPlaceholderText
+        maximumLength: 32
     }
 
     BDialogPromptLabel {
