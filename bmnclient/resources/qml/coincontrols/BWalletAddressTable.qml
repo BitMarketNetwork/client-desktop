@@ -64,7 +64,7 @@ BControl {
                 BLayout.fillWidth: true
                 BLayout.fillHeight: true
                 model: _base.model
-                columnWidth: [355, -1, 150, 65, 60]
+                columnWidth: [-1, 355, 150, 65, 60]
 
                 delegate: BAddressTableRow {
                     width: _tableView.columnWidthProvider(column)
