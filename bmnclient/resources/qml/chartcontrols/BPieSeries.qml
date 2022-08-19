@@ -7,7 +7,7 @@ PieSeries {
     holeSize: 0.3
 
     onSliceAdded: (slice) => {
-        slice.labelPosition = PieSlice.LabelInsideNormal
+        slice.labelPosition = PieSlice.LabelInsideHorizontal
         slice.labelVisible = true
         slice.explodeDistanceFactor = 0.01
 

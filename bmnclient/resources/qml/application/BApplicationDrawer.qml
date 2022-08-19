@@ -4,6 +4,7 @@ import "../basiccontrols"
 BNavigationDrawer {
     id: _base
     property int barsDisplay: BNavigationDrawerItem.TextBesideIcon
+    property int currentIndex
 
     signal showContextMenu
     signal showWallet
@@ -42,7 +43,7 @@ BNavigationDrawer {
     }
 
     BNavigationDrawerItem {
-        checked: true
+        checked: _base.currentIndex === 0
         text: qsTr("Wallet")
         icon.source: _applicationManager.imagePath("icon-wallet.svg")
         onClicked: {
@@ -50,7 +51,7 @@ BNavigationDrawer {
         }
     }
     BNavigationDrawerItem {
-        checked: true
+        checked: _base.currentIndex === 1
         text: qsTr("Chart View")
         icon.source: _applicationManager.imagePath("chart-pie-solid")
         onClicked: {
@@ -66,6 +67,7 @@ BNavigationDrawer {
         }
     }
     BNavigationDrawerItem {
+        checked: _base.currentIndex === 2
         visible: false
         text: qsTr("Market")
         icon.source: _applicationManager.imagePath("icon-market.svg")
@@ -77,6 +79,7 @@ BNavigationDrawer {
     BNavigationDrawerSpacer {}
 
     BNavigationDrawerItem {
+        checked: _base.currentIndex === 3
         text: qsTr("About")
         icon.source: _applicationManager.imagePath("icon-info.svg")
         onClicked: {
@@ -84,6 +87,7 @@ BNavigationDrawer {
         }
     }
     BNavigationDrawerItem {
+        checked: _base.currentIndex === 4
         text: qsTr("Settings")
         icon.source: _applicationManager.imagePath("icon-cog.svg")
         onClicked: {
