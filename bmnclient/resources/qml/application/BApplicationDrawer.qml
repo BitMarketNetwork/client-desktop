@@ -59,7 +59,7 @@ BNavigationDrawer {
         }
     }
     BNavigationDrawerItem {
-        checked: true
+        checked: _base.currentIndex === 2
         text: qsTr("Blockchain explorer")
         icon.source: _applicationManager.imagePath("cubes-solid")
         onClicked: {
@@ -67,7 +67,7 @@ BNavigationDrawer {
         }
     }
     BNavigationDrawerItem {
-        checked: _base.currentIndex === 2
+        checked: _base.currentIndex === 3
         visible: false
         text: qsTr("Market")
         icon.source: _applicationManager.imagePath("icon-market.svg")
@@ -79,7 +79,7 @@ BNavigationDrawer {
     BNavigationDrawerSpacer {}
 
     BNavigationDrawerItem {
-        checked: _base.currentIndex === 3
+        checked: _base.currentIndex === 4
         text: qsTr("About")
         icon.source: _applicationManager.imagePath("icon-info.svg")
         onClicked: {
@@ -87,7 +87,7 @@ BNavigationDrawer {
         }
     }
     BNavigationDrawerItem {
-        checked: _base.currentIndex === 4
+        checked: _base.currentIndex === 5
         text: qsTr("Settings")
         icon.source: _applicationManager.imagePath("icon-cog.svg")
         onClicked: {
