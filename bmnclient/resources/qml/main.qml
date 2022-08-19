@@ -23,6 +23,8 @@ BApplicationWindow {
 
     header: BApplicationDrawer {
         id: _drawer
+        currentIndex: _mainLayout.currentIndex
+
         onShowContextMenu: {
             _applicationManager.popupDebugMenu()
         }
