@@ -49,7 +49,6 @@ BNavigationDrawer {
         }
     }
     BNavigationDrawerItem {
-        checked: true
         text: qsTr("Chart View")
         icon.source: _applicationManager.imagePath("chart-pie-solid")
         onClicked: {
