@@ -14,7 +14,6 @@ Page {
 
     header: BExplorerHeader {
         coin: _base.coin
-
         onSearchTx: (tx) => {
             _base.request(tx)
         }
@@ -35,10 +34,15 @@ Page {
         section.delegate: BItemDelegate {
             id: _delegate
             required property string section
-            contentItem: BRowLayout {
+            contentItem: BColumnLayout {
                 BLabel  {
+                    BLayout.fillHeight: true
                     font.weight: 700
                     text: section
+                }
+                BSeparator {
+                    BLayout.fillWidth: true
+                    BLayout.alignment: Qt.AlignBottom
                 }
             }
         }
