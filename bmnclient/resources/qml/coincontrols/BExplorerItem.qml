@@ -45,6 +45,9 @@ Page {
                     BLayout.alignment: Qt.AlignBottom
                 }
             }
+            MouseArea { // disable onClicked event
+                anchors.fill: parent
+            }
         }
     }
 
