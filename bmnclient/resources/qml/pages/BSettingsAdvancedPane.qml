@@ -65,6 +65,7 @@ BPane {
 
         BDialogInputButton {
             BLayout.columnSpan: parent.columns
+            BLayout.fillWidth: true
             BLayout.alignment:
                 (_applicationStyle.dialogInputAlignment & ~Qt.AlignHorizontal_Mask)
                 | Qt.AlignHCenter
@@ -76,6 +77,7 @@ BPane {
         }
         BDialogInputButton {
             BLayout.columnSpan: parent.columns
+            BLayout.fillWidth: true
             BLayout.alignment:
                 (_applicationStyle.dialogInputAlignment & ~Qt.AlignHorizontal_Mask)
                 | Qt.AlignHCenter
@@ -89,6 +91,7 @@ BPane {
         }
         BDialogInputButton {
             BLayout.columnSpan: parent.columns
+            BLayout.fillWidth: true
             BLayout.alignment:
                 (_applicationStyle.dialogInputAlignment & ~Qt.AlignHorizontal_Mask)
                 | Qt.AlignHCenter
@@ -105,6 +108,7 @@ BPane {
 
         BDialogInputButton {
             BLayout.columnSpan: parent.columns
+            BLayout.fillWidth: true
             BLayout.alignment:
                 (_applicationStyle.dialogInputAlignment & ~Qt.AlignHorizontal_Mask)
                 | Qt.AlignHCenter
