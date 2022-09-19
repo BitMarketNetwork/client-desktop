@@ -24,15 +24,19 @@ class ConfigKey(Enum):
     UI_FONT_FAMILY: Final = "ui.font.family"
     UI_FONT_SIZE: Final = "ui.font.size"
 
+    KEY_STORE: Final = "key_store"
+    KEY_STORE_SEEDS: Final = "key_store.seeds"
     KEY_STORE_VALUE: Final = "key_store.value"
-    KEY_STORE_SEED: Final = "key_store.seed"
-    KEY_STORE_SEED_PHRASE: Final = "key_store.seed_phrase"
 
     SERVICES_FIAT_RATE: Final = "services.fiat_rate"
     SERVICES_FIAT_CURRENCY: Final = "services.fiat_currency"
 
     SERVICES_BLOCKCHAIN_EXPLORER: Final = "services.blockchain_explorer"
 
+class ConfigSeed(Enum):
+    NAME: Final = "name"
+    SEED: Final = "seed"
+    SEED_PHRASE: Final = "seed_phrase"
 
 class Config:
     def __init__(self, file_path: Path) -> None:

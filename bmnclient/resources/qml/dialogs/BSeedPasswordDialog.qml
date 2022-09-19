@@ -4,11 +4,21 @@ import "../basiccontrols"
 
 BDialog {
     id: _base
-    signal passwordAccepted(string password)
+    signal passwordAccepted(string name, string password)
 
-    title: qsTr("Set up seed's password (optional)")
+    title: qsTr("Set up seed's name and password (optional)")
     contentItem: BDialogLayout {
         columns: 2
+
+        BDialogPromptLabel {
+            text: qsTr("Seed's name:")
+        }
+        BDialogInputTextField {
+            id: _name
+            placeholderText: qsTr("Enter your name")
+            maximumLength: 32
+            // TODO Validator
+        }
 
         BDialogPromptLabel {
             text: qsTr("Seed's password:")
@@ -41,15 +51,13 @@ BDialog {
 
     onAboutToShow: {
         onReset()
-        _password1.forceActiveFocus(Qt.TabFocus)
+        _name.forceActiveFocus(Qt.TabFocus)
     }
     onAccepted: {
-        passwordAccepted(_password1.text)
+        passwordAccepted(_name.text, _password1.text)
     }
     onReset: {
         _password1.clear()
         _showPassword.checked = true
     }
-
-
 }

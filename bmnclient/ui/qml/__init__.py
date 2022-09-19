@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 
 from PySide6.QtCore import \
     Property as QProperty, \
@@ -28,6 +28,7 @@ from ..gui import GuiApplication
 from ...network.access_manager import NetworkAccessManager
 from ...resources import Resources
 from ...version import Gui, ProductPaths
+from ...config import ConfigKey
 
 if TYPE_CHECKING:
     from typing import Iterable, List
@@ -133,7 +134,9 @@ class QmlContext(QObject):
             self._application,
             self._application.coinList)
         self._clipboard_model = ClipboardModel(self._application)
-        self._key_store_model = KeyStoreModel(self._application)
+        self._key_store_model = KeyStoreModel(
+            self._application,
+            self._application.config.get(ConfigKey.KEY_STORE_SEEDS, list, []))
         self._settings_model = SettingsModel(self._application)
         self._dialog_manager = DialogManager(self)
         self._debug_model = DebugModel(self._application)

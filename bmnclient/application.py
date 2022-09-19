@@ -388,6 +388,11 @@ class CoreApplication(QObject):
             return
         assert not self._database.isOpen
 
+        # temorary
+        if not self._database.remove():
+            # TODO show message if failed
+            pass
+
         for coin in self._coin_list:
             if not coin.deriveHdNode(root_node):
                 # TODO show message, force user to regenerate seed?
