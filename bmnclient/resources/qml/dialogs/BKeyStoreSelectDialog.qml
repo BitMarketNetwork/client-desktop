@@ -5,7 +5,7 @@ import "../basiccontrols"
 
 BDialog {
     id: _base
-    title: qsTr("Select root key")
+    title: qsTr("Select Root Key")
     width: parent.width / 2
     height: parent.height / 2
 
