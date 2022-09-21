@@ -180,6 +180,7 @@ class KeyStoreSelectDialog(AbstractDialog):
 
     def onRestoreAccepted(self) -> None:
         RestoreSeedPhraseDialog(self._manager).open()
+        self.close.emit()
 
     def onRestoreBackupAccepted(self) -> None:
         raise NotImplementedError
