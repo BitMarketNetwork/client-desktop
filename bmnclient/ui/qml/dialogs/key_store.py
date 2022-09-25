@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from enum import IntEnum
+from pathlib import Path
 from random import randint
 from typing import TYPE_CHECKING
 
@@ -33,7 +34,6 @@ class ConfirmPasswordDialog(AbstractPasswordDialog):
 
     def onPasswordAccepted(self, password: str) -> None:
         result = self._manager.context.keyStore.native.revealSeedPhrase(
-            self._manager.context.keyStore.currentSeed,
             password)
         if isinstance(result, str):
             self._parent.text = result
@@ -104,7 +104,7 @@ class KeyStoreNewPasswordDialog(AbstractDialog):
         if not self._manager.context.keyStore.native.create(password):
             KeyStoreErrorDialog(self._manager, self).open()
         else:
-            KeyStoreSelectDialog(self._manager).open()
+            createKeyStorePasswordDialog(self._manager).open()
 
     def onRejected(self) -> None:
         self._manager.context.exit(0)
@@ -145,18 +145,15 @@ class KeyStorePasswordDialog(AbstractDialog):
     def onPasswordAccepted(self, password: str) -> None:
         result = self._manager.context.keyStore.native.open(password)
         if result != KeyStoreError.SUCCESS:
-            KeyStoreErrorDialog(
-                self._manager,
-                self,
-                result).open()
-        else:
-            KeyStoreSelectDialog(self._manager).open()
-
-    def onResetWalletAccepted(self) -> None:
-        self.ConfirmResetWalletDialog(self._manager, self).open()
+            KeyStoreErrorDialog(self._manager, self, result).open()
+        elif not self._manager.context.keyStore.native.hasSeed:
+            NewSeedDialog(self._manager).open()
 
     def onRejected(self) -> None:
         selectKeyStoreDialog(self._manager).open()
+
+    def onResetWalletAccepted(self) -> None:
+        self.ConfirmResetWalletDialog(self._manager, self).open()
 
 
 class KeyStoreSelectDialog(AbstractDialog):
@@ -167,12 +164,12 @@ class KeyStoreSelectDialog(AbstractDialog):
             manager: DialogManager) -> None:
         super().__init__(manager)
 
-    def onKeyStoreClicked(self, seed: str) -> None:
-        self._manager.context.keyStore.currentSeed = seed
-        result = self._manager.context.keyStore.native.load(seed)
-        if result != KeyStoreError.SUCCESS:
-            KeyStoreErrorDialog(self._manager, self, result).open()
+    def onKeyStoreClicked(self, path: Path) -> None:
+        self._manager.context.config.filePath = Path(path)
+        self._manager.context.config.load()
         self.close.emit()
+
+        createKeyStorePasswordDialog(self._manager).open()
 
     def onGenerateAccepted(self) -> None:
         GenerateSeedPhraseDialog(self._manager, None).open()
@@ -325,9 +322,7 @@ class SeedPasswordDialog(AbstractDialog):
         self._generator = generator
         self._current_phrase = phrase
 
-    def onPasswordAccepted(self,
-            name: str,
-            password: str) -> None:
+    def onPasswordAccepted(self, name: str, password: str) -> None:
         result = self._generator.finalize(self._current_phrase, name, password)
         if result != KeyStoreError.SUCCESS:
             InvalidSeedPhraseDialog(

@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import json
+import json, os, re
 from enum import Enum
 from json.decoder import JSONDecodeError
 from threading import RLock
 from typing import TYPE_CHECKING
+from pathlib import Path
 
 from .logger import Logger
 from .utils.static_list import StaticList
@@ -12,7 +13,6 @@ from .version import Product
 
 if TYPE_CHECKING:
     from typing import Any, Final, Type, Union
-    from pathlib import Path
 
 
 class ConfigKey(Enum):
@@ -24,25 +24,21 @@ class ConfigKey(Enum):
     UI_FONT_FAMILY: Final = "ui.font.family"
     UI_FONT_SIZE: Final = "ui.font.size"
 
-    KEY_STORE: Final = "key_store"
-    KEY_STORE_SEEDS: Final = "key_store.seeds"
     KEY_STORE_VALUE: Final = "key_store.value"
+    KEY_STORE_SEED: Final = "key_store.seed"
+    KEY_STORE_SEED_PHRASE: Final = "key_store.seed_phrase"
 
     SERVICES_FIAT_RATE: Final = "services.fiat_rate"
     SERVICES_FIAT_CURRENCY: Final = "services.fiat_currency"
 
     SERVICES_BLOCKCHAIN_EXPLORER: Final = "services.blockchain_explorer"
 
-class ConfigSeed(Enum):
-    NAME: Final = "name"
-    SEED: Final = "seed"
-    SEED_PHRASE: Final = "seed_phrase"
 
 class Config:
-    def __init__(self, file_path: Path) -> None:
+    def __init__(self, file_path: Path = Path()) -> None:
         self._logger = Logger.classLogger(
             self.__class__,
-            (None, file_path.name))
+            (None, file_path.name if file_path else ""))
         self._file_path = file_path
         self._config = dict()
         self._lock = RLock()
@@ -51,9 +47,26 @@ class Config:
     def filePath(self) -> Path:
         return self._file_path
 
+    @filePath.setter
+    def filePath(self, value: Path) -> None:
+        self._file_path = value
+
     @property
     def lock(self) -> RLock:
         return self._lock
+
+    def create(self, path: Path, name: str) -> None:
+        configures = [x.split('.')[0] for x in os.listdir(path)
+            if re.match("[^\\s]+(.*?)\\.(json|JSON)$", x)]
+        if name in configures:
+            new_name = name
+            counter = 1
+            while new_name in configures:
+                new_name = f"{name} ({counter})"
+                counter += 1
+            name = new_name
+        self._file_path = Path(f"{path}/{name}.json")
+        self.save()
 
     def load(self) -> bool:
         with self._lock:

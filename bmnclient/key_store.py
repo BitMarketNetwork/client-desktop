@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from .coins.hd import HdNode
 from .coins.mnemonic import Mnemonic
-from .config import ConfigKey, ConfigSeed
+from .config import ConfigKey
 from .crypto.cipher import AeadCipher, MessageCipher
 from .crypto.digest import Sha256Digest
 from .crypto.kdf import SecretStore
@@ -42,7 +42,7 @@ class _KeyStoreBase:
         self._logger = Logger.classLogger(self.__class__)
         self._lock = RLock()
         self._application = application
-        self._config_reset_list: Dict[ConfigSeed, Any] = {}
+        self._config_reset_list: Dict[ConfigKey, Any] = {}
 
         self.__nonce_list: List[Optional[bytes]] = [None] * len(KeyIndex)
         self.__key_list: List[Optional[bytes]] = [None] * len(KeyIndex)
@@ -135,25 +135,21 @@ class _KeyStoreBase:
 class _KeyStoreSeed(_KeyStoreBase):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._config_reset_list[ConfigKey.KEY_STORE_SEEDS] = None
+        self._config_reset_list[ConfigKey.KEY_STORE_SEED] = None
+        self._config_reset_list[ConfigKey.KEY_STORE_SEED_PHRASE] = None
         self.__has_seed = False
 
     def _clear(self) -> None:
         super()._clear()
         self.__has_seed = False
 
-    def _saveSeed(
-            self,
-            language: str,
-            phrase: str,
-            name: str,
-            password: str) -> Union[Tuple[bool, str], Tuple[bool, None]]:
+    def _saveSeed(self, language: str, phrase: str, password: str) -> bool:
         if Product.STRING_SEPARATOR in language:
-            return False, None
+            return False
 
         cipher = self.deriveMessageCipher(KeyIndex.SEED)
         if cipher is None:
-            return False, None
+            return False
 
         seed = Mnemonic.phraseToSeed(phrase, password)
         seed = cipher.encrypt(seed)
@@ -162,61 +158,33 @@ class _KeyStoreSeed(_KeyStoreBase):
         phrase = cipher.encrypt(phrase.encode(Product.ENCODING))
 
         with self._application.config.lock:
-            seeds = list(self._application.config.get(
-                ConfigKey.KEY_STORE_SEEDS,
-                list, []))
-
-            seeds.append({
-                ConfigSeed.NAME.value : name,
-                ConfigSeed.SEED.value : seed,
-                ConfigSeed.SEED_PHRASE.value : phrase
-            })
-
             if not self._application.config.set(
-                    ConfigKey.KEY_STORE_SEEDS,
-                    seeds,
+                    ConfigKey.KEY_STORE_SEED,
+                    seed,
                     save=False):
-                return False, None
-            return self._application.config.save(), seed
+                return False
+            if not self._application.config.set(
+                    ConfigKey.KEY_STORE_SEED_PHRASE,
+                    phrase,
+                    save=False):
+                return False
+            return self._application.config.save()
 
-    def __deriveValueFromSeeds(
-            self,
-            config_key: ConfigKey | ConfigSeed,
-            seed: Optional[str]) -> Optional[str]:
-        if self._application.config.exists(ConfigKey.KEY_STORE_SEEDS, list):
-            seeds = self._application.config.get(ConfigKey.KEY_STORE_SEEDS, list)
-            if not seeds or not seed:
-                return None
-            seeds_filtered = list(filter(
-                lambda x: x[ConfigSeed.SEED.value] == seed,
-                seeds))
-            if not seeds_filtered:
-                return None
-            value = seeds_filtered[0][config_key.value]
-            if value:
-                return value
-        else:
-            # support old formate
-            value = self._application.config.get(config_key, str)
-            if value:
-                return value
-        return None
-
-    def __deriveSeed(self, seed: str) -> Optional[bytes]:
-        #value = self.__deriveValueFromSeeds(
-        #    ConfigSeed.SEED,
-        #    seed)
-        #if not value:
-        #    return None
+    def __deriveSeed(self) -> Optional[bytes]:
+        value = self._application.config.get(
+            ConfigKey.KEY_STORE_SEED,
+            str)
+        if not value:
+            return None
         cipher = self.deriveMessageCipher(KeyIndex.SEED)
         if cipher is None:
             return None
-        return cipher.decrypt(seed)
+        return cipher.decrypt(value)
 
-    def _deriveSeedPhrase(self, seed: str) -> Union[Tuple[str, str], Tuple[None, None]]:
-        value = self.__deriveValueFromSeeds(
-            ConfigSeed.SEED_PHRASE,
-            seed)
+    def _deriveSeedPhrase(self) -> Union[Tuple[str, str], Tuple[None, None]]:
+        value = self._application.config.get(
+            ConfigKey.KEY_STORE_SEED_PHRASE,
+            str)
         if not value:
             return None, None
 
@@ -235,10 +203,10 @@ class _KeyStoreSeed(_KeyStoreBase):
         phrase = Mnemonic.friendlyPhrase(language, phrase)
         return language, phrase
 
-    def _deriveRootHdNodeFromSeed(self, seed: str) -> Optional[HdNode, KeyStoreError]:
+    def _deriveRootHdNodeFromSeed(self) -> Optional[HdNode, KeyStoreError]:
         self.__has_seed = False
 
-        seed = self.__deriveSeed(seed)
+        seed = self.__deriveSeed()
         if not seed:
             return None
 
@@ -307,11 +275,7 @@ class KeyStore(_KeyStoreSeed):
                 return KeyStoreError.ERROR_INVALID_PASSWORD
             if not self._loadSecretStoreValue(value):
                 return KeyStoreError.ERROR_SEED_NOT_FOUND
-        return KeyStoreError.SUCCESS
-
-    def load(self, seed: str) -> KeyStoreError:
-        with self._lock:
-            root_node = self._deriveRootHdNodeFromSeed(seed)
+            root_node = self._deriveRootHdNodeFromSeed()
             if isinstance(root_node, KeyStoreError):
                 return root_node
             self._open_callback(root_node)
@@ -324,16 +288,20 @@ class KeyStore(_KeyStoreSeed):
             name: str,
             password: str) -> KeyStoreError:
         with self._lock:
-            result, seed = self._saveSeed(
+            self._application.config.create(self._application.configPath, name)
+            if not self.create(password):
+                return KeyStoreError.ERROR_SAVE_SEED
+            if not self.open(password):
+                return KeyStoreError.ERROR_INVALID_PASSWORD
+
+            result = self._saveSeed(
                 language,
                 phrase,
-                name,
                 password)
 
             if not result:
                 return KeyStoreError.ERROR_SAVE_SEED
-
-            root_node = self._deriveRootHdNodeFromSeed(seed)
+            root_node = self._deriveRootHdNodeFromSeed()
             if root_node is None:
                 return KeyStoreError.ERROR_SEED_NOT_FOUND
             if isinstance(root_node, KeyStoreError):
@@ -341,11 +309,11 @@ class KeyStore(_KeyStoreSeed):
             self._open_callback(root_node)
         return KeyStoreError.SUCCESS
 
-    def revealSeedPhrase(self, seed: str, password: str) -> Union[KeyStoreError, str]:
+    def revealSeedPhrase(self, password: str) -> Union[KeyStoreError, str]:
         with self._lock:
             if not self.verify(password):
                 return KeyStoreError.ERROR_INVALID_PASSWORD
-            language, phrase = self._deriveSeedPhrase(seed)
+            language, phrase = self._deriveSeedPhrase()
             if not language or not phrase:
                 return KeyStoreError.ERROR_SEED_NOT_FOUND
             return phrase

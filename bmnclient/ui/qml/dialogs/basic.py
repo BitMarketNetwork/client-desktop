@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from . import AbstractDialog
-from .key_store import createKeyStorePasswordDialog
+from .key_store import selectKeyStoreDialog
 
 if TYPE_CHECKING:
     from . import DialogManager
@@ -16,7 +16,7 @@ class AlphaDialog(AbstractDialog):
         super().__init__(manager)
 
     def onAccepted(self) -> None:
-        createKeyStorePasswordDialog(self._manager).open()
+        selectKeyStoreDialog(self._manager).open()
 
     def onRejected(self) -> None:
         self._manager.context.exit(0)

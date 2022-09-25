@@ -20,7 +20,7 @@ from .models.clipboard import ClipboardModel
 from .models.coin import CoinListModel
 from .models.debug import DebugModel
 from .models.factory import ModelsFactory
-from .models.key_store import KeyStoreModel
+from .models.key_store import KeyStoreModel, ConfigFolderListModel
 from .models.password import PasswordModel
 from .models.settings import SettingsModel
 from .models.update import UpdateModel
@@ -28,7 +28,7 @@ from ..gui import GuiApplication
 from ...network.access_manager import NetworkAccessManager
 from ...resources import Resources
 from ...version import Gui, ProductPaths
-from ...config import ConfigKey
+from ...config import Config
 
 if TYPE_CHECKING:
     from typing import Iterable, List
@@ -134,9 +134,8 @@ class QmlContext(QObject):
             self._application,
             self._application.coinList)
         self._clipboard_model = ClipboardModel(self._application)
-        self._key_store_model = KeyStoreModel(
-            self._application,
-            self._application.config.get(ConfigKey.KEY_STORE_SEEDS, list, []))
+        self._key_store_model = KeyStoreModel(self._application)
+        self._configure_folder_model = ConfigFolderListModel(self._application)
         self._settings_model = SettingsModel(self._application)
         self._dialog_manager = DialogManager(self)
         self._debug_model = DebugModel(self._application)
@@ -179,8 +178,16 @@ class QmlContext(QObject):
         return self._clipboard_model
 
     @QProperty(QObject, constant=True)
+    def config(self) -> Config:
+        return self._application.config
+
+    @QProperty(QObject, constant=True)
     def keyStore(self) -> KeyStoreModel:
         return self._key_store_model
+
+    @QProperty(QObject, constant=True)
+    def configFolderListModel(self) -> ConfigFolderListModel:
+        return self._configure_folder_model
 
     @QProperty(QObject, constant=True)
     def settings(self) -> SettingsModel:

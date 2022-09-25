@@ -1,5 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Material
+//import Qt.labs.folderlistmodel
+//import Qt.labs.platform
 import "../application"
 import "../basiccontrols"
 
@@ -9,7 +11,7 @@ BDialog {
     width: parent.width / 2
     height: parent.height / 2
 
-    signal keyStoreClicked(string key_store_id)
+    signal keyStoreClicked(var path)
     signal generateAccepted
     signal restoreAccepted
     signal restoreBackupAccepted
@@ -22,7 +24,14 @@ BDialog {
             BLayout.fillHeight: true
             BLayout.preferredWidth: parent.width / 2
             visible: model.rowCount() > 0
-            model: BBackend.keyStore
+            model: BBackend.configFolderListModel
+
+            /*FolderListModel {
+                folder: StandardPaths.writableLocation(StandardPaths.AppConfigLocation)
+                showDirs: false
+                sortField: FolderListModel.Time
+                nameFilters: ["*.json"]
+            }*/
 
             delegate: BItemDelegate {
                 id: _item
@@ -39,19 +48,27 @@ BDialog {
                         sourceSize.height: _applicationStyle.icon.normalHeight
                         color: Material.theme === Material.Dark ? Material.foreground : "transparent"
                     }
-                    BLabel {
+                    BRowLayout {
                         BLayout.fillWidth: true
-                        text: model.name
-                        font.bold: true
+                        BLabel {
+                            BLayout.fillWidth: true
+                            text: model.fileName
+                            font.bold: true
+                        }
+                        BLabel {
+                            BLayout.alignment: Qt.AlignRight
+                            text: model.fileModified
+                        }
                     }
                     BLabel {
                         BLayout.fillWidth: true
-                        text: "no path"
+                        text: model.filePath
+                        elide: BLabel.ElideRight
                     }
                 }
 
                 onClicked: {
-                    _base.keyStoreClicked(model.seed)
+                    _base.keyStoreClicked(model.filePath)
                 }
             }
         }

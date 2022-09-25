@@ -171,10 +171,7 @@ class CoreApplication(QObject):
         self._on_exit_called = False
         self._run_called = False
 
-        self._config = Config(
-            self._command_line.configPath
-            / ProductPaths.CONFIG_FILE_NAME)
-        self._config.load()
+        self._config = Config()
 
         self._key_store = KeyStore(
             self,

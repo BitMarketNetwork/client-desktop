@@ -54,9 +54,12 @@ BDialog {
         _name.forceActiveFocus(Qt.TabFocus)
     }
     onAccepted: {
-        passwordAccepted(_name.text, _password1.text)
+        passwordAccepted(
+            _name.text === "" ? qsTr("New wallet") : _name.text,
+            _password1.text)
     }
     onReset: {
+        _name.clear()
         _password1.clear()
         _showPassword.checked = true
     }
