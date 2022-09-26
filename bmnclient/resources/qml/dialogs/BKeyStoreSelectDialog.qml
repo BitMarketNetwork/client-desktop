@@ -4,6 +4,7 @@ import QtQuick.Controls.Material
 //import Qt.labs.platform
 import "../application"
 import "../basiccontrols"
+import "../controls"
 
 BDialog {
     id: _base
@@ -76,93 +77,36 @@ BDialog {
         BColumnLayout {
             BLayout.fillWidth: true
 
-            BButton {
+            BKeyStoreDialogButton {
                 BLayout.fillWidth: true
                 BLayout.fillHeight: true
-                flat: true
+                title: qsTr("Generate new Root Key")
+                details: qsTr("Create a new wallet to get started")
+                imagePath: _applicationManager.imagePath("plus-solid.svg")
 
-                contentItem: BGridLayout {
-                    columns: 2
-                    columnSpacing: 5
-
-                    BIconImage {
-                        BLayout.rowSpan: parent.columns
-                        source: _applicationManager.imagePath("plus-solid.svg")
-                        sourceSize.width: _applicationStyle.icon.normalWidth
-                        sourceSize.height: _applicationStyle.icon.normalHeight
-                        color: Material.theme === Material.Dark ? Material.foreground : "transparent"
-                    }
-                    BLabel {
-                        BLayout.fillWidth: true
-                        text: qsTr("Generate new Root Key")
-                        font.bold: true
-                    }
-                    BLabel {
-                        BLayout.fillWidth: true
-                        text: qsTr("Create a new wallet to get started")
-                    }
-                }
                 onClicked: {
                     _base.generateAccepted()
                 }
             }
-            BButton {
+            BKeyStoreDialogButton {
                 BLayout.fillWidth: true
                 BLayout.fillHeight: true
-                flat: true
+                title: qsTr("Restore from Seed Phrase")
+                details: qsTr("Enter Seed Phrase to access your wallet")
+                imagePath: _applicationManager.imagePath("rotate-right-solid.svg")
 
-                contentItem: BGridLayout {
-                    columns: 2
-                    columnSpacing: 5
-
-                    BIconImage {
-                        BLayout.rowSpan: parent.columns
-                        source: _applicationManager.imagePath("rotate-right-solid.svg")
-                        sourceSize.width: _applicationStyle.icon.normalWidth
-                        sourceSize.height: _applicationStyle.icon.normalHeight
-                        color: Material.theme === Material.Dark ? Material.foreground : "transparent"
-                    }
-                    BLabel {
-                        BLayout.fillWidth: true
-                        text: qsTr("Restore from Seed Phrase")
-                        font.bold: true
-                    }
-                    BLabel {
-                        BLayout.fillWidth: true
-                        text: qsTr("Enter Seed Phrase to access your wallet")
-                    }
-                }
                 onClicked: {
                     _base.restoreAccepted()
                 }
             }
-            BButton {
+            BKeyStoreDialogButton {
                 BLayout.fillWidth: true
                 BLayout.fillHeight: true
-                flat: true
+                title: qsTr("Restore wallet from backup")
+                details: qsTr("Open a local backup file")
+                imagePath: _applicationManager.imagePath("rotate-right-solid.svg")
                 enabled: false
 
-                contentItem: BGridLayout {
-                    columns: 2
-                    columnSpacing: 5
-
-                    BIconImage {
-                        BLayout.rowSpan: parent.columns
-                        source: _applicationManager.imagePath("rotate-right-solid.svg")
-                        sourceSize.width: _applicationStyle.icon.normalWidth
-                        sourceSize.height: _applicationStyle.icon.normalHeight
-                        color: Material.theme === Material.Dark ? Material.foreground : "transparent"
-                    }
-                    BLabel {
-                        BLayout.fillWidth: true
-                        text: qsTr("Restore wallet from backup")
-                        font.bold: true
-                    }
-                    BLabel {
-                        BLayout.fillWidth: true
-                        text: qsTr("Open a local backup file")
-                    }
-                }
                 onClicked: {
                     _base.restoreBackupAccepted()
                 }
