@@ -87,7 +87,7 @@ BDialog {
 
                     BIconImage {
                         BLayout.rowSpan: parent.columns
-                        source: _applicationManager.imagePath("file-circle-plus.svg")
+                        source: _applicationManager.imagePath("plus-solid.svg")
                         sourceSize.width: _applicationStyle.icon.normalWidth
                         sourceSize.height: _applicationStyle.icon.normalHeight
                         color: Material.theme === Material.Dark ? Material.foreground : "transparent"
@@ -117,7 +117,7 @@ BDialog {
 
                     BIconImage {
                         BLayout.rowSpan: parent.columns
-                        source: _applicationManager.imagePath("file-arrow-down.svg")
+                        source: _applicationManager.imagePath("rotate-right-solid.svg")
                         sourceSize.width: _applicationStyle.icon.normalWidth
                         sourceSize.height: _applicationStyle.icon.normalHeight
                         color: Material.theme === Material.Dark ? Material.foreground : "transparent"
@@ -148,7 +148,7 @@ BDialog {
 
                     BIconImage {
                         BLayout.rowSpan: parent.columns
-                        source: _applicationManager.imagePath("file-import.svg")
+                        source: _applicationManager.imagePath("rotate-right-solid.svg")
                         sourceSize.width: _applicationStyle.icon.normalWidth
                         sourceSize.height: _applicationStyle.icon.normalHeight
                         color: Material.theme === Material.Dark ? Material.foreground : "transparent"
