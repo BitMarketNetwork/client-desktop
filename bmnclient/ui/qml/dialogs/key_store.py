@@ -158,25 +158,6 @@ class KeyStoreSelectDialog(AbstractDialog):
         self._manager.context.exit(0)
 
 
-class NewSeedDialog(AbstractDialog):
-    _QML_NAME = "BNewSeedDialog"
-
-    def __init__(self, manager: DialogManager) -> None:
-        super().__init__(manager)
-
-    def onGenerateAccepted(self) -> None:
-        GenerateSeedPhraseDialog(self._manager, None).open()
-
-    def onRestoreAccepted(self) -> None:
-        RestoreSeedPhraseDialog(self._manager).open()
-
-    def onRestoreBackupAccepted(self) -> None:
-        raise NotImplementedError
-
-    def onRejected(self) -> None:
-        self._manager.context.exit(0)
-
-
 class InvalidSeedPhraseDialog(KeyStoreErrorDialog):
     def __init__(
             self,
