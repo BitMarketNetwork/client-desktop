@@ -4,7 +4,7 @@ import "../basiccontrols"
 
 BDialog {
     id: _base
-    signal passwordAccepted(string name, string password)
+    signal passwordAccepted(string seed_name, string seed_password)
 
     title: qsTr("Set up seed's name and password (optional)")
     contentItem: BDialogLayout {

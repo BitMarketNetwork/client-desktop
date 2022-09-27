@@ -285,19 +285,20 @@ class KeyStore(_KeyStoreSeed):
             self,
             language: str,
             phrase: str,
+            key_store_password: str,
             name: str,
-            password: str) -> KeyStoreError:
+            seed_password: str) -> KeyStoreError:
         with self._lock:
             self._application.config.create(self._application.configPath, name)
-            if not self.create(password):
+            if not self.create(key_store_password):
                 return KeyStoreError.ERROR_SAVE_SEED
-            if not self.open(password):
+            if not self.open(key_store_password):
                 return KeyStoreError.ERROR_INVALID_PASSWORD
 
             result = self._saveSeed(
                 language,
                 phrase,
-                password)
+                seed_password)
 
             if not result:
                 return KeyStoreError.ERROR_SAVE_SEED
@@ -347,16 +348,18 @@ class _AbstractSeedPhrase:
     def finalize(
             self,
             phrase: str,
+            key_store_password: str,
             name: str,
-            password: str) -> KeyStoreError:
+            seed_password: str) -> KeyStoreError:
         if not self.validate(phrase):
             return KeyStoreError.ERROR_INVALID_SEED_PHRASE
 
         result = self._key_store.saveSeed(
             self._mnemonic.language,
             phrase,
+            key_store_password,
             name,
-            password)
+            seed_password)
         if result != KeyStoreError.SUCCESS:
             return result
 
