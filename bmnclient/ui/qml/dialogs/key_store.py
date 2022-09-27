@@ -167,6 +167,7 @@ class KeyStoreSelectDialog(AbstractDialog):
     def onKeyStoreClicked(self, path: Path) -> None:
         self._manager.context.config.filePath = Path(path)
         self._manager.context.config.load()
+        self._manager.context.settings.reload()
         self.close.emit()
 
         createKeyStorePasswordDialog(self._manager).open()
