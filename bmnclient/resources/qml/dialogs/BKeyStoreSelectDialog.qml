@@ -9,7 +9,6 @@ import "../controls"
 BDialog {
     id: _base
     title: qsTr("Select Root Key")
-    width: parent.width / 2
     height: parent.height / 2
 
     signal keyStoreClicked(var path)
@@ -23,7 +22,6 @@ BDialog {
             id: _list
             BLayout.fillWidth: true
             BLayout.fillHeight: true
-            BLayout.preferredWidth: parent.width / 2
             visible: model.rowCount() > 0
             model: BBackend.configFolderListModel
 
@@ -39,11 +37,11 @@ BDialog {
                 height: implicitHeight
 
                 contentItem: BGridLayout {
-                    columns: 2
+                    columns: 3
                     columnSpacing: 5
 
                     BIconImage {
-                        BLayout.rowSpan: parent.columns
+                        BLayout.rowSpan: 2
                         source: _applicationManager.imagePath("icon-wallet.svg")
                         sourceSize.width: _applicationStyle.icon.normalWidth
                         sourceSize.height: _applicationStyle.icon.normalHeight
@@ -61,8 +59,14 @@ BDialog {
                             text: model.fileModified
                         }
                     }
+                    BContextMenuToolButton {
+                        BLayout.rowSpan: 2
+                        menu: null
+                        onClicked: {
+                            // TODO 
+                        }
+                    }
                     BLabel {
-                        BLayout.fillWidth: true
                         text: model.filePath
                         elide: BLabel.ElideRight
                     }
