@@ -32,7 +32,7 @@ class ConfigFolderListModel(AbstractListModel):
     _ROLE_MAP: Final = {
         Role.FILE_NAME: (
             b"fileName",
-            lambda c: QFileInfo(c).fileName()),
+            lambda c: QFileInfo(c).baseName()),
         Role.FILE_PATH: (
             b"filePath",
             lambda c: QFileInfo(c).filePath()),
