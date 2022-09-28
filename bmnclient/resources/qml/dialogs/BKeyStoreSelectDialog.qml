@@ -9,7 +9,6 @@ import "../controls"
 BDialog {
     id: _base
     title: qsTr("Select Root Key")
-    height: parent.height / 2
 
     signal keyStoreClicked(var path)
     signal generateAccepted
@@ -53,7 +52,6 @@ BDialog {
 
             delegate: BItemDelegate {
                 id: _item
-                height: implicitHeight
 
                 contentItem: BGridLayout {
                     columns: 3
@@ -66,7 +64,9 @@ BDialog {
                         sourceSize.height: _applicationStyle.icon.normalHeight
                         color: Material.theme === Material.Dark ? Material.foreground : "transparent"
                     }
-                    BRowLayout {
+                    BRowLayout
+                    {
+                        id: _titleLabels
                         BLayout.fillWidth: true
                         BLabel {
                             BLayout.fillWidth: true
@@ -81,6 +81,7 @@ BDialog {
                     // TODO: reimplement BContextMenuToolButton
                     // Error: Invalid write to global property "down"
                     BContextMenuToolButton {
+                        BLayout.alignment: Qt.AlignRight
                         BLayout.rowSpan: 2
                         menu: BMenu {
                             BMenuItem {
@@ -93,8 +94,9 @@ BDialog {
                         }
                     }
                     BLabel {
+                        BLayout.preferredWidth: _titleLabels.width
+                        elide: BLabel.ElideMiddle
                         text: model.filePath
-                        elide: BLabel.ElideRight
                     }
                 }
 
