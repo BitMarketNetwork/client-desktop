@@ -22,7 +22,7 @@ BDialog {
             id: _list
             BLayout.fillWidth: true
             BLayout.fillHeight: true
-            visible: model.rowCount() > 0
+            visible: model.count > 0
             model: BBackend.configFolderListModel
 
             /*FolderListModel {
@@ -59,11 +59,18 @@ BDialog {
                             text: model.fileModified
                         }
                     }
+                    // TODO: reimplement BContextMenuToolButton
+                    // Error: Invalid write to global property "down"
                     BContextMenuToolButton {
                         BLayout.rowSpan: 2
-                        menu: null
-                        onClicked: {
-                            // TODO 
+                        menu: BMenu {
+                            BMenuItem {
+                                text: qsTr("Remove")
+
+                                onTriggered: {
+                                    BBackend.configFolderListModel.onRemoveAccepted(model.filePath)
+                                }
+                            }
                         }
                     }
                     BLabel {

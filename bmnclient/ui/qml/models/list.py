@@ -1,4 +1,5 @@
 from __future__ import annotations
+from csv import list_dialects
 
 from enum import IntEnum
 from typing import TYPE_CHECKING
@@ -192,8 +193,10 @@ class AbstractItemModel(AbstractModel):
             first_index: int,
             last_index: int) -> None:
         super().beginRemoveRows(parent, first_index, last_index)
-        while range(first_index, last_index + 1):
-            self._data_list.pop(first_index)
+        #while range(first_index, last_index + 1):
+        #    self._data_list.pop(first_index)
+        self._source_list = self._source_list[:first_index] + self._source_list[last_index + 1:]
+        self._data_list = [{}] * len(self._source_list)
 
     def endResetModel(self) -> None:
         self._data_list = [{}] * len(self._source_list)
