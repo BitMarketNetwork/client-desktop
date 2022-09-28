@@ -22,8 +22,27 @@ BDialog {
             id: _list
             BLayout.fillWidth: true
             BLayout.fillHeight: true
-            visible: model.count > 0
+            state: BBackend.configFolderListModel.count > 0 ? "Visible" : "Invisible"
             model: BBackend.configFolderListModel
+
+            states: [
+                State { name: "Visible" },
+                State { name: "Invisible" }
+            ]
+
+            transitions: [
+                Transition {
+                    from: "Visible"
+                    to: "Invisible"
+
+                    BNumberAnimation {
+                        target: _list
+                        property: "BLayout.preferredWidth"
+                        from: target.implicitWidth
+                        to: 0
+                    }
+                }
+            ]
 
             /*FolderListModel {
                 folder: StandardPaths.writableLocation(StandardPaths.AppConfigLocation)
