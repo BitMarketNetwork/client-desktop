@@ -64,8 +64,7 @@ BDialog {
                         sourceSize.height: _applicationStyle.icon.normalHeight
                         color: Material.theme === Material.Dark ? Material.foreground : "transparent"
                     }
-                    BRowLayout
-                    {
+                    BRowLayout {
                         id: _titleLabels
                         BLayout.fillWidth: true
                         BLabel {
