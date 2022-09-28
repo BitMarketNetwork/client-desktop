@@ -68,11 +68,16 @@ BDialog {
                         id: _titleLabels
                         BLayout.fillWidth: true
                         BLabel {
-                            BLayout.fillWidth: true
-                            text: model.fileName
+                            BLayout.preferredWidth: _dateTimeLabel.width
                             font.bold: true
+                            elide: BLabel.ElideRight
+                            text: model.fileName
+                        }
+                        Item {
+                            BLayout.fillWidth: true
                         }
                         BLabel {
+                            id: _dateTimeLabel
                             BLayout.alignment: Qt.AlignRight
                             text: model.fileModified
                         }
