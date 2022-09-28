@@ -49,8 +49,10 @@ class ConfigFolderListModel(AbstractListModel):
 
         super().__init__(application, files)
 
-        self._folder_watcher = QFileSystemWatcher(files, self)
-        self._folder_watcher.fileChanged.connect(self.onFilechanged)
+        self._folder_watcher = QFileSystemWatcher(self)
+        if files:
+            self._folder_watcher.addPaths(files)
+            self._folder_watcher.fileChanged.connect(self.onFilechanged)
         self._count = self.rowCount()
 
     @QProperty(int, notify=_countChanged)
