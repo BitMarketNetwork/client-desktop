@@ -73,6 +73,8 @@ class ConfigFolderListModel(AbstractListModel):
             self._countChanged.emit()
 
     def _getConfigFolderFiles(self) -> List[str]:
+        if not self._application.configPath.exists():
+            return []
         return [str(self._application.configPath/x) for x in os.listdir(self._application.configPath)
             if re.match("[^\\s]+(.*?)\\.(json|JSON)$", x)]
 

@@ -289,7 +289,8 @@ class KeyStore(_KeyStoreSeed):
             name: str,
             seed_password: str) -> KeyStoreError:
         with self._lock:
-            self._application.config.create(self._application.configPath, name)
+            if not self._application.config.create(self._application.configPath, name):
+                return KeyStoreError.ERROR_SAVE_SEED
             if not self.create(key_store_password):
                 return KeyStoreError.ERROR_SAVE_SEED
             if not self.open(key_store_password):
