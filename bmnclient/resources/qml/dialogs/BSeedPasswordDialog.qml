@@ -1,3 +1,4 @@
+import QtQuick
 import QtQuick.Controls.Material
 import "../application"
 import "../basiccontrols"
@@ -15,9 +16,9 @@ BDialog {
         }
         BDialogInputTextField {
             id: _name
-            placeholderText: qsTr("Enter your name")
+            placeholderText: qsTr("Enter seed's name")
             maximumLength: 32
-            // TODO Validator
+            validator: BBackend.keyStore.nameValidator
         }
 
         BDialogPromptLabel {

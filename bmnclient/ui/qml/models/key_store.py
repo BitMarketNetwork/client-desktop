@@ -2,8 +2,9 @@ from __future__ import annotations
 from enum import auto
 import os, re
 
-from typing import TYPE_CHECKING, Final, List
+from typing import TYPE_CHECKING, Final, List, Optional
 from .list import AbstractListModel, RoleEnum
+from ....os_environment import PlatformPaths
 
 from PySide6.QtCore import \
     QObject, \
@@ -12,6 +13,7 @@ from PySide6.QtCore import \
     Signal as QSignal, \
     Property as QProperty, \
     Slot as QSlot
+from PySide6.QtGui import QValidator
 
 from ..dialogs.key_store import RevealSeedPhraseDialog, TxApproveDialog
 from ....coins.abstract.coin import Coin
@@ -80,13 +82,33 @@ class ConfigFolderListModel(AbstractListModel):
 
 
 class KeyStoreModel(QObject):
+    class _KeyStoreNameValidator(QValidator):
+        def __init__(self, parent: Optional[QObject] = ...) -> None:
+            super().__init__(parent)
+            self._invalid_chars = PlatformPaths.invalidFileNameChars
+
+        def validate(self, text: str, position: int) -> QValidator.State:
+            if text.startswith(" "):
+                return QValidator.Invalid
+            if not text or len(text) == 1:
+                return QValidator.Intermediate
+            if len(text) >= position:
+                if text[position - 1] in self._invalid_chars:
+                    return QValidator.Invalid
+            return QValidator.Acceptable
+
     def __init__(self, application: QmlApplication):
         super().__init__()
         self._application = application
+        self._name_validator = self._KeyStoreNameValidator(self)
 
     @property
     def native(self) -> KeyStore:
         return self._application.keyStore
+
+    @QProperty(QObject, constant=True)
+    def nameValidator(self) -> QValidator:
+        return self._name_validator
 
     @QSlot()
     def onRevealSeedPhrase(self) -> None:
