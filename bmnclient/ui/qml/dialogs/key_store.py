@@ -236,7 +236,7 @@ class GenerateSeedPhraseDialog(AbstractSeedPhraseDialog):
             self._generator = generator
         if self._generator.inProgress:
             self.text = self._generator.update(None)
-            self.valid = True
+            self.isValid = True
 
     @property
     def generator(self) -> GenerateSeedPhrase:
