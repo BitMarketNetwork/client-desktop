@@ -90,11 +90,10 @@ class KeyStoreModel(QObject):
         def validate(self, text: str, position: int) -> QValidator.State:
             if text.startswith(" "):
                 return QValidator.Invalid
-            if not text or len(text) == 1:
-                return QValidator.Intermediate
-            if len(text) >= position:
-                if text[position - 1] in self._invalid_chars:
-                    return QValidator.Invalid
+            if text:
+                for ch in self._invalid_chars:
+                    if ch in text:
+                        return QValidator.Invalid
             return QValidator.Acceptable
 
     def __init__(self, application: QmlApplication):
