@@ -169,12 +169,7 @@ class InvalidSeedPhraseDialog(KeyStoreErrorDialog):
         self._generator = generator
 
     def onClosed(self) -> None:
-        if self._generator is not None:
-            dialog = self._parent.__class__(self._manager, self._generator)
-        else:
-            dialog = self._parent.__class__(self._manager)
-        dialog.open()
-
+        selectKeyStoreDialog(self._manager).open()
 
 class AbstractSeedPhraseDialog(AbstractDialog):
     _QML_NAME = "BSeedPhraseDialog"
