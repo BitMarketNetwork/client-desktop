@@ -75,9 +75,10 @@ class ConfigFolderListModel(AbstractListModel):
             self._countChanged.emit()
 
     def _getConfigFolderFiles(self) -> List[str]:
-        if not self._application.configPath.exists():
+        wallets_path: Final = self._application.walletsPath
+        if not wallets_path.exists():
             return []
-        return [str(self._application.configPath/x) for x in os.listdir(self._application.configPath)
+        return [str(wallets_path/x) for x in os.listdir(wallets_path)
             if re.match("[^\\s]+(.*?)\\.(json|JSON)$", x)]
 
 

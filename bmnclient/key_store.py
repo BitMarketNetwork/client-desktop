@@ -243,6 +243,13 @@ class KeyStore(_KeyStoreSeed):
                 return True
         return False
 
+    @property
+    def isFirstStart(self) -> bool:
+        with self._lock:
+            if self._application.config.exists(ConfigKey.UI_THEME):
+                return False
+        return True
+
     def create(self, password: str) -> bool:
         value = self._generateSecretStoreValue()
         value = SecretStore(password).encryptValue(value)
@@ -289,7 +296,7 @@ class KeyStore(_KeyStoreSeed):
             name: str,
             seed_password: str) -> KeyStoreError:
         with self._lock:
-            if not self._application.config.create(self._application.configPath, name):
+            if not self._application.config.create(self._application.walletsPath, name):
                 return KeyStoreError.ERROR_SAVE_SEED
             if not self.create(key_store_password):
                 return KeyStoreError.ERROR_SAVE_SEED

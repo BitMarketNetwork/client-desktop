@@ -20,6 +20,8 @@ if TYPE_CHECKING:
     from . import DialogManager
 
 def selectKeyStoreDialog(manager: DialogManager) -> AbstractDialog:
+    if manager.context.keyStore.native.isFirstStart:
+        return SetupUiSettingsDialog(manager)
     return KeyStoreSelectDialog(manager)
 
 
@@ -137,7 +139,11 @@ class KeyStoreSelectDialog(AbstractDialog):
 
     def onKeyStoreClicked(self, path: Path) -> None:
         self._manager.context.config.filePath = Path(path)
-        self._manager.context.config.load()
+        if not self._manager.context.config.load():
+            KeyStoreErrorDialog(
+                self._manager,
+                self,
+                KeyStoreError.ERROR_SEED_NOT_FOUND).open()
         self._manager.context.settings.reload()
         self.close.emit()
 
@@ -426,3 +432,18 @@ class TxApproveDialog(AbstractTxApproveDialog):
 
     def onOpened(self) -> None:
         ConfirmPasswordDialog(self._manager, self).open()
+
+
+class SetupUiSettingsDialog(AbstractDialog):
+    _QML_NAME = "BSetupUiSettingsDialog"
+
+    def __init__(self, manager: DialogManager) -> None:
+        super().__init__(manager)
+
+    def onThemeAccepted(self) -> None:
+        if not self._manager.context.config.save():
+            KeyStoreErrorDialog(
+                self._manager,
+                self,
+                KeyStoreError.ERROR_UNKNOWN).open()
+        selectKeyStoreDialog(self._manager).open()

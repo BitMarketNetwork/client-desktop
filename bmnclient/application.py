@@ -171,7 +171,10 @@ class CoreApplication(QObject):
         self._on_exit_called = False
         self._run_called = False
 
-        self._config = Config()
+        self._config = Config(
+            self._command_line.configPath
+            / ProductPaths.CONFIG_FILE_NAME)
+        self._config.load()
 
         self._key_store = KeyStore(
             self,
@@ -296,6 +299,10 @@ class CoreApplication(QObject):
     @property
     def configPath(self) -> Path:
         return self._command_line.configPath
+
+    @property
+    def walletsPath(self) -> Path:
+        return self.configPath/ProductPaths.CONFIG_WALLETS_DIR
 
     @property
     def config(self) -> Config:
@@ -459,3 +466,4 @@ class CoreApplication(QObject):
         self._on_exit_called = True
         self._database.close()
         self._signal_handler.close()
+        self._config.close()

@@ -35,10 +35,11 @@ class ConfigKey(Enum):
 
 
 class Config:
-    def __init__(self, file_path: Path = Path()) -> None:
+    def __init__(self, file_path) -> None:
         self._logger = Logger.classLogger(
             self.__class__,
             (None, file_path.name if file_path else ""))
+        self._default_config_path = file_path
         self._file_path = file_path
         self._config = dict()
         self._lock = RLock()
@@ -171,6 +172,17 @@ class Config:
         with self._lock:
             self._config.clear()
             return self.save() if save else True
+
+    def close(self) -> None:
+        key_list_to_save = [ConfigKey.UI_THEME, ConfigKey.UI_LANGUAGE]
+        if self._default_config_path != self._file_path:
+            default_config = Config(self._default_config_path)
+            if default_config.load():
+                for key in key_list_to_save:
+                    if self.exists(key):
+                        value = self.get(key)
+                        if default_config.get(key) != value:
+                            default_config.set(key, value)
 
     def _updateVersion(self) -> None:
         if not self.get(ConfigKey.VERSION, str):
