@@ -204,8 +204,7 @@ class CoreApplication(QObject):
         self._run_called = False
 
         self._config = Config(
-            self._command_line.configPath
-            / ProductPaths.CONFIG_FILE_NAME)
+            self._command_line.configPath / ProductPaths.CONFIG_FILE_NAME)
         self._config.load()
 
         self._key_store = KeyStore(
@@ -303,6 +302,9 @@ class CoreApplication(QObject):
         self._run_called = True
         self._exit_code = self._qt_application.exec()
         assert self._on_exit_called
+
+        self._database.close()
+        self._signal_handler.close()
 
         if not self._exit_code:
             self._logger.info(
@@ -478,5 +480,3 @@ class CoreApplication(QObject):
     def _onExit(self) -> None:
         assert not self._on_exit_called
         self._on_exit_called = True
-        self._database.close()
-        self._signal_handler.close()
