@@ -112,7 +112,7 @@ class AddressesTable(SerializableTable, name="addresses"):
 
     def queryTotalBalance(self, coin: Coin) -> int:
         assert coin.rowId > 0
-        with self._database.transaction(allow_in_transaction=True) as c:
+        with self._database.transaction() as c:
             c.execute(
                 f"SELECT SUM({self.ColumnEnum.BALANCE})"
                 f" FROM {self}"
@@ -132,7 +132,7 @@ class AddressesTable(SerializableTable, name="addresses"):
             HdNode.pathHardenedChars[0],
             "[" + "".join(HdNode.pathHardenedChars) + "]")
 
-        with self._database.transaction(allow_in_transaction=True) as c:
+        with self._database.transaction() as c:
             c.execute(
                 f"SELECT MAX(CAST(SUBSTR("
                 f"{self.ColumnEnum.KEY}, {prefix_length}) AS INTEGER))"

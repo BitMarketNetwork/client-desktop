@@ -168,7 +168,7 @@ class CoinObject(Serializable):
     def save(self) -> bool:
         if not (t := self._openTable(force=True)):
             return False
-        with self._coin.model.database.transaction(allow_in_transaction=True):
+        with self._coin.model.database.transaction():
             result = t.saveSerializable(self)
             if result.isNoneAction:
                 return False
@@ -252,7 +252,7 @@ class CoinObject(Serializable):
                         new_value)
                 )]
                 if on_update:
-                    with table.database.transaction(allow_in_transaction=True):
+                    with table.database.transaction():
                         table.update(self.rowId, columns)
                         on_update()
                 else:

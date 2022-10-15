@@ -167,10 +167,10 @@ class Database:
             return False
 
         try:
-            with self.transaction() as cursor:
+            with self.transaction(allow_in_transaction=False) as cursor:
                 for pragma in self._PRAGMA_LIST:
                     cursor.execute("PRAGMA " + pragma)
-            with self.transaction() as cursor:
+            with self.transaction(allow_in_transaction=False) as cursor:
                 self._openTables(cursor)
         except (_engine.Error, _engine.Warning) as e:
             self._logger.error("Failed to prepare database tables: %s", str(e))
@@ -199,7 +199,7 @@ class Database:
     def transaction(
             self,
             *,
-            allow_in_transaction: bool = False,
+            allow_in_transaction: bool = True,
             suppress_exceptions: bool = False
     ) -> ContextManager[Cursor | None]:
         if (

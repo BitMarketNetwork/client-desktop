@@ -19,7 +19,7 @@ class MetadataTable(Table, name="metadata"):
             key: Key,
             value_type: type(int) | type(str),
             default_value: int | str | None = None) -> int | str | None:
-        with self._database.transaction(allow_in_transaction=True) as c:
+        with self._database.transaction() as c:
             try:
                 c.execute(
                     f"SELECT {self.ColumnEnum.VALUE}"
@@ -42,7 +42,7 @@ class MetadataTable(Table, name="metadata"):
             return default_value
 
     def set(self, key: Key, value: int | str | None) -> None:
-        with self._database.transaction(allow_in_transaction=True) as c:
+        with self._database.transaction() as c:
             c.execute(
                 f"UPDATE {self}"
                 f" SET {Column.joinSet([self.ColumnEnum.VALUE])}"

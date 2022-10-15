@@ -541,7 +541,7 @@ class _Address(
 
     @utxoList.setter
     def utxoList(self, utxo_list: Sequence[Coin.Tx.Utxo]) -> None:
-        with self._coin.model.database.transaction(allow_in_transaction=True):
+        with self._coin.model.database.transaction():
             if self._updateRowList(self.utxoList, utxo_list) > 0:
                 # FIXME wrong event usage, we should call __enter__() in
                 #  _updateRowList()

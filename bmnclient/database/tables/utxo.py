@@ -61,7 +61,7 @@ class UtxosTable(SerializableTable, name="utxos"):
 
     def queryTotalAmount(self, address: Coin.Address) -> int:
         assert address.rowId > 0
-        with self._database.transaction(allow_in_transaction=True) as c:
+        with self._database.transaction() as c:
             c.execute(
                 f"SELECT SUM({self.ColumnEnum.AMOUNT})"
                 f" FROM {self}"

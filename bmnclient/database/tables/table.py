@@ -223,7 +223,7 @@ class Table(metaclass=TableMeta):
         pass
 
     def insert(self, columns: Sequence[ColumnValue]) -> WriteResult:
-        with self._database.transaction(allow_in_transaction=True) as c:
+        with self._database.transaction() as c:
             c.execute(
                 f"INSERT OR IGNORE INTO {self} ("
                 f"{Column.join(c.column for c in columns)})"
@@ -243,7 +243,7 @@ class Table(metaclass=TableMeta):
             row_id: int,
             columns: Sequence[ColumnValue]) -> WriteResult:
         assert row_id > 0
-        with self._database.transaction(allow_in_transaction=True) as c:
+        with self._database.transaction() as c:
             c.execute(
                 f"UPDATE OR IGNORE {self}"
                 f" SET {Column.joinSet(c.column for c in columns)}"
@@ -263,7 +263,7 @@ class Table(metaclass=TableMeta):
             data_columns: Sequence[ColumnValue],
             *,
             fallback_search: bool = False) -> WriteResult:
-        with self._database.transaction(allow_in_transaction=True) as c:
+        with self._database.transaction() as c:
             # row id is defined and row found
             if row_id > 0:
                 result = self.update(row_id, data_columns)
@@ -309,7 +309,7 @@ class Table(metaclass=TableMeta):
             data_columns: Sequence[ColumnValue],
             *,
             fallback_search: bool = False) -> int:
-        with self._database.transaction(allow_in_transaction=True) as c:
+        with self._database.transaction() as c:
             # select by row_id
             if row_id > 0:
                 c.execute(
@@ -353,7 +353,7 @@ class Table(metaclass=TableMeta):
             key_columns: Sequence[ColumnValue],
             *,
             fallback_search: bool = False) -> WriteResult:
-        with self._database.transaction(allow_in_transaction=True) as c:
+        with self._database.transaction() as c:
             if row_id > 0:
                 c.execute(
                     f"DELETE FROM {self}"
@@ -646,7 +646,7 @@ class SerializableRowList(SerializableList):
         return object_
 
     def __len__(self) -> int:
-        with self._table.database.transaction(allow_in_transaction=True) as c:
+        with self._table.database.transaction() as c:
             c.execute(self._query_length, self._where_args)
             if row := c.fetchone():
                 row = int(row[0])
@@ -656,7 +656,7 @@ class SerializableRowList(SerializableList):
         return 0
 
     def __iter__(self) -> Generator[Serializable, None, None]:
-        with self._table.database.transaction(allow_in_transaction=True) as c:
+        with self._table.database.transaction() as c:
             for index, row in enumerate(c.execute(
                     self._query_iter,
                     self._where_args)):
@@ -666,7 +666,7 @@ class SerializableRowList(SerializableList):
     def __getitem__(self, index: int) -> Serializable:
         if 0 <= self._pending_insert_index <= index:
             index += 1
-        with self._table.database.transaction(allow_in_transaction=True) as c:
+        with self._table.database.transaction() as c:
             c.execute(self._query_getitem, [*self._where_args, index])
             if not (row := c.fetchone()):
                 raise IndexError
@@ -689,7 +689,7 @@ class SerializableRowList(SerializableList):
             return
 
         assert self._pending_insert_index < 0
-        with self._table.database.transaction(allow_in_transaction=True) as c:
+        with self._table.database.transaction() as c:
             c.execute(
                 self._query_row_number,
                 [*self._where_args, result.row_id])
@@ -711,7 +711,7 @@ class SerializableRowList(SerializableList):
         raise NotImplementedError
 
     def clear(self) -> int:
-        with self._table.database.transaction(allow_in_transaction=True) as c:
+        with self._table.database.transaction() as c:
             c.execute(
                 f"DELETE FROM {self._table}{self._where_expression}",
                 self._where_args)
