@@ -9,7 +9,7 @@ BTabBarBox {
     property var outputList: tx.openOutputList(1)
     property int visibleAddressCount: Math.min(
         4,
-        Math.max(inputList.rowCount(), outputList.rowCount()))
+        Math.max(inputList ? inputList.rowCount() : 0, outputList ? outputList.rowCount() : 0))
 
     Component.onDestruction: {
         tx.closeList(inputList)

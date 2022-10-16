@@ -28,6 +28,11 @@ BColumnLayout {
         opacity: 0
 
         state: _unfoldBtn.checked ? "unfold" : "fold"
+        active: false
+
+        onStateChanged: {
+            _loader.active = _unfoldBtn.checked
+        }
 
         states: [
             State { name: "fold" },
