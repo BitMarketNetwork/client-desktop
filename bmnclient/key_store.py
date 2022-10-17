@@ -246,7 +246,7 @@ class KeyStore(_KeyStoreSeed):
     @property
     def isFirstStart(self) -> bool:
         with self._lock:
-            if self._application.config.exists(ConfigKey.UI_THEME):
+            if self._application.config.filePath.exists():
                 return False
         return True
 
