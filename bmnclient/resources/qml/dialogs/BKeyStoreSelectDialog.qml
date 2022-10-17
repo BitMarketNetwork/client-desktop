@@ -79,7 +79,9 @@ BDialog {
                         BLabel {
                             id: _dateTimeLabel
                             BLayout.alignment: Qt.AlignRight
-                            text: model.fileModified
+                            text: model.fileModified.toLocaleString(
+                                Qt.locale(BBackend.settings.language.currentName),
+                                Locale.ShortFormat)
                         }
                     }
                     // TODO: reimplement BContextMenuToolButton
