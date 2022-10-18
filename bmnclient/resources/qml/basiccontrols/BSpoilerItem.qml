@@ -8,6 +8,8 @@ BColumnLayout {
 
     property alias contentItem: _loader.sourceComponent
     property alias headerItem: _header.sourceComponent
+    property alias content: _loader.item
+    property alias header: _header.item
 
     BRowLayout {
         BUnfoldToolButton {

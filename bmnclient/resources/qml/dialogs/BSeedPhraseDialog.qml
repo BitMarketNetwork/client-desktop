@@ -9,6 +9,7 @@ BDialog {
     readonly property string closeDelayText: BCommon.button.closeRole + " (%1)"
     readonly property int closeDelay: 10
     signal phraseChanged(string value)
+    signal seedPhraseAccepted(string wallet_name, string seed_password)
 
     enum Type {
         Generate,
@@ -32,7 +33,20 @@ BDialog {
     contentItem: BDialogLayout {
         // TODO advanced description
         BDialogPromptLabel {
-            text: "Seed Phrase:"
+            visible: _base.type === BSeedPhraseDialog.Type.Restore || _base.type === BSeedPhraseDialog.Type.Validate
+            text: qsTr("Wallet name:")
+        }
+        BDialogInputTextField {
+            id: _walletName
+            maximumLength: 32
+            visible: _base.type === BSeedPhraseDialog.Type.Restore || _base.type === BSeedPhraseDialog.Type.Validate
+            placeholderText: qsTr("Enter name")
+            text: qsTr("New wallet")
+            validator: BBackend.keyStore.nameValidator
+        }
+
+        BDialogPromptLabel {
+            text: qsTr("Seed Phrase:")
         }
         BDialogInputTextArea {
             id: _seedPhrase
@@ -64,6 +78,38 @@ BDialog {
                 }
             }
         }
+        BDialogSeparator{}
+        BSpoilerItem {
+            id: _spoiler
+            BLayout.columnSpan: parent.columns
+            visible: _base.type === BSeedPhraseDialog.Type.Restore || _base.type === BSeedPhraseDialog.Type.Validate
+
+            headerItem: BRowLayout {
+                BLabel {
+                    text: qsTr("Seed's password (optional)")
+                }
+            }
+            contentItem: BDialogLayout {
+                columns: 2
+                property alias password: _seedPassword.text
+                BDialogPromptLabel {
+                    text: qsTr("Seed's password:")
+                }
+                BDialogInputTextField {
+                    id: _seedPassword
+                    echoMode: _showPassword.checked ? BTextField.Normal : BTextField.Password
+                    placeholderText: qsTr("Enter your password")
+                }
+
+                BDialogPromptLabel {
+                    text: qsTr("Show password:")
+                }
+                BDialogInputSwitch {
+                    id: _showPassword
+                    BLayout.columnSpan: parent.columns - 1
+                }
+            }
+        }
     }
     footer: BDialogButtonBox {
         id: _buttonBox
@@ -73,7 +119,7 @@ BDialog {
                 BDialogButtonBox.buttonRole: BDialogButtonBox.AcceptRole
                 parent: _buttonBox
                 text: BCommon.button.continueRole
-                enabled: _base.context.isValid
+                enabled: _base.context.isValid && _walletName.length > 0
             }
             onLoaded: {
                 _buttonBox.addItem(item)
@@ -126,6 +172,12 @@ BDialog {
         }
     }
 
+    onAccepted: {
+        if (_base.type === BSeedPhraseDialog.Type.Restore || _base.type === BSeedPhraseDialog.Type.Validate)
+            _base.seedPhraseAccepted(
+                _walletName.text,
+                _spoiler.content ? _spoiler.content.password : "")
+    }
     onReset: {
         switch (type) {
         case BSeedPhraseDialog.Type.Generate:

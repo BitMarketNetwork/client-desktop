@@ -97,20 +97,29 @@ class KeyStoreNewPasswordDialog(AbstractDialog):
             self,
             manager: DialogManager,
             generator: GenerateSeedPhrase,
-            phrase: str) -> None:
+            phrase: str,
+            wallet_name: str,
+            seed_password: str) -> None:
         super().__init__(manager)
         self._generator = generator
         self._current_phrase = phrase
+        self._wallet_name = wallet_name
+        self._seed_password = seed_password
 
     def onPasswordAccepted(self, password: str) -> None:
-        SeedPasswordDialog(
-            self._manager,
-            self._generator,
+        result = self._generator.finalize(
             self._current_phrase,
-            password).open()
+            password,
+            self._wallet_name,
+            self._seed_password)
+        if result != KeyStoreError.SUCCESS:
+            InvalidSeedPhraseDialog(
+                self._manager,
+                self,
+                self._generator,
+                result).open()
 
     def onRejected(self) -> None:
-        #self._manager.context.exit(0)
         selectKeyStoreDialog(self._manager).open()
 
 
@@ -168,7 +177,7 @@ class InvalidSeedPhraseDialog(KeyStoreErrorDialog):
     def __init__(
             self,
             manager: DialogManager,
-            parent: SeedPasswordDialog,
+            parent: AbstractSeedPhraseDialog,
             generator: Optional[GenerateSeedPhrase] = None,
             error: KeyStoreError = KeyStoreError.ERROR_INVALID_SEED_PHRASE):
         super().__init__(manager, parent, error)
@@ -264,47 +273,6 @@ class GenerateSeedPhraseDialog(AbstractSeedPhraseDialog):
         KeyStoreSelectDialog(self._manager).open()
 
 
-class SeedPasswordDialog(AbstractDialog):
-    _QML_NAME = "BSeedPasswordDialog"
-
-    def __init__(
-            self,
-            manager: DialogManager,
-            generator: GenerateSeedPhrase,
-            phrase: str,
-            key_store_password: str) -> None:
-        super().__init__(manager)
-        self._generator = generator
-        self._current_phrase = phrase
-        self._key_store_password = key_store_password
-
-    def onPasswordAccepted(self, seed_name: str, seed_password: str) -> None:
-        result = self._generator.finalize(
-            self._current_phrase,
-            self._key_store_password,
-            seed_name,
-            seed_password)
-        if result != KeyStoreError.SUCCESS:
-            InvalidSeedPhraseDialog(
-                self._manager,
-                self,
-                self._generator,
-                result).open()
-
-    def onRejected(self) -> None:
-        result = self._generator.finalize(
-            self._current_phrase,
-            self._key_store_password,
-            None,
-            None)
-        if result != KeyStoreError.SUCCESS:
-            InvalidSeedPhraseDialog(
-                self._manager,
-                self,
-                self._generator,
-                result).open()
-
-
 class ValidateSeedPhraseDialog(AbstractSeedPhraseDialog):
     def __init__(
             self,
@@ -320,11 +288,16 @@ class ValidateSeedPhraseDialog(AbstractSeedPhraseDialog):
         self._current_phrase = value
         self.isValid = self._generator.validate(self._current_phrase)
 
-    def onAccepted(self) -> None:
+    def onSeedPhraseAccepted(
+            self,
+            wallet_name: str,
+            seed_password: str) -> None:
         KeyStoreNewPasswordDialog(
             self._manager,
             self._generator,
-            self._current_phrase).open()
+            self._current_phrase,
+            wallet_name,
+            seed_password).open()
 
     def onRejected(self) -> None:
         GenerateSeedPhraseDialog(self._manager, self._generator).open()
@@ -344,11 +317,16 @@ class RestoreSeedPhraseDialog(AbstractSeedPhraseDialog):
         self._current_phrase = value
         self.isValid = self._generator.validate(self._current_phrase)
 
-    def onAccepted(self) -> None:
+    def onSeedPhraseAccepted(
+            self,
+            wallet_name: str,
+            seed_password: str) -> None:
         KeyStoreNewPasswordDialog(
             self._manager,
             self._generator,
-            self._current_phrase).open()
+            self._current_phrase,
+            wallet_name,
+            seed_password).open()
 
     def onRejected(self) -> None:
         KeyStoreSelectDialog(self._manager).open()
