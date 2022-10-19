@@ -30,7 +30,7 @@ BDialog {
             return qsTr("Reveal Seed Phrase")
         }
     }
-    contentItem: BDialogLayout {
+    contentItem: BDialogScrollableLayout {
         // TODO advanced description
         BDialogPromptLabel {
             visible: _base.type === BSeedPhraseDialog.Type.Restore || _base.type === BSeedPhraseDialog.Type.Validate
