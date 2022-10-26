@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Material
-//import Qt.labs.folderlistmodel
-//import Qt.labs.platform
+
 import "../application"
 import "../basiccontrols"
 import "../controls"
@@ -11,6 +10,7 @@ BDialog {
     title: qsTr("Select Root Key")
 
     signal keyStoreClicked(var path)
+    signal renameAccepted(var path)
     signal generateAccepted
     signal restoreAccepted
     signal restoreBackupAccepted
@@ -42,13 +42,6 @@ BDialog {
                     }
                 }
             ]
-
-            /*FolderListModel {
-                folder: StandardPaths.writableLocation(StandardPaths.AppConfigLocation)
-                showDirs: false
-                sortField: FolderListModel.Time
-                nameFilters: ["*.json"]
-            }*/
 
             delegate: BItemDelegate {
                 id: _item
@@ -90,6 +83,13 @@ BDialog {
                         BLayout.alignment: Qt.AlignRight
                         BLayout.rowSpan: 2
                         menu: BMenu {
+                            BMenuItem {
+                                text: qsTr("Rename")
+
+                                onTriggered: {
+                                    _base.renameAccepted(model.filePath)
+                                }
+                            }
                             BMenuItem {
                                 text: qsTr("Remove")
 

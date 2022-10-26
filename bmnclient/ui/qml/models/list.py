@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from enum import IntEnum
+import os, re
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import (
@@ -12,8 +14,10 @@ from PySide6.QtCore import (
     QConcatenateTablesProxyModel,
     QModelIndex,
     QSortFilterProxyModel,
+    QFileSystemWatcher,
     Qt,
-    Signal as QSignal)
+    Signal as QSignal,
+    Slot as QSlot)
 
 if TYPE_CHECKING:
     from typing import Any, List, Optional, Sequence
@@ -192,10 +196,8 @@ class AbstractItemModel(AbstractModel):
             first_index: int,
             last_index: int) -> None:
         super().beginRemoveRows(parent, first_index, last_index)
-        #while range(first_index, last_index + 1):
-        #    self._data_list.pop(first_index)
-        self._source_list = self._source_list[:first_index] + self._source_list[last_index + 1:]
-        self._data_list = [{}] * len(self._source_list)
+        while range(first_index, last_index + 1):
+            self._data_list.pop(first_index)
 
     def endResetModel(self) -> None:
         self._data_list = [{}] * len(self._source_list)
@@ -259,3 +261,72 @@ class AbstractSortedModel(AbstractProxyModel, QSortFilterProxyModel):
         self.setSourceModel(source_model)
         self.setSortRole(sort_role)
         self.sort(0, sort_order)
+
+
+class AbstractFolderListModel(AbstractListModel):
+    _countChanged = QSignal()
+
+    def __init__(
+            self,
+            application: QmlApplication,
+            path: Path,
+            match_pattern: str) -> None:
+        self._match_pattern = match_pattern
+        self._path = path
+        files = self._getFolderFiles()
+        super().__init__(application, files)
+        # TODO: use some python file system watcher?
+        self._folder_watcher = QFileSystemWatcher(self)
+        self._folder_watcher.addPath(str(self._path))
+        if files:
+            self._folder_watcher.addPaths(files)
+        self._folder_watcher.directoryChanged.connect(self._onDirectoryChanged)
+        self._folder_watcher.fileChanged.connect(self._onFileChanged)
+
+    @QProperty(int, notify=_countChanged)
+    def count(self) -> int:
+        return self.rowCount()
+
+    @QSlot(str)
+    def _onDirectoryChanged(self, path: str) -> None:
+        self._sync()
+
+    @QSlot(str)
+    def _onFileChanged(self, path: str) -> None:
+        self._sync()
+
+    def _sync(self) -> None:
+        files = self._getFolderFiles()
+
+        if files != self._source_list:
+            for item in self._source_list:
+                if item not in files:
+                    self.lock(self.lockRemoveRows(self._source_list.index(item), 1))
+                    self.unlock()
+
+            for file in files:
+                if file not in self._source_list:
+                    with self.lockInsertRows():
+                        self._source_list.append(file)
+            self._countChanged.emit()
+
+    def _getFolderFiles(self) -> List[str]:
+        if not self._path.exists():
+            return []
+        return [str(self._path/x) for x in os.listdir(self._path)
+            if re.match(self._match_pattern, x)]
+
+    def beginInsertRows(
+            self,
+            parent: QModelIndex,
+            first_index: int,
+            last_index: int) -> None:
+        super(AbstractModel, self).beginInsertRows(parent, first_index, last_index)
+
+    def beginRemoveRows(
+            self,
+            parent: QModelIndex,
+            first_index: int,
+            last_index: int) -> None:
+        super(AbstractModel, self).beginRemoveColumns(parent, first_index, last_index)
+        self._source_list = self._source_list[:first_index] + self._source_list[last_index + 1:]

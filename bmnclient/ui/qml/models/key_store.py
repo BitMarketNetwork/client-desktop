@@ -1,16 +1,14 @@
 from __future__ import annotations
 from enum import auto
-import os, re
+import os
 
-from typing import TYPE_CHECKING, Final, List, Optional
-from .list import AbstractListModel, RoleEnum
+from typing import TYPE_CHECKING, Final, Optional
+from .list import AbstractFolderListModel, RoleEnum
 from ....os_environment import PlatformPaths
 
 from PySide6.QtCore import \
     QObject, \
     QFileInfo, \
-    QFileSystemWatcher, \
-    Signal as QSignal, \
     Property as QProperty, \
     Slot as QSlot
 from PySide6.QtGui import QValidator
@@ -23,9 +21,7 @@ if TYPE_CHECKING:
     from ....key_store import KeyStore
 
 
-class ConfigFolderListModel(AbstractListModel):
-    _countChanged = QSignal()
-
+class ConfigFolderListModel(AbstractFolderListModel):
     class Role(RoleEnum):
         FILE_NAME: Final = auto()
         FILE_PATH: Final = auto()
@@ -46,44 +42,20 @@ class ConfigFolderListModel(AbstractListModel):
     def __init__(
             self,
             application: QmlApplication) -> None:
-        self._application = application
-        files = self._getConfigFolderFiles()
-
-        super().__init__(application, files)
-
-        self._folder_watcher = QFileSystemWatcher(self)
-        if files:
-            self._folder_watcher.addPaths(files)
-            self._folder_watcher.fileChanged.connect(self.onFilechanged)
-        self._count = self.rowCount()
-
-    @QProperty(int, notify=_countChanged)
-    def count(self) -> int:
-        return self._count
+        super().__init__(
+            application,
+            application.walletsPath,
+            "[^\\s]+(.*?)\\.(json|JSON)$")
 
     @QSlot(str)
     def onRemoveAccepted(self, path: str) -> None:
         if os.path.isfile(path):
             os.remove(path)
 
-    @QSlot(str)
-    def onFilechanged(self, path: str) -> None:
-        if not os.path.isfile(path):
-            self.lock(self.lockRemoveRows(self._source_list.index(path), 1))
-            self.unlock()
-            self._count = self.rowCount()
-            self._countChanged.emit()
-
-    def _getConfigFolderFiles(self) -> List[str]:
-        wallets_path: Final = self._application.walletsPath
-        if not wallets_path.exists():
-            return []
-        return [str(wallets_path/x) for x in os.listdir(wallets_path)
-            if re.match("[^\\s]+(.*?)\\.(json|JSON)$", x)]
-
 
 class KeyStoreModel(QObject):
     class _KeyStoreNameValidator(QValidator):
+        # Temporary
         def __init__(self, parent: Optional[QObject] = ...) -> None:
             super().__init__(parent)
             self._invalid_chars = PlatformPaths.invalidFileNameChars

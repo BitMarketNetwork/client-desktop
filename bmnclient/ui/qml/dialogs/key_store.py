@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING
 from PySide6.QtCore import (
     Property as QProperty,
     QObject,
+    QFile,
+    QFileInfo,
     Signal as QSignal
 )
 
@@ -158,6 +160,9 @@ class KeyStoreSelectDialog(AbstractDialog):
 
         KeyStorePasswordDialog(self._manager).open()
 
+    def onRenameAccepted(self, path: Path) -> None:
+        WalletRenameDialog(self._manager, self, path).open()
+
     def onGenerateAccepted(self) -> None:
         GenerateSeedPhraseDialog(self._manager, None).open()
         self.close.emit()
@@ -171,6 +176,44 @@ class KeyStoreSelectDialog(AbstractDialog):
 
     def onRejected(self) -> None:
         self._manager.context.exit(0)
+
+
+class WalletRenameDialog(AbstractDialog):
+    _QML_NAME = "BWalletRenameDialog"
+    _nameChanged = QSignal()
+
+    def __init__(
+            self,
+            manager: DialogManager,
+            parent: KeyStoreSelectDialog,
+            wallet_path: Path,) -> None:
+        super().__init__(manager, parent)
+        self._wallet_path = wallet_path
+
+        self._file_info = QFileInfo(wallet_path)
+        self.__name = self._file_info.baseName()
+
+    @QProperty(str, notify=_nameChanged)
+    def name(self) -> str:
+        return self.__name
+
+    def onNameChanged(self, value: str) -> None:
+        self.__name = value
+
+    def onAccepted(self) -> None:
+        if not QFile(self._wallet_path).rename(
+                self._file_info.dir().filePath(self.__name + ".json")):
+            text = self.tr("A file with the same name already exists")
+            WalletRenameErrorDialog(
+                self._manager,
+                self._parent,
+                title=self.title,  # noqa
+                text=text).open()
+
+
+class WalletRenameErrorDialog(AbstractMessageDialog):
+    def onClosed(self) -> None:
+        pass
 
 
 class InvalidSeedPhraseDialog(KeyStoreErrorDialog):
