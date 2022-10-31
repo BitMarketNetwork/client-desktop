@@ -13,6 +13,7 @@ BDialog {
 
         BDialogInputTextField {
             id: _name
+            maximumLength: _applicationStyle.walletNameMaxLength
             text: _base.context.name
             placeholderText: qsTr("Enter new wallet name")
             validator: BBackend.keyStore.nameValidator

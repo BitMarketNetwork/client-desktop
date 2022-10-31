@@ -38,7 +38,7 @@ BDialog {
         }
         BDialogInputTextField {
             id: _walletName
-            maximumLength: 32
+            maximumLength: _applicationStyle.walletNameMaxLength
             visible: _base.type === BSeedPhraseDialog.Type.Restore || _base.type === BSeedPhraseDialog.Type.Validate
             placeholderText: qsTr("Enter name")
             text: qsTr("New wallet")
