@@ -107,7 +107,7 @@ def _invalidFileNameChars() -> List[str]:
     if Platform.isWindows:
         return ['<', '>', ':', '/', '\\', '|', '?', '*', ',', '"', '\n']
     elif Platform.isDarwin:
-        return [':', '/','\n']
+        return [':', '/', '\n']
     elif Platform.isLinux:
         return ['/', '\n']
     else:
