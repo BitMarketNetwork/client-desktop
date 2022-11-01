@@ -105,11 +105,11 @@ def _applicationTempPath() -> Path:
 
 def _invalidFileNameChars() -> List[str]:
     if Platform.isWindows:
-        return ['<', '>', ':', '/', '\\', '|', '?', '*', ',', '"']
+        return ['<', '>', ':', '/', '\\', '|', '?', '*', ',', '"', '\n']
     elif Platform.isDarwin:
-        return [':', '/']
+        return [':', '/','\n']
     elif Platform.isLinux:
-        return ['/']
+        return ['/', '\n']
     else:
         raise RuntimeError("can't determine invalid file name characters")
 
