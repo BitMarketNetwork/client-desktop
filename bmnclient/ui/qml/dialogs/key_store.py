@@ -202,7 +202,7 @@ class WalletRenameDialog(AbstractDialog):
 
     def onAccepted(self) -> None:
         if not QFile(self._wallet_path).rename(
-                self._file_info.dir().filePath(self.__name + ".json")):
+                self._file_info.dir().filePath(f"{self.__name}.json")):
             text = self.tr("A file with the same name already exists")
             WalletRenameErrorDialog(
                 self._manager,
