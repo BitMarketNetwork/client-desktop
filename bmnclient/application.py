@@ -301,6 +301,10 @@ class CoreApplication(QObject):
         return self._command_line.configPath
 
     @property
+    def defaultConfigPath(self) -> Path:
+        return self._command_line.configPath/ProductPaths.CONFIG_FILE_NAME
+
+    @property
     def walletsPath(self) -> Path:
         return self.configPath/ProductPaths.CONFIG_WALLETS_DIR
 
@@ -464,6 +468,6 @@ class CoreApplication(QObject):
     def _onExit(self) -> None:
         assert not self._on_exit_called
         self._on_exit_called = True
+        self._key_store.close()
         self._database.close()
         self._signal_handler.close()
-        self._config.close()

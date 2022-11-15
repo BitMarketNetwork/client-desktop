@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from .coins.hd import HdNode
 from .coins.mnemonic import Mnemonic
-from .config import ConfigKey
+from .config import Config, ConfigKey
 from .crypto.cipher import AeadCipher, MessageCipher
 from .crypto.digest import Sha256Digest
 from .crypto.kdf import SecretStore
@@ -333,6 +333,19 @@ class KeyStore(_KeyStoreSeed):
                 return False
             self._reset_callback()
         return True
+
+    def close(self) -> None:
+        key_list_to_save = [ConfigKey.UI_THEME, ConfigKey.UI_LANGUAGE]
+        default_config_path = self._application.defaultConfigPath
+        if default_config_path != self._application.config.filePath:
+            default_config = Config(default_config_path)
+            if default_config.load():
+                for key in key_list_to_save:
+                    if self._application.config.exists(key):
+                        value = self._application.config.get(key)
+                        if default_config.get(key) != value:
+                            default_config.set(key, value, save=False)
+            default_config.save()
 
 
 class _AbstractSeedPhrase:
