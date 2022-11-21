@@ -17,97 +17,56 @@ BDialog {
 
     contentItem: BRowLayout {
         spacing: 5
-        BListView {
-            id: _list
-            BLayout.fillWidth: true
-            BLayout.fillHeight: true
-            state: BBackend.configFolderListModel.count > 0 ? "Visible" : "Invisible"
-            model: BBackend.configFolderListModel
 
+        Loader {
+            id: _loader
+            BLayout.fillHeight: true
+            BLayout.fillWidth: true
+
+            state: BBackend.configFolderListModel.count > 0 ? "Visible" : "Invisible"
             states: [
                 State { name: "Visible" },
                 State { name: "Invisible" }
             ]
-
             transitions: [
                 Transition {
                     from: "Visible"
                     to: "Invisible"
 
                     BNumberAnimation {
-                        target: _list
+                        target: _loader
                         property: "BLayout.preferredWidth"
-                        from: target.implicitWidth
+                        from: target.item.itemTemplateWidth
                         to: 0
+                    }
+                },
+                Transition {
+                    from: "Invisible"
+                    to: "Visible"
+
+                    BNumberAnimation {
+                        target: _loader
+                        property: "BLayout.preferredWidth"
+                        from: 0
+                        to: target.item.itemTemplateWidth
                     }
                 }
             ]
 
-            delegate: BItemDelegate {
-                id: _item
+            sourceComponent: BKeyStoreListView {
+                model: BBackend.configFolderListModel
 
-                contentItem: BGridLayout {
-                    columns: 3
-                    columnSpacing: 5
+                delegate: BKeyStoreListItem {
+                    fileName: model.fileName
+                    fileModified: model.fileModified
+                    filePath: model.filePath
 
-                    BIconImage {
-                        BLayout.rowSpan: 2
-                        source: _applicationManager.imagePath("icon-wallet.svg")
-                        sourceSize.width: _applicationStyle.icon.normalWidth
-                        sourceSize.height: _applicationStyle.icon.normalHeight
-                        color: Material.theme === Material.Dark ? Material.foreground : "transparent"
+                    onKeyStoreClicked: (path) => {
+                        _base.keyStoreClicked(path)
                     }
-                    BRowLayout {
-                        id: _titleLabels
-                        BLayout.fillWidth: true
-                        BLabel {
-                            BLayout.preferredWidth: _dateTimeLabel.width
-                            font.bold: true
-                            elide: BLabel.ElideRight
-                            text: model.fileName
-                        }
-                        Item {
-                            BLayout.fillWidth: true
-                        }
-                        BLabel {
-                            id: _dateTimeLabel
-                            BLayout.alignment: Qt.AlignRight
-                            text: model.fileModified.toLocaleString(
-                                Qt.locale(BBackend.settings.language.currentName),
-                                Locale.ShortFormat)
-                        }
+                    onRenameAccepted: (path) => {
+                        _base.renameAccepted(path)
                     }
-                    // TODO: reimplement BContextMenuToolButton
-                    // Error: Invalid write to global property "down"
-                    BContextMenuToolButton {
-                        BLayout.alignment: Qt.AlignRight
-                        BLayout.rowSpan: 2
-                        menu: BMenu {
-                            BMenuItem {
-                                text: qsTr("Rename")
-
-                                onTriggered: {
-                                    _base.renameAccepted(model.filePath)
-                                }
-                            }
-                            BMenuItem {
-                                text: qsTr("Remove")
-
-                                onTriggered: {
-                                    BBackend.configFolderListModel.onRemoveAccepted(model.filePath)
-                                }
-                            }
-                        }
-                    }
-                    BLabel {
-                        BLayout.preferredWidth: _titleLabels.width
-                        elide: BLabel.ElideMiddle
-                        text: model.filePath
-                    }
-                }
-
-                onClicked: {
-                    _base.keyStoreClicked(model.filePath)
                 }
             }
         }
