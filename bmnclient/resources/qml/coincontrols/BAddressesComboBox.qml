@@ -15,8 +15,9 @@ BComboBox {
         padding: 0
 
         contentItem: BListView {
+            clip: true
             implicitHeight: Math.min(contentHeight, _base.parent.height - _base.y)
-            model: _base.delegateModel
+            model: _base.popup.visible ? _base.delegateModel : null
         }
     }
     delegate: BControl {
