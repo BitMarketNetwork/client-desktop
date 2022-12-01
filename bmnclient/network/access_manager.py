@@ -3,22 +3,21 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from PySide6.QtNetwork import \
-    QAbstractNetworkCache, \
-    QHttp2Configuration, \
-    QNetworkAccessManager, \
-    QNetworkCacheMetaData, \
-    QNetworkCookieJar, \
-    QNetworkProxy, \
-    QNetworkReply, \
-    QNetworkRequest, \
-    QSsl, \
-    QSslConfiguration, \
-    QSslSocket
+from PySide6.QtNetwork import (
+    QAbstractNetworkCache,
+    QHttp2Configuration,
+    QNetworkAccessManager,
+    QNetworkCacheMetaData,
+    QNetworkCookieJar,
+    QNetworkProxy,
+    QNetworkReply,
+    QNetworkRequest,
+    QSsl,
+    QSslConfiguration,
+    QSslSocket)
 
 from .utils import NetworkUtils
 from ..logger import Logger
-from ..os_environment import Platform
 from ..version import Timer
 
 if TYPE_CHECKING:
@@ -146,16 +145,11 @@ class NetworkAccessManager(QNetworkAccessManager):
 
     @staticmethod
     def _createTlsConfiguration() -> QSslConfiguration:
-        tls = QSslConfiguration()
+        tls = QSslConfiguration(QSslConfiguration.defaultConfiguration())
         tls.setOcspStaplingEnabled(False)
-        tls.setPeerVerifyDepth(0)  # whole certificate chain should be checked
-        # TODO: PySide 6.2.1 + macOS, recheck after updating PySide
-        if Platform.isDarwin:
-            tls.setPeerVerifyMode(QSslSocket.AutoVerifyPeer)
-            tls.setProtocol(QSsl.SecureProtocols)
-        else:
-            tls.setPeerVerifyMode(QSslSocket.VerifyPeer)
-            tls.setProtocol(QSsl.TlsV1_2OrLater)
+        tls.setPeerVerifyDepth(0)
+        tls.setPeerVerifyMode(QSslSocket.VerifyPeer)
+        tls.setProtocol(QSsl.TlsV1_2OrLater)
         tls.setSslOption(QSsl.SslOptionDisableEmptyFragments, True)
         tls.setSslOption(QSsl.SslOptionDisableSessionTickets, False)
         tls.setSslOption(QSsl.SslOptionDisableCompression, True)

@@ -1,11 +1,7 @@
 # Only standard imports, used by Makefile, setup.cfg.
 from __future__ import annotations
 
-from pathlib import Path
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Final
+from typing import Final
 
 
 def tupleToVersionString(version: tuple[int, ...]) -> str:
@@ -18,8 +14,7 @@ class Product:
     MAINTAINER_URL: Final = "https://" + MAINTAINER_DOMAIN + "/"
     NAME: Final = "BitMarket Network Client"
     SHORT_NAME: Final = "bmn-client"
-    VERSION: Final = (0, 14, 0)
-    VERSION_STRING: Final = tupleToVersionString(VERSION)
+    VERSION: Final = (0, 15, 0)
     VERSION_STRING: Final = tupleToVersionString(VERSION)
     VERSION_UPDATE_URL: Final = \
         "https://github.com/BitMarketNetwork/client-desktop/releases"
@@ -29,8 +24,15 @@ class Product:
     STRING_SEPARATOR: Final = ":"
     PYTHON_MINIMAL_VERSION: Final = (3, 8, 0)
 
+    import platform
+    PLATFORM_STRING: Final = "py{}-{}".format(
+        "".join(platform.python_version_tuple()[:2]),
+        platform.machine().lower())
+
 
 class ProductPaths:
+    from pathlib import Path
+
     BASE_PATH: Final = Path(__file__).parent.resolve()
     RESOURCES_PATH: Final = BASE_PATH / "resources"
 

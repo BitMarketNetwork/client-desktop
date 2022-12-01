@@ -11,13 +11,8 @@ BItemDelegate {
 
     text: tx.name
 
-    contentItem: BColumnLayout {
-        BRowLayout {
-            BUnfoldToolButton {
-                onCheckedChanged: {
-                    _detailsLoader.showControl(checked)
-                }
-            }
+    contentItem: BSpoilerItem {
+        headerItem: BRowLayout {
             BColumnLayout {
                 BLabel {
                     BLayout.fillWidth: true
@@ -51,63 +46,9 @@ BItemDelegate {
                 }
             }*/
         }
-        Loader {
-            id: _detailsLoader
-
-            BLayout.fillWidth: true
-            BLayout.minimumHeight: BLayout.preferredHeight
-            BLayout.preferredHeight: 0
-            BLayout.maximumHeight: BLayout.preferredHeight
-
-            active: false
-            sourceComponent: BTxItemDetailsPane {
-                clip: true // for animation
-                tx: _base.tx
-            }
-
-            onLoaded: {
-                unfold()
-            }
-
-            NumberAnimation {
-                id: _detailsAnimation
-                target: _detailsLoader
-                duration: _applicationStyle.animationDuration
-                easing.type: Easing.InOutQuad
-                property: "BLayout.preferredHeight"
-
-                onFinished: {
-                    if (to === 0) {
-                        _detailsLoader.active = false
-                    }
-                }
-            }
-
-            function showControl(show) {
-                _detailsAnimation.stop()
-                if (show) {
-                    if (status === Loader.Ready) {
-                        unfold()
-                    } else {
-                        active = false // reset status to Loader.Null
-                        active = true
-                    }
-                } else {
-                    fold()
-                }
-            }
-
-            function unfold() {
-                _detailsAnimation.from = item.height
-                _detailsAnimation.to = item.implicitHeight
-                _detailsAnimation.restart()
-            }
-
-            function fold() {
-                _detailsAnimation.from = item.height
-                _detailsAnimation.to = 0
-                _detailsAnimation.restart()
-            }
+        contentItem: BTxItemDetailsPane {
+            clip: true // for animation
+            tx: _base.tx
         }
     }
 

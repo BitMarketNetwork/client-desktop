@@ -3,7 +3,6 @@ import "../application"
 import "../basiccontrols"
 import "../coincontrols"
 
-// TODO python control
 BDialog {
     id: _base
     property var coin // CoinModel
@@ -124,6 +123,15 @@ BDialog {
                     return BCommon.button.closeRole
                 }
             }
+        }
+    }
+
+    onAccepted: {
+        if (_base.coin.txFactory.broadcast()) {
+            // TODO success message?
+            // TODO Clear BWalletSendPane fields
+        } else {
+            // TODO error?
         }
     }
 }
