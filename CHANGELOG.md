@@ -1,5 +1,24 @@
 # BitMarket Network Client Change Log
 
+## 0.15.0 (19.06.2022)
+
+* Requirements:
+    - `ecdsa` package has been updated to version `0.17.0`.
+    - Windows build requirements have changed from MinGW-w64 to MSYS2.
+    - Apple M1 processor support for binary distribution.
+    - The filenames of binary distributions now contain the Python version and
+      processor architecture.
+* GUI:
+    - Send Page:
+        - The Key Store password is required before signing a transaction.
+        - "Advanced options" is now hidden by default under the spoiler.
+    - About:
+        - Checking for new releases/updates from the application repository.
+* Other:
+    - Fixed macOS TLS error: "The root CA certificate is not trusted for this
+      purpose".
+    - Fixed QSslSocket backend double initialization.
+
 ## 0.14.0 (29.03.2022)
 
 * Requirements:
