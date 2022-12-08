@@ -45,32 +45,37 @@ BItemDelegate {
                     Locale.ShortFormat)
             }
         }
-        // TODO: reimplement BContextMenuToolButton
-        // Error: Invalid write to global property "down"
         BContextMenuToolButton {
+            id: _menuToolButton
             BLayout.alignment: Qt.AlignRight
             BLayout.rowSpan: 2
-            menu: BMenu {
-                BMenuItem {
-                    text: qsTr("Rename")
+            menu: null
 
-                    onTriggered: {
-                        _base.renameAccepted(_base.filePath)
-                    }
-                }
-                BMenuItem {
-                    text: qsTr("Remove")
-
-                    onTriggered: {
-                        BBackend.configFolderListModel.onRemoveAccepted(_base.filePath)
-                    }
-                }
+            onClicked: {
+                _contextMenu.popup()
             }
         }
         BLabel {
             BLayout.preferredWidth: _titleLabels.width
             elide: BLabel.ElideMiddle
             text: _base.filePath
+        }
+    }
+    BMenu {
+        id: _contextMenu
+        BMenuItem {
+            text: qsTr("Rename")
+
+            onTriggered: {
+                _base.renameAccepted(_base.filePath)
+            }
+        }
+        BMenuItem {
+            text: qsTr("Remove")
+
+            onTriggered: {
+                BBackend.configFolderListModel.onRemoveAccepted(_base.filePath)
+            }
         }
     }
 

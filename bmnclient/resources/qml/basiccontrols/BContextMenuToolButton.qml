@@ -5,6 +5,11 @@ BToolButton {
     id: _base
     property BMenu menu
 
+    // TODO: reimplement BContextMenuToolButton
+    // Error: Invalid write to global property "down"
+    // Example:
+    // BContextMenuToolButton { menu: BMenu { ... } }
+
     font.bold: true
     text: BCommon.button.contextMenuRole
 
