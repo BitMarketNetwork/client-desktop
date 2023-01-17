@@ -52,7 +52,7 @@ BItemDelegate {
             menu: null
 
             onClicked: {
-                _contextMenu.popup()
+                toggleMenu(_contextMenu)
             }
         }
         BLabel {
