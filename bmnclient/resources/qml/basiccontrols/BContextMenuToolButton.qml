@@ -19,7 +19,9 @@ BToolButton {
             menu.dismiss()
         } else {
             function onMenuVisibleChanged() {
-                down = menu.visible
+                if (!_base) return
+
+                _base.down = menu.visible
                 if (!menu.visible) {
                     menu.onVisibleChanged.disconnect(onMenuVisibleChanged)
                 }
