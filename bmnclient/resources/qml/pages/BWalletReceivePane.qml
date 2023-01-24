@@ -70,6 +70,7 @@ BPane {
                         }
                         onReset: {
                             _layout.currentIndex = 0
+                            _inputBox.clear()
                         }
                         onAccepted: {
                             BBackend.clipboard.text = _resultBox.addressNameText
