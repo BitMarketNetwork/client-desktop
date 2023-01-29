@@ -62,12 +62,6 @@ class AddressStateModel(AbstractAddressStateModel):
 
 
 class AddressBalanceModel(AbstractAddressBalanceModel):
-    def update(self) -> None:
-        super().update()
-        for tx in self._address.txList:
-            tx.model.amount.update()
-            tx.model.feeAmount.update()
-
     def _getValue(self) -> int | None:
         return self._address.balance
 
