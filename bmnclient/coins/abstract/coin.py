@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import Final, Sequence, TYPE_CHECKING
+from typing import Final, TYPE_CHECKING
 from weakref import WeakValueDictionary
 
 from .object import CoinObject, CoinRootObjectModel
@@ -10,10 +10,10 @@ from ...crypto.digest import Sha256Digest
 from ...currency import Currency, FiatRate, NoneFiatCurrency
 from ...database.tables import AddressesTable, CoinsTable, TxsTable
 from ...utils import (
-    DeserializeFlag,
     DeserializedData,
-    SerializableList,
-    serializable)
+    DeserializeFlag,
+    serializable,
+    SerializableList)
 from ...utils.class_property import classproperty
 from ...utils.string import StringUtils
 
@@ -174,6 +174,12 @@ class Coin(CoinObject, table_type=CoinsTable):
 
     def modelFactory(self, owner: CoinObject) -> CoinObjectModel:
         return self._model_factory(owner)
+
+    def load(self) -> bool:
+        if not super().load():
+            return False
+        self.updateBalance()
+        return True
 
     @serializable
     @property
