@@ -75,8 +75,7 @@ class GuiApplication(CoreApplication):
         for window in self.topLevelWindowList:
             if show:
                 window.setVisible(True)
-                # noinspection PyTypeChecker
-                state = int(window.windowStates())
+                state = window.windowStates()
                 if (state & Qt.WindowMinimized) == Qt.WindowMinimized:
                     window.show()
                 window.raise_()
