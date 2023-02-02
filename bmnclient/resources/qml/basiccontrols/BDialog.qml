@@ -9,7 +9,6 @@ Dialog {
     closePolicy: Dialog.CloseOnEscape
 
     parent: Overlay.overlay
-    focus: true
     modal: true
     dim: true
 
