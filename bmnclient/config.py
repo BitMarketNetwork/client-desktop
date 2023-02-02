@@ -7,7 +7,7 @@ from threading import RLock
 from typing import TYPE_CHECKING
 
 from .logger import Logger
-from .utils.static_list import StaticList
+from .utils import StaticList
 from .version import Product
 
 if TYPE_CHECKING:

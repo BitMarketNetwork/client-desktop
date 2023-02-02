@@ -8,20 +8,18 @@ from threading import Lock
 from time import strftime
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import qInstallMessageHandler, QtMsgType
+from PySide6.QtCore import QtMsgType, qInstallMessageHandler
 
-from .os_environment import Platform
 from .utils.string import StringUtils
 from .version import Product
 
 if TYPE_CHECKING:
     from json import JSONDecodeError
-    from typing import Optional, Type
     from PySide6.QtCore import QMessageLogContext
     from .utils.string import ClassStringKeyTuple
 
 
-_qt_logger: Optional[logging.Logger] = None
+_qt_logger: logging.Logger | None = None
 _configure_lock = Lock()
 _is_configured = False
 
@@ -111,7 +109,7 @@ class Logger:
             _is_configured = True
 
     @classmethod
-    def fatalException(cls, logger: Optional[Logger] = None) -> None:
+    def fatalException(cls, logger: Logger | None = None) -> None:
         cls.configure()
         from traceback import format_exc
         if not logger:
@@ -122,7 +120,7 @@ class Logger:
         os.abort()
 
     @classmethod
-    def fatal(cls, message: str, logger: Optional[Logger] = None) -> None:
+    def fatal(cls, message: str, logger: Logger | None = None) -> None:
         cls.configure()
         if not logger:
             logger = logging.getLogger()
@@ -150,7 +148,10 @@ class Logger:
     @classmethod
     def classLogger(
             cls,
-            cls_: Type,
-            *key_list: ClassStringKeyTuple) \
-            -> logging.Logger:
+            cls_: type(object),
+            *key_list: ClassStringKeyTuple) -> logging.Logger:
         return logging.getLogger(StringUtils.classString(cls_, *key_list))
+
+    @classmethod
+    def objectLogger(cls, object_: object) -> logging.Logger:
+        return logging.getLogger(str(object_))

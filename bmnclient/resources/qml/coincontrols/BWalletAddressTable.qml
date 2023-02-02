@@ -8,7 +8,7 @@ BControl {
     property var model // AddressList
 
     contentItem: Loader {
-        sourceComponent: model.rowCountHuman > 0 ? _tableViewComponent : _emptyBoxComponent
+        sourceComponent: model && model.rowCountHuman > 0 ? _tableViewComponent : _emptyBoxComponent
     }
 
     Component {
@@ -68,8 +68,8 @@ BControl {
 
                 delegate: BAddressTableRow {
                     width: _tableView.columnWidthProvider(column)
-                    address: model
-                    amount: model.balance
+                    address: modelObject
+                    amount: modelObject.balance
                     contextMenu: _contextMenu
 
                     Rectangle { // col separator

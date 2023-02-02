@@ -20,7 +20,6 @@ from .coins.list import CoinList
 from .config import Config, ConfigKey
 from .currency import FiatCurrencyList, FiatRate
 from .database import Database
-from .database.tables import AddressListTable, CoinListTable, TxListTable
 from .debug import Debug
 from .key_store import KeyStore
 from .language import Language
@@ -37,13 +36,21 @@ from .signal_handler import SignalHandler
 from .version import Product, ProductPaths, Server, Timer
 
 if TYPE_CHECKING:
-    from typing import List, Optional, Type, Union
+    from typing import Final, List, Optional, Type, Union
     from PySide6.QtCore import QCoreApplication
     from .coins.abstract import CoinModelFactory
     from .coins.hd import HdNode
 
 
 class CommandLine:
+    _LOG_LEVEL_MAP: Final = {
+        "DEBUG": logging.DEBUG,
+        "INFO": logging.INFO,
+        "WARNING": logging.WARNING,
+        "ERROR": logging.ERROR,
+        "CRITICAL": logging.CRITICAL
+    }
+
     def __init__(self, argv: List[str]) -> None:
         self._argv = argv
 
@@ -75,6 +82,13 @@ class CommandLine:
             .format(str(PlatformPaths.applicationTempPath)),
             metavar="PATH")
         parser.add_argument(
+            "--insecure",
+            action="store_true",
+            default=False,
+            help=(
+                "disable database and configuration encryption;"
+                " use only for debug purposes!"))
+        parser.add_argument(
             "-l",
             "--log-file",
             default="stderr",
@@ -82,6 +96,15 @@ class CommandLine:
             help="file that will store the log; can be one of the following"
             " special values: stdout, stderr; by default, it is 'stderr'",
             metavar="FILE")
+        parser.add_argument(
+            "--log-level",
+            default="",
+            type=str,
+            choices=self._LOG_LEVEL_MAP.keys(),
+            help=(
+                "set logging level output;"
+                " by default, it is 'INFO' for normal mode,"
+                " and 'DEBUG' for debug mode."))
         parser.add_argument(
             "-d",
             "--debug",
@@ -105,7 +128,9 @@ class CommandLine:
         self._arguments = parser.parse_args(self._argv[1:])
         assert isinstance(self._arguments.config_path, Path)
         assert isinstance(self._arguments.local_data_path, Path)
+        assert isinstance(self._arguments.insecure, bool)
         assert isinstance(self._arguments.log_file, Path)
+        assert isinstance(self._arguments.log_level, str)
         assert isinstance(self._arguments.debug, bool)
         assert self._arguments.debug == Debug.isEnabled
         assert isinstance(self._arguments.server_url, str)
@@ -128,11 +153,17 @@ class CommandLine:
         return self._arguments.local_data_path
 
     @property
+    def isInsecure(self) -> bool:
+        return self._arguments.insecure
+
+    @property
     def logFilePath(self) -> Path:
         return self._arguments.log_file
 
     @property
     def logLevel(self) -> int:
+        if level := self._LOG_LEVEL_MAP.get(self._arguments.log_level):
+            return level
         return logging.DEBUG if Debug.isEnabled else logging.INFO
 
     @property
@@ -140,7 +171,7 @@ class CommandLine:
         return self._arguments.server_url
 
     @property
-    def allowServerInsecure(self) -> bool:
+    def isServerInsecure(self) -> bool:
         return self._arguments.server_insecure
 
     @classmethod
@@ -159,11 +190,12 @@ class CoreApplication(QObject):
             *,
             qt_class: Union[Type[QCoreApplication], Type[QApplication]],
             command_line: CommandLine,
-            model_factory: Optional[CoinModelFactory] = None) -> None:
+            model_factory: CoinModelFactory) -> None:
         super().__init__()
 
-        self._command_line = command_line
-        self._logger = Logger.classLogger(self.__class__)
+        self._command_line: Final = command_line
+        self._model_factory: Final = model_factory
+        self._logger: Final = Logger.classLogger(self.__class__)
         self._title = "{} {}".format(Product.NAME, Product.VERSION_STRING)
         self._icon = QIcon(Resources.iconFilePath)
         self._language: Optional[Language] = None
@@ -172,8 +204,7 @@ class CoreApplication(QObject):
         self._run_called = False
 
         self._config = Config(
-            self._command_line.configPath
-            / ProductPaths.CONFIG_FILE_NAME)
+            self._command_line.configPath / ProductPaths.CONFIG_FILE_NAME)
         self._config.load()
 
         self._key_store = KeyStore(
@@ -228,7 +259,7 @@ class CoreApplication(QObject):
 
         self._init_database()
         self._init_network()
-        self._init_coins(model_factory)
+        self._init_coins(self._model_factory)
 
     def _init_database(self) -> None:
         self._database = Database(
@@ -239,7 +270,7 @@ class CoreApplication(QObject):
         Network.configure()
 
         self._server_list = ServerList(
-            self._command_line.allowServerInsecure)
+            self._command_line.isServerInsecure)
         if self._command_line.serverUrl:
             self._server_list.appendServer(self._command_line.serverUrl)
         else:
@@ -251,9 +282,7 @@ class CoreApplication(QObject):
             self,
             self._network_query_manager)
 
-    def _init_coins(
-            self,
-            model_factory: Optional[CoinModelFactory] = None) -> None:
+    def _init_coins(self, model_factory: CoinModelFactory) -> None:
         self._fiat_currency_list = FiatCurrencyList(self)
         self._fiat_rate_service_list = FiatRateServiceList(self)
         self._blockchain_explorer_list = BlockchainExplorerList(self)
@@ -274,6 +303,9 @@ class CoreApplication(QObject):
         self._exit_code = self._qt_application.exec()
         assert self._on_exit_called
 
+        self._database.close()
+        self._signal_handler.close()
+
         if not self._exit_code:
             self._logger.info(
                 "%s terminated successfully.",
@@ -293,6 +325,10 @@ class CoreApplication(QObject):
             self._onExit()
 
     @property
+    def modelFactory(self) -> CoinModelFactory:
+        return self._model_factory
+
+    @property
     def tempPath(self) -> Path:
         return self._command_line.tempPath
 
@@ -303,6 +339,10 @@ class CoreApplication(QObject):
     @property
     def config(self) -> Config:
         return self._config
+
+    @property
+    def isInsecure(self) -> bool:
+        return self._command_line.isInsecure
 
     @property
     def exitCode(self) -> int:
@@ -412,25 +452,10 @@ class CoreApplication(QObject):
 
     def _loadWalletData(self) -> bool:  # TODO move to coins
         try:
-            with self._database.transaction() as cursor:
+            with self._database.transaction():
                 for coin in self._coin_list:
-                    if not self._database[CoinListTable].deserialize(
-                            cursor,
-                            coin):
-                        self._logger.debug(
-                            "Cannot deserialize coin '%s' from database.",
-                            coin.name)
-                        self._database[CoinListTable].serialize(cursor, coin)
-                        continue
-
-                    self._database[AddressListTable].deserializeAll(
-                            cursor,
-                            coin)
-
-                    for address in coin.addressList:
-                        self._database[TxListTable].deserializeAll(
-                            cursor,
-                            address)
+                    if not coin.load():
+                        coin.save()
         except (Database.engine.Error, Database.engine.Warning) as e:
             self._logger.error(
                 "Failed to read wallet from database: %s",
@@ -455,5 +480,3 @@ class CoreApplication(QObject):
     def _onExit(self) -> None:
         assert not self._on_exit_called
         self._on_exit_called = True
-        self._database.close()
-        self._signal_handler.close()

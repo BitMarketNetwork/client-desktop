@@ -19,8 +19,8 @@ BPane {
         BDialogInputButton {
             id: _fontDialogButton
             text: qsTr("%1, %2")
-                    .arg(_fontDialog.currentFont.family)
-                    .arg(Math.round(_fontDialog.currentFont.pointSize))
+                    .arg(_fontDialog.selectedFont.family)
+                    .arg(Math.round(_fontDialog.selectedFont.pointSize))
             onClicked: {
                 _fontDialog.open()
             }

@@ -12,6 +12,15 @@ class FiatRate:
         self._value = value
         self._currency_type = currency_type
 
+    def __eq__(self, other: FiatRate) -> bool:
+        return (
+                isinstance(other, self.__class__)
+                and self._value == other._value
+                and self._currency_type is other._currency_type)
+
+    def __hash__(self) -> int:
+        return hash((self._value, ))
+
     @property
     def value(self) -> int:
         return self._value

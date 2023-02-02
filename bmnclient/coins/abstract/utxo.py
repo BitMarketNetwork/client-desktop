@@ -1,72 +1,100 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import TYPE_CHECKING
+from typing import Final, TYPE_CHECKING
 
-from .object import CoinObject
-from ..utils import CoinUtils
-from ...utils.serialize import serializable
+from .object import CoinObject, CoinObjectModel
+from ...database.tables import UtxosTable
+from ...utils import (
+    DeserializeFlag,
+    DeserializedData,
+    SerializeFlag,
+    serializable)
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Final, Optional
     from .coin import Coin
 
 
-class _Utxo(CoinObject):
-    def __init__(
-            self,
-            coin: Coin,
-            *,
-            name: str,
-            height: int,
-            index: int,
-            amount: int,
-            script_type: Optional[Coin.Address.Script.Type] = None) -> None:
-        super().__init__(coin)
-        self._address: Optional[Coin.Address] = None
-        self._name: Final = name
-        self._height: Final = height
-        self._index: Final = index
-        self._amount: Final = amount
-        self._script_type = script_type
+class _Model(CoinObjectModel):
+    def __init__(self, *args, utxo: Coin.Tx.Utxo, **kwargs) -> None:
+        self._utxo = utxo
+        super().__init__(*args, **kwargs)
+
+    @property
+    def owner(self) -> Coin.Tx.Utxo:
+        return self._utxo
+
+
+class _Utxo(CoinObject, table_type=UtxosTable):
+    Model = _Model
+
+    def __init__(self, address: Coin.Address, **kwargs) -> None:
+        self._address: Final = address
+        self._name: Final = str(kwargs["name"]).lower()
+
+        super().__init__(address.coin, kwargs)
+
+        self._script_type: Final = kwargs.pop("script_type")
+        assert isinstance(self._script_type, self._coin.Address.Script.Type)
+        self._index: Final = int(kwargs.pop("index"))
+        self._height: Final = int(kwargs.pop("height"))
+        self._amount: Final = int(kwargs.pop("amount"))
+        assert len(kwargs) == 1
 
     def __eq__(self, other: _Utxo) -> bool:
         return (
                 super().__eq__(other)
                 and self._name == other._name
-                and self._height == other._height
                 and self._index == other._index
-                and self._amount == other._amount
-        )
+                and self._height == other._height
+                and self._amount == other._amount)
 
     def __hash__(self) -> int:
         return hash((
             super().__hash__(),
             self._name,
-            self._height,
             self._index,
-            self._amount
-        ))
+            self._height,
+            self._amount))
 
+    # TODO cache
     def __str__(self) -> str:
         return StringUtils.classString(
             self.__class__,
-            *CoinUtils.utxoToNameKeyTuple(self))
+            (None, self._name),
+            (None, self._index),
+            ("amount", self._amount),
+            parent=self._address)
+
+    def serializeProperty(
+            self,
+            flags: SerializeFlag,
+            key: str,
+            value: ...) -> DeserializedData:
+        if key == "script_type":
+            return value.name
+        return super().serializeProperty(flags, key, value)
+
+    @classmethod
+    def deserializeProperty(
+            cls,
+            flags: DeserializeFlag,
+            self: _Utxo | None,
+            key: str,
+            value: DeserializedData,
+            *cls_args) -> ...:
+        if key == "script_type":
+            address = cls_args[0] if cls_args else self._address
+            for type_ in address.Script.Type:
+                if type_.name == value:
+                    return type_
+            return address.Script.Type.UNKNOWN
+        return super().deserializeProperty(flags, self, key, value, *cls_args)
 
     @property
-    def address(self) -> Optional[Coin.Address]:
+    def address(self) -> Coin.Address:
         return self._address
-
-    @address.setter
-    def address(self, address: Coin.Address) -> None:
-        if self._address is not None:
-            raise AttributeError(
-                "already associated with address '{}'"
-                .format(self._address.name))
-        self._address = address
-        if self._script_type is None:
-            self._script_type = self._address.type.value.scriptType
 
     @serializable
     @property
@@ -92,6 +120,7 @@ class _Utxo(CoinObject):
     def amount(self) -> int:
         return self._amount
 
+    @serializable
     @property
-    def scriptType(self) -> Optional[Coin.Address.Script.Type]:
+    def scriptType(self) -> Coin.Address.Script.Type:
         return self._script_type

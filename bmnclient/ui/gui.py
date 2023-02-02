@@ -24,7 +24,7 @@ class GuiApplication(CoreApplication):
             self,
             *,
             command_line: CommandLine,
-            model_factory: Optional[CoinModelFactory] = None) -> None:
+            model_factory: CoinModelFactory) -> None:
 
         # Warning: Ignoring XDG_SESSION_TYPE=wayland on Gnome. Use
         # QT_QPA_PLATFORM=wayland to run on Wayland anyway.
@@ -75,7 +75,6 @@ class GuiApplication(CoreApplication):
         for window in self.topLevelWindowList:
             if show:
                 window.setVisible(True)
-                # noinspection PyTypeChecker
                 state = window.windowStates()
                 if (state & Qt.WindowMinimized) == Qt.WindowMinimized:
                     window.show()

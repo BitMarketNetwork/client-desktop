@@ -1,18 +1,19 @@
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import TYPE_CHECKING
+from typing import Final, Sequence, TYPE_CHECKING, Union
 
 from .object import CoinObject, CoinObjectModel
 from ..hd import HdNode
 from ...crypto.secp256k1 import PrivateKey, PublicKey
+from ...database.tables import AddressTxsTable, AddressesTable, UtxosTable
+from ...utils import SerializableList, SerializeFlag, serializable
 from ...utils.class_property import classproperty
-from ...utils.serialize import serializable
+from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Any, Final, List, Optional, Union
     from .coin import Coin
-    from ...utils.serialize import DeserializedData, DeserializedDict
+    from ...utils import DeserializeFlag, DeserializedData
 
 
 class _TypeValue:
@@ -32,10 +33,10 @@ class _TypeValue:
             name: str,
             version: int,
             size: int,
-            encoding: Optional[Coin.Address.Encoding],
+            encoding: Coin.Address.Encoding | None,
             is_witness: bool,
-            script_type: Optional[Coin.Address.Script.Type],
-            hd_purpose: Optional[int]) -> None:
+            script_type: Coin.Address.Script.Type,
+            hd_purpose: int | None) -> None:
         self._name: Final = name
         self._version: Final = version
         self._size: Final = size
@@ -97,7 +98,7 @@ class _TypeValue:
         return self._size
 
     @property
-    def encoding(self) -> Optional[Coin.Address.Encoding]:
+    def encoding(self) -> Coin.Address.Encoding | None:
         return self._encoding
 
     @property
@@ -105,62 +106,67 @@ class _TypeValue:
         return self._is_witness
 
     @property
-    def scriptType(self) -> Optional[Coin.Address.Script.Type]:
+    def scriptType(self) -> Coin.Address.Script.Type:
         return self._script_type
 
     @property
-    def hdPurpose(self) -> Optional[int]:
+    def hdPurpose(self) -> int | None:
         return self._hd_purpose
 
 
 class _Model(CoinObjectModel):
     def __init__(self, *args, address: Coin.Address, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
         self._address = address
+        super().__init__(*args, **kwargs)
 
     @property
     def owner(self) -> Coin.Address:
         return self._address
 
-    def afterSetBalance(self) -> None:
-        raise NotImplementedError
+    def afterInsertSelf(self) -> None:
+        self._address.coin.updateBalance()
+        self._address.coin.model.queryScheduler.updateCoinAddress(self._address)
+        super().afterInsertSelf()
 
-    def afterSetLabel(self) -> None:
-        raise NotImplementedError
+    def beforeSetKey(self, value: Coin.Address.KeyType) -> None: pass
+    def afterSetKey(self, value: Coin.Address.KeyType) -> None: pass
 
-    def afterSetComment(self) -> None:
-        raise NotImplementedError
+    def beforeSetBalance(self, value: int) -> None: pass
+    def afterSetBalance(self, value: int) -> None: pass
 
-    def afterSetIsTxInput(self) -> None:
-        raise NotImplementedError
+    def beforeSetLabel(self, value: str) -> None: pass
+    def afterSetLabel(self, value: str) -> None: pass
 
-    def afterSetTxCount(self) -> None:
-        raise NotImplementedError
+    def beforeSetComment(self, value: str) -> None: pass
+    def afterSetComment(self, value: str) -> None: pass
 
-    def beforeAppendTx(self, tx: Coin.Tx) -> None:
-        raise NotImplementedError
+    def beforeSetIsReadOnly(self, value: bool) -> None: pass
+    def afterSetIsReadOnly(self, value: bool) -> None: pass
 
-    def afterAppendTx(self, tx: Coin.Tx) -> None:
-        raise NotImplementedError
+    def beforeSetTxCount(self, value: int) -> None: pass
+    def afterSetTxCount(self, value: int) -> None: pass
 
-    def afterSetUtxoList(self) -> None:
-        raise NotImplementedError
+    def beforeUpdateUtxoList(self, _utxo_list: Sequence[Coin.Tx.Utxo]) -> None:
+        self._address.coin.model.beforeUpdateUtxoList()
 
-    def afterSetHistoryFirstOffset(self) -> None:
-        raise NotImplementedError
+    def afterUpdateUtxoList(self, _utxo_list: Sequence[Coin.Tx.Utxo]) -> None:
+        self._address.coin.model.afterUpdateUtxoList()
 
-    def afterSetHistoryLastOffset(self) -> None:
-        raise NotImplementedError
+    def beforeSetHistoryFirstOffset(self, value: str) -> None: pass
+    def afterSetHistoryFirstOffset(self, value: str) -> None: pass
+
+    def beforeSetHistoryLastOffset(self, value: str) -> None: pass
+    def afterSetHistoryLastOffset(self, value: str) -> None: pass
 
 
-class _Address(CoinObject):
+class _Address(
+        CoinObject,
+        table_type=AddressesTable,
+        associated_table_type=AddressTxsTable):
     __initialized = False
 
     _NULLDATA_NAME = "NULL_DATA"
     _HRP = "hrp"
-
-    if TYPE_CHECKING:
-        KeyType = Union[HdNode, PrivateKey, PublicKey]
 
     class Encoding(Enum):
         BASE58 = auto()
@@ -173,45 +179,50 @@ class _Address(CoinObject):
 
     TypeValue = _TypeValue
     Type = Enum
+    KeyType = Union[HdNode, PrivateKey, PublicKey]
 
     def __new__(cls, coin: Coin, *args, **kwargs) -> _Address:
-        # noinspection PyUnresolvedReferences
         if kwargs.get("type_") == cls.Type.UNKNOWN or not kwargs.get("name"):
-            return super(_Address, cls).__new__(cls)
+            return super().__new__(cls)
 
         heap = coin.weakValueDictionary("address_heap")
         address = heap.get(kwargs["name"])
         if address is None:
-            address = super(_Address, cls).__new__(cls)
+            address = super().__new__(cls)
         heap[kwargs["name"]] = address
         return address
 
-    def __init__(self, coin: Coin, *, row_id: int = -1, **kwargs) -> None:
+    def __init__(self, coin: Coin, **kwargs) -> None:
         if self.__initialized:
             assert self._coin is coin
             self.__update__(**kwargs)
             return
         self.__initialized = True
 
-        super().__init__(coin, row_id=row_id)
-
-        self.__hash: Optional[bytes] = None
-
-        self._name: Final[str] = kwargs.get("name") or self._NULLDATA_NAME
+        self._name: Final = str(kwargs.get("name") or self._NULLDATA_NAME)
         self._type: Final[_Address.Type] = kwargs["type_"]
-        self._data: Final[bytes] = kwargs.get("data", b"")
-        self._key: Optional[_Address.KeyType] = kwargs.get("key", None)
-        self._balance: int = kwargs.get("balance", 0)
-        self._label: str = kwargs.get("label", "")
-        self._comment: str = kwargs.get("comment", "")
-        self._is_tx_input = bool(kwargs.get("is_tx_input", False))
+        assert isinstance(self._type, self.Type)
 
-        self._tx_count: int = kwargs.get("tx_count", 0)
-        self._tx_list: List[Coin.Tx] = list(kwargs.get("tx_list", []))
-        self._utxo_list: List[Coin.Tx.Utxo] = list(kwargs.get("utxo_list", []))
+        super().__init__(
+            coin,
+            kwargs,
+            enable_table=(self._name and self._type != self.Type.UNKNOWN))
 
-        history_first_offset: str = kwargs.get("history_first_offset", "")
-        history_last_offset: str = kwargs.get("history_last_offset", "")
+        self.__hash: bytes | None = None
+        self._balance = int(kwargs.pop("balance", 0))
+        self._tx_count = int(kwargs.pop("tx_count", 0))
+        self._label = str(kwargs.pop("label", ""))
+        self._comment = str(kwargs.pop("comment", ""))
+
+        self._data: Final = bytes(kwargs.pop("data", b""))
+        self._key: _Address.KeyType | None = kwargs.pop("key", None)
+        assert self._key is None or isinstance(self._key, self.KeyType)
+        self._is_read_only = bool(kwargs.pop(
+            "is_read_only",
+            self.privateKey is None))
+
+        history_first_offset = str(kwargs.pop("history_first_offset", ""))
+        history_last_offset = str(kwargs.pop("history_last_offset", ""))
         if history_first_offset and history_last_offset:
             self._history_first_offset = history_first_offset
             self._history_last_offset = history_last_offset
@@ -219,69 +230,119 @@ class _Address(CoinObject):
             self._history_first_offset = ""
             self._history_last_offset = ""
 
+        self._appendDeferredSave(
+            lambda: self.txList,
+            kwargs.pop("tx_list", []))
+        self._appendDeferredSave(
+            lambda: self.utxoList,
+            kwargs.pop("utxo_list", []))
+        assert len(kwargs) == 2
+
     def __eq__(self, other: _Address) -> bool:
         return (
                 super().__eq__(other)
                 and self._name == other.name
-                and self._type == other._type
-        )
+                and self._type == other._type)
 
     def __hash__(self) -> int:
         return hash((
             super().__hash__(),
             self._name,
-            self._type
-        ))
+            self._type))
 
-    def serialize(
-            self,
-            *,
-            allow_hd_path: bool = True,
-            **options) -> DeserializedDict:
-        return super().serialize(allow_hd_path=allow_hd_path, **options)
+    # TODO cache
+    def __str__(self) -> str:
+        return StringUtils.classString(
+            self.__class__,
+            (None, self._name),
+            (
+                "path",
+                self._key.pathToString()
+                if isinstance(self._key, HdNode)
+                else ""
+            ),
+            parent=self.coin)
 
-    def _serializeProperty(
-            self,
-            key: str,
-            value: Any,
-            *,
-            allow_hd_path: bool = True,
-            **options) -> DeserializedData:
-        if key == "key":
-            return self.exportKey(allow_hd_path=allow_hd_path)
-        if key == "type":
-            return value.value.name
-        return super()._serializeProperty(key, value, **options)
+    def __update__(self, **kwargs) -> bool:
+        self._appendDeferredSave(
+            lambda: self.txList,
+            kwargs.pop("tx_list", []))
+        self._appendDeferredSave(
+            lambda: self.utxoList,
+            kwargs.pop("utxo_list", []))
+        if not super().__update__(**kwargs):
+            return False
+        # TODO self.updateBalance()
+        return True
 
     @classmethod
-    def _deserializeProperty(
+    def create(
             cls,
-            self: Optional[_Address],
+            coin: Coin,
+            *,
+            type_: _Address.Type,
+            key: KeyType,
+            **kwargs) -> _Address | None:
+        return cls(coin, type_=type_, key=key, **kwargs)
+
+    @classmethod
+    def createFromName(
+            cls,
+            coin: Coin,
+            *,
+            name: str,
+            **kwargs) -> _Address | None:
+        return cls(coin, name=name, **kwargs)
+
+    @classmethod
+    def createNullData(
+            cls,
+            coin: Coin,
+            *,
+            name: str | None = None,
+            **kwargs) -> _Address | None:
+        return cls(coin, name=name, type_=cls.Type.UNKNOWN, **kwargs)
+
+    def serializeProperty(
+            self,
+            flags: SerializeFlag,
+            key: str,
+            value: ...) -> DeserializedData:
+        if key == "key":
+            # TODO temporary, unsecure
+            if bool(flags & SerializeFlag.PUBLIC_MODE):
+                return self.exportKey(allow_hd_path=True)
+            elif bool(flags & SerializeFlag.PRIVATE_MODE):
+                return self.exportKey(allow_hd_path=False)
+            elif bool(flags & SerializeFlag.DATABASE_MODE):
+                return self.exportKey(allow_hd_path=True)
+            else:
+                return ""
+        if key == "type":
+            return value.value.name
+        return super().serializeProperty(flags, key, value)
+
+    @classmethod
+    def deserializeProperty(
+            cls,
+            flags: DeserializeFlag,
+            self: _Address | None,
             key: str,
             value: DeserializedData,
-            coin: Optional[Coin] = None,
-            **options) -> Any:
-        if coin is None:
-            coin = self._coin
+            *cls_args) -> ...:
         if key == "type":
             for t in cls.Type:
                 if value == t.value.name:
                     return t
-            # noinspection PyUnresolvedReferences
             return cls.Type.UNKNOWN
         if isinstance(value, str) and key == "key":
-            return cls.importKey(coin, value)
-        if key == "tx_list":
-            if isinstance(value, dict):
-                return coin.Tx.deserialize(value, coin)
-            elif isinstance(value, coin.Tx):
-                return value
-        if key == "utxo_list":
-            if isinstance(value, dict):
-                return coin.Tx.Utxo.deserialize(value, coin)
-            elif isinstance(value, coin.Tx.Utxo):
-                return value
-        return super()._deserializeProperty(self, key, value, coin, **options)
+            address = cls_args[0] if cls_args else self
+            return cls.importKey(address._coin, value)
+        if key == "tx_list" and isinstance(value, dict):
+            return lambda a: a.coin.Tx.deserialize(flags, value, a.coin)
+        if key == "utxo_list" and isinstance(value, dict):
+            return lambda a: a.coin.Tx.Utxo.deserialize(flags, value, a)
+        return super().deserializeProperty(flags, self, key, value, *cls_args)
 
     @classproperty
     def hrp(cls) -> str:  # noqa
@@ -306,35 +367,6 @@ class _Address(CoinObject):
     def type(self) -> _Address.Type:
         return self._type
 
-    @classmethod
-    def create(
-            cls,
-            coin: Coin,
-            *,
-            type_: _Address.Type,
-            key: KeyType,
-            **kwargs) -> Optional[_Address]:
-        return cls(coin, type_=type_, key=key, **kwargs)
-
-    @classmethod
-    def createFromName(
-            cls,
-            coin: Coin,
-            *,
-            name: str,
-            **kwargs) -> Optional[_Address]:
-        return cls(coin, name=name, **kwargs)
-
-    @classmethod
-    def createNullData(
-            cls,
-            coin: Coin,
-            *,
-            name: Optional[str] = None,
-            **kwargs) -> _Address:
-        # noinspection PyUnresolvedReferences
-        return cls(coin, name=name, type_=cls.Type.UNKNOWN, **kwargs)
-
     @property
     def isNullData(self) -> bool:
         # noinspection PyUnresolvedReferences
@@ -345,7 +377,7 @@ class _Address(CoinObject):
         return self._data
 
     @classmethod
-    def _publicKey(cls, key: Optional[KeyType]) -> Optional[PublicKey]:
+    def _publicKey(cls, key: KeyType | None) -> PublicKey | None:
         if isinstance(key, HdNode):
             return key.publicKey
         if isinstance(key, PrivateKey):
@@ -355,11 +387,11 @@ class _Address(CoinObject):
         return None
 
     @property
-    def publicKey(self) -> Optional[PublicKey]:
+    def publicKey(self) -> PublicKey | None:
         return self._publicKey(self._key)
 
     @property
-    def privateKey(self) -> Optional[PrivateKey]:
+    def privateKey(self) -> PrivateKey | None:
         if isinstance(self._key, HdNode):
             value = self._key.privateKey
         elif isinstance(self._key, PrivateKey):
@@ -370,14 +402,16 @@ class _Address(CoinObject):
 
     @serializable
     @property
-    def key(self) -> Optional[KeyType]:
+    def key(self) -> KeyType | None:
         return self._key
 
     @key.setter
-    def key(self, value: Optional[KeyType]) -> None:
-        self._key = value
+    def key(self, value: KeyType | None) -> None:
+        self._updateValue("set", "key", value)
+        if self.privateKey is None:
+            self._updateValue("set", "is_read_only", True)
 
-    def exportKey(self, *, allow_hd_path: bool = False) -> Optional[str]:
+    def exportKey(self, *, allow_hd_path: bool = False) -> str | None:
         if isinstance(self._key, HdNode):
             if allow_hd_path and self._key.isFullPath:
                 value = self._key.pathToString()
@@ -403,7 +437,7 @@ class _Address(CoinObject):
         return value
 
     @classmethod
-    def importKey(cls, coin: Coin, value: str) -> Optional[KeyType]:
+    def importKey(cls, coin: Coin, value: str) -> KeyType | None:
         if not value:
             return None
 
@@ -455,10 +489,8 @@ class _Address(CoinObject):
 
     @balance.setter
     def balance(self, value: int) -> None:
-        if self._balance != value:
-            self._balance = value
-            self._callModel("afterSetBalance")
-            self._coin.updateBalance()
+        self._updateValue("set", "balance", value)
+        self._coin.updateBalance()
 
     @serializable
     @property
@@ -467,9 +499,7 @@ class _Address(CoinObject):
 
     @label.setter
     def label(self, value: str) -> None:
-        if self._label != value:
-            self._label = value
-            self._callModel("afterSetLabel")
+        self._updateValue("set", "label", value)
 
     @serializable
     @property
@@ -478,24 +508,17 @@ class _Address(CoinObject):
 
     @comment.setter
     def comment(self, value: str) -> None:
-        if self._comment != value:
-            self._comment = value
-            self._callModel("afterSetComment")
+        self._updateValue("set", "comment", value)
 
     @serializable
     @property
-    def isTxInput(self) -> bool:
-        return self._is_tx_input
-
-    @isTxInput.setter
-    def isTxInput(self, value: bool) -> None:
-        if self._is_tx_input != value:
-            self._is_tx_input = value
-            self._callModel("afterSetIsTxInput")
-
-    @property
     def isReadOnly(self) -> bool:
-        return self.privateKey is None
+        return bool(self._is_read_only or self.privateKey is None)
+
+    @isReadOnly.setter
+    def isReadOnly(self, value: bool) -> None:
+        value = bool(value or self.privateKey is None)
+        self._updateValue("set", "is_read_only", value)
 
     @serializable
     @property
@@ -504,49 +527,27 @@ class _Address(CoinObject):
 
     @txCount.setter
     def txCount(self, value: int) -> None:
-        if self._tx_count != value:
-            self._tx_count = value
-            self._callModel("afterSetTxCount")
+        self._updateValue("set", "tx_count", value)
 
     @serializable
     @property
-    def txList(self) -> List[Coin.Tx]:
-        return self._tx_list
-
-    def appendTx(self, tx: Coin.Tx) -> bool:
-        for etx in self._tx_list:
-            if tx.name != etx.name:
-                continue
-            if etx.height == -1:
-                etx.height = tx.height
-                etx.time = tx.time
-                # TODO compare/replace input/output list
-                return True
-            return False
-
-        self._callModel("beforeAppendTx", tx)
-        self._tx_list.append(tx)
-        self._callModel("afterAppendTx", tx)
-        return True
+    def txList(self) -> SerializableList[Coin.Tx]:
+        return self._rowList(AddressTxsTable)
 
     @serializable
     @property
-    def utxoList(self) -> List[Coin.Tx.Utxo]:
-        return self._utxo_list
+    def utxoList(self) -> SerializableList[Coin.Tx.Utxo]:
+        return self._rowList(UtxosTable)
 
     @utxoList.setter
-    def utxoList(self, utxo_list: List[Coin.Tx.Utxo]) -> None:
-        if self._utxo_list == utxo_list:
-            return
-
-        for utxo in utxo_list:
-            utxo.address = self
-        self._utxo_list = utxo_list
-
-        self._callModel("afterSetUtxoList")
-        self._coin.updateUtxoList()
-
-        self.balance = sum(u.amount for u in self._utxo_list)
+    def utxoList(self, utxo_list: Sequence[Coin.Tx.Utxo]) -> None:
+        with self._coin.model.database.transaction():
+            if self._updateRowList(self.utxoList, utxo_list) > 0:
+                # FIXME wrong event usage, we should call __enter__() in
+                #  _updateRowList()
+                with self._modelEvent("update", "utxo_list", utxo_list):
+                    if t := self._openTable(UtxosTable):
+                        self.balance = t.queryTotalAmount(self)
 
     @serializable
     @property
@@ -555,12 +556,13 @@ class _Address(CoinObject):
 
     @historyFirstOffset.setter
     def historyFirstOffset(self, value: str):
-        if self._history_first_offset != value:
-            if not value:
-                self._clearHistoryOffsets()
-            else:
-                self._history_first_offset = value
-                self._callModel("afterSetHistoryFirstOffset")
+        def clear() -> None:
+            self.historyLastOffset = ""
+        self._updateValue(
+            "set",
+            "history_first_offset",
+            value,
+            on_update=None if value else clear)
 
     @serializable
     @property
@@ -569,15 +571,10 @@ class _Address(CoinObject):
 
     @historyLastOffset.setter
     def historyLastOffset(self, value: str):
-        if self._history_last_offset != value:
-            if not value:
-                self._clearHistoryOffsets()
-            else:
-                self._history_last_offset = value
-                self._callModel("afterSetHistoryLastOffset")
-
-    def _clearHistoryOffsets(self) -> None:
-        self._history_first_offset = ""
-        self._history_last_offset = ""
-        self._callModel("afterSetHistoryFirstOffset")
-        self._callModel("afterSetHistoryLastOffset")
+        def clear() -> None:
+            self.historyFirstOffset = ""
+        self._updateValue(
+            "set",
+            "history_last_offset",
+            value,
+            on_update=None if value else clear)

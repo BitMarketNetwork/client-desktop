@@ -30,15 +30,15 @@ BDialog {
             visibleItemCount: Math.min(10, _base.sourceList.rowCount())
             model: _base.sourceList
             delegate: BAddressItem {
-                address: model
-                amount: model.balance
+                address: modelObject
+                amount: modelObject.balance
                 checkable: true
                 enabled: !_selectAll.checked
                 onCheckedChanged: {
-                    model.state.useAsTransactionInput = checked
+                    modelObject.state.useAsTransactionInput = checked
                 }
                 Binding on checked {
-                    value: model.state.useAsTransactionInput
+                    value: modelObject.state.useAsTransactionInput
                 }
             }
             templateDelegate: BAddressItem {
