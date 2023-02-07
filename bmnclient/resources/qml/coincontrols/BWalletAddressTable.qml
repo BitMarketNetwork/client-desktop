@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Material
 import Qt.labs.qmlmodels
+import QtQml.Models
 import "../basiccontrols"
 
 BControl {
@@ -66,17 +67,25 @@ BControl {
                 model: _base.model
                 columnWidth: [355, -1, 150, 65, 60]
 
+                selectionModel: ItemSelectionModel {
+                    id: _selectionModel
+                    model: _tableView.model
+                }
+
                 delegate: BAddressTableRow {
                     width: _tableView.columnWidthProvider(column)
                     address: model
                     amount: model.balance
                     contextMenu: _contextMenu
+                    required property bool selected
+                    hoverEnabled: false
 
                     Rectangle { // col separator
                         anchors.right: parent.right
                         width: 1
                         height: parent.height
-                        color: Material.dividerColor
+                        //TODO: selected control
+                        color: selected ? "red" : Material.dividerColor
                     }
                 }
             }

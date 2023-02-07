@@ -25,6 +25,7 @@ BControl {
 
         Loader {
             active: _base.orientation !== Qt.Vertical
+            visible: _base.orientation !== Qt.Vertical
             sourceComponent: BLabel {
                 font.bold: true
                 color: _base.color

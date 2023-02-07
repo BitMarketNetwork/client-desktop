@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Material
+import QtQml.Models
 import "../basiccontrols"
 
 BItemDelegate {
@@ -112,6 +113,7 @@ BItemDelegate {
     Component {
         id: _menuComponent
         BContextMenuToolButton {
+            hoverEnabled: true
             menu: null
             onClicked: {
                 _base.contextMenu.address = _base.address
@@ -121,34 +123,36 @@ BItemDelegate {
     }
     MouseArea {
         anchors.fill: parent
-        acceptedButtons: Qt.RightButton
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
 
         onClicked: (mouse) => {
             if (mouse.button === Qt.RightButton) {
                 _base.contextMenu.address = _base.address
                 _base.contextMenu.popup()
-            }  
+            } else if (mouse.button === Qt.LeftButton) {
+                _selectionModel.select(_tableView.model.index(row, column), ItemSelectionModel.ClearAndSelect | ItemSelectionModel.Rows)
+            }
         }
         onPressAndHold: (mouse) => {
             if (mouse.source === Qt.MouseEventNotSynthesized) {
                 _base.contextMenu.address = _base.address
                 contextMenu.popup()
-            } 
+            }
         }
-    }
-    onDoubleClicked: {
-        if (model.column === 0) {
-            BBackend.clipboard.text = address.name
-        } else if (model.column === 1) {
-            BBackend.clipboard.text = address.state.label
-        } else if (model.column === 2) {
-            BBackend.clipboard.text = "%1 %2 / %3 %4"
-                .arg(amount.valueHuman)
-                .arg(amount.unit)
-                .arg(amount.fiatValueHuman)
-                .arg(amount.fiatUnit)
-        } else if (model.column === 3) {
-            BBackend.clipboard.text = address.txList.rowCount()
+        onDoubleClicked: {
+            if (model.column === 0) {
+                BBackend.clipboard.text = address.name
+            } else if (model.column === 1) {
+                BBackend.clipboard.text = address.state.label
+            } else if (model.column === 2) {
+                BBackend.clipboard.text = "%1 %2 / %3 %4"
+                    .arg(amount.valueHuman)
+                    .arg(amount.unit)
+                    .arg(amount.fiatValueHuman)
+                    .arg(amount.fiatUnit)
+            } else if (model.column === 3) {
+                BBackend.clipboard.text = address.txList.rowCount()
+            }
         }
     }
 }
