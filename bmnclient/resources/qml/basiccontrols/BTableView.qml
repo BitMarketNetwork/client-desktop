@@ -2,6 +2,9 @@ import QtQuick
 
 TableView {
     id: _base
+
+    property real viewWidth: width - (BScrollBar.vertical.visible ? BScrollBar.vertical.width : 0)
+
     clip: true
 
     BScrollBar.vertical: BScrollBar {
