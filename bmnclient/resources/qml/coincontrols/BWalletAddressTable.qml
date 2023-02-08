@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls.Material
-import Qt.labs.qmlmodels
 import QtQml.Models
 import "../basiccontrols"
 
@@ -73,19 +72,26 @@ BControl {
                 }
 
                 delegate: BAddressTableRow {
+                    id: _delegate
                     width: _tableView.columnWidthProvider(column)
                     address: model
                     amount: model.balance
                     contextMenu: _contextMenu
-                    required property bool selected
                     hoverEnabled: false
+
+                    required property bool selected
 
                     Rectangle { // col separator
                         anchors.right: parent.right
                         width: 1
                         height: parent.height
                         //TODO: selected control
-                        color: selected ? "red" : Material.dividerColor
+                        color: Material.dividerColor
+                    }
+
+                    background: Rectangle {
+                        implicitHeight: _delegate.Material.delegateHeight
+                        color: selected ? _delegate.Material.listHighlightColor : "transparent"
                     }
                 }
             }
