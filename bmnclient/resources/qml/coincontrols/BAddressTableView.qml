@@ -10,7 +10,7 @@ BTableView {
     columnWidthProvider: function (column) {
         if (_base.model) {
             if (columnWidth[column] == -1) { //spacer col
-                let spacer_width = _base.width
+                let spacer_width = _base.viewWidth
                 for(let col = 0; col < columnWidth.length; col++) {
                     if(columnWidth[col] != -1) spacer_width -= columnWidth[col];
                 }
