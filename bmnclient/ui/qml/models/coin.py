@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from enum import auto
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import (
@@ -10,16 +9,16 @@ from PySide6.QtCore import (
     Slot as QSlot)
 
 from . import AbstractCoinStateModel, AbstractModel, ValidStatus
-from .address import AddressListModel, AddressListSortedModel
+from .abstract import AbstractCoinObjectModel, AbstractTableModel
+from .address import AddressListModel
 from .amount import AbstractAmountModel
-from .list import AbstractListModel, RoleEnum
-from .tx import TxListConcatenateModel, TxListSortedModel
-from ....coin_models import CoinModel as _CoinModel
+from .tx import TxListModel
+from .tx_factory import TxFactoryModel
+from ....coins.abstract import Coin
 
 if TYPE_CHECKING:
-    from typing import Final, Optional
     from .. import QmlApplication
-    from ....coins.abstract import Coin
+    from ....currency import FiatRate
 
 
 class CoinStateModel(AbstractCoinStateModel):
@@ -102,7 +101,7 @@ class CoinBalanceModel(AbstractAmountModel):
         for address in self._coin.addressList:
             address.model.balance.update()
 
-    def _getValue(self) -> Optional[int]:
+    def _getValue(self) -> int | None:
         return self._coin.balance
 
 
@@ -111,7 +110,7 @@ class CoinReceiveManagerModel(AbstractCoinStateModel):
 
     def __init__(self, application: QmlApplication, coin: Coin) -> None:
         super().__init__(application, coin)
-        self._address: Optional[Coin.Address] = None
+        self._address: Coin.Address | None = None
 
     def _getValidStatus(self) -> ValidStatus:
         if self._address is not None:
@@ -148,13 +147,9 @@ class CoinReceiveManagerModel(AbstractCoinStateModel):
             type_=address_type,
             label=label,
             comment=comment)
-        if self._address is None:
-            self.update()
-            return False
-
-        self._coin.appendAddress(self._address)
+        result = bool(self._address and self._address.save())
         self.update()
-        return True
+        return result
 
     @QSlot()
     def clear(self) -> None:
@@ -189,10 +184,7 @@ class CoinManagerModel(AbstractCoinStateModel):
             name=address_name,
             label=label,
             comment=comment)
-        if address is None:
-            return False
-        self._coin.appendAddress(address)
-        return True
+        return bool(address and address.save())
 
     # noinspection PyTypeChecker
     @QSlot(str, result=bool)
@@ -202,13 +194,13 @@ class CoinManagerModel(AbstractCoinStateModel):
         return True
 
 
-class CoinModel(_CoinModel, AbstractModel):
+class CoinModel(AbstractCoinObjectModel, Coin.Model, AbstractModel):
     def __init__(self, application: QmlApplication, coin: Coin) -> None:
         super().__init__(
             application,
+            coin=coin,
             query_scheduler=application.networkQueryScheduler,
-            database=application.database,
-            coin=coin)
+            database=application.database)
 
         self._balance_model = CoinBalanceModel(
             self._application,
@@ -224,11 +216,6 @@ class CoinModel(_CoinModel, AbstractModel):
             self._application,
             self._coin)
         self.connectModelUpdate(self._server_data_model)
-
-        self._address_list_model = AddressListModel(
-            self._application,
-            self._coin.addressList)
-        self._tx_list_model = TxListConcatenateModel(self._application)
 
         self._receive_manager = CoinReceiveManagerModel(
             self._application,
@@ -264,25 +251,21 @@ class CoinModel(_CoinModel, AbstractModel):
     def serverData(self) -> CoinServerDataModel:
         return self._server_data_model
 
-    @QProperty(QObject, constant=True)
-    def addressList(self) -> AddressListModel:
-        return self._address_list_model
-
     # noinspection PyTypeChecker
-    @QSlot(result=QObject)
-    def addressListSorted(self) -> AddressListSortedModel:
-        return AddressListSortedModel(
+    @QSlot(int, result=QObject)
+    def openAddressList(self, column_count: int) -> AddressListModel:
+        return self._registerList(AddressListModel(
             self._application,
-            self._address_list_model)
-
-    @QProperty(QObject, constant=True)
-    def txList(self) -> TxListConcatenateModel:
-        return self._tx_list_model
+            self._coin.addressList,
+            column_count))
 
     # noinspection PyTypeChecker
-    @QSlot(result=QObject)
-    def txListSorted(self) -> TxListSortedModel:
-        return TxListSortedModel(self._application, self._tx_list_model)
+    @QSlot(int, result=QObject)
+    def openTxList(self, column_count: int) -> TxListModel:
+        return self._registerList(TxListModel(
+            self._application,
+            self._coin.txList,
+            column_count))
 
     @QProperty(QObject, constant=True)
     def receiveManager(self) -> CoinReceiveManagerModel:
@@ -292,95 +275,31 @@ class CoinModel(_CoinModel, AbstractModel):
     def manager(self) -> CoinManagerModel:
         return self._manager
 
-    def afterSetEnabled(self) -> None:
+    @QProperty(QObject, constant=True)
+    def txFactory(self) -> TxFactoryModel:
+        return self._coin.txFactory.model
+
+    def afterSetIsEnabled(self, value: bool) -> None:
         self._state_model.update()
-        super().afterSetEnabled()
+        super().afterSetIsEnabled(value)
 
-    def afterSetHeight(self) -> None:
+    def afterSetHeight(self, value: int) -> None:
         self._state_model.update()
-        super().afterSetHeight()
+        super().afterSetHeight(value)
 
-    def afterSetStatus(self) -> None:
-        super().afterSetStatus()
-
-    def afterSetFiatRate(self) -> None:
+    def afterSetFiatRate(self, value: FiatRate) -> None:
         self._balance_model.update()
         self._coin.txFactory.model.update()
-        super().afterSetFiatRate()
+        super().afterSetFiatRate(value)
 
-    def afterUpdateBalance(self) -> None:
+    def afterUpdateBalance(self, value: int) -> None:
         self._balance_model.update()
-        super().afterUpdateBalance()
+        super().afterUpdateBalance(value)
 
-    def afterUpdateUtxoList(self) -> None:
-        self._coin.txFactory.model.update()
-        super().afterUpdateUtxoList()
-
-    def beforeAppendAddress(self, address: Coin.Address) -> None:
-        self._address_list_model.lock(self._address_list_model.lockInsertRows())
-        super().beforeAppendAddress(address)
-
-    def afterAppendAddress(self, address: Coin.Address) -> None:
-        self._address_list_model.unlock()
-        # noinspection PyUnresolvedReferences
-        self._tx_list_model.addSourceModel(address.model.txList)
-        super().afterAppendAddress(address)
-
-    def afterSetServerData(self) -> None:
+    def afterSetServerData(self, value: dict[str, ...]) -> None:
         self._server_data_model.update()
-        super().afterSetServerData()
+        super().afterSetServerData(value)
 
 
-class CoinListModel(AbstractListModel):
-    class Role(RoleEnum):
-        OBJECT: Final = auto()  # TODO temporary, kill
-        SHORT_NAME: Final = auto()
-        FULL_NAME: Final = auto()
-        ICON_PATH: Final = auto()
-        BALANCE: Final = auto()
-        STATE: Final = auto()
-        SERVER_DATA: Final = auto()
-        ADDRESS_LIST: Final = auto()
-        TX_LIST: Final = auto()
-        TX_FACTORY: Final = auto()
-        RECEIVE_MANAGER: Final = auto()
-        MANAGER: Final = auto()
-
-    _ROLE_MAP: Final = {
-        Role.OBJECT: (  # TODO temporary, kill
-            b"object",
-            lambda c: c.model),
-        Role.SHORT_NAME: (
-            b"name",
-            lambda c: c.model.name),
-        Role.FULL_NAME: (
-            b"fullName",
-            lambda c: c.model.fullName),
-        Role.ICON_PATH: (
-            b"iconPath",
-            lambda c: c.model.iconPath),
-        Role.BALANCE: (
-            b"balance",
-            lambda c: c.model.balance),
-        Role.STATE: (
-            b"state",
-            lambda c: c.model.state),
-        Role.SERVER_DATA: (
-            b"serverData",
-            lambda c: c.model.serverData),
-        Role.ADDRESS_LIST: (
-            b"addressList",
-            lambda c: c.model.addressListSorted()),
-        Role.TX_LIST: (
-            b"txList",
-            lambda c: c.model.txListSorted()),
-        Role.TX_FACTORY: (
-            b"txFactory",
-            lambda c: c.txFactory.model),
-        Role.RECEIVE_MANAGER: (
-            b"receiveManager",
-            lambda c: c.model.receiveManager),
-        Role.MANAGER: (
-            b"manager",
-            lambda c: c.model.manager)
-    }
+class CoinListModel(AbstractTableModel):
+    pass

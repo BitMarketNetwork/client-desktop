@@ -7,7 +7,6 @@ from ..abstract import Coin
 from ...crypto.digest import Sha256Digest, Sha256DoubleDigest
 
 if TYPE_CHECKING:
-    from typing import List, Optional, Sequence
     from . import Bitcoin
 
 
@@ -20,27 +19,10 @@ class _MutableTx(Coin.TxFactory.MutableTx):
     Input = _MutableInput
     Output = _MutableOutput
 
-    if TYPE_CHECKING:
-        _input_list: List[_MutableTx.Input]
-        _output_list: List[_MutableTx.Output]
+    def __init__(self, coin: Bitcoin, *, lock_time: int = 0, **kwargs) -> None:
+        super().__init__(coin, lock_time=lock_time, version=1, **kwargs)
 
-    def __init__(
-            self,
-            coin: Bitcoin,
-            input_list: Sequence[_MutableTx.Input],
-            output_list: Sequence[_MutableTx.Output],
-            *,
-            lock_time: int = 0,
-            **kwargs) -> None:
-        super().__init__(
-            coin,
-            input_list,
-            output_list,
-            lock_time=lock_time,
-            version=1,
-            **kwargs)
-
-    def _deriveName(self) -> Optional[str]:
+    def _deriveName(self) -> str | None:
         v = Sha256DoubleDigest(self.raw(with_witness=False)).finalize()
         return v[::-1].hex()
 

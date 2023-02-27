@@ -2,22 +2,13 @@ from __future__ import annotations
 
 import os
 from itertools import chain
-from unittest import TestCase
 
 import bmnclient.database.vfs as vfs  # TODO kill
 from bmnclient.database.vfs import VfsFile
-from tests import TestApplication
+from tests.helpers import TestCaseApplication
 
 
-class TestDatabaseVfs(TestCase):
-    def setUp(self) -> None:
-        self._application = TestApplication()
-        self.assertTrue(self._application.keyStore.create("123456"))
-        self.assertTrue(self._application.keyStore.open("123456"))
-
-    def tearDown(self) -> None:
-        self._application.setExitEvent()
-
+class TestDatabaseVfs(TestCaseApplication):
     def test_sectors(self) -> None:
         for sector_size in chain(
                 [i for i in range(16, 32)],  # AES block size as minimal value

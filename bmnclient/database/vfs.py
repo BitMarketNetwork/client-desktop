@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import os
 from pathlib import PurePath
-from typing import TYPE_CHECKING
+from typing import Final, TYPE_CHECKING
 
 from ..crypto.cipher import BlockDeviceCipher
 from ..logger import Logger
 from ..version import Product
 
 if TYPE_CHECKING:
-    from typing import Union, Tuple, Final
     from ..application import CoreApplication
 
 
@@ -53,7 +52,7 @@ class VfsFile:
     def __init__(
             self,
             application: CoreApplication,
-            file_name: Union[str, PurePath],
+            file_name: str | PurePath,
             sqlite_flags: int,
             sector_size: int = 0) -> None:
         self._application = application
@@ -90,25 +89,27 @@ class VfsFile:
 
         self._is_encrypted = False
         self._salt = b""
-        for object_flag in (
-                SQLITE_OPEN_MAIN_DB,
-                SQLITE_OPEN_MAIN_JOURNAL,
-                SQLITE_OPEN_TEMP_DB,
-                SQLITE_OPEN_TEMP_JOURNAL,
-                SQLITE_OPEN_TRANSIENT_DB,
-                SQLITE_OPEN_SUBJOURNAL,
-                SQLITE_OPEN_SUPER_JOURNAL,
-                SQLITE_OPEN_WAL
-        ):
-            if (sqlite_flags & object_flag) == object_flag:
-                self._is_encrypted = True
-                self._salt = (
-                        object_flag.to_bytes(4, "little")
-                        + Product.SHORT_NAME.encode()
-                        + b"\0" * (BlockDeviceCipher.saltSize - 4)
-                )[:BlockDeviceCipher.saltSize]
-                assert len(self._salt) == BlockDeviceCipher.saltSize
-                break
+
+        if not self._application.isInsecure:
+            for object_flag in (
+                    SQLITE_OPEN_MAIN_DB,
+                    SQLITE_OPEN_MAIN_JOURNAL,
+                    SQLITE_OPEN_TEMP_DB,
+                    SQLITE_OPEN_TEMP_JOURNAL,
+                    SQLITE_OPEN_TRANSIENT_DB,
+                    SQLITE_OPEN_SUBJOURNAL,
+                    SQLITE_OPEN_SUPER_JOURNAL,
+                    SQLITE_OPEN_WAL
+            ):
+                if (sqlite_flags & object_flag) == object_flag:
+                    self._is_encrypted = True
+                    self._salt = (
+                            object_flag.to_bytes(4, "little")
+                            + Product.SHORT_NAME.encode()
+                            + b"\0" * (BlockDeviceCipher.saltSize - 4)
+                    )[:BlockDeviceCipher.saltSize]
+                    assert len(self._salt) == BlockDeviceCipher.saltSize
+                    break
 
         self._sector_size = \
             self._DEFAULT_SECTOR_SIZE if not sector_size else sector_size
@@ -153,7 +154,7 @@ class VfsFile:
             size: int,
             offset: int,
             *,
-            write_mode: bool) -> Tuple[int, int]:
+            write_mode: bool) -> tuple[int, int]:
         sector_offset = (offset // self._sector_size) * self._sector_size
         chunk_offset = offset - sector_offset
         while size > 0:
@@ -310,7 +311,7 @@ class Vfs:
     def close(self, vfs_file: VfsFile) -> None:
         vfs_file.close()
 
-    def read(self, vfs_file: VfsFile, length: int, offset: int) -> Union[bytes, bool]:
+    def read(self, vfs_file: VfsFile, length: int, offset: int) -> bytes | bool:
         return vfs_file.read(length, offset)
 
     def write(self, vfs_file: VfsFile, data: bytes, offset: int) -> None:

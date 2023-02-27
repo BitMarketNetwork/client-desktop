@@ -2,21 +2,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    Property as QProperty, \
-    QObject, \
-    Signal as QSignal, \
-    Slot as QSlot
+from PySide6.QtCore import (
+    Property as QProperty,
+    QObject,
+    Signal as QSignal,
+    Slot as QSlot)
 
 from . import AbstractCoinStateModel, AbstractModel, ValidStatus
 from .amount import AbstractAmountInputModel, AbstractAmountModel
 from .tx import TxIoListModel
-from ....coin_models import TxFactoryModel as _TxFactoryModel
 from ..dialogs.tx import TxBroadcastPendingDialog
+from ....coins.abstract import Coin
+
 if TYPE_CHECKING:
     from typing import Optional, Sequence
     from .. import QmlApplication
-    from ....coins.abstract import Coin
 
 
 class AbstractTxFactoryStateModel(AbstractCoinStateModel):
@@ -161,6 +161,7 @@ class TxFactoryChangeAmountModel(AbstractTxFactoryAmountModel):
         return address.name if address is not None else self._NONE_STRING
 
 
+# TODO rename
 class TxFactoryReceiverModel(AbstractTxFactoryStateModel):
     __stateChanged = QSignal()
 
@@ -183,16 +184,18 @@ class TxFactoryReceiverModel(AbstractTxFactoryStateModel):
         self._factory.setReceiverAddressName(value)
         self._first_use = False
 
+    # TODO deprecated, implement inputAddressList
     @QProperty(str, notify=__stateChanged)
     def inputAddressName(self) -> str:
-        if self._factory.inputAddress is not None:
-            return self._factory.inputAddress.name
+        if self._factory.inputAddressList:
+            return self._factory.inputAddressList[0].name
         else:
             return ""
 
     @inputAddressName.setter
     def inputAddressName(self, value: str) -> None:
-        self._factory.setInputAddressName(value)
+        self._factory.inputAddressList.clear()
+        self._factory.inputAddressList.append(value)
 
     def _getValidStatus(self) -> ValidStatus:
         if self._factory.receiverAddress is not None:
@@ -237,18 +240,14 @@ class TxFactorySourceListModel(TxIoListModel):
             self.__stateChanged.emit()
 
 
-class TxFactoryModel(_TxFactoryModel, AbstractModel):
+class TxFactoryModel(Coin.TxFactory.Model, AbstractModel):
     __stateChanged = QSignal()
 
     def __init__(
             self,
             application: QmlApplication,
             factory: Coin.TxFactory) -> None:
-        super().__init__(
-            application,
-            query_scheduler=application.networkQueryScheduler,
-            database=application.database,
-            factory=factory)
+        super().__init__(application, factory=factory)
 
         self._state = TxFactoryStateModel(
             self._application,
@@ -342,18 +341,20 @@ class TxFactoryModel(_TxFactoryModel, AbstractModel):
     def broadcast(self) -> bool:
         return self._factory.broadcast()
 
-    def afterUpdateState(self) -> None:
-        super().afterUpdateState()
-        # TODO
-
-    def afterSetInputAddress(self) -> None:
+    def afterInsertInputAddress(self, address: Coin.Address) -> None:
         self._receiver.update()
+        super().afterInsertInputAddress(address)
 
-    def afterSetReceiverAddress(self) -> None:
+    def afterSetReceiverAddress(self, address: Coin.Address) -> None:
         self._receiver.update()
+        super().afterSetReceiverAddress(address)
 
-    def onBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None:
-        super().onBroadcast(mtx)
+    def afterUpdateUtxoList(self) -> None:
+        self.update()
+        super().afterUpdateUtxoList()
+
+    def afterInsertBroadcast(self, mtx: Coin.TxFactory.MutableTx) -> None:
+        super().afterInsertBroadcast(mtx)
         # noinspection PyTypeChecker
         TxBroadcastPendingDialog(
             self._application.qmlContext.dialogManager,

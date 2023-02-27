@@ -2,20 +2,22 @@ from __future__ import annotations
 
 from enum import IntEnum
 from threading import Lock
-from typing import TYPE_CHECKING
+from typing import Final, Generator, TYPE_CHECKING
 
-from PySide6.QtCore import \
-    Property as QProperty, \
-    QObject, \
-    Signal as QSignal, \
-    SignalInstance as QSignalInstance
+from PySide6.QtCore import (
+    Property as QProperty,
+    QObject,
+    Signal as QSignal,
+    SignalInstance as QSignalInstance)
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Final, Generator, Optional, Tuple
+    from .abstract import AbstractTableModel
     from .. import QmlApplication
     from ....coins.abstract import Coin
     from ....config import ConfigKey
     from ....language import Locale
+
+# TODO move all to .abstract
 
 
 class ValidStatus(IntEnum):
@@ -63,10 +65,10 @@ class AbstractTupleStateModel(AbstractStateModel):
     def __init__(
             self,
             application: QmlApplication,
-            source_list: Tuple[Dict[str, Any], ...],
+            source_list: tuple[dict[str, ...], ...],
             *,
-            config_key: Optional[ConfigKey] = None,
-            default_name: Optional[str] = None) -> None:
+            config_key: ConfigKey | None = None,
+            default_name: str | None = None) -> None:
         super().__init__(application)
         self._list = source_list
         self._config_key = config_key
@@ -84,7 +86,7 @@ class AbstractTupleStateModel(AbstractStateModel):
             self.__current_name = None
 
     @QProperty(list, constant=True)
-    def list(self) -> Tuple:
+    def list(self) -> tuple:
         return self._list
 
     @QProperty(str, constant=True)
@@ -104,7 +106,7 @@ class AbstractTupleStateModel(AbstractStateModel):
                 self.update()
 
     def _isValidName(self, name) -> bool:
-        return name and any(name == v["name"] for v in self._list)
+        return bool(name and any(name == v["name"] for v in self._list))
 
     def _getCurrentItemName(self) -> str:
         if self.__current_name is None:
@@ -129,6 +131,8 @@ class AbstractModel(QObject):
     stateChanged = QSignal()
 
     def __init__(self, application: QmlApplication, *args, **kwargs) -> None:
+        assert not kwargs
+        assert not args
         super().__init__()
         self._application = application
         self._update_lock = Lock()
@@ -145,7 +149,7 @@ class AbstractModel(QObject):
         return self._application.language.locale
 
     # TODO check usage
-    def update(self, initiator: Optional[QObject] = None) -> None:
+    def update(self, initiator: QObject | None = None) -> None:
         if self._update_lock.acquire(False):
             for a in self.iterateStateModels():
                 if a is not initiator:
