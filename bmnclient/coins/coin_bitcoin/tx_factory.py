@@ -23,13 +23,14 @@ class _TxFactory(Coin.TxFactory):
             *,
             time: int = -1,
             is_dummy: bool) -> Optional[_TxFactory.MutableTx]:
-        return self.MutableTx(
-            self._coin,
-            [
-                self.MutableTx.Input(u, is_dummy=is_dummy)
-                for u in input_list],
-            [
-                self.MutableTx.Output(a, amount=v, is_dummy=is_dummy)
-                for a, v in output_list],
-            is_dummy=is_dummy,
-            time=time)
+        mtx = self.MutableTx(self._coin, time=time, is_dummy=is_dummy)
+        for utxo in input_list:
+            mtx.inputList.append(dict(
+                utxo=utxo,
+                is_dummy=is_dummy))
+        for address, amount in output_list:
+            mtx.outputList.append(dict(
+                address=address,
+                amount=amount,
+                is_dummy=is_dummy))
+        return mtx

@@ -7,7 +7,6 @@ TextField {
     property FontMetrics fontMetrics: FontMetrics { font: _base.font }
 
     clip: true
-    selectByMouse: true
     wrapMode: TextField.NoWrap
 
     // TODO context menu

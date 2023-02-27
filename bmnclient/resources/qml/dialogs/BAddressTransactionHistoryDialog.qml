@@ -1,3 +1,4 @@
+import QtQuick
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
@@ -5,11 +6,15 @@ import "../coincontrols"
 BDialog {
     id: _base
     property var address // AddressModel
+    property var txList: address.openTxList(1)
+
+    Component.onDestruction: {
+        address.closeList(txList)
+    }
 
     title: qsTr("Transaction history")
     contentItem: BAddressTxListView {
-        id: _list
-        model: _base.address.txList
+        model: _base.txList
     }
     footer: BDialogButtonBox {
         BButton {

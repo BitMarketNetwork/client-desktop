@@ -14,7 +14,7 @@ from bmnclient.key_store import \
     KeyStoreError, \
     RestoreSeedPhrase
 from bmnclient.version import Product
-from tests import TestApplication
+from tests.helpers import TestApplication
 
 _logger = TestApplication.getLogger(__name__)
 

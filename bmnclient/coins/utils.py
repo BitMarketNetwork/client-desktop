@@ -10,6 +10,8 @@ if TYPE_CHECKING:
     from .abstract import Coin
     from ..utils.string import ClassStringKeyTuple
 
+# TODO deprecated
+
 
 class CoinUtils(NotImplementedInstance):
     @classmethod
@@ -32,48 +34,10 @@ class CoinUtils(NotImplementedInstance):
         return result
 
     @classmethod
-    def txToNameKeyTuple(
-            cls,
-            tx: Coin.Tx) -> Tuple[ClassStringKeyTuple, ...]:
-        return (
-            *cls.coinToNameKeyTuple(tx.coin),
-            (None, tx.name)
-        )
-
-    @classmethod
-    def txIoToNameKeyTuple(
-            cls,
-            io: Coin.Tx.Io) -> Tuple[ClassStringKeyTuple, ...]:
-        return (
-            *cls.addressToNameKeyTuple(io.address),
-            (None, "io"),
-            ("index", io.index),
-            ("amount", io.amount)
-        )
-
-    @classmethod
-    def txFactoryToNameKeyTuple(
-            cls,
-            factory: Coin.TxFactory) -> Tuple[ClassStringKeyTuple, ...]:
-        return cls.coinToNameKeyTuple(factory.coin)
-
-    @classmethod
     def mutableTxToNameKeyTuple(
             cls,
-            mtx: Coin.TxFactory.MutableTx) \
-            -> Tuple[ClassStringKeyTuple, ...]:
+            mtx: Coin.TxFactory.MutableTx) -> Tuple[ClassStringKeyTuple, ...]:
         return (
             *cls.coinToNameKeyTuple(mtx.coin),
             (None, mtx.name or "no_name")
-        )
-
-    @classmethod
-    def utxoToNameKeyTuple(
-            cls,
-            utxo: Coin.Tx.Utxo) -> Tuple[ClassStringKeyTuple, ...]:
-        return (
-            *cls.addressToNameKeyTuple(utxo.address),
-            (None, utxo.name),
-            (None, utxo.index),
-            ("amount", utxo.amount)
         )

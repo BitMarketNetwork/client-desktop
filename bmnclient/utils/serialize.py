@@ -1,14 +1,21 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import MutableSequence
+from enum import Flag, auto
+from typing import (
+    Callable,
+    Generator,
+    Generic,
+    Iterable,
+    Optional,
+    TypeVar,
+    Union)
 
 from .class_property import classproperty
 from .string import StringUtils
 
-if TYPE_CHECKING:
-    from typing import Any, Dict, List, Optional
-    DeserializedData = Optional[str, int, List, Dict]
-    DeserializedDict = Dict[str, DeserializedData]
+DeserializedData = Optional[Union[str, int, list, dict]]
+DeserializedDict = dict[str, DeserializedData]
 
 
 class DeserializationNotSupportedError(Exception):
@@ -16,30 +23,44 @@ class DeserializationNotSupportedError(Exception):
         super().__init__("deserialization not supported")
 
 
-def serializable(func: property) -> property:
-    assert isinstance(func, property)
-    getattr(func, "fget").__serializable = True
-    return func
+def serializable(
+        function: property | None = None,
+        **kwargs) -> Callable[[property], property] | property:
+    def decorator(function_: property) -> property:
+        assert isinstance(function_, property)
+        fget = getattr(function_, "fget")
+        fget.__serializable = True
+        fget.__data = kwargs
+        return function_
+    return decorator if function is None else decorator(function)
+
+
+class SerializeFlag(Flag):
+    DATABASE_MODE = auto()
+    PUBLIC_MODE = auto()
+    PRIVATE_MODE = auto()
+    EXCLUDE_SUBCLASSES = auto()
+
+
+class DeserializeFlag(Flag):
+    DATABASE_MODE = auto()
+    NORMAL_MODE = auto()
 
 
 class Serializable:
     __serialize_map = None
 
-    def __init__(self, *args, row_id: int = -1, **kwargs) -> None:
-        self.__row_id = row_id
+    def __init__(self, *args, **kwargs) -> None:
+        self.__row_id = -1
 
     def __update__(self, **kwargs) -> bool:
-        row_id = kwargs.pop("row_id", None)
-        if row_id is not None:
-            self.rowId = row_id
-
         serialize_map = self.serializeMap
         for (key, value) in kwargs.items():
-            key = self.__keyFromKwarg(key)
+            key = self.kwargKeyToName(key)
             if key not in serialize_map:
                 raise KeyError(
                     "unknown property '{}' to deserialization".format(key))
-            v = getattr(self.__class__, serialize_map[key])
+            v = getattr(self.__class__, serialize_map[key]["name"])
             if v.fset:
                 v.fset(self, value)
             elif v.fget(self) != value:
@@ -53,10 +74,13 @@ class Serializable:
 
     @rowId.setter
     def rowId(self, value: int) -> None:
-        self.__row_id = value
+        if self.__row_id != value:
+            if self.__row_id > 0 and value != -1:
+                raise RuntimeError("row id can't be changed")
+            self.__row_id = value
 
     @classproperty
-    def serializeMap(cls) -> Dict[str, str]: # noqa
+    def serializeMap(cls) -> dict[str, str]: # noqa
         if cls.__serialize_map is None:
             cls.__serialize_map = {}
             for name in dir(cls):
@@ -65,38 +89,41 @@ class Serializable:
                         isinstance(v, property)
                         and getattr(v.fget, "__serializable", None)
                 ):
-                    cls.__serialize_map[StringUtils.toSnakeCase(name)] = name
+                    cls.__serialize_map[StringUtils.toSnakeCase(name)] = dict(
+                        name=name,
+                        **getattr(v.fget, "__data", {}))
+
         return cls.__serialize_map
 
-    def serialize(
-            self,
-            *,
-            exclude_subclasses: bool = False,
-            **options) -> DeserializedDict:
-        result = {}
-        for (key, name) in self.serializeMap.items():
-            result[key] = self._serializeProperty(
+    def serialize(self, flags: SerializeFlag) -> DeserializedDict:
+        return {
+            key: self.serializeProperty(
+                flags,
                 key,
-                getattr(self, name),
-                exclude_subclasses=exclude_subclasses,
-                **options)
-        return result
+                getattr(self, data["name"]))
+            for (key, data) in self.serializeMap.items()
+        }
 
-    def _serializeProperty(
+    def serializeProperty(
             self,
+            flags: SerializeFlag,
             key: str,
-            value: Any,
-            *,
-            exclude_subclasses: bool = False,
-            **options) -> DeserializedData:
+            value: ...) -> DeserializedData:
         if isinstance(value, Serializable):
-            if exclude_subclasses:
+            if bool(flags & SerializeFlag.EXCLUDE_SUBCLASSES):
                 return {}
-            return value.serialize(**options)
+            return value.serialize(flags)
         if isinstance(value, (int, str, type(None))):
             return value
-        if isinstance(value, list):
-            return [self._serializeProperty(key, v, **options) for v in value]
+        if isinstance(value, Iterable):
+            return [
+                self.serializeProperty(flags, key, v)
+                for v in value
+                if not (
+                        isinstance(v, Serializable)
+                        and bool(flags & SerializeFlag.EXCLUDE_SUBCLASSES)
+                )
+            ]
 
         raise TypeError(
             "can't serialize value type '{}' for key '{}'"
@@ -105,40 +132,40 @@ class Serializable:
     @classmethod
     def deserialize(
             cls,
+            flags: DeserializeFlag,
             source_data: DeserializedDict,
-            *args,
-            **options) -> Optional[Serializable]:
-        kwargs = {
-            cls.__keyToKwarg(key):
-                cls._deserializeProperty(None, key, value, *args, **options)
+            *cls_args) -> Serializable | None:
+        cls_kwargs = {
+            cls.kwargKeyFromName(key):
+                cls.deserializeProperty(flags, None, key, value, *cls_args)
             for key, value in source_data.items()
         }
-        return cls(*args, **kwargs)
+        return cls(*cls_args, **cls_kwargs)
 
     def deserializeUpdate(
             self,
-            source_data: DeserializedDict,
-            **options) -> bool:
+            flags: DeserializeFlag,
+            source_data: DeserializedDict) -> bool:
         kwargs = {
-            self.__keyToKwarg(key):
-                self._deserializeProperty(self, key, value, **options)
+            self.kwargKeyFromName(key):
+                self.deserializeProperty(flags, self, key, value)
             for key, value in source_data.items()
         }
         return self.__update__(**kwargs)
 
     @classmethod
-    def _deserializeProperty(
+    def deserializeProperty(
             cls,
-            self: Optional[Serializable],
+            flags: DeserializeFlag,
+            self: Serializable | None,
             key: str,
             value: DeserializedData,
-            *args,
-            **options) -> Any:
+            *cls_args) -> ...:
         if isinstance(value, (int, str, type(None))):
             return value
-        if isinstance(value, list):
+        if isinstance(value, Iterable):
             return [
-                cls._deserializeProperty(self, key, v, *args, **options)
+                cls.deserializeProperty(flags, self, key, v, *cls_args)
                 for v in value
             ]
 
@@ -147,13 +174,68 @@ class Serializable:
             .format(str(type(value)), key))
 
     @classmethod
-    def __keyToKwarg(cls, key: str) -> str:
+    def kwargKeyFromName(cls, key: str) -> str:
         if key in ("type", ):
             return key + "_"
         return key
 
     @classmethod
-    def __keyFromKwarg(cls, key: str) -> str:
+    def kwargKeyToName(cls, key: str) -> str:
         if key in ("type_", ):
             return key[:-1]
         return key
+
+
+_T = TypeVar("_T", bound=Serializable)
+
+
+class SerializableList(MutableSequence[Generic[_T]]):
+    def __len__(self) -> int:
+        raise NotImplementedError
+
+    def __iter__(self) -> Generator[_T, None, None]:
+        raise NotImplementedError
+
+    def __getitem__(self, index: int) -> _T:
+        raise NotImplementedError
+
+    def __setitem__(self, index: int, value: ...) -> None:
+        raise NotImplementedError
+
+    def __delitem__(self, index: int) -> None:
+        raise NotImplementedError
+
+    def insert(self, index: int, value: ...) -> None:
+        raise NotImplementedError
+
+    def append(self, value: ...) -> None:
+        return self.insert(-1, value)
+
+    def clear(self) -> int:
+        raise NotImplementedError
+
+
+class EmptySerializableList(SerializableList):
+    def __len__(self) -> int:
+        return 0
+
+    def __iter__(self) -> Iterable[_T]:
+        return self
+
+    def __next__(self) -> _T:
+        raise StopIteration
+
+    def __getitem__(self, index: int) -> _T:
+        raise IndexError
+
+    def __setitem__(self, index: int, value: ...) -> None:
+        raise IndexError
+
+    def __delitem__(self, index: int) -> None:
+        raise IndexError
+
+    def insert(self, index: int, value: ...) -> None:
+        raise IndexError
+
+    def clear(self) -> int:
+        return 0

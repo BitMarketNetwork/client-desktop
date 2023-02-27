@@ -106,7 +106,7 @@ BItemDelegate {
             verticalAlignment: Text.AlignVCenter
             elide: BLabel.ElideRight
             maximumLineCount: 4
-            text: _base.address.txList.rowCount()
+            text: _base.address.state.txCount
         }
     }
     Component {
@@ -127,13 +127,13 @@ BItemDelegate {
             if (mouse.button === Qt.RightButton) {
                 _base.contextMenu.address = _base.address
                 _base.contextMenu.popup()
-            }  
+            }
         }
         onPressAndHold: (mouse) => {
             if (mouse.source === Qt.MouseEventNotSynthesized) {
                 _base.contextMenu.address = _base.address
                 contextMenu.popup()
-            } 
+            }
         }
     }
     onDoubleClicked: {

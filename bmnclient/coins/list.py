@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from .coin_bitcoin import Bitcoin, BitcoinTest
 from .coin_litecoin import Litecoin
-from ..utils.static_list import StaticList
+from ..utils import StaticList
 
 if TYPE_CHECKING:
     from typing import Iterator, Optional, Union
@@ -12,15 +12,12 @@ if TYPE_CHECKING:
 
 
 class CoinList(StaticList):
-    def __init__(
-            self,
-            *,
-            model_factory: Optional[CoinModelFactory] = None) -> None:
+    def __init__(self, *, model_factory: CoinModelFactory) -> None:
         super().__init__(
             (
                 Bitcoin(model_factory=model_factory),
                 BitcoinTest(model_factory=model_factory),
-                Litecoin(model_factory=model_factory)
+                Litecoin(model_factory=model_factory),
             ),
             item_property="name"
         )

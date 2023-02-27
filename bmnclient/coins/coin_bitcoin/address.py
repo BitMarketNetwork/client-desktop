@@ -20,6 +20,7 @@ class _Address(Coin.Address):
 
     Script = _Script
 
+    # TODO Enum(Coin.Address.TypeValue, Enum)
     class Type(Coin.Address.Type):
         UNKNOWN: Final = Coin.Address.TypeValue(
             name="unknown",
@@ -27,7 +28,7 @@ class _Address(Coin.Address):
             size=0,
             encoding=None,
             is_witness=False,
-            script_type=None,
+            script_type=_Script.Type.UNKNOWN,
             hd_purpose=None)
         PUBKEY_HASH: Final = Coin.Address.TypeValue(
             name="p2pkh",
@@ -67,7 +68,7 @@ class _Address(Coin.Address):
             size=-40,
             encoding=Coin.Address.Encoding.BECH32,
             is_witness=True,
-            script_type=None,
+            script_type=_Script.Type.UNKNOWN,
             hd_purpose=None)
         DEFAULT = WITNESS_V0_KEY_HASH
 

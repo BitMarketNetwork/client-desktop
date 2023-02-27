@@ -22,7 +22,6 @@ BScrollView {
         id: _base
         property FontMetrics fontMetrics: FontMetrics { font: _base.font }
 
-        selectByMouse: true
         wrapMode: TextArea.Wrap
 
         // TODO context menu
