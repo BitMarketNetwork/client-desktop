@@ -7,6 +7,7 @@ from unittest import TestCase
 
 from bmnclient.coins.coin_bitcoin import Bitcoin
 from bmnclient.coins.hd import HdAddressIterator, HdNode
+from tests.helpers import TestCaseApplication
 
 if TYPE_CHECKING:
     from typing import Final
@@ -122,7 +123,7 @@ PUBLIC_KEY_PATH_LIST: Final = {
 }
 
 
-class TestHd(TestCase):
+class TestHd(TestCaseApplication):
     def test_path(self) -> None:
         for (s, r) in PATH_LIST:
             self.assertEqual(r, HdNode.pathFromString(s))
@@ -248,7 +249,9 @@ class TestHd(TestCase):
                         private=False))
 
     def test_hd_address_index(self) -> None:
-        coin = Bitcoin()
+        coin = Bitcoin(model_factory=self._application.modelFactory)
+        self.assertTrue(coin.save())
+
         root_node = HdNode.deriveRootNode(urandom(64))
         self.assertIsNotNone(root_node)
         self.assertTrue(coin.deriveHdNode(root_node))
@@ -265,7 +268,7 @@ class TestHd(TestCase):
                         account=account,
                         is_change=is_change)
                     self.assertIsNotNone(address)
-                    coin.appendAddress(address)
+                    self.assertTrue(address.save())
                     self.assertEqual(
                         i + 1,
                         coin.nextHdIndex(purpose, account, change))
@@ -487,14 +490,14 @@ HD_ADDRESS_LIST = (
 )
 
 
-class TestHdAddressIterator(TestCase):
+class TestHdAddressIterator(TestCaseApplication):
     def test_hd_list(self) -> None:
         for hd_list in HD_ADDRESS_LIST:
             count = 0
             root_node = HdNode.deriveRootNode(bytes.fromhex(hd_list["seed"]))
             self.assertIsNotNone(root_node)
 
-            coin = Bitcoin()
+            coin = Bitcoin(model_factory=self._application.modelFactory)
             self.assertTrue(coin.deriveHdNode(root_node))
 
             it = HdAddressIterator(coin)
@@ -520,7 +523,7 @@ class TestHdAddressIterator(TestCase):
         root_node = HdNode.deriveRootNode(urandom(64))
         self.assertIsNotNone(root_node)
 
-        coin = Bitcoin()
+        coin = Bitcoin(model_factory=self._application.modelFactory)
         self.assertTrue(coin.deriveHdNode(root_node))
 
         flush = 0

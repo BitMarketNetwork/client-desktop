@@ -11,9 +11,9 @@ BApplicationPage {
 
     list.model: BBackend.coinList
     list.delegate: BCoinItem {
-        visible: model.state.isEnabled
-        enabled: model.state.isEnabled
-        coin: model
+        visible: modelObject.state.isEnabled
+        enabled: modelObject.state.isEnabled
+        coin: modelObject
         onClicked: {
             _base.stack.currentIndex = _base.coinToListIndex(coin.name)
             _base.stack.children[_base.stack.currentIndex].active = true
@@ -23,10 +23,10 @@ BApplicationPage {
     Repeater {
         model: BBackend.coinList
         delegate: Loader {
-            readonly property string coinName: model.name
+            readonly property string coinName: modelObject.name
             active: false
             sourceComponent: BWalletCoinPage {
-                coin: model
+                coin: modelObject
                 onCreateAddress: {
                     _base.createAddress(coin)
                 }

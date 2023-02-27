@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Final, List, Optional, Type, Union
-    from ...utils.serialize import DeserializedDict
+    from ...utils import DeserializedDict
 
 
 class ParseError(LookupError):
@@ -20,11 +20,11 @@ class AbstractParser:
             self,
             flags: Optional[AbstractParser.ParseFlag] = None) -> None:
         self._flags = flags
-        self._deserialized_dict: DeserializedDict = {}
+        self._result: DeserializedDict = {}
 
     @property
-    def deserializedDict(self) -> DeserializedDict:
-        return self._deserialized_dict
+    def result(self) -> DeserializedDict:
+        return self._result
 
     @classmethod
     def parseKey(
@@ -137,20 +137,21 @@ class TxParser(AbstractParser):
             "is_coinbase": self.parseKey(value, "coinbase", int) != 0,
 
             "input_list": [
-                self._parseIo(i, v) for i, v in enumerate(self.parseKey(
+                self._parseIo(i, v, "input") for i, v in enumerate(self.parseKey(
                     value,
                     "input",
                     list))
             ],
             "output_list": [
-                self._parseIo(i, v) for i, v in enumerate(self.parseKey(
+                self._parseIo(i, v, "output") for i, v in enumerate(self.parseKey(
                     value,
                     "output",
                     list))
             ]
         }
 
-    def _parseIo(self, index: int, item: dict) -> dict:
+    def _parseIo(self, index: int, item: dict, io_type: str) -> dict:
+        # TODO io_type as _Io.IoType.value.
         self.parseKey(
             item,
             "type",
@@ -159,11 +160,12 @@ class TxParser(AbstractParser):
 
         return {
             "index": index,
+            "io_type": io_type,
             "output_type": self.parseKey(
                 item,
                 "output_type",
                 str),
-            "address_name": self.parseKey(
+            "address": self.parseKey(
                 item,
                 "address",
                 str,
@@ -221,11 +223,11 @@ class SysinfoParser(AbstractParser):
 class CoinsInfoParser(AbstractParser):
     def __init__(self) -> None:
         super().__init__()
-        self._status = -1
+        self._online_status = -1
 
     @property
-    def status(self) -> int:
-        return self._status
+    def onlineStatus(self) -> int:
+        return self._online_status
 
     def __call__(self, value: dict, coin_name: str) -> bool:
         coin_info = self.parseKey(value, coin_name, dict, {})
@@ -233,11 +235,11 @@ class CoinsInfoParser(AbstractParser):
             return False
 
         try:
-            self._status = self.parseKey(
+            self._online_status = self.parseKey(
                 coin_info,
                 "status",
                 int)
-            self._deserialized_dict = {
+            self._result = {
                 "name": coin_name,
                 "height": self.parseKey(
                     coin_info,

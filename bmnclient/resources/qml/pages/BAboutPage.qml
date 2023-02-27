@@ -17,7 +17,7 @@ BApplicationPage {
         enabled: false
         model: BBackend.coinList
         delegate: BAboutCoinPane {
-            coin: model
+            coin: modelObject
         }
     }
 }

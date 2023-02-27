@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Optional, Tuple, Union
 
-from . import NotImplementedInstance
+from .instance import NotImplementedInstance
 
-if TYPE_CHECKING:
-    from typing import Optional, Tuple, Type
-    ClassStringKeyTuple = Tuple[Optional[str], Optional[str, int]]
+ClassStringKeyTuple = Tuple[Optional[str], Optional[Union[str, int]]]
 
 
 class StringUtils(NotImplementedInstance):
     @classmethod
-    def stripLeft(cls, source: str, symbol_list: str) -> Tuple[int, str]:
+    def stripLeft(cls, source: str, symbol_list: str) -> tuple[int, str]:
         offset = 0
         for c in source:
             if c not in symbol_list:
@@ -22,7 +20,7 @@ class StringUtils(NotImplementedInstance):
         return offset, source
 
     @classmethod
-    def stripRight(cls, source: str, symbol_list: str) -> Tuple[int, str]:
+    def stripRight(cls, source: str, symbol_list: str) -> tuple[int, str]:
         offset = 0
         for c in reversed(source):
             if c not in symbol_list:
@@ -73,8 +71,9 @@ class StringUtils(NotImplementedInstance):
 
     @staticmethod
     def classString(
-            cls_: Type,
-            *key_list: ClassStringKeyTuple) -> str:
+            cls_: type(object),
+            *key_list: ClassStringKeyTuple,
+            parent: object | type(object) | None = None) -> str:
         result = []
         for name, value in key_list:
             if name:
@@ -87,6 +86,9 @@ class StringUtils(NotImplementedInstance):
             class_name = class_name[8:]
 
         if result:
-            return class_name + "[" + ":".join(result) + "]"
-        else:
-            return class_name
+            class_name += "[" + ":".join(result) + "]"
+
+        if parent is not None:
+            class_name = str(parent) + "." + class_name
+
+        return class_name
