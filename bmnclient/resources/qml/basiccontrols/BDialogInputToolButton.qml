@@ -1,3 +1,5 @@
+import QtQuick.Layouts
+
 BToolButton {
-    BLayout.alignment: _applicationStyle.dialogInputAlignment
+    Layout.alignment: _applicationStyle.dialogInputAlignment
 }

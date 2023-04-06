@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Controls.Material
 
 import "../application"
@@ -19,7 +20,7 @@ BItemDelegate {
         columnSpacing: 5
 
         BIconImage {
-            BLayout.rowSpan: 2
+            Layout.rowSpan: 2
             source: _applicationManager.imagePath("icon-wallet.svg")
             sourceSize.width: _applicationStyle.icon.normalWidth
             sourceSize.height: _applicationStyle.icon.normalHeight
@@ -27,19 +28,19 @@ BItemDelegate {
         }
         BRowLayout {
             id: _titleLabels
-            BLayout.fillWidth: true
+            Layout.fillWidth: true
             BLabel {
-                BLayout.preferredWidth: _dateTimeLabel.width
+                Layout.preferredWidth: _dateTimeLabel.width
                 font.bold: true
                 elide: BLabel.ElideRight
                 text: _base.fileName
             }
             Item {
-                BLayout.fillWidth: true
+                Layout.fillWidth: true
             }
             BLabel {
                 id: _dateTimeLabel
-                BLayout.alignment: Qt.AlignRight
+                Layout.alignment: Qt.AlignRight
                 text: _base.fileModified.toLocaleString(
                     Qt.locale(BBackend.settings.language.currentName),
                     Locale.ShortFormat)
@@ -47,8 +48,8 @@ BItemDelegate {
         }
         BContextMenuToolButton {
             id: _menuToolButton
-            BLayout.alignment: Qt.AlignRight
-            BLayout.rowSpan: 2
+            Layout.alignment: Qt.AlignRight
+            Layout.rowSpan: 2
             menu: null
 
             onClicked: {
@@ -56,7 +57,7 @@ BItemDelegate {
             }
         }
         BLabel {
-            BLayout.preferredWidth: _titleLabels.width
+            Layout.preferredWidth: _titleLabels.width
             elide: BLabel.ElideMiddle
             text: _base.filePath
         }

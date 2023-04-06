@@ -1,6 +1,8 @@
+import QtQuick.Layouts
+
 BDialogButtonBox {
-    BLayout.columnSpan: parent.columns
-    BLayout.minimumWidth: implicitWidth
-    BLayout.fillWidth: true
+    Layout.columnSpan: parent.columns
+    Layout.minimumWidth: implicitWidth
+    Layout.fillWidth: true
     background: null
 }

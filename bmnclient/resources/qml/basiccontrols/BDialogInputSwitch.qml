@@ -1,3 +1,5 @@
+import QtQuick.Layouts
+
 BSwitch {
-    BLayout.alignment: _applicationStyle.dialogInputAlignment
+    Layout.alignment: _applicationStyle.dialogInputAlignment
 }

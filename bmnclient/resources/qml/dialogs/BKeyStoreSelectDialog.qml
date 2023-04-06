@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Controls.Material
 
 import "../application"
@@ -20,8 +21,8 @@ BDialog {
 
         Loader {
             id: _loader
-            BLayout.fillHeight: true
-            BLayout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.fillWidth: true
 
             state: BBackend.configFolderListModel.count > 0 ? "Visible" : "Invisible"
             states: [
@@ -35,7 +36,7 @@ BDialog {
 
                     BNumberAnimation {
                         target: _loader
-                        property: "BLayout.preferredWidth"
+                        property: "Layout.preferredWidth"
                         from: target.item.itemTemplateWidth
                         to: 0
                     }
@@ -46,7 +47,7 @@ BDialog {
 
                     BNumberAnimation {
                         target: _loader
-                        property: "BLayout.preferredWidth"
+                        property: "Layout.preferredWidth"
                         from: 0
                         to: target.item.itemTemplateWidth
                     }
@@ -72,11 +73,11 @@ BDialog {
         }
 
         BColumnLayout {
-            BLayout.fillWidth: true
+            Layout.fillWidth: true
 
             BKeyStoreDialogButton {
-                BLayout.fillWidth: true
-                BLayout.fillHeight: true
+                Layout.fillWidth: true
+                Layout.fillHeight: true
                 title: qsTr("Generate new Root Key")
                 details: qsTr("Create a new wallet to get started")
                 imagePath: _applicationManager.imagePath("plus-solid.svg")
@@ -86,8 +87,8 @@ BDialog {
                 }
             }
             BKeyStoreDialogButton {
-                BLayout.fillWidth: true
-                BLayout.fillHeight: true
+                Layout.fillWidth: true
+                Layout.fillHeight: true
                 title: qsTr("Restore from Seed Phrase")
                 details: qsTr("Enter Seed Phrase to access your wallet")
                 imagePath: _applicationManager.imagePath("rotate-right-solid.svg")
@@ -97,8 +98,8 @@ BDialog {
                 }
             }
             BKeyStoreDialogButton {
-                BLayout.fillWidth: true
-                BLayout.fillHeight: true
+                Layout.fillWidth: true
+                Layout.fillHeight: true
                 title: qsTr("Restore wallet from backup")
                 details: qsTr("Open a local backup file")
                 imagePath: _applicationManager.imagePath("rotate-right-solid.svg")

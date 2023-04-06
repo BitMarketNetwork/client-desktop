@@ -1,5 +1,7 @@
+import QtQuick.Layouts
+
 BButton {
-    BLayout.alignment: _applicationStyle.dialogInputAlignment
-    BLayout.minimumWidth: _applicationStyle.dialogInputWidth
-    BLayout.preferredWidth: _applicationStyle.dialogInputWidth
+    Layout.alignment: _applicationStyle.dialogInputAlignment
+    Layout.minimumWidth: _applicationStyle.dialogInputWidth
+    Layout.preferredWidth: _applicationStyle.dialogInputWidth
 }

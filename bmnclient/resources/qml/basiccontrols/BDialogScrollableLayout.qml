@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 
 BScrollView {
     id: _base
@@ -11,7 +12,7 @@ BScrollView {
         height: _base.height > implicitHeight ? _base.height : implicitHeight
         BControl {
             id: _control
-            BLayout.alignment: Qt.AlignTop | Qt.AlignHCenter
+            Layout.alignment: Qt.AlignTop | Qt.AlignHCenter
             topPadding: _applicationStyle.padding
             leftPadding: _applicationStyle.padding
             bottomPadding: _applicationStyle.padding + _base.BScrollBar.vertical.width

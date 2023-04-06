@@ -1,4 +1,6 @@
 import QtQml
+import QtQuick.Layouts
+
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
@@ -22,10 +24,10 @@ BDialog {
         }
         BDialogSeparator {}
         BAddressListView {
-            BLayout.fillWidth: true
-            BLayout.fillHeight: true
-            BLayout.minimumHeight: 0
-            BLayout.maximumHeight: implicitHeight
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.minimumHeight: 0
+            Layout.maximumHeight: implicitHeight
 
             visibleItemCount: Math.min(10, _base.sourceList.rowCount())
             model: _base.sourceList

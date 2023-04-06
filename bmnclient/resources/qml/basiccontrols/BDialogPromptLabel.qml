@@ -1,3 +1,5 @@
+import QtQuick.Layouts
+
 BLabel {
-    BLayout.alignment: _applicationStyle.dialogPromptAlignment
+    Layout.alignment: _applicationStyle.dialogPromptAlignment
 }

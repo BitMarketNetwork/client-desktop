@@ -1,7 +1,9 @@
+import QtQuick.Layouts
+
 BLabel {
-    BLayout.alignment: _applicationStyle.dialogInputAlignment
-    BLayout.minimumWidth: implicitWidth
-    BLayout.fillWidth: true
+    Layout.alignment: _applicationStyle.dialogInputAlignment
+    Layout.minimumWidth: implicitWidth
+    Layout.fillWidth: true
 
     font.bold: true
 }

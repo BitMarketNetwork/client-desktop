@@ -1,6 +1,7 @@
 import QtQuick
+import QtQuick.Layouts
 
 Item {
-    BLayout.columnSpan: parent.columns
-    BLayout.fillHeight: true
+    Layout.columnSpan: parent.columns
+    Layout.fillHeight: true
 }

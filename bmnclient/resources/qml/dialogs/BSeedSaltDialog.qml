@@ -1,6 +1,8 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Controls.Material
 import QtQuick.Particles
+
 import "../application"
 import "../basiccontrols"
 
@@ -34,8 +36,8 @@ BDialog {
 
             BLabel {
                 id: _label
-                BColumnLayout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-                BColumnLayout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+                Layout.fillWidth: true
                 horizontalAlignment: BLabel.AlignHCenter
                 wrapMode: BLabel.Wrap
                 font.bold: true
@@ -44,13 +46,13 @@ BDialog {
             }
             BProgressBar {
                 id: _progressBar
-                BColumnLayout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-                BColumnLayout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+                Layout.fillWidth: true
                 enabled: false
                 to: _base.stepCount
             }
             BButton {
-                BColumnLayout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
                 text: BCommon.button.cancelRole
                 onClicked: {
                     _base.reject()

@@ -1,4 +1,6 @@
+import QtQuick.Layouts
 import QtQuick.Controls.Material
+
 import "../basiccontrols"
 
 BPane {
@@ -9,21 +11,21 @@ BPane {
 
     contentItem: BDialogScrollableLayout {
         BLogoImage {
-            BLayout.columnSpan: parent.columns
-            BLayout.minimumWidth: implicitWidth
-            BLayout.alignment: Qt.AlignTop | Qt.AlignHCenter
+            Layout.columnSpan: parent.columns
+            Layout.minimumWidth: implicitWidth
+            Layout.alignment: Qt.AlignTop | Qt.AlignHCenter
             huge: true
             source: _base.iconPath
         }
 
         BDialogSeparator {
-            BLayout.minimumWidth: _applicationStyle.dialogInputWidth
+            Layout.minimumWidth: _applicationStyle.dialogInputWidth
             transparent: true
         }
 
         BInfoLayout {
-            BLayout.columnSpan: parent.columns
-            BLayout.fillWidth: true
+            Layout.columnSpan: parent.columns
+            Layout.fillWidth: true
 
             BInfoLabel {
                 text: qsTr("Full name:")

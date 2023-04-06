@@ -1,4 +1,6 @@
 import QtQuick
+import QtQuick.Layouts
+
 import "../application"
 import "../basiccontrols"
 
@@ -81,7 +83,7 @@ BDialog {
         BDialogSeparator{}
         BSpoilerItem {
             id: _spoiler
-            BLayout.columnSpan: parent.columns
+            Layout.columnSpan: parent.columns
             visible: _base.type === BSeedPhraseDialog.Type.Restore || _base.type === BSeedPhraseDialog.Type.Validate
 
             headerItem: BRowLayout {
@@ -106,7 +108,7 @@ BDialog {
                 }
                 BDialogInputSwitch {
                     id: _showPassword
-                    BLayout.columnSpan: parent.columns - 1
+                    Layout.columnSpan: parent.columns - 1
                 }
             }
         }

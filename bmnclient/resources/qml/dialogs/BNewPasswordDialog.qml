@@ -1,4 +1,6 @@
+import QtQuick.Layouts
 import QtQuick.Controls.Material
+
 import "../application"
 import "../basiccontrols"
 
@@ -51,7 +53,7 @@ BDialog {
         }
         BDialogInputSwitch {
             id: _showPassword
-            BLayout.columnSpan: parent.columns - 1
+            Layout.columnSpan: parent.columns - 1
         }
 
         // TODO show password rules

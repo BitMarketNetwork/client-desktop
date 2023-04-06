@@ -1,5 +1,7 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Controls.Material
+
 import "../application"
 
 BLabel {
@@ -9,8 +11,8 @@ BLabel {
     property string advancedText: ""
     property int status: BCommon.ValidStatus.Unset
 
-    BLayout.alignment: _applicationStyle.dialogInputAlignment
-    BLayout.preferredWidth: fontMetrics.averageCharacterWidth * (2 + maxAdvancedTextLength) * 1.5
+    Layout.alignment: _applicationStyle.dialogInputAlignment
+    Layout.preferredWidth: fontMetrics.averageCharacterWidth * (2 + maxAdvancedTextLength) * 1.5
 
     font.bold: true
     font.capitalization: Font.AllLowercase

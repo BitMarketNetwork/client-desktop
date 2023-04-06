@@ -1,5 +1,7 @@
+import QtQuick.Layouts
+
 BRadioButton {
-    BLayout.alignment: _applicationStyle.dialogInputAlignment
-    BLayout.minimumWidth: implicitWidth
-    BLayout.fillWidth: true
+    Layout.alignment: _applicationStyle.dialogInputAlignment
+    Layout.minimumWidth: implicitWidth
+    Layout.fillWidth: true
 }

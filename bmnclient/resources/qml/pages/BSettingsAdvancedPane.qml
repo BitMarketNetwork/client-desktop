@@ -1,4 +1,6 @@
+import QtQuick.Layouts
 import QtQuick.Dialogs
+
 import "../application"
 import "../basiccontrols"
 import "../dialogs"
@@ -64,9 +66,9 @@ BPane {
         BDialogSeparator {}
 
         BDialogInputButton {
-            BLayout.columnSpan: parent.columns
-            BLayout.fillWidth: true
-            BLayout.alignment:
+            Layout.columnSpan: parent.columns
+            Layout.fillWidth: true
+            Layout.alignment:
                 (_applicationStyle.dialogInputAlignment & ~Qt.AlignHorizontal_Mask)
                 | Qt.AlignHCenter
             text: qsTr("Backup wallet...")
@@ -76,9 +78,9 @@ BPane {
             }
         }
         BDialogInputButton {
-            BLayout.columnSpan: parent.columns
-            BLayout.fillWidth: true
-            BLayout.alignment:
+            Layout.columnSpan: parent.columns
+            Layout.fillWidth: true
+            Layout.alignment:
                 (_applicationStyle.dialogInputAlignment & ~Qt.AlignHorizontal_Mask)
                 | Qt.AlignHCenter
             text: qsTr("Restore wallet...")
@@ -90,9 +92,9 @@ BPane {
             }
         }
         BDialogInputButton {
-            BLayout.columnSpan: parent.columns
-            BLayout.fillWidth: true
-            BLayout.alignment:
+            Layout.columnSpan: parent.columns
+            Layout.fillWidth: true
+            Layout.alignment:
                 (_applicationStyle.dialogInputAlignment & ~Qt.AlignHorizontal_Mask)
                 | Qt.AlignHCenter
             text: qsTr("Clear wallet...")
@@ -107,9 +109,9 @@ BPane {
         BDialogSeparator {}
 
         BDialogInputButton {
-            BLayout.columnSpan: parent.columns
-            BLayout.fillWidth: true
-            BLayout.alignment:
+            Layout.columnSpan: parent.columns
+            Layout.fillWidth: true
+            Layout.alignment:
                 (_applicationStyle.dialogInputAlignment & ~Qt.AlignHorizontal_Mask)
                 | Qt.AlignHCenter
             text: qsTr("Reveal Seed Phrase...")

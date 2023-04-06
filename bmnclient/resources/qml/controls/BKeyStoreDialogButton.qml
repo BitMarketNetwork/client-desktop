@@ -1,5 +1,7 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Controls.Material
+
 import "../application"
 import "../basiccontrols"
 
@@ -16,19 +18,19 @@ BButton {
 
         BIconImage {
             id: _iconImage
-            BLayout.rowSpan: parent.columns
+            Layout.rowSpan: parent.columns
             sourceSize.width: _applicationStyle.icon.normalWidth
             sourceSize.height: _applicationStyle.icon.normalHeight
             color: Material.theme === Material.Dark ? Material.foreground : "transparent"
         }
         BLabel {
             id: _title
-            BLayout.fillWidth: true
+            Layout.fillWidth: true
             font.bold: true
         }
         BLabel {
             id: _details
-            BLayout.fillWidth: true
+            Layout.fillWidth: true
         }
     }
 }

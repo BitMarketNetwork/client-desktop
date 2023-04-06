@@ -1,9 +1,11 @@
+import QtQuick.Layouts
+
 BLabel {
-    BLayout.columnSpan: parent.columns
-    BLayout.alignment: _applicationStyle.dialogDescriptionAlignment
-    BLayout.minimumWidth: _applicationStyle.dialogInputWidth
-    BLayout.preferredWidth: _applicationStyle.dialogInputWidth
-    BLayout.fillWidth: true
+    Layout.columnSpan: parent.columns
+    Layout.alignment: _applicationStyle.dialogDescriptionAlignment
+    Layout.minimumWidth: _applicationStyle.dialogInputWidth
+    Layout.preferredWidth: _applicationStyle.dialogInputWidth
+    Layout.fillWidth: true
 
     wrapMode: BLabel.Wrap
 }
