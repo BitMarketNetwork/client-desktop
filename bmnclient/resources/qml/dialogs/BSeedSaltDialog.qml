@@ -8,6 +8,8 @@ import "../basiccontrols"
 
 BDialog {
     id: _base
+    Material.roundedScale: Material.NotRounded
+
     property int stepCount
     signal updateSalt(string value)
 
