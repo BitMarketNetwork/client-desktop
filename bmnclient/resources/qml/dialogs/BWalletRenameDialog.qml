@@ -1,5 +1,6 @@
 import "../application"
 import "../basiccontrols"
+import "../dialogcontrols"
 
 BDialog {
     id: _base

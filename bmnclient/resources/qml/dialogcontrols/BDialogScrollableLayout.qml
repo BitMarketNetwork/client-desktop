@@ -1,6 +1,9 @@
 import QtQuick
 import QtQuick.Layouts
 
+import "../basiccontrols"
+import "../dialogcontrols"
+
 BScrollView {
     id: _base
     default property alias children: _layout.children

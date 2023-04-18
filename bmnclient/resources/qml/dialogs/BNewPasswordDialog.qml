@@ -3,6 +3,7 @@ import QtQuick.Controls.Material
 
 import "../application"
 import "../basiccontrols"
+import "../dialogcontrols"
 
 BDialog {
     id: _base

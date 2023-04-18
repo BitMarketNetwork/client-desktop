@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
+import "../dialogcontrols"
 
 BDialog {
     id: _base

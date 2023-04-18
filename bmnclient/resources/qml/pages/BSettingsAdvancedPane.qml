@@ -3,6 +3,7 @@ import QtQuick.Dialogs
 
 import "../application"
 import "../basiccontrols"
+import "../dialogcontrols"
 import "../dialogs"
 
 BPane {

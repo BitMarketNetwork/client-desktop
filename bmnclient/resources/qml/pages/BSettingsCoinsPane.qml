@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import "../basiccontrols"
+import "../dialogcontrols"
 
 BPane {
     id: _base

@@ -4,6 +4,7 @@ import QtQuick.Controls.Material
 
 import "../application"
 import "../basiccontrols"
+import "../dialogcontrols"
 
 BPane {
     id: _base

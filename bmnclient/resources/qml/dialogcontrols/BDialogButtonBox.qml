@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Controls
 
+import "../basiccontrols"
+
 DialogButtonBox {
     // block standardButtons
     delegate: BButton {

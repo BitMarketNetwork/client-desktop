@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
 
+import "../basiccontrols"
+
 BComboBox {
     property var stateModel // AbstractTupleStateModel
 

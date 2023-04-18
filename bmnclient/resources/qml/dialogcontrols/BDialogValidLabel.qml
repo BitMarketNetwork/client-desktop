@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls.Material
 
 import "../application"
+import "../basiccontrols"
 
 BLabel {
     id: _base

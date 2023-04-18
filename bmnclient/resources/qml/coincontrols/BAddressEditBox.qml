@@ -1,8 +1,11 @@
 import "../application"
 import "../basiccontrols"
+import "../dialogcontrols"
 
 BDialogLayout {
     id: _base
+
+    // TODO: reimplement without dialog controls
 
     enum Type {
         Create,
