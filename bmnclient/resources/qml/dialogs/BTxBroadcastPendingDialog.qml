@@ -26,7 +26,6 @@ BDialog {
             text: qsTr("Transaction ID:")
         }
         BInfoValue {
-            placeholderText: qsTr("None")
             text: _base.tx.name
         }
 
