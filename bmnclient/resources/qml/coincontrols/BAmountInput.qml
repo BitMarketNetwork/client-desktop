@@ -31,7 +31,6 @@ BControl {
             Layout.preferredWidth: leftPadding + rightPadding + _base.valueTextMetrics.width
 
             validator: _base.amount.valueHumanValidator
-            horizontalAlignment: BTextField.AlignRight
             placeholderText: qsTr("Amount")
 
             Binding on text {
@@ -77,7 +76,6 @@ BControl {
             Layout.preferredWidth: leftPadding + rightPadding + _base.valueTextMetrics.width
 
             validator: _base.amount.fiatValueHumanValidator
-            horizontalAlignment: BTextField.AlignRight
             placeholderText: qsTr("Fiat amount")
 
             Binding on text {
