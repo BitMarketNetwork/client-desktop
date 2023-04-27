@@ -58,7 +58,7 @@ BDialog {
                 switch (_base.type) {
                 case BSeedPhraseDialog.Type.Generate:
                 case BSeedPhraseDialog.Type.Reveal:
-                    return qsTr("None")
+                    return qsTr("")
                 case BSeedPhraseDialog.Type.Validate:
                     return qsTr("Re-enter generated Seed Phrase")
                 case BSeedPhraseDialog.Type.Restore:
