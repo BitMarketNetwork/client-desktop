@@ -67,7 +67,7 @@ BDialogLayout {
             return qsTr("Not created")
         case BAddressEditBox.Type.View:
         case BAddressEditBox.Type.ViewRecipient:
-            return qsTr("None")
+            return ""
         case BAddressEditBox.Type.CreateWatchOnly:
             return qsTr("Enter watch-only address")
         }
@@ -83,7 +83,7 @@ BDialogLayout {
             return qsTr("Enter label for new address (optional)")
         case BAddressEditBox.Type.View:
         case BAddressEditBox.Type.ViewRecipient:
-            return qsTr("None")
+            return ""
         case BAddressEditBox.Type.CreateWatchOnly:
             return qsTr("Enter label for address (optional)")
         }
@@ -97,7 +97,7 @@ BDialogLayout {
             return qsTr("Enter comment for new address (optional)")
         case BAddressEditBox.Type.View:
         case BAddressEditBox.Type.ViewRecipient:
-            return qsTr("None")
+            return ""
         case BAddressEditBox.Type.CreateWatchOnly:
             return qsTr("Enter comment for address (optional)")
         }
