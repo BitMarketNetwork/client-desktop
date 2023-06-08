@@ -19,10 +19,20 @@ Dialog {
     // TODO: Binding loop detected for property "implicitWidth" when:
     // contentItem == BDialogLayout and header.elide != Text.ElideNone
     // qtdeclarative/src/quickcontrols2/material/Dialog.qml
-    implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
+    /*implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
                             contentWidth + leftPadding + rightPadding,
                             // implicitHeaderWidth,
-                            implicitFooterWidth)
+                            implicitFooterWidth)*/
+
+    implicitWidth: Math.max(background ? background.implicitWidth : 0,
+                            header && header.visible ? header.implicitWidth : 0,
+                            footer && footer.visible ? footer.implicitWidth : 0,
+                            contentWidth > 0 ? contentWidth + leftPadding + rightPadding : 0)
+
+    implicitHeight: Math.max(background ? background.implicitHeight : 0,
+                             (header && header.visible ? header.implicitHeight + spacing : 0)
+                             + (footer && footer.visible ? footer.implicitHeight + spacing : 0)
+                             + (contentHeight > 0 ? contentHeight + topPadding + bottomPadding : 0))
 
     Component.onCompleted: {
         if (context !== null) {
