@@ -17,8 +17,8 @@ BDialog {
     signal restoreAccepted
     signal restoreBackupAccepted
 
-    contentItem: BRowLayout {
-        spacing: 5
+    contentItem: BDialogLayout {
+        columns: 2
 
         Loader {
             id: _loader
@@ -77,8 +77,6 @@ BDialog {
             Layout.fillWidth: true
 
             BKeyStoreDialogButton {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
                 title: qsTr("Generate new Root Key")
                 details: qsTr("Create a new wallet to get started")
                 imagePath: _applicationManager.imagePath("plus-solid.svg")
@@ -88,8 +86,6 @@ BDialog {
                 }
             }
             BKeyStoreDialogButton {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
                 title: qsTr("Restore from Seed Phrase")
                 details: qsTr("Enter Seed Phrase to access your wallet")
                 imagePath: _applicationManager.imagePath("rotate-right-solid.svg")
@@ -99,8 +95,6 @@ BDialog {
                 }
             }
             BKeyStoreDialogButton {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
                 title: qsTr("Restore wallet from backup")
                 details: qsTr("Open a local backup file")
                 imagePath: _applicationManager.imagePath("rotate-right-solid.svg")
