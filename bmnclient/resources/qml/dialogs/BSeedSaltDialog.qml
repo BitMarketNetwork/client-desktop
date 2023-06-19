@@ -28,7 +28,7 @@ BDialog {
         onPositionChanged: {
             _base.saltStep((mouseX * mouseY) + (mouseX + mouseY))
         }
-        Keys.onPressed: {
+        Keys.onPressed: (event) => {
             _base.saltStep(event.key)
         }
 
