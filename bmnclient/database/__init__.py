@@ -357,6 +357,7 @@ class Database:
             assert id(table_type) not in self.__table_list
             self.__table_list[id(table_type)] = table_type(self)
 
+        self.__table_list[id(MetadataTable)].open(cursor)
         version = self[MetadataTable].get(
             cursor,
             MetadataTable.Key.VERSION,
