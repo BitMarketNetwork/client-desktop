@@ -9,10 +9,11 @@ BScrollView {
     default property alias children: _layout.children
     property alias columns: _layout.columns
     property alias contentLayoutItem: _control.contentItem
+    contentWidth: _base.availableWidth
 
     BColumnLayout {
-        width: _base.width > implicitWidth ? _base.width : implicitWidth
-        height: _base.height > implicitHeight ? _base.height : implicitHeight
+        anchors.fill: parent
+
         BControl {
             id: _control
             Layout.alignment: Qt.AlignTop | Qt.AlignHCenter
@@ -25,5 +26,4 @@ BScrollView {
             }
         }
     }
-
 }
