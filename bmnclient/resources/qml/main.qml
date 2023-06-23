@@ -67,8 +67,11 @@ BApplicationWindow {
             }
         }
 
-        BSettingsPage {
-            list.display: _drawer.barsDisplay
+        Loader {
+            active: _mainLayout.currentIndex === 3
+            sourceComponent: BSettingsPage {
+                list.display: _drawer.barsDisplay
+            }
         }
     }
 
