@@ -9,9 +9,11 @@ BScrollView {
     default property alias children: _layout.children
     property alias columns: _layout.columns
     property alias contentLayoutItem: _control.contentItem
+    property alias baseLayout: _baseLayout
     contentWidth: _base.availableWidth
 
     BColumnLayout {
+        id: _baseLayout
         anchors.fill: parent
 
         BControl {

@@ -7,6 +7,8 @@ import "../dialogcontrols"
 
 BDialog {
     id: _base
+    contentWidth: _base.contentItem.baseLayout.implicitWidth
+
     property int type: BSeedPhraseDialog.Type.Generate
     property bool readOnly: false
     readonly property string closeDelayText: BCommon.button.closeRole + " (%1)"
