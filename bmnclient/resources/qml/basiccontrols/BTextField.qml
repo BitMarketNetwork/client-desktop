@@ -6,14 +6,14 @@ TextField {
     id: _base
     property FontMetrics fontMetrics: FontMetrics { font: _base.font }
 
-    clip: true
+    //clip: true
+    selectByMouse: true
     wrapMode: TextField.NoWrap
-
     // TODO context menu
     // https://stackoverflow.com/questions/49793284/os-edit-paste-menu-for-qt-quick-2-textfield/49875950
     // https://bugreports.qt.io/browse/QTBUG-35598
 
-    background: Rectangle {
+    /*background: Rectangle {
         color: "transparent"
         radius: 2
         border.width: _base.activeFocus || _base.hovered ? 2 : 1
@@ -26,7 +26,7 @@ TextField {
     leftPadding: fontMetrics.averageCharacterWidth
     rightPadding: fontMetrics.averageCharacterWidth
     topPadding: fontMetrics.height * 0.5
-    bottomPadding: fontMetrics.height * 0.5
+    bottomPadding: fontMetrics.height * 0.5*/
 
     onActiveFocusChanged: {
         if (activeFocus && readOnly) {

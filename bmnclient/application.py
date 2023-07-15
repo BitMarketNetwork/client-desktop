@@ -337,6 +337,14 @@ class CoreApplication(QObject):
         return self._command_line.configPath
 
     @property
+    def defaultConfigPath(self) -> Path:
+        return self._command_line.configPath/ProductPaths.CONFIG_FILE_NAME
+
+    @property
+    def walletsPath(self) -> Path:
+        return self.configPath/ProductPaths.CONFIG_WALLETS_DIR
+
+    @property
     def config(self) -> Config:
         return self._config
 
@@ -427,6 +435,11 @@ class CoreApplication(QObject):
         if root_node is None:
             return
         assert not self._database.isOpen
+
+        # temorary
+        if not self._database.remove():
+            # TODO show message if failed
+            pass
 
         for coin in self._coin_list:
             if not coin.deriveHdNode(root_node):

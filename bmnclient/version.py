@@ -42,6 +42,7 @@ class ProductPaths:
 
     CONFIG_FILE_NAME: Final = "config.json"
     DATABASE_FILE_NAME: Final = "wallet.db"
+    CONFIG_WALLETS_DIR: Final = "wallets"
 
     QML_OFFLINE_STORAGE_PATH: Final = Path("qml") / "offline_storage"
     QML_CACHE_PATH: Final = Path("qml") / "cache"

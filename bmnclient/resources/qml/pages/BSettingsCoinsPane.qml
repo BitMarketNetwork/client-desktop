@@ -1,5 +1,8 @@
 import QtQuick
+import QtQuick.Layouts
+
 import "../basiccontrols"
+import "../dialogcontrols"
 
 BPane {
     id: _base
@@ -8,25 +11,25 @@ BPane {
 
     contentItem: BDialogScrollableLayout {
         BDialogPromptLabel {
-            BLayout.columnSpan: parent.columns
+            Layout.columnSpan: parent.columns
             text: qsTr("Uncheck unnecessary coins:")
         }
         Repeater {
             model: BBackend.coinList
             delegate: BDialogPromptLabel {
-                BLayout.column: 0
-                BLayout.row: index + 1
-                text: modelObject.fullName
+                Layout.column: 0
+                Layout.row: index + 1
+                text: model.fullName
             }
         }
         Repeater {
             model: BBackend.coinList
             delegate: BDialogInputSwitch {
-                BLayout.column: 1
-                BLayout.row: index + 1
-                checked: modelObject.state.isEnabled
+                Layout.column: 1
+                Layout.row: index + 1
+                checked: model.state.isEnabled
                 onCheckedChanged: {
-                    modelObject.state.isEnabled = checked
+                    model.state.isEnabled = checked
                 }
             }
         }

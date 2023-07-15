@@ -1,4 +1,4 @@
-PySide6-Essentials == 6.4.2
+PySide6-Essentials == 6.5.1
 cryptography == 36.0.2
 ecdsa == 0.17.0
 bmnsqlite3 == 0.1.0

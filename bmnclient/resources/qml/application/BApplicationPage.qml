@@ -1,5 +1,7 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Controls.Material
+
 import "../basiccontrols"
 
 BControl {
@@ -15,9 +17,10 @@ BControl {
     contentItem: BRowLayout {
         BListView {
             id: _list
-            BLayout.fillHeight: true
+            Layout.fillHeight: true
 
-            visible: count > 0
+            // TODO QTBUG-106164 will be fixed in 6.5.2
+            //visible: count > 0
             model: _stack.children.length - 1
             delegate: BItemDelegate {
                 id: _item
@@ -36,7 +39,7 @@ BControl {
             }
         }
         Rectangle {
-            BLayout.fillHeight: true
+            Layout.fillHeight: true
             implicitWidth: _list.count > 0 ? _applicationStyle.dividerSize : 0
             visible: _list.count > 0
             color: Material.dividerColor
@@ -44,8 +47,8 @@ BControl {
         BStackLayout {
             id: _stack
             currentIndex: 0
-            BLayout.fillWidth: true
-            BLayout.fillHeight: true
+            Layout.fillWidth: true
+            Layout.fillHeight: true
 
             Loader {
                 active: _stack.currentIndex === 0

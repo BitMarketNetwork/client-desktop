@@ -1,4 +1,6 @@
 import QtQuick
+import QtQuick.Layouts
+
 import "../basiccontrols"
 
 BControl {
@@ -9,7 +11,7 @@ BControl {
     padding: _applicationStyle.padding
     contentItem: BRowLayout {
         BIconLabel {
-            BLayout.fillWidth: true
+            Layout.fillWidth: true
             icon.width: _applicationStyle.icon.largeWidth
             icon.height: _applicationStyle.icon.largeHeight
             icon.source: _applicationManager.imagePath(_base.coin.iconPath)

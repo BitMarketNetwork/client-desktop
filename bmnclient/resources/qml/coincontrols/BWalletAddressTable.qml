@@ -1,6 +1,8 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Controls.Material
 import Qt.labs.qmlmodels
+
 import "../basiccontrols"
 
 BControl {
@@ -27,7 +29,7 @@ BControl {
 
             BHorizontalHeaderView {
                 id: _horizontalHeader
-                BLayout.fillWidth: true
+                Layout.fillWidth: true
                 syncView: _tableView
                 visible: _tableView.rows > 0
 
@@ -61,8 +63,8 @@ BControl {
             }
             BAddressTableView {
                 id: _tableView
-                BLayout.fillWidth: true
-                BLayout.fillHeight: true
+                Layout.fillWidth: true
+                Layout.fillHeight: true
                 model: _base.model
                 columnWidth: [355, -1, 150, 65, 60]
 

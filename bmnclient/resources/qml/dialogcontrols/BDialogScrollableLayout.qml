@@ -1,17 +1,24 @@
 import QtQuick
+import QtQuick.Layouts
+
+import "../basiccontrols"
+import "../dialogcontrols"
 
 BScrollView {
     id: _base
     default property alias children: _layout.children
     property alias columns: _layout.columns
     property alias contentLayoutItem: _control.contentItem
+    property alias baseLayout: _baseLayout
+    contentWidth: _base.availableWidth
 
     BColumnLayout {
-        width: _base.width > implicitWidth ? _base.width : implicitWidth
-        height: _base.height > implicitHeight ? _base.height : implicitHeight
+        id: _baseLayout
+        anchors.fill: parent
+
         BControl {
             id: _control
-            BLayout.alignment: Qt.AlignTop | Qt.AlignHCenter
+            Layout.alignment: Qt.AlignTop | Qt.AlignHCenter
             topPadding: _applicationStyle.padding
             leftPadding: _applicationStyle.padding
             bottomPadding: _applicationStyle.padding + _base.BScrollBar.vertical.width
@@ -21,5 +28,4 @@ BScrollView {
             }
         }
     }
-
 }

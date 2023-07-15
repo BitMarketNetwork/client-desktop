@@ -1,5 +1,7 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Controls.Material
+
 import "../application"
 import "../basiccontrols"
 
@@ -8,6 +10,8 @@ BColumnLayout {
 
     property alias contentItem: _loader.sourceComponent
     property alias headerItem: _header.sourceComponent
+    property alias content: _loader.item
+    property alias header: _header.item
 
     BRowLayout {
         BUnfoldToolButton {
@@ -15,16 +19,16 @@ BColumnLayout {
         }
         Loader {
             id: _header
-            BLayout.fillWidth: true
-            BLayout.fillHeight: true
+            Layout.fillWidth: true
+            Layout.fillHeight: true
         }
     }
     Loader {
         id: _loader
-        BLayout.fillWidth: true
-        BLayout.minimumHeight: BLayout.preferredHeight
-        BLayout.preferredHeight: 0
-        BLayout.maximumHeight: BLayout.preferredHeight
+        Layout.fillWidth: true
+        Layout.minimumHeight: Layout.preferredHeight
+        Layout.preferredHeight: 0
+        Layout.maximumHeight: Layout.preferredHeight
         opacity: 0
 
         state: _unfoldBtn.checked ? "unfold" : "fold"
@@ -49,7 +53,7 @@ BColumnLayout {
                         id: heightAnimation
                         target: _loader
                         easing.type: Easing.InOutQuad
-                        property: "BLayout.preferredHeight"
+                        property: "Layout.preferredHeight"
                         to: target.implicitHeight
                     }
                     BNumberAnimation {
@@ -76,7 +80,7 @@ BColumnLayout {
                         id: heightAnimation1
                         target: _loader
                         easing.type: Easing.InOutQuad
-                        property: "BLayout.preferredHeight"
+                        property: "Layout.preferredHeight"
                         to: 0
                     }
                 }

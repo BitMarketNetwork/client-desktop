@@ -1,7 +1,9 @@
 import QtQuick
 import QtQuick.Controls.Material
+
 import "../application"
 import "../basiccontrols"
+import "../dialogcontrols"
 
 BDialog {
     id: _base
@@ -19,7 +21,7 @@ BDialog {
             id: _message
             text: qsTr(
                       "This is an alpha version of the current application and it does not guarantee stable operation or safety of your finances.\n\n"
-                      + "Please use this version carefully for reference only, as it is intended for demonstration purposes only")
+                      + "Please use this version carefully for reference only, as it is intended for demonstration purposes only.")
         }
     }
 

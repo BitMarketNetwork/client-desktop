@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from .coins.hd import HdNode
 from .coins.mnemonic import Mnemonic
-from .config import ConfigKey
+from .config import Config, ConfigKey
 from .crypto.cipher import AeadCipher, MessageCipher
 from .crypto.digest import Sha256Digest
 from .crypto.kdf import SecretStore
@@ -243,6 +243,13 @@ class KeyStore(_KeyStoreSeed):
                 return True
         return False
 
+    @property
+    def isFirstStart(self) -> bool:
+        with self._lock:
+            if self._application.config.filePath.exists():
+                return False
+        return True
+
     def create(self, password: str) -> bool:
         value = self._generateSecretStoreValue()
         value = SecretStore(password).encryptValue(value)
@@ -285,9 +292,23 @@ class KeyStore(_KeyStoreSeed):
             self,
             language: str,
             phrase: str,
-            password: str) -> KeyStoreError:
+            key_store_password: str,
+            name: str,
+            seed_password: str) -> KeyStoreError:
         with self._lock:
-            if not self._saveSeed(language, phrase, password):
+            if not self._application.config.create(self._application.walletsPath, name):
+                return KeyStoreError.ERROR_SAVE_SEED
+            if not self.create(key_store_password):
+                return KeyStoreError.ERROR_SAVE_SEED
+            if not self.open(key_store_password):
+                return KeyStoreError.ERROR_INVALID_PASSWORD
+
+            result = self._saveSeed(
+                language,
+                phrase,
+                seed_password)
+
+            if not result:
                 return KeyStoreError.ERROR_SAVE_SEED
             root_node = self._deriveRootHdNodeFromSeed()
             if root_node is None:
@@ -313,6 +334,19 @@ class KeyStore(_KeyStoreSeed):
             self._reset_callback()
         return True
 
+    def close(self) -> None:
+        key_list_to_save = [ConfigKey.UI_THEME, ConfigKey.UI_LANGUAGE]
+        default_config_path = self._application.defaultConfigPath
+        if default_config_path != self._application.config.filePath:
+            default_config = Config(default_config_path)
+            if default_config.load():
+                for key in key_list_to_save:
+                    if self._application.config.exists(key):
+                        value = self._application.config.get(key)
+                        if default_config.get(key) != value:
+                            default_config.set(key, value, save=False)
+            default_config.save()
+
 
 class _AbstractSeedPhrase:
     def __init__(self, key_store: KeyStore) -> None:
@@ -332,14 +366,21 @@ class _AbstractSeedPhrase:
     def validate(self, phrase: str) -> bool:
         raise NotImplementedError
 
-    def finalize(self, phrase: str, password: str) -> KeyStoreError:
+    def finalize(
+            self,
+            phrase: str,
+            key_store_password: str,
+            name: str,
+            seed_password: str) -> KeyStoreError:
         if not self.validate(phrase):
             return KeyStoreError.ERROR_INVALID_SEED_PHRASE
 
         result = self._key_store.saveSeed(
             self._mnemonic.language,
             phrase,
-            password)
+            key_store_password,
+            name,
+            seed_password)
         if result != KeyStoreError.SUCCESS:
             return result
 

@@ -1,12 +1,15 @@
 import QtQuick
+import QtQuick.Layouts
+
+import "../basiccontrols"
 
 BComboBox {
     property var stateModel // AbstractTupleStateModel
 
-    BLayout.alignment: _applicationStyle.dialogInputAlignment
-    BLayout.minimumWidth: _applicationStyle.dialogInputWidth
-    BLayout.preferredWidth: _applicationStyle.dialogInputWidth
-    BLayout.fillWidth: true
+    Layout.alignment: _applicationStyle.dialogInputAlignment
+    Layout.minimumWidth: _applicationStyle.dialogInputWidth
+    Layout.preferredWidth: _applicationStyle.dialogInputWidth
+    Layout.fillWidth: true
 
     model: stateModel.list
     valueRole: "name"

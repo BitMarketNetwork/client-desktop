@@ -43,6 +43,9 @@ class AbstractStateModel(QObject):
         # noinspection PyUnresolvedReferences
         self.stateChanged.emit()
 
+    def reload(self) -> None:
+        raise NotImplementedError
+
     @property
     def locale(self) -> Locale:
         return self._application.language.locale
@@ -74,16 +77,7 @@ class AbstractTupleStateModel(AbstractStateModel):
         self._config_key = config_key
         self.__default_name = default_name
 
-        if self._config_key is not None:
-            self.__current_name = self._application.config.get(
-                self._config_key,
-                str,
-                "")
-            if self.__default_name is not None:
-                if not self._isValidName(self.__current_name):
-                    self.__current_name = self.__default_name
-        else:
-            self.__current_name = None
+        self._load()
 
     @QProperty(list, constant=True)
     def list(self) -> tuple:
@@ -105,6 +99,10 @@ class AbstractTupleStateModel(AbstractStateModel):
             if self._setCurrentItemName(value):
                 self.update()
 
+    def reload(self) -> None:
+        self._load()
+        self.update()
+
     def _isValidName(self, name) -> bool:
         return bool(name and any(name == v["name"] for v in self._list))
 
@@ -119,6 +117,18 @@ class AbstractTupleStateModel(AbstractStateModel):
         self._application.config.set(self._config_key, value)
         self.__current_name = value
         return True
+
+    def _load(self) -> None:
+        if self._config_key is not None:
+            self.__current_name = self._application.config.get(
+                self._config_key,
+                str,
+                "")
+            if self.__default_name is not None:
+                if not self._isValidName(self.__current_name):
+                    self.__current_name = self.__default_name
+        else:
+            self.__current_name = None
 
 
 class AbstractCoinStateModel(AbstractStateModel):

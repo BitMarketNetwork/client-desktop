@@ -23,7 +23,7 @@ ApplicationWindow {
     locale: Qt.locale(BBackend.settings.language.currentName)
     font: Qt.font(BBackend.settings.font.current)
 
-    onSceneGraphError: {
+    onSceneGraphError: (error, message) => {
         console.error("QML rendering error %1: %2".arg(error).arg(message))
     }
 }

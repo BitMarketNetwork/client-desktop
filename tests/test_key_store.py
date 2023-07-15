@@ -229,10 +229,10 @@ class TestKeyStore(TestCase):
             self.assertIsInstance(seed2, bytes)
 
             self.assertEqual(
-                g1.finalize(phrase1, ""),
+                g1.finalize(phrase1, self._password, "", ""),
                 KeyStoreError.ERROR_INVALID_SEED_PHRASE)
             self.assertEqual(
-                g1.finalize(phrase2, ""),
+                g1.finalize(phrase2, self._password, "", ""),
                 KeyStoreError.SUCCESS)
             self.assertTrue(key_store.hasSeed)
 
@@ -278,7 +278,7 @@ class TestKeyStore(TestCase):
             self.assertTrue(r1.prepare(language))
             self.assertTrue(r1.validate(phrase))
             self.assertEqual(
-                r1.finalize(phrase, ""),
+                r1.finalize(phrase, self._password, "", ""),
                 KeyStoreError.SUCCESS)
             self.assertTrue(key_store.hasSeed)
 

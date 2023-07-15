@@ -1,8 +1,11 @@
 import "../application"
 import "../basiccontrols"
+import "../dialogcontrols"
 
 BDialogLayout {
     id: _base
+
+    // TODO: reimplement without dialog controls
 
     enum Type {
         Create,
@@ -64,7 +67,7 @@ BDialogLayout {
             return qsTr("Not created")
         case BAddressEditBox.Type.View:
         case BAddressEditBox.Type.ViewRecipient:
-            return qsTr("None")
+            return ""
         case BAddressEditBox.Type.CreateWatchOnly:
             return qsTr("Enter watch-only address")
         }
@@ -80,7 +83,7 @@ BDialogLayout {
             return qsTr("Enter label for new address (optional)")
         case BAddressEditBox.Type.View:
         case BAddressEditBox.Type.ViewRecipient:
-            return qsTr("None")
+            return ""
         case BAddressEditBox.Type.CreateWatchOnly:
             return qsTr("Enter label for address (optional)")
         }
@@ -94,7 +97,7 @@ BDialogLayout {
             return qsTr("Enter comment for new address (optional)")
         case BAddressEditBox.Type.View:
         case BAddressEditBox.Type.ViewRecipient:
-            return qsTr("None")
+            return ""
         case BAddressEditBox.Type.CreateWatchOnly:
             return qsTr("Enter comment for address (optional)")
         }
