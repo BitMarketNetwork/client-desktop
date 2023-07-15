@@ -48,7 +48,7 @@ BDialog {
     }
     onReset: {
         _password1.clear()
-        _showPassword.checked = true
+        _showPassword.checked = false
     }
 
 
