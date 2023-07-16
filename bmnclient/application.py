@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from argparse import ArgumentParser
-from enum import Enum, auto
+from enum import auto, Enum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
