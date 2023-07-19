@@ -1,22 +1,24 @@
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from enum import Enum
-from typing import Sequence, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
+from PySide6.QtCore import Property as QProperty
 from PySide6.QtCore import (
-    Property as QProperty,
     QAbstractTableModel,
     QByteArray,
     QModelIndex,
     QObject,
     Qt,
-    Signal as QSignal,
-    Slot as QSlot)
+)
+from PySide6.QtCore import Signal as QSignal
+from PySide6.QtCore import Slot as QSlot
 
 if TYPE_CHECKING:
-    from .. import QmlApplication
     from ....coins.abstract import CoinObject
     from ....database.tables import SerializableRowList
+    from .. import QmlApplication
 
 
 class AbstractCoinObjectModel(QObject if TYPE_CHECKING else object):
@@ -33,27 +35,27 @@ class AbstractCoinObjectModel(QObject if TYPE_CHECKING else object):
         self._list_model_list.pop(id(model))
 
     def beforeInsertChild(
-            self,
-            object_: CoinObject,
-            row_list: SerializableRowList,
-            index: int) -> None:
+        self,
+        object_: CoinObject,
+        row_list: SerializableRowList,
+        index: int,
+    ) -> None:
         for m in self._list_model_list.values():
             if m.sourceList is row_list:
                 m.lock(m.Lock.INSERT, index, 1)
                 break
-        # noinspection PyUnresolvedReferences
         super().beforeInsertChild(object_, row_list, index)
 
     def afterInsertChild(
-            self,
-            object_: CoinObject,
-            row_list: SerializableRowList,
-            index: int) -> None:
+        self,
+        object_: CoinObject,
+        row_list: SerializableRowList,
+        index: int,
+    ) -> None:
         for m in self._list_model_list.values():
             if m.sourceList is row_list:
                 m.unlock()
                 break
-        # noinspection PyUnresolvedReferences
         super().afterInsertChild(object_, row_list, index)
 
 
@@ -70,23 +72,22 @@ class AbstractTableModel(QAbstractTableModel):
         RESET = 3
 
     def __init__(
-            self,
-            application: QmlApplication,
-            source_list: Sequence[CoinObject],
-            column_count: int = 1) -> None:
+        self,
+        application: QmlApplication,
+        source_list: MutableSequence[object],
+        column_count: int = 1,
+    ) -> None:
         super().__init__()
         self._application = application
         self._source_list = source_list
         self._column_count = column_count
         self.__lock = None
 
-        # noinspection PyUnresolvedReferences
         self.rowsInserted.connect(self.__rowCountChanged)
-        # noinspection PyUnresolvedReferences
         self.rowsRemoved.connect(self.__rowCountChanged)
 
     @property
-    def sourceList(self) -> Sequence[CoinObject]:
+    def sourceList(self) -> MutableSequence[object]:
         return self._source_list
 
     def roleNames(self) -> dict[Qt.ItemDataRole, QByteArray]:
@@ -100,16 +101,18 @@ class AbstractTableModel(QAbstractTableModel):
     @QProperty(str, notify=__rowCountChanged)
     def rowCountHuman(self) -> str:
         return self._application.language.locale.integerToString(
-            self.rowCount())
+            self.rowCount()
+        )
 
     def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
         return 0 if parent.isValid() else self._column_count
 
     def headerData(
-            self,
-            section: int,
-            orientation: Qt.Orientation,
-            role: Qt.ItemDataRole = Qt.DisplayRole) -> ...:
+        self,
+        section: int,
+        orientation: Qt.Orientation,
+        role: Qt.ItemDataRole = Qt.DisplayRole,
+    ) -> ...:
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
                 return "column" + str(section)
@@ -118,9 +121,10 @@ class AbstractTableModel(QAbstractTableModel):
         return None
 
     def data(
-            self,
-            index: QModelIndex,
-            role: Qt.ItemDataRole = Qt.DisplayRole) -> ...:
+        self,
+        index: QModelIndex,
+        role: Qt.ItemDataRole = Qt.DisplayRole,
+    ) -> ...:
         if 0 <= index.row() < len(self._source_list) and index.isValid():
             if role == self.RoleEnum.MODEL.value[0]:
                 return self._source_list[index.row()].model
