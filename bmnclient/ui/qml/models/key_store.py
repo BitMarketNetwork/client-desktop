@@ -86,9 +86,11 @@ class KeyStoreModel(QObject):
     def onRevealSeedPhrase(self) -> None:
         # noinspection PyTypeChecker
         RevealSeedPhraseDialog(
-            self._application.qmlContext.dialogManager).open()
+            self._application.qmlContext.dialogManager
+        ).open()
 
     @QSlot(QObject)
     def onPrepareTransaction(self, coin: Coin) -> None:
         TxApproveDialog(
-            self._application.qmlContext.dialogManager, coin).open()
+            self._application.qmlContext.dialogManager, coin
+        ).open()

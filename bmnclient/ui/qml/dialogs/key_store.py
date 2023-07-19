@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from typing import Final, Optional
     from . import DialogManager
 
+
 def selectKeyStoreDialog(manager: DialogManager) -> AbstractDialog:
     if manager.context.keyStore.native.isFirstStart:
         return SetupUiSettingsDialog(manager)
@@ -37,13 +38,10 @@ class ConfirmPasswordDialog(AbstractPasswordDialog):
             self._parent.text = result
             return
         if result == KeyStoreError.ERROR_INVALID_PASSWORD:
-            # noinspection PyUnresolvedReferences
             text = self.tr("Wrong Key Store password.")
         elif result == KeyStoreError.ERROR_SEED_NOT_FOUND:
-            # noinspection PyUnresolvedReferences
             text = self.tr("Seed Phrase not found.")
         else:
-            # noinspection PyUnresolvedReferences
             text = self.tr("Unknown Key Store error.")
         ConfirmPasswordErrorDialog(
             self._manager,

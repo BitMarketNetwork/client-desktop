@@ -82,11 +82,11 @@ class NullNetworkCookieJar(AbstractNetworkCookieJar):
 
 class NetworkAccessManager(QNetworkAccessManager):
     _OPERATION_MAP: Final = {
-        QNetworkAccessManager.HeadOperation: "HEAD",
-        QNetworkAccessManager.GetOperation: "GET",
-        QNetworkAccessManager.PutOperation: "PUT",
-        QNetworkAccessManager.PostOperation: "POST",
-        QNetworkAccessManager.DeleteOperation: "DELETE",
+        QNetworkAccessManager.Operation.HeadOperation: "HEAD",
+        QNetworkAccessManager.Operation.GetOperation: "GET",
+        QNetworkAccessManager.Operation.PutOperation: "PUT",
+        QNetworkAccessManager.Operation.PostOperation: "POST",
+        QNetworkAccessManager.Operation.DeleteOperation: "DELETE",
     }
 
     def __init__(
@@ -148,7 +148,7 @@ class NetworkAccessManager(QNetworkAccessManager):
         tls = QSslConfiguration(QSslConfiguration.defaultConfiguration())
         tls.setOcspStaplingEnabled(False)
         tls.setPeerVerifyDepth(0)
-        tls.setPeerVerifyMode(QSslSocket.VerifyPeer)
+        tls.setPeerVerifyMode(QSslSocket.PeerVerifyMode.VerifyPeer)
         tls.setProtocol(QSsl.TlsV1_2OrLater)
         tls.setSslOption(QSsl.SslOptionDisableEmptyFragments, True)
         tls.setSslOption(QSsl.SslOptionDisableSessionTickets, False)
