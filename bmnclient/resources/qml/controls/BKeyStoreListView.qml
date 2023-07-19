@@ -12,9 +12,7 @@ BListView {
         visible: false
 
         sourceComponent: BKeyStoreListItem {
-            fileName: BCommon.keyStoreItemTemplate.fileName
-            fileModified: BCommon.keyStoreItemTemplate.fileModified
-            filePath: BCommon.keyStoreItemTemplate.filePath
+            file: BCommon.keyStoreItemTemplate
         }
     }
 }

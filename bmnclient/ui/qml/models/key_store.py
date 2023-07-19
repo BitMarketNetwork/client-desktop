@@ -1,56 +1,24 @@
 from __future__ import annotations
-from enum import auto
-import os
 
-from typing import TYPE_CHECKING, Final, Optional
-from .list import AbstractFolderListModel, RoleEnum
-from ....os_environment import PlatformPaths
+from pathlib import Path
+from typing import TYPE_CHECKING, Optional
 
-from PySide6.QtCore import \
-    QObject, \
-    QFileInfo, \
-    Property as QProperty, \
-    Slot as QSlot
+from PySide6.QtCore import Property as QProperty
+from PySide6.QtCore import QObject
+from PySide6.QtCore import Slot as QSlot
 from PySide6.QtGui import QValidator
 
-from ..dialogs.key_store import RevealSeedPhraseDialog, TxApproveDialog
+from bmnclient.version import ProductPaths
+
 from ....coins.abstract.coin import Coin
+from ....logger import Logger
+from ....os_environment import PlatformPaths
+from ..dialogs.key_store import RevealSeedPhraseDialog, TxApproveDialog
+from .file import FileListModel
 
 if TYPE_CHECKING:
-    from . import QmlApplication
     from ....key_store import KeyStore
-
-
-class ConfigFolderListModel(AbstractFolderListModel):
-    class Role(RoleEnum):
-        FILE_NAME: Final = auto()
-        FILE_PATH: Final = auto()
-        FILE_MODIFED: Final = auto()
-
-    _ROLE_MAP: Final = {
-        Role.FILE_NAME: (
-            b"fileName",
-            lambda c: QFileInfo(c).baseName()),
-        Role.FILE_PATH: (
-            b"filePath",
-            lambda c: QFileInfo(c).filePath()),
-        Role.FILE_MODIFED: (
-            b"fileModified",
-            lambda c: QFileInfo(c).lastModified())
-    }
-
-    def __init__(
-            self,
-            application: QmlApplication) -> None:
-        super().__init__(
-            application,
-            application.walletsPath,
-            "[^\\s]+(.*?)\\.(json|JSON)$")
-
-    @QSlot(str)
-    def onRemoveAccepted(self, path: str) -> None:
-        if os.path.isfile(path):
-            os.remove(path)
+    from . import QmlApplication
 
 
 class KeyStoreModel(QObject):
@@ -84,7 +52,6 @@ class KeyStoreModel(QObject):
 
     @QSlot()
     def onRevealSeedPhrase(self) -> None:
-        # noinspection PyTypeChecker
         RevealSeedPhraseDialog(
             self._application.qmlContext.dialogManager
         ).open()
@@ -94,3 +61,30 @@ class KeyStoreModel(QObject):
         TxApproveDialog(
             self._application.qmlContext.dialogManager, coin
         ).open()
+
+
+class KeyStoreListModel(FileListModel):
+    def __init__(self, application: QmlApplication) -> None:
+        super().__init__(application, application.walletsPath)
+
+    def _filter(self, file: Path) -> bool:
+        return (
+            file.is_file()
+            and file.suffix.lower() == ProductPaths.WALLET_SUFFIX.lower()
+        )
+
+    # TODO confirmation dialog
+    @QSlot(str)
+    def onRemoveAccepted(self, path: str) -> None:
+        path = Path(path)
+        if path not in self._source_list:  # advanced protection
+            return
+        try:
+            path.unlink(missing_ok=True)
+        except OSError as exp:
+            self._logger.debug(
+                "Failed to remove file '%s'. %s",
+                path,
+                Logger.osErrorString(exp),
+            )
+            # TODO: UI message

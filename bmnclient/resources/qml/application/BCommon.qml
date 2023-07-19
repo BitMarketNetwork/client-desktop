@@ -82,9 +82,9 @@ QtObject {
     }
 
     readonly property QtObject keyStoreItemTemplate: QtObject {
-        readonly property string fileName: "config"
-        readonly property string fileModified: "01/01/1970 00:00 PM"
-        readonly property string filePath: "/Users/Username/Library/Preferences/BitMarket Network Client/config.json"
+        readonly property string name: "config.json"
+        readonly property string mtimeHuman: "Thursday, January 1, 1970 00:00:00 AM UTC"
+        readonly property string path: "/Users/Username/Library/Preferences/BitMarket Network Client/config.json"
     }
 
     readonly property var txStatusMap: [

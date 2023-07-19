@@ -44,9 +44,11 @@ class ProductPaths:
     ICON_DARWIN_FILE_PATH: Final = RESOURCES_PATH / "images" / "icon-logo.icns"
     ICON_LINUX_FILE_PATH: Final = RESOURCES_PATH / "images" / "icon-logo.svg"
 
-    CONFIG_FILE_NAME: Final = "config.json"
+    CONFIG_FILE_NAME: Final = "config.json"  # TODO deprecated
     WALLETS_DIR_NAME: Final = "wallets"
-    DATABASE_FILE_NAME: Final = "wallet.db"
+    WALLET_SUFFIX: Final = ".json"
+    DATABSE_SUFFIX: Final = ".db"
+    DATABASE_FILE_NAME: Final = "wallet.db"  # TODO deprecated
 
     QML_OFFLINE_STORAGE_PATH: Final = Path("qml") / "offline_storage"
     QML_CACHE_PATH: Final = Path("qml") / "cache"

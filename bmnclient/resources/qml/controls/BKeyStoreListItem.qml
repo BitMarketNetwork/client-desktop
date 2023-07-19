@@ -11,9 +11,7 @@ BItemDelegate {
     signal keyStoreClicked(var path)
     signal renameAccepted(var path)
 
-    property string fileName
-    property var fileModified
-    property string filePath
+    property var file // FileModel
 
     contentItem: BGridLayout {
         columns: 3
@@ -33,7 +31,7 @@ BItemDelegate {
                 Layout.preferredWidth: _dateTimeLabel.width
                 font.bold: true
                 elide: BLabel.ElideRight
-                text: _base.fileName
+                text: _base.file.name
             }
             Item {
                 Layout.fillWidth: true
@@ -41,9 +39,7 @@ BItemDelegate {
             BLabel {
                 id: _dateTimeLabel
                 Layout.alignment: Qt.AlignRight
-                text: _base.fileModified.toLocaleString(
-                    Qt.locale(BBackend.settings.language.currentName),
-                    Locale.ShortFormat)
+                text: _base.file.mtimeHuman
             }
         }
         BContextMenuToolButton {
@@ -59,7 +55,7 @@ BItemDelegate {
         BLabel {
             Layout.preferredWidth: _titleLabels.width
             elide: BLabel.ElideMiddle
-            text: _base.filePath
+            text: _base.file.path
         }
     }
     BMenu {
@@ -68,19 +64,20 @@ BItemDelegate {
             text: qsTr("Rename")
 
             onTriggered: {
-                _base.renameAccepted(_base.filePath)
+                _base.renameAccepted(_base.file.path)
             }
         }
         BMenuItem {
             text: qsTr("Remove")
 
             onTriggered: {
-                BBackend.configFolderListModel.onRemoveAccepted(_base.filePath)
+                // TODO confirmation dialog
+                BBackend.keyStoreList.onRemoveAccepted(_base.file.path)
             }
         }
     }
 
     onClicked: {
-        _base.keyStoreClicked(_base.filePath)
+        _base.keyStoreClicked(_base.file.path)
     }
 }

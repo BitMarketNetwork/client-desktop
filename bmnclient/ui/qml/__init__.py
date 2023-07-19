@@ -24,7 +24,7 @@ from .models.clipboard import ClipboardModel
 from .models.coin import CoinListModel
 from .models.debug import DebugModel
 from .models.factory import ModelsFactory
-from .models.key_store import KeyStoreModel, ConfigFolderListModel
+from .models.key_store import KeyStoreListModel, KeyStoreModel
 from .models.password import PasswordModel
 from .models.settings import SettingsModel
 from .models.update import UpdateModel
@@ -146,7 +146,7 @@ class QmlContext(QObject):
         )
         self._clipboard_model = ClipboardModel(self._application)
         self._key_store_model = KeyStoreModel(self._application)
-        self._configure_folder_model = ConfigFolderListModel(self._application)
+        self._key_store_list_model = KeyStoreListModel(self._application)
         self._settings_model = SettingsModel(self._application)
         self._dialog_manager = DialogManager(self)
         self._debug_model = DebugModel(self._application)
@@ -196,8 +196,8 @@ class QmlContext(QObject):
         return self._key_store_model
 
     @QProperty(QObject, constant=True)
-    def configFolderListModel(self) -> ConfigFolderListModel:
-        return self._configure_folder_model
+    def keyStoreList(self) -> KeyStoreListModel:
+        return self._key_store_list_model
 
     @QProperty(QObject, constant=True)
     def settings(self) -> SettingsModel:

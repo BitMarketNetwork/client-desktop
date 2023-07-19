@@ -25,7 +25,7 @@ BDialog {
             Layout.fillHeight: true
             Layout.fillWidth: true
 
-            state: BBackend.configFolderListModel.count > 0 ? "Visible" : "Invisible"
+            state: BBackend.keyStoreList.count > 0 ? "Visible" : "Invisible"
             states: [
                 State { name: "Visible" },
                 State { name: "Invisible" }
@@ -56,12 +56,10 @@ BDialog {
             ]
 
             sourceComponent: BKeyStoreListView {
-                model: BBackend.configFolderListModel
+                model: BBackend.keyStoreList
 
                 delegate: BKeyStoreListItem {
-                    fileName: model.fileName
-                    fileModified: model.fileModified
-                    filePath: model.filePath
+                    file: modelObject
 
                     onKeyStoreClicked: (path) => {
                         _base.keyStoreClicked(path)
