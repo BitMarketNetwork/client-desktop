@@ -237,6 +237,7 @@ gui: all
 gui-debug: all
 	$(PYTHON) -m $(BMN_PACKAGE_NAME) -d
 
+# TODO
 .PHONY: check
 check: T = $(call NPATH,$(BASE_DIR))
 check: S = $(call NPATH,$(TESTS_DIR))
@@ -342,3 +343,21 @@ pip-clean:
 	$(call RMDIR,$(BUILD_DIR))
 	$(call RM,$(PIP_DIST_TARGET_WHEEL))
 	$(call RM,$(PIP_DIST_TARGET_SDIST))
+
+.PHONY: pip-upload
+pip-upload:
+	$(RSYNC) $(RSYNC_FLAGS) \
+		"$(PIP_DIST_TARGET_WHEEL)" \
+		"$(PIP_DIST_TARGET_SDIST)" \
+		"$(BMN_UPLOAD_DIR)/"
+
+################################################################################
+
+# TODO
+.PHONY: upload
+upload: DIST_TARGET_NAME := $(notdir $(DIST_TARGET))
+upload: DIST_TARGET_NAME := $(basename $(DIST_TARGET_NAME))-$(call FILE_MTIME,$(DIST_TARGET))$(suffix $(DIST_TARGET_NAME))
+upload:
+	$(RSYNC) $(RSYNC_FLAGS) \
+		"$(DIST_TARGET)" \
+		"$(BMN_UPLOAD_DIR)/$(DIST_TARGET_NAME)"
