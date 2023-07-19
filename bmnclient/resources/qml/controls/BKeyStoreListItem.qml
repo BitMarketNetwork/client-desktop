@@ -59,7 +59,6 @@ BItemDelegate {
             BSeparator {
                 Layout.fillWidth: true
             }
-
             BRowLayout {
                 BLabel {
                     text: qsTr("Path")
