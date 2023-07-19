@@ -8,6 +8,8 @@ import "../basiccontrols"
 BItemDelegate {
     id: _base
 
+    display: BItemDelegate.IconOnly // for ToolTip
+
     signal keyStoreClicked(var path)
     signal renameAccepted(var path)
 
@@ -45,6 +47,30 @@ BItemDelegate {
             text: _base.file.mtimeHuman
         }
     }
+
+    toolTipItem: BToolTip {
+        parent: _base
+
+        contentItem: BColumnLayout {
+            BLabel {
+                text: _base.file.name
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+            }
+            BSeparator {
+                Layout.fillWidth: true
+            }
+
+            BRowLayout {
+                BLabel {
+                    text: qsTr("Path")
+                }
+                BLabel {
+                    text: _base.file.path
+                }
+            }
+        }
+    }
+
     BMenu {
         id: _contextMenu
         BMenuItem {
