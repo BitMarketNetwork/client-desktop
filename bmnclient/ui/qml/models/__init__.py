@@ -11,10 +11,9 @@ from PySide6.QtCore import SignalInstance as QSignalInstance
 
 if TYPE_CHECKING:
     from ....coins.abstract import Coin
-    from ....config import ConfigKey
+    from ....config import Config
     from ....language import Locale
     from .. import QmlApplication
-    from .abstract import AbstractTableModel
 
 # TODO move all to .abstract
 
@@ -69,7 +68,7 @@ class AbstractTupleStateModel(AbstractStateModel):
         application: QmlApplication,
         source_list: tuple[dict[str, ...], ...],
         *,
-        config_key: ConfigKey | None = None,
+        config_key: Config.Key | None = None,
         default_name: str | None = None,
     ) -> None:
         super().__init__(application)

@@ -14,30 +14,14 @@ from .utils import StaticList
 from .version import Product
 
 if TYPE_CHECKING:
-    from typing import Any, Final, Type, Union
-
-
-class ConfigKey(Enum):
-    VERSION: Final = "version"
-
-    UI_LANGUAGE: Final = "ui.language"
-    UI_THEME: Final = "ui.theme"
-    UI_CLOSE_TO_TRAY: Final = "ui.close_to_tray"
-    UI_FONT_FAMILY: Final = "ui.font.family"
-    UI_FONT_SIZE: Final = "ui.font.size"
-
-    KEY_STORE_VALUE: Final = "key_store.value"
-    KEY_STORE_SEED: Final = "key_store.seed"
-    KEY_STORE_SEED_PHRASE: Final = "key_store.seed_phrase"
-
-    SERVICES_FIAT_RATE: Final = "services.fiat_rate"
-    SERVICES_FIAT_CURRENCY: Final = "services.fiat_currency"
-
-    SERVICES_BLOCKCHAIN_EXPLORER: Final = "services.blockchain_explorer"
+    from typing import Final, Type, Union
 
 
 class Config:
-    def __init__(self, file_path) -> None:
+    class Key(Enum):
+        pass
+
+    def __init__(self, file_path: Path) -> None:
         self._logger = Logger.classLogger(
             self.__class__, (None, file_path.name if file_path else "")
         )
@@ -136,8 +120,11 @@ class Config:
         return False
 
     def get(
-        self, key: ConfigKey, value_type: Type = str, default_value: Any = None
-    ) -> Any:
+        self,
+        key: Key,
+        value_type: Type = str,
+        default_value: ... = None,
+    ) -> ...:
         key_list = key.value.split(".")
         with self._lock:
             current_config = self._config
@@ -153,10 +140,10 @@ class Config:
                 current_config = current_value
         return default_value
 
-    def exists(self, key: ConfigKey, value_type: Type = str) -> bool:
+    def exists(self, key: Key, value_type: Type = str) -> bool:
         return self.get(key, value_type, None) is not None
 
-    def set(self, key: ConfigKey, value: Any, *, save: bool = True) -> bool:
+    def set(self, key: Key, value: ..., *, save: bool = True) -> bool:
         key_list = key.value.split(".")
         with self._lock:
             current_config = self._config
@@ -181,15 +168,15 @@ class Config:
             return self.save() if save else True
 
     def _updateVersion(self) -> None:
-        if not self.get(ConfigKey.VERSION, str):
-            self.set(ConfigKey.VERSION, Product.VERSION_STRING, save=False)
+        if not self.get(self.Key.VERSION, str):
+            self.set(self.Key.VERSION, Product.VERSION_STRING, save=False)
 
 
 class ConfigStaticList(StaticList):
     def __init__(
         self,
         config: Config,
-        config_key: ConfigKey,
+        config_key: Config.Key,
         source_list: Union[list, tuple],
         *,
         default_index: int,
@@ -235,3 +222,28 @@ class ConfigStaticList(StaticList):
                 if getattr(self._list[i], self._item_property) == value:
                     return self.setCurrentIndex(i)
         return False
+
+
+class ApplicationConfig(Config):
+    class Key(Config.Key):
+        VERSION: Final = "version"
+
+        UI_LANGUAGE: Final = "ui.language"
+        UI_THEME: Final = "ui.theme"
+        UI_CLOSE_TO_TRAY: Final = "ui.close_to_tray"
+        UI_FONT_FAMILY: Final = "ui.font.family"
+        UI_FONT_SIZE: Final = "ui.font.size"
+
+        SERVICES_FIAT_RATE: Final = "services.fiat_rate"
+        SERVICES_FIAT_CURRENCY: Final = "services.fiat_currency"
+
+        SERVICES_BLOCKCHAIN_EXPLORER: Final = "services.blockchain_explorer"
+
+
+class KeyStoreConfig(Config):
+    class Key(Config.Key):
+        VERSION: Final = "version"
+
+        VALUE: Final = "value"
+        SEED: Final = "seed"
+        SEED_PHRASE: Final = "seed_phrase"

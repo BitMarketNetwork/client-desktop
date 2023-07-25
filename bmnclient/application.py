@@ -13,7 +13,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from .coins.list import CoinList
-from .config import Config, ConfigKey
+from .config import ApplicationConfig
 from .currency import FiatCurrencyList, FiatRate
 from .database import Database
 from .debug import Debug
@@ -218,7 +218,7 @@ class CoreApplication(QObject):
         self._on_exit_called = False
         self._run_called = False
 
-        self._config = Config(
+        self._config = ApplicationConfig(
             self._command_line.configPath / ProductPaths.CONFIG_FILE_NAME
         )
         self._config.load()
@@ -315,7 +315,6 @@ class CoreApplication(QObject):
         assert self._on_exit_called
 
     def run(self) -> int:
-        # noinspection PyTypeChecker
         QMetaObject.invokeMethod(self, "_onRunPrivate", Qt.QueuedConnection)
 
         assert not self._on_exit_called
@@ -427,7 +426,7 @@ class CoreApplication(QObject):
         return self._language
 
     def updateTranslation(self) -> None:
-        language_name = self._config.get(ConfigKey.UI_LANGUAGE, str)
+        language_name = self._config.get(self._config.Key.UI_LANGUAGE, str)
         if not language_name:
             language_name = Language.primaryName
         language = Language(language_name)

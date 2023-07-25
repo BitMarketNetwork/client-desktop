@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QObject
 
-from ..config import ConfigKey, ConfigStaticList
+from ..config import ConfigStaticList
 from .currency import Currency
 
 if TYPE_CHECKING:
@@ -36,7 +36,7 @@ class FiatCurrencyList(ConfigStaticList):
     def __init__(self, application: CoreApplication) -> None:
         super().__init__(
             application.config,
-            ConfigKey.SERVICES_FIAT_CURRENCY,
+            application.config.Key.SERVICES_FIAT_CURRENCY,
             (UsdFiatCurrency, EuroFiatCurrency),
             default_index=0,
             item_property="unit",

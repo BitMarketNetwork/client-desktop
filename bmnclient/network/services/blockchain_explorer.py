@@ -4,7 +4,7 @@ import webbrowser
 from typing import TYPE_CHECKING
 
 from ...coins.abstract import Coin
-from ...config import ConfigKey, ConfigStaticList
+from ...config import ConfigStaticList
 from ...logger import Logger
 from ...utils.class_property import classproperty
 from ..utils import NetworkUtils
@@ -95,7 +95,7 @@ class BlockchainExplorerList(ConfigStaticList):
     def __init__(self, application: CoreApplication) -> None:
         super().__init__(
             application.config,
-            ConfigKey.SERVICES_BLOCKCHAIN_EXPLORER,
+            application.config.Key.SERVICES_BLOCKCHAIN_EXPLORER,
             (BlockchainComExplorer,),
             default_index=0,
             item_property="name",

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QObject
 
-from ...config import ConfigKey, ConfigStaticList
+from ...config import ConfigStaticList
 from ...currency import (
     EuroFiatCurrency,
     FiatCurrency,
@@ -189,7 +189,7 @@ class FiatRateServiceList(ConfigStaticList):
     def __init__(self, application: CoreApplication) -> None:
         super().__init__(
             application.config,
-            ConfigKey.SERVICES_FIAT_RATE,
+            application.config.Key.SERVICES_FIAT_RATE,
             (
                 NoneFiatRateService,
                 CoinGeckoFiatRateService,
