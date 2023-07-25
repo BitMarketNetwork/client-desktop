@@ -18,7 +18,6 @@ BControl {
     contentItem: BRowLayout {
         ColumnLayout {
             Layout.fillHeight: true
-            Layout.fillWidth: true
 
             BListView {
                 id: _list
@@ -44,9 +43,10 @@ BControl {
                 }
             }
             BStatusBar {
-                Layout.preferredWidth: parent.width
+                Layout.preferredWidth: _list.width
                 Layout.alignment: Qt.AlignBottom
                 Material.elevation: 1
+                display: _list.display
             }
         }
         Rectangle {

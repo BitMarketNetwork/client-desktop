@@ -36,6 +36,10 @@ class NetworkQueryManager:
     def currentQuery(self) -> Optional[AbstractQuery]:
         return self._current_query
 
+    @property
+    def queueSize(self) -> int:
+        return len(self._queue)
+
     def isUnique(self, query: AbstractQuery) -> bool:
         if (
                 self._current_query is not None
