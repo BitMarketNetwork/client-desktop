@@ -208,16 +208,16 @@ class NetworkAccessManager(QNetworkAccessManager):
 
     def __onFinished(self, reply: QNetworkReply) -> None:
         status_code = reply.error()
-        if status_code != QNetworkReply.NoError:
+        if status_code != QNetworkReply.NetworkError.NoError:
             if status_code not in (
-                    QNetworkReply.ContentAccessDenied,
-                    QNetworkReply.ContentNotFoundError,
+                    QNetworkReply.NetworkError.ContentAccessDenied,
+                    QNetworkReply.NetworkError.ContentNotFoundError,
             ):
                 self._logger.warning(
                     "%s Connection error: %s",
                     self._loggerReplyPrefix(reply),
                     Logger.errorString(
-                        int(status_code),
+                        int(status_code.value),
                         reply.errorString()))
 
         if self._logger.isEnabledFor(logging.DEBUG):
