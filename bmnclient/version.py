@@ -47,6 +47,7 @@ class ProductPaths:
     CONFIG_FILE_NAME: Final = "config.json"  # TODO deprecated
     WALLETS_DIR_NAME: Final = "wallets"
     WALLET_SUFFIX: Final = ".json"
+    WALLET_DUPLICATE_FORMAT: Final = "{name} ({index})"
     DATABSE_SUFFIX: Final = ".db"
     DATABASE_FILE_NAME: Final = "wallet.db"  # TODO deprecated
 

@@ -1,19 +1,17 @@
 from __future__ import annotations
 
 import json
-import os
-import re
 from enum import Enum
 from json.decoder import JSONDecodeError
-from pathlib import Path
 from threading import RLock
 from typing import TYPE_CHECKING
 
 from .logger import Logger
 from .utils import StaticList
-from .version import Product
+from .version import Product, ProductPaths
 
 if TYPE_CHECKING:
+    from pathlib import Path
     from typing import Final, Type, Union
 
 
@@ -23,7 +21,8 @@ class Config:
 
     def __init__(self, file_path: Path) -> None:
         self._logger = Logger.classLogger(
-            self.__class__, (None, file_path.name if file_path else "")
+            self.__class__,
+            (None, file_path.name),
         )
         self._file_path = file_path
         self._config = dict()
@@ -41,22 +40,47 @@ class Config:
     def lock(self) -> RLock:
         return self._lock
 
-    def create(self, path: Path, name: str) -> bool:
+    @classmethod
+    def create(cls, path: Path, name: str) -> Config | None:
+        logger = Logger.classLogger(cls)
+
+        if False:  # TODO filter chars in name var
+            logger.error("Invalid characters found in name '%s'.", name)
+            return None
+
+        actual_name = name
         if path.exists():
-            configures = [
-                x.split(".")[0]
-                for x in os.listdir(path)
-                if re.match("[^\\s]+(.*?)\\.(json|JSON)$", x)
-            ]
-            if name in configures:
-                new_name = name
-                counter = 1
-                while new_name in configures:
-                    new_name = f"{name} ({counter})"
-                    counter += 1
-                name = new_name
-        self._file_path = Path(f"{path}/{name}.json")
-        return self.save()
+            try:
+                suffix = ProductPaths.WALLET_SUFFIX.lower()
+                file_list = [
+                    f.stem.lower()
+                    for f in path.iterdir()
+                    if f.suffix.lower() == suffix
+                ]
+            except OSError as exp:
+                logger.error(
+                    "Failed to list directory contents '%s'. %s",
+                    path,
+                    Logger.osErrorString(exp),
+                )
+                return None
+
+            index = 0
+            while actual_name.lower() in file_list:
+                index += 1
+                if index >= 10 * 1000:
+                    logger.error(
+                        "Too many duplicated files in directory '%s'.",
+                        path,
+                    )
+                    return None
+                actual_name = ProductPaths.WALLET_DUPLICATE_FORMAT.format(
+                    name=name,
+                    index=index,
+                )
+
+        config = cls(path / (actual_name + ProductPaths.WALLET_SUFFIX))
+        return config if config.save() else None
 
     def load(self) -> bool:
         with self._lock:
