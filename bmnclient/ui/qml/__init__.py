@@ -28,6 +28,7 @@ from .models.key_store import KeyStoreListModel, KeyStoreModel
 from .models.password import PasswordModel
 from .models.settings import SettingsModel
 from .models.update import UpdateModel
+from .models.statusbar import StatusBar
 
 if TYPE_CHECKING:
     from typing import Iterable, List
@@ -152,6 +153,7 @@ class QmlContext(QObject):
         self._debug_model = DebugModel(self._application)
         self._password_model = PasswordModel()
         self._update_model = UpdateModel()
+        self._status_bar_model = StatusBar(self._application)
 
     @QSlot()
     def onCompleted(self) -> None:
@@ -186,6 +188,10 @@ class QmlContext(QObject):
     @QProperty(QObject, constant=True)
     def clipboard(self) -> ClipboardModel:
         return self._clipboard_model
+
+    @QProperty(QObject, constant=True)
+    def statusBar(self) -> StatusBar:
+        return self._status_bar_model
 
     @QProperty(QObject, constant=True)
     def config(self) -> Config:
