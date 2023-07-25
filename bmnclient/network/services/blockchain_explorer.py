@@ -3,14 +3,15 @@ from __future__ import annotations
 import webbrowser
 from typing import TYPE_CHECKING
 
-from ..utils import NetworkUtils
 from ...coins.abstract import Coin
 from ...config import ConfigKey, ConfigStaticList
 from ...logger import Logger
 from ...utils.class_property import classproperty
+from ..utils import NetworkUtils
 
 if TYPE_CHECKING:
     from typing import Dict, Final, Iterator, Optional, Type, Union
+
     from ...application import CoreApplication
 
 
@@ -34,10 +35,7 @@ class AbstractBlockchainExplorer:
     def browse(self, object_: Union[Coin, Coin.Address, Coin.Tx]) -> bool:
         request_name = ""
         url = ""
-        values = dict(
-            coin_name="",
-            address_name="",
-            tx_name="")
+        values = dict(coin_name="", address_name="", tx_name="")
 
         if isinstance(object_, Coin):
             request_name = "Coin"
@@ -58,12 +56,12 @@ class AbstractBlockchainExplorer:
             self._logger.error(
                 "%s request not supported by '%s'.",
                 request_name,
-                self._FULL_NAME)
+                self._FULL_NAME,
+            )
             return False
 
         values = {
-            k: NetworkUtils.quoteUrlQueryItem(v)
-            for k, v in values.items()
+            k: NetworkUtils.quoteUrlQueryItem(v) for k, v in values.items()
         }
         url = url.format(**values)
         self._logger.debug("%s request URL: %s", request_name, url)
@@ -76,7 +74,8 @@ class AbstractBlockchainExplorer:
                 "\n\tURL: %s\n\tError: %s",
                 request_name,
                 url,
-                str(e))
+                str(e),
+            )
             return False
         return True
 
@@ -85,18 +84,11 @@ class BlockchainComExplorer(AbstractBlockchainExplorer):
     _SHORT_NAME: Final = "blockchain"
     _FULL_NAME: Final = "Blockchain.com"
     _URL_MAP: Final = {
-        "coin":
-            "https://www.blockchain.com/explorer?view={coin_name}",
-        "address":
-            "https://www.blockchain.com/{coin_name}/address/{address_name}",
-        "tx":
-            "https://www.blockchain.com/{coin_name}/tx/{tx_name}"
+        "coin": "https://www.blockchain.com/explorer?view={coin_name}",
+        "address": "https://www.blockchain.com/{coin_name}/address/{address_name}",
+        "tx": "https://www.blockchain.com/{coin_name}/tx/{tx_name}",
     }
-    _COIN_MAP: Final = {
-        "btc": "btc",
-        "btctest": "btc-testnet",
-        "ltc": "ltc"
-    }
+    _COIN_MAP: Final = {"btc": "btc", "btctest": "btc-testnet", "ltc": "ltc"}
 
 
 class BlockchainExplorerList(ConfigStaticList):
@@ -104,22 +96,20 @@ class BlockchainExplorerList(ConfigStaticList):
         super().__init__(
             application.config,
             ConfigKey.SERVICES_BLOCKCHAIN_EXPLORER,
-            (
-                BlockchainComExplorer,
-            ),
+            (BlockchainComExplorer,),
             default_index=0,
-            item_property="name")
+            item_property="name",
+        )
         self._logger.debug(
-            "Current blockchain explorer: %s",
-            self.current.fullName)
+            "Current blockchain explorer: %s", self.current.fullName
+        )
 
     def __iter__(self) -> Iterator[Type[AbstractBlockchainExplorer]]:
         return super().__iter__()
 
     def __getitem__(
-            self,
-            value: Union[str, int]) \
-            -> Optional[Type[AbstractBlockchainExplorer]]:
+        self, value: Union[str, int]
+    ) -> Optional[Type[AbstractBlockchainExplorer]]:
         return super().__getitem__(value)
 
     @property

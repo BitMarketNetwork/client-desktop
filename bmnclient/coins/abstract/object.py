@@ -2,31 +2,35 @@ from __future__ import annotations
 
 from contextlib import ExitStack, contextmanager
 from typing import (
+    TYPE_CHECKING,
     Callable,
     ContextManager,
     Final,
     Iterable,
     Sequence,
-    TYPE_CHECKING,
-    TypeVar)
+    TypeVar,
+)
 
 from ...database.tables import (
     ColumnValue,
     SerializableRowList,
-    SerializableTable)
+    SerializableTable,
+)
 from ...logger import Logger
 from ...utils import (
     EmptySerializableList,
     Serializable,
     SerializableList,
-    SerializeFlag)
+    SerializeFlag,
+)
 from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
     import logging
-    from .coin import Coin
+
     from ...database import Database
     from ...network.query_scheduler import NetworkQueryScheduler
+    from .coin import Coin
 
 
 class CoinObjectModel:
@@ -49,27 +53,24 @@ class CoinObjectModel:
         pass
 
     def beforeInsertChild(
-            self,
-            object_: CoinObject,
-            row_list: SerializableRowList,
-            index: int) -> None:
+        self, object_: CoinObject, row_list: SerializableRowList, index: int
+    ) -> None:
         pass
 
     def afterInsertChild(
-            self,
-            object_: CoinObject,
-            row_list: SerializableRowList,
-            index: int) -> None:
+        self, object_: CoinObject, row_list: SerializableRowList, index: int
+    ) -> None:
         pass
 
 
 class CoinRootObjectModel(CoinObjectModel):
     def __init__(
-            self,
-            *args,
-            database: Database,
-            query_scheduler: NetworkQueryScheduler,
-            **kwargs) -> None:
+        self,
+        *args,
+        database: Database,
+        query_scheduler: NetworkQueryScheduler,
+        **kwargs,
+    ) -> None:
         super().__init__(*args, **kwargs)
         self._database = database
         self._query_scheduler = query_scheduler
@@ -90,8 +91,8 @@ class CoinRootObjectModel(CoinObjectModel):
 class CoinObject(Serializable):
     def __init_subclass__(cls, *args, **kwargs) -> None:
         if (
-                not hasattr(cls, "_CoinObject__TABLE_TYPE")
-                or "table_type" in kwargs
+            not hasattr(cls, "_CoinObject__TABLE_TYPE")
+            or "table_type" in kwargs
         ):
             table_type = kwargs.pop("table_type")
             associated_table_type = kwargs.pop("associated_table_type", None)
@@ -102,20 +103,16 @@ class CoinObject(Serializable):
             super().__init_subclass__(*args, **kwargs)
 
     def __init__(
-            self,
-            coin: Coin,
-            kwargs,
-            *,
-            enable_table: bool = True) -> None:
+        self, coin: Coin, kwargs, *, enable_table: bool = True
+    ) -> None:
         super().__init__()
         self._coin: Final = coin
         self.__model: CoinObjectModel | bool | None = False
         self.__value_events: dict[str, tuple[Callable, Callable]] = {}
         self.__enable_table = enable_table
-        self.__deferred_save_list: list[(
-            Callable[[None], SerializableList[CoinObject]],
-            list[CoinObject]
-        )] = []
+        self.__deferred_save_list: list[
+            (Callable[[None], SerializableList[CoinObject]], list[CoinObject])
+        ] = []
 
         if self is not self._coin and (t := self._openTable(force=True)):
             if t.completeSerializable(self, kwargs) > 0:
@@ -131,7 +128,7 @@ class CoinObject(Serializable):
 
     def __hash__(self) -> int:
         if self is not self._coin:
-            return hash((self._coin, ))
+            return hash((self._coin,))
         return 0
 
     def __str__(self) -> str:
@@ -156,14 +153,14 @@ class CoinObject(Serializable):
         return True
 
     def _appendDeferredSave(
-            self,
-            old_list: Callable[[None], SerializableList[CoinObject]],
-            object_list: Iterable[Callable[[CoinObject], CoinObject]]) -> None:
+        self,
+        old_list: Callable[[None], SerializableList[CoinObject]],
+        object_list: Iterable[Callable[[CoinObject], CoinObject]],
+    ) -> None:
         if object_list:
-            self.__deferred_save_list.append((
-                old_list,
-                [o(self) for o in object_list]
-            ))
+            self.__deferred_save_list.append(
+                (old_list, [o(self) for o in object_list])
+            )
 
     def save(self) -> bool:
         if not (t := self._openTable(force=True)):
@@ -191,30 +188,30 @@ class CoinObject(Serializable):
         return False
 
     def remove(self) -> bool:
-        if (
-                (t := self._openTable(force=True))
-                and t.removeSerializable(self).isRemoveAction
-        ):
+        if (t := self._openTable(force=True)) and t.removeSerializable(
+            self
+        ).isRemoveAction:
             assert self.rowId == -1
             return True
         return False
 
     @contextmanager
     def _modelEvent(
-            self,
-            action: str,
-            name: str,
-            *args) -> ContextManager[None]:
+        self, action: str, name: str, *args
+    ) -> ContextManager[None]:
         events_name = name + "[" + action + "]"
         events = self.__value_events.get(events_name, None)
         model = self.model
         if not events:
             assert action in ("update", "set", "insert")
             action = action.capitalize()
-            suffix = StringUtils.toCamelCase(name.strip("_"), first_lower=False)
+            suffix = StringUtils.toCamelCase(
+                name.strip("_"), first_lower=False
+            )
             events = (
                 getattr(model, "before" + action + suffix),
-                getattr(model, "after" + action + suffix))
+                getattr(model, "after" + action + suffix),
+            )
             self.__value_events[events_name] = events
 
         model.logger.debug("before event %s: %s", events_name, str(events[0]))
@@ -224,12 +221,13 @@ class CoinObject(Serializable):
         events[1](*args)
 
     def _updateValue(
-            self,
-            action: str,
-            name: str,
-            new_value: ...,
-            *,
-            on_update: Callable[[], None] | None = None) -> bool:
+        self,
+        action: str,
+        name: str,
+        new_value: ...,
+        *,
+        on_update: Callable[[], None] | None = None,
+    ) -> bool:
         private_name = "_" + name
 
         old_value = getattr(self, private_name)
@@ -239,18 +237,21 @@ class CoinObject(Serializable):
         with self._modelEvent(action, name, new_value):
             setattr(self, private_name, new_value)
             if (
-                    (table := self._openTable())
-                    and name in self.serializeMap
-                    and (column := self.__TABLE_TYPE.ColumnEnum.get(name))
+                (table := self._openTable())
+                and name in self.serializeMap
+                and (column := self.__TABLE_TYPE.ColumnEnum.get(name))
             ):
-                columns = [ColumnValue(
-                    column,
-                    self.serializeProperty(
-                        SerializeFlag.DATABASE_MODE
-                        | SerializeFlag.EXCLUDE_SUBCLASSES,
-                        name,
-                        new_value)
-                )]
+                columns = [
+                    ColumnValue(
+                        column,
+                        self.serializeProperty(
+                            SerializeFlag.DATABASE_MODE
+                            | SerializeFlag.EXCLUDE_SUBCLASSES,
+                            name,
+                            new_value,
+                        ),
+                    )
+                ]
                 if on_update:
                     with table.database.transaction():
                         table.update(self.rowId, columns)
@@ -265,10 +266,8 @@ class CoinObject(Serializable):
     _TableT = TypeVar("_TableT", bound=SerializableTable)
 
     def _openTable(
-            self,
-            table_type: type(_TableT) | None = None,
-            *,
-            force: bool = False) -> _TableT | None:
+        self, table_type: type(_TableT) | None = None, *, force: bool = False
+    ) -> _TableT | None:
         if not force and self.rowId <= 0:
             return None
         if table_type is None:
@@ -280,35 +279,32 @@ class CoinObject(Serializable):
         return self._coin.model.database[table_type]
 
     def _rowList(
-            self,
-            table_type: type(SerializableTable),
-            *args,
-            **kwargs
+        self, table_type: type(SerializableTable), *args, **kwargs
     ) -> SerializableList:
         if t := self._openTable(table_type):
             result = t.rowList(
-                self,
-                *args,
-                on_save_row=self._onSaveRow,
-                **kwargs)
+                self, *args, on_save_row=self._onSaveRow, **kwargs
+            )
             if result is not None:
                 return result
         return EmptySerializableList()
 
     def _onSaveRow(
-            self,
-            object_: CoinObject,
-            row_list: SerializableRowList,
-            result: SerializableTable.WriteResult,
-            index: int):
+        self,
+        object_: CoinObject,
+        row_list: SerializableRowList,
+        result: SerializableTable.WriteResult,
+        index: int,
+    ):
         if result.isInsertAction:
             with self._modelEvent("insert", "child", object_, row_list, index):
                 row_list.__accept_insert_index__()
 
     def _updateRowList(
-            self,
-            old_list: SerializableList[CoinObject],
-            new_list: Sequence[CoinObject]) -> int:
+        self,
+        old_list: SerializableList[CoinObject],
+        new_list: Sequence[CoinObject],
+    ) -> int:
         new_map = [False] * len(new_list)
         for old_item in old_list:
             found = False

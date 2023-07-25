@@ -9,10 +9,8 @@ if TYPE_CHECKING:
 
 class StaticList(Sequence):
     def __init__(
-            self,
-            source_list: Union[list, tuple],
-            *,
-            item_property: str) -> None:
+        self, source_list: Union[list, tuple], *, item_property: str
+    ) -> None:
         self._list = source_list
         self._item_property = item_property
 

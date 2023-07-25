@@ -8,6 +8,7 @@ from bmnclient.database import Database
 
 if TYPE_CHECKING:
     from bmnclient.coins.abstract import CoinObject, CoinObjectModel
+
     from .application import TestApplication
 
 
@@ -17,15 +18,16 @@ class CoinModel(Coin.Model):
     def __init__(self, application: TestApplication, *, coin: Coin) -> None:
         # individual database for every coin instance
         db_file_path = application.tempPath
-        db_file_path /= (
-            "coin-{:s}-{:08d}.db"
-            .format(coin.name, next(self.__class__.__DATABASE_NEXT_INDEX)))
+        db_file_path /= "coin-{:s}-{:08d}.db".format(
+            coin.name, next(self.__class__.__DATABASE_NEXT_INDEX)
+        )
         db_file_path.unlink(missing_ok=True)
 
         super().__init__(
             coin=coin,
             query_scheduler=application.networkQueryScheduler,
-            database=Database(application, db_file_path))
+            database=Database(application, db_file_path),
+        )
 
     def __del__(self) -> None:
         self._database.close()
@@ -60,8 +62,8 @@ class TxFactoryModel(Coin.TxFactory.Model):
 class ModelsFactory:
     @staticmethod
     def create(
-            application: TestApplication,
-            owner: CoinObject) -> CoinObjectModel:
+        application: TestApplication, owner: CoinObject
+    ) -> CoinObjectModel:
         if isinstance(owner, Coin):
             return CoinModel(application, coin=owner)
 

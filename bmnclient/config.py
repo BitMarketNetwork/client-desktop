@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-import json, os, re
+import json
+import os
+import re
 from enum import Enum
 from json.decoder import JSONDecodeError
+from pathlib import Path
 from threading import RLock
 from typing import TYPE_CHECKING
-from pathlib import Path
 
 from .logger import Logger
 from .utils import StaticList
@@ -37,8 +39,8 @@ class ConfigKey(Enum):
 class Config:
     def __init__(self, file_path) -> None:
         self._logger = Logger.classLogger(
-            self.__class__,
-            (None, file_path.name if file_path else ""))
+            self.__class__, (None, file_path.name if file_path else "")
+        )
         self._file_path = file_path
         self._config = dict()
         self._lock = RLock()
@@ -57,8 +59,11 @@ class Config:
 
     def create(self, path: Path, name: str) -> bool:
         if path.exists():
-            configures = [x.split('.')[0] for x in os.listdir(path)
-                if re.match("[^\\s]+(.*?)\\.(json|JSON)$", x)]
+            configures = [
+                x.split(".")[0]
+                for x in os.listdir(path)
+                if re.match("[^\\s]+(.*?)\\.(json|JSON)$", x)
+            ]
             if name in configures:
                 new_name = name
                 counter = 1
@@ -73,10 +78,11 @@ class Config:
         with self._lock:
             try:
                 with open(
-                        self._file_path,
-                        mode="rt",
-                        encoding=Product.ENCODING,
-                        errors="strict") as file:
+                    self._file_path,
+                    mode="rt",
+                    encoding=Product.ENCODING,
+                    errors="strict",
+                ) as file:
                     self._config = json.load(file)
                 self._updateVersion()
                 return True
@@ -93,7 +99,8 @@ class Config:
                 self._logger.warning(
                     "Failed to read file '%s'. %s",
                     self._file_path,
-                    str(error_message))
+                    str(error_message),
+                )
             self._config = dict()
             self._updateVersion()
         return False
@@ -103,16 +110,18 @@ class Config:
             try:
                 self._file_path.parent.mkdir(parents=True, exist_ok=True)
                 with open(
-                        self._file_path,
-                        mode="w+t",
-                        encoding=Product.ENCODING,
-                        errors="strict") as file:
+                    self._file_path,
+                    mode="w+t",
+                    encoding=Product.ENCODING,
+                    errors="strict",
+                ) as file:
                     json.dump(
                         self._config,
                         file,
                         skipkeys=False,
                         indent=4,
-                        sort_keys=True)
+                        sort_keys=True,
+                    )
                     file.flush()
                 return True
             except OSError as e:
@@ -122,15 +131,14 @@ class Config:
             self._logger.warning(
                 "Failed to write file '%s'. %s",
                 self._file_path,
-                str(error_message))
+                str(error_message),
+            )
         return False
 
     def get(
-            self,
-            key: ConfigKey,
-            value_type: Type = str,
-            default_value: Any = None) -> Any:
-        key_list = key.value.split('.')
+        self, key: ConfigKey, value_type: Type = str, default_value: Any = None
+    ) -> Any:
+        key_list = key.value.split(".")
         with self._lock:
             current_config = self._config
             for i in range(len(key_list)):
@@ -149,7 +157,7 @@ class Config:
         return self.get(key, value_type, None) is not None
 
     def set(self, key: ConfigKey, value: Any, *, save: bool = True) -> bool:
-        key_list = key.value.split('.')
+        key_list = key.value.split(".")
         with self._lock:
             current_config = self._config
             for i in range(len(key_list)):
@@ -179,13 +187,14 @@ class Config:
 
 class ConfigStaticList(StaticList):
     def __init__(
-            self,
-            config: Config,
-            config_key: ConfigKey,
-            source_list: Union[list, tuple],
-            *,
-            default_index: int,
-            item_property: str) -> None:
+        self,
+        config: Config,
+        config_key: ConfigKey,
+        source_list: Union[list, tuple],
+        *,
+        default_index: int,
+        item_property: str,
+    ) -> None:
         super().__init__(source_list, item_property=item_property)
         self._logger = Logger.classLogger(self.__class__)
 
@@ -213,10 +222,11 @@ class ConfigStaticList(StaticList):
             self._current_index = index
             return self._config.set(
                 self._config_key,
-                getattr(self._list[index], self._item_property))
+                getattr(self._list[index], self._item_property),
+            )
 
     @property
-    def current(self) -> Any:
+    def current(self) -> ...:
         return self._list[self._current_index]
 
     def setCurrent(self, value: str) -> bool:

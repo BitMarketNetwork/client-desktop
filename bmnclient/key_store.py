@@ -17,7 +17,8 @@ from .logger import Logger
 from .version import Product
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, Final, List, Optional, Tuple, Union
+    from typing import Callable, Final, Union
+
     from .application import CoreApplication
     from .crypto.digest import AbstractDigest
 
@@ -44,8 +45,8 @@ class _KeyStoreBase:
         self._application = application
         self._config_reset_list: Dict[ConfigKey, Any] = {}
 
-        self.__nonce_list: List[Optional[bytes]] = [None] * len(KeyIndex)
-        self.__key_list: List[Optional[bytes]] = [None] * len(KeyIndex)
+        self.__nonce_list: list[bytes | None] = [None] * len(KeyIndex)
+        self.__key_list: list[bytes | None] = [None] * len(KeyIndex)
 
     def __clearSecrets(self) -> None:
         self.__nonce_list = [None] * len(KeyIndex)
@@ -54,27 +55,28 @@ class _KeyStoreBase:
     def _clear(self) -> None:
         self.__clearSecrets()
 
-    def _getNonce(self, key_index: KeyIndex) -> Optional[bytes]:
+    def _getNonce(self, key_index: KeyIndex) -> bytes | None:
         return self.__nonce_list[key_index.value]
 
-    def _getKey(self, key_index: KeyIndex) -> Optional[bytes]:
+    def _getKey(self, key_index: KeyIndex) -> bytes | None:
         return self.__key_list[key_index.value]
 
     @staticmethod
     def _generateSecretStoreValue() -> bytes:
         value = {
-            "version":
-                Product.VERSION_STRING,
-
-            "nonce_{:d}".format(KeyIndex.WALLET_DATABASE.value):
-                AeadCipher.generateNonce().hex(),
-            "key_{:d}".format(KeyIndex.WALLET_DATABASE.value):
-                AeadCipher.generateKey().hex(),
-
-            "nonce_{:d}".format(KeyIndex.SEED.value):
-                MessageCipher.generateNonce().hex(),
-            "key_{:d}".format(KeyIndex.SEED.value):
-                MessageCipher.generateKey().hex()
+            "version": Product.VERSION_STRING,
+            "nonce_{:d}".format(
+                KeyIndex.WALLET_DATABASE.value
+            ): AeadCipher.generateNonce().hex(),
+            "key_{:d}".format(
+                KeyIndex.WALLET_DATABASE.value
+            ): AeadCipher.generateKey().hex(),
+            "nonce_{:d}".format(
+                KeyIndex.SEED.value
+            ): MessageCipher.generateNonce().hex(),
+            "key_{:d}".format(
+                KeyIndex.SEED.value
+            ): MessageCipher.generateKey().hex(),
         }
         return json.dumps(value).encode(Product.ENCODING)
 
@@ -95,7 +97,7 @@ class _KeyStoreBase:
         return True
 
     # TODO temporary
-    def deriveBlockDeviceKey(self) -> Optional[bytes]:
+    def deriveBlockDeviceKey(self) -> bytes | None:
         key1 = self._getKey(KeyIndex.WALLET_DATABASE)
         key2 = self._getKey(KeyIndex.SEED)
         if not key1 or not key2:
@@ -103,7 +105,7 @@ class _KeyStoreBase:
         assert len(key1) + len(key2) == 256 // 8
         return key1 + key2
 
-    def deriveCipher(self, key_index: KeyIndex) -> Optional[AeadCipher]:
+    def deriveCipher(self, key_index: KeyIndex) -> AeadCipher | None:
         with self._lock:
             key = self._getKey(key_index)
             nonce = self._getNonce(key_index)
@@ -111,9 +113,7 @@ class _KeyStoreBase:
                 return None
             return AeadCipher(key, nonce)
 
-    def deriveMessageCipher(
-            self,
-            key_index: KeyIndex) -> Optional[MessageCipher]:
+    def deriveMessageCipher(self, key_index: KeyIndex) -> MessageCipher | None:
         with self._lock:
             key = self._getKey(key_index)
             if key is None:
@@ -159,21 +159,21 @@ class _KeyStoreSeed(_KeyStoreBase):
 
         with self._application.config.lock:
             if not self._application.config.set(
-                    ConfigKey.KEY_STORE_SEED,
-                    seed,
-                    save=False):
+                ConfigKey.KEY_STORE_SEED,
+                seed,
+                save=False,
+            ):
                 return False
             if not self._application.config.set(
-                    ConfigKey.KEY_STORE_SEED_PHRASE,
-                    phrase,
-                    save=False):
+                ConfigKey.KEY_STORE_SEED_PHRASE,
+                phrase,
+                save=False,
+            ):
                 return False
             return self._application.config.save()
 
     def __deriveSeed(self) -> Optional[bytes]:
-        value = self._application.config.get(
-            ConfigKey.KEY_STORE_SEED,
-            str)
+        value = self._application.config.get(ConfigKey.KEY_STORE_SEED, str)
         if not value:
             return None
         cipher = self.deriveMessageCipher(KeyIndex.SEED)
@@ -181,10 +181,10 @@ class _KeyStoreSeed(_KeyStoreBase):
             return None
         return cipher.decrypt(value)
 
-    def _deriveSeedPhrase(self) -> Union[Tuple[str, str], Tuple[None, None]]:
+    def _deriveSeedPhrase(self) -> Union[tuple[str, str], tuple[None, None]]:
         value = self._application.config.get(
-            ConfigKey.KEY_STORE_SEED_PHRASE,
-            str)
+            ConfigKey.KEY_STORE_SEED_PHRASE, str
+        )
         if not value:
             return None, None
 
@@ -203,7 +203,7 @@ class _KeyStoreSeed(_KeyStoreBase):
         phrase = Mnemonic.friendlyPhrase(language, phrase)
         return language, phrase
 
-    def _deriveRootHdNodeFromSeed(self) -> Optional[HdNode, KeyStoreError]:
+    def _deriveRootHdNodeFromSeed(self) -> HdNode | KeyStoreError | None:
         self.__has_seed = False
 
         seed = self.__deriveSeed()
@@ -224,11 +224,12 @@ class _KeyStoreSeed(_KeyStoreBase):
 
 class KeyStore(_KeyStoreSeed):
     def __init__(
-            self,
-            application: CoreApplication,
-            *,
-            open_callback: Callable[[Optional[HdNode]], None],
-            reset_callback: Callable[[], None]) -> None:
+        self,
+        application: CoreApplication,
+        *,
+        open_callback: Callable[[HdNode | None], None],
+        reset_callback: Callable[[], None],
+    ) -> None:
         super().__init__(application)
         self._config_reset_list[ConfigKey.KEY_STORE_VALUE] = None
         self._open_callback = open_callback
@@ -237,9 +238,7 @@ class KeyStore(_KeyStoreSeed):
     @property
     def isExists(self) -> bool:
         with self._lock:
-            if self._application.config.get(
-                    ConfigKey.KEY_STORE_VALUE,
-                    str):
+            if self._application.config.get(ConfigKey.KEY_STORE_VALUE, str):
                 return True
         return False
 
@@ -256,14 +255,14 @@ class KeyStore(_KeyStoreSeed):
         with self._lock:
             self.reset()
             return self._application.config.set(
-                ConfigKey.KEY_STORE_VALUE,
-                value)
+                ConfigKey.KEY_STORE_VALUE, value
+            )
 
     def verify(self, password: str) -> bool:
         with self._lock:
             value = self._application.config.get(
-                ConfigKey.KEY_STORE_VALUE,
-                str)
+                ConfigKey.KEY_STORE_VALUE, str
+            )
             if value and SecretStore(password).decryptValue(value):
                 return True
         return False
@@ -273,8 +272,8 @@ class KeyStore(_KeyStoreSeed):
             self._clear()
 
             value = self._application.config.get(
-                ConfigKey.KEY_STORE_VALUE,
-                str)
+                ConfigKey.KEY_STORE_VALUE, str
+            )
             if not value:
                 return KeyStoreError.ERROR_SEED_NOT_FOUND
             value = SecretStore(password).decryptValue(value)
@@ -289,24 +288,24 @@ class KeyStore(_KeyStoreSeed):
         return KeyStoreError.SUCCESS
 
     def saveSeed(
-            self,
-            language: str,
-            phrase: str,
-            key_store_password: str,
-            name: str,
-            seed_password: str) -> KeyStoreError:
+        self,
+        language: str,
+        phrase: str,
+        key_store_password: str,
+        name: str,
+        seed_password: str,
+    ) -> KeyStoreError:
         with self._lock:
-            if not self._application.config.create(self._application.walletsPath, name):
+            if not self._application.config.create(
+                self._application.walletsPath, name
+            ):
                 return KeyStoreError.ERROR_SAVE_SEED
             if not self.create(key_store_password):
                 return KeyStoreError.ERROR_SAVE_SEED
             if not self.open(key_store_password):
                 return KeyStoreError.ERROR_INVALID_PASSWORD
 
-            result = self._saveSeed(
-                language,
-                phrase,
-                seed_password)
+            result = self._saveSeed(language, phrase, seed_password)
 
             if not result:
                 return KeyStoreError.ERROR_SAVE_SEED
@@ -351,7 +350,7 @@ class KeyStore(_KeyStoreSeed):
 class _AbstractSeedPhrase:
     def __init__(self, key_store: KeyStore) -> None:
         self._key_store = key_store
-        self._mnemonic: Optional[Mnemonic] = None
+        self._mnemonic: Mnemonic | None = None
 
     @property
     def inProgress(self) -> bool:
@@ -367,11 +366,12 @@ class _AbstractSeedPhrase:
         raise NotImplementedError
 
     def finalize(
-            self,
-            phrase: str,
-            key_store_password: str,
-            name: str,
-            seed_password: str) -> KeyStoreError:
+        self,
+        phrase: str,
+        key_store_password: str,
+        name: str,
+        seed_password: str,
+    ) -> KeyStoreError:
         if not self.validate(phrase):
             return KeyStoreError.ERROR_INVALID_SEED_PHRASE
 
@@ -380,7 +380,8 @@ class _AbstractSeedPhrase:
             phrase,
             key_store_password,
             name,
-            seed_password)
+            seed_password,
+        )
         if result != KeyStoreError.SUCCESS:
             return result
 
@@ -391,7 +392,7 @@ class _AbstractSeedPhrase:
 class GenerateSeedPhrase(_AbstractSeedPhrase):
     def __init__(self, key_store: KeyStore) -> None:
         super().__init__(key_store)
-        self._salt_hash: Optional[AbstractDigest] = None
+        self._salt_hash: AbstractDigest | None = None
 
     def clear(self) -> None:
         super().clear()
@@ -403,17 +404,17 @@ class GenerateSeedPhrase(_AbstractSeedPhrase):
         self._salt_hash.update(os.urandom(64))
 
         result = self._salt_hash.copy().finalize()
-        result = result[:Mnemonic.defaultDataLength]
+        result = result[: Mnemonic.defaultDataLength]
         return self._mnemonic.getPhrase(result)
 
     def validate(self, phrase: str) -> bool:
         return (
-                phrase
-                and self.inProgress
-                and Mnemonic.isEqualPhrases(phrase, self.update(None))
+            phrase
+            and self.inProgress
+            and Mnemonic.isEqualPhrases(phrase, self.update(None))
         )
 
-    def update(self, salt: Optional[str]) -> str:
+    def update(self, salt: str | None) -> str:
         if not self.inProgress:
             return ""
 
@@ -422,7 +423,7 @@ class GenerateSeedPhrase(_AbstractSeedPhrase):
             self._salt_hash.update(os.urandom(4))
 
         result = self._salt_hash.copy().finalize()
-        result = result[:Mnemonic.defaultDataLength]
+        result = result[: Mnemonic.defaultDataLength]
         return self._mnemonic.getPhrase(result)
 
 
@@ -433,7 +434,5 @@ class RestoreSeedPhrase(_AbstractSeedPhrase):
 
     def validate(self, phrase: str) -> bool:
         return (
-                phrase
-                and self.inProgress
-                and self._mnemonic.isValidPhrase(phrase)
+            phrase and self.inProgress and self._mnemonic.isValidPhrase(phrase)
         )

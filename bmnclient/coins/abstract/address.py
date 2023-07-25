@@ -1,19 +1,19 @@
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import Final, Sequence, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Final, Sequence, Union
 
-from .object import CoinObject, CoinObjectModel
-from ..hd import HdNode
 from ...crypto.secp256k1 import PrivateKey, PublicKey
-from ...database.tables import AddressTxsTable, AddressesTable, UtxosTable
+from ...database.tables import AddressesTable, AddressTxsTable, UtxosTable
 from ...utils import SerializableList, SerializeFlag, serializable
 from ...utils.class_property import classproperty
 from ...utils.string import StringUtils
+from ..hd import HdNode
+from .object import CoinObject, CoinObjectModel
 
 if TYPE_CHECKING:
+    from ...utils import DeserializedData, DeserializeFlag
     from .coin import Coin
-    from ...utils import DeserializeFlag, DeserializedData
 
 
 class _TypeValue:
@@ -24,19 +24,20 @@ class _TypeValue:
         "_encoding",
         "_is_witness",
         "_script_type",
-        "_hd_purpose"
+        "_hd_purpose",
     )
 
     def __init__(
-            self,
-            *,
-            name: str,
-            version: int,
-            size: int,
-            encoding: Coin.Address.Encoding | None,
-            is_witness: bool,
-            script_type: Coin.Address.Script.Type,
-            hd_purpose: int | None) -> None:
+        self,
+        *,
+        name: str,
+        version: int,
+        size: int,
+        encoding: Coin.Address.Encoding | None,
+        is_witness: bool,
+        script_type: Coin.Address.Script.Type,
+        hd_purpose: int | None,
+    ) -> None:
         self._name: Final = name
         self._version: Final = version
         self._size: Final = size
@@ -47,23 +48,26 @@ class _TypeValue:
 
     def __eq__(self, other: _TypeValue) -> bool:
         return (
-                isinstance(other, self.__class__)
-                and self._name == other._name
-                and self._version == other._version
-                and self._size == other._size
-                and self._encoding == other._encoding
-                and self._script_type == other._script_type
-                and self._hd_purpose == other._hd_purpose
+            isinstance(other, self.__class__)
+            and self._name == other._name
+            and self._version == other._version
+            and self._size == other._size
+            and self._encoding == other._encoding
+            and self._script_type == other._script_type
+            and self._hd_purpose == other._hd_purpose
         )
 
     def __hash__(self) -> int:
-        return hash((
-            self._name,
-            self._version,
-            self._size,
-            self._encoding,
-            self._script_type,
-            self._hd_purpose))
+        return hash(
+            (
+                self._name,
+                self._version,
+                self._size,
+                self._encoding,
+                self._script_type,
+                self._hd_purpose,
+            )
+        )
 
     def copy(self, **kwargs) -> _TypeValue:
         return self.__class__(
@@ -125,26 +129,46 @@ class _Model(CoinObjectModel):
 
     def afterInsertSelf(self) -> None:
         self._address.coin.updateBalance()
-        self._address.coin.model.queryScheduler.updateCoinAddress(self._address)
+        self._address.coin.model.queryScheduler.updateCoinAddress(
+            self._address
+        )
         super().afterInsertSelf()
 
-    def beforeSetKey(self, value: Coin.Address.KeyType) -> None: pass
-    def afterSetKey(self, value: Coin.Address.KeyType) -> None: pass
+    def beforeSetKey(self, value: Coin.Address.KeyType) -> None:
+        pass
 
-    def beforeSetBalance(self, value: int) -> None: pass
-    def afterSetBalance(self, value: int) -> None: pass
+    def afterSetKey(self, value: Coin.Address.KeyType) -> None:
+        pass
 
-    def beforeSetLabel(self, value: str) -> None: pass
-    def afterSetLabel(self, value: str) -> None: pass
+    def beforeSetBalance(self, value: int) -> None:
+        pass
 
-    def beforeSetComment(self, value: str) -> None: pass
-    def afterSetComment(self, value: str) -> None: pass
+    def afterSetBalance(self, value: int) -> None:
+        pass
 
-    def beforeSetIsReadOnly(self, value: bool) -> None: pass
-    def afterSetIsReadOnly(self, value: bool) -> None: pass
+    def beforeSetLabel(self, value: str) -> None:
+        pass
 
-    def beforeSetTxCount(self, value: int) -> None: pass
-    def afterSetTxCount(self, value: int) -> None: pass
+    def afterSetLabel(self, value: str) -> None:
+        pass
+
+    def beforeSetComment(self, value: str) -> None:
+        pass
+
+    def afterSetComment(self, value: str) -> None:
+        pass
+
+    def beforeSetIsReadOnly(self, value: bool) -> None:
+        pass
+
+    def afterSetIsReadOnly(self, value: bool) -> None:
+        pass
+
+    def beforeSetTxCount(self, value: int) -> None:
+        pass
+
+    def afterSetTxCount(self, value: int) -> None:
+        pass
 
     def beforeUpdateUtxoList(self, _utxo_list: Sequence[Coin.Tx.Utxo]) -> None:
         self._address.coin.model.beforeUpdateUtxoList()
@@ -152,17 +176,24 @@ class _Model(CoinObjectModel):
     def afterUpdateUtxoList(self, _utxo_list: Sequence[Coin.Tx.Utxo]) -> None:
         self._address.coin.model.afterUpdateUtxoList()
 
-    def beforeSetHistoryFirstOffset(self, value: str) -> None: pass
-    def afterSetHistoryFirstOffset(self, value: str) -> None: pass
+    def beforeSetHistoryFirstOffset(self, value: str) -> None:
+        pass
 
-    def beforeSetHistoryLastOffset(self, value: str) -> None: pass
-    def afterSetHistoryLastOffset(self, value: str) -> None: pass
+    def afterSetHistoryFirstOffset(self, value: str) -> None:
+        pass
+
+    def beforeSetHistoryLastOffset(self, value: str) -> None:
+        pass
+
+    def afterSetHistoryLastOffset(self, value: str) -> None:
+        pass
 
 
 class _Address(
-        CoinObject,
-        table_type=AddressesTable,
-        associated_table_type=AddressTxsTable):
+    CoinObject,
+    table_type=AddressesTable,
+    associated_table_type=AddressTxsTable,
+):
     __initialized = False
 
     _NULLDATA_NAME = "NULL_DATA"
@@ -175,6 +206,7 @@ class _Address(
     Model = _Model
 
     from .script import _Script
+
     Script = _Script
 
     TypeValue = _TypeValue
@@ -206,7 +238,8 @@ class _Address(
         super().__init__(
             coin,
             kwargs,
-            enable_table=(self._name and self._type != self.Type.UNKNOWN))
+            enable_table=(self._name and self._type != self.Type.UNKNOWN),
+        )
 
         self.__hash: bytes | None = None
         self._balance = int(kwargs.pop("balance", 0))
@@ -217,9 +250,9 @@ class _Address(
         self._data: Final = bytes(kwargs.pop("data", b""))
         self._key: _Address.KeyType | None = kwargs.pop("key", None)
         assert self._key is None or isinstance(self._key, self.KeyType)
-        self._is_read_only = bool(kwargs.pop(
-            "is_read_only",
-            self.privateKey is None))
+        self._is_read_only = bool(
+            kwargs.pop("is_read_only", self.privateKey is None)
+        )
 
         history_first_offset = str(kwargs.pop("history_first_offset", ""))
         history_last_offset = str(kwargs.pop("history_last_offset", ""))
@@ -231,24 +264,22 @@ class _Address(
             self._history_last_offset = ""
 
         self._appendDeferredSave(
-            lambda: self.txList,
-            kwargs.pop("tx_list", []))
+            lambda: self.txList, kwargs.pop("tx_list", [])
+        )
         self._appendDeferredSave(
-            lambda: self.utxoList,
-            kwargs.pop("utxo_list", []))
+            lambda: self.utxoList, kwargs.pop("utxo_list", [])
+        )
         assert len(kwargs) == 2
 
     def __eq__(self, other: _Address) -> bool:
         return (
-                super().__eq__(other)
-                and self._name == other.name
-                and self._type == other._type)
+            super().__eq__(other)
+            and self._name == other.name
+            and self._type == other._type
+        )
 
     def __hash__(self) -> int:
-        return hash((
-            super().__hash__(),
-            self._name,
-            self._type))
+        return hash((super().__hash__(), self._name, self._type))
 
     # TODO cache
     def __str__(self) -> str:
@@ -259,17 +290,18 @@ class _Address(
                 "path",
                 self._key.pathToString()
                 if isinstance(self._key, HdNode)
-                else ""
+                else "",
             ),
-            parent=self.coin)
+            parent=self.coin,
+        )
 
     def __update__(self, **kwargs) -> bool:
         self._appendDeferredSave(
-            lambda: self.txList,
-            kwargs.pop("tx_list", []))
+            lambda: self.txList, kwargs.pop("tx_list", [])
+        )
         self._appendDeferredSave(
-            lambda: self.utxoList,
-            kwargs.pop("utxo_list", []))
+            lambda: self.utxoList, kwargs.pop("utxo_list", [])
+        )
         if not super().__update__(**kwargs):
             return False
         # TODO self.updateBalance()
@@ -277,37 +309,25 @@ class _Address(
 
     @classmethod
     def create(
-            cls,
-            coin: Coin,
-            *,
-            type_: _Address.Type,
-            key: KeyType,
-            **kwargs) -> _Address | None:
+        cls, coin: Coin, *, type_: _Address.Type, key: KeyType, **kwargs
+    ) -> _Address | None:
         return cls(coin, type_=type_, key=key, **kwargs)
 
     @classmethod
     def createFromName(
-            cls,
-            coin: Coin,
-            *,
-            name: str,
-            **kwargs) -> _Address | None:
+        cls, coin: Coin, *, name: str, **kwargs
+    ) -> _Address | None:
         return cls(coin, name=name, **kwargs)
 
     @classmethod
     def createNullData(
-            cls,
-            coin: Coin,
-            *,
-            name: str | None = None,
-            **kwargs) -> _Address | None:
+        cls, coin: Coin, *, name: str | None = None, **kwargs
+    ) -> _Address | None:
         return cls(coin, name=name, type_=cls.Type.UNKNOWN, **kwargs)
 
     def serializeProperty(
-            self,
-            flags: SerializeFlag,
-            key: str,
-            value: ...) -> DeserializedData:
+        self, flags: SerializeFlag, key: str, value: ...
+    ) -> DeserializedData:
         if key == "key":
             # TODO temporary, unsecure
             if bool(flags & SerializeFlag.PUBLIC_MODE):
@@ -324,12 +344,13 @@ class _Address(
 
     @classmethod
     def deserializeProperty(
-            cls,
-            flags: DeserializeFlag,
-            self: _Address | None,
-            key: str,
-            value: DeserializedData,
-            *cls_args) -> ...:
+        cls,
+        flags: DeserializeFlag,
+        self: _Address | None,
+        key: str,
+        value: DeserializedData,
+        *cls_args,
+    ) -> ...:
         if key == "type":
             for t in cls.Type:
                 if value == t.value.name:
@@ -420,13 +441,13 @@ class _Address(
 
             if value is None:
                 value = self._key.toExtendedKey(
-                    self._coin.bip0032VersionPrivateKey,
-                    private=True)
+                    self._coin.bip0032VersionPrivateKey, private=True
+                )
 
             if value is None:
                 value = self._key.toExtendedKey(
-                    self._coin.bip0032VersionPublicKey,
-                    private=False)
+                    self._coin.bip0032VersionPublicKey, private=False
+                )
         elif isinstance(self._key, PrivateKey):
             value = self._key.toWif(self._coin.wifVersion)
         elif isinstance(self._key, PublicKey):
@@ -447,11 +468,12 @@ class _Address(
                 for coin_hd_node in coin.hdNodeList.values():
                     if len(hd_path) <= len(coin_hd_node.path):
                         continue
-                    if hd_path[:len(coin_hd_node.path)] != coin_hd_node.path:
+                    if hd_path[: len(coin_hd_node.path)] != coin_hd_node.path:
                         continue
                     key = coin_hd_node.fromPath(
-                        hd_path[len(coin_hd_node.path):],
-                        private=coin_hd_node.privateKey is not None)
+                        hd_path[len(coin_hd_node.path) :],
+                        private=coin_hd_node.privateKey is not None,
+                    )
                     return key
             return None
 
@@ -558,11 +580,13 @@ class _Address(
     def historyFirstOffset(self, value: str):
         def clear() -> None:
             self.historyLastOffset = ""
+
         self._updateValue(
             "set",
             "history_first_offset",
             value,
-            on_update=None if value else clear)
+            on_update=None if value else clear,
+        )
 
     @serializable
     @property
@@ -573,8 +597,10 @@ class _Address(
     def historyLastOffset(self, value: str):
         def clear() -> None:
             self.historyFirstOffset = ""
+
         self._updateValue(
             "set",
             "history_last_offset",
             value,
-            on_update=None if value else clear)
+            on_update=None if value else clear,
+        )

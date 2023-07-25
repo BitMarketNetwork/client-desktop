@@ -2,16 +2,17 @@ from __future__ import annotations
 
 from enum import Enum
 from functools import cached_property
-from typing import Final, TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
-from .object import CoinObject, CoinObjectModel
 from ...database.tables import TxIosTable, TxsTable
 from ...utils import (
-    DeserializeFlag,
     DeserializedData,
+    DeserializeFlag,
     SerializableList,
-    serializable)
+    serializable,
+)
 from ...utils.string import StringUtils
+from .object import CoinObject, CoinObjectModel
 
 if TYPE_CHECKING:
     from .coin import Coin
@@ -26,11 +27,17 @@ class _Model(CoinObjectModel):
     def owner(self) -> Coin.Tx:
         return self._tx
 
-    def beforeSetHeight(self, value: int) -> None: pass
-    def afterSetHeight(self, value: int) -> None: pass
+    def beforeSetHeight(self, value: int) -> None:
+        pass
 
-    def beforeSetTime(self, value: int) -> None: pass
-    def afterSetTime(self, value: int) -> None: pass
+    def afterSetHeight(self, value: int) -> None:
+        pass
+
+    def beforeSetTime(self, value: int) -> None:
+        pass
+
+    def afterSetTime(self, value: int) -> None:
+        pass
 
 
 class _Tx(CoinObject, table_type=TxsTable):
@@ -44,9 +51,11 @@ class _Tx(CoinObject, table_type=TxsTable):
     Model = _Model
 
     from .tx_io import _Io
+
     Io = _Io
 
     from .utxo import _Utxo
+
     Utxo = _Utxo
 
     def __new__(cls, coin: Coin, *args, **kwargs) -> _Tx:
@@ -77,37 +86,32 @@ class _Tx(CoinObject, table_type=TxsTable):
         self._fee_amount = int(kwargs.pop("fee_amount"))
         self._is_coinbase: Final = bool(kwargs.pop("is_coinbase"))
         self._appendDeferredSave(
-            lambda: self.inputList,
-            kwargs.pop("input_list", []))
+            lambda: self.inputList, kwargs.pop("input_list", [])
+        )
         self._appendDeferredSave(
-            lambda: self.outputList,
-            kwargs.pop("output_list", []))
+            lambda: self.outputList, kwargs.pop("output_list", [])
+        )
         assert len(kwargs) == 1
 
     def __eq__(self, other: _Tx) -> bool:
-        return (
-                super().__eq__(other)
-                and self._name == other._name)
+        return super().__eq__(other) and self._name == other._name
 
     def __hash__(self) -> int:
-        return hash((
-            super().__hash__(),
-            self._name))
+        return hash((super().__hash__(), self._name))
 
     # TODO cache
     def __str__(self) -> str:
         return StringUtils.classString(
-            self.__class__,
-            (None, self._name),
-            parent=self.coin)
+            self.__class__, (None, self._name), parent=self.coin
+        )
 
     def __update__(self, **kwargs) -> bool:
         self._appendDeferredSave(
-            lambda: self.inputList,
-            kwargs.pop("input_list", []))
+            lambda: self.inputList, kwargs.pop("input_list", [])
+        )
         self._appendDeferredSave(
-            lambda: self.outputList,
-            kwargs.pop("output_list", []))
+            lambda: self.outputList, kwargs.pop("output_list", [])
+        )
         if not super().__update__(**kwargs):
             return False
         # TODO self.updateBalance()
@@ -115,12 +119,13 @@ class _Tx(CoinObject, table_type=TxsTable):
 
     @classmethod
     def deserializeProperty(
-            cls,
-            flags: DeserializeFlag,
-            self: _Tx | None,
-            key: str,
-            value: DeserializedData,
-            *cls_args) -> ...:
+        cls,
+        flags: DeserializeFlag,
+        self: _Tx | None,
+        key: str,
+        value: DeserializedData,
+        *cls_args,
+    ) -> ...:
         if key in ("input_list", "output_list") and isinstance(value, dict):
             return lambda tx: cls.Io.deserialize(flags, value, tx)
         return super().deserializeProperty(flags, self, key, value, *cls_args)

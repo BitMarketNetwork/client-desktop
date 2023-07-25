@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Type
+
     from .fiat import FiatCurrency
 
 
@@ -14,12 +15,13 @@ class FiatRate:
 
     def __eq__(self, other: FiatRate) -> bool:
         return (
-                isinstance(other, self.__class__)
-                and self._value == other._value
-                and self._currency_type is other._currency_type)
+            isinstance(other, self.__class__)
+            and self._value == other._value
+            and self._currency_type is other._currency_type
+        )
 
     def __hash__(self) -> int:
-        return hash((self._value, ))
+        return hash((self._value,))
 
     @property
     def value(self) -> int:

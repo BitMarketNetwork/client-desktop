@@ -4,5 +4,6 @@ from .fiat import (
     FiatCurrency,
     FiatCurrencyList,
     NoneFiatCurrency,
-    UsdFiatCurrency)
+    UsdFiatCurrency,
+)
 from .fiat_rate import FiatRate

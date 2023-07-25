@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
-from .table import ColumnEnum, SerializableRowList, SerializableTable
 from ...utils.class_property import classproperty
+from .table import ColumnEnum, SerializableRowList, SerializableTable
 
 if TYPE_CHECKING:
     from ...coins.abstract import Coin
@@ -23,6 +23,7 @@ class UtxosTable(SerializableTable, name="utxos"):
     @classproperty
     def _CONSTRAINT_LIST(cls) -> Tuple[str, ...]:  # noqa
         from .address import AddressesTable
+
         return (
             f"FOREIGN KEY ("
             f"{cls.ColumnEnum.ADDRESS_ROW_ID})"
@@ -31,24 +32,20 @@ class UtxosTable(SerializableTable, name="utxos"):
             f" ON DELETE CASCADE",
         )
 
-    _UNIQUE_COLUMN_LIST = (
-        (ColumnEnum.ADDRESS_ROW_ID, ColumnEnum.NAME),
-    )
+    _UNIQUE_COLUMN_LIST = ((ColumnEnum.ADDRESS_ROW_ID, ColumnEnum.NAME),)
 
     _KEY_COLUMN_LIST = (
         (
             ColumnEnum.ADDRESS_ROW_ID,
-            lambda o: o.address.rowId if o.address.rowId > 0 else None
-        ), (
-            ColumnEnum.NAME,
-            lambda o: o.name
+            lambda o: o.address.rowId if o.address.rowId > 0 else None,
         ),
+        (ColumnEnum.NAME, lambda o: o.name),
     )
 
     def rowList(
-            self,
-            address: Coin.Address,
-            on_save_row: Callable[[int], None] | None = None
+        self,
+        address: Coin.Address,
+        on_save_row: Callable[[int], None] | None = None,
     ) -> SerializableRowList[Coin.Tx.Utxo]:
         assert address.rowId > 0
         return SerializableRowList(
@@ -57,7 +54,8 @@ class UtxosTable(SerializableTable, name="utxos"):
             table=self,
             where_expression=f"{self.ColumnEnum.ADDRESS_ROW_ID} == ?",
             where_args=[address.rowId],
-            on_save_row=on_save_row)
+            on_save_row=on_save_row,
+        )
 
     def queryTotalAmount(self, address: Coin.Address) -> int:
         assert address.rowId > 0
@@ -66,7 +64,8 @@ class UtxosTable(SerializableTable, name="utxos"):
                 f"SELECT SUM({self.ColumnEnum.AMOUNT})"
                 f" FROM {self}"
                 f" WHERE {self.ColumnEnum.ADDRESS_ROW_ID} == ?",
-                [address.rowId])
+                [address.rowId],
+            )
             value = c.fetchone()
         if value is None or value[0] is None:
             return 0

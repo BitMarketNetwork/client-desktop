@@ -7,20 +7,22 @@ from typing import TYPE_CHECKING
 from bmnclient.coins.list import CoinList
 from bmnclient.database import Cursor, Database
 from bmnclient.database.tables import (
-    AddressTxsTable,
     AddressesTable,
+    AddressTxsTable,
     CoinsTable,
     ColumnValue,
     MetadataTable,
     SerializableTable,
     TxIosTable,
-    TxsTable)
+    TxsTable,
+)
 from bmnclient.database.tables.table import ColumnEnum
 from bmnclient.utils import (
     DeserializeFlag,
     Serializable,
     SerializeFlag,
-    serializable)
+    serializable,
+)
 from tests.helpers import TestCaseApplication
 from tests.test_coins import fillCoin
 
@@ -56,8 +58,8 @@ class TestDatabase(TestCaseApplication):
 
         for i in range(0, 10):
             db = self._create(
-                Path("not_exists") / (str(i) + ".db"),
-                mkdir=False)
+                Path("not_exists") / (str(i) + ".db"), mkdir=False
+            )
             self.assertFalse(db.filePath.exists())
             self.assertFalse(db.isOpen)
             self.assertFalse(db.open())
@@ -116,20 +118,20 @@ class TestDatabase(TestCaseApplication):
         self.assertTrue(db.open())
 
         self.assertEqual(
-            db.version,
-            db[MetadataTable].get(MetadataTable.Key.VERSION, int))
+            db.version, db[MetadataTable].get(MetadataTable.Key.VERSION, int)
+        )
 
         db[MetadataTable].set(MetadataTable.Key.VERSION, -1)
         self.assertEqual(
-            -1,
-            db[MetadataTable].get(MetadataTable.Key.VERSION, int))
+            -1, db[MetadataTable].get(MetadataTable.Key.VERSION, int)
+        )
 
         self.assertTrue(db.close())
         self.assertTrue(db.open())
 
         self.assertEqual(
-            db.version,
-            db[MetadataTable].get(MetadataTable.Key.VERSION, int))
+            db.version, db[MetadataTable].get(MetadataTable.Key.VERSION, int)
+        )
 
         db[MetadataTable].set(MetadataTable.Key.VERSION, db.version + 1)
 
@@ -141,7 +143,7 @@ class TestDatabase(TestCaseApplication):
         self.assertTrue(db.open())
 
         keys = [ColumnValue(MetadataTable.ColumnEnum.KEY, "key1")]
-        data = (ColumnValue(MetadataTable.ColumnEnum.VALUE, "value1"), )
+        data = (ColumnValue(MetadataTable.ColumnEnum.VALUE, "value1"),)
 
         r1 = db[MetadataTable].save(-1, keys, data, fallback_search=True)
         self.assertLess(0, r1.row_id)
@@ -156,10 +158,8 @@ class TestDatabase(TestCaseApplication):
         self.assertTrue(r.isUpdateAction)
 
         r = db[MetadataTable].save(
-                r1.row_id * 10000,
-                keys,
-                data,
-                fallback_search=True)
+            r1.row_id * 10000, keys, data, fallback_search=True
+        )
         self.assertEqual(r1.row_id, r.row_id)
         self.assertTrue(r.isUpdateAction)
 
@@ -167,15 +167,15 @@ class TestDatabase(TestCaseApplication):
         self.assertEqual(-1, r.row_id)
         self.assertTrue(r.isNoneAction)
 
-        r = db[MetadataTable].save(r1.row_id, keys, data, fallback_search=False)
+        r = db[MetadataTable].save(
+            r1.row_id, keys, data, fallback_search=False
+        )
         self.assertEqual(r1.row_id, r.row_id)
         self.assertTrue(r.isUpdateAction)
 
         r = db[MetadataTable].save(
-                r1.row_id * 10000,
-                keys,
-                data,
-                fallback_search=False)
+            r1.row_id * 10000, keys, data, fallback_search=False
+        )
         self.assertEqual(-1, r.row_id)
         self.assertTrue(r.isNoneAction)
 
@@ -184,14 +184,14 @@ class TestDatabase(TestCaseApplication):
         self.assertTrue(db.open())
 
         keys = [ColumnValue(MetadataTable.ColumnEnum.KEY, "key1")]
-        data = (ColumnValue(MetadataTable.ColumnEnum.VALUE, "value1"), )
+        data = (ColumnValue(MetadataTable.ColumnEnum.VALUE, "value1"),)
 
         self.assertEqual(
-            -1,
-            db[MetadataTable].load(-1, keys, data, fallback_search=True))
+            -1, db[MetadataTable].load(-1, keys, data, fallback_search=True)
+        )
         self.assertEqual(
-            -1,
-            db[MetadataTable].load(-1, keys, data, fallback_search=False))
+            -1, db[MetadataTable].load(-1, keys, data, fallback_search=False)
+        )
 
         r1 = db[MetadataTable].save(-1, keys, data)
         self.assertLess(0, r1.row_id)
@@ -203,7 +203,10 @@ class TestDatabase(TestCaseApplication):
             c.value = None
         self.assertEqual(
             r1.row_id,
-            db[MetadataTable].load(r1.row_id, keys, data, fallback_search=True))
+            db[MetadataTable].load(
+                r1.row_id, keys, data, fallback_search=True
+            ),
+        )
         for c in data:
             self.assertIsNotNone(c.value)
 
@@ -212,10 +215,9 @@ class TestDatabase(TestCaseApplication):
         self.assertEqual(
             r1.row_id,
             db[MetadataTable].load(
-                r1.row_id,
-                keys,
-                data,
-                fallback_search=False))
+                r1.row_id, keys, data, fallback_search=False
+            ),
+        )
         for c in data:
             self.assertIsNotNone(c.value)
 
@@ -225,7 +227,8 @@ class TestDatabase(TestCaseApplication):
             c.value = None
         self.assertEqual(
             r1.row_id,
-            db[MetadataTable].load(-1, keys, data, fallback_search=True))
+            db[MetadataTable].load(-1, keys, data, fallback_search=True),
+        )
         for c in data:
             self.assertIsNotNone(c.value)
 
@@ -233,7 +236,8 @@ class TestDatabase(TestCaseApplication):
             c.value = None
         self.assertEqual(
             r1.row_id,
-            db[MetadataTable].load(-1, keys, data, fallback_search=False))
+            db[MetadataTable].load(-1, keys, data, fallback_search=False),
+        )
         for c in data:
             self.assertIsNotNone(c.value)
 
@@ -244,10 +248,9 @@ class TestDatabase(TestCaseApplication):
         self.assertEqual(
             r1.row_id,
             db[MetadataTable].load(
-                r1.row_id * 10000,
-                keys,
-                data,
-                fallback_search=True))
+                r1.row_id * 10000, keys, data, fallback_search=True
+            ),
+        )
         for c in data:
             self.assertIsNotNone(c.value)
 
@@ -256,10 +259,9 @@ class TestDatabase(TestCaseApplication):
         self.assertEqual(
             -1,
             db[MetadataTable].load(
-                r1.row_id * 10000,
-                keys,
-                data,
-                fallback_search=False))
+                r1.row_id * 10000, keys, data, fallback_search=False
+            ),
+        )
         for c in data:
             self.assertIsNone(c.value)
 
@@ -273,9 +275,7 @@ class TestDatabase(TestCaseApplication):
                 V3 = ("v3", "TEXT NOT NULL")
                 V4 = ("v4", "TEXT NOT NULL")
 
-            _KEY_COLUMN_LIST = (
-                (ColumnEnum.V1, lambda o: o.v1),
-            )
+            _KEY_COLUMN_LIST = ((ColumnEnum.V1, lambda o: o.v1),)
 
         owner = self
         db = self._create(Path("serializable.db"))
@@ -339,8 +339,8 @@ class TestDatabase(TestCaseApplication):
         self.assertEqual(o1_result.row_id, table.saveSerializable(o1).row_id)
 
         o2 = table.loadSerializable(
-            Object,
-            key_columns=[ColumnValue(Table.ColumnEnum.V1, o1.v1)])
+            Object, key_columns=[ColumnValue(Table.ColumnEnum.V1, o1.v1)]
+        )
         self.assertIsInstance(o2, Object)
         self.assertEqual(0, o2.result)
         self.assertEqual(o1.rowId, o2.rowId)
@@ -362,7 +362,7 @@ class TestDatabase(TestCaseApplication):
         self.assertEqual(o1.v3, o3.v3)
         self.assertEqual(o1.v4, o3.v4)
 
-        o4 = Object(v1=o1.v1*100)
+        o4 = Object(v1=o1.v1 * 100)
         self.assertEqual(-1, o4.result)
         self.assertEqual(-1, o4.rowId)
 
@@ -371,12 +371,13 @@ class TestDatabase(TestCaseApplication):
             fillCoin(self, coin_source, address_count=10, tx_count=10)
 
             data = coin_source.serialize(
-                SerializeFlag.PRIVATE_MODE
-                | SerializeFlag.EXCLUDE_SUBCLASSES)
+                SerializeFlag.PRIVATE_MODE | SerializeFlag.EXCLUDE_SUBCLASSES
+            )
             self.assertIsInstance(data, dict)
 
             coin = coin_source.__class__(
-                model_factory=self._application.modelFactory)
+                model_factory=self._application.modelFactory
+            )
             coin.deserializeUpdate(DeserializeFlag.NORMAL_MODE, data)
 
             db[CoinsTable].saveSerializable(coin)
@@ -385,12 +386,12 @@ class TestDatabase(TestCaseApplication):
             for address_source in list(coin_source.addressList):
                 data = address_source.serialize(
                     SerializeFlag.PRIVATE_MODE
-                    | SerializeFlag.EXCLUDE_SUBCLASSES)
+                    | SerializeFlag.EXCLUDE_SUBCLASSES
+                )
                 self.assertIsInstance(data, dict)
                 address = coin.Address.deserialize(
-                    DeserializeFlag.DATABASE_MODE,
-                    data,
-                    coin)
+                    DeserializeFlag.DATABASE_MODE, data, coin
+                )
                 self.assertIsNotNone(address)
                 db[AddressesTable].saveSerializable(address)
                 self.assertLess(0, address.rowId)
@@ -398,116 +399,114 @@ class TestDatabase(TestCaseApplication):
                 for tx_source in address_source.txList:
                     data = tx_source.serialize(
                         SerializeFlag.PRIVATE_MODE
-                        | SerializeFlag.EXCLUDE_SUBCLASSES)
+                        | SerializeFlag.EXCLUDE_SUBCLASSES
+                    )
                     self.assertIsInstance(data, dict)
                     tx = coin.Tx.deserialize(
-                        DeserializeFlag.DATABASE_MODE,
-                        data,
-                        coin)
+                        DeserializeFlag.DATABASE_MODE, data, coin
+                    )
                     db[TxsTable].saveSerializable(tx)
                     self.assertLess(0, tx.rowId)
 
-                    self.assertTrue(db[AddressTxsTable].associateSerializable(
-                        address,
-                        tx))
+                    self.assertTrue(
+                        db[AddressTxsTable].associateSerializable(address, tx)
+                    )
 
                     for io_source in chain(
-                            tx_source.inputList,
-                            tx_source.outputList):
+                        tx_source.inputList, tx_source.outputList
+                    ):
                         data = io_source.serialize(
                             SerializeFlag.PRIVATE_MODE
-                            | SerializeFlag.EXCLUDE_SUBCLASSES)
+                            | SerializeFlag.EXCLUDE_SUBCLASSES
+                        )
                         self.assertIsInstance(data, dict)
                         io = coin.Tx.Io.deserialize(
-                            DeserializeFlag.DATABASE_MODE,
-                            data,
-                            tx)
+                            DeserializeFlag.DATABASE_MODE, data, tx
+                        )
                         db[TxIosTable].saveSerializable(io)
                         self.assertLess(0, io.rowId)
 
-    def _select_coin(
-            self,
-            cursor: Cursor,
-            coin: Coin) -> list[tuple[...]]:
+    def _select_coin(self, cursor: Cursor, coin: Coin) -> list[tuple[...]]:
         cursor.execute(
             f"SELECT * FROM {CoinsTable}"
             f" WHERE {CoinsTable.ColumnEnum.NAME} == ?",
-            [coin.name])
+            [coin.name],
+        )
         r = cursor.fetchall()
         self.assertIsNotNone(r)
         return r
 
     def _select_addresses(
-            self,
-            cursor: Cursor,
-            coin: Coin) -> list[tuple[...]]:
+        self, cursor: Cursor, coin: Coin
+    ) -> list[tuple[...]]:
         cursor.execute(
             f"SELECT * FROM {AddressesTable}"
             f" WHERE {AddressesTable.ColumnEnum.COIN_ROW_ID} IN ("
             f"SELECT {CoinsTable.ColumnEnum.ROW_ID}"
             f" FROM {CoinsTable}"
             f" WHERE  {CoinsTable.ColumnEnum.NAME} == ?)",
-            [coin.name])
+            [coin.name],
+        )
         r = cursor.fetchall()
         self.assertIsNotNone(r)
         return r
 
     def _select_transactions(
-            self,
-            cursor: Cursor,
-            coin: Coin) -> list[tuple[...]]:
+        self, cursor: Cursor, coin: Coin
+    ) -> list[tuple[...]]:
         cursor.execute(
             f"SELECT * FROM {TxsTable}"
             f" WHERE {TxsTable.ColumnEnum.COIN_ROW_ID} IN ("
             f"SELECT {CoinsTable.ColumnEnum.ROW_ID}"
             f" FROM {CoinsTable}"
             f" WHERE  {CoinsTable.ColumnEnum.NAME} == ?)",
-            [coin.name])
+            [coin.name],
+        )
         r = cursor.fetchall()
         self.assertIsNotNone(r)
         return r
 
     def _select_transaction_io(
-            self,
-            cursor: Cursor,
-            tx: Coin.Tx) -> list[tuple[...]]:
+        self, cursor: Cursor, tx: Coin.Tx
+    ) -> list[tuple[...]]:
         cursor.execute(
             f"SELECT * FROM {TxIosTable}"
             f" WHERE {TxIosTable.ColumnEnum.TX_ROW_ID} IN ("
             f"SELECT {TxsTable.ColumnEnum.ROW_ID}"
             f" FROM {TxsTable}"
             f" WHERE {TxsTable.ColumnEnum.NAME} == ?)",
-            [tx.name])
+            [tx.name],
+        )
         r = cursor.fetchall()
         self.assertIsNotNone(r)
         return r
 
     def _select_transaction_address_map(
-            self,
-            cursor: Cursor,
-            tx: Coin.Tx) -> list[tuple[...]]:
+        self, cursor: Cursor, tx: Coin.Tx
+    ) -> list[tuple[...]]:
         cursor.execute(
             f"SELECT * FROM {AddressTxsTable}"
             f" WHERE {AddressTxsTable.ColumnEnum.TX_ROW_ID} IN ("
             f"SELECT {TxsTable.ColumnEnum.ROW_ID}"
             f" FROM {TxsTable}"
             f" WHERE {TxsTable.ColumnEnum.NAME} == ?)",
-            [tx.name])
+            [tx.name],
+        )
         r = cursor.fetchall()
         self.assertIsNotNone(r)
         return r
 
     def _select_address_transaction_map(
-            self,
-            cursor: Cursor,
-            address: Coin.Address) -> list[tuple[...]]:
+        self, cursor: Cursor, address: Coin.Address
+    ) -> list[tuple[...]]:
         cursor.execute(
             f"SELECT * FROM {AddressTxsTable}"
             f" WHERE {AddressTxsTable.ColumnEnum.ADDRESS_ROW_ID} IN ("
             f"SELECT {AddressesTable.ColumnEnum.ROW_ID}"
             f" FROM {AddressesTable}"
             f" WHERE {AddressesTable.ColumnEnum.NAME} == ?)",
-            [address.name])
+            [address.name],
+        )
         r = cursor.fetchall()
         self.assertIsNotNone(r)
         return r
@@ -532,14 +531,16 @@ class TestDatabase(TestCaseApplication):
                     self.assertEqual(10, len(address.txList))
                     self.assertEqual(
                         10,
-                        len(self._select_address_transaction_map(c, address)))
+                        len(self._select_address_transaction_map(c, address)),
+                    )
                     for tx in address.txList:
                         self.assertEqual(
                             len(tx.inputList) + len(tx.outputList),
-                            len(self._select_transaction_io(c, tx)))
+                            len(self._select_transaction_io(c, tx)),
+                        )
                         self.assertEqual(
-                            1,
-                            len(self._select_transaction_address_map(c, tx)))
+                            1, len(self._select_transaction_address_map(c, tx))
+                        )
 
         # delete coin[0]
         with db.transaction(suppress_exceptions=False) as c:
@@ -547,7 +548,8 @@ class TestDatabase(TestCaseApplication):
             c.execute(
                 f"DELETE FROM {CoinsTable} WHERE "
                 f" {CoinsTable.ColumnEnum.ROW_ID} == ?",
-                (coin.rowId, ))
+                (coin.rowId,),
+            )
             self.assertEqual(1, c.rowcount)
             self.assertEqual(0, len(self._select_coin(c, coin)))
             self.assertEqual(0, len(self._select_addresses(c, coin)))
@@ -555,15 +557,15 @@ class TestDatabase(TestCaseApplication):
 
             for address in coin.addressList:
                 self.assertEqual(
-                    0,
-                    len(self._select_address_transaction_map(c, address)))
+                    0, len(self._select_address_transaction_map(c, address))
+                )
                 for tx in address.txList:
                     self.assertEqual(
-                        0,
-                        len(self._select_transaction_io(c, tx)))
+                        0, len(self._select_transaction_io(c, tx))
+                    )
                     self.assertEqual(
-                        0,
-                        len(self._select_transaction_address_map(c, tx)))
+                        0, len(self._select_transaction_address_map(c, tx))
+                    )
 
         # delete coin[1].address[1]
         with db.transaction(suppress_exceptions=False) as c:
@@ -571,11 +573,12 @@ class TestDatabase(TestCaseApplication):
             c.execute(
                 f"DELETE FROM {AddressesTable}"
                 f" WHERE {AddressesTable.ColumnEnum.NAME} == ?",
-                [address.name])
+                [address.name],
+            )
             self.assertEqual(1, c.rowcount)
             self.assertEqual(
-                0,
-                len(self._select_address_transaction_map(c, address)))
+                0, len(self._select_address_transaction_map(c, address))
+            )
 
         # delete coin[1].address[2].tx[2]
         with db.transaction(suppress_exceptions=False) as c:
@@ -583,11 +586,10 @@ class TestDatabase(TestCaseApplication):
             c.execute(
                 f"DELETE FROM {TxsTable}"
                 f" WHERE {TxsTable.ColumnEnum.NAME} == ?",
-                [tx.name])
+                [tx.name],
+            )
             self.assertEqual(1, c.rowcount)
+            self.assertEqual(0, len(self._select_transaction_io(c, tx)))
             self.assertEqual(
-                0,
-                len(self._select_transaction_io(c, tx)))
-            self.assertEqual(
-                0,
-                len(self._select_transaction_address_map(c, tx)))
+                0, len(self._select_transaction_address_map(c, tx))
+            )

@@ -3,8 +3,8 @@ from __future__ import annotations
 from math import ceil
 from typing import TYPE_CHECKING
 
-from ..abstract import Coin
 from ...crypto.digest import Sha256Digest, Sha256DoubleDigest
+from ..abstract import Coin
 
 if TYPE_CHECKING:
     from . import Bitcoin
@@ -16,6 +16,7 @@ class _MutableTx(Coin.TxFactory.MutableTx):
     _WITNESS_HEADER = b"\x00\x01"
 
     from .mutable_tx_io import _MutableInput, _MutableOutput
+
     Input = _MutableInput
     Output = _MutableOutput
 
@@ -35,27 +36,25 @@ class _MutableTx(Coin.TxFactory.MutableTx):
             return True
 
         input_count = self._coin.Address.Script.integerToVarInt(
-            len(self._input_list))
+            len(self._input_list)
+        )
         output_count = self._coin.Address.Script.integerToVarInt(
-            len(self._output_list))
+            len(self._output_list)
+        )
         if not input_count or not output_count:
             return False
 
         output_list = b"".join(
-            o.amountBytes + o.scriptBytes
-            for o in self._output_list)
+            o.amountBytes + o.scriptBytes for o in self._output_list
+        )
 
         if self.isWitness:
             output_list_hash = Sha256DoubleDigest(output_list).finalize()
 
-            hash_prevouts = b"".join(
-                i.utxoIdBytes
-                for i in self._input_list)
+            hash_prevouts = b"".join(i.utxoIdBytes for i in self._input_list)
             hash_prevouts = Sha256DoubleDigest(hash_prevouts).finalize()
 
-            hash_sequence = b"".join(
-                i.sequenceBytes
-                for i in self._input_list)
+            hash_sequence = b"".join(i.sequenceBytes for i in self._input_list)
             hash_sequence = Sha256DoubleDigest(hash_sequence).finalize()
         else:
             output_list_hash = b""
@@ -82,7 +81,8 @@ class _MutableTx(Coin.TxFactory.MutableTx):
                         digest.update(other_input.scriptBytes)
                     else:
                         digest.update(
-                            self._coin.Address.Script.integerToVarInt(0))
+                            self._coin.Address.Script.integerToVarInt(0)
+                        )
                     digest.update(other_input.sequenceBytes)
                 digest.update(output_count)
                 digest.update(output_list)
@@ -96,36 +96,34 @@ class _MutableTx(Coin.TxFactory.MutableTx):
 
     def _raw(self, *, with_witness: bool = True, **_) -> bytes:
         try:
-            input_list = (
-                self._coin.Address.Script.integerToVarInt(
-                    len(self._input_list))
-                + b"".join(
-                    i.utxoIdBytes + i.scriptSigBytes + i.sequenceBytes
-                    for i in self._input_list)
+            input_list = self._coin.Address.Script.integerToVarInt(
+                len(self._input_list)
+            ) + b"".join(
+                i.utxoIdBytes + i.scriptSigBytes + i.sequenceBytes
+                for i in self._input_list
             )
 
-            output_list = (
-                self._coin.Address.Script.integerToVarInt(
-                    len(self._output_list))
-                + b"".join(
-                    o.amountBytes + o.scriptBytes
-                    for o in self._output_list)
+            output_list = self._coin.Address.Script.integerToVarInt(
+                len(self._output_list)
+            ) + b"".join(
+                o.amountBytes + o.scriptBytes for o in self._output_list
             )
 
             if with_witness and self.isWitness:
                 witness_list = b"".join(
-                    i.witnessBytes
-                    for i in self._input_list)
+                    i.witnessBytes for i in self._input_list
+                )
             else:
                 witness_list = b""
 
             return (
-                    self.versionBytes
-                    + (self._WITNESS_HEADER if witness_list else b"")
-                    + input_list
-                    + output_list
-                    + witness_list
-                    + self.lockTimeBytes)
+                self.versionBytes
+                + (self._WITNESS_HEADER if witness_list else b"")
+                + input_list
+                + output_list
+                + witness_list
+                + self.lockTimeBytes
+            )
         except TypeError:
             return b""
 

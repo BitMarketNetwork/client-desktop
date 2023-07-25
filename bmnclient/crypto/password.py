@@ -18,9 +18,9 @@ class PasswordStrength:
         (False, QObject().tr("Horrible")),
         (False, QObject().tr("Weak")),
         (False, QObject().tr("Medium")),
-        (True,  QObject().tr("Good")),
-        (True,  QObject().tr("Strong")),
-        (True,  QObject().tr("Paranoiac"))
+        (True, QObject().tr("Good")),
+        (True, QObject().tr("Strong")),
+        (True, QObject().tr("Paranoiac")),
     )
 
     def __init__(self, password: str) -> None:
@@ -87,9 +87,7 @@ class PasswordStrength:
 
     @classmethod
     def _getGroups(cls, unique_chars: str) -> Dict[str, bool]:
-        result = dict.fromkeys(
-            ("upper", "lower", "numbers", "special"),
-            False)
+        result = dict.fromkeys(("upper", "lower", "numbers", "special"), False)
 
         if unique_chars.lower() != unique_chars:
             result["upper"] = True

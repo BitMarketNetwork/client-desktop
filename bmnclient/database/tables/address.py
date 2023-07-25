@@ -1,20 +1,21 @@
 from __future__ import annotations
 
 import glob
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
+from ...coins.hd import HdNode
+from ...utils.class_property import classproperty
 from .table import (
     Column,
     ColumnEnum,
     ColumnValue,
     SerializableRowList,
-    SerializableTable)
-from ...coins.hd import HdNode
-from ...utils.class_property import classproperty
+    SerializableTable,
+)
 
 if TYPE_CHECKING:
-    from .. import Cursor
     from ...coins.abstract import Coin
+    from .. import Cursor
 
 
 class AddressesTable(SerializableTable, name="addresses"):
@@ -38,6 +39,7 @@ class AddressesTable(SerializableTable, name="addresses"):
     @classproperty
     def _CONSTRAINT_LIST(cls) -> Tuple[str, ...]:  # noqa
         from .coin import CoinsTable
+
         return (
             f"FOREIGN KEY ("
             f"{cls.ColumnEnum.COIN_ROW_ID})"
@@ -46,18 +48,14 @@ class AddressesTable(SerializableTable, name="addresses"):
             f" ON DELETE CASCADE",
         )
 
-    _UNIQUE_COLUMN_LIST = (
-        (ColumnEnum.COIN_ROW_ID, ColumnEnum.NAME),
-    )
+    _UNIQUE_COLUMN_LIST = ((ColumnEnum.COIN_ROW_ID, ColumnEnum.NAME),)
 
     _KEY_COLUMN_LIST = (
         (
             ColumnEnum.COIN_ROW_ID,
-            lambda o: o.coin.rowId if o.coin.rowId > 0 else None
-        ), (
-            ColumnEnum.NAME,
-            lambda o: o.name
-        )
+            lambda o: o.coin.rowId if o.coin.rowId > 0 else None,
+        ),
+        (ColumnEnum.NAME, lambda o: o.name),
     )
 
     def upgrade(self, cursor: Cursor, old_version: int) -> None:
@@ -69,15 +67,16 @@ class AddressesTable(SerializableTable, name="addresses"):
     def _upgrade_v1(cursor: Cursor) -> None:
         if cursor.isColumnExists("addresses", "amount"):
             cursor.execute(
-                "ALTER TABLE \"addresses\" RENAME \"amount\" TO \"balance\"")
+                'ALTER TABLE "addresses" RENAME "amount" TO "balance"'
+            )
 
     def rowList(
-            self,
-            coin: Coin,
-            on_save_row: Callable[[int], None] | None = None,
-            *,
-            is_read_only: bool | None = None,
-            with_utxo: bool | None = None
+        self,
+        coin: Coin,
+        on_save_row: Callable[[int], None] | None = None,
+        *,
+        is_read_only: bool | None = None,
+        with_utxo: bool | None = None,
     ) -> SerializableRowList[Coin.Address]:
         assert coin.rowId > 0
 
@@ -92,6 +91,7 @@ class AddressesTable(SerializableTable, name="addresses"):
 
         if with_utxo is not None:
             from .utxo import UtxosTable
+
             where_expression += (
                 f" AND ("
                 f"SELECT 1 FROM {UtxosTable}"
@@ -99,7 +99,8 @@ class AddressesTable(SerializableTable, name="addresses"):
                 f" {UtxosTable}.{UtxosTable.ColumnEnum.ADDRESS_ROW_ID}"
                 f" == {self}.{self.ColumnEnum.ROW_ID}"
                 f" LIMIT 1"
-                f") == ?")
+                f") == ?"
+            )
             where_args.append(1 if with_utxo else None)
 
         return SerializableRowList(
@@ -108,7 +109,8 @@ class AddressesTable(SerializableTable, name="addresses"):
             table=self,
             where_expression=where_expression,
             where_args=where_args,
-            on_save_row=on_save_row)
+            on_save_row=on_save_row,
+        )
 
     def queryTotalBalance(self, coin: Coin) -> int:
         assert coin.rowId > 0
@@ -118,7 +120,8 @@ class AddressesTable(SerializableTable, name="addresses"):
                 f" FROM {self}"
                 f" WHERE {self.ColumnEnum.COIN_ROW_ID} == ?"
                 f" AND IFNULL({self.ColumnEnum.KEY}, ?) != ? ",
-                [coin.rowId, "", ""])
+                [coin.rowId, "", ""],
+            )
             value = c.fetchone()
         if value is None or value[0] is None:
             return 0
@@ -130,7 +133,8 @@ class AddressesTable(SerializableTable, name="addresses"):
         prefix = glob.escape(prefix) + "*"
         prefix = prefix.replace(
             HdNode.pathHardenedChars[0],
-            "[" + "".join(HdNode.pathHardenedChars) + "]")
+            "[" + "".join(HdNode.pathHardenedChars) + "]",
+        )
 
         with self._database.transaction() as c:
             c.execute(
@@ -139,7 +143,8 @@ class AddressesTable(SerializableTable, name="addresses"):
                 f" FROM {self}"
                 f" WHERE {self.ColumnEnum.COIN_ROW_ID} == ?"
                 f" AND {self.ColumnEnum.KEY} GLOB ?",
-                [coin.rowId, prefix])
+                [coin.rowId, prefix],
+            )
             value = c.fetchone()
         if value is None or value[0] is None:
             return -1
@@ -154,7 +159,8 @@ class AddressesTable(SerializableTable, name="addresses"):
             coin,
             key_columns=[
                 ColumnValue(self.ColumnEnum.COIN_ROW_ID, coin.rowId),
-                ColumnValue(self.ColumnEnum.NAME, address_name)]
+                ColumnValue(self.ColumnEnum.NAME, address_name),
+            ],
         )
 
 
@@ -165,38 +171,39 @@ class AddressTxsTable(SerializableTable, name="address_transactions"):
         ADDRESS_ROW_ID = (
             "address_row_id",
             "INTEGER NOT NULL",
-            Column.Flags.ASSOCIATE_IS_PARENT)
+            Column.Flags.ASSOCIATE_IS_PARENT,
+        )
         TX_ROW_ID = (
             "tx_row_id",
             "INTEGER NOT NULL",
-            Column.Flags.ASSOCIATE_IS_CHILD)
+            Column.Flags.ASSOCIATE_IS_CHILD,
+        )
 
     @classproperty
     def _CONSTRAINT_LIST(cls) -> tuple[str, ...]:  # noqa
         from .tx import TxsTable
+
         return (
             f"FOREIGN KEY ("
             f"{cls.ColumnEnum.ADDRESS_ROW_ID})"
             f" REFERENCES {AddressesTable} ("
             f"{AddressesTable.ColumnEnum.ROW_ID})"
             f" ON DELETE CASCADE",
-
             f"FOREIGN KEY ({cls.ColumnEnum.TX_ROW_ID})"
             f" REFERENCES {TxsTable} ("
             f"{TxsTable.ColumnEnum.ROW_ID})"
             f" ON DELETE CASCADE",
         )
 
-    _UNIQUE_COLUMN_LIST = (
-        (ColumnEnum.ADDRESS_ROW_ID, ColumnEnum.TX_ROW_ID),
-    )
+    _UNIQUE_COLUMN_LIST = ((ColumnEnum.ADDRESS_ROW_ID, ColumnEnum.TX_ROW_ID),)
 
     def rowList(
-            self,
-            address: Coin.Address,
-            on_save_row: Callable[[int], None] | None = None
+        self,
+        address: Coin.Address,
+        on_save_row: Callable[[int], None] | None = None,
     ) -> SerializableRowList[Coin.Tx]:
         from .tx import TxsTable
+
         assert address.rowId > 0
         return SerializableRowList(
             type_=address.coin.Tx,
@@ -206,14 +213,15 @@ class AddressTxsTable(SerializableTable, name="address_transactions"):
                 f"{TxsTable.ColumnEnum.ROW_ID} IN ("
                 f"SELECT {self.ColumnEnum.TX_ROW_ID}"
                 f" FROM {self}"
-                f" WHERE {self.ColumnEnum.ADDRESS_ROW_ID} == ?)"),
+                f" WHERE {self.ColumnEnum.ADDRESS_ROW_ID} == ?)"
+            ),
             where_args=[address.rowId],
-            on_save_row=on_save_row)
+            on_save_row=on_save_row,
+        )
 
     def associateSerializable(
-            self,
-            address: Coin.Address,
-            tx: Coin.Tx) -> SerializableTable.WriteResult:
+        self, address: Coin.Address, tx: Coin.Tx
+    ) -> SerializableTable.WriteResult:
         if not isinstance(tx, address.coin.Tx):
             return self.WriteResult()
         return super().associateSerializable(address, tx)

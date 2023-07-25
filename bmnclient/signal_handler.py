@@ -5,9 +5,8 @@ import sys
 from socket import SOCK_STREAM, socketpair
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    QObject, \
-    Signal as QSignal
+from PySide6.QtCore import QObject
+from PySide6.QtCore import Signal as QSignal
 from PySide6.QtNetwork import QAbstractSocket
 
 from .logger import Logger
@@ -49,8 +48,8 @@ class SignalHandler(QObject):
         # noinspection PyTypeChecker
         self._qt_socket = QAbstractSocket(QAbstractSocket.TcpSocket, None)
         self._qt_socket.setSocketDescriptor(
-            read_socket.detach(),
-            openMode=QAbstractSocket.ReadOnly)
+            read_socket.detach(), openMode=QAbstractSocket.ReadOnly
+        )
         self._qt_socket.readyRead.connect(self._onReadSignal)
 
         self._old_wakeup_fd = signal.set_wakeup_fd(self._write_socket.fileno())
@@ -58,8 +57,8 @@ class SignalHandler(QObject):
         self._old_signal_list = [-1] * len(self._SIGNAL_LIST)
         for i in range(len(self._SIGNAL_LIST)):
             self._old_signal_list[i] = signal.signal(
-                self._SIGNAL_LIST[i][0],
-                self._defaultHandler)
+                self._SIGNAL_LIST[i][0], self._defaultHandler
+            )
             assert self._old_signal_list[i] != -1
 
     def __del__(self) -> None:
@@ -70,8 +69,8 @@ class SignalHandler(QObject):
             for i in range(len(self._SIGNAL_LIST)):
                 if self._old_signal_list[i] != -1:
                     signal.signal(
-                        self._SIGNAL_LIST[i][0],
-                        self._old_signal_list[i])
+                        self._SIGNAL_LIST[i][0], self._old_signal_list[i]
+                    )
             self._old_signal_list = None
 
         if self._old_wakeup_fd is not None:
@@ -100,8 +99,7 @@ class SignalHandler(QObject):
                     found = True
                     break
             if not found:
-                self._logger.debug(
-                    "Unsupported signal %i received.", sig)
+                self._logger.debug("Unsupported signal %i received.", sig)
 
     def _defaultHandler(self, sig: int, frame: object) -> None:
         pass

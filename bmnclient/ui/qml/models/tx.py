@@ -2,37 +2,29 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import (
-    Property as QProperty,
-    QDateTime,
-    QObject,
-    Signal as QSignal,
-    Slot as QSlot)
+from PySide6.QtCore import Property as QProperty
+from PySide6.QtCore import QDateTime, QObject
+from PySide6.QtCore import Signal as QSignal
+from PySide6.QtCore import Slot as QSlot
 
+from ....coins.abstract import Coin
 from . import AbstractCoinStateModel, AbstractModel
 from .abstract import AbstractCoinObjectModel, AbstractTableModel
 from .amount import AbstractAmountModel
 from .tx_io import TxIoListModel
-from ....coins.abstract import Coin
 
 if TYPE_CHECKING:
     from .. import QmlApplication
 
 
 class AbstractTxStateModel(AbstractCoinStateModel):
-    def __init__(
-            self,
-            application: QmlApplication,
-            tx: Coin.Tx) -> None:
+    def __init__(self, application: QmlApplication, tx: Coin.Tx) -> None:
         super().__init__(application, tx.coin)
         self._tx = tx
 
 
 class AbstractTxAmountModel(AbstractAmountModel):
-    def __init__(
-            self,
-            application: QmlApplication,
-            tx: Coin.Tx) -> None:
+    def __init__(self, application: QmlApplication, tx: Coin.Tx) -> None:
         super().__init__(application, tx.coin)
         self._tx = tx
 
@@ -97,19 +89,13 @@ class TxModel(AbstractCoinObjectModel, Coin.Tx.Model, AbstractModel):
     def __init__(self, application: QmlApplication, tx: Coin.Tx) -> None:
         super().__init__(application, tx=tx)
 
-        self._amount_model = TxAmountModel(
-            self._application,
-            self._tx)
+        self._amount_model = TxAmountModel(self._application, self._tx)
         self.connectModelUpdate(self._amount_model)
 
-        self._fee_amount_model = TxFeeAmountModel(
-            self._application,
-            self._tx)
+        self._fee_amount_model = TxFeeAmountModel(self._application, self._tx)
         self.connectModelUpdate(self._fee_amount_model)
 
-        self._state_model = TxStateModel(
-            self._application,
-            self._tx)
+        self._state_model = TxStateModel(self._application, self._tx)
         self.connectModelUpdate(self._state_model)
 
     @QProperty(str, constant=True)
@@ -135,18 +121,16 @@ class TxModel(AbstractCoinObjectModel, Coin.Tx.Model, AbstractModel):
     # noinspection PyTypeChecker
     @QSlot(int, result=QObject)
     def openInputList(self, column_count: int) -> TxIoListModel:
-        return self._registerList(TxIoListModel(
-            self._application,
-            self._tx.inputList,
-            column_count))
+        return self._registerList(
+            TxIoListModel(self._application, self._tx.inputList, column_count)
+        )
 
     # noinspection PyTypeChecker
     @QSlot(int, result=QObject)
     def openOutputList(self, column_count: int) -> TxIoListModel:
-        return self._registerList(TxIoListModel(
-            self._application,
-            self._tx.outputList,
-            column_count))
+        return self._registerList(
+            TxIoListModel(self._application, self._tx.outputList, column_count)
+        )
 
     def afterSetHeight(self, value: int) -> None:
         self._state_model.update()

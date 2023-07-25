@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 import bmnsqlite3 as _engine
 
@@ -44,21 +44,20 @@ class Cursor(_engine.Cursor):
 
     def isTableExists(self, table: str | type(Table)) -> bool:
         self.execute(
-            "SELECT COUNT(*) FROM \"sqlite_master\""
-            " WHERE \"type\" == ? AND \"name\" == ?"
+            'SELECT COUNT(*) FROM "sqlite_master"'
+            ' WHERE "type" == ? AND "name" == ?'
             " LIMIT 1",
-            ("table", self.__tableToName(table)))
+            ("table", self.__tableToName(table)),
+        )
         value = self.fetchone()
         return bool(value is not None and value[0] > 0)
 
-    def isColumnExists(
-            self,
-            table: str | type(Table),
-            name: str) -> bool:
+    def isColumnExists(self, table: str | type(Table), name: str) -> bool:
         if not self.isTableExists(table):
             return False
         for value in self.execute(
-                f"PRAGMA table_info(\"{self.__tableToName(table)}\")"):
+            f'PRAGMA table_info("{self.__tableToName(table)}")'
+        ):
             if len(value) > 2 and value[1] == name:
                 return True
         return False

@@ -17,6 +17,4 @@ class CoinsTable(SerializableTable, name="coins"):
         UNVERIFIED_OFFSET = ("unverified_offset", "TEXT NOT NULL")
         UNVERIFIED_HASH = ("unverified_hash", "TEXT NOT NULL")
 
-    _KEY_COLUMN_LIST = (
-        (ColumnEnum.NAME, lambda o: o.name),
-    )
+    _KEY_COLUMN_LIST = ((ColumnEnum.NAME, lambda o: o.name),)
