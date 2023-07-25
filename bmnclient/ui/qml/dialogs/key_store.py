@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 def selectKeyStoreDialog(manager: DialogManager) -> AbstractDialog:
-    if manager.context.keyStore.native.isFirstStart:
+    if manager.context.keyStore.native.isExists:
         return SetupUiSettingsDialog(manager)
     return KeyStoreSelectDialog(manager)
 

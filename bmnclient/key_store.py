@@ -247,13 +247,6 @@ class KeyStore(_KeyStoreSeed):
                 return True
         return False
 
-    @property
-    def isFirstStart(self) -> bool:
-        with self._lock:
-            if self._application.config.filePath.exists():
-                return False
-        return True
-
     def create(self, password: str) -> bool:
         if not self._config:
             return False
