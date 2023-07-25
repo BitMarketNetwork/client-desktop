@@ -1,51 +1,51 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from enum import Enum
+from typing import Final, TYPE_CHECKING
 
 from .object import CoinObject, CoinObjectModel
-from ...utils.serialize import serializable
+from ...database.tables import TxIosTable
+from ...utils import (
+    DeserializeFlag,
+    DeserializedData,
+    SerializeFlag,
+    serializable)
+from ...utils.string import StringUtils
 
 if TYPE_CHECKING:
-    from typing import Final, Optional
     from .coin import Coin
 
 
 class _Model(CoinObjectModel):
     def __init__(self, *args, io: Coin.Tx.Io, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
         self._io = io
+        super().__init__(*args, **kwargs)
+
+    @property
+    def owner(self) -> Coin.Tx.Io:
+        return self._io
 
 
-class _Io(CoinObject):
+class _Io(CoinObject, table_type=TxIosTable):
     Model = _Model
 
-    def __init__(
-            self,
-            coin: Coin,
-            address: Optional[Coin.Address] = None,
-            *,
-            row_id: int = -1,
-            index: int,
-            output_type: str,
-            address_name: Optional[str],
-            amount: int) -> None:
-        super().__init__(coin, row_id=row_id)
-        if address is not None:
-            assert not address_name
-            assert coin is address.coin
-        elif not address_name:
-            address = coin.Address.createNullData(coin)
-        else:
-            address = coin.Address.createFromName(coin, name=address_name)
-            if address is None:
-                address = coin.Address.createNullData(
-                    coin,
-                    name="~" + address_name.strip()[:10] + "~")
+    class IoType(Enum):
+        INPUT = "input"
+        OUTPUT = "output"
 
-        self._index: Final = index
-        self._output_type: Final = output_type
-        self._address: Final = address
-        self._amount: Final = amount
+    def __init__(self, tx: Coin.Tx, **kwargs) -> None:
+        self._tx: Final = tx
+        self._io_type: Final[_Io.IoType] = kwargs["io_type"]
+        assert isinstance(self._io_type, self.IoType)
+        self._index: Final = int(kwargs["index"])
+
+        super().__init__(tx.coin, kwargs)
+
+        self._output_type: Final = str(kwargs.pop("output_type"))
+        self._address: Final[Coin.Address] = kwargs.pop("address")
+        assert isinstance(self._address, self._coin.Address)
+        self._amount: Final = int(kwargs.pop("amount"))
+        assert len(kwargs) == 2
 
     def __eq__(self, other: _Io) -> bool:
         return (
@@ -53,8 +53,7 @@ class _Io(CoinObject):
                 and self._index == other.index
                 and self._output_type == other._output_type
                 and self._address == other.address
-                and self._amount == other._amount
-        )
+                and self._amount == other._amount)
 
     def __hash__(self) -> int:
         return hash((
@@ -62,8 +61,59 @@ class _Io(CoinObject):
             self._index,
             self._output_type,
             self._address,
-            self._amount
-        ))
+            self._amount))
+
+    # TODO cache
+    def __str__(self) -> str:
+        return StringUtils.classString(
+            self.__class__,
+            (None, self._io_type.value),
+            ("index", self._index),
+            ("amount", self._amount),
+            parent=self._address)
+
+    def serializeProperty(
+            self,
+            flags: SerializeFlag,
+            key: str,
+            value: ...) -> DeserializedData:
+        if key == "io_type":
+            return value.value
+        if key == "address":
+            return value.name
+        return super().serializeProperty(flags, key, value)
+
+    @classmethod
+    def deserializeProperty(
+            cls,
+            flags: DeserializeFlag,
+            self: _Io | None,
+            key: str,
+            value: DeserializedData,
+            *cls_args) -> ...:
+        if key == "io_type":
+            for io_type in cls.IoType:
+                if io_type.value == value:
+                    return io_type
+            return None
+        if key == "address":
+            tx = cls_args[0] if cls_args else self._tx
+            if not value:
+                return tx.coin.Address.createNullData(tx.coin)
+            address = tx.coin.Address.createFromName(tx.coin, name=value)
+            if address is None:
+                address = tx.coin.Address.createNullData(tx.coin, name=value)
+            return address
+        return super().deserializeProperty(flags, self, key, value, *cls_args)
+
+    @property
+    def tx(self) -> Coin.Tx:
+        return self._tx
+
+    @serializable
+    @property
+    def ioType(self) -> _Io.IoType:
+        return self._io_type
 
     @serializable
     @property
@@ -76,10 +126,6 @@ class _Io(CoinObject):
         return self._output_type
 
     @serializable
-    @property
-    def addressName(self) -> Optional[str]:
-        return self._address.name if not self._address.isNullData else None
-
     @property
     def address(self) -> Coin.Address:
         return self._address

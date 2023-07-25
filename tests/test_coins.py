@@ -2,19 +2,17 @@ from __future__ import annotations
 
 from os import urandom
 from random import randint, shuffle
-from typing import TYPE_CHECKING
+from typing import Sequence
 from unittest import TestCase
 
+from bmnclient.coins.abstract import Coin
 from bmnclient.coins.coin_bitcoin import Bitcoin, BitcoinTest
 from bmnclient.coins.coin_litecoin import Litecoin
 from bmnclient.coins.hd import HdNode
 from bmnclient.coins.list import CoinList
 from bmnclient.language import Locale
-
-if TYPE_CHECKING:
-    from typing import List, Optional, Sequence, Type
-    from bmnclient.coins.abstract import Coin
-
+from bmnclient.utils import DeserializeFlag, SerializeFlag
+from tests.helpers import TestCaseApplication
 
 BITCOIN_ADDRESS_LIST = (
     (
@@ -134,6 +132,7 @@ def fillCoin(
     coin.unverifiedOffset = "u_offset" + str(randint(1000, 100000))
     coin.unverifiedHash = "u_hash" + str(randint(1000, 100000))
     coin.verifiedHeight = randint(1000, 100000)
+    owner.assertTrue(coin.save())
 
     for address_index in range(1, address_count + 1):
         address = coin.deriveHdAddress(
@@ -146,43 +145,14 @@ def fillCoin(
             history_first_offset="first_" + str(randint(1000, 100000)),
             history_last_offset="last_" + str(randint(1000, 100000)))
         owner.assertIsNotNone(address)
+        owner.assertFalse(address.isReadOnly)
+        owner.assertIs(None, coin.findAddressByName(address.name))
+        owner.assertTrue(address.save())
+        owner.assertIs(address, coin.findAddressByName(address.name))
+        owner.assertFalse(address.isReadOnly)
 
         for tx_index in range(1, tx_count + 1):
-            input_list = []
-            for i in range(1, 3):
-                input_address = coin.deriveHdAddress(
-                    account=1,
-                    is_change=False)
-                owner.assertIsNotNone(input_address)
-                input_list.append(coin.Tx.Io(
-                    coin,
-                    index=i,
-                    output_type="output_type_" + str(i),
-                    address_name=input_address.name,
-                    amount=randint(1000, 100000)))
-                owner.assertIs(input_address, input_list[-1].address)
-
-            output_list = []
-            for i in range(1, 3):
-                output_address = coin.deriveHdAddress(
-                    account=2,
-                    is_change=False)
-                owner.assertIsNotNone(output_address)
-                output_list.append(coin.Tx.Io(
-                    coin,
-                    index=i,
-                    output_type="output_type_" + str(i),
-                    address_name=output_address.name,
-                    amount=randint(1000, 100000)))
-                owner.assertIs(output_address, output_list[-1].address)
-            output_list.append(coin.Tx.Io(
-                coin,
-                index=4,
-                output_type="output_type_nulldata",
-                address_name=None,
-                amount=0))
-
-            address.appendTx(coin.Tx(
+            tx = coin.Tx(
                 coin,
                 name="tx_name_" + str(tx_index) + "_" + address.name,
                 height=randint(10000, 1000000),
@@ -190,25 +160,69 @@ def fillCoin(
                 amount=randint(10000, 1000000),
                 fee_amount=randint(10000, 1000000),
                 is_coinbase=randint(0, 2) == 1,
-                input_list=input_list,
-                output_list=output_list))
+                input_list=[],
+                output_list=[])
+            owner.assertTrue(tx.save())
+            owner.assertTrue(address.associate(tx))
 
-        address.utxoList = [coin.Tx.Utxo(
-            coin,
-            name="utxo_" + str(i),
-            height=randint(10000, 1000000),
-            index=randint(10000, 1000000),
-            amount=randint(10000, 1000000)) for i in range(1, 3)]
+            for i in range(1, 3):
+                input_address = coin.deriveHdAddress(
+                    account=1,
+                    is_change=False)
+                owner.assertIsNotNone(input_address)
+                io = coin.Tx.Io(
+                    tx,
+                    io_type=coin.Tx.Io.IoType.INPUT,
+                    index=i,
+                    output_type="output_type_" + str(i),
+                    address=input_address,
+                    amount=randint(1000, 100000))
+                owner.assertFalse(io.address.isNullData)
+                owner.assertTrue(io.save())
 
-        coin.appendAddress(address)
+            for i in range(1, 3):
+                output_address = coin.deriveHdAddress(
+                    account=2,
+                    is_change=False)
+                owner.assertIsNotNone(output_address)
+                io = coin.Tx.Io(
+                    tx,
+                    io_type=coin.Tx.Io.IoType.OUTPUT,
+                    index=i,
+                    output_type="output_type_" + str(i),
+                    address=output_address,
+                    amount=randint(1000, 100000))
+                owner.assertFalse(io.address.isNullData)
+                owner.assertTrue(io.save())
+            io = coin.Tx.Io(
+                tx,
+                io_type=coin.Tx.Io.IoType.OUTPUT,
+                index=4,
+                output_type="output_type_nulldata",
+                address=coin.Address.createNullData(coin),
+                amount=0)
+            owner.assertTrue(io.address.isNullData)
+            owner.assertTrue(io.save())
+
+        for i in range(1, 3):
+            utxo = coin.Tx.Utxo(
+                address,
+                script_type=address.type.value.scriptType,
+                name="utxo_" + str(i),
+                height=randint(10000, 1000000),
+                index=randint(10000, 1000000),
+                amount=randint(10000, 1000000))
+            owner.assertTrue(utxo.save())
+
+        owner.assertEqual(tx_count, len(address.txList))
     return coin
 
 
-class TestCoins(TestCase):
+class TestCoins(TestCaseApplication):
     def _test_address_decode(
             self,
             coin: Coin,
-            address_list: Sequence[tuple]) -> None:
+            address_list: tuple[tuple, ...]) -> None:
         hash_check_count = 0
 
         # noinspection PyUnusedLocal
@@ -228,13 +242,13 @@ class TestCoins(TestCase):
 
     def test_address_decode(self) -> None:
         self._test_address_decode(
-            Bitcoin(),
+            Bitcoin(model_factory=self._application.modelFactory),
             BITCOIN_ADDRESS_LIST)
         self._test_address_decode(
-            BitcoinTest(),
+            BitcoinTest(model_factory=self._application.modelFactory),
             BITCOIN_TEST_ADDRESS_LIST)
         self._test_address_decode(
-            Litecoin(),
+            Litecoin(model_factory=self._application.modelFactory),
             LITECOIN_ADDRESS_LIST)
 
     def test_string_to_amount(self) -> None:
@@ -352,12 +366,20 @@ class TestCoins(TestCase):
 
     def test_mempool_address_lists(self) -> None:
         for limit in range(201):
-            coin = Bitcoin()
+            coin = Bitcoin(model_factory=self._application.modelFactory)
+            root_node = HdNode.deriveRootNode(urandom(64))
+            self.assertIsNotNone(root_node)
+            self.assertTrue(coin.deriveHdNode(root_node))
+            self.assertTrue(coin.save())
+
             for i in range(limit):
-                address = coin.Address.createNullData(
-                    coin,
-                    name="address_{:06d}".format(i))
-                self.assertTrue(coin.appendAddress(address))
+                address = coin.deriveHdAddress(
+                    account=0,
+                    index=1000 + i,
+                    is_change=False)
+                self.assertIsNotNone(address)
+                self.assertTrue(address.save())
+            self.assertEqual(limit, len(coin.addressList))
 
             limit = randint(1, 10)
 
@@ -393,26 +415,242 @@ class TestCoins(TestCase):
 
             # check expired
             for i in range(randint(1, 20)):
-                address = coin.Address.createNullData(
-                    coin,
-                    name="address_new_{:06d}".format(i))
-                self.assertTrue(coin.appendAddress(address))
+                address = coin.deriveHdAddress(
+                    account=0,
+                    index=10000 + i,
+                    is_change=False)
+                self.assertIsNotNone(address)
+                self.assertTrue(address.save())
 
                 mempool_list = coin.createMempoolAddressLists(limit)
                 # noinspection PyProtectedMember
                 self.assertEqual(len(coin._mempool_cache), len(mempool_list))
 
-    def _test_serialization(self, coin_type: Type[Coin]) -> None:
-        coin = fillCoin(self, coin_type())
+    def test_utxo_1(self) -> None:
+        coin = Bitcoin(model_factory=self._application.modelFactory)
+        root_node = HdNode.deriveRootNode(urandom(64))
+        self.assertTrue(coin.deriveHdNode(root_node))
+        self.assertTrue(coin.save())
 
-        data = coin.serialize(allow_hd_path=False)
+        address1 = coin.deriveHdAddress(account=0, index=1, is_change=False)
+        address2 = coin.deriveHdAddress(account=0, index=2, is_change=False)
+        self.assertNotEqual(address1, address2)
+
+        for address in (address1, address2):
+            for i in range(100):
+                utxo = coin.Tx.Utxo(
+                    address,
+                    script_type=address.type.value.scriptType,
+                    name="utxo_" + str(i),
+                    index=i,
+                    height=i * 1000,
+                    amount=i * 10000)
+                self.assertFalse(utxo.save())
+            self.assertTrue(address.save())
+
+        for address in (address1, address2):
+            for i in range(100):
+                utxo = coin.Tx.Utxo(
+                    address,
+                    script_type=address.type.value.scriptType,
+                    name="utxo_" + str(i),
+                    index=i,
+                    height=i * 1000,
+                    amount=i * 10000)
+                self.assertTrue(utxo.save())
+                self.assertLess(-1, utxo.rowId)
+
+        for address in (address1, address2):
+            self.assertRaises(
+                KeyError,
+                coin.Tx.Utxo,
+                address,
+                name="utxo_X")
+
+        for i in range(100):
+            utxo = coin.Tx.Utxo(address1, name="utxo_" + str(i))
+            self.assertEqual(address1.type.value.scriptType, utxo.scriptType)
+            self.assertEqual("utxo_" + str(i), utxo.name)
+            self.assertEqual(i, utxo.index)
+            self.assertEqual(i * 1000, utxo.height)
+            self.assertEqual(i * 10000, utxo.amount)
+            self.assertLess(0, utxo.rowId)
+
+        self.assertEqual(100, len(address1.utxoList))
+        self.assertEqual(100, len(address2.utxoList))
+
+        for i in range(100):
+            utxo = coin.Tx.Utxo(address1, name="utxo_" + str(i))
+            self.assertTrue(utxo.remove())
+            self.assertEqual(-1, utxo.rowId)
+            self.assertFalse(utxo.remove())
+
+        self.assertEqual(0, len(address1.utxoList))
+        self.assertEqual(100, len(address2.utxoList))
+        for utxo in address2.utxoList:
+            self.assertLess(0, utxo.rowId)
+            self.assertIs(address2, utxo.address)
+
+    def test_utxo_2(self) -> None:
+        coin = Bitcoin(model_factory=self._application.modelFactory)
+        root_node = HdNode.deriveRootNode(urandom(64))
+        self.assertTrue(coin.deriveHdNode(root_node))
+        self.assertTrue(coin.save())
+
+        address = coin.deriveHdAddress(account=0, index=1, is_change=False)
+        utxo_list = []
+        for i in range(20):
+            utxo = coin.Tx.Utxo(
+                address,
+                script_type=address.type.value.scriptType,
+                name="utxo_" + str(i),
+                index=i,
+                height=i * 1000,
+                amount=i * 10000)
+            utxo_list.append(utxo)
+        utxo_list_next = utxo_list[10:]
+        utxo_list = utxo_list[:10]
+
+        self.assertTrue(address.save())
+        self.assertEqual(0, len(address.utxoList))
+        for u in utxo_list:
+            self.assertEqual(-1, u.rowId)
+
+        # noinspection PyProtectedMember
+        count = address._updateRowList(address.utxoList, utxo_list)
+        self.assertEqual(10, count)
+        self.assertEqual(10, len(address.utxoList))
+        self.assertEqual(10, len(utxo_list))
+
+        for u in utxo_list:
+            self.assertLess(0, u.rowId)
+
+        # noinspection PyProtectedMember
+        count = address._updateRowList(address.utxoList, utxo_list)
+        self.assertEqual(0, count)
+        self.assertEqual(10, len(address.utxoList))
+        self.assertEqual(10, len(utxo_list))
+        self.assertEqual([*address.utxoList], utxo_list)
+
+        utxo_list = utxo_list[1:-1]
+        # noinspection PyProtectedMember
+        count = address._updateRowList(address.utxoList, utxo_list)
+        self.assertEqual(0, count)
+        self.assertEqual(8, len(address.utxoList))
+        self.assertEqual(8, len(utxo_list))
+        self.assertEqual([*address.utxoList], utxo_list)
+
+        utxo_list.append(utxo_list_next.pop())
+        # noinspection PyProtectedMember
+        count = address._updateRowList(address.utxoList, utxo_list)
+        self.assertEqual(1, count)
+        self.assertEqual(9, len(address.utxoList))
+        self.assertEqual(9, len(utxo_list))
+        self.assertEqual([*address.utxoList], utxo_list)
+
+        utxo_list = utxo_list_next
+        # noinspection PyProtectedMember
+        count = address._updateRowList(address.utxoList, utxo_list)
+        self.assertEqual(9, count)
+        self.assertEqual(9, len(address.utxoList))
+        self.assertEqual(9, len(utxo_list))
+        self.assertEqual([*address.utxoList], utxo_list)
+
+        for u in utxo_list:
+            self.assertLess(0, u.rowId)
+
+        utxo_list.pop()
+        address.utxoList = utxo_list
+        self.assertEqual([*address.utxoList], utxo_list)
+
+    def test_io(self) -> None:
+        coin = Bitcoin(model_factory=self._application.modelFactory)
+        root_node = HdNode.deriveRootNode(urandom(64))
+        self.assertTrue(coin.deriveHdNode(root_node))
+        self.assertTrue(coin.save())
+
+        for tx_index in range(10):
+            tx = coin.Tx(
+                coin,
+                name="tx_name_" + str(tx_index),
+                height=randint(10000, 1000000),
+                time=randint(10000, 1000000),
+                amount=randint(10000, 1000000),
+                fee_amount=randint(10000, 1000000),
+                is_coinbase=randint(0, 2) == 1,
+                input_list=[],
+                output_list=[])
+            self.assertTrue(tx.save())
+            self.assertEqual(0, len(tx.inputList))
+            self.assertEqual(0, len(tx.outputList))
+
+            for io_type in tx.Io.IoType:
+                for io_index in range(10):
+                    if not io_index:
+                        io_address = coin.deriveHdAddress(
+                            account=hash(io_type),
+                            index=io_index,
+                            is_change=False)
+                        self.assertFalse(io_address.isNullData)
+                    else:
+                        io_address = coin.Address.createNullData(
+                            coin,
+                            name=f"address_{io_type.value}_{io_index}")
+                        self.assertTrue(io_address.isNullData)
+                    self.assertIsNotNone(io_address)
+
+                    io = tx.Io(
+                        tx,
+                        io_type=io_type,
+                        index=io_index,
+                        output_type=f"output_type_{io_type.value}_{io_index}",
+                        address=io_address,
+                        amount=io_index * 100000)
+                    self.assertTrue(io.address)
+                    self.assertEqual(
+                        io_address.isNullData,
+                        io.address.isNullData)
+                    self.assertTrue(io.save())
+                    self.assertLess(-1, io.rowId)
+
+                    io_db = tx.Io(tx, io_type=io_type, index=io_index)
+                    self.assertEqual(io.IoType, io_db.IoType)
+                    self.assertEqual(io.index, io_db.index)
+                    self.assertEqual(io.outputType, io_db.outputType)
+                    self.assertEqual(io.address, io_db.address)
+                    self.assertTrue(io_db.address)
+                    self.assertEqual(
+                        io_address.isNullData,
+                        io_db.address.isNullData)
+                    self.assertLess(0, io_db.rowId)
+
+                    self.assertRaises(
+                        AssertionError,
+                        tx.Io,
+                        tx,
+                        io_type=None,
+                        index=0)
+
+            self.assertEqual(10, len(tx.inputList))
+            self.assertEqual(10, len(tx.outputList))
+
+    def _test_serialization(
+            self,
+            d_flags: DeserializeFlag,
+            coin_type: type(Coin)) -> None:
+        coin = fillCoin(
+            self,
+            coin_type(model_factory=self._application.modelFactory))
+
+        data = coin.serialize(SerializeFlag.PRIVATE_MODE)
         self.assertIsInstance(data, dict)
 
         # from pprint import pprint
         # pprint(data, sort_dicts=False)
 
-        coin_new = coin_type()
-        coin_new.deserializeUpdate(data)
+        coin_new = coin_type(model_factory=self._application.modelFactory)
+        coin_new.deserializeUpdate(d_flags, data)
+        self.assertTrue(coin_new.save())
 
         # coin compare
         self.assertEqual(coin.name, coin_new.name)
@@ -432,6 +670,7 @@ class TestCoins(TestCase):
             self.assertEqual(a1.exportKey(), a2.exportKey())
             self.assertEqual(a1.balance, a2.balance)
             self.assertEqual(a1.txCount, a2.txCount)
+            self.assertEqual(a1.isReadOnly, a2.isReadOnly)
             self.assertEqual(a1.label, a2.label)
             self.assertEqual(a1.comment, a2.comment)
             self.assertEqual(a1.historyFirstOffset, a2.historyFirstOffset)
@@ -476,30 +715,77 @@ class TestCoins(TestCase):
                 self.assertEqual(u1.amount, u2.amount)
 
     def test_serialization(self) -> None:
-        for coin in CoinList():
-            self._test_serialization(coin.__class__)
+        for coin in CoinList(model_factory=self._application.modelFactory):
+            self.assertTrue(coin.save())
+            for d_flag in DeserializeFlag:
+                self._test_serialization(d_flag, coin.__class__)
+
+    def test_is_read_only(self) -> None:
+        for coin in CoinList(model_factory=self._application.modelFactory):
+            self.assertTrue(coin.save())
+            coin = fillCoin(
+                self,
+                coin.__class__(model_factory=self._application.modelFactory))
+
+            data = coin.serialize(SerializeFlag.PRIVATE_MODE)
+            self.assertIsInstance(data, dict)
+
+            coin_new = coin.__class__(
+                model_factory=self._application.modelFactory)
+            coin_new.deserializeUpdate(DeserializeFlag.DATABASE_MODE, data)
+            self.assertTrue(coin_new.save())
+
+            for address in coin.addressList:
+                self.assertFalse(address.isReadOnly)
+
+            for address in coin_new.addressList:
+                self.assertFalse(address.isReadOnly)
+                address.isReadOnly = True
+                self.assertTrue(address.isReadOnly)
+                address.isReadOnly = False
+                self.assertFalse(address.isReadOnly)
+
+                address.key = None
+                self.assertTrue(address.isReadOnly)
+                address.isReadOnly = False
+                self.assertTrue(address.isReadOnly)
+
+            self.assertEqual(
+                len(coin.addressList),
+                len(coin.addressWithUtxoList))
+            self.assertEqual(0, len(coin_new.addressWithUtxoList))
+
+            coin.addressList[0].key = None
+            coin.addressList[1].isReadOnly = True
+            coin.addressList[2].utxoList = []
+
+            self.assertEqual(
+                [*coin.addressList][3:],
+                [*coin.addressWithUtxoList])
 
 
-class TestTxFactory(TestCase):
+class TestTxFactory(TestCaseApplication):
     def setUp(self) -> None:
-        self._coin = Bitcoin()
+        super().setUp()
+        self._coin = Bitcoin(model_factory=self._application.modelFactory)
         root_node = HdNode.deriveRootNode(urandom(64))
         self.assertIsNotNone(root_node)
         self.assertTrue(self._coin.deriveHdNode(root_node))
+        self.assertTrue(self._coin.save())
 
     def _createUtxoList(
             self,
             address: Bitcoin.Address,
             amount_list: Sequence[int]) -> None:
-        utxo_list: List[Bitcoin.Tx.Utxo] = []
         for i in range(len(amount_list)):
-            utxo_list.append(self._coin.Tx.Utxo(
-                self._coin,
+            utxo = self._coin.Tx.Utxo(
+                address,
+                script_type=address.type.value.scriptType,
                 name=i.to_bytes(32, "big").hex(),
                 height=100 + i,
                 index=0,
-                amount=amount_list[i]))
-        address.utxoList = utxo_list
+                amount=amount_list[i])
+            self.assertTrue(utxo.save())
 
     @classmethod
     def _isLowHeightUtxo(
@@ -516,6 +802,7 @@ class TestTxFactory(TestCase):
     def test_find_exact_utxo(self) -> None:
         address = self._coin.deriveHdAddress(account=0, is_change=False)
         self.assertIsNotNone(address)
+        self.assertTrue(address.save())
 
         # no utxo
         for r in range(100):
@@ -546,6 +833,9 @@ class TestTxFactory(TestCase):
                 # noinspection PyProtectedMember
                 utxo = self._coin.TxFactory._findExactUtxo(address.utxoList, 2)
                 self.assertIsNone(utxo)
+                for utxo in address.utxoList:
+                    self.assertTrue(utxo.remove())
+                    self.assertEqual(-1, utxo.rowId)
 
         # multiple utxo
         if True:
@@ -569,6 +859,7 @@ class TestTxFactory(TestCase):
     def test_find_single_address_single_utxo(self) -> None:
         address = self._coin.deriveHdAddress(account=0, is_change=False)
         self.assertIsNotNone(address)
+        self.assertTrue(address.save())
 
         # find same amount
         if True:
@@ -583,6 +874,10 @@ class TestTxFactory(TestCase):
                     i)
                 self.assertEqual(1, len(l))
                 self.assertEqual(i, a)
+
+        for utxo in address.utxoList:
+            self.assertTrue(utxo.remove())
+            self.assertEqual(-1, utxo.rowId)
 
         # find the nearest amount + height test
         if True:
@@ -602,6 +897,7 @@ class TestTxFactory(TestCase):
     def test_find_single_address_multiple_utxo(self) -> None:
         address = self._coin.deriveHdAddress(account=0, is_change=False)
         self.assertIsNotNone(address)
+        self.assertTrue(address.save())
 
         amount_list = list(range(0, 10)) * 4
         shuffle(amount_list)
@@ -626,6 +922,10 @@ class TestTxFactory(TestCase):
             self.assertEqual(utxo_count, len(l))
             self.assertEqual(result_amount, a)
 
+        for utxo in address.utxoList:
+            self.assertTrue(utxo.remove())
+            self.assertEqual(-1, utxo.rowId)
+
         amount_list = list(range(1, 10))
         shuffle(amount_list)
         self._createUtxoList(address, amount_list)
@@ -648,20 +948,29 @@ class TestTxFactory(TestCase):
 
     def test(self) -> None:
         amount_list = list(range(100000, 100100))
-        address = self._coin.deriveHdAddress(
-            account=0,
-            is_change=False,
-            index=1000)
-        self.assertIsNotNone(address)
-        receiver_address = self._coin.deriveHdAddress(
-            account=0,
-            is_change=False,
-            index=1001)
-        self.assertIsNotNone(receiver_address)
 
-        self._createUtxoList(address, amount_list)
-        self._coin.appendAddress(address)
-        self.assertEqual(1, len(self._coin.addressList))
+        sender_address_list = []
+        for index in range(1000, 1010):
+            address = self._coin.deriveHdAddress(
+                account=0,
+                is_change=False,
+                index=index)
+            self.assertIsNotNone(address)
+            self.assertTrue(address.save())
+            sender_address_list.append(address)
+
+        receiver_address_list = []
+        for index in range(2000, 2010):
+            address = self._coin.deriveHdAddress(
+                account=0,
+                is_change=False,
+                index=index)
+            self.assertIsNotNone(address)
+            receiver_address_list.append(address)
+
+        self._createUtxoList(sender_address_list[0], amount_list)
+        self.assertTrue(sender_address_list[0].save())
+        self.assertEqual(10, len(self._coin.addressList))
 
         txf = self._coin.txFactory
         txf.updateUtxoList()
@@ -672,28 +981,28 @@ class TestTxFactory(TestCase):
         self.assertEqual(sum(amount_list), txf.availableAmount)
         self.assertEqual(0, txf.receiverAmount)
 
-        self.assertTrue(txf.setInputAddressName(None))
-        self.assertIsNone(txf.inputAddress)
-        self.assertFalse(txf.setInputAddressName(
-            "BAD_INPUT1"))
-        self.assertIsNone(txf.inputAddress)
-        self.assertTrue(txf.setInputAddressName(
-            "3Ps86GT6vHg7dCT5QhcECDFkRaUJbBzqXB"))
-        self.assertIsNotNone(txf.inputAddress)
-        self.assertFalse(txf.setInputAddressName(
-            "BAD_INPUT2"))
-        self.assertIsNone(txf.inputAddress)
-        self.assertTrue(txf.setInputAddressName(None))
+        txf.inputAddressList.clear()
+        self.assertEqual(0, len(txf.inputAddressList))
+        self.assertFalse(txf.inputAddressList.append("BAD_INPUT1"))
+        self.assertEqual(0, len(txf.inputAddressList))
+        self.assertTrue(txf.inputAddressList.append(
+            sender_address_list[1].name))
+        self.assertEqual(1, len(txf.inputAddressList))
+        self.assertFalse(txf.inputAddressList.append("BAD_INPUT2"))
+        self.assertEqual(1, len(txf.inputAddressList))
+        txf.inputAddressList.clear()
+        self.assertEqual(0, len(txf.inputAddressList))
 
         self.assertEqual(0, txf.setReceiverMaxAmount())
         self.assertFalse(txf.isValidReceiverAmount)
         self.assertFalse(txf.isValidFeeAmount)
         self.assertFalse(txf.setReceiverAddressName("BAD_NAME"))
-        self.assertTrue(txf.setReceiverAddressName(receiver_address.name))
-        self.assertEqual(txf.receiverAddress, receiver_address)
+        self.assertTrue(txf.setReceiverAddressName(
+            receiver_address_list[0].name))
+        self.assertEqual(txf.receiverAddress, receiver_address_list[0])
 
         address_count = len(self._coin.addressList)
-        self.assertEqual(1, address_count)
+        self.assertEqual(10, address_count)
 
         for subtract_fee in (False, True):
             txf.subtractFee = subtract_fee
@@ -786,9 +1095,10 @@ class TestTxFactory(TestCase):
                 txf.clear()
 
 
-class TestMutableTx(TestCase):
+class TestMutableTx(TestCaseApplication):
     def setUp(self) -> None:
-        self._coin = Bitcoin()
+        super().setUp()
+        self._coin = Bitcoin(model_factory=self._application.modelFactory)
         root_node = HdNode.deriveRootNode(urandom(64))
         self.assertIsNotNone(root_node)
         self.assertTrue(self._coin.deriveHdNode(root_node))
@@ -804,7 +1114,7 @@ class TestMutableTx(TestCase):
             script_type: Coin.Address.Script.Type,
             amount: int,
             sequence: int,
-            is_dummy: bool = False) -> Coin.TxFactory.MutableTx.Input:
+            is_dummy: bool = False) -> dict:
         private_key = coin.Address.importKey(coin, private_key)
         self.assertIsNotNone(private_key)
 
@@ -815,15 +1125,15 @@ class TestMutableTx(TestCase):
         self.assertIsNotNone(address)
 
         utxo = coin.Tx.Utxo(
-            coin,
+            address,
             name=bytes.fromhex(name)[::-1].hex(),
-            height=1,
             index=index,
+            height=1,
             amount=amount,
             script_type=script_type)
-        utxo.address = address
-        return coin.TxFactory.MutableTx.Input(
-            utxo,
+
+        return dict(
+            utxo=utxo,
             sequence=sequence,
             is_dummy=is_dummy)
 
@@ -834,30 +1144,38 @@ class TestMutableTx(TestCase):
             *,
             address_name: str,
             amount: int,
-            is_dummy: bool = False) -> Coin.TxFactory.MutableTx.Output:
+            is_dummy: bool = False) -> dict:
         address = coin.Address.createFromName(coin, name=address_name)
-        return coin.TxFactory.MutableTx.Output(
-            address,
+        return dict(
+            address=address,
             amount=amount,
             is_dummy=is_dummy)
 
     def _test_mtx(
             self,
-            input_list: Sequence[Coin.TxFactory.MutableTx.Input],
-            output_list: Sequence[Coin.TxFactory.MutableTx.Output],
+            input_list: list[dict],
+            output_list: list[dict],
             *,
             lock_time: int,
             is_dummy: bool,
-            expected_name: Optional[str],
+            expected_name: str | None,
             expected_data: str,
             excepted_raw_size: int,
             excepted_virtual_size: int) -> Coin.TxFactory.MutableTx:
         mtx = self._coin.TxFactory.MutableTx(
             self._coin,
-            input_list,
-            output_list,
             lock_time=lock_time,
             is_dummy=is_dummy)
+        self.assertEqual(0, mtx.amount)
+        self.assertEqual(0, mtx.feeAmount)
+
+        for io in input_list:
+            mtx.inputList.append(io)
+        self.assertEqual(len(input_list), len(mtx.inputList))
+        for io in output_list:
+            mtx.outputList.append(io)
+        self.assertEqual(len(output_list), len(mtx.outputList))
+
         self.assertEqual(is_dummy, mtx.isDummy)
         self.assertFalse(mtx.isSigned)
         self.assertEqual(b"", mtx.raw())
@@ -868,16 +1186,16 @@ class TestMutableTx(TestCase):
         self.assertEqual(excepted_virtual_size, mtx.virtualSize)
 
         self.assertEqual(
-            sum(i.amount for i in input_list),
+            sum(i["utxo"].amount for i in input_list),
             mtx.amount)
         self.assertEqual(
-            sum(i.amount for i in input_list)
-            - sum(o.amount for o in output_list),
+            sum(i["utxo"].amount for i in input_list)
+            - sum(o["amount"] for o in output_list),
             mtx.feeAmount)
         return mtx
 
     def test_p2pkh(self) -> None:
-        def input_list(*, is_dummy: bool) -> Sequence:
+        def input_list(*, is_dummy: bool) -> list[dict]:
             return [
                 self._createInput(
                     self._coin,
@@ -891,7 +1209,7 @@ class TestMutableTx(TestCase):
                     is_dummy=is_dummy)
             ]
 
-        def output_list(*, is_dummy: bool) -> Sequence:
+        def output_list(*, is_dummy: bool) -> list[dict]:
             return [
                 self._createOutput(
                     self._coin,
@@ -942,7 +1260,7 @@ class TestMutableTx(TestCase):
             excepted_virtual_size=226)
 
     def test_p2pkh_uncompressed(self) -> None:
-        def input_list(*, is_dummy: bool) -> Sequence:
+        def input_list(*, is_dummy: bool) -> list[dict]:
             return [
                 self._createInput(
                     self._coin,
@@ -956,7 +1274,7 @@ class TestMutableTx(TestCase):
                     is_dummy=is_dummy)
             ]
 
-        def output_list(*, is_dummy: bool) -> Sequence:
+        def output_list(*, is_dummy: bool) -> list[dict]:
             return [
                 self._createOutput(
                     self._coin,
@@ -1003,7 +1321,7 @@ class TestMutableTx(TestCase):
 
     # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#native-p2wpkh # noqa
     def test_native_p2wpkh(self) -> None:
-        def input_list(*, is_dummy: bool) -> Sequence:
+        def input_list(*, is_dummy: bool) -> list[dict]:
             return [
                 self._createInput(
                     self._coin,
@@ -1027,7 +1345,7 @@ class TestMutableTx(TestCase):
                     is_dummy=is_dummy),
             ]
 
-        def output_list(*, is_dummy: bool) -> Sequence:
+        def output_list(*, is_dummy: bool) -> list[dict]:
             return [
                 self._createOutput(
                     self._coin,
@@ -1087,7 +1405,7 @@ class TestMutableTx(TestCase):
 
     # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#p2sh-p2wpkh
     def test_p2sh_p2wpkh(self) -> None:
-        def input_list(*, is_dummy: bool) -> Sequence:
+        def input_list(*, is_dummy: bool) -> list[dict]:
             return [
                 self._createInput(
                     self._coin,
@@ -1101,7 +1419,7 @@ class TestMutableTx(TestCase):
                     is_dummy=is_dummy)
                 ]
 
-        def output_list(*, is_dummy: bool) -> Sequence:
+        def output_list(*, is_dummy: bool) -> list[dict]:
             return [
                 self._createOutput(
                     self._coin,

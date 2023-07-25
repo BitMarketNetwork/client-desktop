@@ -1,6 +1,8 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Controls.Material
 import Qt.labs.qmlmodels
+
 import "../basiccontrols"
 
 BControl {
@@ -8,7 +10,7 @@ BControl {
     property var model // AddressList
 
     contentItem: Loader {
-        sourceComponent: model.rowCountHuman > 0 ? _tableViewComponent : _emptyBoxComponent
+        sourceComponent: model && model.rowCountHuman > 0 ? _tableViewComponent : _emptyBoxComponent
     }
 
     Component {
@@ -27,7 +29,7 @@ BControl {
 
             BHorizontalHeaderView {
                 id: _horizontalHeader
-                BLayout.fillWidth: true
+                Layout.fillWidth: true
                 syncView: _tableView
                 visible: _tableView.rows > 0
 
@@ -61,15 +63,15 @@ BControl {
             }
             BAddressTableView {
                 id: _tableView
-                BLayout.fillWidth: true
-                BLayout.fillHeight: true
+                Layout.fillWidth: true
+                Layout.fillHeight: true
                 model: _base.model
                 columnWidth: [355, -1, 150, 65, 60]
 
                 delegate: BAddressTableRow {
                     width: _tableView.columnWidthProvider(column)
-                    address: model
-                    amount: model.balance
+                    address: modelObject
+                    amount: modelObject.balance
                     contextMenu: _contextMenu
 
                     Rectangle { // col separator

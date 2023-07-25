@@ -1,32 +1,33 @@
 from __future__ import annotations
 
-from enum import auto, Enum
+from enum import Enum, auto
 from itertools import chain
 from typing import TYPE_CHECKING
 
-from .parser import \
-    AddressInfoParser, \
-    AddressTxParser, \
-    AddressUtxoParser, \
-    BroadcastTxParser, \
-    CoinMempoolParser, \
-    CoinsInfoParser, \
-    ParseError, \
-    ResponseMetaParser, \
-    ResponseParser, \
-    SysinfoParser
+from .parser import (
+    AddressInfoParser,
+    AddressTxParser,
+    AddressUtxoParser,
+    BroadcastTxParser,
+    CoinMempoolParser,
+    CoinsInfoParser,
+    ParseError,
+    ResponseMetaParser,
+    ResponseParser,
+    SysinfoParser)
 from ..query import AbstractJsonQuery
 from ..utils import NetworkUtils
 from ...coins.hd import HdAddressIterator
 from ...coins.utils import CoinUtils
 from ...logger import Logger
+from ...utils import DeserializeFlag
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Dict, Final, List, Optional, Tuple, Union
     from PySide6.QtNetwork import QSslError
     from ...coins.abstract import Coin
     from ...coins.list import CoinList
-    from ...utils.serialize import DeserializedDict
+    from ...utils import DeserializedDict
     from ...utils.string import ClassStringKeyTuple
 
 
@@ -281,8 +282,8 @@ class CoinsInfoApiQuery(AbstractApiQuery):
                     "Coin '%s' not found in server response.",
                     coin.name)
                 continue
-            coin.status = parser.status
-            coin.deserializeUpdate(parser.deserializedDict)
+            coin.onlineStatus = parser.onlineStatus
+            coin.deserializeUpdate(DeserializeFlag.NORMAL_MODE, parser.result)
 
 
 class AddressInfoApiQuery(AbstractApiQuery):
@@ -363,7 +364,7 @@ class HdAddressIteratorApiQuery(AddressInfoApiQuery):
             self._hd_iterator.markCurrentAddress(True)
         else:
             self._hd_iterator.markCurrentAddress(False)
-            self._address.coin.appendAddress(self._address)
+            self._address.save()
 
         try:
             next_address = next(self._hd_iterator)
@@ -431,9 +432,13 @@ class AddressTxIteratorApiQuery(
         parser(value)
 
         for tx in parser.txList:
-            tx_d = self._address.coin.Tx.deserialize(tx, self._address.coin)
+            tx_d = self._address.coin.Tx.deserialize(
+                DeserializeFlag.NORMAL_MODE,
+                tx,
+                self._address.coin)
             if tx_d is not None:
-                self._address.appendTx(tx_d)
+                tx_d.save()
+                self._address.associate(tx_d)
             else:
                 self._logger.warning(
                     "Failed to deserialize transaction '%s'.",
@@ -530,17 +535,21 @@ class AddressUtxoIteratorApiQuery(
         parser = AddressUtxoParser()
         parser(value)
 
-        for tx in parser.txList:
-            tx_d = self._address.coin.Tx.Utxo.deserialize(
-                tx,
-                self._address.coin)
-            if tx_d is not None:
-                self._utxo_list.append(tx_d)
+        for utxo in parser.txList:
+            # TODO server support
+            utxo["script_type"] = self._address.type.value.scriptType.name
+
+            utxo_d = self._address.coin.Tx.Utxo.deserialize(
+                DeserializeFlag.NORMAL_MODE,
+                utxo,
+                self._address)
+            if utxo_d is not None:
+                self._utxo_list.append(utxo_d)
             else:
                 self._logger.warning(
                     "Failed to deserialize UTXO '%s:%i'.",
-                    tx.get("name", "unnamed"),
-                    tx.get("index", -1))
+                    utxo.get("name", "unnamed"),
+                    utxo.get("index", -1))
 
         if parser.lastOffset is None:
             self._address.utxoList = self._utxo_list
@@ -601,13 +610,17 @@ class CoinMempoolIteratorApiQuery(AbstractApiQuery):
 
     def _processTx(self, tx: DeserializedDict) -> None:
         for tx_io in chain(tx["input_list"], tx["output_list"]):
-            address = self._coin.findAddressByName(tx_io["address_name"])
+            address = self._coin.findAddressByName(tx_io["address"])
             if address is None:
                 continue
 
-            tx_d = self._coin.Tx.deserialize(tx, self._coin)
+            tx_d = self._coin.Tx.deserialize(
+                DeserializeFlag.NORMAL_MODE,
+                tx,
+                self._coin)
             if tx_d is not None:
-                address.appendTx(tx_d)
+                tx_d.save()
+                address.associate(tx_d)
             else:
                 self._logger.warning(
                     "Failed to deserialize unconfirmed transaction '%s'.",

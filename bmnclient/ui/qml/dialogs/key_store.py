@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from enum import IntEnum
+from pathlib import Path
 from random import randint
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import (
     Property as QProperty,
     QObject,
+    QFile,
+    QFileInfo,
     Signal as QSignal
 )
 
@@ -19,11 +22,10 @@ if TYPE_CHECKING:
     from . import DialogManager
 
 
-def createKeyStorePasswordDialog(manager: DialogManager) -> AbstractDialog:
-    if manager.context.keyStore.native.isExists:
-        return KeyStorePasswordDialog(manager)
-    else:
-        return KeyStoreNewPasswordDialog(manager)
+def selectKeyStoreDialog(manager: DialogManager) -> AbstractDialog:
+    if manager.context.keyStore.native.isFirstStart:
+        return SetupUiSettingsDialog(manager)
+    return KeyStoreSelectDialog(manager)
 
 
 class ConfirmPasswordDialog(AbstractPasswordDialog):
@@ -36,13 +38,10 @@ class ConfirmPasswordDialog(AbstractPasswordDialog):
             self._parent.text = result
             return
         if result == KeyStoreError.ERROR_INVALID_PASSWORD:
-            # noinspection PyUnresolvedReferences
             text = self.tr("Wrong Key Store password.")
         elif result == KeyStoreError.ERROR_SEED_NOT_FOUND:
-            # noinspection PyUnresolvedReferences
             text = self.tr("Seed Phrase not found.")
         else:
-            # noinspection PyUnresolvedReferences
             text = self.tr("Unknown Key Store error.")
         ConfirmPasswordErrorDialog(
             self._manager,
@@ -88,53 +87,44 @@ class KeyStoreErrorDialog(AbstractMessageDialog):
             text=text or self._ERROR_MAP[KeyStoreError.ERROR_UNKNOWN])
 
     def onClosed(self) -> None:
-        createKeyStorePasswordDialog(self._manager).open()
+        KeyStorePasswordDialog(self._manager).open()
 
 
 class KeyStoreNewPasswordDialog(AbstractDialog):
     _QML_NAME = "BKeyStoreNewPasswordDialog"
 
-    def __init__(self, manager: DialogManager) -> None:
+    def __init__(
+            self,
+            manager: DialogManager,
+            generator: GenerateSeedPhrase,
+            phrase: str,
+            wallet_name: str,
+            seed_password: str) -> None:
         super().__init__(manager)
+        self._generator = generator
+        self._current_phrase = phrase
+        self._wallet_name = wallet_name
+        self._seed_password = seed_password
 
     def onPasswordAccepted(self, password: str) -> None:
-        if not self._manager.context.keyStore.native.create(password):
-            KeyStoreErrorDialog(self._manager, self).open()
-        else:
-            createKeyStorePasswordDialog(self._manager).open()
+        result = self._generator.finalize(
+            self._current_phrase,
+            password,
+            self._wallet_name,
+            self._seed_password)
+        if result != KeyStoreError.SUCCESS:
+            InvalidSeedPhraseDialog(
+                self._manager,
+                self,
+                self._generator,
+                result).open()
 
     def onRejected(self) -> None:
-        self._manager.context.exit(0)
+        selectKeyStoreDialog(self._manager).open()
 
 
 class KeyStorePasswordDialog(AbstractDialog):
     _QML_NAME = "BKeyStorePasswordDialog"
-
-    class ConfirmResetWalletDialog(AbstractMessageDialog):
-        def __init__(
-                self,
-                manager: DialogManager,
-                parent: KeyStorePasswordDialog):
-            text = QObject().tr(
-                "This will destroy all saved information and you can lose your "
-                "money!"
-                "\nPlease make sure you remember the Seed Phrase."
-                "\n\nReset?")
-            super().__init__(
-                manager,
-                parent,
-                type_=AbstractMessageDialog.Type.AskYesNo,
-                title=parent.title,  # noqa
-                text=text)
-
-        def onAccepted(self) -> None:
-            if not self._manager.context.keyStore.native.reset():
-                KeyStoreErrorDialog(self._manager, self).open()
-            else:
-                createKeyStorePasswordDialog(self._manager).open()
-
-        def onRejected(self) -> None:
-            createKeyStorePasswordDialog(self._manager).open()
 
     def __init__(self, manager: DialogManager) -> None:
         super().__init__(manager)
@@ -143,27 +133,41 @@ class KeyStorePasswordDialog(AbstractDialog):
         result = self._manager.context.keyStore.native.open(password)
         if result != KeyStoreError.SUCCESS:
             KeyStoreErrorDialog(self._manager, self, result).open()
-        elif not self._manager.context.keyStore.native.hasSeed:
-            NewSeedDialog(self._manager).open()
-
-    def onResetWalletAccepted(self) -> None:
-        self.ConfirmResetWalletDialog(self._manager, self).open()
 
     def onRejected(self) -> None:
-        self._manager.context.exit(0)
+        selectKeyStoreDialog(self._manager).open()
 
 
-class NewSeedDialog(AbstractDialog):
-    _QML_NAME = "BNewSeedDialog"
+class KeyStoreSelectDialog(AbstractDialog):
+    _QML_NAME = "BKeyStoreSelectDialog"
 
-    def __init__(self, manager: DialogManager) -> None:
+    def __init__(
+            self,
+            manager: DialogManager) -> None:
         super().__init__(manager)
+
+    def onKeyStoreClicked(self, path: Path) -> None:
+        self._manager.context.config.filePath = Path(path)
+        if not self._manager.context.config.load():
+            KeyStoreErrorDialog(
+                self._manager,
+                self,
+                KeyStoreError.ERROR_SEED_NOT_FOUND).open()
+        self._manager.context.settings.reload()
+        self.close.emit()
+
+        KeyStorePasswordDialog(self._manager).open()
+
+    def onRenameAccepted(self, path: Path) -> None:
+        WalletRenameDialog(self._manager, self, path).open()
 
     def onGenerateAccepted(self) -> None:
         GenerateSeedPhraseDialog(self._manager, None).open()
+        self.close.emit()
 
     def onRestoreAccepted(self) -> None:
         RestoreSeedPhraseDialog(self._manager).open()
+        self.close.emit()
 
     def onRestoreBackupAccepted(self) -> None:
         raise NotImplementedError
@@ -172,23 +176,56 @@ class NewSeedDialog(AbstractDialog):
         self._manager.context.exit(0)
 
 
+class WalletRenameDialog(AbstractDialog):
+    _QML_NAME = "BWalletRenameDialog"
+    _nameChanged = QSignal()
+
+    def __init__(
+            self,
+            manager: DialogManager,
+            parent: KeyStoreSelectDialog,
+            wallet_path: Path,) -> None:
+        super().__init__(manager, parent)
+        self._wallet_path = wallet_path
+
+        self._file_info = QFileInfo(wallet_path)
+        self.__name = self._file_info.baseName()
+
+    @QProperty(str, notify=_nameChanged)
+    def name(self) -> str:
+        return self.__name
+
+    def onNameChanged(self, value: str) -> None:
+        self.__name = value
+
+    def onAccepted(self) -> None:
+        if not QFile(self._wallet_path).rename(
+                self._file_info.dir().filePath(f"{self.__name}.json")):
+            text = self.tr("A file with the same name already exists")
+            WalletRenameErrorDialog(
+                self._manager,
+                self._parent,
+                title=self.title,  # noqa
+                text=text).open()
+
+
+class WalletRenameErrorDialog(AbstractMessageDialog):
+    def onClosed(self) -> None:
+        pass
+
+
 class InvalidSeedPhraseDialog(KeyStoreErrorDialog):
     def __init__(
             self,
             manager: DialogManager,
-            parent: SeedPasswordDialog,
+            parent: AbstractSeedPhraseDialog,
             generator: Optional[GenerateSeedPhrase] = None,
             error: KeyStoreError = KeyStoreError.ERROR_INVALID_SEED_PHRASE):
         super().__init__(manager, parent, error)
         self._generator = generator
 
     def onClosed(self) -> None:
-        if self._generator is not None:
-            dialog = self._parent.__class__(self._manager, self._generator)
-        else:
-            dialog = self._parent.__class__(self._manager)
-        dialog.open()
-
+        selectKeyStoreDialog(self._manager).open()
 
 class AbstractSeedPhraseDialog(AbstractDialog):
     _QML_NAME = "BSeedPhraseDialog"
@@ -250,7 +287,7 @@ class GenerateSeedPhraseDialog(AbstractSeedPhraseDialog):
             self._generator = generator
         if self._generator.inProgress:
             self.text = self._generator.update(None)
-            self.valid = True
+            self.isValid = True
 
     @property
     def generator(self) -> GenerateSeedPhrase:
@@ -274,38 +311,7 @@ class GenerateSeedPhraseDialog(AbstractSeedPhraseDialog):
     def onRejected(self) -> None:
         if self._child_dialog is not None:
             self._child_dialog.close.emit()
-        NewSeedDialog(self._manager).open()
-
-
-class SeedPasswordDialog(AbstractDialog):
-    _QML_NAME = "BSeedPasswordDialog"
-
-    def __init__(
-            self,
-            manager: DialogManager,
-            generator: GenerateSeedPhrase,
-            phrase: str) -> None:
-        super().__init__(manager)
-        self._generator = generator
-        self._current_phrase = phrase
-
-    def onPasswordAccepted(self, password: str) -> None:
-        result = self._generator.finalize(self._current_phrase, password)
-        if result != KeyStoreError.SUCCESS:
-            InvalidSeedPhraseDialog(
-                self._manager,
-                self,
-                self._generator,
-                result).open()
-
-    def onRejected(self) -> None:
-        result = self._generator.finalize(self._current_phrase, None)
-        if result != KeyStoreError.SUCCESS:
-            InvalidSeedPhraseDialog(
-                self._manager,
-                self,
-                self._generator,
-                result).open()
+        KeyStoreSelectDialog(self._manager).open()
 
 
 class ValidateSeedPhraseDialog(AbstractSeedPhraseDialog):
@@ -323,11 +329,16 @@ class ValidateSeedPhraseDialog(AbstractSeedPhraseDialog):
         self._current_phrase = value
         self.isValid = self._generator.validate(self._current_phrase)
 
-    def onAccepted(self) -> None:
-        SeedPasswordDialog(
+    def onSeedPhraseAccepted(
+            self,
+            wallet_name: str,
+            seed_password: str) -> None:
+        KeyStoreNewPasswordDialog(
             self._manager,
             self._generator,
-            self._current_phrase).open()
+            self._current_phrase,
+            wallet_name,
+            seed_password).open()
 
     def onRejected(self) -> None:
         GenerateSeedPhraseDialog(self._manager, self._generator).open()
@@ -347,14 +358,19 @@ class RestoreSeedPhraseDialog(AbstractSeedPhraseDialog):
         self._current_phrase = value
         self.isValid = self._generator.validate(self._current_phrase)
 
-    def onAccepted(self) -> None:
-        SeedPasswordDialog(
+    def onSeedPhraseAccepted(
+            self,
+            wallet_name: str,
+            seed_password: str) -> None:
+        KeyStoreNewPasswordDialog(
             self._manager,
             self._generator,
-            self._current_phrase).open()
+            self._current_phrase,
+            wallet_name,
+            seed_password).open()
 
     def onRejected(self) -> None:
-        NewSeedDialog(self._manager).open()
+        KeyStoreSelectDialog(self._manager).open()
 
 
 class RevealSeedPhraseDialog(AbstractSeedPhraseDialog):
@@ -435,3 +451,18 @@ class TxApproveDialog(AbstractTxApproveDialog):
 
     def onOpened(self) -> None:
         ConfirmPasswordDialog(self._manager, self).open()
+
+
+class SetupUiSettingsDialog(AbstractDialog):
+    _QML_NAME = "BSetupUiSettingsDialog"
+
+    def __init__(self, manager: DialogManager) -> None:
+        super().__init__(manager)
+
+    def onThemeAccepted(self) -> None:
+        if not self._manager.context.config.save():
+            KeyStoreErrorDialog(
+                self._manager,
+                self,
+                KeyStoreError.ERROR_UNKNOWN).open()
+        selectKeyStoreDialog(self._manager).open()

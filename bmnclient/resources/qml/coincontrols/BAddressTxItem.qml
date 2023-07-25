@@ -1,5 +1,7 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Controls.Material
+
 import "../application"
 import "../basiccontrols"
 
@@ -10,24 +12,24 @@ BItemDelegate {
 
     contentItem: BRowLayout {
         BLabel {
-            BLayout.fillWidth: true
+            Layout.fillWidth: true
             elide: BLabel.ElideRight
             text: _base.tx.name
         }
         BColumnLayout {
-            BLayout.fillHeight: true
-            BLayout.alignment: Qt.AlignRight
-            BLayout.leftMargin: 5
+            Layout.fillHeight: true
+            Layout.alignment: Qt.AlignRight
+            Layout.leftMargin: 5
 
             BLabel {
-                BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                 font.pointSize: _base.smallFontPointSize
                 font.bold: true
                 text: BCommon.txStatusMap[_base.tx.state.status][0]
                 color: Material.color(BCommon.txStatusMap[_base.tx.state.status][1])
             }
             BAmountLabel {
-                BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                 font.pointSize: _base.smallFontPointSize
                 amount: _base.tx.amount
             }

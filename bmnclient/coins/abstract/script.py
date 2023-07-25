@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from enum import Enum, IntEnum
-from typing import TYPE_CHECKING
+from typing import Sequence, TYPE_CHECKING
 
 from ...utils.integer import LittleOrderIntegerConverter
 
 if TYPE_CHECKING:
-    from typing import Optional, Sequence
     from .coin import Coin
 
 
@@ -17,7 +16,7 @@ class _Script(LittleOrderIntegerConverter):
     @classmethod
     def scriptToBytes(
             cls,
-            opcode_list: Sequence[int, bytes]) -> Optional[bytes]:
+            opcode_list: Sequence[int, bytes]) -> bytes | None:
         try:
             return b"".join(
                 cls.integerToBytes(c, 1) if isinstance(c, int) else c
@@ -26,7 +25,7 @@ class _Script(LittleOrderIntegerConverter):
             return None
 
     @classmethod
-    def integerToVarInt(cls, value: int) -> Optional[bytes]:
+    def integerToVarInt(cls, value: int) -> bytes | None:
         if value < 0xfd:
             prefix = b""
             length = 1
@@ -46,7 +45,7 @@ class _Script(LittleOrderIntegerConverter):
         return (prefix + value) if value is not None else None
 
     @classmethod
-    def integerFromVarInt(cls, value: bytes) -> Optional[int]:
+    def integerFromVarInt(cls, value: bytes) -> int | None:
         if len(value) == 1:
             value = cls.integerFromBytes(value)
             return value if value < 0xfd else None
@@ -66,9 +65,9 @@ class _Script(LittleOrderIntegerConverter):
     def addressToScript(
             cls,
             address: Coin.Address,
-            type_: Optional[_Script.Type] = None) -> Optional[bytes]:
+            type_: _Script.Type | None = None) -> bytes | None:
         raise NotImplementedError
 
     @classmethod
-    def pushData(cls, data: bytes) -> Optional[bytes]:
+    def pushData(cls, data: bytes) -> bytes | None:
         raise NotImplementedError

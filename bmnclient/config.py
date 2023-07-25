@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-import json
+import json, os, re
 from enum import Enum
 from json.decoder import JSONDecodeError
 from threading import RLock
 from typing import TYPE_CHECKING
+from pathlib import Path
 
 from .logger import Logger
-from .utils.static_list import StaticList
+from .utils import StaticList
 from .version import Product
 
 if TYPE_CHECKING:
     from typing import Any, Final, Type, Union
-    from pathlib import Path
 
 
 class ConfigKey(Enum):
@@ -35,10 +35,10 @@ class ConfigKey(Enum):
 
 
 class Config:
-    def __init__(self, file_path: Path) -> None:
+    def __init__(self, file_path) -> None:
         self._logger = Logger.classLogger(
             self.__class__,
-            (None, file_path.name))
+            (None, file_path.name if file_path else ""))
         self._file_path = file_path
         self._config = dict()
         self._lock = RLock()
@@ -47,9 +47,27 @@ class Config:
     def filePath(self) -> Path:
         return self._file_path
 
+    @filePath.setter
+    def filePath(self, value: Path) -> None:
+        self._file_path = value
+
     @property
     def lock(self) -> RLock:
         return self._lock
+
+    def create(self, path: Path, name: str) -> bool:
+        if path.exists():
+            configures = [x.split('.')[0] for x in os.listdir(path)
+                if re.match("[^\\s]+(.*?)\\.(json|JSON)$", x)]
+            if name in configures:
+                new_name = name
+                counter = 1
+                while new_name in configures:
+                    new_name = f"{name} ({counter})"
+                    counter += 1
+                name = new_name
+        self._file_path = Path(f"{path}/{name}.json")
+        return self.save()
 
     def load(self) -> bool:
         with self._lock:

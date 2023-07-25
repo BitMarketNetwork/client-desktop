@@ -1,5 +1,7 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Controls.Material
+import QtQuick.Layouts
 import "../basiccontrols"
 
 BItemDelegate {
@@ -59,10 +61,10 @@ BItemDelegate {
 
         BColumnLayout {
             BRowLayout {
-                BLayout.alignment: Qt.AlignRight
-                BLayout.topMargin: 10
+                Layout.alignment: Qt.AlignRight
+                Layout.topMargin: 10
                 BLabel {
-                    BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                     font.bold: true
                     color: _base.color
                     font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
@@ -70,7 +72,7 @@ BItemDelegate {
                     text: _base.amount.valueHuman
                 }
                 BLabel {
-                    BLayout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                    Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
                     color: _base.color
                     font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
                     font.strikeout: _base.address.state.isReadOnly // TODO tmp
@@ -78,10 +80,10 @@ BItemDelegate {
                 }
             }
             BRowLayout {
-                BLayout.alignment: Qt.AlignRight
-                BLayout.bottomMargin: 10
+                Layout.alignment: Qt.AlignRight
+                Layout.bottomMargin: 10
                 BLabel {
-                    BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                     font.bold: true
                     color: _base.color
                     font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
@@ -89,7 +91,7 @@ BItemDelegate {
                     text: _base.amount.fiatValueHuman
                 }
                 BLabel {
-                    BLayout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                    Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
                     color: _base.color
                     font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
                     font.strikeout: _base.address.state.isReadOnly // TODO tmp
@@ -106,7 +108,7 @@ BItemDelegate {
             verticalAlignment: Text.AlignVCenter
             elide: BLabel.ElideRight
             maximumLineCount: 4
-            text: _base.address.txList.rowCount()
+            text: _base.address.state.txCount
         }
     }
     Component {
@@ -127,13 +129,13 @@ BItemDelegate {
             if (mouse.button === Qt.RightButton) {
                 _base.contextMenu.address = _base.address
                 _base.contextMenu.popup()
-            }  
+            }
         }
         onPressAndHold: (mouse) => {
             if (mouse.source === Qt.MouseEventNotSynthesized) {
                 _base.contextMenu.address = _base.address
                 contextMenu.popup()
-            } 
+            }
         }
     }
     onDoubleClicked: {

@@ -1,4 +1,6 @@
+import QtQuick.Layouts
+
 BSeparator {
-    BLayout.columnSpan: parent.columns
-    BLayout.fillWidth: true
+    Layout.columnSpan: parent.columns
+    Layout.fillWidth: true
 }

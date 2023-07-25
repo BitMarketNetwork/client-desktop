@@ -175,6 +175,10 @@ class FontModel(AbstractStateModel):
             self._font = value
             self.update()
 
+    def reload(self) -> None:
+        self._font = self.__currentFont()
+        self.update()
+
 
 class SystemTrayModel(AbstractStateModel):
     __stateChanged = QSignal()
@@ -199,6 +203,13 @@ class SystemTrayModel(AbstractStateModel):
         if self._close_to_tray != value:
             self._close_to_tray = value
             self.update()
+
+    def reload(self) -> None:
+        self._close_to_tray = self._application.config.get(
+            ConfigKey.UI_CLOSE_TO_TRAY,
+            bool,
+            False)
+        self.update()
 
 
 class SettingsModel(AbstractModel):
@@ -240,3 +251,12 @@ class SettingsModel(AbstractModel):
     @QProperty(QObject, constant=True)
     def systemTray(self) -> SystemTrayModel:
         return self._system_tray_model
+
+    def reload(self) -> None:
+        self._fiat_rate_service_model.reload()
+        self._fiat_currency_service_model.reload()
+        self._blockchain_explorer_model.reload()
+        self._language_model.reload()
+        self._theme_model.reload()
+        self._font_model.reload()
+        self._system_tray_model.reload()

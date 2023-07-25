@@ -1,6 +1,6 @@
-import QtQuick
 import "../application"
 import "../basiccontrols"
+import "../dialogcontrols"
 
 BPane {
     property string title: qsTr("General")

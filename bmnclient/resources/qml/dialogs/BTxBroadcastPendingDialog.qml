@@ -1,7 +1,10 @@
 import QtQuick
+import QtQuick.Layouts
+
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
+import "../dialogcontrols"
 
 BDialog {
     id: _base
@@ -23,7 +26,6 @@ BDialog {
             text: qsTr("Transaction ID:")
         }
         BInfoValue {
-            placeholderText: qsTr("None")
             text: _base.tx.name
         }
 
@@ -55,8 +57,8 @@ BDialog {
         BInfoSeparator {}
 
         BTxIoView {
-            BLayout.columnSpan: parent.columns
-            BLayout.fillWidth: true
+            Layout.columnSpan: parent.columns
+            Layout.fillWidth: true
             tx: _base.tx
         }
         BInfoSeparator {}
