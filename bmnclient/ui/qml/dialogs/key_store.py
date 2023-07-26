@@ -9,8 +9,13 @@ from PySide6.QtCore import Property as QProperty
 from PySide6.QtCore import QFile, QFileInfo, QObject
 from PySide6.QtCore import Signal as QSignal
 
-from ....coins.abstract.coin import Coin
-from ....key_store import GenerateSeedPhrase, KeyStoreError, RestoreSeedPhrase
+from bmnclient.coins.abstract.coin import Coin
+from bmnclient.key_store import (
+    GenerateSeedPhrase,
+    KeyStoreError,
+    RestoreSeedPhrase,
+)
+
 from . import AbstractDialog, AbstractMessageDialog, AbstractPasswordDialog
 
 if TYPE_CHECKING:
@@ -153,7 +158,9 @@ class KeyStoreSelectDialog(AbstractDialog):
         self._manager.context.config.filePath = Path(path)
         if not self._manager.context.config.load():
             KeyStoreErrorDialog(
-                self._manager, self, KeyStoreError.ERROR_SEED_NOT_FOUND
+                self._manager,
+                self,
+                KeyStoreError.ERROR_SEED_NOT_FOUND,
             ).open()
         self._manager.context.settings.reload()
         self.close.emit()
