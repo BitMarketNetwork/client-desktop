@@ -10,6 +10,7 @@ from PySide6.QtCore import QFile, QFileInfo, QObject
 from PySide6.QtCore import Signal as QSignal
 
 from bmnclient.coins.abstract.coin import Coin
+from bmnclient.config import KeyStoreConfig
 from bmnclient.key_store import (
     GenerateSeedPhrase,
     KeyStoreError,
@@ -155,8 +156,10 @@ class KeyStoreSelectDialog(AbstractDialog):
         super().__init__(manager)
 
     def onKeyStoreClicked(self, path: Path) -> None:
-        self._manager.context.config.filePath = Path(path)
-        if not self._manager.context.config.load():
+        # FIXME quick fix
+        key_store = self._manager.context.keyStore.native
+        key_store.config = KeyStoreConfig(Path(path))
+        if not key_store.config.load():
             KeyStoreErrorDialog(
                 self._manager,
                 self,
