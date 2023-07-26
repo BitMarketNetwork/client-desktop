@@ -1,20 +1,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
-from PySide6.QtCore import Property as QProperty
-from PySide6.QtCore import QObject
-from PySide6.QtCore import Slot as QSlot
+from PySide6.QtCore import Property as QProperty, QObject, Slot as QSlot
 from PySide6.QtGui import QValidator
 
+from bmnclient.coins.abstract.coin import Coin
+from bmnclient.config import KeyStoreConfig
+from bmnclient.logger import Logger
 from bmnclient.version import ProductPaths
-
-from ....coins.abstract.coin import Coin
-from ....logger import Logger
-from ....os_environment import PlatformPaths
-from ..dialogs.key_store import RevealSeedPhraseDialog, TxApproveDialog
 from .file import FileListModel
+from ..dialogs.key_store import RevealSeedPhraseDialog, TxApproveDialog
 
 if TYPE_CHECKING:
     from ....key_store import KeyStore
@@ -23,19 +20,12 @@ if TYPE_CHECKING:
 
 class KeyStoreModel(QObject):
     class _KeyStoreNameValidator(QValidator):
-        # Temporary
-        def __init__(self, parent: Optional[QObject] = ...) -> None:
-            super().__init__(parent)
-            self._invalid_chars = PlatformPaths.invalidFileNameChars
-
-        def validate(self, text: str, position: int) -> QValidator.State:
-            if text.startswith(" "):
-                return QValidator.Invalid
-            if text:
-                for ch in self._invalid_chars:
-                    if ch in text:
-                        return QValidator.Invalid
-            return QValidator.Acceptable
+        def validate(self, value: str, position: int) -> QValidator.State:
+            if not value:
+                return QValidator.State.Intermediate
+            if not KeyStoreConfig.isValidName(value):
+                return QValidator.State.Invalid
+            return QValidator.State.Acceptable
 
     def __init__(self, application: QmlApplication):
         super().__init__()

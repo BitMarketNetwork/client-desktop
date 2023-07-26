@@ -6,6 +6,8 @@ from json.decoder import JSONDecodeError
 from threading import RLock
 from typing import TYPE_CHECKING
 
+import pathvalidate
+
 from .logger import Logger
 from .utils import StaticList
 from .version import Product, ProductPaths
@@ -41,10 +43,21 @@ class Config:
         return self._lock
 
     @classmethod
+    def isValidName(cls, name: str) -> bool:
+        if name.lstrip() != name:
+            return False
+        return pathvalidate.is_valid_filename(
+            name + ProductPaths.WALLET_SUFFIX,
+            platform=pathvalidate.Platform.UNIVERSAL,
+            min_len=1 + len(ProductPaths.WALLET_SUFFIX),
+            max_len=127 - len(ProductPaths.WALLET_SUFFIX),
+        )
+
+    @classmethod
     def create(cls, path: Path, name: str) -> Config | None:
         logger = Logger.classLogger(cls)
 
-        if False:  # TODO filter chars in name var
+        if not cls.isValidName(name):
             logger.error("Invalid characters found in name '%s'.", name)
             return None
 
