@@ -45,10 +45,13 @@ class SignalHandler(QObject):
         read_socket.setblocking(False)
         self._write_socket.setblocking(False)
 
-        # noinspection PyTypeChecker
-        self._qt_socket = QAbstractSocket(QAbstractSocket.TcpSocket, None)
+        self._qt_socket = QAbstractSocket(
+            QAbstractSocket.SocketType.TcpSocket,
+            None,
+        )
         self._qt_socket.setSocketDescriptor(
-            read_socket.detach(), openMode=QAbstractSocket.ReadOnly
+            read_socket.detach(),
+            openMode=QAbstractSocket.OpenModeFlag.ReadOnly,
         )
         self._qt_socket.readyRead.connect(self._onReadSignal)
 
