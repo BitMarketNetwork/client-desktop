@@ -46,6 +46,11 @@ QtObject {
         property int largeHeight: 48
     }
 
+    property QtObject animation: QtObject {
+        property int numberDuration: 400
+        property int rotationDuration: 1000
+    }
+
     property real backgroundDarkFactor: _applicationWindow.Material.theme === Material.Dark ? 1.2 : 1.04 // TODO to themeList
     property real padding: baseFontMetrics.height
     property real spacing: baseFontMetrics.height * 0.5
@@ -63,7 +68,6 @@ QtObject {
     property int infoColumnSpacing: 0
     property int infoRowSpacing: 0
 
-    property int animationDuration: 400
     property int tooTipDelay: 400
 
     property int walletNameMaxLength: 32

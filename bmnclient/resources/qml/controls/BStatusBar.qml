@@ -38,7 +38,7 @@ BPane {
                     target: _rotateImage
                     from: 0
                     to: 360
-                    duration: 1000
+                    duration: _applicationStyle.animation.rotationDuration
                     running: isSync
                     loops: Animation.Infinite
                 }
