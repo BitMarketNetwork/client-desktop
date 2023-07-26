@@ -32,6 +32,7 @@ class KeyStoreError(Enum):
     SUCCESS: Final = 0
     ERROR_UNKNOWN: Final = 1
     ERROR_INVALID_PASSWORD: Final = 1000
+    ERROR_CREATE_KEY_STORE: Final = 1001
     ERROR_SEED_NOT_FOUND: Final = 2000
     ERROR_SAVE_SEED: Final = 2001
     ERROR_INVALID_SEED_PHRASE: Final = 2002
@@ -54,6 +55,7 @@ class _KeyStoreBase:
 
     @config.setter
     def config(self, value: KeyStoreConfig | None) -> None:
+        self._clear()
         self._config = value
 
     def __clearSecrets(self) -> None:
@@ -289,21 +291,10 @@ class KeyStore(_KeyStoreSeed):
         self,
         language: str,
         phrase: str,
-        key_store_password: str,
-        name: str,
-        seed_password: str,
+        password: str,
     ) -> KeyStoreError:
         with self._lock:
-            if not self._config.create(self._application.walletsPath, name):
-                return KeyStoreError.ERROR_SAVE_SEED
-            if not self.create(key_store_password):
-                return KeyStoreError.ERROR_SAVE_SEED
-            if not self.open(key_store_password):
-                return KeyStoreError.ERROR_INVALID_PASSWORD
-
-            result = self._saveSeed(language, phrase, seed_password)
-
-            if not result:
+            if not self._saveSeed(language, phrase, password):
                 return KeyStoreError.ERROR_SAVE_SEED
             root_node = self._deriveRootHdNodeFromSeed()
             if root_node is None:
@@ -329,9 +320,6 @@ class KeyStore(_KeyStoreSeed):
             self._reset_callback()
         return True
 
-    def close(self) -> None:
-        pass
-
 
 class _AbstractSeedPhrase:
     def __init__(self, key_store: KeyStore) -> None:
@@ -348,24 +336,35 @@ class _AbstractSeedPhrase:
     def prepare(self, language: str = None) -> str:
         raise NotImplementedError
 
-    def validate(self, phrase: str) -> bool:
+    def validate(self, seed_phrase: str) -> bool:
         raise NotImplementedError
 
     def finalize(
         self,
-        phrase: str,
-        key_store_password: str,
-        name: str,
+        seed_phrase: str,
         seed_password: str,
+        key_store_name: str,
+        key_store_password: str,
     ) -> KeyStoreError:
-        if not self.validate(phrase):
+        if not self.validate(seed_phrase):
             return KeyStoreError.ERROR_INVALID_SEED_PHRASE
+
+        self._key_store.config = KeyStoreConfig.create(
+            self._key_store._application.walletsPath,  # FIXME
+            key_store_name,
+        )
+        if self._key_store.config is None:
+            return KeyStoreError.ERROR_CREATE_KEY_STORE
+        if not self._key_store.create(key_store_password):
+            return KeyStoreError.ERROR_CREATE_KEY_STORE
+
+        result = self._key_store.open(key_store_password)
+        if result != KeyStoreError.SUCCESS:
+            return result
 
         result = self._key_store.saveSeed(
             self._mnemonic.language,
-            phrase,
-            key_store_password,
-            name,
+            seed_phrase,
             seed_password,
         )
         if result != KeyStoreError.SUCCESS:
@@ -418,7 +417,9 @@ class RestoreSeedPhrase(_AbstractSeedPhrase):
         self._mnemonic = Mnemonic(language)
         return True
 
-    def validate(self, phrase: str) -> bool:
+    def validate(self, seed_phrase: str) -> bool:
         return (
-            phrase and self.inProgress and self._mnemonic.isValidPhrase(phrase)
+            seed_phrase
+            and self.inProgress
+            and self._mnemonic.isValidPhrase(seed_phrase)
         )

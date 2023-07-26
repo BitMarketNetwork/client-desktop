@@ -60,6 +60,9 @@ class KeyStoreErrorDialog(AbstractMessageDialog):
         KeyStoreError.ERROR_INVALID_PASSWORD: QObject().tr(
             "Wrong Key Store password."
         ),
+        KeyStoreError.ERROR_CREATE_KEY_STORE: QObject().tr(
+            "Failed to create Key Store file."
+        ),
         KeyStoreError.ERROR_SEED_NOT_FOUND: QObject().tr(
             "The seed was not found in the Key Store."
         ),
@@ -112,9 +115,9 @@ class KeyStoreNewPasswordDialog(AbstractDialog):
     def onPasswordAccepted(self, password: str) -> None:
         result = self._generator.finalize(
             self._current_phrase,
-            password,
-            self._wallet_name,
             self._seed_password,
+            self._wallet_name,
+            password,
         )
         if result != KeyStoreError.SUCCESS:
             InvalidSeedPhraseDialog(
