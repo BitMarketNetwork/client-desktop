@@ -3,10 +3,9 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import (
-    Property as QProperty,
-    QObject,
-    Slot as QSlot)
+from PySide6.QtCore import Property as QProperty
+from PySide6.QtCore import QObject
+from PySide6.QtCore import Slot as QSlot
 
 from ....debug import Debug
 
@@ -44,6 +43,5 @@ class DebugModel(QObject):
             type_ = self._application.MessageType.INFORMATION
 
         self._application.showMessage(
-            type_=type_,
-            title="showMessage() Test",
-            text=text)
+            type_=type_, title="showMessage() Test", text=text
+        )

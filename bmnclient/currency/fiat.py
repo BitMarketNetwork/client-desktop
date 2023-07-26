@@ -4,11 +4,12 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QObject
 
+from ..config import ConfigStaticList
 from .currency import Currency
-from ..config import ConfigKey, ConfigStaticList
 
 if TYPE_CHECKING:
-    from typing import Final, Iterator, Optional, Type, Union
+    from typing import Final, Iterator
+
     from ..application import CoreApplication
 
 
@@ -35,25 +36,19 @@ class FiatCurrencyList(ConfigStaticList):
     def __init__(self, application: CoreApplication) -> None:
         super().__init__(
             application.config,
-            ConfigKey.SERVICES_FIAT_CURRENCY,
-            (
-                UsdFiatCurrency,
-                EuroFiatCurrency
-            ),
+            application.config.Key.SERVICES_FIAT_CURRENCY,
+            (UsdFiatCurrency, EuroFiatCurrency),
             default_index=0,
-            item_property="unit")
-        self._logger.debug(
-            "Current fiat currency is '%s'.",
-            self.current.unit)
+            item_property="unit",
+        )
+        self._logger.debug("Current fiat currency is '%s'.", self.current.unit)
 
-    def __iter__(self) -> Iterator[Type[FiatCurrency]]:
+    def __iter__(self) -> Iterator[type[FiatCurrency]]:
         return super().__iter__()
 
-    def __getitem__(
-            self,
-            value: Union[str, int]) -> Optional[Type[FiatCurrency]]:
+    def __getitem__(self, value: str | int) -> type[FiatCurrency] | None:
         return super().__getitem__(value)
 
     @property
-    def current(self) -> Type[FiatCurrency]:
+    def current(self) -> type[FiatCurrency]:
         return super().current

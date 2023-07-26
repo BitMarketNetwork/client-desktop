@@ -15,16 +15,18 @@ class _Address(Bitcoin.Address):
     _HRP = "ltc"
 
     class Type(Coin.Address.Type):
-        UNKNOWN: Final = \
-            Bitcoin.Address.Type.UNKNOWN.value
-        PUBKEY_HASH: Final = \
-            Bitcoin.Address.Type.PUBKEY_HASH.value.copy(version=0x30)
-        SCRIPT_HASH: Final = \
-            Bitcoin.Address.Type.SCRIPT_HASH.value.copy(version=0x32)
-        WITNESS_V0_KEY_HASH: Final = \
+        UNKNOWN: Final = Bitcoin.Address.Type.UNKNOWN.value
+        PUBKEY_HASH: Final = Bitcoin.Address.Type.PUBKEY_HASH.value.copy(
+            version=0x30
+        )
+        SCRIPT_HASH: Final = Bitcoin.Address.Type.SCRIPT_HASH.value.copy(
+            version=0x32
+        )
+        WITNESS_V0_KEY_HASH: Final = (
             Bitcoin.Address.Type.WITNESS_V0_KEY_HASH.value
-        WITNESS_V0_SCRIPT_HASH: Final = \
+        )
+        WITNESS_V0_SCRIPT_HASH: Final = (
             Bitcoin.Address.Type.WITNESS_V0_SCRIPT_HASH.value
-        WITNESS_UNKNOWN: Final = \
-            Bitcoin.Address.Type.WITNESS_UNKNOWN.value
+        )
+        WITNESS_UNKNOWN: Final = Bitcoin.Address.Type.WITNESS_UNKNOWN.value
         DEFAULT = WITNESS_V0_KEY_HASH

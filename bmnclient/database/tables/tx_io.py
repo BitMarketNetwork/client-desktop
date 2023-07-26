@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable
 
-from .table import (Column, ColumnEnum, SerializableRowList, SerializableTable)
 from ...utils.class_property import classproperty
+from .table import Column, ColumnEnum, SerializableRowList, SerializableTable
 
 if TYPE_CHECKING:
     from ...coins.abstract import Coin
@@ -23,6 +23,7 @@ class TxIosTable(SerializableTable, name="transaction_ios"):
     @classproperty
     def _CONSTRAINT_LIST(cls) -> tuple[str, ...]:  # noqa
         from .tx import TxsTable
+
         return (
             f"FOREIGN KEY ("
             f"{cls.ColumnEnum.TX_ROW_ID})"
@@ -38,21 +39,17 @@ class TxIosTable(SerializableTable, name="transaction_ios"):
     _KEY_COLUMN_LIST = (
         (
             ColumnEnum.TX_ROW_ID,
-            lambda o: o.tx.rowId if o.tx.rowId > 0 else None
-        ), (
-            ColumnEnum.IO_TYPE,
-            lambda o: o.ioType.value
-        ), (
-            ColumnEnum.INDEX,
-            lambda o: o.index
-        )
+            lambda o: o.tx.rowId if o.tx.rowId > 0 else None,
+        ),
+        (ColumnEnum.IO_TYPE, lambda o: o.ioType.value),
+        (ColumnEnum.INDEX, lambda o: o.index),
     )
 
     def rowList(
-            self,
-            tx: Coin.Tx,
-            io_type: Coin.Tx.Io.IoType | None,
-            on_save_row: Callable[[int], None] | None = None
+        self,
+        tx: Coin.Tx,
+        io_type: Coin.Tx.Io.IoType | None,
+        on_save_row: Callable[[int], None] | None = None,
     ) -> SerializableRowList[Coin.Tx.Io]:
         assert tx.rowId > 0
         where_columns = [self.ColumnEnum.TX_ROW_ID]
@@ -66,4 +63,5 @@ class TxIosTable(SerializableTable, name="transaction_ios"):
             table=self,
             where_expression=Column.joinWhere(where_columns),
             where_args=where_args,
-            on_save_row=on_save_row)
+            on_save_row=on_save_row,
+        )

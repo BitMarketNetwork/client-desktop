@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from enum import auto, Flag
+from enum import Flag, auto
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Final, List, Optional, Type, Union
+
     from ...utils import DeserializedDict
 
 
@@ -17,8 +18,8 @@ class AbstractParser:
         pass
 
     def __init__(
-            self,
-            flags: Optional[AbstractParser.ParseFlag] = None) -> None:
+        self, flags: Optional[AbstractParser.ParseFlag] = None
+    ) -> None:
         self._flags = flags
         self._result: DeserializedDict = {}
 
@@ -28,14 +29,15 @@ class AbstractParser:
 
     @classmethod
     def parseKey(
-            cls,
-            item: Union[dict, list],
-            key_name: Union[str, int],
-            value_type: Type,
-            default_value: Any = None,
-            *,
-            allow_none: bool = False,
-            allow_convert: bool = False) -> Any:
+        cls,
+        item: Union[dict, list],
+        key_name: Union[str, int],
+        value_type: Type,
+        default_value: Any = None,
+        *,
+        allow_none: bool = False,
+        allow_convert: bool = False,
+    ) -> Any:
         try:
             value = item[key_name]
 
@@ -55,19 +57,20 @@ class AbstractParser:
         except (KeyError, IndexError):
             if default_value is not None:
                 return default_value
-            raise ParseError(
-                "key '{}' not found".format(str(key_name)))
+            raise ParseError("key '{}' not found".format(str(key_name)))
         except (TypeError, ValueError):
             raise ParseError(
-                "invalid value for key '{}'".format(str(key_name)))
+                "invalid value for key '{}'".format(str(key_name))
+            )
 
 
 class ResponseParser(AbstractParser):
     def __call__(
-            self,
-            response: dict,
-            callback: Callable[[str, str, dict], None],
-            error_callback: Callable[[int, str], None]) -> None:
+        self,
+        response: dict,
+        callback: Callable[[str, str, dict], None],
+        error_callback: Callable[[int, str], None],
+    ) -> None:
         # The members data and errors MUST NOT coexist in the same
         # document.
         if "errors" in response:
@@ -77,7 +80,8 @@ class ResponseParser(AbstractParser):
             for error in error_list:
                 error_callback(
                     self.parseKey(error, "code", int, allow_convert=True),
-                    self.parseKey(error, "detail", str))
+                    self.parseKey(error, "detail", str),
+                )
         elif "data" in response:
             data = self.parseKey(response, "data", dict)
             data_id = self.parseKey(data, "id", str)
@@ -135,45 +139,26 @@ class TxParser(AbstractParser):
             "amount": self.parseKey(value, "amount", int),
             "fee_amount": self.parseKey(value, "fee", int),
             "is_coinbase": self.parseKey(value, "coinbase", int) != 0,
-
             "input_list": [
-                self._parseIo(i, v, "input") for i, v in enumerate(self.parseKey(
-                    value,
-                    "input",
-                    list))
+                self._parseIo(i, v, "input")
+                for i, v in enumerate(self.parseKey(value, "input", list))
             ],
             "output_list": [
-                self._parseIo(i, v, "output") for i, v in enumerate(self.parseKey(
-                    value,
-                    "output",
-                    list))
-            ]
+                self._parseIo(i, v, "output")
+                for i, v in enumerate(self.parseKey(value, "output", list))
+            ],
         }
 
     def _parseIo(self, index: int, item: dict, io_type: str) -> dict:
         # TODO io_type as _Io.IoType.value.
-        self.parseKey(
-            item,
-            "type",
-            str,
-            allow_none=True)
+        self.parseKey(item, "type", str, allow_none=True)
 
         return {
             "index": index,
             "io_type": io_type,
-            "output_type": self.parseKey(
-                item,
-                "output_type",
-                str),
-            "address": self.parseKey(
-                item,
-                "address",
-                str,
-                allow_none=True),
-            "amount": self.parseKey(
-                item,
-                "amount",
-                int)
+            "output_type": self.parseKey(item, "output_type", str),
+            "address": self.parseKey(item, "address", str, allow_none=True),
+            "amount": self.parseKey(item, "amount", int),
         }
 
 
@@ -197,18 +182,18 @@ class SysinfoParser(AbstractParser):
             "server_url": server_url or "",
             "server_name": self.parseKey(value, "name", str),
             "server_version_string": self.parseKey(server_version, 0, str),
-            "server_version": self.parseKey(server_version, 1, int)
+            "server_version": self.parseKey(server_version, 1, int),
         }
 
         self._server_coin_list.clear()
         server_coin_list = self.parseKey(value, "coins", dict)
-        for (coin_name, coin_value) in server_coin_list.items():
+        for coin_name, coin_value in server_coin_list.items():
             try:
                 self._server_coin_list[coin_name] = self._parseCoin(coin_value)
             except ParseError as e:
                 raise ParseError(
-                    "failed to parse coin '{}': {}"
-                    .format(coin_name, str(e)))
+                    "failed to parse coin '{}': {}".format(coin_name, str(e))
+                )
 
     def _parseCoin(self, value: dict) -> dict:
         coin_version = self.parseKey(value, "version", list)
@@ -235,37 +220,25 @@ class CoinsInfoParser(AbstractParser):
             return False
 
         try:
-            self._online_status = self.parseKey(
-                coin_info,
-                "status",
-                int)
+            self._online_status = self.parseKey(coin_info, "status", int)
             self._result = {
                 "name": coin_name,
-                "height": self.parseKey(
-                    coin_info,
-                    "height",
-                    int),
+                "height": self.parseKey(coin_info, "height", int),
                 "verified_height": self.parseKey(
-                    coin_info,
-                    "verified_height",
-                    int),
-                "offset": self.parseKey(
-                    coin_info,
-                    "offset",
-                    str),
+                    coin_info, "verified_height", int
+                ),
+                "offset": self.parseKey(coin_info, "offset", str),
                 "unverified_offset": self.parseKey(
-                    coin_info,
-                    "unverified_offset",
-                    str),
+                    coin_info, "unverified_offset", str
+                ),
                 "unverified_hash": self.parseKey(
-                    coin_info,
-                    "unverified_hash",
-                    str)
+                    coin_info, "unverified_hash", str
+                ),
             }
         except ParseError as e:
             raise ParseError(
-                "failed to parse coin '{}': {}"
-                .format(coin_name, str(e)))
+                "failed to parse coin '{}': {}".format(coin_name, str(e))
+            )
 
         return True
 
@@ -331,57 +304,50 @@ class AddressTxParser(AbstractParser):
         return self._tx_list
 
     def __call__(self, value: dict) -> None:
-        self._address_type = self.parseKey(
-            value,
-            "type",
-            str)
-        self._address_name = self.parseKey(
-            value,
-            "address",
-            str)
-        self._first_offset = self.parseKey(
-            value,
-            "first_offset",
-            str)
+        self._address_type = self.parseKey(value, "type", str)
+        self._address_name = self.parseKey(value, "address", str)
+        self._first_offset = self.parseKey(value, "first_offset", str)
         self._last_offset = self.parseKey(
-            value,
-            "last_offset",
-            str,
-            allow_none=True)
+            value, "last_offset", str, allow_none=True
+        )
         self._parseTxList(value)
 
     def _parseTxList(self, value: dict):
         tx_value_list = self.parseKey(value, "tx_list", dict)
         tx_parser = TxParser()
-        for (tx_name, tx_value) in tx_value_list.items():
+        for tx_name, tx_value in tx_value_list.items():
             try:
                 self._tx_list.append(tx_parser(tx_name, tx_value))
             except ParseError as e:
                 raise ParseError(
-                    "failed to parse transaction '{}': {}"
-                    .format(tx_name, str(e)))
+                    "failed to parse transaction '{}': {}".format(
+                        tx_name, str(e)
+                    )
+                )
 
 
 class AddressUtxoParser(AddressTxParser):
     def _parseTxList(self, value: dict):
         tx_value_list = self.parseKey(value, "tx_list", list)
-        for (tx_index, tx_value) in enumerate(tx_value_list):
+        for tx_index, tx_value in enumerate(tx_value_list):
             try:
-                height = self.parseKey(tx_value, "height", int, allow_none=True)
+                height = self.parseKey(
+                    tx_value, "height", int, allow_none=True
+                )
                 if height is None:  # TODO mempool (no server support)
                     height = -1
                 data = {
                     "name": self.parseKey(tx_value, "tx", str),
                     "height": height,
                     "index": self.parseKey(tx_value, "index", int),
-                    "amount": self.parseKey(tx_value, "amount", int)
+                    "amount": self.parseKey(tx_value, "amount", int),
                 }
                 if data["amount"] > 0:
                     self._tx_list.append(data)
             except ParseError as e:
                 raise ParseError(
-                    "failed to parse UTXO '{}': {}"
-                    .format(tx_index, str(e)))
+                    "failed to parse UTXO '{}': {}".format(tx_index, str(e))
+                )
 
 
 class CoinMempoolParser(AbstractParser):
@@ -403,13 +369,15 @@ class CoinMempoolParser(AbstractParser):
 
         tx_value_list = self.parseKey(value, "tx_list", dict)
         tx_parser = TxParser(TxParser.ParseFlag.MEMPOOL)
-        for (tx_name, tx_value) in tx_value_list.items():
+        for tx_name, tx_value in tx_value_list.items():
             try:
                 self._tx_list.append(tx_parser(tx_name, tx_value))
             except ParseError as e:
                 raise ParseError(
-                    "failed to parse unconfirmed transaction '{}': {}"
-                    .format(tx_name, str(e)))
+                    "failed to parse unconfirmed transaction '{}': {}".format(
+                        tx_name, str(e)
+                    )
+                )
 
 
 class BroadcastTxParser(AbstractParser):

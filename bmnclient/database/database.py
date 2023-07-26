@@ -1,28 +1,30 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import ContextManager, Final, TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, ContextManager, Final, TypeVar
 
 import bmnsqlite3 as _engine
 
+from ..debug import Debug
+from ..logger import Logger
+from ..utils.class_property import classproperty
+from ..version import Product
 from .cursor import Cursor
 from .tables import (
-    AddressTxsTable,
     AddressesTable,
+    AddressTxsTable,
     CoinsTable,
     MetadataTable,
     Table,
     TxIosTable,
     TxsTable,
-    UtxosTable)
+    UtxosTable,
+)
 from .vfs import Vfs
-from ..debug import Debug
-from ..logger import Logger
-from ..utils.class_property import classproperty
-from ..version import Product
 
 if TYPE_CHECKING:
     from pathlib import Path
+
     from ..application import CoreApplication
     from ..utils import Serializable
 
@@ -36,9 +38,8 @@ class Connection(_engine.Connection):
         # TODO sqlite.Connection.cursor(factory)
         return super().cursor(
             factory=lambda *args, **kwargs: Cursor(
-                *args,
-                database=self._database,
-                **kwargs)
+                *args, database=self._database, **kwargs
+            )
         )
 
 
@@ -64,7 +65,7 @@ class Database:
         AddressTxsTable,
         TxsTable,
         TxIosTable,
-        UtxosTable
+        UtxosTable,
     )
 
     class Error(_engine.OperationalError):
@@ -84,9 +85,10 @@ class Database:
 
     class TransactionInEffectError(Error):
         def __init__(
-                self,
-                value: str = "transaction is already in effect",
-                query: str | None = None):
+            self,
+            value: str = "transaction is already in effect",
+            query: str | None = None,
+        ):
             super().__init__(value, query)
 
     def __init__(self, application: CoreApplication, file_path: Path) -> None:
@@ -94,15 +96,10 @@ class Database:
         self._file_path = file_path
 
         self._logger = Logger.classLogger(
-            self.__class__,
-            (None, self._file_path.name))
-        self._logger.debug(
-            "%s version: %s",
-            _engine.__name__,
-            _engine.version)
-        self._logger.debug(
-            "SQLite version: %s",
-            _engine.sqlite_version)
+            self.__class__, (None, self._file_path.name)
+        )
+        self._logger.debug("%s version: %s", _engine.__name__, _engine.version)
+        self._logger.debug("SQLite version: %s", _engine.sqlite_version)
 
         self.__connection: _engine.Connection | None = None
         self.__table_list: dict[int, Table] = {}
@@ -156,11 +153,11 @@ class Database:
                 isolation_level="DEFERRED",
                 check_same_thread=True,
                 factory=lambda *args, **kwargs: Connection(
-                    *args,
-                    database=self,
-                    **kwargs),
+                    *args, database=self, **kwargs
+                ),
                 cached_statements=100,
-                uri=True)  # noqa
+                uri=True,
+            )  # noqa
         except (_engine.Error, _engine.Warning, RuntimeError) as e:
             self.__connection = None
             self._logger.error("Failed to open database: %s", str(e))
@@ -197,14 +194,13 @@ class Database:
 
     @contextmanager
     def transaction(
-            self,
-            *,
-            allow_in_transaction: bool = True,
-            suppress_exceptions: bool = False
+        self,
+        *,
+        allow_in_transaction: bool = True,
+        suppress_exceptions: bool = False,
     ) -> ContextManager[Cursor | None]:
-        if (
-                not self.isOpen
-                or (self.__in_transaction > 0 and not allow_in_transaction)
+        if not self.isOpen or (
+            self.__in_transaction > 0 and not allow_in_transaction
         ):
             if suppress_exceptions:
                 try:
@@ -253,7 +249,8 @@ class Database:
                     self._logger.error(
                         "Failed to %s transaction: %s",
                         "commit" if commit else "rollback",
-                        str(e))
+                        str(e),
+                    )
                     if not suppress_exceptions:
                         self.__in_transaction -= 1
                         raise
@@ -263,9 +260,8 @@ class Database:
         self._logger.debug("Query: %s", query)
 
     def logException(
-            self,
-            e: _engine.Error | _engine.Warning,
-            query: str | None = None) -> None:
+        self, e: _engine.Error | _engine.Warning, query: str | None = None
+    ) -> None:
         if not query and isinstance(e, self.Error):
             query = e.query
 
@@ -273,20 +269,21 @@ class Database:
             "Query failed with '%s' exception:\n\t%s\n\t%s",
             e.__class__.__name__,
             str(e),
-            query if query else "NO STATEMENT")
+            query if query else "NO STATEMENT",
+        )
         if isinstance(e, _engine.Warning):
             self._logger.warning(*message)
         else:
             self._logger.error(*message)
 
     def logDeserializeError(
-            self,
-            type_: type(Serializable),
-            result: dict[str, int | str]) -> None:
+        self, type_: type(Serializable), result: dict[str, int | str]
+    ) -> None:
         self._logger.error(
             "Failed to deserialize '%s' object.\n\t%s",
             str(type_.__name__),
-            str(result))
+            str(result),
+        )
         pass
 
     def remove(self) -> bool:
@@ -318,12 +315,11 @@ class Database:
         else:
             raise self.Error(
                 "existing database from a more recent version of the {}"
-                " (existing database version {}, current database version {})"
-                .format(
-                    Product.NAME,
-                    version,
-                    self._VERSION),
-                None)
+                " (existing database version {}, current database version {})".format(
+                    Product.NAME, version, self._VERSION
+                ),
+                None,
+            )
 
         if upgrade:
             for table_type in self._TABLE_TYPE_LIST:
@@ -340,8 +336,8 @@ class Database:
             table = self.__table_list.get(id(table_type))
             if table is None:
                 self._logger.debug(
-                    "Can't close table '%s', it was not open.",
-                    table_type.name)
+                    "Can't close table '%s', it was not open.", table_type.name
+                )
                 continue
             table.close(cursor)
         self.__table_list.clear()

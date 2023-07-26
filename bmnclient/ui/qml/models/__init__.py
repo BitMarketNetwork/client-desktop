@@ -2,20 +2,18 @@ from __future__ import annotations
 
 from enum import IntEnum
 from threading import Lock
-from typing import Final, Generator, TYPE_CHECKING
+from typing import TYPE_CHECKING, Final, Generator
 
-from PySide6.QtCore import (
-    Property as QProperty,
-    QObject,
-    Signal as QSignal,
-    SignalInstance as QSignalInstance)
+from PySide6.QtCore import Property as QProperty
+from PySide6.QtCore import QObject
+from PySide6.QtCore import Signal as QSignal
+from PySide6.QtCore import SignalInstance as QSignalInstance
 
 if TYPE_CHECKING:
-    from .abstract import AbstractTableModel
-    from .. import QmlApplication
     from ....coins.abstract import Coin
-    from ....config import ConfigKey
+    from ....config import Config
     from ....language import Locale
+    from .. import QmlApplication
 
 # TODO move all to .abstract
 
@@ -66,12 +64,13 @@ class AbstractTupleStateModel(AbstractStateModel):
     __stateChanged = QSignal()
 
     def __init__(
-            self,
-            application: QmlApplication,
-            source_list: tuple[dict[str, ...], ...],
-            *,
-            config_key: ConfigKey | None = None,
-            default_name: str | None = None) -> None:
+        self,
+        application: QmlApplication,
+        source_list: tuple[dict[str, ...], ...],
+        *,
+        config_key: Config.Key | None = None,
+        default_name: str | None = None,
+    ) -> None:
         super().__init__(application)
         self._list = source_list
         self._config_key = config_key
@@ -121,9 +120,8 @@ class AbstractTupleStateModel(AbstractStateModel):
     def _load(self) -> None:
         if self._config_key is not None:
             self.__current_name = self._application.config.get(
-                self._config_key,
-                str,
-                "")
+                self._config_key, str, ""
+            )
             if self.__default_name is not None:
                 if not self._isValidName(self.__current_name):
                     self.__current_name = self.__default_name

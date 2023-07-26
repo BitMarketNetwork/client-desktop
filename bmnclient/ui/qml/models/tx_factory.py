@@ -2,28 +2,27 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import (
-    Property as QProperty,
-    QObject,
-    Signal as QSignal,
-    Slot as QSlot)
+from PySide6.QtCore import Property as QProperty
+from PySide6.QtCore import QObject
+from PySide6.QtCore import Signal as QSignal
+from PySide6.QtCore import Slot as QSlot
 
+from ....coins.abstract import Coin
+from ..dialogs.tx import TxBroadcastPendingDialog
 from . import AbstractCoinStateModel, AbstractModel, ValidStatus
 from .amount import AbstractAmountInputModel, AbstractAmountModel
 from .tx import TxIoListModel
-from ..dialogs.tx import TxBroadcastPendingDialog
-from ....coins.abstract import Coin
 
 if TYPE_CHECKING:
     from typing import Optional, Sequence
+
     from .. import QmlApplication
 
 
 class AbstractTxFactoryStateModel(AbstractCoinStateModel):
     def __init__(
-            self,
-            application: QmlApplication,
-            factory: Coin.TxFactory) -> None:
+        self, application: QmlApplication, factory: Coin.TxFactory
+    ) -> None:
         super().__init__(application, factory.coin)
         self._factory = factory
 
@@ -48,9 +47,8 @@ class TxFactoryStateModel(AbstractTxFactoryStateModel):
 
 class AbstractTxFactoryAmountModel(AbstractAmountModel):
     def __init__(
-            self,
-            application: QmlApplication,
-            factory: Coin.TxFactory) -> None:
+        self, application: QmlApplication, factory: Coin.TxFactory
+    ) -> None:
         super().__init__(application, factory.coin)
         self._factory = factory
 
@@ -60,9 +58,8 @@ class AbstractTxFactoryAmountModel(AbstractAmountModel):
 
 class AbstractTxFactoryAmountInputModel(AbstractAmountInputModel):
     def __init__(
-            self,
-            application: QmlApplication,
-            factory: Coin.TxFactory) -> None:
+        self, application: QmlApplication, factory: Coin.TxFactory
+    ) -> None:
         super().__init__(application, factory.coin)
         self._factory = factory
 
@@ -166,9 +163,8 @@ class TxFactoryReceiverModel(AbstractTxFactoryStateModel):
     __stateChanged = QSignal()
 
     def __init__(
-            self,
-            application: QmlApplication,
-            factory: Coin.TxFactory) -> None:
+        self, application: QmlApplication, factory: Coin.TxFactory
+    ) -> None:
         super().__init__(application, factory)
         self._first_use = True
 
@@ -210,9 +206,8 @@ class TxFactorySourceListModel(TxIoListModel):
     __stateChanged = QSignal()
 
     def __init__(
-            self,
-            application: QmlApplication,
-            source_list: Sequence) -> None:
+        self, application: QmlApplication, source_list: Sequence
+    ) -> None:
         super().__init__(application, source_list)
         # noinspection PyUnresolvedReferences
         self.rowsInserted.connect(lambda *_: self.__stateChanged.emit())
@@ -244,49 +239,46 @@ class TxFactoryModel(Coin.TxFactory.Model, AbstractModel):
     __stateChanged = QSignal()
 
     def __init__(
-            self,
-            application: QmlApplication,
-            factory: Coin.TxFactory) -> None:
+        self, application: QmlApplication, factory: Coin.TxFactory
+    ) -> None:
         super().__init__(application, factory=factory)
 
-        self._state = TxFactoryStateModel(
-            self._application,
-            self._factory)
+        self._state = TxFactoryStateModel(self._application, self._factory)
         self.connectModelUpdate(self._state)
 
         self._available_amount = TxFactoryAvailableAmountModel(
-            self._application,
-            self._factory)
+            self._application, self._factory
+        )
         self.connectModelUpdate(self._available_amount)
 
         self._receiver_amount = TxFactoryReceiverAmountModel(
-            self._application,
-            self._factory)
+            self._application, self._factory
+        )
         self.connectModelUpdate(self._receiver_amount)
 
         self._fee_amount = TxFactoryFeeAmountModel(
-            self._application,
-            self._factory)
+            self._application, self._factory
+        )
         self.connectModelUpdate(self._fee_amount)
 
         self._kib_fee_amount = TxFactoryKibFeeAmountModel(
-            self._application,
-            self._factory)
+            self._application, self._factory
+        )
         self.connectModelUpdate(self._kib_fee_amount)
 
         self._change_amount = TxFactoryChangeAmountModel(
-            self._application,
-            self._factory)
+            self._application, self._factory
+        )
         self.connectModelUpdate(self._change_amount)
 
         self._receiver = TxFactoryReceiverModel(
-            self._application,
-            self._factory)
+            self._application, self._factory
+        )
         self.connectModelUpdate(self._receiver)
 
         self._source_list = TxFactorySourceListModel(  # TODO
-            self._application,
-            [])
+            self._application, []
+        )
 
     @QProperty(str, notify=__stateChanged)
     def name(self) -> str:
@@ -357,12 +349,11 @@ class TxFactoryModel(Coin.TxFactory.Model, AbstractModel):
         super().afterInsertBroadcast(mtx)
         # noinspection PyTypeChecker
         TxBroadcastPendingDialog(
-            self._application.qmlContext.dialogManager,
-            mtx).open()
+            self._application.qmlContext.dialogManager, mtx
+        ).open()
 
     def onBroadcastFinished(
-            self,
-            error_code: int,
-            mtx: Coin.TxFactory.MutableTx) -> None:
+        self, error_code: int, mtx: Coin.TxFactory.MutableTx
+    ) -> None:
         super().onBroadcastFinished(error_code, mtx)
         # TODO show finished message

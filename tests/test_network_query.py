@@ -53,14 +53,13 @@ class DefaultGetQuery(AbstractQuery, QueryHelper):
         _logger.debug(
             "_onResponseData: statusCode = %i, len(data) = %i",
             self.statusCode,
-            len(data))
+            len(data),
+        )
         return self.response_data_result
 
     def _onResponseFinished(self) -> None:
         self.response_finished_called = True
-        _logger.debug(
-            "_onResponseFinished: statusCode = %i",
-            self.statusCode)
+        _logger.debug("_onResponseFinished: statusCode = %i", self.statusCode)
         self.event_loop.exit()
 
 
@@ -110,7 +109,10 @@ class DefaultJsonPostQuery(DefaultJsonGetQuery):
 
 
 class TestNetworkQuery(TestCaseApplication):
-    def _run_request(self, query: AbstractQuery,) -> None:
+    def _run_request(
+        self,
+        query: AbstractQuery,
+    ) -> None:
         manager = NetworkAccessManager()
 
         request = query.createRequest()
@@ -148,17 +150,13 @@ class TestNetworkQuery(TestCaseApplication):
         self.assertEqual(request.url().toString(), q.url + "?a=1")
 
         # strict argument list
-        q.test_arguments = {
-            "a": 1,
-            "b": " spaces ",
-            "spaces  ": " ",
-            "&": "+"
-        }
+        q.test_arguments = {"a": 1, "b": " spaces ", "spaces  ": " ", "&": "+"}
         request = q.createRequest()
         self.assertIsInstance(request, QNetworkRequest)
         self.assertEqual(
             request.url().toString(),
-            q.url + "?a=1&b=+spaces+&spaces++=+&%26=%2B")
+            q.url + "?a=1&b=+spaces+&spaces++=+&%26=%2B",
+        )
 
         # bad argument list
         q.test_arguments = {"a": 0.0}
@@ -169,7 +167,7 @@ class TestNetworkQuery(TestCaseApplication):
         q = DefaultGetQuery()
         request = q.createRequest()
         # noinspection PyProtectedMember
-        for (a, v) in q._REQUEST_ATTRIBUTE_LIST:
+        for a, v in q._REQUEST_ATTRIBUTE_LIST:
             self.assertEqual(request.attribute(a), v)
 
     def test_query_run(self) -> None:
@@ -232,7 +230,7 @@ class TestNetworkQuery(TestCaseApplication):
 
         self.assertEqual(q.content, b"")
         q.test_content = {"Hello1": 1}
-        self.assertEqual(q.content, b"{\"Hello1\": 1}")
+        self.assertEqual(q.content, b'{"Hello1": 1}')
 
     def test_json_query_run(self) -> None:
         # normal GET

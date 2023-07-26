@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    Property as QProperty, \
-    QObject, \
-    Slot as QSlot
+from PySide6.QtCore import Property as QProperty
+from PySide6.QtCore import QObject
+from PySide6.QtCore import Slot as QSlot
 
-from . import ValidStatus
 from ....crypto.password import PasswordStrength
+from . import ValidStatus
 
 if TYPE_CHECKING:
     from typing import Any, Dict
@@ -31,5 +30,5 @@ class PasswordModel(QObject):
         return {
             "isAcceptable": s.isAcceptable,
             "name": s.name,
-            "status": valid_status.value
+            "status": valid_status.value,
         }

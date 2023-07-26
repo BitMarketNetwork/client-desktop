@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Final, TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
-from .object import CoinObject, CoinObjectModel
 from ...database.tables import TxIosTable
 from ...utils import (
-    DeserializeFlag,
     DeserializedData,
+    DeserializeFlag,
     SerializeFlag,
-    serializable)
+    serializable,
+)
 from ...utils.string import StringUtils
+from .object import CoinObject, CoinObjectModel
 
 if TYPE_CHECKING:
     from .coin import Coin
@@ -49,19 +50,23 @@ class _Io(CoinObject, table_type=TxIosTable):
 
     def __eq__(self, other: _Io) -> bool:
         return (
-                super().__eq__(other)
-                and self._index == other.index
-                and self._output_type == other._output_type
-                and self._address == other.address
-                and self._amount == other._amount)
+            super().__eq__(other)
+            and self._index == other.index
+            and self._output_type == other._output_type
+            and self._address == other.address
+            and self._amount == other._amount
+        )
 
     def __hash__(self) -> int:
-        return hash((
-            super().__hash__(),
-            self._index,
-            self._output_type,
-            self._address,
-            self._amount))
+        return hash(
+            (
+                super().__hash__(),
+                self._index,
+                self._output_type,
+                self._address,
+                self._amount,
+            )
+        )
 
     # TODO cache
     def __str__(self) -> str:
@@ -70,13 +75,12 @@ class _Io(CoinObject, table_type=TxIosTable):
             (None, self._io_type.value),
             ("index", self._index),
             ("amount", self._amount),
-            parent=self._address)
+            parent=self._address,
+        )
 
     def serializeProperty(
-            self,
-            flags: SerializeFlag,
-            key: str,
-            value: ...) -> DeserializedData:
+        self, flags: SerializeFlag, key: str, value: ...
+    ) -> DeserializedData:
         if key == "io_type":
             return value.value
         if key == "address":
@@ -85,12 +89,13 @@ class _Io(CoinObject, table_type=TxIosTable):
 
     @classmethod
     def deserializeProperty(
-            cls,
-            flags: DeserializeFlag,
-            self: _Io | None,
-            key: str,
-            value: DeserializedData,
-            *cls_args) -> ...:
+        cls,
+        flags: DeserializeFlag,
+        self: _Io | None,
+        key: str,
+        value: DeserializedData,
+        *cls_args,
+    ) -> ...:
         if key == "io_type":
             for io_type in cls.IoType:
                 if io_type.value == value:

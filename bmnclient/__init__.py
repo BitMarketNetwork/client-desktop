@@ -17,16 +17,18 @@ def main(argv: Optional[List[str]] = None) -> int:
     if sys.version_info[:3] < Product.PYTHON_MINIMAL_VERSION:
         raise RuntimeError(
             "{} requires Python version {}.{}.{} or above, "
-            "current Python version is {}.{}.{}"
-            .format(
+            "current Python version is {}.{}.{}".format(
                 Product.NAME,
                 *Product.PYTHON_MINIMAL_VERSION[:3],
-                *sys.version_info[:3]))
+                *sys.version_info[:3],
+            )
+        )
 
     if argv is None:
         argv = sys.argv
 
     from .debug import Debug
+
     Debug.setState("-d" in argv or "--debug" in argv)
 
     from .application import CommandLine

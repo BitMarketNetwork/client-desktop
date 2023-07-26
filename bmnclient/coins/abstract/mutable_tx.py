@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from functools import cached_property, lru_cache
-from typing import Final, Iterable, TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Final, Iterable, TypeVar
 
-from .tx import _Tx
 from ...utils import SerializableList, serializable
+from .tx import _Tx
 
 if TYPE_CHECKING:
     from .coin import Coin
@@ -15,6 +15,7 @@ class _MutableTx(_Tx, table_type=None):
     _LOCK_TIME_LENGTH = 0
 
     from .mutable_tx_io import _MutableInput, _MutableOutput
+
     Input = _MutableInput
     Output = _MutableOutput
 
@@ -22,8 +23,8 @@ class _MutableTx(_Tx, table_type=None):
 
     class IoList(SerializableList[_ioT]):
         def __init__(
-                self, tx: _MutableTx,
-                type_: type(_MutableTx._ioT)) -> None:
+            self, tx: _MutableTx, type_: type(_MutableTx._ioT)
+        ) -> None:
             self._tx = tx
             self._type = type_
             self._list: list[_MutableTx._ioT] = []
@@ -57,20 +58,17 @@ class _MutableTx(_Tx, table_type=None):
             self._tx._updateAmount()
 
     def __init__(
-            self,
-            coin: Coin,
-            *,
-            time: int = -1,
-            version: int,
-            lock_time: int,
-            is_dummy: bool = False):
+        self,
+        coin: Coin,
+        *,
+        time: int = -1,
+        version: int,
+        lock_time: int,
+        is_dummy: bool = False,
+    ):
         super().__init__(
-            coin,
-            name="",
-            time=time,
-            amount=0,
-            fee_amount=0,
-            is_coinbase=False)
+            coin, name="", time=time, amount=0, fee_amount=0, is_coinbase=False
+        )
         self._is_dummy: Final = is_dummy
         self._version: Final = version
         self._lock_time: Final = lock_time
@@ -81,21 +79,25 @@ class _MutableTx(_Tx, table_type=None):
 
     def __eq__(self, other: _MutableTx) -> bool:
         return (
-                super().__eq__(other)
-                and self._is_dummy == other._is_dummy
-                and self._version == other._version
-                and self._lock_time == other._lock_time
-                and self._input_list == other._input_list
-                and self._output_list == other._output_list)
+            super().__eq__(other)
+            and self._is_dummy == other._is_dummy
+            and self._version == other._version
+            and self._lock_time == other._lock_time
+            and self._input_list == other._input_list
+            and self._output_list == other._output_list
+        )
 
     def __hash__(self) -> int:
-        return hash((
-            super().__hash__(),
-            self._is_dummy,
-            self._version,
-            self._lock_time,
-            *(io.__hash__() for io in self._input_list),
-            *(io.__hash__() for io in self._output_list)))
+        return hash(
+            (
+                super().__hash__(),
+                self._is_dummy,
+                self._version,
+                self._lock_time,
+                *(io.__hash__() for io in self._input_list),
+                *(io.__hash__() for io in self._output_list),
+            )
+        )
 
     @cached_property
     def name(self) -> str | None:
@@ -124,9 +126,8 @@ class _MutableTx(_Tx, table_type=None):
     @property
     def versionBytes(self) -> bytes:
         return self._coin.Address.Script.integerToBytes(
-            self._version,
-            self._VERSION_LENGTH,
-            safe=True)
+            self._version, self._VERSION_LENGTH, safe=True
+        )
 
     @property
     def lockTime(self) -> int:
@@ -135,9 +136,8 @@ class _MutableTx(_Tx, table_type=None):
     @property
     def lockTimeBytes(self) -> bytes:
         return self._coin.Address.Script.integerToBytes(
-            self._lock_time,
-            self._LOCK_TIME_LENGTH,
-            safe=True)
+            self._lock_time, self._LOCK_TIME_LENGTH, safe=True
+        )
 
     @cached_property
     def isWitness(self) -> bool:

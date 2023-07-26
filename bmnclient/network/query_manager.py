@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from enum import auto, Enum
+from enum import Enum, auto
 from typing import TYPE_CHECKING
 
+from ..logger import Logger
 from .access_manager import NetworkAccessManager
 from .query import AbstractQuery
-from ..logger import Logger
 
 if TYPE_CHECKING:
     from typing import List, Optional
@@ -42,8 +42,8 @@ class NetworkQueryManager:
 
     def isUnique(self, query: AbstractQuery) -> bool:
         if (
-                self._current_query is not None
-                and self._current_query.isEqualQuery(query)
+            self._current_query is not None
+            and self._current_query.isEqualQuery(query)
         ):
             return False
 
@@ -54,31 +54,32 @@ class NetworkQueryManager:
         return True
 
     def put(
-            self,
-            query: AbstractQuery,
-            *,
-            unique: bool = False,
-            high_priority: bool = False) -> PutStatus:
+        self,
+        query: AbstractQuery,
+        *,
+        unique: bool = False,
+        high_priority: bool = False,
+    ) -> PutStatus:
         if unique and not self.isUnique(query):
             self._logger.debug("Query '%s' already in queue.", str(query))
             return self.PutStatus.ERROR_NOT_UNIQUE
 
         if self._current_query is None and not self._queue:
             self._logger.debug(
-                "Queue is empty, starting query '%s' now.",
-                str(query))
+                "Queue is empty, starting query '%s' now.", str(query)
+            )
             self.__runSequence(query)
             return self.PutStatus.SUCCESS
 
         if high_priority:
             self._logger.debug(
-                "Appending query '%s' to the top position.",
-                str(query)),
+                "Appending query '%s' to the top position.", str(query)
+            ),
             self._queue.insert(0, query)
         else:
             self._logger.debug(
-                "Appending query '%s' to the bottom position.",
-                str(query))
+                "Appending query '%s' to the bottom position.", str(query)
+            )
             self._queue.append(query)
         self._logger.debug("New queue size: %i", len(self._queue)),
         return self.PutStatus.SUCCESS

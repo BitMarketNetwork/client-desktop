@@ -15,10 +15,11 @@ class MetadataTable(Table, name="metadata"):
         VERSION = "version"
 
     def get(
-            self,
-            key: Key,
-            value_type: type(int) | type(str),
-            default_value: int | str | None = None) -> int | str | None:
+        self,
+        key: Key,
+        value_type: type(int) | type(str),
+        default_value: int | str | None = None,
+    ) -> int | str | None:
         with self._database.transaction() as c:
             try:
                 c.execute(
@@ -26,7 +27,8 @@ class MetadataTable(Table, name="metadata"):
                     f" FROM {self}"
                     f" WHERE {self.ColumnEnum.KEY} == ?"
                     f" LIMIT 1",
-                    [key.value])
+                    [key.value],
+                )
             except self._database.engine.OperationalError:
                 value = default_value
             else:
@@ -47,12 +49,14 @@ class MetadataTable(Table, name="metadata"):
                 f"UPDATE {self}"
                 f" SET {Column.joinSet([self.ColumnEnum.VALUE])}"
                 f" WHERE {self.ColumnEnum.KEY} == ?",
-                [value, key.value])
+                [value, key.value],
+            )
             if c.rowcount <= 0:
                 columns = [self.ColumnEnum.KEY, self.ColumnEnum.VALUE]
                 c.execute(
                     f"INSERT INTO {self} ("
                     f"{Column.join(columns)})"
                     f" VALUES ({ColumnValue.join(len(columns))})",
-                    [key.value, value])
+                    [key.value, value],
+                )
             assert c.rowcount == 1

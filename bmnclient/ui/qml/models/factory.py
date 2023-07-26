@@ -2,25 +2,25 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ....coins.abstract import Coin
+from ....utils import NotImplementedInstance
 from .address import AddressModel
 from .coin import CoinModel
 from .tx import TxModel
 from .tx_factory import TxFactoryModel
 from .tx_io import TxIoModel
 from .utxo import UtxoModel
-from ....coins.abstract import Coin
-from ....utils import NotImplementedInstance
 
 if TYPE_CHECKING:
-    from .. import QmlApplication
     from ....coins.abstract import CoinObject, CoinObjectModel
+    from .. import QmlApplication
 
 
 class ModelsFactory(NotImplementedInstance):
     @staticmethod
     def create(
-            application: QmlApplication,
-            owner: CoinObject) -> CoinObjectModel:
+        application: QmlApplication, owner: CoinObject
+    ) -> CoinObjectModel:
         if isinstance(owner, Coin):
             return CoinModel(application, owner)
 
@@ -40,5 +40,7 @@ class ModelsFactory(NotImplementedInstance):
             return TxFactoryModel(application, owner)
 
         raise TypeError(
-            "model for class instance '{}' not found'"
-            .format(owner.__class__.__name__))
+            "model for class instance '{}' not found'".format(
+                owner.__class__.__name__
+            )
+        )

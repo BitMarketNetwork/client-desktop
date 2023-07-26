@@ -8,8 +8,8 @@ class Bitcoin(Coin):
     _FULL_NAME = "Bitcoin"
     _BIP0044_COIN_TYPE = 0
     # https://github.com/bitcoin/bitcoin/blob/master/src/chainparams.cpp
-    _BIP0032_VERSION_PUBLIC_KEY = 0x0488b21e
-    _BIP0032_VERSION_PRIVATE_KEY = 0x0488ade4
+    _BIP0032_VERSION_PUBLIC_KEY = 0x0488B21E
+    _BIP0032_VERSION_PRIVATE_KEY = 0x0488ADE4
     _WIF_VERSION = 0x80
 
     class Currency(Coin.Currency):
@@ -18,9 +18,11 @@ class Bitcoin(Coin):
         _UNIT = "BTC"
 
     from .address import _Address
+
     Address = _Address
 
     from .tx_factory import _TxFactory
+
     TxFactory = _TxFactory
 
 
@@ -29,9 +31,10 @@ class BitcoinTest(Bitcoin):
     _FULL_NAME = "Bitcoin Testnet"
     _IS_TEST_NET = True
     _BIP0044_COIN_TYPE = 1
-    _BIP0032_VERSION_PUBLIC_KEY = 0x043587cf
+    _BIP0032_VERSION_PUBLIC_KEY = 0x043587CF
     _BIP0032_VERSION_PRIVATE_KEY = 0x04358394
-    _WIF_VERSION = 0xef
+    _WIF_VERSION = 0xEF
 
     from .address import _TestAddress
+
     Address = _TestAddress

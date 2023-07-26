@@ -17,10 +17,8 @@ class AbstractDigest:
     _BLOCK_SIZE: int = 0
 
     def __init__(
-            self,
-            data: Optional[bytes] = None,  # TODO kill
-            *,
-            context: Any) -> None:
+        self, data: Optional[bytes] = None, *, context: Any  # TODO kill
+    ) -> None:
         self._context = context
         if data is not None:
             self.update(data)
@@ -51,13 +49,11 @@ class AbstractDigestHashlib(AbstractDigest):
     _HASHLIB_NAME: str = ""
 
     def __init__(
-            self,
-            data: Optional[bytes] = None,
-            *,
-            context: Optional[object] = None) -> None:
+        self, data: Optional[bytes] = None, *, context: Optional[object] = None
+    ) -> None:
         super().__init__(
-            data,
-            context=context or hashlib.new(self._HASHLIB_NAME))
+            data, context=context or hashlib.new(self._HASHLIB_NAME)
+        )
 
     def update(self, data: bytes) -> AbstractDigestHashlib:
         self._context.update(data)
@@ -75,10 +71,11 @@ class AbstractDigestHazmat(AbstractDigest):
     _HAZMAT_ARGS: Tuple[Any] = ()
 
     def __init__(
-            self,
-            data: Optional[bytes] = None,
-            *,
-            context: Optional[hashes.HashAlgorithm] = None) -> None:
+        self,
+        data: Optional[bytes] = None,
+        *,
+        context: Optional[hashes.HashAlgorithm] = None,
+    ) -> None:
         if not context:
             # noinspection PyArgumentList
             context = hashes.Hash(self._HAZMAT_ALGORITHM(*self._HAZMAT_ARGS))
@@ -157,7 +154,7 @@ class Blake2bDigest(AbstractDigestHazmat):
     _SIZE: Final = 512 // 8
     _BLOCK_SIZE: Final = 128
     _HAZMAT_ALGORITHM: Final = hashes.BLAKE2b
-    _HAZMAT_ARGS: Final = (512 // 8, )
+    _HAZMAT_ARGS: Final = (512 // 8,)
 
 
 # Ripemd160Digest after Sha256Digest
@@ -167,13 +164,12 @@ class Hash160Digest(AbstractDigest):
     _BLOCK_SIZE = Ripemd160Digest.blockSize
 
     def __init__(
-            self,
-            data: Optional[bytes] = None,
-            *,
-            context: Optional[Sha256Digest] = None) -> None:
-        super().__init__(
-            data,
-            context=context or Sha256Digest())
+        self,
+        data: Optional[bytes] = None,
+        *,
+        context: Optional[Sha256Digest] = None,
+    ) -> None:
+        super().__init__(data, context=context or Sha256Digest())
 
     def update(self, data: bytes) -> AbstractDigest:
         return self._context.update(data)
@@ -187,18 +183,19 @@ class Hash160Digest(AbstractDigest):
 
 class Hmac(AbstractDigest):
     def __init__(
-            self,
-            key: Optional[bytes],
-            digest: Optional[Type[AbstractDigestHazmat]],
-            data: Optional[bytes] = None,
-            *,
-            context: Optional[hmac.HMAC] = None) -> None:
+        self,
+        key: Optional[bytes],
+        digest: Optional[Type[AbstractDigestHazmat]],
+        data: Optional[bytes] = None,
+        *,
+        context: Optional[hmac.HMAC] = None,
+    ) -> None:
         if not context:
             # noinspection PyArgumentList
             # noinspection PyProtectedMember
             context = hmac.HMAC(
-                key,
-                digest._HAZMAT_ALGORITHM(*digest._HAZMAT_ARGS))
+                key, digest._HAZMAT_ALGORITHM(*digest._HAZMAT_ARGS)
+            )
         super().__init__(data, context=context)
 
     def update(self, data: bytes) -> Hmac:

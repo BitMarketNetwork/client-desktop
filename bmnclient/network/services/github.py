@@ -7,6 +7,7 @@ from ...version import Product, tupleToVersionString
 
 if TYPE_CHECKING:
     from typing import Optional
+
     from ...application import CoreApplication
 
 
@@ -20,9 +21,9 @@ class GitHubNewReleasesApiQuery(AbstractJsonQuery):
 
     def _processResponse(self, response: Optional[dict, list]) -> None:
         if (
-                not self.isSuccess
-                and not isinstance(response, list)
-                and self.statusCode != 200
+            not self.isSuccess
+            and not isinstance(response, list)
+            and self.statusCode != 200
         ):
             return
 
@@ -39,7 +40,8 @@ class GitHubNewReleasesApiQuery(AbstractJsonQuery):
             self._logger.info(
                 "New version %s available! %s",
                 tupleToVersionString(version),
-                url)
+                url,
+            )
 
             # FIXME
             # class UpdateInfo + CoreApplication.updateInfo property
@@ -47,6 +49,5 @@ class GitHubNewReleasesApiQuery(AbstractJsonQuery):
                 context.update.set(version, url)
         else:
             self._logger.debug(
-                "Latest version: %s\n%s",
-                tupleToVersionString(version),
-                url)
+                "Latest version: %s\n%s", tupleToVersionString(version), url
+            )

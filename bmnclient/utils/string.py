@@ -38,7 +38,8 @@ class StringUtils(NotImplementedInstance):
 
         # remove symbol if next char not lower
         source = [
-            c for i, c in enumerate(source)
+            c
+            for i, c in enumerate(source)
             if c != symbol or (c == symbol and source[i + 1].islower())
         ]
 
@@ -52,11 +53,8 @@ class StringUtils(NotImplementedInstance):
 
     @classmethod
     def toCamelCase(
-            cls,
-            source: str,
-            *,
-            symbol: str = "_",
-            first_lower: bool = True) -> str:
+        cls, source: str, *, symbol: str = "_", first_lower: bool = True
+    ) -> str:
         symbol = symbol[0]
         l_offset, source = cls.stripLeft(source, symbol)
         r_offset, source = cls.stripRight(source, symbol)
@@ -71,9 +69,10 @@ class StringUtils(NotImplementedInstance):
 
     @staticmethod
     def classString(
-            cls_: type(object),
-            *key_list: ClassStringKeyTuple,
-            parent: object | type(object) | None = None) -> str:
+        cls_: type(object),
+        *key_list: ClassStringKeyTuple,
+        parent: object | type(object) | None = None,
+    ) -> str:
         result = []
         for name, value in key_list:
             if name:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
-from enum import auto, Enum
+from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, List
 
@@ -100,35 +100,31 @@ def _applicationLocalDataPath(local_data_path: Path) -> Path:
 
 def _applicationTempPath() -> Path:
     from tempfile import gettempdir
+
     return Path(gettempdir()) / Product.SHORT_NAME.lower()
 
 
 def _invalidFileNameChars() -> List[str]:
     if Platform.isWindows:
-        return ['<', '>', ':', '/', '\\', '|', '?', '*', ',', '"', '\n']
+        return ["<", ">", ":", "/", "\\", "|", "?", "*", ",", '"', "\n"]
     elif Platform.isDarwin:
-        return [':', '/', '\n']
+        return [":", "/", "\n"]
     elif Platform.isLinux:
-        return ['/', '\n']
+        return ["/", "\n"]
     else:
         raise RuntimeError("can't determine invalid file name characters")
 
 
 class PlatformPaths(NotImplementedInstance):
-    _HOME_PATH: Final = \
-        Path.home()
-    _CONFIG_PATH: Final = \
-        _configPath(_HOME_PATH)
-    _LOCAL_DATA_PATH: Final = \
-        _localDataPath(_HOME_PATH)
-    _APPLICATION_CONFIG_PATH: Final = \
-        _applicationConfigPath(_CONFIG_PATH)
-    _APPLICATION_LOCAL_DATA_PATH: Final = \
-        _applicationLocalDataPath(_LOCAL_DATA_PATH)
-    _APPLICATION_TEMP_PATH: Final = \
-        _applicationTempPath()
-    _INVALID_FILENAME_CHARS: Final = \
-        _invalidFileNameChars()
+    _HOME_PATH: Final = Path.home()
+    _CONFIG_PATH: Final = _configPath(_HOME_PATH)
+    _LOCAL_DATA_PATH: Final = _localDataPath(_HOME_PATH)
+    _APPLICATION_CONFIG_PATH: Final = _applicationConfigPath(_CONFIG_PATH)
+    _APPLICATION_LOCAL_DATA_PATH: Final = _applicationLocalDataPath(
+        _LOCAL_DATA_PATH
+    )
+    _APPLICATION_TEMP_PATH: Final = _applicationTempPath()
+    _INVALID_FILENAME_CHARS: Final = _invalidFileNameChars()
 
     @classproperty
     def homePath(cls) -> Path:  # noqa

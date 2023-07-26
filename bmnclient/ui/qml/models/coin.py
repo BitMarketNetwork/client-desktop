@@ -2,23 +2,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import (
-    Property as QProperty,
-    QObject,
-    Signal as QSignal,
-    Slot as QSlot)
+from PySide6.QtCore import Property as QProperty
+from PySide6.QtCore import QObject
+from PySide6.QtCore import Signal as QSignal
+from PySide6.QtCore import Slot as QSlot
 
+from ....coins.abstract import Coin
 from . import AbstractCoinStateModel, AbstractModel, ValidStatus
 from .abstract import AbstractCoinObjectModel, AbstractTableModel
 from .address import AddressListModel
 from .amount import AbstractAmountModel
 from .tx import TxListModel
 from .tx_factory import TxFactoryModel
-from ....coins.abstract import Coin
 
 if TYPE_CHECKING:
-    from .. import QmlApplication
     from ....currency import FiatRate
+    from .. import QmlApplication
 
 
 class CoinStateModel(AbstractCoinStateModel):
@@ -146,7 +145,8 @@ class CoinReceiveManagerModel(AbstractCoinStateModel):
             is_change=False,
             type_=address_type,
             label=label,
-            comment=comment)
+            comment=comment,
+        )
         result = bool(self._address and self._address.save())
         self.update()
         return result
@@ -160,14 +160,10 @@ class CoinReceiveManagerModel(AbstractCoinStateModel):
 class CoinManagerModel(AbstractCoinStateModel):
     # noinspection PyTypeChecker
     @QSlot(bool, str, str, result=str)
-    def createAddress(
-            self,
-            is_witness: bool,
-            label: str,
-            comment: str) -> str:
+    def createAddress(self, is_witness: bool, label: str, comment: str) -> str:
         receive_manager = CoinReceiveManagerModel(
-            self._application,
-            self._coin)
+            self._application, self._coin
+        )
         if receive_manager.create(is_witness, label, comment):
             return receive_manager.name
         return ""
@@ -175,21 +171,19 @@ class CoinManagerModel(AbstractCoinStateModel):
     # noinspection PyTypeChecker
     @QSlot(str, str, str, result=bool)
     def createWatchOnlyAddress(
-            self,
-            address_name: str,
-            label: str,
-            comment: str) -> bool:
+        self, address_name: str, label: str, comment: str
+    ) -> bool:
         address = self._coin.Address.createFromName(
-            self._coin,
-            name=address_name,
-            label=label,
-            comment=comment)
+            self._coin, name=address_name, label=label, comment=comment
+        )
         return bool(address and address.save())
 
     # noinspection PyTypeChecker
     @QSlot(str, result=bool)
     def isValidAddress(self, address_name: str) -> bool:
-        if not self._coin.Address.createFromName(self._coin, name=address_name):
+        if not self._coin.Address.createFromName(
+            self._coin, name=address_name
+        ):
             return False
         return True
 
@@ -200,31 +194,26 @@ class CoinModel(AbstractCoinObjectModel, Coin.Model, AbstractModel):
             application,
             coin=coin,
             query_scheduler=application.networkQueryScheduler,
-            database=application.database)
+            database=application.database,
+        )
 
-        self._balance_model = CoinBalanceModel(
-            self._application,
-            self._coin)
+        self._balance_model = CoinBalanceModel(self._application, self._coin)
         self.connectModelUpdate(self._balance_model)
 
-        self._state_model = CoinStateModel(
-            self._application,
-            self._coin)
+        self._state_model = CoinStateModel(self._application, self._coin)
         self.connectModelUpdate(self._state_model)
 
         self._server_data_model = CoinServerDataModel(
-            self._application,
-            self._coin)
+            self._application, self._coin
+        )
         self.connectModelUpdate(self._server_data_model)
 
         self._receive_manager = CoinReceiveManagerModel(
-            self._application,
-            self._coin)
+            self._application, self._coin
+        )
         self.connectModelUpdate(self._receive_manager)
 
-        self._manager = CoinManagerModel(
-            self._application,
-            self._coin)
+        self._manager = CoinManagerModel(self._application, self._coin)
         self.connectModelUpdate(self._manager)
 
     @QProperty(str, constant=True)
@@ -254,18 +243,18 @@ class CoinModel(AbstractCoinObjectModel, Coin.Model, AbstractModel):
     # noinspection PyTypeChecker
     @QSlot(int, result=QObject)
     def openAddressList(self, column_count: int) -> AddressListModel:
-        return self._registerList(AddressListModel(
-            self._application,
-            self._coin.addressList,
-            column_count))
+        return self._registerList(
+            AddressListModel(
+                self._application, self._coin.addressList, column_count
+            )
+        )
 
     # noinspection PyTypeChecker
     @QSlot(int, result=QObject)
     def openTxList(self, column_count: int) -> TxListModel:
-        return self._registerList(TxListModel(
-            self._application,
-            self._coin.txList,
-            column_count))
+        return self._registerList(
+            TxListModel(self._application, self._coin.txList, column_count)
+        )
 
     @QProperty(QObject, constant=True)
     def receiveManager(self) -> CoinReceiveManagerModel:

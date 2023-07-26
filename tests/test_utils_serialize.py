@@ -4,16 +4,14 @@ from bmnclient.utils import (
     DeserializeFlag,
     Serializable,
     SerializeFlag,
-    serializable)
+    serializable,
+)
 
 
 class A(Serializable):
     def __init__(
-            self,
-            *,
-            value1_a: int = 1,
-            value2_b: int = 2,
-            value3_c: int = 2) -> None:
+        self, *, value1_a: int = 1, value2_b: int = 2, value3_c: int = 2
+    ) -> None:
         super().__init__()
         self._v1 = value1_a
         self._v2 = value2_b
@@ -47,7 +45,6 @@ class B(A):
 class TestSerializable(TestCase):
     def test_basic(self) -> None:
         for s_flag in SerializeFlag:
-
             a1 = A()
             self.assertEqual(3, len(a1.serializeMap))
             self.assertEqual(3, len(a1.serialize(s_flag)))
@@ -74,11 +71,7 @@ class TestSerializable(TestCase):
 
     def test_source(self) -> None:
         for s_flag in SerializeFlag:
-            source = {
-                "value1_a": 101,
-                "value2_b": 202,
-                "value3_c": 303
-            }
+            source = {"value1_a": 101, "value2_b": 202, "value3_c": 303}
 
             a1 = A(**source)
             self.assertEqual(a1.value1A, source["value1_a"])
@@ -98,25 +91,22 @@ class TestSerializable(TestCase):
                     KeyError,
                     a2.deserializeUpdate,
                     d_flag,
-                    {"value_three": 303})
+                    {"value_three": 303},
+                )
                 self.assertRaises(
-                    ValueError,
-                    a2.deserializeUpdate,
-                    d_flag,
-                    source)
+                    ValueError, a2.deserializeUpdate, d_flag, source
+                )
                 self.assertEqual(a2.value1A, source["value1_a"])
                 self.assertEqual(a2.value2B, A().value2B)
 
-                self.assertTrue(a2.deserializeUpdate(
-                    d_flag,
-                    {"value1_a": 1001}))
+                self.assertTrue(
+                    a2.deserializeUpdate(d_flag, {"value1_a": 1001})
+                )
                 self.assertEqual(a2.value1A, 1001)
                 self.assertEqual(a2.value2B, A().value2B)
 
                 b1 = B(**source)
                 self.assertEqual(a1.serialize(s_flag), b1.serialize(s_flag))
-                b1.deserializeUpdate(
-                    d_flag,
-                    {"value1_a": 10001})
+                b1.deserializeUpdate(d_flag, {"value1_a": 10001})
                 self.assertEqual(b1.value1A, 10001)
                 self.assertEqual(b1.value2B, a1.value2B)

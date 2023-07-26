@@ -8,6 +8,8 @@ import "../basiccontrols"
 BItemDelegate {
     id: _base
 
+    display: BItemDelegate.IconOnly // for ToolTip
+
     signal keyStoreClicked(var path)
     signal renameAccepted(var path)
 
@@ -18,29 +20,17 @@ BItemDelegate {
         columnSpacing: 5
 
         BIconImage {
+            Layout.fillWidth: true
             Layout.rowSpan: 2
             source: _applicationManager.imagePath("icon-wallet.svg")
             sourceSize.width: _applicationStyle.icon.normalWidth
             sourceSize.height: _applicationStyle.icon.normalHeight
             color: Material.theme === Material.Dark ? Material.foreground : "transparent"
         }
-        BRowLayout {
-            id: _titleLabels
-            Layout.fillWidth: true
-            BLabel {
-                Layout.preferredWidth: _dateTimeLabel.width
-                font.bold: true
-                elide: BLabel.ElideRight
-                text: _base.file.name
-            }
-            Item {
-                Layout.fillWidth: true
-            }
-            BLabel {
-                id: _dateTimeLabel
-                Layout.alignment: Qt.AlignRight
-                text: _base.file.mtimeHuman
-            }
+        BLabel {
+            font.bold: true
+            elide: BLabel.ElideRight
+            text: _base.file.name
         }
         BContextMenuToolButton {
             id: _menuToolButton
@@ -53,11 +43,33 @@ BItemDelegate {
             }
         }
         BLabel {
-            Layout.preferredWidth: _titleLabels.width
-            elide: BLabel.ElideMiddle
-            text: _base.file.path
+            Layout.fillWidth: true
+            text: _base.file.mtimeHuman
         }
     }
+
+    toolTipItem: BToolTip {
+        parent: _base
+
+        contentItem: BColumnLayout {
+            BLabel {
+                text: _base.file.name
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+            }
+            BSeparator {
+                Layout.fillWidth: true
+            }
+            BRowLayout {
+                BLabel {
+                    text: qsTr("Path")
+                }
+                BLabel {
+                    text: _base.file.path
+                }
+            }
+        }
+    }
+
     BMenu {
         id: _contextMenu
         BMenuItem {

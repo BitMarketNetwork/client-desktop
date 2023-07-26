@@ -1,12 +1,13 @@
 from .instance import NotImplementedInstance, NotImplementedInstanceError
 from .serialize import (
     DeserializationNotSupportedError,
-    DeserializeFlag,
     DeserializedData,
     DeserializedDict,
+    DeserializeFlag,
     EmptySerializableList,
     Serializable,
     SerializableList,
     SerializeFlag,
-    serializable)
+    serializable,
+)
 from .static_list import StaticList

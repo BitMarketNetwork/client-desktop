@@ -4,19 +4,21 @@ from dataclasses import dataclass
 from enum import Enum, IntFlag
 from itertools import chain
 from typing import (
+    TYPE_CHECKING,
     Callable,
     Generator,
     Iterable,
     Sequence,
-    TYPE_CHECKING,
-    TypeVar)
+    TypeVar,
+)
 from weakref import WeakValueDictionary
 
 from ...utils import (
     DeserializeFlag,
     Serializable,
     SerializableList,
-    SerializeFlag)
+    SerializeFlag,
+)
 from ...utils.class_property import classproperty
 
 if TYPE_CHECKING:
@@ -43,11 +45,12 @@ class Column:
         "_identifier",
         "_definition",
         "_full_definition",
-        "_flags")
+        "_flags",
+    )
 
     def __init__(self, name: str, definition: str, flags: Flags) -> None:
         self._name = name
-        self._identifier = f"\"{self._name}\""
+        self._identifier = f'"{self._name}"'
         self._definition = definition
         self._full_definition = f"{self._identifier} {self._definition}"
         self._flags = flags
@@ -80,10 +83,11 @@ class Column:
 
     @classmethod
     def joinWhere(
-            cls,
-            source: Iterable[Column],
-            separator: str = "AND",
-            operator: str = "==") -> str:
+        cls,
+        source: Iterable[Column],
+        separator: str = "AND",
+        operator: str = "==",
+    ) -> str:
         return f" {separator} ".join(f"{s} {operator} ?" for s in source)
 
 
@@ -111,10 +115,11 @@ class ColumnValue:
 
 class ColumnEnum(Column, Enum):
     def __init__(
-            self,
-            name: str = "row_id",
-            definition: str = "INTEGER PRIMARY KEY",
-            flags: Column.Flags = Column.Flags.NONE) -> None:
+        self,
+        name: str = "row_id",
+        definition: str = "INTEGER PRIMARY KEY",
+        flags: Column.Flags = Column.Flags.NONE,
+    ) -> None:
         super().__init__(name, definition, flags)
 
     @classmethod
@@ -123,7 +128,8 @@ class ColumnEnum(Column, Enum):
             if column.name == name:
                 return column
         raise KeyError(
-            f"column with name '{name}' not found in enum '{cls.__name__}'")
+            f"column with name '{name}' not found in enum '{cls.__name__}'"
+        )
 
     @classmethod
     def get(cls, name: str) -> Column | None:
@@ -182,13 +188,15 @@ class Table(metaclass=TableMeta):
         name: str = kwargs.pop("name")
         super().__init_subclass__(*args, **kwargs)
         cls.__NAME = name
-        cls.__IDENTIFIER = f"\"{cls.__NAME}\""
+        cls.__IDENTIFIER = f'"{cls.__NAME}"'
 
-        definition_list = ", ".join(chain(
-            (repr(c) for c in cls.ColumnEnum),
-            (c for c in cls._CONSTRAINT_LIST),
-            (f"UNIQUE({Column.join(c)})" for c in cls._UNIQUE_COLUMN_LIST)
-        ))
+        definition_list = ", ".join(
+            chain(
+                (repr(c) for c in cls.ColumnEnum),
+                (c for c in cls._CONSTRAINT_LIST),
+                (f"UNIQUE({Column.join(c)})" for c in cls._UNIQUE_COLUMN_LIST),
+            )
+        )
         cls.__DEFINITION = (
             f"CREATE TABLE IF NOT EXISTS {cls.__IDENTIFIER}"
             f" ({definition_list})"
@@ -229,40 +237,40 @@ class Table(metaclass=TableMeta):
                 f"{Column.join(c.column for c in columns)})"
                 f" VALUES ("
                 f"{ColumnValue.join(len(columns))})",
-                [c.value for c in columns])
+                [c.value for c in columns],
+            )
             if c.rowcount > 0:
                 assert c.rowcount == 1
                 assert c.lastrowid > 0
                 return self.WriteResult(
-                    c.lastrowid,
-                    self.WriteResult.Action.INSERT)
+                    c.lastrowid, self.WriteResult.Action.INSERT
+                )
         return self.WriteResult()
 
     def update(
-            self,
-            row_id: int,
-            columns: Sequence[ColumnValue]) -> WriteResult:
+        self, row_id: int, columns: Sequence[ColumnValue]
+    ) -> WriteResult:
         assert row_id > 0
         with self._database.transaction() as c:
             c.execute(
                 f"UPDATE OR IGNORE {self}"
                 f" SET {Column.joinSet(c.column for c in columns)}"
                 f" WHERE {self.ColumnEnum.ROW_ID} == ?",
-                [*(c.value for c in columns), row_id])
+                [*(c.value for c in columns), row_id],
+            )
             if c.rowcount > 0:
                 assert c.rowcount == 1
-                return self.WriteResult(
-                    row_id,
-                    self.WriteResult.Action.UPDATE)
+                return self.WriteResult(row_id, self.WriteResult.Action.UPDATE)
         return self.WriteResult()
 
     def save(
-            self,
-            row_id: int,
-            key_columns: Sequence[ColumnValue],
-            data_columns: Sequence[ColumnValue],
-            *,
-            fallback_search: bool = False) -> WriteResult:
+        self,
+        row_id: int,
+        key_columns: Sequence[ColumnValue],
+        data_columns: Sequence[ColumnValue],
+        *,
+        fallback_search: bool = False,
+    ) -> WriteResult:
         with self._database.transaction() as c:
             # row id is defined and row found
             if row_id > 0:
@@ -288,27 +296,30 @@ class Table(metaclass=TableMeta):
                     f" FROM {self}"
                     f" WHERE {Column.joinWhere(c.column for c in key_columns)}"
                     f" LIMIT 1",
-                    [c.value for c in key_columns])
+                    [c.value for c in key_columns],
+                )
                 if (value := c.fetchone()) is not None and value[0] > 0:
                     result = self.update(value[0], data_columns)
                     if result.isUpdateAction:
                         return result
 
             raise self._database.engine.IntegrityError(
-                "row in table '{}' not found where: {}"
-                .format(
+                "row in table '{}' not found where: {}".format(
                     self,
                     ", ".join(
-                        f"{c.column} == '{str(c.value)}'" for c in key_columns)
-                ))
+                        f"{c.column} == '{str(c.value)}'" for c in key_columns
+                    ),
+                )
+            )
 
     def load(
-            self,
-            row_id: int,
-            key_columns: Sequence[ColumnValue],
-            data_columns: Sequence[ColumnValue],
-            *,
-            fallback_search: bool = False) -> int:
+        self,
+        row_id: int,
+        key_columns: Sequence[ColumnValue],
+        data_columns: Sequence[ColumnValue],
+        *,
+        fallback_search: bool = False,
+    ) -> int:
         with self._database.transaction() as c:
             # select by row_id
             if row_id > 0:
@@ -317,7 +328,8 @@ class Table(metaclass=TableMeta):
                     f" FROM {self}"
                     f" WHERE {self.ColumnEnum.ROW_ID} == ?"
                     f" LIMIT 1",
-                    [row_id])
+                    [row_id],
+                )
                 value = c.fetchone()
                 if value is None:
                     if not fallback_search:
@@ -330,13 +342,15 @@ class Table(metaclass=TableMeta):
                     return -1
                 columns = [
                     self.ColumnEnum.ROW_ID,
-                    *(c.column for c in data_columns)]
+                    *(c.column for c in data_columns),
+                ]
                 c.execute(
                     f"SELECT {Column.join(columns)}"
                     f" FROM {self}"
                     f" WHERE {Column.joinWhere(c.column for c in key_columns)}"
                     f" LIMIT 1",
-                    [c.value for c in key_columns])
+                    [c.value for c in key_columns],
+                )
                 value = c.fetchone()
                 if value is None or value[0] <= 0:
                     return -1
@@ -348,39 +362,41 @@ class Table(metaclass=TableMeta):
         return row_id
 
     def remove(
-            self,
-            row_id: int,
-            key_columns: Sequence[ColumnValue],
-            *,
-            fallback_search: bool = False) -> WriteResult:
+        self,
+        row_id: int,
+        key_columns: Sequence[ColumnValue],
+        *,
+        fallback_search: bool = False,
+    ) -> WriteResult:
         with self._database.transaction() as c:
             if row_id > 0:
                 c.execute(
                     f"DELETE FROM {self}"
                     f" WHERE {self.ColumnEnum.ROW_ID} == ?",
-                    [row_id])
+                    [row_id],
+                )
                 if c.rowcount > 0:
                     assert c.rowcount == 1
                     return self.WriteResult(
-                        row_id,
-                        self.WriteResult.Action.REMOVE)
+                        row_id, self.WriteResult.Action.REMOVE
+                    )
                 if not fallback_search:
                     return self.WriteResult()
             if key_columns:
                 c.execute(
                     f"DELETE FROM {self}"
                     f" WHERE {Column.joinWhere(c.column for c in key_columns)}",
-                    [c.value for c in key_columns])
+                    [c.value for c in key_columns],
+                )
                 if c.rowcount > 0:
-                    return self.WriteResult(
-                        -1,
-                        self.WriteResult.Action.REMOVE)
+                    return self.WriteResult(-1, self.WriteResult.Action.REMOVE)
         return self.WriteResult()
 
 
 class SerializableTable(Table, name=""):
-    _KEY_COLUMN_LIST: \
-        tuple[tuple[Column, Callable[[Serializable], None], ...]] = tuple()
+    _KEY_COLUMN_LIST: tuple[
+        tuple[Column, Callable[[Serializable], None], ...]
+    ] = tuple()
 
     def __init__(self, database: Database) -> None:
         super().__init__(database)
@@ -390,14 +406,13 @@ class SerializableTable(Table, name=""):
 
     def _keyColumns(self, object_: Serializable) -> tuple[ColumnValue, ...]:
         columns = tuple(
-            ColumnValue(c[0], c[1](object_))
-            for c in self._KEY_COLUMN_LIST)
+            ColumnValue(c[0], c[1](object_)) for c in self._KEY_COLUMN_LIST
+        )
         return tuple() if any(c.value is None for c in columns) else columns
 
     def _updateRowListWeakList(
-            self,
-            object_: Serializable,
-            result: SerializableTable.WriteResult) -> None:
+        self, object_: Serializable, result: SerializableTable.WriteResult
+    ) -> None:
         for row_list in self._row_list_weak_list.values():
             row_list.__save_row__(object_, self, result)
 
@@ -408,18 +423,19 @@ class SerializableTable(Table, name=""):
         self._row_list_weak_list[id(row_list)] = row_list
 
     def saveSerializable(
-            self,
-            object_: Serializable,
-            *,
-            use_row_id: bool = True,
-            fallback_search: bool = True) -> SerializableTable.WriteResult:
+        self,
+        object_: Serializable,
+        *,
+        use_row_id: bool = True,
+        fallback_search: bool = True,
+    ) -> SerializableTable.WriteResult:
         key_columns = self._keyColumns(object_)
         if not key_columns:
             return SerializableTable.WriteResult()
 
         source_data = object_.serialize(
-            SerializeFlag.DATABASE_MODE |
-            SerializeFlag.EXCLUDE_SUBCLASSES)
+            SerializeFlag.DATABASE_MODE | SerializeFlag.EXCLUDE_SUBCLASSES
+        )
 
         data_columns: list[ColumnValue] = []
         for name, value in source_data.items():
@@ -431,11 +447,14 @@ class SerializableTable(Table, name=""):
             object_.rowId if use_row_id else -1,
             key_columns,
             data_columns,
-            fallback_search=fallback_search)
+            fallback_search=fallback_search,
+        )
         if result.isNoneAction:
             raise self._database.engine.IntegrityError(
-                "failed to save serializable object '{}'"
-                .format(object_.__class__.__name__))
+                "failed to save serializable object '{}'".format(
+                    object_.__class__.__name__
+                )
+            )
 
         if use_row_id:
             object_.rowId = result.row_id
@@ -443,12 +462,12 @@ class SerializableTable(Table, name=""):
         return result
 
     def loadSerializable(
-            self,
-            object_: Serializable | type(Serializable),
-            *cls_args,
-            use_row_id: bool = True,
-            fallback_search: bool = False,
-            key_columns: Sequence[ColumnValue] | None = None
+        self,
+        object_: Serializable | type(Serializable),
+        *cls_args,
+        use_row_id: bool = True,
+        fallback_search: bool = False,
+        key_columns: Sequence[ColumnValue] | None = None,
     ) -> Serializable | None:
         if key_columns is None:
             key_columns = self._keyColumns(object_)
@@ -465,26 +484,29 @@ class SerializableTable(Table, name=""):
                 object_.rowId if use_row_id else -1,
                 key_columns,
                 data_columns,
-                fallback_search=fallback_search)
+                fallback_search=fallback_search,
+            )
             if row_id > 0:
                 object_.deserializeUpdate(
                     DeserializeFlag.DATABASE_MODE,
-                    {c.column.name: c.value for c in data_columns})
+                    {c.column.name: c.value for c in data_columns},
+                )
             elif use_row_id and object_.rowId > 0:
                 raise self._database.engine.IntegrityError(
-                    "failed to load serializable object '{}'"
-                    .format(object_.__class__.__name__))
+                    "failed to load serializable object '{}'".format(
+                        object_.__class__.__name__
+                    )
+                )
         elif issubclass(object_, Serializable):
             row_id = self.load(
-                -1,
-                key_columns,
-                data_columns,
-                fallback_search=fallback_search)
+                -1, key_columns, data_columns, fallback_search=fallback_search
+            )
             if row_id > 0:
                 object_ = object_.deserialize(
                     DeserializeFlag.DATABASE_MODE,
                     {c.column.name: c.value for c in data_columns},
-                    *cls_args)
+                    *cls_args,
+                )
         else:
             return None
 
@@ -515,22 +537,22 @@ class SerializableTable(Table, name=""):
         for c in data_columns:
             name = object_.kwargKeyFromName(c.column.name)
             kwargs[name] = object_.deserializeProperty(
-                DeserializeFlag.DATABASE_MODE,
-                object_,
-                c.column.name,
-                c.value)
+                DeserializeFlag.DATABASE_MODE, object_, c.column.name, c.value
+            )
         return len(data_columns)
 
     def removeSerializable(
-            self,
-            object_: Serializable,
-            *,
-            use_row_id: bool = True,
-            fallback_search: bool = False) -> SerializableTable.WriteResult:
+        self,
+        object_: Serializable,
+        *,
+        use_row_id: bool = True,
+        fallback_search: bool = False,
+    ) -> SerializableTable.WriteResult:
         result = self.remove(
-                object_.rowId if use_row_id else -1,
-                self._keyColumns(object_),
-                fallback_search=fallback_search)
+            object_.rowId if use_row_id else -1,
+            self._keyColumns(object_),
+            fallback_search=fallback_search,
+        )
         if result.isRemoveAction:
             if use_row_id:
                 object_.rowId = -1
@@ -538,9 +560,8 @@ class SerializableTable(Table, name=""):
         return result
 
     def associateSerializable(
-            self,
-            parent_object: Serializable,
-            child_object: Serializable) -> SerializableTable.WriteResult:
+        self, parent_object: Serializable, child_object: Serializable
+    ) -> SerializableTable.WriteResult:
         assert parent_object.rowId > 0
         assert child_object.rowId > 0
 
@@ -560,23 +581,24 @@ class SerializableTable(Table, name=""):
 # Performance: https://www.sqlite.org/autoinc.html
 class SerializableRowList(SerializableList):
     def __init__(
-            self,
-            *,
-            type_: type(Serializable),
-            type_args: Sequence | None = None,
-            table: SerializableTable,
-            where_expression: str | None = None,
-            where_args: Sequence[ColumnValueType] | None,
-            order_columns: Sequence[tuple[Column, SortOrder] | None] = None,
-            on_save_row: Callable[
-                             [
-                                 Serializable,
-                                 SerializableRowList,
-                                 SerializableTable.WriteResult,
-                                 int
-                             ],
-                             None
-                         ] | None = None
+        self,
+        *,
+        type_: type(Serializable),
+        type_args: Sequence | None = None,
+        table: SerializableTable,
+        where_expression: str | None = None,
+        where_args: Sequence[ColumnValueType] | None,
+        order_columns: Sequence[tuple[Column, SortOrder] | None] = None,
+        on_save_row: Callable[
+            [
+                Serializable,
+                SerializableRowList,
+                SerializableTable.WriteResult,
+                int,
+            ],
+            None,
+        ]
+        | None = None,
     ) -> None:
         super().__init__()
         self._type = type_
@@ -593,25 +615,29 @@ class SerializableRowList(SerializableList):
 
         column_expression = Column.join(self._column_list)
         order_expression = SortOrder.join(
-            order_columns if order_columns else
-            [(self._table.ColumnEnum.ROW_ID, SortOrder.ASC)])
+            order_columns
+            if order_columns
+            else [(self._table.ColumnEnum.ROW_ID, SortOrder.ASC)]
+        )
 
         self._where_expression = (
-                " WHERE " + where_expression if where_expression
-                else "")
+            " WHERE " + where_expression if where_expression else ""
+        )
 
         self._query_length = (
-            f"SELECT COUNT(*) FROM {self._table}"
-            f"{self._where_expression}")
+            f"SELECT COUNT(*) FROM {self._table}" f"{self._where_expression}"
+        )
         self._query_iter = (
             f"SELECT {column_expression} FROM {self._table}"
             f"{self._where_expression}"
-            f" ORDER BY {order_expression}")
+            f" ORDER BY {order_expression}"
+        )
         self._query_getitem = (
             f"SELECT {column_expression} FROM {self._table}"
             f"{self._where_expression}"
             f" ORDER BY {order_expression}"
-            f" LIMIT 1 OFFSET ?")
+            f" LIMIT 1 OFFSET ?"
+        )
 
         row_number_expression = (
             f"SELECT"
@@ -623,7 +649,8 @@ class SerializableRowList(SerializableList):
         self._query_row_number = (
             f"SELECT * FROM ({row_number_expression})"
             f" WHERE {self._table.ColumnEnum.ROW_ID} == ?"
-            f" LIMIT 1")
+            f" LIMIT 1"
+        )
 
         # for Qt beginInsertRows/endInsertRows
         self._pending_insert_index: int = -1
@@ -632,15 +659,14 @@ class SerializableRowList(SerializableList):
         self._table.registerRowList(self)
 
     def _deserialize(
-            self,
-            row: tuple[ColumnValueType, ...]) -> Serializable | None:
+        self, row: tuple[ColumnValueType, ...]
+    ) -> Serializable | None:
         it = iter(zip((c.name for c in self._column_list), row))
         row_id = next(it)[1]
 
         object_ = self._type.deserialize(
-            DeserializeFlag.DATABASE_MODE,
-            dict(it),
-            *self._type_args)
+            DeserializeFlag.DATABASE_MODE, dict(it), *self._type_args
+        )
         if object_ is not None:
             object_.rowId = row_id
         return object_
@@ -657,9 +683,9 @@ class SerializableRowList(SerializableList):
 
     def __iter__(self) -> Generator[Serializable, None, None]:
         with self._table.database.transaction() as c:
-            for index, row in enumerate(c.execute(
-                    self._query_iter,
-                    self._where_args)):
+            for index, row in enumerate(
+                c.execute(self._query_iter, self._where_args)
+            ):
                 if index != self._pending_insert_index:
                     yield self._deserialize(row)
 
@@ -679,10 +705,11 @@ class SerializableRowList(SerializableList):
         raise NotImplementedError
 
     def __save_row__(
-            self,
-            object_: Serializable,
-            table: SerializableTable,
-            result: SerializableTable.WriteResult) -> None:
+        self,
+        object_: Serializable,
+        table: SerializableTable,
+        result: SerializableTable.WriteResult,
+    ) -> None:
         if not self._on_save_row or table is not self._table:
             return
         if not result.isInsertAction:
@@ -691,16 +718,14 @@ class SerializableRowList(SerializableList):
         assert self._pending_insert_index < 0
         with self._table.database.transaction() as c:
             c.execute(
-                self._query_row_number,
-                [*self._where_args, result.row_id])
+                self._query_row_number, [*self._where_args, result.row_id]
+            )
             if row := c.fetchone():
                 # one-based to zero-based index
                 self._pending_insert_index = int(row[0]) - 1
                 self._on_save_row(
-                    object_,
-                    self,
-                    result,
-                    self._pending_insert_index)
+                    object_, self, result, self._pending_insert_index
+                )
                 self._pending_insert_index = -1
 
     def __accept_insert_index__(self) -> None:
@@ -714,5 +739,6 @@ class SerializableRowList(SerializableList):
         with self._table.database.transaction() as c:
             c.execute(
                 f"DELETE FROM {self._table}{self._where_expression}",
-                self._where_args)
+                self._where_args,
+            )
             return c.rowcount

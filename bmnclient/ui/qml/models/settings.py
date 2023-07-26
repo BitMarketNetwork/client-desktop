@@ -2,19 +2,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import (
-    Property as QProperty,
-    QObject,
-    Signal as QSignal,
-    Slot as QSlot)
+from PySide6.QtCore import Property as QProperty
+from PySide6.QtCore import QObject
+from PySide6.QtCore import Signal as QSignal
+from PySide6.QtCore import Slot as QSlot
 
-from . import AbstractModel, AbstractStateModel, AbstractTupleStateModel
-from ....config import ConfigKey
 from ....language import Language
 from ....version import Gui
+from . import AbstractModel, AbstractStateModel, AbstractTupleStateModel
 
 if TYPE_CHECKING:
     from typing import Any, Dict, TypedDict
+
     from .. import QmlApplication
 
 
@@ -25,7 +24,8 @@ class FiatRateServiceModel(AbstractTupleStateModel):
             tuple(
                 {"name": v.name, "fullName": v.fullName}
                 for v in application.fiatRateServiceList
-            ))
+            ),
+        )
 
     def _getCurrentItemName(self) -> str:
         return self._application.fiatRateServiceList.current.name
@@ -44,7 +44,8 @@ class BlockchainExplorerModel(AbstractTupleStateModel):
             tuple(
                 {"name": v.name, "fullName": v.fullName}
                 for v in application.blockchainExplorerList
-            ))
+            ),
+        )
 
     def _getCurrentItemName(self) -> str:
         return self._application.blockchainExplorerList.current.name
@@ -66,9 +67,11 @@ class FiatCurrencyModel(AbstractTupleStateModel):
             tuple(
                 {
                     "name": v.unit,
-                    "fullName": "{} ({})".format(v.fullName, v.unit)
-                } for v in application.fiatCurrencyList
-            ))
+                    "fullName": "{} ({})".format(v.fullName, v.unit),
+                }
+                for v in application.fiatCurrencyList
+            ),
+        )
 
     def _getCurrentItemName(self) -> str:
         return self._application.fiatCurrencyList.current.unit
@@ -85,8 +88,9 @@ class LanguageModel(AbstractTupleStateModel):
         super().__init__(
             application,
             Language.translationList(),
-            config_key=ConfigKey.UI_LANGUAGE,
-            default_name=Language.primaryName)
+            config_key=application.config.Key.UI_LANGUAGE,
+            default_name=Language.primaryName,
+        )
 
     def _setCurrentItemName(self, value: str) -> bool:
         if super()._setCurrentItemName(value):
@@ -100,8 +104,9 @@ class ThemeModel(AbstractTupleStateModel):
         super().__init__(
             application,
             tuple(),  # QML controlled
-            config_key=ConfigKey.UI_THEME,
-            default_name=Gui.DEFAULT_THEME_NAME)
+            config_key=application.config.Key.UI_THEME,
+            default_name=Gui.DEFAULT_THEME_NAME,
+        )
 
     def _isValidName(self, name) -> bool:
         return bool(name)
@@ -132,15 +137,17 @@ class FontModel(AbstractStateModel):
     def __currentFont(self) -> FontDict:
         with self._application.config.lock:
             family = self._application.config.get(
-                ConfigKey.UI_FONT_FAMILY,
+                self._application.config.Key.UI_FONT_FAMILY,
                 str,
-                "")
+                "",
+            )
             if not family:
                 family = self._default_font["family"]
             point_size = self._application.config.get(
-                ConfigKey.UI_FONT_SIZE,
+                self._application.config.Key.UI_FONT_SIZE,
                 int,
-                0)
+                0,
+            )
             if point_size <= 0:
                 point_size = self._default_font["pointSize"]
         return dict(family=family, pointSize=point_size)
@@ -161,13 +168,15 @@ class FontModel(AbstractStateModel):
 
         with self._application.config.lock:
             self._application.config.set(
-                ConfigKey.UI_FONT_FAMILY,
+                self._application.config.Key.UI_FONT_FAMILY,
                 family,
-                save=False)
+                save=False,
+            )
             self._application.config.set(
-                ConfigKey.UI_FONT_SIZE,
+                self._application.config.Key.UI_FONT_SIZE,
                 point_size,
-                save=False)
+                save=False,
+            )
             self._application.config.save()
 
         value: FontModel.FontDict = dict(family=family, pointSize=point_size)
@@ -186,9 +195,10 @@ class SystemTrayModel(AbstractStateModel):
     def __init__(self, application: QmlApplication) -> None:
         super().__init__(application)
         self._close_to_tray = self._application.config.get(
-            ConfigKey.UI_CLOSE_TO_TRAY,
+            self._application.config.Key.UI_CLOSE_TO_TRAY,
             bool,
-            False)
+            False,
+        )
 
     @QProperty(bool, notify=__stateChanged)
     def closeToTray(self) -> bool:
@@ -198,17 +208,18 @@ class SystemTrayModel(AbstractStateModel):
     def closeToTray(self, value: bool) -> None:
         value = bool(value)
         self._application.config.set(
-            ConfigKey.UI_CLOSE_TO_TRAY,
-            value)
+            self._application.config.Key.UI_CLOSE_TO_TRAY, value
+        )
         if self._close_to_tray != value:
             self._close_to_tray = value
             self.update()
 
     def reload(self) -> None:
         self._close_to_tray = self._application.config.get(
-            ConfigKey.UI_CLOSE_TO_TRAY,
+            self._application.config.Key.UI_CLOSE_TO_TRAY,
             bool,
-            False)
+            False,
+        )
         self.update()
 
 
@@ -217,8 +228,12 @@ class SettingsModel(AbstractModel):
         super().__init__(application)
 
         self._fiat_rate_service_model = FiatRateServiceModel(self._application)
-        self._fiat_currency_service_model = FiatCurrencyModel(self._application)
-        self._blockchain_explorer_model = BlockchainExplorerModel(self._application)
+        self._fiat_currency_service_model = FiatCurrencyModel(
+            self._application
+        )
+        self._blockchain_explorer_model = BlockchainExplorerModel(
+            self._application
+        )
         self._language_model = LanguageModel(self._application)
         self._theme_model = ThemeModel(self._application)
         self._font_model = FontModel(self._application)

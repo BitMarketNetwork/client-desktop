@@ -9,14 +9,15 @@ from ecdsa.keys import (
     BadSignatureError,
     MalformedPointError,
     SigningKey,
-    VerifyingKey)
+    VerifyingKey,
+)
 from ecdsa.util import sigdecode_der, sigencode_der_canonize
 
-from .base58 import Base58
-from .digest import HashlibWrapper, Sha256Digest
 from ..utils import NotImplementedInstance
 from ..utils.class_property import classproperty
 from ..utils.integer import BigOrderIntegerConverter
+from .base58 import Base58
+from .digest import HashlibWrapper, Sha256Digest
 
 _CURVE: Final = SECP256k1
 
@@ -36,19 +37,17 @@ class AbstractKey:
     _COMPRESSED_FLAG: int = 0x01
 
     def __init__(
-            self,
-            key: SigningKey | VerifyingKey,
-            *,
-            is_compressed: bool) -> None:
+        self, key: SigningKey | VerifyingKey, *, is_compressed: bool
+    ) -> None:
         self._key = key
         self._is_compressed = is_compressed
         self._data_cache: bytes | None = None
 
     def __eq__(self, other: AbstractKey) -> bool:
         return (
-                isinstance(other, self.__class__)
-                and self._is_compressed == other._is_compressed
-                and self.data == other.data
+            isinstance(other, self.__class__)
+            and self._is_compressed == other._is_compressed
+            and self.data == other.data
         )
 
     def __hash__(self) -> int:
@@ -85,25 +84,20 @@ class PublicKey(AbstractKey):
     @classmethod
     def fromPublicData(cls, data: bytes) -> PublicKey | None:
         try:
-            key = VerifyingKey.from_string(
-                data,
-                _CURVE,
-                _hashHelper,
-                True)
+            key = VerifyingKey.from_string(data, _CURVE, _hashHelper, True)
         except (MalformedPointError, RuntimeError):
             return None
 
-        return cls(
-            key,
-            is_compressed=(len(data) == _CURVE.baselen + 1))
+        return cls(key, is_compressed=(len(data) == _CURVE.baselen + 1))
 
     @classmethod
     def fromPublicInteger(
-            cls,
-            integer: int,
-            parent_point: tuple[int, int] | None,
-            *,
-            is_compressed: bool) -> PublicKey | None:
+        cls,
+        integer: int,
+        parent_point: tuple[int, int] | None,
+        *,
+        is_compressed: bool,
+    ) -> PublicKey | None:
         if integer >= KeyUtils.n:
             return None
 
@@ -114,15 +108,14 @@ class PublicKey(AbstractKey):
                     _CURVE.curve,
                     parent_point[0],
                     parent_point[1],
-                    _CURVE.order)
+                    _CURVE.order,
+                )
             if point == INFINITY:
                 return None
 
             key = VerifyingKey.from_public_point(
-                point,
-                _CURVE,
-                _hashHelper,
-                True)
+                point, _CURVE, _hashHelper, True
+            )
         except (MalformedPointError, RuntimeError):
             return None
 
@@ -140,10 +133,7 @@ class PublicKey(AbstractKey):
     def verify(self, signature: bytes, data: bytes) -> bool:
         data = Sha256Digest(data).finalize()
         try:
-            return self._key.verify_digest(
-                signature,
-                data,
-                sigdecode_der)
+            return self._key.verify_digest(signature, data, sigdecode_der)
         except (BadSignatureError, BadDigestError):
             return False
 
@@ -151,40 +141,29 @@ class PublicKey(AbstractKey):
 class PrivateKey(AbstractKey):
     _SIGNATURE_MAX_SIZE = 1 + 70  # DER
 
-    def __init__(
-            self,
-            key: SigningKey,
-            *,
-            is_compressed: bool) -> None:
+    def __init__(self, key: SigningKey, *, is_compressed: bool) -> None:
         super().__init__(key, is_compressed=is_compressed)
         self._public_key = PublicKey(
-            self._key.verifying_key,
-            is_compressed=self._is_compressed)
+            self._key.verifying_key, is_compressed=self._is_compressed
+        )
 
     @classmethod
     def fromSecretData(
-            cls,
-            secret_data: bytes,
-            *,
-            is_compressed: bool) -> PrivateKey | None:
+        cls, secret_data: bytes, *, is_compressed: bool
+    ) -> PrivateKey | None:
         return cls.fromSecretInteger(
-            KeyUtils.integerFromBytes(secret_data),
-            is_compressed=is_compressed)
+            KeyUtils.integerFromBytes(secret_data), is_compressed=is_compressed
+        )
 
     @classmethod
     def fromSecretInteger(
-            cls,
-            integer: int,
-            *,
-            is_compressed: bool) -> PrivateKey | None:
+        cls, integer: int, *, is_compressed: bool
+    ) -> PrivateKey | None:
         if not 0 < integer < KeyUtils.n:
             return None
 
         try:
-            key = SigningKey.from_secret_exponent(
-                integer,
-                _CURVE,
-                _hashHelper)
+            key = SigningKey.from_secret_exponent(integer, _CURVE, _hashHelper)
         except (MalformedPointError, RuntimeError):
             return None
 
@@ -211,8 +190,8 @@ class PrivateKey(AbstractKey):
             return 0, None
 
         result = cls.fromSecretInteger(
-            KeyUtils.integerFromBytes(result),
-            is_compressed=is_compressed)
+            KeyUtils.integerFromBytes(result), is_compressed=is_compressed
+        )
         if result is None:
             return 0, None
 
@@ -242,6 +221,5 @@ class PrivateKey(AbstractKey):
     def sign(self, data: bytes) -> bytes | None:
         data = Sha256Digest(data).finalize()
         return self._key.sign_digest_deterministic(
-            data,
-            None,
-            sigencode_der_canonize)
+            data, None, sigencode_der_canonize
+        )

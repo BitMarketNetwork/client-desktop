@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
-from .table import (
-    ColumnEnum,
-    SerializableRowList,
-    SerializableTable)
 from ...utils.class_property import classproperty
+from .table import ColumnEnum, SerializableRowList, SerializableTable
 
 if TYPE_CHECKING:
     from ...coins.abstract import Coin
@@ -29,6 +26,7 @@ class TxsTable(SerializableTable, name="transactions"):
     @classproperty
     def _CONSTRAINT_LIST(cls) -> tuple[str, ...]:  # noqa
         from .coin import CoinsTable
+
         return (
             f"FOREIGN KEY ("
             f"{cls.ColumnEnum.COIN_ROW_ID})"
@@ -37,24 +35,18 @@ class TxsTable(SerializableTable, name="transactions"):
             f" ON DELETE CASCADE",
         )
 
-    _UNIQUE_COLUMN_LIST = (
-        (ColumnEnum.COIN_ROW_ID, ColumnEnum.NAME),
-    )
+    _UNIQUE_COLUMN_LIST = ((ColumnEnum.COIN_ROW_ID, ColumnEnum.NAME),)
 
     _KEY_COLUMN_LIST = (
         (
             ColumnEnum.COIN_ROW_ID,
-            lambda o: o.coin.rowId if o.coin.rowId > 0 else None
-        ), (
-            ColumnEnum.NAME,
-            lambda o: o.name
-        )
+            lambda o: o.coin.rowId if o.coin.rowId > 0 else None,
+        ),
+        (ColumnEnum.NAME, lambda o: o.name),
     )
 
     def rowList(
-            self,
-            coin: Coin,
-            on_save_row: Callable[[int], None] | None = None
+        self, coin: Coin, on_save_row: Callable[[int], None] | None = None
     ) -> SerializableRowList[Coin.Tx]:
         assert coin.rowId > 0
         return SerializableRowList(
@@ -63,4 +55,5 @@ class TxsTable(SerializableTable, name="transactions"):
             table=self,
             where_expression=f"{self.ColumnEnum.COIN_ROW_ID} == ?",
             where_args=[coin.rowId],
-            on_save_row=on_save_row)
+            on_save_row=on_save_row,
+        )

@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import Final, TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
-from .object import CoinObject, CoinObjectModel
 from ...database.tables import UtxosTable
 from ...utils import (
-    DeserializeFlag,
     DeserializedData,
+    DeserializeFlag,
     SerializeFlag,
-    serializable)
+    serializable,
+)
 from ...utils.string import StringUtils
+from .object import CoinObject, CoinObjectModel
 
 if TYPE_CHECKING:
     from .coin import Coin
@@ -44,19 +45,23 @@ class _Utxo(CoinObject, table_type=UtxosTable):
 
     def __eq__(self, other: _Utxo) -> bool:
         return (
-                super().__eq__(other)
-                and self._name == other._name
-                and self._index == other._index
-                and self._height == other._height
-                and self._amount == other._amount)
+            super().__eq__(other)
+            and self._name == other._name
+            and self._index == other._index
+            and self._height == other._height
+            and self._amount == other._amount
+        )
 
     def __hash__(self) -> int:
-        return hash((
-            super().__hash__(),
-            self._name,
-            self._index,
-            self._height,
-            self._amount))
+        return hash(
+            (
+                super().__hash__(),
+                self._name,
+                self._index,
+                self._height,
+                self._amount,
+            )
+        )
 
     # TODO cache
     def __str__(self) -> str:
@@ -65,25 +70,25 @@ class _Utxo(CoinObject, table_type=UtxosTable):
             (None, self._name),
             (None, self._index),
             ("amount", self._amount),
-            parent=self._address)
+            parent=self._address,
+        )
 
     def serializeProperty(
-            self,
-            flags: SerializeFlag,
-            key: str,
-            value: ...) -> DeserializedData:
+        self, flags: SerializeFlag, key: str, value: ...
+    ) -> DeserializedData:
         if key == "script_type":
             return value.name
         return super().serializeProperty(flags, key, value)
 
     @classmethod
     def deserializeProperty(
-            cls,
-            flags: DeserializeFlag,
-            self: _Utxo | None,
-            key: str,
-            value: DeserializedData,
-            *cls_args) -> ...:
+        cls,
+        flags: DeserializeFlag,
+        self: _Utxo | None,
+        key: str,
+        value: DeserializedData,
+        *cls_args,
+    ) -> ...:
         if key == "script_type":
             address = cls_args[0] if cls_args else self._address
             for type_ in address.Script.Type:
