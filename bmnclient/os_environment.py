@@ -4,7 +4,7 @@ import os
 import sys
 from enum import Enum, auto
 from pathlib import Path
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from .utils import NotImplementedInstance
 from .utils.class_property import classproperty
@@ -104,17 +104,6 @@ def _applicationTempPath() -> Path:
     return Path(gettempdir()) / Product.SHORT_NAME.lower()
 
 
-def _invalidFileNameChars() -> List[str]:
-    if Platform.isWindows:
-        return ["<", ">", ":", "/", "\\", "|", "?", "*", ",", '"', "\n"]
-    elif Platform.isDarwin:
-        return [":", "/", "\n"]
-    elif Platform.isLinux:
-        return ["/", "\n"]
-    else:
-        raise RuntimeError("can't determine invalid file name characters")
-
-
 class PlatformPaths(NotImplementedInstance):
     _HOME_PATH: Final = Path.home()
     _CONFIG_PATH: Final = _configPath(_HOME_PATH)
@@ -124,7 +113,6 @@ class PlatformPaths(NotImplementedInstance):
         _LOCAL_DATA_PATH
     )
     _APPLICATION_TEMP_PATH: Final = _applicationTempPath()
-    _INVALID_FILENAME_CHARS: Final = _invalidFileNameChars()
 
     @classproperty
     def homePath(cls) -> Path:  # noqa
@@ -145,7 +133,3 @@ class PlatformPaths(NotImplementedInstance):
     @classproperty
     def applicationTempPath(cls) -> Path:  # noqa
         return cls._APPLICATION_TEMP_PATH
-
-    @classproperty
-    def invalidFileNameChars(cls) -> List[str]:
-        return cls._INVALID_FILENAME_CHARS
