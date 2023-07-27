@@ -23,8 +23,7 @@ BControl {
                 id: _list
                 Layout.fillHeight: true
 
-                // TODO QTBUG-106164 will be fixed in 6.5.2
-                //visible: count > 0
+                visible: count > 0
                 model: _stack.children.length - 1
                 delegate: BItemDelegate {
                     id: _item
