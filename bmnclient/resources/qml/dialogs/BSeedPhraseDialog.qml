@@ -46,7 +46,7 @@ BDialog {
             maximumLength: _applicationStyle.walletNameMaxLength
             visible: _base.type === BSeedPhraseDialog.Type.Restore || _base.type === BSeedPhraseDialog.Type.Validate
             placeholderText: qsTr("Enter name")
-            text: qsTr("New wallet")
+            text: qsTr("Wallet")
             validator: BBackend.keyStore.nameValidator
         }
 
