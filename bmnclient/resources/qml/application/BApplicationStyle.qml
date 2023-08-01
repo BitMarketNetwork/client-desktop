@@ -38,10 +38,17 @@ QtObject {
     }
 
     property QtObject icon: QtObject {
+        property int smallWidth: 12
+        property int smallHeight: 12
         property int normalWidth: 24
         property int normalHeight: 24
         property int largeWidth: 48
         property int largeHeight: 48
+    }
+
+    property QtObject animation: QtObject {
+        property int numberDuration: 400
+        property int rotationDuration: 1000
     }
 
     property real backgroundDarkFactor: _applicationWindow.Material.theme === Material.Dark ? 1.2 : 1.04 // TODO to themeList
@@ -61,7 +68,6 @@ QtObject {
     property int infoColumnSpacing: 0
     property int infoRowSpacing: 0
 
-    property int animationDuration: 400
     property int tooTipDelay: 400
 
     property int walletNameMaxLength: 32

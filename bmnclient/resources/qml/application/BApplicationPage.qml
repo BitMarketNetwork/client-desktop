@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls.Material
 
 import "../basiccontrols"
+import "../controls"
 
 BControl {
     id: _base
@@ -15,27 +16,36 @@ BControl {
     property alias stack: _stack
 
     contentItem: BRowLayout {
-        BListView {
-            id: _list
+        ColumnLayout {
             Layout.fillHeight: true
 
-            // TODO QTBUG-106164 will be fixed in 6.5.2
-            //visible: count > 0
-            model: _stack.children.length - 1
-            delegate: BItemDelegate {
-                id: _item
-                text: _stack.children[index + 1].title
-                enabled: _stack.children[index + 1].enabled
-                visible: _stack.children[index + 1].enabled
-                icon.source: _stack.children[index + 1].iconPath
-                contentItem: BIconLabel {
-                    display: _item.display
-                    icon: _item.icon
-                    text: _item.text
+            BListView {
+                id: _list
+                Layout.fillHeight: true
+
+                visible: count > 0
+                model: _stack.children.length - 1
+                delegate: BItemDelegate {
+                    id: _item
+                    text: _stack.children[index + 1].title
+                    enabled: _stack.children[index + 1].enabled
+                    visible: _stack.children[index + 1].enabled
+                    icon.source: _stack.children[index + 1].iconPath
+                    contentItem: BIconLabel {
+                        display: _item.display
+                        icon: _item.icon
+                        text: _item.text
+                    }
+                    onClicked: {
+                        _stack.currentIndex = index + 1
+                    }
                 }
-                onClicked: {
-                    _stack.currentIndex = index + 1
-                }
+            }
+            BStatusBar {
+                Layout.preferredWidth: _list.width
+                Layout.alignment: Qt.AlignBottom
+                Material.elevation: 1
+                display: _list.display
             }
         }
         Rectangle {
