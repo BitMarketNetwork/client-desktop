@@ -12,6 +12,7 @@ BItemDelegate {
 
     signal keyStoreClicked(var path)
     signal renameAccepted(var path)
+    signal removeAccepted(var path)
 
     property var file // FileModel
 
@@ -83,8 +84,7 @@ BItemDelegate {
             text: qsTr("Remove")
 
             onTriggered: {
-                // TODO confirmation dialog
-                BBackend.keyStoreList.onRemoveAccepted(_base.file.path)
+                _base.removeAccepted(_base.file.path)
             }
         }
     }

@@ -63,7 +63,6 @@ class KeyStoreListModel(FileListModel):
             and file.suffix.lower() == ProductPaths.WALLET_SUFFIX.lower()
         )
 
-    # TODO confirmation dialog
     @QSlot(str)
     def onRemoveAccepted(self, path: str) -> None:
         path = Path(path)
