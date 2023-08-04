@@ -3,15 +3,19 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import Property as QProperty, QObject, Slot as QSlot
+from PySide6.QtCore import Property as QProperty
+from PySide6.QtCore import QObject
+from PySide6.QtCore import Signal as QSignal
+from PySide6.QtCore import Slot as QSlot
 from PySide6.QtGui import QValidator
 
 from bmnclient.coins.abstract.coin import Coin
 from bmnclient.config import KeyStoreConfig
 from bmnclient.logger import Logger
 from bmnclient.version import ProductPaths
-from .file import FileListModel
+
 from ..dialogs.key_store import RevealSeedPhraseDialog, TxApproveDialog
+from .file import FileListModel
 
 if TYPE_CHECKING:
     from ....key_store import KeyStore
