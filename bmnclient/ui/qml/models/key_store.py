@@ -58,6 +58,8 @@ class KeyStoreModel(QObject):
 
 
 class KeyStoreListModel(FileListModel):
+    keyStoreRemoved = QSignal()
+
     def __init__(self, application: QmlApplication) -> None:
         super().__init__(application, application.walletsPath)
 
@@ -74,10 +76,10 @@ class KeyStoreListModel(FileListModel):
             return
         try:
             path.unlink(missing_ok=True)
+            self.keyStoreRemoved.emit()
         except OSError as exp:
             self._logger.debug(
                 "Failed to remove file '%s'. %s",
                 path,
                 Logger.osErrorString(exp),
             )
-            # TODO: UI message
