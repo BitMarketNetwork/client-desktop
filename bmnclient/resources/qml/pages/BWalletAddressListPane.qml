@@ -6,15 +6,20 @@ import "../dialogs"
 
 BPane {
     id: _base
-    property string title: qsTr("Addresses (%1)").arg(coin.addressList.rowCountHuman)
+    property string title: qsTr("Addresses (%1)").arg(addressList ? addressList.rowCountHuman : "")
     property var coin // CoinModel
+    property var addressList: coin.openAddressList(5)
 
     signal spendFromTriggered
+
+    Component.onDestruction: {
+         coin.closeList(addressList)
+    }
 
     BWalletAddressTable {
         id: _tableItem
         anchors.fill: parent
-        model: _base.coin.addressList
+        model: _base.addressList
     }
 
     BMenu {
@@ -30,7 +35,7 @@ BPane {
         BMenuItem {
             text: qsTr("Spend from")
             onTriggered: {
-                _contextMenu.address.state.isTxInput = true
+                _base.coin.txFactory.receiver.inputAddressName = _contextMenu.address.name
                 spendFromTriggered()
             }
         }

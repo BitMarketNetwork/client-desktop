@@ -1,3 +1,5 @@
+import QtQuick.Layouts
+
 BLabel {
-    BLayout.alignment: _applicationStyle.infoLabelAlignment
+    Layout.alignment: _applicationStyle.infoLabelAlignment
 }

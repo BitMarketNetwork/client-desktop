@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from enum import auto, Enum
+from enum import Enum, auto
 from io import BytesIO
 from json import JSONDecodeError
 from typing import TYPE_CHECKING
@@ -9,15 +9,17 @@ from typing import TYPE_CHECKING
 from PySide6.QtCore import QUrl
 from PySide6.QtNetwork import QNetworkReply, QNetworkRequest
 
-from .utils import NetworkUtils
 from ..logger import Logger
 from ..utils.size_unit import SizeUnit, SizeUnitConverter
 from ..utils.string import StringUtils
 from ..version import Product, Timer
+from .utils import NetworkUtils
 
 if TYPE_CHECKING:
     from typing import Callable, Dict, List, Optional, Tuple, Union
+
     from PySide6.QtNetwork import QSslError
+
     from ..utils.string import ClassStringKeyTuple
 
 
@@ -34,51 +36,28 @@ class AbstractQuery:
     _REQUEST_ATTRIBUTE_LIST = (
         (
             QNetworkRequest.CacheLoadControlAttribute,
-            QNetworkRequest.AlwaysNetwork
-        ), (
-            QNetworkRequest.CacheSaveControlAttribute,
-            False
-        ), (
-            QNetworkRequest.DoNotBufferUploadDataAttribute,
-            True
-        ), (
-            QNetworkRequest.HttpPipeliningAllowedAttribute,
-            False
-        ), (
-            QNetworkRequest.CookieLoadControlAttribute,
-            QNetworkRequest.Manual
-        ), (
-            QNetworkRequest.CookieSaveControlAttribute,
-            QNetworkRequest.Manual
-        ), (
-            QNetworkRequest.AuthenticationReuseAttribute,
-            QNetworkRequest.Manual
-        ), (
-            QNetworkRequest.BackgroundRequestAttribute,
-            False
-        ), (
-            QNetworkRequest.Http2AllowedAttribute,
-            True
-        ), (
-            QNetworkRequest.EmitAllUploadProgressSignalsAttribute,
-            False
-        ), (
+            QNetworkRequest.AlwaysNetwork,
+        ),
+        (QNetworkRequest.CacheSaveControlAttribute, False),
+        (QNetworkRequest.DoNotBufferUploadDataAttribute, True),
+        (QNetworkRequest.HttpPipeliningAllowedAttribute, False),
+        (QNetworkRequest.CookieLoadControlAttribute, QNetworkRequest.Manual),
+        (QNetworkRequest.CookieSaveControlAttribute, QNetworkRequest.Manual),
+        (QNetworkRequest.AuthenticationReuseAttribute, QNetworkRequest.Manual),
+        (QNetworkRequest.BackgroundRequestAttribute, False),
+        (QNetworkRequest.Http2AllowedAttribute, True),
+        (QNetworkRequest.EmitAllUploadProgressSignalsAttribute, False),
+        (
             QNetworkRequest.RedirectPolicyAttribute,
-            QNetworkRequest.ManualRedirectPolicy
-        ), (
-            QNetworkRequest.Http2DirectAttribute,
-            False
-        ), (
-            QNetworkRequest.AutoDeleteReplyOnFinishAttribute,
-            True
-        )
+            QNetworkRequest.ManualRedirectPolicy,
+        ),
+        (QNetworkRequest.Http2DirectAttribute, False),
+        (QNetworkRequest.AutoDeleteReplyOnFinishAttribute, True),
     )
 
     def __init__(
-            self,
-            *args,
-            name_key_tuple: Tuple[ClassStringKeyTuple, ...],
-            **kwargs) -> None:
+        self, *args, name_key_tuple: Tuple[ClassStringKeyTuple, ...], **kwargs
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.__name_key_list = name_key_tuple
         self._logger = Logger.classLogger(self.__class__, *name_key_tuple)
@@ -87,19 +66,19 @@ class AbstractQuery:
         self.__is_success = False
         self._next_query: Optional[AbstractQuery] = None
 
-        self.__finished_callback_list: List[Callable[[AbstractQuery], None]] = \
-            []
-        self.__close_callback: Optional[Callable[[AbstractQuery], None]] = \
-            None
+        self.__finished_callback_list: List[
+            Callable[[AbstractQuery], None]
+        ] = []
+        self.__close_callback: Optional[Callable[[AbstractQuery], None]] = None
 
     def __str__(self) -> str:
         return StringUtils.classString(self.__class__, *self.__name_key_list)
 
     def isEqualQuery(self, other: AbstractQuery) -> bool:
         return (
-                isinstance(other, self.__class__)
-                and self.url == other.url
-                and self.method == other.method
+            isinstance(other, self.__class__)
+            and self.url == other.url
+            and self.method == other.method
         )
 
     @property
@@ -135,8 +114,8 @@ class AbstractQuery:
         return self._next_query
 
     def appendFinishedCallback(
-            self,
-            callback: Callable[[AbstractQuery], None]) -> None:
+        self, callback: Callable[[AbstractQuery], None]
+    ) -> None:
         self.__finished_callback_list.append(callback)
 
     def __callFinishedCallbackList(self) -> None:
@@ -181,13 +160,11 @@ class AbstractQuery:
         # prepare full url
         url_string = self.url
         if not url_string:
-            self._logger.error(
-                "Cannot create request, empty URL.",
-                url_string)
+            self._logger.error("Cannot create request, empty URL.", url_string)
             return None
 
         url_query = ""
-        for (k, v) in self.arguments.items():
+        for k, v in self.arguments.items():
             bad_argument = False
             if not isinstance(k, str) or not isinstance(v, (str, int)):
                 bad_argument = True
@@ -200,7 +177,8 @@ class AbstractQuery:
                 self._logger.error(
                     "Cannot create request for URL '%s', "
                     + "invalid query arguments.",
-                    url_string)
+                    url_string,
+                )
                 return None
             if url_query:
                 url_query += "&"
@@ -211,13 +189,13 @@ class AbstractQuery:
         url = QUrl(url_string, QUrl.StrictMode)
         if not url.isValid():
             self._logger.error(
-                "Cannot create request, invalid URL '%s'.",
-                url_string)
+                "Cannot create request, invalid URL '%s'.", url_string
+            )
             return None
 
         # configure QNetworkRequest
         requests = QNetworkRequest(url)
-        for (a, v) in self._REQUEST_ATTRIBUTE_LIST:
+        for a, v in self._REQUEST_ATTRIBUTE_LIST:
             requests.setAttribute(a, v)
         requests.setMaximumRedirectsAllowed(0)
         requests.setTransferTimeout(Timer.NETWORK_TRANSFER_TIMEOUT)
@@ -225,16 +203,15 @@ class AbstractQuery:
         # set content type
         content_type = self.contentType
         if content_type:
-            requests.setHeader(
-                QNetworkRequest.ContentTypeHeader,
-                content_type)
+            requests.setHeader(QNetworkRequest.ContentTypeHeader, content_type)
 
         return requests
 
     def setResponse(
-            self,
-            response: QNetworkReply,
-            close_callback: Optional[Callable[[AbstractQuery], None]]) -> None:
+        self,
+        response: QNetworkReply,
+        close_callback: Optional[Callable[[AbstractQuery], None]],
+    ) -> None:
         assert self.__response is None
         self.__is_success = False
         self.__response = response
@@ -250,7 +227,8 @@ class AbstractQuery:
             return
         if status_code is None:
             status_code = self.__response.attribute(
-                QNetworkRequest.HttpStatusCodeAttribute)
+                QNetworkRequest.HttpStatusCodeAttribute
+            )
         self.__status_code = int(status_code) if status_code else -1
         self._logger.debug("Status code: %i", self.__status_code)
 
@@ -265,11 +243,11 @@ class AbstractQuery:
             self.__onResponseRead()
 
         if (
-                self.__status_code is not None
-                and self.__status_code > 0
-                and self.__response is not None
-                and self.__response.error() == QNetworkReply.NoError
-                and self.__response.isFinished()
+            self.__status_code is not None
+            and self.__status_code > 0
+            and self.__response is not None
+            and self.__response.error() == QNetworkReply.NoError
+            and self.__response.isFinished()
         ):
             self.__is_success = True
         else:
@@ -286,9 +264,11 @@ class AbstractQuery:
 
     def __onResponseRedirected(self, url: QUrl) -> None:
         Logger.fatal(
-            "Redirect to '{}' detected, but redirects was disabled."
-                .format(url.toString()),
-            self._logger)
+            "Redirect to '{}' detected, but redirects was disabled.".format(
+                url.toString()
+            ),
+            self._logger,
+        )
 
     def __onTlsErrors(self, error_list: List[QSslError]) -> None:
         for e in error_list:
@@ -323,9 +303,7 @@ class AbstractJsonQuery(AbstractQuery):
                 self._logger.debug("JSON Request: %s", value)
                 return value.encode(self._ENCODING)
             except UnicodeError as e:
-                self._logger.error(
-                    "Failed to encode JSON request: %s",
-                    str(e))
+                self._logger.error("Failed to encode JSON request: %s", str(e))
         return b""
 
     @property
@@ -337,12 +315,14 @@ class AbstractJsonQuery(AbstractQuery):
         self._logger.debug(
             "Limit download size: %d MiB",
             SizeUnitConverter.sizeToUnit(
-                self._DEFAULT_DOWNLOAD_MAX_SIZE,
-                SizeUnit.MB))
+                self._DEFAULT_DOWNLOAD_MAX_SIZE, SizeUnit.MB
+            ),
+        )
         if len(data) > self._DEFAULT_DOWNLOAD_MAX_SIZE:
             self._logger.error(
                 "Limit download size has been reached: %d bytes",
-                self._DEFAULT_DOWNLOAD_MAX_SIZE)
+                self._DEFAULT_DOWNLOAD_MAX_SIZE,
+            )
             return False
         self._json_buffer.write(data)
         return True
@@ -364,7 +344,9 @@ class AbstractJsonQuery(AbstractQuery):
 
             if error_message is not None:
                 response = None
-                self._logger.warning("Invalid JSON response: %s", error_message)
+                self._logger.warning(
+                    "Invalid JSON response: %s", error_message
+                )
 
         if not isinstance(response, (dict, list)):
             response = None

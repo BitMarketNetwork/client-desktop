@@ -1,4 +1,6 @@
 import QtQuick
+import QtQuick.Layouts
+
 import "../application"
 import "../basiccontrols"
 
@@ -20,11 +22,11 @@ BControl {
         BColumnLayout {
             BListView {
                 id: _listView
-                BLayout.fillWidth: true
-                BLayout.fillHeight: true
+                Layout.fillWidth: true
+                Layout.fillHeight: true
 
                 delegate: BAddressTxItem {
-                    tx: model
+                    tx: modelObject
                 }
 
                 section.property: "state.timeHuman"

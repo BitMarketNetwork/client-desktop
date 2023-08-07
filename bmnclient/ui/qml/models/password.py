@@ -1,17 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from PySide6.QtCore import Property as QProperty
+from PySide6.QtCore import QObject
+from PySide6.QtCore import Slot as QSlot
 
-from PySide6.QtCore import \
-    Property as QProperty, \
-    QObject, \
-    Slot as QSlot
-
-from . import ValidStatus
 from ....crypto.password import PasswordStrength
-
-if TYPE_CHECKING:
-    from typing import Any, Dict
+from . import ValidStatus
 
 
 class PasswordModel(QObject):
@@ -20,7 +14,7 @@ class PasswordModel(QObject):
         return PasswordStrength.maxNameLength
 
     @QSlot(str, result="QVariantMap")
-    def calcStrength(self, password: str) -> Dict[str, Any]:
+    def calcStrength(self, password: str) -> dict[str, ...]:
         s = PasswordStrength(password)
         if not s.score:
             valid_status = ValidStatus.Unset
@@ -31,5 +25,5 @@ class PasswordModel(QObject):
         return {
             "isAcceptable": s.isAcceptable,
             "name": s.name,
-            "status": valid_status.value
+            "status": valid_status.value,
         }

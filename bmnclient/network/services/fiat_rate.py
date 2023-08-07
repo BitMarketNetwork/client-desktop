@@ -5,18 +5,20 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QObject
 
-from ..query import AbstractJsonQuery
-from ...config import ConfigKey, ConfigStaticList
+from ...config import ConfigStaticList
 from ...currency import (
     EuroFiatCurrency,
     FiatCurrency,
     FiatRate,
-    UsdFiatCurrency)
+    UsdFiatCurrency,
+)
 from ...debug import Debug
 from ...utils.class_property import classproperty
+from ..query import AbstractJsonQuery
 
 if TYPE_CHECKING:
     from typing import Dict, Final, Iterator, List, Optional, Type, Union
+
     from ...application import CoreApplication
     from ...coins.list import CoinList
 
@@ -27,18 +29,19 @@ class AbstractFiatRateService(AbstractJsonQuery):
     _COIN_MAP: Final = {  # local: service
         "btc": "bitcoin",
         "btctest": "bitcoin",
-        "ltc": "litecoin"
+        "ltc": "litecoin",
     }
     _CURRENCY_MAP = {  # local: service
         UsdFiatCurrency: "usd",
-        EuroFiatCurrency: "eur"
+        EuroFiatCurrency: "eur",
     }
 
     def __init__(
-            self,
-            coin_list: CoinList,
-            currency_type: Type[FiatCurrency] = UsdFiatCurrency) -> None:
-        super().__init__(name_key_tuple=((None, currency_type.unit), ))
+        self,
+        coin_list: CoinList,
+        currency_type: Type[FiatCurrency] = UsdFiatCurrency,
+    ) -> None:
+        super().__init__(name_key_tuple=((None, currency_type.unit),))
         self._buffer = BytesIO()
 
         self._coin_list = coin_list
@@ -64,15 +67,17 @@ class AbstractFiatRateService(AbstractJsonQuery):
 
     def _processResponse(self, response: Optional[dict, list]) -> None:
         if (
-                not self.isSuccess
-                or response is None
-                or self.statusCode != 200
-                or self.isDummyRequest
+            not self.isSuccess
+            or response is None
+            or self.statusCode != 200
+            or self.isDummyRequest
         ):
             if not self.isDummyRequest:
                 self._logger.warning(
-                    "Invalid response from '{}' Service."
-                    .format(self._FULL_NAME))
+                    "Invalid response from '{}' Service.".format(
+                        self._FULL_NAME
+                    )
+                )
             response = {}
 
         for coin in self._coin_list:
@@ -83,8 +88,10 @@ class AbstractFiatRateService(AbstractJsonQuery):
                     fiat_rate = 0
                     if self.url is not None:
                         self._logger.warning(
-                            "Failed to parse fiat rate for '{}'."
-                            .format(coin.fullName))
+                            "Failed to parse fiat rate for '{}'.".format(
+                                coin.fullName
+                            )
+                        )
                 coin.fiatRate = FiatRate(fiat_rate, self._currency_type)
 
     def _createCoinNameList(self) -> List[str]:
@@ -96,34 +103,39 @@ class AbstractFiatRateService(AbstractJsonQuery):
                     result.append(name)
             else:
                 self._logger.warning(
-                    "Fiat rate for '{}' not supported by '{}' Service."
-                    .format(coin.fullName, self._FULL_NAME))
+                    "Fiat rate for '{}' not supported by '{}' Service.".format(
+                        coin.fullName, self._FULL_NAME
+                    )
+                )
 
         if not result:
             self._logger.warning(
-                "Required fiat rates not supported by '{}' Service."
-                .format(self._FULL_NAME))
+                "Required fiat rates not supported by '{}' Service.".format(
+                    self._FULL_NAME
+                )
+            )
 
         return result
 
     def _createFiatCurrencyName(self) -> Optional[str]:
         result = None
-        for (currency_type, name) in self._CURRENCY_MAP.items():
+        for currency_type, name in self._CURRENCY_MAP.items():
             if currency_type is self._currency_type and name:
                 result = name
                 break
 
         if not result:
             self._logger.warning(
-                "Required fiat currency '{}' not supported by '{}' Service."
-                .format(self._currency_type.fullName, self._FULL_NAME))
+                "Required fiat currency '{}' not supported by '{}' Service.".format(
+                    self._currency_type.fullName, self._FULL_NAME
+                )
+            )
 
         return result
 
     def _getFiatRate(
-            self,
-            coin_name: str,
-            data: Union[dict, list]) -> Optional[int]:
+        self, coin_name: str, data: Union[dict, list]
+    ) -> Optional[int]:
         raise NotImplementedError
 
 
@@ -133,9 +145,8 @@ class NoneFiatRateService(AbstractFiatRateService):
     _DEFAULT_URL: Final = None
 
     def _getFiatRate(
-            self,
-            coin_name: str,
-            data: Union[dict, list]) -> Optional[int]:
+        self, coin_name: str, data: Union[dict, list]
+    ) -> Optional[int]:
         return 0
 
 
@@ -145,10 +156,10 @@ class RandomFiatRateService(AbstractFiatRateService):
     _DEFAULT_URL: Final = None
 
     def _getFiatRate(
-            self,
-            coin_name: str,
-            data: Union[dict, list]) -> Optional[int]:
+        self, coin_name: str, data: Union[dict, list]
+    ) -> Optional[int]:
         from random import randrange
+
         return randrange(0, 1000000) * 10
 
 
@@ -161,13 +172,12 @@ class CoinGeckoFiatRateService(AbstractFiatRateService):
     def arguments(self) -> Dict[str, Union[int, str]]:
         return {
             "ids": ",".join(self._coin_name_list),
-            "vs_currencies": self._currency_name
+            "vs_currencies": self._currency_name,
         }
 
     def _getFiatRate(
-            self,
-            coin_name: str,
-            data: Union[dict, list]) -> Optional[int]:
+        self, coin_name: str, data: Union[dict, list]
+    ) -> Optional[int]:
         try:
             value = data[coin_name][self._currency_name]
             return int(value * self._currency_type.decimalDivisor)
@@ -179,24 +189,25 @@ class FiatRateServiceList(ConfigStaticList):
     def __init__(self, application: CoreApplication) -> None:
         super().__init__(
             application.config,
-            ConfigKey.SERVICES_FIAT_RATE,
+            application.config.Key.SERVICES_FIAT_RATE,
             (
                 NoneFiatRateService,
                 CoinGeckoFiatRateService,
             )
-            + ((RandomFiatRateService, ) if Debug.isEnabled else tuple()),
+            + ((RandomFiatRateService,) if Debug.isEnabled else tuple()),
             default_index=1,
-            item_property="name")
+            item_property="name",
+        )
         self._logger.debug(
-            "Current fiat rate service: %s",
-            self.current.fullName)
+            "Current fiat rate service: %s", self.current.fullName
+        )
 
     def __iter__(self) -> Iterator[Type[AbstractFiatRateService]]:
         return super().__iter__()
 
     def __getitem__(
-            self,
-            value: Union[str, int]) -> Optional[Type[AbstractFiatRateService]]:
+        self, value: Union[str, int]
+    ) -> Optional[Type[AbstractFiatRateService]]:
         return super().__getitem__(value)
 
     @property

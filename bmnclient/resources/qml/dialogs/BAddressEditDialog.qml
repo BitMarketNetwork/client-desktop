@@ -1,6 +1,7 @@
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
+import "../dialogcontrols"
 
 // TODO python control
 // TODO show result in BAddressEditBox.Type.*View

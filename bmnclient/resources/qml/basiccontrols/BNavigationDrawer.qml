@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Material
+import QtQuick.Layouts
 
 BControl {
     default property alias children: _layout.children
@@ -9,7 +10,7 @@ BControl {
             id: _layout
         }
         Rectangle {
-            BLayout.fillWidth: true
+            Layout.fillWidth: true
             implicitHeight: _applicationStyle.dividerSize
             color: Material.dividerColor
         }

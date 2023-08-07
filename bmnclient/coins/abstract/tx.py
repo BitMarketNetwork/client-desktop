@@ -2,34 +2,45 @@ from __future__ import annotations
 
 from enum import Enum
 from functools import cached_property
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
+from ...database.tables import TxIosTable, TxsTable
+from ...utils import (
+    DeserializedData,
+    DeserializeFlag,
+    SerializableList,
+    serializable,
+)
+from ...utils.string import StringUtils
 from .object import CoinObject, CoinObjectModel
-from ...utils.serialize import serializable
 
 if TYPE_CHECKING:
-    from typing import Any, Final, List, Optional
     from .coin import Coin
-    from ...utils.serialize import DeserializedData
 
 
 class _Model(CoinObjectModel):
     def __init__(self, *args, tx: Coin.Tx, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
         self._tx = tx
+        super().__init__(*args, **kwargs)
 
     @property
     def owner(self) -> Coin.Tx:
         return self._tx
 
-    def afterSetHeight(self) -> None:
-        raise NotImplementedError
+    def beforeSetHeight(self, value: int) -> None:
+        pass
 
-    def afterSetTime(self) -> None:
-        raise NotImplementedError
+    def afterSetHeight(self, value: int) -> None:
+        pass
+
+    def beforeSetTime(self, value: int) -> None:
+        pass
+
+    def afterSetTime(self, value: int) -> None:
+        pass
 
 
-class _Tx(CoinObject):
+class _Tx(CoinObject, table_type=TxsTable):
     __initialized = False
 
     class Status(Enum):
@@ -40,65 +51,84 @@ class _Tx(CoinObject):
     Model = _Model
 
     from .tx_io import _Io
+
     Io = _Io
 
     from .utxo import _Utxo
+
     Utxo = _Utxo
 
     def __new__(cls, coin: Coin, *args, **kwargs) -> _Tx:
         if not kwargs.get("name"):
-            return super(_Tx, cls).__new__(cls)
+            return super().__new__(cls)
 
         heap = coin.weakValueDictionary("tx_heap")
         name = kwargs["name"].lower()
         tx = heap.get(name)
         if tx is None:
-            tx = super(_Tx, cls).__new__(cls)
+            tx = super().__new__(cls)
         heap[name] = tx
         return tx
 
-    def __init__(self, coin: Coin, *, row_id: int = -1, **kwargs) -> None:
+    def __init__(self, coin: Coin, **kwargs) -> None:
         if self.__initialized:
             assert self._coin is coin
             self.__update__(**kwargs)
             return
         self.__initialized = True
+        self._name: Final = str(kwargs.get("name")).lower()
 
-        super().__init__(coin, row_id=row_id)
+        super().__init__(coin, kwargs)
 
-        self._name: Final[str] = kwargs.get("name").lower()
-        self._height: int = kwargs.get("height", -1)
-        self._time: int = kwargs.get("time", -1)
-        self._amount: int = kwargs["amount"]
-        self._fee_amount: int = kwargs["fee_amount"]
-        self._is_coinbase = bool(kwargs["is_coinbase"])
-
-        self._input_list: Final[List[_Tx.Io]] = list(kwargs["input_list"])
-        self._output_list: Final[List[_Tx.Io]] = list(kwargs["output_list"])
+        self._height = int(kwargs.pop("height", -1))
+        self._time = int(kwargs.pop("time", -1))
+        self._amount = int(kwargs.pop("amount"))
+        self._fee_amount = int(kwargs.pop("fee_amount"))
+        self._is_coinbase: Final = bool(kwargs.pop("is_coinbase"))
+        self._appendDeferredSave(
+            lambda: self.inputList, kwargs.pop("input_list", [])
+        )
+        self._appendDeferredSave(
+            lambda: self.outputList, kwargs.pop("output_list", [])
+        )
+        assert len(kwargs) == 1
 
     def __eq__(self, other: _Tx) -> bool:
-        return (
-                super().__eq__(other)
-                and self._name == other._name
-        )
+        return super().__eq__(other) and self._name == other._name
 
     def __hash__(self) -> int:
-        return hash((super().__hash__(), self._name, ))
+        return hash((super().__hash__(), self._name))
+
+    # TODO cache
+    def __str__(self) -> str:
+        return StringUtils.classString(
+            self.__class__, (None, self._name), parent=self.coin
+        )
+
+    def __update__(self, **kwargs) -> bool:
+        self._appendDeferredSave(
+            lambda: self.inputList, kwargs.pop("input_list", [])
+        )
+        self._appendDeferredSave(
+            lambda: self.outputList, kwargs.pop("output_list", [])
+        )
+        if not super().__update__(**kwargs):
+            return False
+        # TODO self.updateBalance()
+        return True
 
     @classmethod
-    def _deserializeProperty(
-            cls,
-            self: Optional[_Tx],
-            key: str,
-            value: DeserializedData,
-            coin: Optional[Coin] = None,
-            **options) -> Any:
-        if key in ("input_list", "output_list"):
-            if isinstance(value, dict):
-                return cls.Io.deserialize(value, coin, **options)
-            elif isinstance(value, cls.Io):
-                return value
-        return super()._deserializeProperty(self, key, value, coin, **options)
+    def deserializeProperty(
+        cls,
+        flags: DeserializeFlag,
+        self: _Tx | None,
+        key: str,
+        value: DeserializedData,
+        *cls_args,
+    ) -> ...:
+        if key in ("input_list", "output_list") and isinstance(value, dict):
+            return lambda tx: cls.Io.deserialize(flags, value, tx)
+        return super().deserializeProperty(flags, self, key, value, *cls_args)
 
     @serializable
     @property
@@ -116,10 +146,7 @@ class _Tx(CoinObject):
 
     @height.setter
     def height(self, value: int) -> None:
-        if self._height != value:
-            assert self._height == -1
-            self._height = value
-            self._callModel("afterSetHeight")
+        self._updateValue("set", "height", value)
 
     @property
     def confirmations(self) -> int:
@@ -143,9 +170,7 @@ class _Tx(CoinObject):
 
     @time.setter
     def time(self, value: int) -> None:
-        if self._time != value:
-            self._time = value
-            self._callModel("afterSetTime")
+        self._updateValue("set", "time", value)
 
     @serializable
     @property
@@ -164,13 +189,13 @@ class _Tx(CoinObject):
 
     @serializable
     @property
-    def inputList(self) -> List[_Tx.Io]:
-        return self._input_list
+    def inputList(self) -> SerializableList[_Tx.Io]:
+        return self._rowList(TxIosTable, self.Io.IoType.INPUT)
 
     @serializable
     @property
-    def outputList(self) -> List[_Tx.Io]:
-        return self._output_list
+    def outputList(self) -> SerializableList[_Tx.Io]:
+        return self._rowList(TxIosTable, self.Io.IoType.OUTPUT)
 
     @staticmethod
     def toNameHuman(name: str) -> str:

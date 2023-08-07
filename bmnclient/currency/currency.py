@@ -7,6 +7,7 @@ from ..utils.class_property import classproperty
 
 if TYPE_CHECKING:
     from typing import Optional
+
     from ..language import Locale
 
 
@@ -18,61 +19,60 @@ class Currency(NotImplementedInstance):
     __string_template: Optional[str] = None
 
     @classproperty
-    def fullName(cls) -> str: # noqa
+    def fullName(cls) -> str:  # noqa
         return cls._FULL_NAME
 
     @classproperty
-    def unit(cls) -> str: # noqa
+    def unit(cls) -> str:  # noqa
         return cls._UNIT
 
     @classproperty
-    def decimalSize(cls) -> int: # noqa
+    def decimalSize(cls) -> int:  # noqa
         return cls._DECIMAL_SIZE[1]
 
     @classproperty
-    def decimalDivisor(cls) -> int: # noqa
+    def decimalDivisor(cls) -> int:  # noqa
         return 10 ** cls._DECIMAL_SIZE[1]
 
     @classproperty
     def maxValue(cls) -> int:  # noqa
-        return (2 ** cls._VALUE_BITS) - 1
+        return (2**cls._VALUE_BITS) - 1
 
     @classproperty
     def minValue(cls) -> int:  # noqa
-        return -(2 ** cls._VALUE_BITS)
+        return -(2**cls._VALUE_BITS)
 
     @classmethod
     def isValidValue(cls, value: int) -> bool:
         return cls.minValue <= value <= cls.maxValue
 
     @classproperty
-    def stringTemplate(cls) -> str: # noqa
+    def stringTemplate(cls) -> str:  # noqa
         if not cls.__string_template:
-            v = len(cls.toString(2 ** cls._VALUE_BITS - 1))
+            v = len(cls.toString(2**cls._VALUE_BITS - 1))
             assert v > 2
             cls.__string_template = "8" * (v + v // 3 - 1)
         return cls.__string_template
 
     @classmethod
     def fromString(
-            cls,
-            source: str,
-            *,
-            strict: bool = True,
-            locale: Optional[Locale] = None) -> Optional[int]:
+        cls,
+        source: str,
+        *,
+        strict: bool = True,
+        locale: Optional[Locale] = None,
+    ) -> Optional[int]:
         if not source:
             return None
 
         sign = False
-        if (
-                source[0] == "-" or
-                (locale is not None and source[0] == locale.negativeSign())
+        if source[0] == "-" or (
+            locale is not None and source[0] == locale.negativeSign()
         ):
             sign = True
             source = source[1:]
-        elif (
-                source[0] == "+" or
-                (locale is not None and source[0] == locale.positiveSign())
+        elif source[0] == "+" or (
+            locale is not None and source[0] == locale.positiveSign()
         ):
             source = source[1:]
 
@@ -92,7 +92,7 @@ class Currency(NotImplementedInstance):
         if a:
             if locale is not None:
                 if not strict:
-                    a = a.replace(locale.groupSeparator(), '')
+                    a = a.replace(locale.groupSeparator(), "")
                 a = locale.stringToInteger(a)
             elif a.isalnum():
                 try:
@@ -120,18 +120,14 @@ class Currency(NotImplementedInstance):
                 return None
             for _ in range(b_length, cls._DECIMAL_SIZE[1]):
                 b *= 10
-            result += (-b if sign else b)
+            result += -b if sign else b
 
         if not cls.isValidValue(result):
             return None
         return result
 
     @classmethod
-    def toString(
-            cls,
-            value: int,
-            *,
-            locale: Optional[Locale] = None) -> str:
+    def toString(cls, value: int, *, locale: Optional[Locale] = None) -> str:
         if not value or not cls.isValidValue(value):
             return "0"
         if value < 0:

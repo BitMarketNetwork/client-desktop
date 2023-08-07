@@ -1,7 +1,10 @@
 import QtQml
+import QtQuick.Layouts
+
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
+import "../dialogcontrols"
 
 // TODO python control
 BDialog {
@@ -22,23 +25,23 @@ BDialog {
         }
         BDialogSeparator {}
         BAddressListView {
-            BLayout.fillWidth: true
-            BLayout.fillHeight: true
-            BLayout.minimumHeight: 0
-            BLayout.maximumHeight: implicitHeight
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.minimumHeight: 0
+            Layout.maximumHeight: implicitHeight
 
             visibleItemCount: Math.min(10, _base.sourceList.rowCount())
             model: _base.sourceList
             delegate: BAddressItem {
-                address: model
-                amount: model.balance
+                address: modelObject
+                amount: modelObject.balance
                 checkable: true
                 enabled: !_selectAll.checked
                 onCheckedChanged: {
-                    model.state.useAsTransactionInput = checked
+                    modelObject.state.useAsTransactionInput = checked
                 }
                 Binding on checked {
-                    value: model.state.useAsTransactionInput
+                    value: modelObject.state.useAsTransactionInput
                 }
             }
             templateDelegate: BAddressItem {

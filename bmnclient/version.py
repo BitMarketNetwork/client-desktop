@@ -16,18 +16,22 @@ class Product:
     SHORT_NAME: Final = "bmn-client"
     VERSION: Final = (0, 15, 0)
     VERSION_STRING: Final = tupleToVersionString(VERSION)
-    VERSION_UPDATE_URL: Final = \
+    VERSION_UPDATE_URL: Final = (
         "https://github.com/BitMarketNetwork/client-desktop/releases"
-    VERSION_UPDATE_API_URL: Final = \
+    )
+    VERSION_UPDATE_API_URL: Final = (
         "https://api.github.com/repos/BitMarketNetwork/client-desktop/releases"
+    )
     ENCODING: Final = "utf-8"
     STRING_SEPARATOR: Final = ":"
     PYTHON_MINIMAL_VERSION: Final = (3, 8, 0)
 
     import platform
+
     PLATFORM_STRING: Final = "py{}-{}".format(
         "".join(platform.python_version_tuple()[:2]),
-        platform.machine().lower())
+        platform.machine().lower(),
+    )
 
 
 class ProductPaths:
@@ -40,8 +44,12 @@ class ProductPaths:
     ICON_DARWIN_FILE_PATH: Final = RESOURCES_PATH / "images" / "icon-logo.icns"
     ICON_LINUX_FILE_PATH: Final = RESOURCES_PATH / "images" / "icon-logo.svg"
 
-    CONFIG_FILE_NAME: Final = "config.json"
-    DATABASE_FILE_NAME: Final = "wallet.db"
+    CONFIG_FILE_NAME: Final = "config.json"  # TODO deprecated
+    WALLETS_DIR_NAME: Final = "wallets"
+    WALLET_SUFFIX: Final = ".json"
+    WALLET_DUPLICATE_FORMAT: Final = "{name} ({index})"
+    DATABSE_SUFFIX: Final = ".db"
+    DATABASE_FILE_NAME: Final = "wallet.db"  # TODO deprecated
 
     QML_OFFLINE_STORAGE_PATH: Final = Path("qml") / "offline_storage"
     QML_CACHE_PATH: Final = Path("qml") / "cache"
@@ -59,9 +67,7 @@ class Timer:
 
 
 class Server:
-    DEFAULT_URL_LIST: Final = (
-        "https://d1.bitmarket.network:30110/",
-    )
+    DEFAULT_URL_LIST: Final = ("https://d1.bitmarket.network:30110/",)
 
 
 class Gui:

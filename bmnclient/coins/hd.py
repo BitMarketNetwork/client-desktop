@@ -6,34 +6,40 @@ from typing import TYPE_CHECKING
 from ..crypto.base58 import Base58
 from ..crypto.digest import Hash160Digest, Hmac, Sha512Digest
 from ..crypto.secp256k1 import KeyUtils, PrivateKey, PublicKey
+from ..utils.class_property import classproperty
 
 if TYPE_CHECKING:
-    from typing import \
-        Final, \
-        Generator, \
-        Iterator, \
-        Optional, \
-        Sequence, \
-        Tuple, \
-        Union
+    from typing import (
+        Final,
+        Generator,
+        Iterator,
+        Optional,
+        Sequence,
+        Tuple,
+        Union,
+    )
+
     from .abstract import Coin
 
 
 # https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
 class HdNode:
     _ROOT_KEY: Final = b"Bitcoin seed"
-    _EXTENDED_KEY_SIZE: int = (4 + 1 + 4 + 4 + 32 + 33)
+    _EXTENDED_KEY_SIZE: int = 4 + 1 + 4 + 4 + 32 + 33
     _HARDENED_MASK = 0x80000000
+    _PATH_HARDENED_CHARS = ("H", "h", "'")
+    _PATH_SEPARATOR: Final = "/"
 
     def __init__(
-            self,
-            *,
-            key: Union[PrivateKey, PublicKey],
-            chain_code: bytes,
-            depth: int,
-            index: int,
-            path: Tuple[int, ...],
-            parent_fingerprint: bytes):
+        self,
+        *,
+        key: Union[PrivateKey, PublicKey],
+        chain_code: bytes,
+        depth: int,
+        index: int,
+        path: Tuple[int, ...],
+        parent_fingerprint: bytes,
+    ):
         super().__init__()
         self.__key = key
         self.__is_private_key = isinstance(self.__key, PrivateKey)
@@ -45,27 +51,29 @@ class HdNode:
         self.__identifier: Optional[bytes] = None
 
         assert len(self._chain_code) == 32
-        assert 0x00 <= self._depth <= 0xff
+        assert 0x00 <= self._depth <= 0xFF
         assert len(self._parent_fingerprint) == 4
 
     def __eq__(self, other: HdNode) -> bool:
         return (
-                isinstance(other, self.__class__)
-                and self._chain_code == other._chain_code
-                and self._depth == other._depth
-                and self._index == other._index
-                and self._parent_fingerprint == other._parent_fingerprint
-                and self.publicKey == other.publicKey
+            isinstance(other, self.__class__)
+            and self._chain_code == other._chain_code
+            and self._depth == other._depth
+            and self._index == other._index
+            and self._parent_fingerprint == other._parent_fingerprint
+            and self.publicKey == other.publicKey
         )
 
     def __hash__(self) -> int:
-        return hash((
-            self._chain_code,
-            self._depth,
-            self._index,
-            self._parent_fingerprint,
-            self.publicKey
-        ))
+        return hash(
+            (
+                self._chain_code,
+                self._depth,
+                self._index,
+                self._parent_fingerprint,
+                self.publicKey,
+            )
+        )
 
     @property
     def publicKey(self) -> PublicKey:
@@ -110,15 +118,13 @@ class HdNode:
             depth=0,
             index=0,
             path=tuple(),
-            parent_fingerprint=b"\0" * 4)
+            parent_fingerprint=b"\0" * 4,
+        )
 
     def deriveChildNode(
-            self,
-            index: int,
-            *,
-            hardened: bool,
-            private: bool) -> Optional[HdNode]:
-        if self._depth >= 0xff or (private and self.privateKey is None):
+        self, index: int, *, hardened: bool, private: bool
+    ) -> Optional[HdNode]:
+        if self._depth >= 0xFF or (private and self.privateKey is None):
             return None
 
         if hardened:
@@ -154,9 +160,8 @@ class HdNode:
             # Protected in secp256k1:
             #   parse256(IL) ≥ n or Ki is the point at infinity
             key = PublicKey.fromPublicInteger(
-                key_integer,
-                self.publicKey.point,
-                is_compressed=True)
+                key_integer, self.publicKey.point, is_compressed=True
+            )
 
         if key is None:
             return None
@@ -166,8 +171,9 @@ class HdNode:
             chain_code=key_i_r,
             depth=self._depth + 1,
             index=index,
-            path=self._path + (index, ),
-            parent_fingerprint=self.fingerprint)
+            path=self._path + (index,),
+            parent_fingerprint=self.fingerprint,
+        )
 
     @classmethod
     def fromExtendedKey(cls, key_string: str) -> Tuple[int, Optional[HdNode]]:
@@ -177,17 +183,17 @@ class HdNode:
 
         offset = 0
 
-        version = KeyUtils.integerFromBytes(ext_key[offset:offset + 4])
+        version = KeyUtils.integerFromBytes(ext_key[offset : offset + 4])
         offset += 4
-        depth = KeyUtils.integerFromBytes(ext_key[offset:offset + 1])
+        depth = KeyUtils.integerFromBytes(ext_key[offset : offset + 1])
         offset += 1
-        parent_fingerprint = ext_key[offset:offset + 4]
+        parent_fingerprint = ext_key[offset : offset + 4]
         offset += 4
-        index = KeyUtils.integerFromBytes(ext_key[offset:offset + 4])
+        index = KeyUtils.integerFromBytes(ext_key[offset : offset + 4])
         offset += 4
-        chain_code = ext_key[offset:offset + 32]
+        chain_code = ext_key[offset : offset + 32]
         offset += 32
-        key_data = ext_key[offset:offset + 33]
+        key_data = ext_key[offset : offset + 33]
         offset += 33
 
         assert offset == cls._EXTENDED_KEY_SIZE
@@ -207,8 +213,9 @@ class HdNode:
             chain_code=chain_code,
             depth=depth,
             index=index,
-            path=(index, ) if depth else tuple(),
-            parent_fingerprint=parent_fingerprint)
+            path=(index,) if depth else tuple(),
+            parent_fingerprint=parent_fingerprint,
+        )
         return version, node
 
     def toExtendedKey(self, version: int, *, private: bool) -> Optional[str]:
@@ -221,12 +228,13 @@ class HdNode:
         if version is None or depth is None or index is None:
             return None
 
-        result = \
-            version \
-            + depth \
-            + self._parent_fingerprint \
-            + index \
+        result = (
+            version
+            + depth
+            + self._parent_fingerprint
+            + index
             + self._chain_code
+        )
         if private:
             result += b"\x00" + self.privateKey.data
         else:
@@ -238,15 +246,23 @@ class HdNode:
 
     @classmethod
     def toHardenedLevel(cls, value: int) -> int:
-        return (value | cls._HARDENED_MASK) & 0xffffffff
+        return (value | cls._HARDENED_MASK) & 0xFFFFFFFF
 
     @classmethod
     def fromHardenedLevel(cls, value: int) -> int:
-        return (value & ~cls._HARDENED_MASK) & 0xffffffff
+        return (value & ~cls._HARDENED_MASK) & 0xFFFFFFFF
 
     @classmethod
     def isHardenedLevel(cls, value: int) -> bool:
         return (value & cls._HARDENED_MASK) == cls._HARDENED_MASK
+
+    @classproperty
+    def pathHardenedChars(cls) -> Tuple[str, ...]:  # noqa
+        return cls._PATH_HARDENED_CHARS
+
+    @classproperty
+    def pathSeparator(cls) -> str:  # noqa
+        return cls._PATH_SEPARATOR
 
     @property
     def path(self) -> Tuple[int, ...]:
@@ -259,9 +275,9 @@ class HdNode:
 
     @classmethod
     def pathFromString(
-            cls,
-            path: str) -> Tuple[Optional[Tuple[int, ...]], bool]:
-        path = path.split("/")
+        cls, path: str
+    ) -> Tuple[Optional[Tuple[int, ...]], bool]:
+        path = path.split(cls._PATH_SEPARATOR)
         if not path:
             return tuple(), False
 
@@ -278,7 +294,7 @@ class HdNode:
                     continue
 
                 hardened = False
-                if level[-1] in ("'", "h", "H"):
+                if level[-1] in cls._PATH_HARDENED_CHARS:
                     level = level[:-1]
                     hardened = True
 
@@ -288,7 +304,7 @@ class HdNode:
                     hardened = True
 
                 level = abs(int(level))
-                if level > 0xffffffff:
+                if level > 0xFFFFFFFF:
                     return None, False
                 if hardened:
                     level = cls.toHardenedLevel(level)
@@ -298,25 +314,39 @@ class HdNode:
         except (ValueError, IndexError):
             return None, False
 
-    def pathToString(self, *, hardened_char: str = "H") -> Optional[str]:
+    def pathToString(self, *, hardened_char: str = "") -> Optional[str]:
+        return self.pathJoin(
+            self._path,
+            is_full_path=self.isFullPath,
+            hardened_char=hardened_char,
+        )
+
+    @classmethod
+    def pathJoin(
+        cls,
+        path: Tuple[int, ...],
+        *,
+        is_full_path: bool = True,
+        hardened_char: str = "",
+    ) -> Optional[str]:
+        if not hardened_char:
+            hardened_char = cls._PATH_HARDENED_CHARS[0]
         result = []
-        if len(self._path) == self._depth:
+        if is_full_path:
             result.append("m")
-        for level in self._path:
-            if level > 0xffffffff:
+        for level in path:
+            if level > 0xFFFFFFFF:
                 return None
-            if self.isHardenedLevel(level):
-                level = self.fromHardenedLevel(level)
+            if cls.isHardenedLevel(level):
+                level = cls.fromHardenedLevel(level)
                 result.append(str(level) + hardened_char[0])
             else:
                 result.append(str(level))
-        return "/".join(result)
+        return cls._PATH_SEPARATOR.join(result)
 
     def fromPath(
-            self,
-            path: Union[str, Sequence[int]],
-            *,
-            private: bool) -> Optional[HdNode]:
+        self, path: Union[str, Sequence[int]], *, private: bool
+    ) -> Optional[HdNode]:
         if isinstance(path, str):
             path, is_full_path = self.pathFromString(path)
             if path is None:
@@ -329,7 +359,8 @@ class HdNode:
             node = node.deriveChildNode(
                 self.fromHardenedLevel(index),
                 hardened=self.isHardenedLevel(index),
-                private=private)
+                private=private,
+            )
             if node is None:
                 return None
         return node
@@ -339,11 +370,7 @@ class HdAddressIterator:
     _EMPTY_ACCOUNT_LIMIT = 2
     _EMPTY_ADDRESS_LIMIT = 6
 
-    def __init__(
-            self,
-            coin: Coin,
-            *,
-            broken_mode: bool = False) -> None:
+    def __init__(self, coin: Coin, *, broken_mode: bool = False) -> None:
         self._coin = coin
         self._is_empty_account = True
         self._empty_address_count = 0
@@ -371,16 +398,20 @@ class HdAddressIterator:
         if not self._coin.hdNodeList:
             return
 
-        type_list = list(chain(
-            filter(
-                lambda t:
-                    t.value.hdPurpose is not None and t.value.isWitness,
-                self._coin.Address.Type),
-            filter(
-                lambda t:
-                    t.value.hdPurpose is not None and not t.value.isWitness,
-                self._coin.Address.Type),
-        ))
+        type_list = list(
+            chain(
+                filter(
+                    lambda t: t.value.hdPurpose is not None
+                    and t.value.isWitness,
+                    self._coin.Address.Type,
+                ),
+                filter(
+                    lambda t: t.value.hdPurpose is not None
+                    and not t.value.isWitness,
+                    self._coin.Address.Type,
+                ),
+            )
+        )
 
         invalid_address_limit = self._EMPTY_ADDRESS_LIMIT
         empty_address_limit = self._EMPTY_ADDRESS_LIMIT
@@ -395,7 +426,8 @@ class HdAddressIterator:
                         account=-1,
                         is_change=False,
                         index=address_index,
-                        type_=type_)
+                        type_=type_,
+                    )
                     if address is None:
                         invalid_address_count += 1
                         break
@@ -420,7 +452,8 @@ class HdAddressIterator:
                             account=account,
                             is_change=change > 0,
                             index=address_index,
-                            type_=type_)
+                            type_=type_,
+                        )
                         if address is None:
                             # invalid hd path protection, BIP-0032
                             invalid_address_count += 1
@@ -430,7 +463,10 @@ class HdAddressIterator:
                             invalid_address_count = 0
                             yield address
                             # controlled by self.markCurrentAddress()
-                            if self._empty_address_count >= empty_address_limit:
+                            if (
+                                self._empty_address_count
+                                >= empty_address_limit
+                            ):
                                 break
 
                 # controlled by self.markCurrentAddress()

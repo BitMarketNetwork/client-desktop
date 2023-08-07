@@ -19,17 +19,15 @@ class Debug(NotImplementedInstance):
 
         if current_object is not None:
             current_name = (
-                    current_object.__class__.__name__
-                    + "."
-                    + current_name)
+                current_object.__class__.__name__ + "." + current_name
+            )
         if object_ is not None:
-            name = (
-                    object_.__class__.__name__
-                    + "."
-                    + name)
+            name = object_.__class__.__name__ + "." + name
         raise AssertionError(
-            "invalid caller name '{}', required caller name is '{}'"
-            .format(current_name, name))
+            "invalid caller name '{}', required caller name is '{}'".format(
+                current_name, name
+            )
+        )
 
     @classproperty
     def isEnabled(cls) -> bool:  # noqa
@@ -40,8 +38,10 @@ class Debug(NotImplementedInstance):
     def setState(cls, enabled: bool) -> None:
         if cls._ENABLED is not None:
             raise RuntimeError(
-                "can't change an already initialized {} state."
-                .format(cls.__name__))
+                "can't change an already initialized {} state.".format(
+                    cls.__name__
+                )
+            )
 
         cls._ENABLED = enabled
         if not cls._ENABLED:

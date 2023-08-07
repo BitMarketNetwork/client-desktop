@@ -6,25 +6,27 @@ from unittest import TestCase
 from bmnclient.coins.coin_bitcoin import Bitcoin
 from bmnclient.coins.hd import HdNode
 from bmnclient.coins.mnemonic import Mnemonic
-from tests import TestApplication
+from tests.helpers import TestApplication
 
 _logger = TestApplication.getLogger(__name__)
 
 
 class TestMnemonic(TestCase):
     def _test_seed(
-            self,
-            language: str,
-            entropy: str,
-            phrase: str,
-            password: str,
-            seed: str,
-            bip32_xprv: str) -> None:
+        self,
+        language: str,
+        entropy: str,
+        phrase: str,
+        password: str,
+        seed: str,
+        bip32_xprv: str,
+    ) -> None:
         mnemonic = Mnemonic(language)
         generated_phrase = mnemonic.getPhrase(bytes.fromhex(entropy))
         self.assertEqual(
             Mnemonic.normalizePhrase(generated_phrase),
-            Mnemonic.normalizePhrase(phrase))
+            Mnemonic.normalizePhrase(phrase),
+        )
 
         self.assertTrue(mnemonic.isValidPhrase(generated_phrase))
         self.assertTrue(mnemonic.isValidPhrase(phrase))
@@ -34,9 +36,12 @@ class TestMnemonic(TestCase):
 
         root_node = HdNode.deriveRootNode(generated_seed)
         self.assertIsNotNone(root_node)
-        self.assertEqual(bip32_xprv, root_node.toExtendedKey(
-            Bitcoin.bip0032VersionPrivateKey,
-            private=True))
+        self.assertEqual(
+            bip32_xprv,
+            root_node.toExtendedKey(
+                Bitcoin.bip0032VersionPrivateKey, private=True
+            ),
+        )
 
     def test_invalid_language(self) -> None:
         for language in ("unknown", "..", "12\x003"):
@@ -48,19 +53,17 @@ class TestMnemonic(TestCase):
 
     def test_seed_en(self) -> None:
         test_list = json.loads(
-            (TestApplication.dataPath / "bip-0039.json").read_text("utf-8"))
+            (TestApplication.dataPath / "bip-0039.json").read_text("utf-8")
+        )
         for item in test_list["english"]:
             self._test_seed(
-                "english",
-                item[0],
-                item[1],
-                "TREZOR",
-                item[2],
-                item[3])
+                "english", item[0], item[1], "TREZOR", item[2], item[3]
+            )
 
     def test_seed_jp(self) -> None:
         test_list = json.loads(
-            (TestApplication.dataPath / "bip-0039_jp.json").read_text("utf-8"))
+            (TestApplication.dataPath / "bip-0039_jp.json").read_text("utf-8")
+        )
         for item in test_list:
             self._test_seed(
                 "japanese",
@@ -68,17 +71,22 @@ class TestMnemonic(TestCase):
                 item["mnemonic"],
                 item["passphrase"],
                 item["seed"],
-                item["bip32_xprv"])
+                item["bip32_xprv"],
+            )
 
     def test_valid(self) -> None:
         for language in Mnemonic.getLanguageList():
             mnemonic = Mnemonic(language)
             for i in range(2000):
                 phrase = mnemonic.getPhrase(
-                    os.urandom(random.choice(Mnemonic.dataLengthList)))
+                    os.urandom(random.choice(Mnemonic.dataLengthList))
+                )
                 if i == 1:
                     _logger.debug("Random phrase {}: {}".format(i, phrase))
                 self.assertTrue(mnemonic.isValidPhrase(phrase))
                 # noinspection PyProtectedMember
-                self.assertFalse(mnemonic.isValidPhrase(
-                    phrase + " " + random.choice(mnemonic._word_list)))
+                self.assertFalse(
+                    mnemonic.isValidPhrase(
+                        phrase + " " + random.choice(mnemonic._word_list)
+                    )
+                )

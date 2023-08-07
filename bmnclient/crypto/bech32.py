@@ -19,11 +19,7 @@ class Bech32:
         return cls._SEPARATOR
 
     @classmethod
-    def encode(
-            cls,
-            hrp: str,
-            version: int,
-            data: bytes) -> Optional[str]:
+    def encode(cls, hrp: str, version: int, data: bytes) -> Optional[str]:
         if not hrp or not 0 <= version <= 16:
             return None
 
@@ -42,9 +38,8 @@ class Bech32:
 
     @classmethod
     def decode(
-            cls,
-            source: str) \
-            -> Union[Tuple[None, None, None], Tuple[str, int, bytes]]:
+        cls, source: str
+    ) -> Union[Tuple[None, None, None], Tuple[str, int, bytes]]:
         result_none = (None, None, None)
         if len(source) > cls._MAX_SIZE:
             return result_none
@@ -59,7 +54,7 @@ class Bech32:
                 return result_none
 
         data = []
-        for c in source[separator + 1:]:
+        for c in source[separator + 1 :]:
             c = cls._CHAR_LIST.find(c)
             if c < 0:
                 return result_none
@@ -72,7 +67,7 @@ class Bech32:
         if not cls._verifyChecksum(hrp, data):
             return result_none
 
-        data = cls._convertBits(data[1:-cls._CHECKSUM_SIZE], 5, 8, False)
+        data = cls._convertBits(data[1 : -cls._CHECKSUM_SIZE], 5, 8, False)
         if data is None or not 0 <= version <= 16:
             return result_none
 
@@ -91,7 +86,8 @@ class Bech32:
         checksum = cls._polyMod(b"\0" * cls._CHECKSUM_SIZE, checksum)
         checksum ^= 1
         return bytes(
-            (checksum >> 5 * (5 - i)) & 31 for i in range(cls._CHECKSUM_SIZE))
+            (checksum >> 5 * (5 - i)) & 31 for i in range(cls._CHECKSUM_SIZE)
+        )
 
     @classmethod
     def _verifyChecksum(cls, hrp: str, data: bytes) -> bool:
@@ -101,10 +97,8 @@ class Bech32:
 
     @staticmethod
     def _convertBits(
-            data: bytes,
-            from_bits: int,
-            to_bits: int,
-            pad: bool = True) -> Optional[bytes]:
+        data: bytes, from_bits: int, to_bits: int, pad: bool = True
+    ) -> Optional[bytes]:
         acc = 0
         bits = 0
         result = []
@@ -130,15 +124,15 @@ class Bech32:
     def _polyMod(data: bytes, checksum) -> int:
         for v in data:
             checksum0 = checksum >> 25
-            checksum = (checksum & 0x1ffffff) << 5 ^ v
+            checksum = (checksum & 0x1FFFFFF) << 5 ^ v
             if checksum0 & 1:
-                checksum ^= 0x3b6a57b2
+                checksum ^= 0x3B6A57B2
             if checksum0 & 2:
-                checksum ^= 0x26508e6d
+                checksum ^= 0x26508E6D
             if checksum0 & 4:
-                checksum ^= 0x1ea119fa
+                checksum ^= 0x1EA119FA
             if checksum0 & 8:
-                checksum ^= 0x3d4233dd
+                checksum ^= 0x3D4233DD
             if checksum0 & 16:
-                checksum ^= 0x2a1462b3
+                checksum ^= 0x2A1462B3
         return checksum
