@@ -16,10 +16,12 @@ BItemDelegate {
     property var file // FileModel
 
     contentItem: BGridLayout {
+        id: _grid
         columns: 3
         columnSpacing: 5
 
         BIconImage {
+            id: _icon
             Layout.fillWidth: true
             Layout.rowSpan: 2
             source: _applicationManager.imagePath("icon-wallet.svg")
@@ -28,6 +30,7 @@ BItemDelegate {
             color: Material.theme === Material.Dark ? Material.foreground : "transparent"
         }
         BLabel {
+            Layout.maximumWidth: _grid.width - (_grid.columnSpacing * 2) - _icon.implicitWidth - _menuToolButton.implicitWidth
             font.bold: true
             elide: BLabel.ElideRight
             text: _base.file.name
