@@ -25,7 +25,6 @@ BDialog {
             Layout.fillHeight: true
             Layout.fillWidth: true
 
-            state: BBackend.keyStoreList.count > 0 ? "Visible" : "Invisible"
             states: [
                 State { name: "Visible" },
                 State { name: "Invisible" }
@@ -67,6 +66,10 @@ BDialog {
                     onRenameAccepted: (path) => {
                         _base.renameAccepted(path)
                     }
+                }
+
+                onCountChanged: {
+                    _loader.state = BBackend.keyStoreList.rowCount() > 0 ? "Visible" : "Invisible"
                 }
             }
         }
