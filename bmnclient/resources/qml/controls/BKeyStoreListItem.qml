@@ -22,7 +22,6 @@ BItemDelegate {
 
         BIconImage {
             id: _icon
-            Layout.fillWidth: true
             Layout.rowSpan: 2
             source: _applicationManager.imagePath("icon-wallet.svg")
             sourceSize.width: _applicationStyle.icon.normalWidth
@@ -30,6 +29,8 @@ BItemDelegate {
             color: Material.theme === Material.Dark ? Material.foreground : "transparent"
         }
         BLabel {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignLeft
             Layout.maximumWidth: _grid.width - (_grid.columnSpacing * 2) - _icon.implicitWidth - _menuToolButton.implicitWidth
             font.bold: true
             elide: BLabel.ElideRight
