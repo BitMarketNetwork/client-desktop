@@ -63,7 +63,7 @@ BItemDelegate {
                 id: _fileName
                 Layout.maximumWidth: _toolTip.availableWidth
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-                wrapMode: Label.WrapAnywhere
+                wrapMode: BLabel.WrapAnywhere
                 text: _base.file.name
             }
             BSeparator {
@@ -75,7 +75,7 @@ BItemDelegate {
                 }
                 BLabel {
                     Layout.maximumWidth: _toolTip.availableWidth - _toolTip.leftPadding - _toolTip.rightPadding
-                    wrapMode: Label.WrapAnywhere
+                    wrapMode: BLabel.WrapAnywhere
                     text: _base.file.path
                 }
             }
