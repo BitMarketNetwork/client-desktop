@@ -54,12 +54,17 @@ BItemDelegate {
     }
 
     toolTipItem: BToolTip {
+        id: _toolTip
         parent: _base
+        width: _base.width * 2
 
         contentItem: BColumnLayout {
             BLabel {
-                text: _base.file.name
+                id: _fileName
+                Layout.maximumWidth: _toolTip.availableWidth
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+                wrapMode: Label.WrapAnywhere
+                text: _base.file.name
             }
             BSeparator {
                 Layout.fillWidth: true
@@ -69,6 +74,8 @@ BItemDelegate {
                     text: qsTr("Path")
                 }
                 BLabel {
+                    Layout.maximumWidth: _toolTip.availableWidth - _toolTip.leftPadding - _toolTip.rightPadding
+                    wrapMode: Label.WrapAnywhere
                     text: _base.file.path
                 }
             }
