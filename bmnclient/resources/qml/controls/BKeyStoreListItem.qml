@@ -12,15 +12,17 @@ BItemDelegate {
 
     signal keyStoreClicked(var path)
     signal renameAccepted(var path)
+    signal removeAccepted(var path)
 
     property var file // FileModel
 
     contentItem: BGridLayout {
+        id: _grid
         columns: 3
         columnSpacing: 5
 
         BIconImage {
-            Layout.fillWidth: true
+            id: _icon
             Layout.rowSpan: 2
             source: _applicationManager.imagePath("icon-wallet.svg")
             sourceSize.width: _applicationStyle.icon.normalWidth
@@ -28,6 +30,9 @@ BItemDelegate {
             color: Material.theme === Material.Dark ? Material.foreground : "transparent"
         }
         BLabel {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignLeft
+            Layout.maximumWidth: _grid.width - (_grid.columnSpacing * 2) - _icon.implicitWidth - _menuToolButton.implicitWidth
             font.bold: true
             elide: BLabel.ElideRight
             text: _base.file.name
@@ -49,12 +54,17 @@ BItemDelegate {
     }
 
     toolTipItem: BToolTip {
+        id: _toolTip
         parent: _base
+        width: _base.width * 2
 
         contentItem: BColumnLayout {
             BLabel {
-                text: _base.file.name
+                id: _fileName
+                Layout.maximumWidth: _toolTip.availableWidth
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+                wrapMode: BLabel.WrapAnywhere
+                text: _base.file.name
             }
             BSeparator {
                 Layout.fillWidth: true
@@ -64,6 +74,8 @@ BItemDelegate {
                     text: qsTr("Path")
                 }
                 BLabel {
+                    Layout.maximumWidth: _toolTip.availableWidth - _toolTip.leftPadding - _toolTip.rightPadding
+                    wrapMode: BLabel.WrapAnywhere
                     text: _base.file.path
                 }
             }
@@ -83,8 +95,7 @@ BItemDelegate {
             text: qsTr("Remove")
 
             onTriggered: {
-                // TODO confirmation dialog
-                BBackend.keyStoreList.onRemoveAccepted(_base.file.path)
+                _base.removeAccepted(_base.file.path)
             }
         }
     }

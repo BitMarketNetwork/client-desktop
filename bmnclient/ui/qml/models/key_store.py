@@ -3,15 +3,19 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import Property as QProperty, QObject, Slot as QSlot
+from PySide6.QtCore import Property as QProperty
+from PySide6.QtCore import QObject
+from PySide6.QtCore import Signal as QSignal
+from PySide6.QtCore import Slot as QSlot
 from PySide6.QtGui import QValidator
 
 from bmnclient.coins.abstract.coin import Coin
 from bmnclient.config import KeyStoreConfig
 from bmnclient.logger import Logger
 from bmnclient.version import ProductPaths
-from .file import FileListModel
+
 from ..dialogs.key_store import RevealSeedPhraseDialog, TxApproveDialog
+from .file import FileListModel
 
 if TYPE_CHECKING:
     from ....key_store import KeyStore
@@ -54,6 +58,8 @@ class KeyStoreModel(QObject):
 
 
 class KeyStoreListModel(FileListModel):
+    keyStoreRemoved = QSignal()
+
     def __init__(self, application: QmlApplication) -> None:
         super().__init__(application, application.walletsPath)
 
@@ -63,7 +69,6 @@ class KeyStoreListModel(FileListModel):
             and file.suffix.lower() == ProductPaths.WALLET_SUFFIX.lower()
         )
 
-    # TODO confirmation dialog
     @QSlot(str)
     def onRemoveAccepted(self, path: str) -> None:
         path = Path(path)
@@ -71,10 +76,10 @@ class KeyStoreListModel(FileListModel):
             return
         try:
             path.unlink(missing_ok=True)
+            self.keyStoreRemoved.emit()
         except OSError as exp:
             self._logger.debug(
                 "Failed to remove file '%s'. %s",
                 path,
                 Logger.osErrorString(exp),
             )
-            # TODO: UI message

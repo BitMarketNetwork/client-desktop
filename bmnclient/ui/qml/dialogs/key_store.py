@@ -101,6 +101,26 @@ class KeyStoreErrorDialog(AbstractMessageDialog):
         KeyStorePasswordDialog(self._manager).open()
 
 
+class KeyStoreRemoveConfirmDialog(AbstractMessageDialog):
+    def __init__(
+        self,
+        manager: DialogManager,
+        parent: AbstractDialog,
+        path: Path
+    ) -> None:
+        super().__init__(
+            manager,
+            parent,
+            type_=AbstractMessageDialog.Type.AskYesNo,
+            title=parent.title,
+            text=self.tr("Do you want to remove key store?"))
+
+        self._path = path
+
+    def onAccepted(self) -> None:
+        self._manager.context.keyStoreList.onRemoveAccepted(self._path)
+
+
 class KeyStoreNewPasswordDialog(AbstractDialog):
     _QML_NAME = "BKeyStoreNewPasswordDialog"
 
@@ -172,6 +192,9 @@ class KeyStoreSelectDialog(AbstractDialog):
 
     def onRenameAccepted(self, path: Path) -> None:
         WalletRenameDialog(self._manager, self, path).open()
+
+    def onRemoveAccepted(self, path: Path) -> None:
+        KeyStoreRemoveConfirmDialog(self._manager, self, path).open()
 
     def onGenerateAccepted(self) -> None:
         GenerateSeedPhraseDialog(self._manager, None).open()

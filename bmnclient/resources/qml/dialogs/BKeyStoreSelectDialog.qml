@@ -13,6 +13,7 @@ BDialog {
 
     signal keyStoreClicked(var path)
     signal renameAccepted(var path)
+    signal removeAccepted(var path)
     signal generateAccepted
     signal restoreAccepted
     signal restoreBackupAccepted
@@ -25,7 +26,6 @@ BDialog {
             Layout.fillHeight: true
             Layout.fillWidth: true
 
-            state: BBackend.keyStoreList.count > 0 ? "Visible" : "Invisible"
             states: [
                 State { name: "Visible" },
                 State { name: "Invisible" }
@@ -67,6 +67,13 @@ BDialog {
                     onRenameAccepted: (path) => {
                         _base.renameAccepted(path)
                     }
+                    onRemoveAccepted: (path) => {
+                        _base.removeAccepted(path)
+                    }
+                }
+
+                onCountChanged: {
+                    _loader.state = BBackend.keyStoreList.rowCount() > 0 ? "Visible" : "Invisible"
                 }
             }
         }
