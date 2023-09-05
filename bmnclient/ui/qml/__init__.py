@@ -13,7 +13,7 @@ from PySide6.QtQml import (
 from PySide6.QtQuick import QQuickWindow
 from PySide6.QtQuickControls2 import QQuickStyle
 
-from ...config import Config
+from ...config import ApplicationConfig
 from ...network.access_manager import NetworkAccessManager
 from ...resources import Resources
 from ...version import Gui, ProductPaths
@@ -188,7 +188,7 @@ class QmlContext(QObject):
         return self._clipboard_model
 
     @QProperty(QObject, constant=True)
-    def config(self) -> Config:
+    def config(self) -> ApplicationConfig:
         return self._application.config
 
     @QProperty(QObject, constant=True)
