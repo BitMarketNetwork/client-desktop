@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 
 def selectKeyStoreDialog(manager: DialogManager) -> AbstractDialog:
-    if manager.context.keyStore.native.isExists:
+    if not manager.context.config.filePath.exists():
         return SetupUiSettingsDialog(manager)
     return KeyStoreSelectDialog(manager)
 
