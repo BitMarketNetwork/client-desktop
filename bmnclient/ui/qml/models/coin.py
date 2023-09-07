@@ -1,13 +1,17 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Union
 
 from PySide6.QtCore import Property as QProperty
-from PySide6.QtCore import QObject, Qt
+from PySide6.QtCore import (
+    QIdentityProxyModel,
+    QModelIndex,
+    QObject,
+    QPersistentModelIndex,
+    Qt,
+)
 from PySide6.QtCore import Signal as QSignal
 from PySide6.QtCore import Slot as QSlot
-from PySide6.QtCore import QIdentityProxyModel
-from PySide6.QtCore import QModelIndex, QPersistentModelIndex
 
 from ....coins.abstract import Coin
 from . import AbstractCoinStateModel, AbstractModel, ValidStatus
