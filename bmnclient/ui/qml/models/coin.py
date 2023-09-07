@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from PySide6.QtCore import Property as QProperty
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Qt
 from PySide6.QtCore import Signal as QSignal
 from PySide6.QtCore import Slot as QSlot
+from PySide6.QtCore import QIdentityProxyModel
+from PySide6.QtCore import QModelIndex, QPersistentModelIndex
 
 from ....coins.abstract import Coin
 from . import AbstractCoinStateModel, AbstractModel, ValidStatus
@@ -292,3 +294,44 @@ class CoinModel(AbstractCoinObjectModel, Coin.Model, AbstractModel):
 
 class CoinListModel(AbstractTableModel):
     pass
+
+class WalletChartModel(QIdentityProxyModel):
+    def __init__(
+        self,
+        application: QmlApplication,
+        sourceModel: AbstractTableModel
+    ) -> None:
+        super().__init__(application)
+        self.setSourceModel(sourceModel)
+
+    def index(
+        self,
+        row: int,
+        column: int,
+        parent: QModelIndex = QModelIndex()
+    ) -> QModelIndex:
+        if 0 <= row < self.rowCount() and 0 <= column < self.columnCount():
+            return self.createIndex(row, column)
+        return QModelIndex()
+
+    def rowCount(
+        self,
+        parent: Union[QModelIndex, QPersistentModelIndex] = ...
+    ) -> int:
+        return self.sourceModel().rowCount()
+
+    def columnCount(
+        self,
+        parent: Union[QModelIndex, QPersistentModelIndex] = ...
+    ) -> int:
+        return 2
+
+    def data(
+        self,
+        proxyIndex: Union[QModelIndex, QPersistentModelIndex],
+        role: int = ...
+    ) -> Any:
+        if not proxyIndex.isValid():
+            return None
+        coin = self.sourceModel().data(proxyIndex, Qt.UserRole + 1)
+        return coin.name if proxyIndex.row() == 0 else coin.balance.value
