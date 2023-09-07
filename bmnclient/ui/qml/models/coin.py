@@ -338,4 +338,4 @@ class WalletChartModel(QIdentityProxyModel):
         if not proxyIndex.isValid() or proxyIndex.column() >= self.columnCount():
             return None
         coin = self.sourceModel().data(proxyIndex, Qt.UserRole + 1)
-        return coin.name if proxyIndex.column() == 0 else coin.balance.value
+        return coin.name if proxyIndex.column() == 0 else coin.balance.fiatValue

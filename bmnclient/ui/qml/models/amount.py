@@ -56,6 +56,15 @@ class AbstractAmountModel(AbstractCoinStateModel):
             fiat_amount, self._coin.fiatRate.currencyType
         )
 
+    @QProperty(int, constant=True)
+    def fiatValue(self) -> int:
+        if self._coin.fiatRate.value <= 0:
+            return 0
+        value = self._getValue()
+        if value is None:
+            return 0
+        return self._coin.toFiatAmount(value)
+
     @QProperty(str, notify=__stateChanged)
     def fiatUnit(self) -> str:
         return self._coin.fiatRate.currencyType.unit
