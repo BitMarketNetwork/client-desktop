@@ -13,6 +13,7 @@ BDialog {
 
     signal keyStoreClicked(var path)
     signal renameAccepted(var path)
+    signal removeAccepted(var path)
     signal generateAccepted
     signal restoreAccepted
     signal restoreBackupAccepted
@@ -66,6 +67,9 @@ BDialog {
                     }
                     onRenameAccepted: (path) => {
                         _base.renameAccepted(path)
+                    }
+                    onRemoveAccepted: (path) => {
+                        _base.removeAccepted(path)
                     }
                 }
             }
