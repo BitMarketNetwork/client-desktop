@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from os import stat_result
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -107,7 +108,7 @@ class FileListModel(AbstractTableModel):
         self._watcher.fileChanged.connect(self._onFileChanged)
 
     def _update(self) -> None:
-        for file in self._application.walletsPath.iterdir():
+        for file in sorted(self._application.walletsPath.iterdir(), key=os.path.getmtime, reverse=True):
             if file in self._source_list or not self._filter(file):
                 continue
             self.lock(self.Lock.INSERT, -1, 1)
