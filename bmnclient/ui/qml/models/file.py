@@ -92,7 +92,9 @@ class FileModel(AbstractStateModel):
     def mtimeHuman(self) -> str:
         value = QDateTime()
         value.setSecsSinceEpoch(self.mtime)
-        return self.locale.toString(value, self.locale.FormatType.LongFormat)
+        #return self.locale.toString(value, self.locale.FormatType.LongFormat)
+        # TEMP
+        return self.locale.toString(value, "MMMM dd, yyyy hh:mm:ss")
 
 
 class FileListModel(AbstractTableModel):
