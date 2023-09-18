@@ -1,4 +1,6 @@
 import QtQml
+import QtQuick.Layouts
+
 import "../application"
 import "../basiccontrols"
 
@@ -17,12 +19,12 @@ BColumnLayout {
     property string txVolumeEstValue
 
     BControl {
-        BLayout.fillWidth: true
+        Layout.fillWidth: true
         padding: _applicationStyle.padding
         contentItem: BRowLayout {
             BIconLabel {
                 id: _icon
-                BLayout.fillWidth: true
+                Layout.fillWidth: true
                 icon.width: _applicationStyle.icon.largeWidth
                 icon.height: _applicationStyle.icon.largeHeight
                 icon.source: _applicationManager.imagePath(_base.coin.iconPath)
@@ -31,12 +33,12 @@ BColumnLayout {
             }
             BTextField {
                 id: _transactionInput
-                BLayout.maximumWidth: parent.width / 2
+                Layout.maximumWidth: parent.width / 2
                 placeholderText: qsTr("Search your transaction or address")
             }
             BButton { // TODO: icon
                 id: _searchBtn
-                BLayout.leftMargin: 10
+                Layout.leftMargin: 10
                 text: qsTr("SEARCH")
                 enabled: _transactionInput.text.length > 0
                 onClicked: {
@@ -46,8 +48,8 @@ BColumnLayout {
         }
     }
     BControl {
-        BLayout.alignment: Qt.AlignHCenter
-        BLayout.fillWidth: true
+        Layout.alignment: Qt.AlignHCenter
+        Layout.fillWidth: true
 
         contentItem: BGridLayout {
             id: _headerGrid
@@ -55,68 +57,68 @@ BColumnLayout {
 
             BLabel {
                 id: price
-                BLayout.alignment: Qt.AlignHCenter
+                Layout.alignment: Qt.AlignHCenter
                 text: _base.priceValue
                 font.pixelSize: 16
                 font.weight: 600
             }
             BLabel {
                 id: hashRate
-                BLayout.alignment: Qt.AlignHCenter
+                Layout.alignment: Qt.AlignHCenter
                 text: _base.hashRateValue
                 font.pixelSize: 16
                 font.weight: 600
             }
             BLabel {
                 id: tx
-                BLayout.alignment: Qt.AlignHCenter
+                Layout.alignment: Qt.AlignHCenter
                 text: _base.txValue
                 font.pixelSize: 16
                 font.weight: 600
             }
             BLabel {
                 id: txVolume
-                BLayout.alignment: Qt.AlignHCenter
+                Layout.alignment: Qt.AlignHCenter
                 text: _base.txVolumeValue
                 font.pixelSize: 16
                 font.weight: 600
             }
             BLabel {
                 id: txVolumeEst
-                BLayout.alignment: Qt.AlignHCenter
+                Layout.alignment: Qt.AlignHCenter
                 text: _base.txVolumeEstValue
                 font.pixelSize: 16
                 font.weight: 600
             }
             BLabel {
-                BLayout.alignment: Qt.AlignHCenter
+                Layout.alignment: Qt.AlignHCenter
                 text: qsTr("Price")
                 font.pixelSize: 12
             }
             BLabel {
-                BLayout.alignment: Qt.AlignHCenter
+                Layout.alignment: Qt.AlignHCenter
                 text: qsTr("Estimated Hash Rate")
                 font.pixelSize: 12
             }
             BLabel {
-                BLayout.alignment: Qt.AlignHCenter
+                Layout.alignment: Qt.AlignHCenter
                 text: qsTr("Transactions (24hrs)")
                 font.pixelSize: 12
             }
             BLabel {
-                BLayout.alignment: Qt.AlignHCenter
+                Layout.alignment: Qt.AlignHCenter
                 text: qsTr("Transactions volume")
                 font.pixelSize: 12
             }
             BLabel {
-                BLayout.alignment: Qt.AlignHCenter
+                Layout.alignment: Qt.AlignHCenter
                 text: qsTr("Transactions volume (Est)")
                 font.pixelSize: 12
             }
         }
     }
     BSeparator {
-        BLayout.fillWidth: true
+        Layout.fillWidth: true
     }
 
     function requestStats() {

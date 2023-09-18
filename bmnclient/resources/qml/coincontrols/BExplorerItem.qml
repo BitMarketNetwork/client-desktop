@@ -1,10 +1,13 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
+import QtQuick.Layouts
 import QtQml.Models
 import Qt.labs.qmlmodels
+
 import "../application"
 import "../basiccontrols"
+import "../dialogcontrols"
 
 Page {
     id: _base
@@ -36,13 +39,13 @@ Page {
             required property string section
             contentItem: BColumnLayout {
                 BLabel  {
-                    BLayout.fillHeight: true
+                    Layout.fillHeight: true
                     font.weight: 700
                     text: section
                 }
                 BSeparator {
-                    BLayout.fillWidth: true
-                    BLayout.alignment: Qt.AlignBottom
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignBottom
                 }
             }
             MouseArea { // disable onClicked event
@@ -62,11 +65,11 @@ Page {
                 contentItem: BGridLayout {
                     columns: 2
                     BLabel {
-                        BLayout.preferredWidth: parent.width / 2
+                        Layout.preferredWidth: parent.width / 2
                         text: model.key
                     }
                     BLabel {
-                        BLayout.preferredWidth: parent.width / 2
+                        Layout.preferredWidth: parent.width / 2
                         text: model.val
                         elide: Text.ElideRight
                     }
@@ -90,11 +93,11 @@ Page {
                 contentItem: BGridLayout {
                     columns: 2
                     BLabel {
-                        BLayout.preferredWidth: parent.width / 2
+                        Layout.preferredWidth: parent.width / 2
                         text: model.key
                     }
                     BColumnLayout {
-                        BLayout.preferredWidth: parent.width / 2
+                        Layout.preferredWidth: parent.width / 2
                         Repeater {
                             model: valList
                             Column {

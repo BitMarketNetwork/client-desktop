@@ -15,8 +15,8 @@ BApplicationPage {
     list.model: BBackend.coinList
     list.delegate: BCoinItem {
         visible: supportedCoins.includes(coin.name)
-        enabled: model.state.isEnabled
-        coin: model
+        enabled: modelObject.state.isEnabled
+        coin: modelObject
         onClicked: {
             _base.stack.currentIndex = _base.coinToListIndex(coin.name)
             _base.stack.children[_base.stack.currentIndex].active = true
@@ -26,11 +26,11 @@ BApplicationPage {
     Repeater {
         model: BBackend.coinList
         delegate: Loader {
-            readonly property string coinName: model.name
+            readonly property string coinName: modelObject.name
             active: false
             sourceComponent: BExplorerItem {
                 anchors.fill: parent
-                coin: model
+                coin: modelObject
             }
         }
     }

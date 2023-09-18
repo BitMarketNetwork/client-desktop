@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Material
+
 import "application"
 import "basiccontrols"
 import "pages"
@@ -71,10 +72,14 @@ BApplicationWindow {
             }
         }
 
-        BBlockchainExplorerPage {
-            id: _explorerPage
-            list.display: _drawer.barsDisplay
+        Loader {
+            active: _mainLayout.currentIndex === 2
+            sourceComponent: BBlockchainExplorerPage {
+                id: _explorerPage
+                list.display: _drawer.barsDisplay
+            }
         }
+
 
         Loader {
             active: _mainLayout.currentIndex === 3
@@ -92,7 +97,7 @@ BApplicationWindow {
         }
 
         Loader {
-            active: _mainLayout.currentIndex === 3
+            active: _mainLayout.currentIndex === 5
             sourceComponent: BSettingsPage {
                 list.display: _drawer.barsDisplay
             }
