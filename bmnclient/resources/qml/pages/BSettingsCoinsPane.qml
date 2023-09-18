@@ -19,7 +19,7 @@ BPane {
             delegate: BDialogPromptLabel {
                 Layout.column: 0
                 Layout.row: index + 1
-                text: model.fullName
+                text: modelObject.fullName
             }
         }
         Repeater {
@@ -27,9 +27,9 @@ BPane {
             delegate: BDialogInputSwitch {
                 Layout.column: 1
                 Layout.row: index + 1
-                checked: model.state.isEnabled
+                checked: modelObject.state.isEnabled
                 onCheckedChanged: {
-                    model.state.isEnabled = checked
+                    modelObject.state.isEnabled = checked
                 }
             }
         }
