@@ -1,5 +1,7 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Controls.Material
+
 import "../basiccontrols"
 
 BItemDelegate {
@@ -30,7 +32,7 @@ BItemDelegate {
             }
         }
         BLabel {
-            BLayout.fillWidth: true
+            Layout.fillWidth: true
             elide: BLabel.ElideMiddle
             text: _base.text
         }

@@ -19,7 +19,7 @@ class Network(NotImplementedInstance):
         if not cls.__initialized:
             logger.debug(
                 "QSslSocket available backends: [%s]",
-                ", ".join(QSslSocket.availableBackends())
+                ", ".join(QSslSocket.availableBackends()),
             )
 
             if Platform.isWindows:
@@ -30,13 +30,15 @@ class Network(NotImplementedInstance):
                 backend = "openssl"
 
             if (
-                    not QSslSocket.setActiveBackend(backend)
-                    or not QSslSocket.supportsSsl()
+                not QSslSocket.setActiveBackend(backend)
+                or not QSslSocket.supportsSsl()
             ):
                 Logger.fatal(
-                    "Platform doesn't support TLS, failed to set backend '{}'."
-                    .format(backend),
-                    logger)
+                    "Platform doesn't support TLS, failed to set backend '{}'.".format(
+                        backend
+                    ),
+                    logger,
+                )
             cls.__initialized = True
 
         if logger.isEnabledFor(logging.DEBUG):
@@ -47,9 +49,8 @@ class Network(NotImplementedInstance):
             else:
                 version_number = ""
             logger.debug(
-                "QSslSocket TLS status:"
-                "\n\tBackend: %s"
-                "\n\tVersion: %s%s",
+                "QSslSocket TLS status:" "\n\tBackend: %s" "\n\tVersion: %s%s",
                 QSslSocket.activeBackend(),
                 version_string,
-                version_number)
+                version_number,
+            )

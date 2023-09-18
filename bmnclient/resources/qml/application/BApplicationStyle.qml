@@ -44,6 +44,12 @@ QtObject {
         property int largeHeight: 48
     }
 
+    property QtObject chart: QtObject {
+        property real size: 0.7
+        property real holeSize: 0.3
+        property real explodeDistanceFactor: 0.01
+    }
+
     property real backgroundDarkFactor: _applicationWindow.Material.theme === Material.Dark ? 1.2 : 1.04 // TODO to themeList
     property real padding: baseFontMetrics.height
     property real spacing: baseFontMetrics.height * 0.5
@@ -63,4 +69,6 @@ QtObject {
 
     property int animationDuration: 400
     property int tooTipDelay: 400
+
+    property int walletNameMaxLength: 32
 }

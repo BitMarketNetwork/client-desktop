@@ -1,6 +1,9 @@
+import QtQuick.Layouts
 import QtQuick.Dialogs
+
 import "../application"
 import "../basiccontrols"
+import "../dialogcontrols"
 import "../dialogs"
 
 BPane {
@@ -19,8 +22,8 @@ BPane {
         BDialogInputButton {
             id: _fontDialogButton
             text: qsTr("%1, %2")
-                    .arg(_fontDialog.currentFont.family)
-                    .arg(Math.round(_fontDialog.currentFont.pointSize))
+                    .arg(_fontDialog.selectedFont.family)
+                    .arg(Math.round(_fontDialog.selectedFont.pointSize))
             onClicked: {
                 _fontDialog.open()
             }
@@ -64,8 +67,9 @@ BPane {
         BDialogSeparator {}
 
         BDialogInputButton {
-            BLayout.columnSpan: parent.columns
-            BLayout.alignment:
+            Layout.columnSpan: parent.columns
+            Layout.fillWidth: true
+            Layout.alignment:
                 (_applicationStyle.dialogInputAlignment & ~Qt.AlignHorizontal_Mask)
                 | Qt.AlignHCenter
             text: qsTr("Backup wallet...")
@@ -75,8 +79,9 @@ BPane {
             }
         }
         BDialogInputButton {
-            BLayout.columnSpan: parent.columns
-            BLayout.alignment:
+            Layout.columnSpan: parent.columns
+            Layout.fillWidth: true
+            Layout.alignment:
                 (_applicationStyle.dialogInputAlignment & ~Qt.AlignHorizontal_Mask)
                 | Qt.AlignHCenter
             text: qsTr("Restore wallet...")
@@ -88,8 +93,9 @@ BPane {
             }
         }
         BDialogInputButton {
-            BLayout.columnSpan: parent.columns
-            BLayout.alignment:
+            Layout.columnSpan: parent.columns
+            Layout.fillWidth: true
+            Layout.alignment:
                 (_applicationStyle.dialogInputAlignment & ~Qt.AlignHorizontal_Mask)
                 | Qt.AlignHCenter
             text: qsTr("Clear wallet...")
@@ -104,8 +110,9 @@ BPane {
         BDialogSeparator {}
 
         BDialogInputButton {
-            BLayout.columnSpan: parent.columns
-            BLayout.alignment:
+            Layout.columnSpan: parent.columns
+            Layout.fillWidth: true
+            Layout.alignment:
                 (_applicationStyle.dialogInputAlignment & ~Qt.AlignHorizontal_Mask)
                 | Qt.AlignHCenter
             text: qsTr("Reveal Seed Phrase...")

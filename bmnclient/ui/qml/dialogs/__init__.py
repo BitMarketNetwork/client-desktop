@@ -3,17 +3,18 @@ from __future__ import annotations
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    Property as QProperty, \
-    QObject, \
-    Signal as QSignal, \
-    Slot as QSlot
+from PySide6.QtCore import Property as QProperty
+from PySide6.QtCore import QObject
+from PySide6.QtCore import Signal as QSignal
+from PySide6.QtCore import Slot as QSlot
 
 from ....logger import Logger
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Final, List, Optional, Union
+
     from .. import QmlContext
+
     QmlProperties = Dict[str, Any]
 
 
@@ -27,17 +28,16 @@ class AbstractDialog(QObject):
     _titleChanged = QSignal()
 
     def __init__(
-            self,
-            manager: DialogManager,
-            parent: Optional[AbstractDialog] = None,
-            *,
-            title: Optional[str] = None) -> None:
+        self,
+        manager: DialogManager,
+        parent: Optional[AbstractDialog] = None,
+        *,
+        title: Optional[str] = None,
+    ) -> None:
         super().__init__()
         self._manager = manager
         self._parent = parent
-        self._qml_properties: QmlProperties = {
-            "context": self
-        }
+        self._qml_properties: QmlProperties = {"context": self}
 
         if title is not None:
             self._qml_properties["title"] = title
@@ -76,13 +76,14 @@ class AbstractMessageDialog(AbstractDialog):
         AskYesNo: Final = 1
 
     def __init__(
-            self,
-            manager: DialogManager,
-            parent: Optional[AbstractDialog] = None,
-            *,
-            type_: Type = Type.Information,
-            title: Optional[str] = None,
-            text: str) -> None:
+        self,
+        manager: DialogManager,
+        parent: Optional[AbstractDialog] = None,
+        *,
+        type_: Type = Type.Information,
+        title: Optional[str] = None,
+        text: str,
+    ) -> None:
         super().__init__(manager, parent, title=title)
         self._qml_properties["type"] = type_.value
         self._qml_properties["text"] = text
@@ -120,7 +121,7 @@ class DialogManager(QObject):
         options = {
             "id": dialog_id,
             "callbacks": [],
-            "properties": dialog.qmlProperties
+            "properties": dialog.qmlProperties,
         }
         for n in dir(dialog):
             if n.startswith("on") and callable(getattr(dialog, n, None)):
@@ -131,10 +132,11 @@ class DialogManager(QObject):
 
     @QSlot(int, str, list)
     def onResult(
-            self,
-            dialog_id: int,
-            callback_name: str,
-            callback_args: List[Union[str, int]]) -> None:
+        self,
+        dialog_id: int,
+        callback_name: str,
+        callback_args: List[Union[str, int]],
+    ) -> None:
         assert dialog_id in self._opened_dialog_list
         dialog = self._opened_dialog_list[dialog_id]
         callback = getattr(dialog, callback_name, None)
@@ -146,5 +148,6 @@ class DialogManager(QObject):
         self._logger.debug(
             "onDestruction: %i, %s",
             dialog_id,
-            self._opened_dialog_list[dialog_id].__class__.__name__)
+            self._opened_dialog_list[dialog_id].__class__.__name__,
+        )
         del self._opened_dialog_list[dialog_id]

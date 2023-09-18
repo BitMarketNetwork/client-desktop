@@ -7,20 +7,15 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import (
-    QLocale,
-    QMetaObject,
-    QObject,
-    Qt,
-    Slot as QSlot)
+from PySide6.QtCore import QLocale, QMetaObject, QObject, Qt
+from PySide6.QtCore import Slot as QSlot
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from .coins.list import CoinList
-from .config import Config, ConfigKey
+from .config import ApplicationConfig
 from .currency import FiatCurrencyList, FiatRate
 from .database import Database
-from .database.tables import AddressListTable, CoinListTable, TxListTable
 from .debug import Debug
 from .key_store import KeyStore
 from .language import Language
@@ -37,43 +32,69 @@ from .signal_handler import SignalHandler
 from .version import Product, ProductPaths, Server, Timer
 
 if TYPE_CHECKING:
-    from typing import List, Optional, Type, Union
+    from typing import Final, List, Optional, Type, Union
+
     from PySide6.QtCore import QCoreApplication
+
     from .coins.abstract import CoinModelFactory
     from .coins.hd import HdNode
 
 
 class CommandLine:
+    _LOG_LEVEL_MAP: Final = {
+        "DEBUG": logging.DEBUG,
+        "INFO": logging.INFO,
+        "WARNING": logging.WARNING,
+        "ERROR": logging.ERROR,
+        "CRITICAL": logging.CRITICAL,
+    }
+
     def __init__(self, argv: List[str]) -> None:
         self._argv = argv
 
         parser = ArgumentParser(
             prog=os.path.basename(self._argv[0]),
-            description=Product.NAME + " " + Product.VERSION_STRING)
+            description=Product.NAME + " " + Product.VERSION_STRING,
+        )
         parser.add_argument(
             "-c",
             "--config-path",
             default=str(PlatformPaths.applicationConfigPath),
             type=self._expandPath,
-            help="directory for configuration files; by default, it is '{}'"
-            .format(str(PlatformPaths.applicationConfigPath)),
-            metavar="PATH")
+            help="directory for configuration files; by default, it is '{}'".format(
+                str(PlatformPaths.applicationConfigPath)
+            ),
+            metavar="PATH",
+        )
         parser.add_argument(
             "-L",
             "--local-data-path",
             default=str(PlatformPaths.applicationLocalDataPath),
             type=self._expandPath,
-            help="directory for local data files; by default, it is '{}'"
-            .format(str(PlatformPaths.applicationLocalDataPath)),
-            metavar="PATH")
+            help="directory for local data files; by default, it is '{}'".format(
+                str(PlatformPaths.applicationLocalDataPath)
+            ),
+            metavar="PATH",
+        )
         parser.add_argument(
             "-T",
             "--temp-path",
             default=str(PlatformPaths.applicationLocalDataPath),
             type=self._expandPath,
-            help="directory for temporary files; by default, it is '{}'"
-            .format(str(PlatformPaths.applicationTempPath)),
-            metavar="PATH")
+            help="directory for temporary files; by default, it is '{}'".format(
+                str(PlatformPaths.applicationTempPath)
+            ),
+            metavar="PATH",
+        )
+        parser.add_argument(
+            "--insecure",
+            action="store_true",
+            default=False,
+            help=(
+                "disable database and configuration encryption;"
+                " use only for debug purposes!"
+            ),
+        )
         parser.add_argument(
             "-l",
             "--log-file",
@@ -81,31 +102,49 @@ class CommandLine:
             type=self._expandPath,
             help="file that will store the log; can be one of the following"
             " special values: stdout, stderr; by default, it is 'stderr'",
-            metavar="FILE")
+            metavar="FILE",
+        )
+        parser.add_argument(
+            "--log-level",
+            default="",
+            type=str,
+            choices=self._LOG_LEVEL_MAP.keys(),
+            help=(
+                "set logging level output;"
+                " by default, it is 'INFO' for normal mode,"
+                " and 'DEBUG' for debug mode."
+            ),
+        )
         parser.add_argument(
             "-d",
             "--debug",
             action="store_true",
             default=False,
-            help="run the application in debug mode")
+            help="run the application in debug mode",
+        )
         parser.add_argument(
             "-s",
             "--server-url",
             default=Server.DEFAULT_URL_LIST[0],
             type=str,
-            help="alternative server URL; by default, it is '{}'"
-            .format(Server.DEFAULT_URL_LIST[0]),
-            metavar="URL")
+            help="alternative server URL; by default, it is '{}'".format(
+                Server.DEFAULT_URL_LIST[0]
+            ),
+            metavar="URL",
+        )
         parser.add_argument(
             "--server-insecure",
             action="store_true",
             default=False,
-            help="do not check the validity of server certificates")
+            help="do not check the validity of server certificates",
+        )
 
         self._arguments = parser.parse_args(self._argv[1:])
         assert isinstance(self._arguments.config_path, Path)
         assert isinstance(self._arguments.local_data_path, Path)
+        assert isinstance(self._arguments.insecure, bool)
         assert isinstance(self._arguments.log_file, Path)
+        assert isinstance(self._arguments.log_level, str)
         assert isinstance(self._arguments.debug, bool)
         assert self._arguments.debug == Debug.isEnabled
         assert isinstance(self._arguments.server_url, str)
@@ -128,11 +167,17 @@ class CommandLine:
         return self._arguments.local_data_path
 
     @property
+    def isInsecure(self) -> bool:
+        return self._arguments.insecure
+
+    @property
     def logFilePath(self) -> Path:
         return self._arguments.log_file
 
     @property
     def logLevel(self) -> int:
+        if level := self._LOG_LEVEL_MAP.get(self._arguments.log_level):
+            return level
         return logging.DEBUG if Debug.isEnabled else logging.INFO
 
     @property
@@ -140,7 +185,7 @@ class CommandLine:
         return self._arguments.server_url
 
     @property
-    def allowServerInsecure(self) -> bool:
+    def isServerInsecure(self) -> bool:
         return self._arguments.server_insecure
 
     @classmethod
@@ -155,15 +200,17 @@ class CoreApplication(QObject):
         ERROR = auto()
 
     def __init__(
-            self,
-            *,
-            qt_class: Union[Type[QCoreApplication], Type[QApplication]],
-            command_line: CommandLine,
-            model_factory: Optional[CoinModelFactory] = None) -> None:
+        self,
+        *,
+        qt_class: Union[Type[QCoreApplication], Type[QApplication]],
+        command_line: CommandLine,
+        model_factory: CoinModelFactory,
+    ) -> None:
         super().__init__()
 
-        self._command_line = command_line
-        self._logger = Logger.classLogger(self.__class__)
+        self._command_line: Final = command_line
+        self._model_factory: Final = model_factory
+        self._logger: Final = Logger.classLogger(self.__class__)
         self._title = "{} {}".format(Product.NAME, Product.VERSION_STRING)
         self._icon = QIcon(Resources.iconFilePath)
         self._language: Optional[Language] = None
@@ -171,15 +218,16 @@ class CoreApplication(QObject):
         self._on_exit_called = False
         self._run_called = False
 
-        self._config = Config(
-            self._command_line.configPath
-            / ProductPaths.CONFIG_FILE_NAME)
+        self._config = ApplicationConfig(
+            self._command_line.configPath / ProductPaths.CONFIG_FILE_NAME
+        )
         self._config.load()
 
         self._key_store = KeyStore(
             self,
             open_callback=self._onKeyStoreOpen,
-            reset_callback=self._onKeyStoreReset)
+            reset_callback=self._onKeyStoreReset,
+        )
 
         if qt_class.instance() is not None:
             self._logger.warning("Qt Application has already been created.")
@@ -197,9 +245,7 @@ class CoreApplication(QObject):
             qt_class.setOrganizationDomain(Product.MAINTAINER_DOMAIN)
 
             # QCoreApplication
-            self._qt_application = qt_class([
-                self._command_line.argv[0],
-            ])
+            self._qt_application = qt_class([self._command_line.argv[0]])
 
         if issubclass(qt_class, QApplication):
             qt_class.setWindowIcon(self._icon)
@@ -212,34 +258,38 @@ class CoreApplication(QObject):
         # noinspection PyUnresolvedReferences
         self._qt_application.aboutToQuit.connect(
             self.__onAboutToQuit,
-            Qt.DirectConnection)
+            Qt.DirectConnection,
+        )
 
         # SignalHandler
         self._signal_handler = SignalHandler()
         self._signal_handler.sigintSignal.connect(
             self.setExitEvent,
-            Qt.QueuedConnection)
+            Qt.QueuedConnection,
+        )
         self._signal_handler.sigquitSignal.connect(
             self.setExitEvent,
-            Qt.QueuedConnection)
+            Qt.QueuedConnection,
+        )
         self._signal_handler.sigtermSignal.connect(
             self.setExitEvent,
-            Qt.QueuedConnection)
+            Qt.QueuedConnection,
+        )
 
         self._init_database()
         self._init_network()
-        self._init_coins(model_factory)
+        self._init_coins(self._model_factory)
 
     def _init_database(self) -> None:
         self._database = Database(
             self,
-            self._command_line.configPath / ProductPaths.DATABASE_FILE_NAME)
+            self._command_line.configPath / ProductPaths.DATABASE_FILE_NAME,
+        )
 
     def _init_network(self) -> None:
         Network.configure()
 
-        self._server_list = ServerList(
-            self._command_line.allowServerInsecure)
+        self._server_list = ServerList(self._command_line.isServerInsecure)
         if self._command_line.serverUrl:
             self._server_list.appendServer(self._command_line.serverUrl)
         else:
@@ -249,11 +299,10 @@ class CoreApplication(QObject):
         self._network_query_manager = NetworkQueryManager("Default")
         self._network_query_scheduler = NetworkQueryScheduler(
             self,
-            self._network_query_manager)
+            self._network_query_manager,
+        )
 
-    def _init_coins(
-            self,
-            model_factory: Optional[CoinModelFactory] = None) -> None:
+    def _init_coins(self, model_factory: CoinModelFactory) -> None:
         self._fiat_currency_list = FiatCurrencyList(self)
         self._fiat_rate_service_list = FiatRateServiceList(self)
         self._blockchain_explorer_list = BlockchainExplorerList(self)
@@ -266,7 +315,6 @@ class CoreApplication(QObject):
         assert self._on_exit_called
 
     def run(self) -> int:
-        # noinspection PyTypeChecker
         QMetaObject.invokeMethod(self, "_onRunPrivate", Qt.QueuedConnection)
 
         assert not self._on_exit_called
@@ -274,15 +322,20 @@ class CoreApplication(QObject):
         self._exit_code = self._qt_application.exec()
         assert self._on_exit_called
 
+        self._database.close()
+        self._signal_handler.close()
+
         if not self._exit_code:
             self._logger.info(
                 "%s terminated successfully.",
-                Product.NAME)
+                Product.NAME,
+            )
         else:
             self._logger.warning(
                 "%s terminated with error %i.",
                 Product.NAME,
-                self._exit_code)
+                self._exit_code,
+            )
         return self._exit_code
 
     def setExitEvent(self, code: int = 0) -> None:
@@ -293,6 +346,10 @@ class CoreApplication(QObject):
             self._onExit()
 
     @property
+    def modelFactory(self) -> CoinModelFactory:
+        return self._model_factory
+
+    @property
     def tempPath(self) -> Path:
         return self._command_line.tempPath
 
@@ -301,8 +358,20 @@ class CoreApplication(QObject):
         return self._command_line.configPath
 
     @property
+    def defaultConfigPath(self) -> Path:
+        return self._command_line.configPath / ProductPaths.CONFIG_FILE_NAME
+
+    @property
+    def walletsPath(self) -> Path:
+        return self.configPath / ProductPaths.WALLETS_DIR_NAME
+
+    @property
     def config(self) -> Config:
         return self._config
+
+    @property
+    def isInsecure(self) -> bool:
+        return self._command_line.isInsecure
 
     @property
     def exitCode(self) -> int:
@@ -357,7 +426,7 @@ class CoreApplication(QObject):
         return self._language
 
     def updateTranslation(self) -> None:
-        language_name = self._config.get(ConfigKey.UI_LANGUAGE, str)
+        language_name = self._config.get(self._config.Key.UI_LANGUAGE, str)
         if not language_name:
             language_name = Language.primaryName
         language = Language(language_name)
@@ -365,28 +434,36 @@ class CoreApplication(QObject):
         if self._language is not None:
             self._logger.info(
                 "Removing translation '%s'.",
-                self._language.name)
+                self._language.name,
+            )
             self._language.uninstall()
 
         self._language = language
         self._logger.info(
             "Setting translation '%s'.",
-            self._language.name)
+            self._language.name,
+        )
         self._language.install()
 
     def showMessage(
-            self,
-            *,
-            type_: MessageType = MessageType.INFORMATION,
-            title: Optional[str] = None,
-            text: str,
-            timeout: int = Timer.UI_MESSAGE_TIMEOUT) -> None:
+        self,
+        *,
+        type_: MessageType = MessageType.INFORMATION,
+        title: Optional[str] = None,
+        text: str,
+        timeout: int = Timer.UI_MESSAGE_TIMEOUT,
+    ) -> None:
         raise NotImplementedError
 
     def _onKeyStoreOpen(self, root_node: Optional[HdNode]) -> None:
         if root_node is None:
             return
         assert not self._database.isOpen
+
+        # temorary
+        if not self._database.remove():
+            # TODO show message if failed
+            pass
 
         for coin in self._coin_list:
             if not coin.deriveHdNode(root_node):
@@ -401,9 +478,11 @@ class CoreApplication(QObject):
             pass
 
         self._network_query_scheduler.start(
-            self._network_query_scheduler.GLOBAL_NAMESPACE)
+            self._network_query_scheduler.GLOBAL_NAMESPACE
+        )
         self._network_query_scheduler.start(
-            self._network_query_scheduler.COINS_NAMESPACE)
+            self._network_query_scheduler.COINS_NAMESPACE
+        )
 
     def _onKeyStoreReset(self) -> None:
         if not self._database.remove():
@@ -412,29 +491,15 @@ class CoreApplication(QObject):
 
     def _loadWalletData(self) -> bool:  # TODO move to coins
         try:
-            with self._database.transaction() as cursor:
+            with self._database.transaction():
                 for coin in self._coin_list:
-                    if not self._database[CoinListTable].deserialize(
-                            cursor,
-                            coin):
-                        self._logger.debug(
-                            "Cannot deserialize coin '%s' from database.",
-                            coin.name)
-                        self._database[CoinListTable].serialize(cursor, coin)
-                        continue
-
-                    self._database[AddressListTable].deserializeAll(
-                            cursor,
-                            coin)
-
-                    for address in coin.addressList:
-                        self._database[TxListTable].deserializeAll(
-                            cursor,
-                            address)
+                    if not coin.load():
+                        coin.save()
         except (Database.engine.Error, Database.engine.Warning) as e:
             self._logger.error(
                 "Failed to read wallet from database: %s",
-                str(e))
+                str(e),
+            )
             return False
         return True
 
@@ -455,5 +520,3 @@ class CoreApplication(QObject):
     def _onExit(self) -> None:
         assert not self._on_exit_called
         self._on_exit_called = True
-        self._database.close()
-        self._signal_handler.close()

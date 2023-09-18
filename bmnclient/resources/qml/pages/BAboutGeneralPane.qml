@@ -1,7 +1,10 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Controls.Material
+
 import "../application"
 import "../basiccontrols"
+import "../dialogcontrols"
 
 BPane {
     id: _base
@@ -10,20 +13,20 @@ BPane {
 
     contentItem: BDialogScrollableLayout {
         BLogoImage {
-            BLayout.columnSpan: parent.columns
-            BLayout.minimumWidth: implicitWidth
-            BLayout.alignment: Qt.AlignTop | Qt.AlignHCenter
+            Layout.columnSpan: parent.columns
+            Layout.minimumWidth: implicitWidth
+            Layout.alignment: Qt.AlignTop | Qt.AlignHCenter
             huge: true
         }
 
         BDialogSeparator {
-            BLayout.minimumWidth: _applicationStyle.dialogInputWidth
+            Layout.minimumWidth: _applicationStyle.dialogInputWidth
             transparent: true
         }
 
         BInfoLayout {
-            BLayout.columnSpan: parent.columns
-            BLayout.fillWidth: true
+            Layout.columnSpan: parent.columns
+            Layout.fillWidth: true
 
             BInfoLabel {
                 text: qsTr("Application name:")
@@ -73,13 +76,13 @@ BPane {
 
         BDialogSpacer {}
         BLabel {
-            BLayout.columnSpan: parent.columns
-            BLayout.minimumWidth: implicitWidth
-            BLayout.alignment: Qt.AlignBottom | Qt.AlignHCenter
+            Layout.columnSpan: parent.columns
+            Layout.minimumWidth: implicitWidth
+            Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
 
             font.bold: true
             // TODO year from compile time
-            text: qsTr("Copyright © 2020-2022 %1.\nAll rights reserved.").arg(Qt.application.organization)
+            text: qsTr("Copyright © 2020-2023 %1.\nAll rights reserved.").arg(Qt.application.organization)
             horizontalAlignment: BLabel.AlignHCenter
         }
     }

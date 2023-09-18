@@ -1,5 +1,6 @@
 import QtQuick
+import QtQuick.Layouts
 
 Item {
-    BLayout.fillWidth: true
+    Layout.fillWidth: true
 }

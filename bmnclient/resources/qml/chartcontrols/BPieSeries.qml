@@ -1,15 +1,17 @@
 import QtQuick
 import QtCharts
 
+import "../application"
+
 PieSeries {
     id: _base
-    size: 0.7
-    holeSize: 0.3
+    size: _applicationStyle.chart.size
+    holeSize: _applicationStyle.chart.holeSize
 
     onSliceAdded: (slice) => {
         slice.labelPosition = PieSlice.LabelInsideHorizontal
         slice.labelVisible = true
-        slice.explodeDistanceFactor = 0.01
+        slice.explodeDistanceFactor = _applicationStyle.chart.explodeDistanceFactor
 
         slice.onHovered.connect(function(hovered) {
             slice.exploded = hovered

@@ -9,8 +9,9 @@ if TYPE_CHECKING:
 
 
 class Base58:
-    _CHAR_LIST: Final = \
+    _CHAR_LIST: Final = (
         "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"  # noqa
+    )
     _CHAR_LIST_MAP: Final = {c: i for i, c in enumerate(_CHAR_LIST)}
     _BASE: Final = len(_CHAR_LIST)
     _CHECKSUM_SIZE: Final = 4
@@ -30,7 +31,7 @@ class Base58:
         result = []
         while value:
             value, mod = divmod(value, cls._BASE)
-            result.append(cls._CHAR_LIST[mod:mod + 1])
+            result.append(cls._CHAR_LIST[mod : mod + 1])
 
         return cls._CHAR_LIST[0:1] * offset + "".join(reversed(result))
 
@@ -57,12 +58,12 @@ class Base58:
         result = b"\0" * offset + bytes(reversed(result))
 
         if check:
-            digest = result[-cls._CHECKSUM_SIZE:]
-            result = result[:-cls._CHECKSUM_SIZE]
+            digest = result[-cls._CHECKSUM_SIZE :]
+            result = result[: -cls._CHECKSUM_SIZE]
             if not result or cls._digest(result) != digest:
                 return None
         return result
 
     @classmethod
     def _digest(cls, source: bytes) -> bytes:
-        return Sha256DoubleDigest(source).finalize()[:cls._CHECKSUM_SIZE]
+        return Sha256DoubleDigest(source).finalize()[: cls._CHECKSUM_SIZE]

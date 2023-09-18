@@ -1,4 +1,6 @@
 import QtQuick
+import QtQuick.Layouts
+
 import "../basiccontrols"
 
 BNavigationDrawer {
@@ -27,11 +29,11 @@ BNavigationDrawer {
         }
     }
     BLogoImage {
-        BLayout.rightMargin: _barsButton.implicitWidth + parent.spacing
+        Layout.rightMargin: _barsButton.implicitWidth + parent.spacing
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton | Qt.RightButton
-            onClicked: {
+            onClicked: (mouse) => {
                 mouse.accepted = true
                 switch (mouse.button) {
                 case Qt.RightButton:

@@ -1,56 +1,49 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
+from ...utils import serializable
 from .tx_io import _Io
-from ...utils.serialize import DeserializationNotSupportedError, serializable
 
 if TYPE_CHECKING:
-    from typing import Final, Optional
     from .coin import Coin
 
 
-class _MutableIo(_Io):
+class _MutableIo(_Io, table_type=None):
     _AMOUNT_LENGTH = 0
 
     def __init__(
-            self,
-            address: Coin.Address,
-            *,
-            amount: int,
-            is_dummy: bool = False):
+        self,
+        mtx: Coin.TxFactory.MutableTx,
+        *,
+        io_type: _MutableIo.IoType,
+        index: int,
+        address,
+        amount: int,
+        is_dummy: bool = False,
+    ):
         super().__init__(
-            address.coin,
-            address,
-            index=-1,
+            mtx,
+            io_type=io_type,
+            index=index,
             output_type=address.type.value.name,
-            address_name=None,
-            amount=amount)
+            address=address,
+            amount=amount,
+        )
         self._is_dummy: Final = is_dummy
 
     def __eq__(self, other: _MutableIo) -> bool:
-        return (
-                super().__eq__(other)
-                and self._is_dummy == other._is_dummy
-        )
+        return super().__eq__(other) and self._is_dummy == other._is_dummy
 
     def __hash__(self) -> int:
-        return hash((
-            super().__hash__(),
-            self._is_dummy
-        ))
-
-    @classmethod
-    def deserialize(cls, *_, **__) -> Optional[_MutableIo]:
-        raise DeserializationNotSupportedError
+        return hash((super().__hash__(), self._is_dummy))
 
     @cached_property
     def amountBytes(self) -> bytes:
         return self._address.Script.integerToBytes(
-            self._amount,
-            self._AMOUNT_LENGTH,
-            safe=True)
+            self._amount, self._AMOUNT_LENGTH, safe=True
+        )
 
     @property
     def isDummy(self) -> bool:
@@ -66,13 +59,21 @@ class _MutableInput(_MutableIo):
     _SEQUENCE_LENGTH = 0
 
     def __init__(
-            self,
-            utxo: Coin.Tx.Utxo,
-            *,
-            hash_type: int,
-            sequence: int,
-            **kwargs) -> None:
-        super().__init__(utxo.address, amount=utxo.amount, **kwargs)
+        self,
+        mtx: Coin.TxFactory.MutableTx,
+        *,
+        utxo: Coin.Tx.Utxo,
+        hash_type: int,
+        sequence: int,
+        **kwargs,
+    ) -> None:
+        super().__init__(
+            mtx,
+            io_type=self.IoType.INPUT,
+            address=utxo.address,
+            amount=utxo.amount,
+            **kwargs,
+        )
         self._utxo: Final = utxo
         self._hash_type: Final = hash_type
         self._sequence: Final = sequence
@@ -82,19 +83,16 @@ class _MutableInput(_MutableIo):
 
     def __eq__(self, other: _MutableInput):
         return (
-                super().__eq__(other)
-                and self._utxo == other._utxo
-                and self._hash_type == other._hash_type
-                and self._sequence == other._sequence
+            super().__eq__(other)
+            and self._utxo == other._utxo
+            and self._hash_type == other._hash_type
+            and self._sequence == other._sequence
         )
 
     def __hash__(self) -> int:
-        return hash((
-            super().__hash__(),
-            self._utxo,
-            self._hash_type,
-            self._sequence
-        ))
+        return hash(
+            (super().__hash__(), self._utxo, self._hash_type, self._sequence)
+        )
 
     @cached_property
     def scriptBytes(self) -> bytes:
@@ -121,9 +119,8 @@ class _MutableInput(_MutableIo):
     @cached_property
     def hashTypeBytes(self) -> bytes:
         return self._address.Script.integerToBytes(
-            self._hash_type,
-            self._HASH_TYPE_LENGTH,
-            safe=True)
+            self._hash_type, self._HASH_TYPE_LENGTH, safe=True
+        )
 
     @serializable
     @property
@@ -133,9 +130,8 @@ class _MutableInput(_MutableIo):
     @cached_property
     def sequenceBytes(self) -> bytes:
         return self._address.Script.integerToBytes(
-            self._sequence,
-            self._SEQUENCE_LENGTH,
-            safe=True)
+            self._sequence, self._SEQUENCE_LENGTH, safe=True
+        )
 
     @property
     def scriptSigBytes(self) -> bytes:
@@ -150,6 +146,9 @@ class _MutableInput(_MutableIo):
 
 
 class _MutableOutput(_MutableIo):
+    def __init__(self, mtx: Coin.TxFactory.MutableTx, **kwargs) -> None:
+        super().__init__(mtx, io_type=self.IoType.OUTPUT, **kwargs)
+
     @cached_property
     def scriptBytes(self) -> bytes:
         raise NotImplementedError

@@ -55,10 +55,7 @@ class NetworkUtils(NotImplementedInstance):
             item = item.strip("/")
             if item:
                 try:
-                    item = quote(
-                        item,
-                        safe="",
-                        errors="strict")
+                    item = quote(item, safe="", errors="strict")
                 except UnicodeError:
                     return None
                 result += "/" + item

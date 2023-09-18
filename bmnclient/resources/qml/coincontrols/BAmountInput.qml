@@ -1,6 +1,8 @@
 import QtQuick
 import QtQml
+import QtQuick.Layouts
 import QtQuick.Controls.Material
+
 import "../application"
 import "../basiccontrols"
 
@@ -24,9 +26,9 @@ BControl {
         BTextField {
             id: _valueField
 
-            BLayout.column: 0
-            BLayout.row: 0
-            BLayout.preferredWidth: leftPadding + rightPadding + _base.valueTextMetrics.width
+            Layout.column: 0
+            Layout.row: 0
+            Layout.preferredWidth: leftPadding + rightPadding + _base.valueTextMetrics.width
 
             validator: _base.amount.valueHumanValidator
             horizontalAlignment: BTextField.AlignRight
@@ -49,8 +51,8 @@ BControl {
             }
         }
         BLabel {
-            BLayout.column: 1
-            BLayout.row: 0
+            Layout.column: 1
+            Layout.row: 0
 
             color: _base.color
             text: _base.amount.unit
@@ -59,8 +61,8 @@ BControl {
         Loader {
             active: _base.orientation !== Qt.Vertical
             sourceComponent: BLabel {
-                BLayout.column: 2
-                BLayout.row: 0
+                Layout.column: 2
+                Layout.row: 0
                 font.bold: true
                 color: _base.color
                 text: "/"
@@ -70,9 +72,9 @@ BControl {
         BTextField {
             id: _fiatValueField
 
-            BLayout.column: _base.orientation === Qt.Vertical ? 0 : 3
-            BLayout.row: _base.orientation === Qt.Vertical ? 1 : 0
-            BLayout.preferredWidth: leftPadding + rightPadding + _base.valueTextMetrics.width
+            Layout.column: _base.orientation === Qt.Vertical ? 0 : 3
+            Layout.row: _base.orientation === Qt.Vertical ? 1 : 0
+            Layout.preferredWidth: leftPadding + rightPadding + _base.valueTextMetrics.width
 
             validator: _base.amount.fiatValueHumanValidator
             horizontalAlignment: BTextField.AlignRight
@@ -96,8 +98,8 @@ BControl {
 
         }
         BLabel {
-            BLayout.column: _base.orientation === Qt.Vertical ? 1 : 4
-            BLayout.row: _base.orientation === Qt.Vertical ? 1 : 0
+            Layout.column: _base.orientation === Qt.Vertical ? 1 : 4
+            Layout.row: _base.orientation === Qt.Vertical ? 1 : 0
 
             color: _base.color
             text: _base.amount.fiatUnit
@@ -106,8 +108,8 @@ BControl {
         Loader {
             active: _base.orientation !== Qt.Vertical
             sourceComponent: BLabel {
-                BLayout.column: 5
-                BLayout.row: 0
+                Layout.column: 5
+                Layout.row: 0
 
                 font.bold: true
                 color: _base.color
@@ -117,9 +119,9 @@ BControl {
 
         BButton {
             id: _defaultButton
-            BLayout.column: _base.orientation === Qt.Vertical ? 2 : 6
-            BLayout.row: 0
-            BLayout.rowSpan: _base.orientation === Qt.Vertical ? 2 : 1
+            Layout.column: _base.orientation === Qt.Vertical ? 2 : 6
+            Layout.row: 0
+            Layout.rowSpan: _base.orientation === Qt.Vertical ? 2 : 1
 
             text: qsTr("max")
             onClicked: {
@@ -136,5 +138,4 @@ BControl {
         _fiatValueField.clear()
         _valueField.clear()
     }
-
 }

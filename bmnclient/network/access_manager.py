@@ -14,14 +14,16 @@ from PySide6.QtNetwork import (
     QNetworkRequest,
     QSsl,
     QSslConfiguration,
-    QSslSocket)
+    QSslSocket,
+)
 
-from .utils import NetworkUtils
 from ..logger import Logger
 from ..version import Timer
+from .utils import NetworkUtils
 
 if TYPE_CHECKING:
     from typing import Final, List, Optional
+
     from PySide6.QtCore import QIODevice, QObject, QUrl
     from PySide6.QtNetwork import QAuthenticator, QNetworkCookie, QSslError
 
@@ -67,9 +69,8 @@ class AbstractNetworkCookieJar(QNetworkCookieJar):
         return False
 
     def setCookiesFromUrl(
-            self,
-            cookie_list: List[QNetworkCookie],
-            url: QUrl) -> bool:
+        self, cookie_list: List[QNetworkCookie], url: QUrl
+    ) -> bool:
         return False
 
     def updateCookie(self, cookie: QNetworkCookie) -> bool:
@@ -82,17 +83,16 @@ class NullNetworkCookieJar(AbstractNetworkCookieJar):
 
 class NetworkAccessManager(QNetworkAccessManager):
     _OPERATION_MAP: Final = {
-        QNetworkAccessManager.HeadOperation: "HEAD",
-        QNetworkAccessManager.GetOperation: "GET",
-        QNetworkAccessManager.PutOperation: "PUT",
-        QNetworkAccessManager.PostOperation: "POST",
-        QNetworkAccessManager.DeleteOperation: "DELETE",
+        QNetworkAccessManager.Operation.HeadOperation: "HEAD",
+        QNetworkAccessManager.Operation.GetOperation: "GET",
+        QNetworkAccessManager.Operation.PutOperation: "PUT",
+        QNetworkAccessManager.Operation.PostOperation: "POST",
+        QNetworkAccessManager.Operation.DeleteOperation: "DELETE",
     }
 
     def __init__(
-            self,
-            name: Optional[str] = None,
-            parent: Optional[QObject] = None) -> None:
+        self, name: Optional[str] = None, parent: Optional[QObject] = None
+    ) -> None:
         super().__init__(parent)
 
         self._name = name if name else "default"
@@ -113,21 +113,19 @@ class NetworkAccessManager(QNetworkAccessManager):
         self.setStrictTransportSecurityEnabled(False)  # TODO
         self.setTransferTimeout(Timer.NETWORK_TRANSFER_TIMEOUT)
 
-        self.authenticationRequired.connect(
-            self.__onAuthenticationRequired)
+        self.authenticationRequired.connect(self.__onAuthenticationRequired)
         self.proxyAuthenticationRequired.connect(
-            self.__onProxyAuthenticationRequired)
-        self.encrypted.connect(
-            self.__onEncrypted)
-        self.finished.connect(
-            self.__onFinished)
-        self.sslErrors.connect(
-            self.__onTlsErrors)
+            self.__onProxyAuthenticationRequired
+        )
+        self.encrypted.connect(self.__onEncrypted)
+        self.finished.connect(self.__onFinished)
+        self.sslErrors.connect(self.__onTlsErrors)
 
         if parent:
             self._logger.debug(
                 "Network access manager was created for '%s'.",
-                parent.objectName())
+                parent.objectName(),
+            )
         else:
             self._logger.debug("Network access manager was created.")
 
@@ -148,7 +146,7 @@ class NetworkAccessManager(QNetworkAccessManager):
         tls = QSslConfiguration(QSslConfiguration.defaultConfiguration())
         tls.setOcspStaplingEnabled(False)
         tls.setPeerVerifyDepth(0)
-        tls.setPeerVerifyMode(QSslSocket.VerifyPeer)
+        tls.setPeerVerifyMode(QSslSocket.PeerVerifyMode.VerifyPeer)
         tls.setProtocol(QSsl.TlsV1_2OrLater)
         tls.setSslOption(QSsl.SslOptionDisableEmptyFragments, True)
         tls.setSslOption(QSsl.SslOptionDisableSessionTickets, False)
@@ -165,32 +163,34 @@ class NetworkAccessManager(QNetworkAccessManager):
         return http2
 
     def createRequest(
-            self,
-            op: QNetworkAccessManager.Operation,
-            request: QNetworkRequest,
-            outgoing_data: Optional[QIODevice] = None) -> QNetworkReply:
+        self,
+        op: QNetworkAccessManager.Operation,
+        request: QNetworkRequest,
+        outgoing_data: Optional[QIODevice] = None,
+    ) -> QNetworkReply:
         self._logger.debug(
             "New request: %s %s",
             self._OPERATION_MAP.get(op, "UNKNOWN"),
-            request.url().toString())
+            request.url().toString(),
+        )
         return super().createRequest(op, request, outgoing_data)
 
     def __onAuthenticationRequired(
-            self,
-            reply: QNetworkReply,
-            _: QAuthenticator) -> None:
+        self, reply: QNetworkReply, _: QAuthenticator
+    ) -> None:
         self._logger.warning(
             "%sAuthentication required for URL: %s",
             self._loggerReplyPrefix(reply),
-            reply.url().toString())
+            reply.url().toString(),
+        )
 
     def __onProxyAuthenticationRequired(
-            self,
-            proxy: QNetworkProxy,
-            _: QAuthenticator) -> None:
+        self, proxy: QNetworkProxy, _: QAuthenticator
+    ) -> None:
         self._logger.warning(
             "Authentication required for proxy %s.",
-            NetworkUtils.hostPortToString(proxy.hostName(), proxy.port()))
+            NetworkUtils.hostPortToString(proxy.hostName(), proxy.port()),
+        )
 
     def __onEncrypted(self, reply: QNetworkReply) -> None:
         if self._logger.isEnabledFor(logging.DEBUG):
@@ -200,48 +200,53 @@ class NetworkAccessManager(QNetworkAccessManager):
                 self._logger.debug(
                     "%s New TLS session, cipher: %s",
                     self._loggerReplyPrefix(reply),
-                    cipher_name)
+                    cipher_name,
+                )
             else:
                 self._logger.debug(
-                    "%s New TLS session.",
-                    self._loggerReplyPrefix(reply))
+                    "%s New TLS session.", self._loggerReplyPrefix(reply)
+                )
 
     def __onFinished(self, reply: QNetworkReply) -> None:
         status_code = reply.error()
-        if status_code != QNetworkReply.NoError:
+        if status_code != QNetworkReply.NetworkError.NoError:
             if status_code not in (
-                    QNetworkReply.ContentAccessDenied,
-                    QNetworkReply.ContentNotFoundError,
+                QNetworkReply.NetworkError.ContentAccessDenied,
+                QNetworkReply.NetworkError.ContentNotFoundError,
             ):
                 self._logger.warning(
                     "%s Connection error: %s",
                     self._loggerReplyPrefix(reply),
                     Logger.errorString(
-                        int(status_code),
-                        reply.errorString()))
+                        int(status_code.value), reply.errorString()
+                    ),
+                )
 
         if self._logger.isEnabledFor(logging.DEBUG):
             status_code = reply.attribute(
-                QNetworkRequest.HttpStatusCodeAttribute)
+                QNetworkRequest.HttpStatusCodeAttribute
+            )
             status_code = int(status_code) if status_code else -1
             is_http2 = reply.attribute(QNetworkRequest.Http2WasUsedAttribute)
             self._logger.debug(
                 "%s HTTP status code: %i, is_http2=%s",
                 self._loggerReplyPrefix(reply),
                 status_code,
-                "YES" if is_http2 else "NO")
+                "YES" if is_http2 else "NO",
+            )
 
     def __onTlsErrors(
-            self,
-            reply: QNetworkReply,
-            error_list: List[QSslError]) -> None:
+        self, reply: QNetworkReply, error_list: List[QSslError]
+    ) -> None:
         for e in error_list:
             self._logger.error(
                 "%s %s",
                 self._loggerReplyPrefix(reply),
-                Logger.errorString(int(e.error()), e.errorString()))
+                Logger.errorString(int(e.error()), e.errorString()),
+            )
 
     def _loggerReplyPrefix(self, reply: QNetworkReply) -> str:
         return "[{} {}]".format(
             self._OPERATION_MAP.get(reply.operation(), "UNKNOWN"),
-            reply.url().toString())
+            reply.url().toString(),
+        )

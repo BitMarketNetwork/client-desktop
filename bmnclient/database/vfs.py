@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import os
 from pathlib import PurePath
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from ..crypto.cipher import BlockDeviceCipher
 from ..logger import Logger
 from ..version import Product
 
 if TYPE_CHECKING:
-    from typing import Union, Tuple, Final
     from ..application import CoreApplication
 
 
@@ -32,35 +31,36 @@ SQLITE_OPEN_EXCLUSIVE = 0x00000010
 
 SQLITE_OPEN_AUTOPROXY = 0x00000020
 
-SQLITE_OPEN_MAIN_DB       = 0x00000100
-SQLITE_OPEN_MAIN_JOURNAL  = 0x00000800
-SQLITE_OPEN_TEMP_DB       = 0x00000200
-SQLITE_OPEN_TEMP_JOURNAL  = 0x00001000
-SQLITE_OPEN_TRANSIENT_DB  = 0x00000400
-SQLITE_OPEN_SUBJOURNAL    = 0x00002000
+SQLITE_OPEN_MAIN_DB = 0x00000100
+SQLITE_OPEN_MAIN_JOURNAL = 0x00000800
+SQLITE_OPEN_TEMP_DB = 0x00000200
+SQLITE_OPEN_TEMP_JOURNAL = 0x00001000
+SQLITE_OPEN_TRANSIENT_DB = 0x00000400
+SQLITE_OPEN_SUBJOURNAL = 0x00002000
 SQLITE_OPEN_SUPER_JOURNAL = 0x00004000
-SQLITE_OPEN_WAL           = 0x00080000
+SQLITE_OPEN_WAL = 0x00080000
 
 
 class VfsFile:
     _DEFAULT_OPEN_FLAGS: Final = (
-            0
-            | (os.O_BINARY if hasattr(os, "O_BINARY") else 0)
-            | (os.O_CLOEXEC if hasattr(os, "O_CLOEXEC") else 0)
+        0
+        | (os.O_BINARY if hasattr(os, "O_BINARY") else 0)
+        | (os.O_CLOEXEC if hasattr(os, "O_CLOEXEC") else 0)
     )
     _DEFAULT_SECTOR_SIZE: Final = 4096
 
     def __init__(
-            self,
-            application: CoreApplication,
-            file_name: Union[str, PurePath],
-            sqlite_flags: int,
-            sector_size: int = 0) -> None:
+        self,
+        application: CoreApplication,
+        file_name: str | PurePath,
+        sqlite_flags: int,
+        sector_size: int = 0,
+    ) -> None:
         self._application = application
         self._file_path = PurePath(file_name)
         self._logger = Logger.classLogger(
-            self.__class__,
-            (None, self._file_path.name))
+            self.__class__, (None, self._file_path.name)
+        )
 
         flags = self._DEFAULT_OPEN_FLAGS
 
@@ -82,15 +82,18 @@ class VfsFile:
         if (sqlite_flags & SQLITE_OPEN_AUTOPROXY) == SQLITE_OPEN_AUTOPROXY:
             raise NotImplementedError
 
-        if (sqlite_flags & SQLITE_OPEN_DELETEONCLOSE) \
-                == SQLITE_OPEN_DELETEONCLOSE:
+        if (
+            sqlite_flags & SQLITE_OPEN_DELETEONCLOSE
+        ) == SQLITE_OPEN_DELETEONCLOSE:
             self._remove = True
         else:
             self._remove = False
 
         self._is_encrypted = False
         self._salt = b""
-        for object_flag in (
+
+        if not self._application.isInsecure:
+            for object_flag in (
                 SQLITE_OPEN_MAIN_DB,
                 SQLITE_OPEN_MAIN_JOURNAL,
                 SQLITE_OPEN_TEMP_DB,
@@ -98,31 +101,34 @@ class VfsFile:
                 SQLITE_OPEN_TRANSIENT_DB,
                 SQLITE_OPEN_SUBJOURNAL,
                 SQLITE_OPEN_SUPER_JOURNAL,
-                SQLITE_OPEN_WAL
-        ):
-            if (sqlite_flags & object_flag) == object_flag:
-                self._is_encrypted = True
-                self._salt = (
+                SQLITE_OPEN_WAL,
+            ):
+                if (sqlite_flags & object_flag) == object_flag:
+                    self._is_encrypted = True
+                    self._salt = (
                         object_flag.to_bytes(4, "little")
                         + Product.SHORT_NAME.encode()
                         + b"\0" * (BlockDeviceCipher.saltSize - 4)
-                )[:BlockDeviceCipher.saltSize]
-                assert len(self._salt) == BlockDeviceCipher.saltSize
-                break
+                    )[: BlockDeviceCipher.saltSize]
+                    assert len(self._salt) == BlockDeviceCipher.saltSize
+                    break
 
-        self._sector_size = \
+        self._sector_size = (
             self._DEFAULT_SECTOR_SIZE if not sector_size else sector_size
+        )
 
         try:
             self._logger.debug(
-                "Opening a file in '{}' mode."
-                .format("ENCRYPTED" if self._is_encrypted else "PLAIN"))
+                "Opening a file in '{}' mode.".format(
+                    "ENCRYPTED" if self._is_encrypted else "PLAIN"
+                )
+            )
             self._fd = os.open(self._file_path, flags, 0o644)  # TODO mode
         except OSError as e:
             self._fd = -1
             self._logger.error(
-                "Failed to open file. %s",
-                Logger.osErrorString(e))
+                "Failed to open file. %s", Logger.osErrorString(e)
+            )
 
     @property
     def isEncrypted(self) -> bool:
@@ -143,17 +149,14 @@ class VfsFile:
             os.close(self._fd)
         except OSError as e:
             self._logger.error(
-                "Failed to close file. %s",
-                Logger.osErrorString(e))
+                "Failed to close file. %s", Logger.osErrorString(e)
+            )
         self._fd = -1
         self._salt = b""
 
     def _ioChunks(
-            self,
-            size: int,
-            offset: int,
-            *,
-            write_mode: bool) -> Tuple[int, int]:
+        self, size: int, offset: int, *, write_mode: bool
+    ) -> tuple[int, int]:
         sector_offset = (offset // self._sector_size) * self._sector_size
         chunk_offset = offset - sector_offset
         while size > 0:
@@ -179,7 +182,8 @@ class VfsFile:
             BlockDeviceCipher.OpMode.ENCRYPT,
             self._application.keyStore.deriveBlockDeviceKey(),
             sector_index,
-            self._salt)
+            self._salt,
+        )
         return cipher.update(data) + cipher.finalize()
 
     def _decrypt(self, sector_index: int, data: bytes) -> bytes:
@@ -187,7 +191,8 @@ class VfsFile:
             BlockDeviceCipher.OpMode.DECRYPT,
             self._application.keyStore.deriveBlockDeviceKey(),
             sector_index,
-            self._salt)
+            self._salt,
+        )
         return cipher.update(data) + cipher.finalize()
 
     def read(self, amount: int, offset: int) -> bytes:
@@ -199,8 +204,12 @@ class VfsFile:
                 return os.read(self._fd, amount)
 
             result = []
-            for sector_index, sector_data, chunk_offset, chunk_size \
-                    in self._ioChunks(amount, offset, write_mode=False):
+            for (
+                sector_index,
+                sector_data,
+                chunk_offset,
+                chunk_size,
+            ) in self._ioChunks(amount, offset, write_mode=False):
                 if len(sector_data) != self._sector_size:
                     break
                 sector_data = self._decrypt(sector_index, sector_data)
@@ -210,14 +219,16 @@ class VfsFile:
                 else:
                     sector_data = memoryview(sector_data)
                     result.append(
-                        sector_data[chunk_offset:chunk_offset + chunk_size])
+                        sector_data[chunk_offset : chunk_offset + chunk_size]
+                    )
             return b"".join(result)
         except OSError as e:
             self._logger.error(
                 "Failed to read file (offset=%i, amount=%i). %s",
                 offset,
                 amount,
-                Logger.osErrorString(e))
+                Logger.osErrorString(e),
+            )
             return b""
 
     def write(self, data: bytes, offset: int) -> None:
@@ -230,8 +241,12 @@ class VfsFile:
                 return
 
             data_offset = 0
-            for sector_index, sector_data, chunk_offset, chunk_size \
-                    in self._ioChunks(len(data), offset, write_mode=True):
+            for (
+                sector_index,
+                sector_data,
+                chunk_offset,
+                chunk_size,
+            ) in self._ioChunks(len(data), offset, write_mode=True):
                 if len(sector_data) == self._sector_size:
                     sector_data = self._decrypt(sector_index, sector_data)
                 elif not len(sector_data):
@@ -241,13 +256,14 @@ class VfsFile:
                         "Partial read of sector %i (offset %i), "
                         "data was ignored.",
                         sector_index,
-                        sector_index * self.sectorSize)
+                        sector_index * self.sectorSize,
+                    )
                     sector_data = b"\0" * self._sector_size
 
                 sector_data = (
-                        sector_data[:chunk_offset]
-                        + data[data_offset:data_offset + chunk_size]
-                        + sector_data[chunk_offset + chunk_size:]
+                    sector_data[:chunk_offset]
+                    + data[data_offset : data_offset + chunk_size]
+                    + sector_data[chunk_offset + chunk_size :]
                 )
                 assert len(sector_data) == self._sector_size
                 os.write(self._fd, self._encrypt(sector_index, sector_data))
@@ -257,7 +273,8 @@ class VfsFile:
                 "Failed to write file (offset=%i, amount=%i). %s",
                 offset,
                 len(data),
-                Logger.osErrorString(e))
+                Logger.osErrorString(e),
+            )
 
     def truncate(self, size: int) -> int:
         if not self.isValid:
@@ -268,7 +285,8 @@ class VfsFile:
             self._logger.error(
                 "Failed to truncate file to size %i. %s",
                 size,
-                Logger.osErrorString(e))
+                Logger.osErrorString(e),
+            )
         return 0
 
     def sync(self, flags: int) -> None:
@@ -278,8 +296,8 @@ class VfsFile:
             os.fsync(self._fd)
         except OSError as e:
             self._logger.error(
-                "Failed to sync file. %s",
-                Logger.osErrorString(e))
+                "Failed to sync file. %s", Logger.osErrorString(e)
+            )
         return None
 
     def file_size(self) -> int:
@@ -289,8 +307,8 @@ class VfsFile:
             return os.fstat(self._fd).st_size
         except OSError as e:
             self._logger.error(
-                "Failed to get size of file. %s",
-                Logger.osErrorString(e))
+                "Failed to get size of file. %s", Logger.osErrorString(e)
+            )
         return 0
 
     def sector_size(self) -> int:
@@ -310,7 +328,9 @@ class Vfs:
     def close(self, vfs_file: VfsFile) -> None:
         vfs_file.close()
 
-    def read(self, vfs_file: VfsFile, length: int, offset: int) -> Union[bytes, bool]:
+    def read(
+        self, vfs_file: VfsFile, length: int, offset: int
+    ) -> bytes | bool:
         return vfs_file.read(length, offset)
 
     def write(self, vfs_file: VfsFile, data: bytes, offset: int) -> None:

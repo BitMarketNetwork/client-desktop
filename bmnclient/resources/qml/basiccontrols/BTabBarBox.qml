@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 
 BControl {
     id: _base
@@ -11,7 +12,7 @@ BControl {
 
         BTabBar {
             id: _tabBar
-            BLayout.fillWidth: true
+            Layout.fillWidth: true
             position: BTabBar.Header
 
             Repeater {
@@ -24,8 +25,8 @@ BControl {
 
         BStackLayout {
             id: _stack
-            BLayout.fillWidth: true
-            BLayout.fillHeight: true
+            Layout.fillWidth: true
+            Layout.fillHeight: true
             currentIndex: _tabBar.currentIndex
         }
     }

@@ -32,32 +32,34 @@ class Mnemonic:
         language = language.lower() if language else "english"
         self._language = str(Path(language).name)
         self._logger = Logger.classLogger(
-            self.__class__,
-            (None, self._language))
+            self.__class__, (None, self._language)
+        )
         self._file_path = self._SOURCE_PATH / (self._language + ".txt")
 
         error_message = None
         try:
             self._logger.debug("Reading words from '%s'...", self._file_path)
             with open(  # TODO global cache
-                    self._file_path,
-                    mode="rt",
-                    encoding=self._ENCODING,
-                    errors="strict") as file:
+                self._file_path,
+                mode="rt",
+                encoding=self._ENCODING,
+                errors="strict",
+            ) as file:
                 self._word_list = [word.strip() for word in file.readlines()]
             if len(self._word_list) != self._WORD_COUNT:
                 raise ValueError(
-                    "wordlist should contain {} words, but it contains {} words"
-                    .format(self._WORD_COUNT, len(self._word_list)))
+                    "wordlist should contain {} words, but it contains {} words".format(
+                        self._WORD_COUNT, len(self._word_list)
+                    )
+                )
         except OSError as e:
             error_message = Logger.osErrorString(e)
         except ValueError as e:
             error_message = Logger.exceptionString(e)
         if error_message is not None:
             self._logger.debug(
-                "Failed to read file '%s'. %s",
-                self._file_path,
-                error_message)
+                "Failed to read file '%s'. %s", self._file_path, error_message
+            )
             self._word_list = [""] * self._WORD_COUNT
 
     @classproperty
@@ -76,9 +78,9 @@ class Mnemonic:
         if len(data) not in self._DATA_LENGTH_LIST:
             Logger.fatal(
                 "Data length should be one of the following: {}, but data "
-                "length {}."
-                .format(self._DATA_LENGTH_LIST, len(data)),
-                self._logger)
+                "length {}.".format(self._DATA_LENGTH_LIST, len(data)),
+                self._logger,
+            )
 
         h = Sha256Digest().update(data).finalize().hex()
 
@@ -87,7 +89,7 @@ class Mnemonic:
         result = []
 
         for i in range(len(b) // 11):
-            i = int(b[i * 11: (i + 1) * 11], 2)
+            i = int(b[i * 11 : (i + 1) * 11], 2)
             result.append(self._word_list[i])
         return self.friendlyPhrase(self._language, result)
 
@@ -97,12 +99,12 @@ class Mnemonic:
             return False
         try:
             b = "".join(
-                bin(self._word_list.index(p))[2:].zfill(11)
-                for p in phrase)
+                bin(self._word_list.index(p))[2:].zfill(11) for p in phrase
+            )
 
             j = len(b)
             d = b[: j // 33 * 32]
-            h = b[-j // 33:]
+            h = b[-j // 33 :]
             nd = int(d, 2).to_bytes(j // 33 * 4, "big")
         except (ValueError, OverflowError):
             return False
@@ -113,9 +115,8 @@ class Mnemonic:
 
     @classmethod
     def phraseToSeed(
-            cls,
-            phrase: str,
-            password: Optional[str] = None) -> bytes:
+        cls, phrase: str, password: Optional[str] = None
+    ) -> bytes:
         phrase = cls.normalizePhrase(phrase)
         if not password:
             password = "".join(phrase[::-3])
@@ -129,7 +130,8 @@ class Mnemonic:
             algorithm=hashes.SHA512(),
             length=64,
             salt=password,
-            iterations=cls._PBKDF2_ROUNDS)
+            iterations=cls._PBKDF2_ROUNDS,
+        )
         seed = kdf.derive(phrase)
         assert len(seed) == 64
         return seed
@@ -148,9 +150,8 @@ class Mnemonic:
 
     @classmethod
     def friendlyPhrase(
-            cls,
-            language: str,
-            phrase: Union[str, Sequence[str]]) -> str:
+        cls, language: str, phrase: Union[str, Sequence[str]]
+    ) -> str:
         if isinstance(phrase, str):
             phrase = cls.normalizePhrase(phrase).split()
             # phrase = filter(None, phrase)
