@@ -43,7 +43,7 @@ BPane {
             text: qsTr("Transaction history")
             onTriggered: {
                 let dialog = _applicationManager.createDialog(
-                    "BAddressTransactionHistoryDialog", {
+                    "BAddressTxHistoryDialog", {
                     "address" : _contextMenu.address,
                     "height" : _applicationWindow.height / 2,
                     "width" : _applicationWindow.width / 2
