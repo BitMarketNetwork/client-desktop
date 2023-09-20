@@ -29,7 +29,7 @@ BControl {
                     tx: modelObject
                 }
 
-                section.property: "state.timeHuman"
+                section.property: "modelObject.state.timeHuman"
                 section.criteria: ViewSection.FullString
                 section.delegate: BLabel {
                     font.pointSize: _base.smallFontPointSize
