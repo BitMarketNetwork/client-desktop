@@ -15,7 +15,7 @@ BDialog {
     signal renameAccepted(var path)
     signal generateAccepted
     signal restoreAccepted
-    signal restoreBackupAccepted
+    signal restoreBackupAccepted(var path)
 
     contentItem: BDialogLayout {
         columns: 2
@@ -96,10 +96,18 @@ BDialog {
                 title: qsTr("Restore wallet from backup")
                 details: qsTr("Open a local backup file")
                 imagePath: _applicationManager.imagePath("rotate-right-solid.svg")
-                enabled: false
+
+                BBackupFileDialog {
+                    id: _fileDialog
+                    type: BBackupFileDialog.Type.Import
+
+                    onAccepted: {
+                        _base.restoreBackupAccepted(_fileDialog.currentFile)
+                    }
+                }
 
                 onClicked: {
-                    _base.restoreBackupAccepted()
+                    _fileDialog.open()
                 }
             }
         }

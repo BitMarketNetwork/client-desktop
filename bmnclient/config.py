@@ -276,6 +276,7 @@ class ApplicationConfig(Config):
 
         SERVICES_BLOCKCHAIN_EXPLORER: Final = "services.blockchain_explorer"
 
+        IMPORTED_KEY_STORES: Final = "imported"
 
 class KeyStoreConfig(Config):
     class Key(Config.Key):

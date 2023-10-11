@@ -366,7 +366,7 @@ class CoreApplication(QObject):
         return self.configPath / ProductPaths.WALLETS_DIR_NAME
 
     @property
-    def config(self) -> Config:
+    def config(self) -> ApplicationConfig:
         return self._config
 
     @property

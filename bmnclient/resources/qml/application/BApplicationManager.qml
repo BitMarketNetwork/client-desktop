@@ -27,19 +27,22 @@ QtObject {
         target: BBackend.clipboard
 
         function onTextChanged() {
-            let notificaion = createObject(
-                _applicationWindow,
-                "../basiccontrols/BNotification.qml",
-                { "text": qsTr("Copied to clipboard") })
+            createNotification(qsTr("Copied to clipboard"))
+        }
+    }
 
-            notificaion.x = _applicationWindow.width / 2 - notificaion.width / 2
+    property Connections backendKeyStoreListManager: Connections {
+        target: BBackend.keyStoreList
 
-            if (notificaion !== null) {
-                notificaion.onClosed.connect(function () {
-                    Qt.callLater(notificaion.destroy)
-                })
-                notificaion.open()
-            }
+        function onKeyStoreImported() {
+            createNotification(qsTr("Successfully imported!"))
+        }
+    }
+    property Connections backendKeyStoreManager: Connections {
+        target: BBackend.keyStore
+
+        function onKeyStoreExported() {
+            createNotification(qsTr("Successfully exported"))
         }
     }
 
@@ -59,6 +62,22 @@ QtObject {
             console.debug("~" + filePath)
         })
         return object
+    }
+
+    function createNotification(text) {
+        let notification = createObject(
+                _applicationWindow,
+                "../basiccontrols/BNotification.qml",
+                { "text": text })
+
+        notification.x = _applicationWindow.width / 2 - notification.width / 2
+
+        if (notification !== null) {
+            notification.onClosed.connect(function () {
+                Qt.callLater(notification.destroy)
+            })
+            notification.open()
+        }
     }
 
     function createDialog(name, properties) {

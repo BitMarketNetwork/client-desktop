@@ -73,7 +73,6 @@ BPane {
                 (_applicationStyle.dialogInputAlignment & ~Qt.AlignHorizontal_Mask)
                 | Qt.AlignHCenter
             text: qsTr("Backup wallet...")
-            enabled: false
             onClicked: {
                 _base.backupWallet()
             }

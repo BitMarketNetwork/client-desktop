@@ -6,7 +6,7 @@ from random import randint
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import Property as QProperty
-from PySide6.QtCore import QFile, QFileInfo, QObject
+from PySide6.QtCore import QFile, QFileInfo, QObject, QUrl
 from PySide6.QtCore import Signal as QSignal
 
 from bmnclient.coins.abstract.coin import Coin
@@ -181,8 +181,8 @@ class KeyStoreSelectDialog(AbstractDialog):
         RestoreSeedPhraseDialog(self._manager).open()
         self.close.emit()
 
-    def onRestoreBackupAccepted(self) -> None:
-        raise NotImplementedError
+    def onRestoreBackupAccepted(self, path: QUrl) -> None:
+        self._manager.context.keyStoreList.onImportBackupWallet(path)
 
     def onRejected(self) -> None:
         self._manager.context.exit(0)
