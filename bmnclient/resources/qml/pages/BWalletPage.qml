@@ -26,6 +26,8 @@ BApplicationPage {
             readonly property string coinName: modelObject.name
             active: false
             sourceComponent: BWalletCoinPage {
+                visible: modelObject.state.isEnabled
+                enabled: modelObject.state.isEnabled
                 coin: modelObject
                 onCreateAddress: {
                     _base.createAddress(coin)
