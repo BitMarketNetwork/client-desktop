@@ -58,6 +58,7 @@ BControl {
                             text: qsTr("Tx")
                         }
                     }
+                    BFilterAddressesMenu {}
                 }
                 // TODO sorting controls
             }
