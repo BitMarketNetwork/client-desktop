@@ -10,7 +10,7 @@ from PySide6.QtCore import Slot as QSlot
 from ....coins.abstract import Coin
 from . import AbstractCoinStateModel, AbstractModel, ValidStatus
 from .abstract import AbstractCoinObjectModel, AbstractTableModel
-from .address import AddressListModel
+from .address import AddressListModel, AddressListSortFilterProxyModel
 from .amount import AbstractAmountModel
 from .tx import TxListModel
 from .tx_factory import TxFactoryModel
@@ -246,6 +246,20 @@ class CoinModel(AbstractCoinObjectModel, Coin.Model, AbstractModel):
         return self._registerList(
             AddressListModel(
                 self._application, self._coin.addressList, column_count
+            )
+        )
+
+    @QSlot(int, result=QObject)
+    def openProxyAddressList(
+        self,
+        column_count: int
+    ) -> AddressListSortFilterProxyModel:
+        return self._registerList(
+            AddressListSortFilterProxyModel(
+                self._application,
+                AddressListModel(
+                    self._application, self._coin.addressList, column_count
+                )
             )
         )
 

@@ -3,17 +3,24 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import Property as QProperty
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Qt
 from PySide6.QtCore import Signal as QSignal
 from PySide6.QtCore import Slot as QSlot
 
 from ....coins.abstract import Coin
 from . import AbstractCoinStateModel, AbstractModel
-from .abstract import AbstractCoinObjectModel, AbstractTableModel
+from .abstract import (
+    AbstractCoinObjectModel,
+    AbstractSortFilterProxyModel,
+    AbstractTableModel,
+    QModelIndex
+)
 from .amount import AbstractAmountModel
 from .tx import TxListModel
 
 if TYPE_CHECKING:
+    from typing import Final
+
     from .. import QmlApplication
 
 _TX_NOTIFIED_LIST = []  # TODO tmp
@@ -138,3 +145,40 @@ class AddressModel(AbstractCoinObjectModel, Coin.Address.Model, AbstractModel):
 
 class AddressListModel(AbstractTableModel):
     pass
+
+
+class AddressListSortFilterProxyModel(AbstractSortFilterProxyModel):
+    # TODO Sorting
+    class FilterRole(AbstractSortFilterProxyModel.FilterRole):
+        HideEmpty: Final = 1
+
+    def __init__(
+        self,
+        application: QmlApplication,
+        source_model: AbstractTableModel
+    ) -> None:
+        super().__init__(application, source_model)
+
+    @QSlot(int)
+    def setFilterRole(self, role: int) -> None:
+        super().setFilterRole(role)
+
+    def filterAcceptsRow(
+        self,
+        source_row: int,
+        source_parent: QModelIndex
+    ) -> bool:
+        index = self.sourceModel().index(source_row, 0, source_parent)
+        address = self.sourceModel().data(index, Qt.UserRole + 1)
+
+        # TODO: store multiply filters
+        if self.filterRole() == self.FilterRole.HideEmpty.value:
+            return address.balance.value > 0
+        return True
+
+    def lessThan(
+        self,
+        source_left: QModelIndex,
+        source_right: QModelIndex
+    ) -> bool:
+        pass

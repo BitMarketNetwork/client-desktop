@@ -11,6 +11,7 @@ from PySide6.QtCore import (
     QModelIndex,
     QObject,
     Qt,
+    QSortFilterProxyModel,
 )
 from PySide6.QtCore import Signal as QSignal
 from PySide6.QtCore import Slot as QSlot
@@ -170,3 +171,31 @@ class AbstractTableModel(QAbstractTableModel):
         elif self.__lock == self.Lock.RESET:
             self.endResetModel()
         self.__lock = None
+
+
+class AbstractSortFilterProxyModel(QSortFilterProxyModel):
+    __rowCountChanged = QSignal()
+    class SortRole(Enum):
+        pass
+
+    class FilterRole(Enum):
+        pass
+
+    def __init__(
+        self,
+        application: QmlApplication,
+        source_model: AbstractTableModel
+    ) -> None:
+        super().__init__(application)
+        self._application = application
+
+        self.setSourceModel(source_model)
+
+        self.rowsInserted.connect(self.__rowCountChanged)
+        self.rowsRemoved.connect(self.__rowCountChanged)
+
+    @QProperty(str, notify=__rowCountChanged)
+    def rowCountHuman(self) -> str:
+        return self._application.language.locale.integerToString(
+            self.rowCount()
+        )

@@ -8,7 +8,7 @@ BPane {
     id: _base
     property string title: qsTr("Addresses (%1)").arg(addressList ? addressList.rowCountHuman : "")
     property var coin // CoinModel
-    property var addressList: coin.openAddressList(5)
+    property var addressList: coin.openProxyAddressList(5)
 
     signal spendFromTriggered
 

@@ -58,7 +58,15 @@ BControl {
                             text: qsTr("Tx")
                         }
                     }
-                    BFilterAddressesMenu {}
+                    BFilterAddressesMenu {
+                        id: _filterAddresses
+
+                        onHideEmptyChanged: (checked) => {
+                            _base.model.setFilterRole(
+                                checked ? BFilterAddressesMenu.FilterRole.HideEmpty : Qt.DisplayRole
+                            )
+                        }
+                    }
                 }
                 // TODO sorting controls
             }
