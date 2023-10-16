@@ -1,7 +1,9 @@
+import QtQuick.Layouts
+
 BTextField {
-    BLayout.alignment: _applicationStyle.infoValueAlignment
-    BLayout.minimumWidth: implicitWidth
-    BLayout.fillWidth: true
+    Layout.alignment: _applicationStyle.infoValueAlignment
+    Layout.minimumWidth: implicitWidth
+    Layout.fillWidth: true
 
     font.family:  parent.font.family
     font.pointSize: parent.font.pointSize

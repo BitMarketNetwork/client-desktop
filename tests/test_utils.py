@@ -35,17 +35,13 @@ STRING_TO_CAMEL_CASE_LIST = (
     ("__hello_world__", "__helloWorld__"),
     ("__hello_World", "__helloWorld"),
     ("hello_WorlD_", "helloWorld_"),  # noqa
-    ("h_e_l_l_o_w_o_r_l_d", "hELLOWORLD"), # noqa
+    ("h_e_l_l_o_w_o_r_l_d", "hELLOWORLD"),  # noqa
 )
 
 
 class TestStringUtils(TestCase):
     def test_case(self) -> None:
         for camel, snake in STRING_TO_SNAKE_CASE_LIST:
-            self.assertEqual(
-                snake,
-                StringUtils.toSnakeCase(camel))
+            self.assertEqual(snake, StringUtils.toSnakeCase(camel))
         for snake, camel in STRING_TO_CAMEL_CASE_LIST:
-            self.assertEqual(
-                camel,
-                StringUtils.toCamelCase(snake))
+            self.assertEqual(camel, StringUtils.toCamelCase(snake))

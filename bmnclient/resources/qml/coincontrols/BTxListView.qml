@@ -1,4 +1,6 @@
 import QtQuick
+import QtQuick.Layouts
+
 import "../basiccontrols"
 
 BControl {
@@ -20,8 +22,8 @@ BControl {
         BColumnLayout {
             BListView {
                 id: _listView
-                BLayout.fillWidth: true
-                BLayout.fillHeight: true
+                Layout.fillWidth: true
+                Layout.fillHeight: true
             }
             /*BLabel { // TODO
                 BLayout.fillWidth: true

@@ -1,9 +1,10 @@
 import QtQuick
+
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
+import "../dialogcontrols"
 
-// TODO python control
 BDialog {
     id: _base
     property var coin // CoinModel
@@ -37,7 +38,6 @@ BDialog {
             text: qsTr("Transaction ID:")
         }
         BInfoValue {
-            placeholderText: qsTr("None")
             text: _base.coin.txFactory.name
         }
         BInfoSeparator {}
@@ -124,6 +124,15 @@ BDialog {
                     return BCommon.button.closeRole
                 }
             }
+        }
+    }
+
+    onAccepted: {
+        if (_base.coin.txFactory.broadcast()) {
+            // TODO success message?
+            // TODO Clear BWalletSendPane fields
+        } else {
+            // TODO error?
         }
     }
 }

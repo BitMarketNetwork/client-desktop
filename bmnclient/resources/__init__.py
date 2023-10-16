@@ -27,19 +27,22 @@ class Resources(NotImplementedInstance):
         _ICON_FILE_PATH: Final = ":/images/icon-logo.svg"
     else:
         _ICON_FILE_PATH: Final = str(
-            ProductPaths.RESOURCES_PATH / "images" / "icon-logo.svg")
+            ProductPaths.RESOURCES_PATH / "images" / "icon-logo.svg"
+        )
 
     if _resource_exists(":/qml"):
         _QML_URL: Final = QUrl("qrc:///qml/")
     else:
         _QML_URL: Final = QUrl.fromLocalFile(
-            str(ProductPaths.RESOURCES_PATH / "qml") + os.sep)
+            str(ProductPaths.RESOURCES_PATH / "qml") + os.sep
+        )
 
     if _resource_exists(":/translations"):
         _TRANSLATIONS_PATH: Final = ":/translations"
     else:
         _TRANSLATIONS_PATH: Final = str(
-            ProductPaths.RESOURCES_PATH / "translations")
+            ProductPaths.RESOURCES_PATH / "translations"
+        )
 
     @classproperty
     def iconFilePath(cls) -> str:  # noqa

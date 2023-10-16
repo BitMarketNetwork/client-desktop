@@ -5,7 +5,7 @@ from unittest import TestCase
 from bmnclient.crypto.cipher import MessageCipher
 from bmnclient.crypto.kdf import KeyDerivationFunction, SecretStore
 from bmnclient.crypto.password import PasswordStrength
-from tests import TestApplication
+from tests.helpers import TestApplication
 
 _logger = TestApplication.getLogger(__name__)
 
@@ -54,10 +54,12 @@ class TestKdf(TestCase):
         kdf.derive(b"salt2", 128)
         timeframe = time.monotonic_ns() - timeframe
 
-        result = (24 * 60 * 60 * 1e+9) / timeframe
+        result = (24 * 60 * 60 * 1e9) / timeframe
         _logger.info(
-            "KDF bruteforce status: ~{:.2f} combinations per day."
-            .format(result))
+            "KDF bruteforce status: ~{:.2f} combinations per day.".format(
+                result
+            )
+        )
 
 
 class TestSecretStore(TestCase):
@@ -83,76 +85,132 @@ class TestSecretStore(TestCase):
 class TestPassword(TestCase):
     def test_groups(self) -> None:
         password_list = (
-            ("",  {
-                "upper": False,
-                "lower": False,
-                "numbers": False,
-                "special": False}),
-            ("A", {
-                "upper": True,
-                "lower": False,
-                "numbers": False,
-                "special": False}),
-            ("a", {
-                "upper": False,
-                "lower": True,
-                "numbers": False,
-                "special": False}),
-            ("Aa", {
-                "upper": True,
-                "lower": True,
-                "numbers": False,
-                "special": False}),
-            ("1", {
-                "upper": False,
-                "lower": False,
-                "numbers": True,
-                "special": False}),
-            ("Aa1", {
-                "upper": True,
-                "lower": True,
-                "numbers": True,
-                "special": False}),
-            (".", {
-                "upper": False,
-                "lower": False,
-                "numbers": False,
-                "special": True}),
-            (" ", {
-                "upper": False,
-                "lower": False,
-                "numbers": False,
-                "special": True}),
-            ("słowo", {  # noqa
-                "upper": False,
-                "lower": True,
-                "numbers": False,
-                "special": False}),
-            ("SŁOWO", { # noqa
-                "upper": True,
-                "lower": False,
-                "numbers": False,
-                "special": False}),
-            ("реч", {
-                "upper": False,
-                "lower": True,
-                "numbers": False,
-                "special": False}),
-            ("РЕЧ", {
-                "upper": True,
-                "lower": False,
-                "numbers": False,
-                "special": False}),
-            ("Реч@1", { # noqa
-                "upper": True,
-                "lower": True,
-                "numbers": True,
-                "special": True}),
-            ("`", {
-                "upper": False,
-                "lower": False,
-                "numbers": False,
-                "special": True}),
+            (
+                "",
+                {
+                    "upper": False,
+                    "lower": False,
+                    "numbers": False,
+                    "special": False,
+                },
+            ),
+            (
+                "A",
+                {
+                    "upper": True,
+                    "lower": False,
+                    "numbers": False,
+                    "special": False,
+                },
+            ),
+            (
+                "a",
+                {
+                    "upper": False,
+                    "lower": True,
+                    "numbers": False,
+                    "special": False,
+                },
+            ),
+            (
+                "Aa",
+                {
+                    "upper": True,
+                    "lower": True,
+                    "numbers": False,
+                    "special": False,
+                },
+            ),
+            (
+                "1",
+                {
+                    "upper": False,
+                    "lower": False,
+                    "numbers": True,
+                    "special": False,
+                },
+            ),
+            (
+                "Aa1",
+                {
+                    "upper": True,
+                    "lower": True,
+                    "numbers": True,
+                    "special": False,
+                },
+            ),
+            (
+                ".",
+                {
+                    "upper": False,
+                    "lower": False,
+                    "numbers": False,
+                    "special": True,
+                },
+            ),
+            (
+                " ",
+                {
+                    "upper": False,
+                    "lower": False,
+                    "numbers": False,
+                    "special": True,
+                },
+            ),
+            (
+                "słowo",
+                {  # noqa
+                    "upper": False,
+                    "lower": True,
+                    "numbers": False,
+                    "special": False,
+                },
+            ),
+            (
+                "SŁOWO",
+                {  # noqa
+                    "upper": True,
+                    "lower": False,
+                    "numbers": False,
+                    "special": False,
+                },
+            ),
+            (
+                "реч",
+                {
+                    "upper": False,
+                    "lower": True,
+                    "numbers": False,
+                    "special": False,
+                },
+            ),
+            (
+                "РЕЧ",
+                {
+                    "upper": True,
+                    "lower": False,
+                    "numbers": False,
+                    "special": False,
+                },
+            ),
+            (
+                "Реч@1",
+                {  # noqa
+                    "upper": True,
+                    "lower": True,
+                    "numbers": True,
+                    "special": True,
+                },
+            ),
+            (
+                "`",
+                {
+                    "upper": False,
+                    "lower": False,
+                    "numbers": False,
+                    "special": True,
+                },
+            ),
         )
         for password, groups in password_list:
             s = PasswordStrength(password)

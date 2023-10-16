@@ -1,5 +1,7 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Controls.Material
+
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
@@ -36,8 +38,8 @@ BPane {
         BInfoSeparator {}
 
         BTxIoView {
-            BLayout.columnSpan: parent.columns
-            BLayout.fillWidth: true
+            Layout.columnSpan: parent.columns
+            Layout.fillWidth: true
             tx: _base.tx
         }
         BInfoSeparator {}

@@ -1,5 +1,7 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Controls.Material
+import QtQuick.Layouts
 import "../application"
 import "../basiccontrols"
 
@@ -11,16 +13,11 @@ BItemDelegate {
 
     text: tx.name
 
-    contentItem: BColumnLayout {
-        BRowLayout {
-            BUnfoldToolButton {
-                onCheckedChanged: {
-                    _detailsLoader.showControl(checked)
-                }
-            }
+    contentItem: BSpoilerItem {
+        headerItem: BRowLayout {
             BColumnLayout {
                 BLabel {
-                    BLayout.fillWidth: true
+                    Layout.fillWidth: true
                     elide: BLabel.ElideMiddle
                     font.bold: true
                     text: _base.text
@@ -32,14 +29,14 @@ BItemDelegate {
             }
             BColumnLayout {
                 BLabel {
-                    BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                     font.pointSize: _base.smallFontPointSize
                     font.bold: true
                     text: BCommon.txStatusMap[_base.tx.state.status][0]
                     color: Material.color(BCommon.txStatusMap[_base.tx.state.status][1])
                 }
                 BAmountLabel {
-                    BLayout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                     font.pointSize: _base.smallFontPointSize
                     amount: _base.tx.amount
                 }
@@ -51,63 +48,9 @@ BItemDelegate {
                 }
             }*/
         }
-        Loader {
-            id: _detailsLoader
-
-            BLayout.fillWidth: true
-            BLayout.minimumHeight: BLayout.preferredHeight
-            BLayout.preferredHeight: 0
-            BLayout.maximumHeight: BLayout.preferredHeight
-
-            active: false
-            sourceComponent: BTxItemDetailsPane {
-                clip: true // for animation
-                tx: _base.tx
-            }
-
-            onLoaded: {
-                unfold()
-            }
-
-            NumberAnimation {
-                id: _detailsAnimation
-                target: _detailsLoader
-                duration: _applicationStyle.animationDuration
-                easing.type: Easing.InOutQuad
-                property: "BLayout.preferredHeight"
-
-                onFinished: {
-                    if (to === 0) {
-                        _detailsLoader.active = false
-                    }
-                }
-            }
-
-            function showControl(show) {
-                _detailsAnimation.stop()
-                if (show) {
-                    if (status === Loader.Ready) {
-                        unfold()
-                    } else {
-                        active = false // reset status to Loader.Null
-                        active = true
-                    }
-                } else {
-                    fold()
-                }
-            }
-
-            function unfold() {
-                _detailsAnimation.from = item.height
-                _detailsAnimation.to = item.implicitHeight
-                _detailsAnimation.restart()
-            }
-
-            function fold() {
-                _detailsAnimation.from = item.height
-                _detailsAnimation.to = 0
-                _detailsAnimation.restart()
-            }
+        contentItem: BTxItemDetailsPane {
+            clip: true // for animation
+            tx: _base.tx
         }
     }
 

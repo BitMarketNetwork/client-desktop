@@ -1,3 +1,5 @@
+import QtQuick.Layouts
+
 import "../basiccontrols"
 import "../coincontrols"
 
@@ -11,17 +13,22 @@ BControl {
     contentItem: BColumnLayout {
         BCoinHeader {
             id: _header
-            BLayout.fillWidth: true
+            Layout.fillWidth: true
             coin: _base.coin
             contextMenu: _contextMenu
         }
         BTabBarBox {
-            BLayout.fillWidth: true
-            BLayout.fillHeight: true
+            id: _tabBar
+            Layout.fillWidth: true
+            Layout.fillHeight: true
             spacing: _applicationStyle.spacing
 
             BWalletAddressListPane {
                 coin: _base.coin
+
+                onSpendFromTriggered: {
+                    _tabBar.currentIndex = 2
+                }
             }
             BWalletTxListPane {
                 coin: _base.coin

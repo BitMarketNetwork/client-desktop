@@ -81,6 +81,12 @@ QtObject {
         readonly property var outputList: [] // TODO ListModel
     }
 
+    readonly property QtObject keyStoreItemTemplate: QtObject {
+        readonly property string name: "config.json"
+        readonly property string mtimeHuman: "Thursday, January 1, 1970 00:00:00 AM UTC"
+        readonly property string path: "/Users/Username/Library/Preferences/BitMarket Network Client/config.json"
+    }
+
     readonly property var txStatusMap: [
         [ qsTr("Pending"),   Material.Pink   ],
         [ qsTr("Confirmed"), Material.Yellow ],

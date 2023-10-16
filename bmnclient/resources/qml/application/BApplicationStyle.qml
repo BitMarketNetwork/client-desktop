@@ -63,4 +63,6 @@ QtObject {
 
     property int animationDuration: 400
     property int tooTipDelay: 400
+
+    property int walletNameMaxLength: 32
 }

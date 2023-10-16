@@ -4,12 +4,13 @@ from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import \
-    QCoreApplication, \
-    QDir, \
-    QDirIterator, \
-    QLocale, \
-    QTranslator
+from PySide6.QtCore import (
+    QCoreApplication,
+    QDir,
+    QDirIterator,
+    QLocale,
+    QTranslator,
+)
 
 from .logger import Logger
 from .resources import Resources
@@ -17,6 +18,7 @@ from .utils.class_property import classproperty
 
 if TYPE_CHECKING:
     from typing import Dict, Final, List, Optional, Tuple
+
     TranslationList = Tuple[Dict[str, str], ...]
 
 
@@ -32,10 +34,8 @@ class Locale(QLocale):
         return result + self.toString(value, "f", precision)
 
     def stringToFloat(
-            self,
-            value: str,
-            *,
-            strict: bool = True) -> Optional[float]:
+        self, value: str, *, strict: bool = True
+    ) -> Optional[float]:
         if strict:
             s = (self.groupSeparator(), self.decimalPoint())
             for v in value:
@@ -51,10 +51,8 @@ class Locale(QLocale):
         return self.toString(value)
 
     def stringToInteger(
-            self,
-            value: str,
-            *,
-            strict: bool = True) -> Optional[int]:
+        self, value: str, *, strict: bool = True
+    ) -> Optional[int]:
         if strict:
             s = self.groupSeparator()
             for v in value:
@@ -65,15 +63,15 @@ class Locale(QLocale):
 
 
 class Language:
-    _SUFFIX_LIST: Final = (".qm", )
+    _SUFFIX_LIST: Final = (".qm",)
     _FILE_MATH: Final = "*.qm"
     _PRIMARY_NAME: Final = "en_US"
 
     def __init__(self, name: str = _PRIMARY_NAME) -> None:
         self._locale = Locale() if name is None else Locale(name)
         self._logger = Logger.classLogger(
-            self.__class__,
-            (None, self._locale.name()))
+            self.__class__, (None, self._locale.name())
+        )
         self._translator_list: List[QTranslator] = []
         if name != self._PRIMARY_NAME:
             for suffix in self._SUFFIX_LIST:
@@ -102,13 +100,14 @@ class Language:
         for translator in self._translator_list:
             if translator.isEmpty():
                 self._logger.warning(
-                    "Translator file '%s' is empty.",
-                    translator.filePath())
+                    "Translator file '%s' is empty.", translator.filePath()
+                )
                 translated = True
             elif not QCoreApplication.installTranslator(translator):
                 self._logger.error(
                     "Can't install translator file '%s'.",
-                    translator.filePath())
+                    translator.filePath(),
+                )
             else:
                 translated = True
         return translated
@@ -123,11 +122,10 @@ class Language:
     def translationList(cls) -> TranslationList:
         result = [cls._appendTranslationItem(cls._PRIMARY_NAME)]
         it = QDirIterator(
-            str(Resources.translationsPath),
-            (cls._FILE_MATH, ),
-            QDir.Files)
+            str(Resources.translationsPath), (cls._FILE_MATH,), QDir.Files
+        )
         while it.next():
-            name = Path(it.fileName()).with_suffix('').with_suffix('').stem
+            name = Path(it.fileName()).with_suffix("").with_suffix("").stem
             result.append(cls._appendTranslationItem(name))
         result.sort(key=lambda x: x["name"])
         return tuple(result)
@@ -140,25 +138,24 @@ class Language:
             "name": name,
             "fullName": "{} - {}".format(
                 locale.nativeLanguageName().title(),
-                Locale.languageToString(locale.language()).title())
+                Locale.languageToString(locale.language()).title(),
+            ),
         }
 
     @classmethod
     def _createTranslator(
-            cls,
-            locale: Locale,
-            suffix: str) -> Optional[QTranslator]:
+        cls, locale: Locale, suffix: str
+    ) -> Optional[QTranslator]:
         translator = QTranslator()
         result = translator.load(
-            locale,
-            "",
-            "",
-            str(Resources.translationsPath),
-            suffix)
+            locale, "", "", str(Resources.translationsPath), suffix
+        )
 
         if not result:
             Logger.classLogger(cls).error(
-                "Failed to load translator: locale '{}', suffix '{}'."
-                .format(locale.name(), suffix))
+                "Failed to load translator: locale '{}', suffix '{}'.".format(
+                    locale.name(), suffix
+                )
+            )
             return None
         return translator

@@ -1,5 +1,50 @@
 # BitMarket Network Client Change Log
 
+## 0.15.0 (19.06.2022)
+
+* Requirements:
+    - `ecdsa` package has been updated to version `0.17.0`.
+    - Windows build requirements have changed from MinGW-w64 to MSYS2.
+    - Apple M1 processor support for binary distribution.
+    - The filenames of binary distributions now contain the Python version and
+      processor architecture.
+* GUI:
+    - Send Page:
+        - The Key Store password is required before signing a transaction.
+        - "Advanced options" is now hidden by default under the spoiler.
+    - About:
+        - Checking for new releases/updates from the application repository.
+* Other:
+    - Fixed macOS TLS error: "The root CA certificate is not trusted for this
+      purpose".
+    - Fixed QSslSocket backend double initialization.
+
+## 0.14.0 (29.03.2022)
+
+* Requirements:
+    - Python 3.8 or later is required.
+    - `PySide6` package has been updated to version `6.2.4`.
+    - `cryptography` package has been updated to version `36.0.2`.
+* Database:
+    - Database version changed to `2`.
+* GUI:
+    - Added popup notification for copy to clipboard event.
+    - Settings Page:
+        - Added "Blockchain explorer" option (currently only Blockchain.com).
+    - Addresses Page:
+        - The address list is now in table view.
+        - Displaying the number of transactions for each address.
+        - Copies the context of the selected address cell to the clipboard.
+        - Popup address context menu when right-clicking.
+        - Added "Transaction history" dialog for each address.
+        - Clicking on a transaction in the "Transaction History" dialog opens an
+          external blockchain explorer.
+        - Changing the page to "Send" after selecting "Spend from" in the
+          context menu of an address.
+    - Send Page:
+        - The "amount" fields is disabled if the "Pay to" field is empty.
+        - Advanced fee options are hidden in the "Advanced options" expander.
+
 ## 0.13.1 (08.02.2022)
 
 * New command line option `--temp-path`.

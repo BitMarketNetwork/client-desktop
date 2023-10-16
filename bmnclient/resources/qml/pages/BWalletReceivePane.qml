@@ -1,7 +1,9 @@
 import QtQuick
+
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
+import "../dialogcontrols"
 
 BPane {
     id: _base
@@ -57,7 +59,7 @@ BPane {
                     addressNameText: _base.coin.receiveManager.name
                     labelText: _base.coin.receiveManager.label
                     commentText: _base.coin.receiveManager.comment
-                    isSegwit: _base.coin.receiveManager.isSegwit
+                    isSegwit: !_base.coin.receiveManager.isWitness
 
                     BDialogInputButtonBox {
                         BButton {

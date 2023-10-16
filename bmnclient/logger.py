@@ -8,28 +8,27 @@ from threading import Lock
 from time import strftime
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import qInstallMessageHandler, QtMsgType
+from PySide6.QtCore import QtMsgType, qInstallMessageHandler
 
-from .os_environment import Platform
 from .utils.string import StringUtils
 from .version import Product
 
 if TYPE_CHECKING:
     from json import JSONDecodeError
-    from typing import Optional, Type
+
     from PySide6.QtCore import QMessageLogContext
+
     from .utils.string import ClassStringKeyTuple
 
 
-_qt_logger: Optional[logging.Logger] = None
+_qt_logger: logging.Logger | None = None
 _configure_lock = Lock()
 _is_configured = False
 
 
 def _qtMessageHandler(
-        message_type: QtMsgType,
-        _: QMessageLogContext,
-        message: str) -> None:
+    message_type: QtMsgType, _: QMessageLogContext, message: str
+) -> None:
     global _qt_logger
     if message_type == QtMsgType.QtDebugMsg:
         _qt_logger.debug(message)
@@ -60,21 +59,22 @@ class _Formatter(logging.Formatter):
     def __init__(self) -> None:
         super().__init__(
             fmt="%(asctime)s (%(levelname)s) %(thread)016x %(name)s: "
-                "%(message)s",
-            datefmt=None)
+            "%(message)s",
+            datefmt=None,
+        )
 
     def formatTime(self, record, datefmt=None) -> str:
         return strftime(
             "%Y-%m-%d %H:%M:%S.{0:03.0f} %z".format(record.msecs),
-            self.converter(record.created))
+            self.converter(record.created),
+        )
 
 
 class Logger:
     @classmethod
     def configure(
-            cls,
-            file_path: Path = Path("stderr"),
-            level: int = logging.DEBUG) -> None:
+        cls, file_path: Path = Path("stderr"), level: int = logging.DEBUG
+    ) -> None:
         global _is_configured
         global _configure_lock
         global _qt_logger
@@ -89,9 +89,8 @@ class Logger:
                 handler = _StreamHandler(stream=sys.stdout)
             else:
                 handler = _FileHandler(
-                    str(file_path),
-                    mode="at",
-                    encoding=Product.ENCODING)
+                    str(file_path), mode="at", encoding=Product.ENCODING
+                )
             handler.setFormatter(_Formatter())
 
             logging.addLevelName(logging.DEBUG, "dd")
@@ -100,10 +99,7 @@ class Logger:
             logging.addLevelName(logging.ERROR, "EE")
             logging.addLevelName(logging.CRITICAL, "CC")
 
-            kwargs = {
-                "level": level,
-                "handlers": (handler,)
-            }
+            kwargs = {"level": level, "handlers": (handler,)}
             logging.basicConfig(**kwargs)
             _qt_logger = logging.getLogger("Qt")
             qInstallMessageHandler(_qtMessageHandler)
@@ -111,18 +107,19 @@ class Logger:
             _is_configured = True
 
     @classmethod
-    def fatalException(cls, logger: Optional[Logger] = None) -> None:
+    def fatalException(cls, logger: Logger | None = None) -> None:
         cls.configure()
         from traceback import format_exc
+
         if not logger:
             logger = logging.getLogger()
         logger.critical(
-            "FATAL EXCEPTION:\n%s",
-            format_exc(limit=-5, chain=True))
+            "FATAL EXCEPTION:\n%s", format_exc(limit=-5, chain=True)
+        )
         os.abort()
 
     @classmethod
-    def fatal(cls, message: str, logger: Optional[Logger] = None) -> None:
+    def fatal(cls, message: str, logger: Logger | None = None) -> None:
         cls.configure()
         if not logger:
             logger = logging.getLogger()
@@ -143,14 +140,16 @@ class Logger:
 
     @classmethod
     def jsonDecodeErrorString(cls, e: JSONDecodeError) -> str:
-        return \
-            "JSON error at offset {:d}:{:d}: {:s}" \
-            .format(e.lineno, e.pos, e.msg)
+        return "JSON error at offset {:d}:{:d}: {:s}".format(
+            e.lineno, e.pos, e.msg
+        )
 
     @classmethod
     def classLogger(
-            cls,
-            cls_: Type,
-            *key_list: ClassStringKeyTuple) \
-            -> logging.Logger:
+        cls, cls_: type(object), *key_list: ClassStringKeyTuple
+    ) -> logging.Logger:
         return logging.getLogger(StringUtils.classString(cls_, *key_list))
+
+    @classmethod
+    def objectLogger(cls, object_: object) -> logging.Logger:
+        return logging.getLogger(str(object_))

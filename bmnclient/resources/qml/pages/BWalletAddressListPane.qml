@@ -6,67 +6,20 @@ import "../dialogs"
 
 BPane {
     id: _base
-    property string title: qsTr("Addresses (%1)").arg(_tableView.model.rowCountHuman)
+    property string title: qsTr("Addresses (%1)").arg(addressList ? addressList.rowCountHuman : "")
     property var coin // CoinModel
+    property var addressList: coin.openAddressList(5)
 
-    BHorizontalHeaderView {
-        id: _horizontalHeader
-        syncView: _tableView
-        anchors.left: _tableView.left
-        width: parent.width
+    signal spendFromTriggered
 
-        model: ObjectModel {
-            id: itemModel
-
-            BControl {
-                BLabel {
-                    anchors.centerIn: parent
-                    text: qsTr("Address")
-                }
-            }
-            BControl {
-                BLabel {
-                    anchors.centerIn: parent
-                    text: qsTr("Label")
-                }
-            }
-            BControl {
-                BLabel {
-                    anchors.centerIn: parent
-                    text: qsTr("Balance")
-                }
-            }
-            BControl {
-                BLabel {
-                    anchors.centerIn: parent
-                    text: qsTr("Tx")
-                }
-            }
-        }
-        // TODO sorting controls
+    Component.onDestruction: {
+         coin.closeList(addressList)
     }
-    BAddressTableView {
-        id: _tableView
+
+    BWalletAddressTable {
+        id: _tableItem
         anchors.fill: parent
-        anchors.topMargin: _horizontalHeader.implicitHeight
-        model: _base.coin.addressList
-
-        columnWidth: [355, -1, 150, 65, 50]
-
-        delegate: BAddressTableRow {
-            implicitWidth: _tableView.columnWidthProvider(column)
-            address: model
-            amount: model.balance
-            contextMenu: _contextMenu
-
-            Rectangle { // col separator
-                anchors.right: parent.right
-                width: 1
-                height: parent.height
-                color: "grey"
-                opacity: 0.5
-            }
-        }
+        model: _base.addressList
     }
 
     BMenu {
@@ -82,7 +35,8 @@ BPane {
         BMenuItem {
             text: qsTr("Spend from")
             onTriggered: {
-                _contextMenu.address.state.isTxInput = true
+                _base.coin.txFactory.receiver.inputAddressName = _contextMenu.address.name
+                spendFromTriggered()
             }
         }
         BMenuItem {

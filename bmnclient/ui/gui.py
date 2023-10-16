@@ -6,39 +6,39 @@ from typing import TYPE_CHECKING
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
-from .system_tray import SystemTrayIcon
 from ..application import CoreApplication
 from ..os_environment import Platform
 from ..version import Timer
+from .system_tray import SystemTrayIcon
 
 if TYPE_CHECKING:
     from typing import Iterable, Optional
+
     from PySide6.QtGui import QClipboard, QFont, QWindow
+
     from ..application import CommandLine
     from ..coins.abstract import CoinModelFactory
+
     MessageType = CoreApplication.MessageType
 
 
 class GuiApplication(CoreApplication):
     def __init__(
-            self,
-            *,
-            command_line: CommandLine,
-            model_factory: Optional[CoinModelFactory] = None) -> None:
-
+        self, *, command_line: CommandLine, model_factory: CoinModelFactory
+    ) -> None:
         # Warning: Ignoring XDG_SESSION_TYPE=wayland on Gnome. Use
         # QT_QPA_PLATFORM=wayland to run on Wayland anyway.
         if Platform.isLinux:
-            if (
-                    environ.get("XDG_SESSION_TYPE", "").lower() == "wayland"
-                    and not environ.get("QT_QPA_PLATFORM")
-            ):
+            if environ.get(
+                "XDG_SESSION_TYPE", ""
+            ).lower() == "wayland" and not environ.get("QT_QPA_PLATFORM"):
                 environ["QT_QPA_PLATFORM"] = "wayland"
 
         super().__init__(
             qt_class=QApplication,
             command_line=command_line,
-            model_factory=model_factory)
+            model_factory=model_factory,
+        )
 
         if Platform.isLinux:
             self._is_wayland = self._qt_application.platformName() == "wayland"
@@ -75,8 +75,7 @@ class GuiApplication(CoreApplication):
         for window in self.topLevelWindowList:
             if show:
                 window.setVisible(True)
-                # noinspection PyTypeChecker
-                state = int(window.windowStates())
+                state = window.windowStates()
                 if (state & Qt.WindowMinimized) == Qt.WindowMinimized:
                     window.show()
                 window.raise_()
@@ -86,12 +85,13 @@ class GuiApplication(CoreApplication):
                 window.setVisible(False)
 
     def showMessage(
-            self,
-            *,
-            type_: MessageType = CoreApplication.MessageType.INFORMATION,
-            title: Optional[str] = None,
-            text: str,
-            timeout: int = Timer.UI_MESSAGE_TIMEOUT) -> None:
+        self,
+        *,
+        type_: MessageType = CoreApplication.MessageType.INFORMATION,
+        title: Optional[str] = None,
+        text: str,
+        timeout: int = Timer.UI_MESSAGE_TIMEOUT,
+    ) -> None:
         if type_ == CoreApplication.MessageType.INFORMATION:
             icon = self._system_tray_icon.MessageIcon.INFORMATION
         elif type_ == CoreApplication.MessageType.WARNING:

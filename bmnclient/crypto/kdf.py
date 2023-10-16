@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING
 
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 
+from ..version import Product
 from .cipher import MessageCipher
 from .digest import Blake2bDigest
-from ..version import Product
 
 if TYPE_CHECKING:
     from typing import Final, Optional
@@ -24,17 +24,14 @@ class KeyDerivationFunction:
         password_hash = password_hash.finalize()
         self._password_hash = password_hash
 
-    def derive(
-            self,
-            salt: bytes,
-            key_length: int) -> bytes:
+    def derive(self, salt: bytes, key_length: int) -> bytes:
         # https://stackoverflow.com/questions/11126315/what-are-optimal-scrypt-work-factors/30308723#30308723
         kdf = Scrypt(
             salt=salt,
             length=key_length,
             n=(1 << self._KEY_COST),
             r=8,  # RFC7914
-            p=1   # RFC7914
+            p=1,  # RFC7914
         )
         return kdf.derive(self._password_hash)
 
@@ -55,8 +52,8 @@ class SecretStore(KeyDerivationFunction):
     def decryptValue(self, value: str) -> Optional[bytes]:
         try:
             (secret_version, salt, value) = value.split(
-                Product.STRING_SEPARATOR,
-                2)
+                Product.STRING_SEPARATOR, 2
+            )
             salt = bytes.fromhex(salt)
         except ValueError:
             return None

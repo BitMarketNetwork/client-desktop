@@ -9,7 +9,6 @@ from enum import Enum
 
 
 class SizeUnitConverter:
-
     @staticmethod
     def sizeToUnit(value: int, unit: Enum) -> Optional[int]:
         try:

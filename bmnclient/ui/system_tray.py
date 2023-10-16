@@ -37,7 +37,8 @@ class SystemTrayIcon(QObject):
             for v in getenv("XDG_CURRENT_DESKTOP", "").split(":"):
                 if v.lower() == "xfce":
                     self._logger.warning(
-                        "System tray with Xfce+Qt message icon bug.")
+                        "System tray with Xfce+Qt message icon bug."
+                    )
                     self._enable_message_icon = False
                     break
 
@@ -48,14 +49,14 @@ class SystemTrayIcon(QObject):
         self._menu = QMenu(self._application.title)
 
         # noinspection PyTypeChecker
-        self._menu.setDefaultAction(self._menu.addAction(
-            self.tr("&Show/Hide main window"),
-            self._onToggleMainWindow))
+        self._menu.setDefaultAction(
+            self._menu.addAction(
+                self.tr("&Show/Hide main window"), self._onToggleMainWindow
+            )
+        )
         self._menu.addSeparator()
         # noinspection PyTypeChecker
-        self._menu.addAction(
-            self.tr("&Quit"),
-            self._onQuit)
+        self._menu.addAction(self.tr("&Quit"), self._onQuit)
 
     def _createIcon(self) -> None:
         self._icon = QSystemTrayIcon()
@@ -78,8 +79,8 @@ class SystemTrayIcon(QObject):
         self._application.setExitEvent(0)
 
     def _onIconActivated(
-            self,
-            reason: QSystemTrayIcon.ActivationReason) -> None:
+        self, reason: QSystemTrayIcon.ActivationReason
+    ) -> None:
         if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
             self._onToggleMainWindow()
 
@@ -90,17 +91,14 @@ class SystemTrayIcon(QObject):
         self._icon.setVisible(show)
 
     def showMessage(
-            self,
-            title: str,
-            text: str,
-            icon: MessageIcon = MessageIcon.INFORMATION,
-            timeout: int = Timer.UI_MESSAGE_TIMEOUT) -> None:
+        self,
+        title: str,
+        text: str,
+        icon: MessageIcon = MessageIcon.INFORMATION,
+        timeout: int = Timer.UI_MESSAGE_TIMEOUT,
+    ) -> None:
         if not self._enable_message_icon:
             icon = self.MessageIcon.NONE
 
         self._logger.debug("Message (%s):\n\t%s\n\t%s", str(icon), title, text)
-        self._icon.showMessage(
-            title,
-            text,
-            icon.value,
-            timeout)
+        self._icon.showMessage(title, text, icon.value, timeout)

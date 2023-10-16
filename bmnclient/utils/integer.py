@@ -11,11 +11,8 @@ class AbstractIntegerConverter:
 
     @classmethod
     def integerToBytes(
-            cls,
-            value: int,
-            length: int,
-            *,
-            safe: bool = False) -> Optional[bytes]:
+        cls, value: int, length: int, *, safe: bool = False
+    ) -> Optional[bytes]:
         try:
             return value.to_bytes(length, cls._BYTE_ORDER)
         except OverflowError:
