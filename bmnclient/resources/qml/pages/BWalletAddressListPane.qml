@@ -27,6 +27,18 @@ BPane {
         property var address // AddressModel
 
         BMenuItem {
+            text: qsTr("Edit...")
+            onTriggered: {
+                let dialog = _applicationManager.createDialog(
+                "BAddressEditDialog", {
+                    "coin": coin,
+                    "type": BAddressEditBox.Type.Edit
+                })
+                dialog.open()
+            }
+        }
+
+        BMenuItem {
             text: qsTr("Copy address")
             onTriggered: {
                 BBackend.clipboard.text = _contextMenu.address.name
@@ -51,13 +63,6 @@ BPane {
                 dialog.open();
             }
         }
-        /*BMenuItem {
-            text: qsTr("Edit...")
-            onTriggered: {
-                // TODO
-                //showAddressDetails(_contextMenu.index)
-            }
-        }*/
         /*BMenuItem {
             text: qsTr("Export transactions")
             onTriggered: {
