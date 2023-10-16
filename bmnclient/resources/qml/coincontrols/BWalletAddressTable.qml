@@ -81,6 +81,17 @@ BControl {
                         color: Material.dividerColor
                     }
                 }
+
+                MouseArea {
+                    anchors.fill: parent
+                    propagateComposedEvents: true
+                    onWheel: (wheel) => {
+                        if (_contextMenu.visible) {
+                            _contextMenu.dismiss()
+                        }
+                        wheel.accepted = false
+                    }
+                }
             }
         }
     }
