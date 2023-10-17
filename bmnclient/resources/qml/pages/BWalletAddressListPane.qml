@@ -32,7 +32,10 @@ BPane {
                 let dialog = _applicationManager.createDialog(
                 "BAddressEditDialog", {
                     "coin": coin,
-                    "type": BAddressEditBox.Type.Edit
+                    "type": BAddressEditBox.Type.Edit,
+                    "addressNameText": _contextMenu.address.name,
+                    "labelText": _contextMenu.address.state.label
+                    //"commentText": _contextMenu.address.comment
                 })
                 dialog.open()
             }

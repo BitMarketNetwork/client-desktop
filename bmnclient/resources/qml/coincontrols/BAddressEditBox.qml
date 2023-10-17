@@ -5,11 +5,10 @@ import "../dialogcontrols"
 BDialogLayout {
     id: _base
 
-    // TODO: reimplement without dialog controls
-
     enum Type {
         Create,
         View,
+        Edit,
 
         CreateRecipient,
         ViewRecipient,
@@ -32,6 +31,8 @@ BDialogLayout {
             return qsTr("Create new address")
         case BAddressEditBox.Type.View:
             return qsTr("Address information")
+        case BAddressEditBox.Type.Edit:
+            return qsTr("Edit address")
         case BAddressEditBox.Type.CreateRecipient:
             return qsTr("Create recipient address")
         case BAddressEditBox.Type.ViewRecipient:
@@ -66,6 +67,7 @@ BDialogLayout {
         case BAddressEditBox.Type.CreateRecipient:
             return qsTr("Not created")
         case BAddressEditBox.Type.View:
+        case BAddressEditBox.Type.Edit:
         case BAddressEditBox.Type.ViewRecipient:
             return ""
         case BAddressEditBox.Type.CreateWatchOnly:
@@ -84,6 +86,7 @@ BDialogLayout {
         case BAddressEditBox.Type.View:
         case BAddressEditBox.Type.ViewRecipient:
             return ""
+        case BAddressEditBox.Type.Edit:
         case BAddressEditBox.Type.CreateWatchOnly:
             return qsTr("Enter label for address (optional)")
         }
@@ -98,6 +101,7 @@ BDialogLayout {
         case BAddressEditBox.Type.View:
         case BAddressEditBox.Type.ViewRecipient:
             return ""
+        case BAddressEditBox.Type.Edit:
         case BAddressEditBox.Type.CreateWatchOnly:
             return qsTr("Enter comment for address (optional)")
         }
@@ -108,6 +112,8 @@ BDialogLayout {
         case BAddressEditBox.Type.Create:
         case BAddressEditBox.Type.CreateRecipient:
             return qsTr("Create address")
+        case BAddressEditBox.Type.Edit:
+            return BCommon.button.acceptRole
         case BAddressEditBox.Type.View:
         case BAddressEditBox.Type.ViewRecipient:
             return qsTr("Copy address")
@@ -139,7 +145,7 @@ BDialogLayout {
     }
     BDialogInputTextField {
         id: _address
-        enabled: _base.type !== BAddressEditBox.Type.Create && _base.type !== BAddressEditBox.Type.CreateRecipient
+        enabled: _base.type !== BAddressEditBox.Type.Create && _base.type !== BAddressEditBox.Type.CreateRecipient && _base.type !== BAddressEditBox.Type.Edit
         readOnly: _base.readOnly
         placeholderText: _base.addressPlaceholderText
     }
@@ -150,7 +156,7 @@ BDialogLayout {
         text: _base.segwitPromptText
     }
     BDialogInputSwitch {
-        enabled: !_base.readOnly
+        enabled: !_base.readOnly && _base.type !== BAddressEditBox.Type.Edit
         id: _segwitSwitch
         visible: _base.type !== BAddressEditBox.Type.CreateWatchOnly
         checked: true

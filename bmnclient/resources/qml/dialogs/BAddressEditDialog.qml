@@ -1,3 +1,5 @@
+import QtQuick
+
 import "../application"
 import "../basiccontrols"
 import "../coincontrols"
@@ -6,6 +8,7 @@ import "../dialogcontrols"
 // TODO python control
 // TODO show result in BAddressEditBox.Type.*View
 BDialog {
+    id: _base
     property alias coin: _box.coin
     property alias type: _box.type
 
@@ -35,9 +38,13 @@ BDialog {
             BDialogButtonBox.buttonRole: BDialogButtonBox.RejectRole
             text: BCommon.button.cancelRole
         }
-        BButton {
-            BDialogButtonBox.buttonRole: BDialogButtonBox.ResetRole
-            text: BCommon.button.resetRole
+        Loader {
+            active: _base.type !== BAddressEditBox.Type.Edit
+
+            sourceComponent: BButton {
+                BDialogButtonBox.buttonRole: BDialogButtonBox.ResetRole
+                text: BCommon.button.resetRole
+            }
         }
     }
 
