@@ -58,45 +58,12 @@ BItemDelegate {
     }
     Component {
         id: _amountComponent
-
         BColumnLayout {
-            BRowLayout {
+            BAmountLabel {
                 Layout.alignment: Qt.AlignRight
-                Layout.topMargin: 10
-                BLabel {
-                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                    font.bold: true
-                    color: _base.color
-                    font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
-                    font.strikeout: _base.address.state.isReadOnly // TODO tmp
-                    text: _base.amount.valueHuman
-                }
-                BLabel {
-                    Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
-                    color: _base.color
-                    font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
-                    font.strikeout: _base.address.state.isReadOnly // TODO tmp
-                    text: _base.amount.unit
-                }
-            }
-            BRowLayout {
-                Layout.alignment: Qt.AlignRight
-                Layout.bottomMargin: 10
-                BLabel {
-                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                    font.bold: true
-                    color: _base.color
-                    font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
-                    font.strikeout: _base.address.state.isReadOnly // TODO tmp
-                    text: _base.amount.fiatValueHuman
-                }
-                BLabel {
-                    Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
-                    color: _base.color
-                    font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
-                    font.strikeout: _base.address.state.isReadOnly // TODO tmp
-                    text: _base.amount.fiatUnit
-                }
+                font.pointSize: _base.font.pointSize * _applicationStyle.fontPointSizeFactor.small
+                font.strikeout: _base.address.state.isReadOnly // TODO tmp
+                amount: _base.amount
             }
         }
     }
